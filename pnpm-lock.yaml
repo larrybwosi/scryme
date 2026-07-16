@@ -137,12 +137,9 @@ importers:
       '@repo/zitadel':
         specifier: workspace:*
         version: link:../../packages/zitadel
-<<<<<<< HEAD
       '@sentry/nestjs':
         specifier: ^10.65.0
         version: 10.65.0(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))
-=======
->>>>>>> crm
       '@upstash/redis':
         specifier: ^1.38.0
         version: 1.38.0
@@ -498,11 +495,7 @@ importers:
         version: link:../../packages/windmill
       '@sentry/nextjs':
         specifier: ^10.65.0
-<<<<<<< HEAD
-        version: 10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))
-=======
         version: 10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))
->>>>>>> crm
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.3.2
@@ -514,11 +507,7 @@ importers:
         version: 12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.11)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       better-auth:
         specifier: ^1.4.19
-<<<<<<< HEAD
         version: 1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10)
-=======
-        version: 1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10)
->>>>>>> crm
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -960,11 +949,6 @@ importers:
       '@repo/env':
         specifier: workspace:*
         version: link:../../packages/env
-<<<<<<< HEAD
-      '@sentry/nextjs':
-        specifier: ^10.65.0
-        version: 10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))
-=======
       '@sanity/icons':
         specifier: ^5.1.0
         version: 5.1.0(react@19.2.6)
@@ -974,7 +958,9 @@ importers:
       '@sanity/vision':
         specifier: ^5.31.1
         version: 5.31.1(@babel/runtime@7.29.7)(@codemirror/lint@6.9.7)(@codemirror/theme-one-dark@6.1.3)(@emotion/is-prop-valid@1.4.0)(codemirror@6.0.2)(react-dom@19.2.6(react@19.2.6))(react-is@19.2.7)(react@19.2.6)(sanity@5.31.1(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.11)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3))(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
->>>>>>> crm
+      '@sentry/nextjs':
+        specifier: ^10.65.0
+        version: 10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19))
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.3.2
@@ -991,13 +977,8 @@ importers:
         specifier: 16.2.10
         version: 16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       next-sanity:
-<<<<<<< HEAD
-        specifier: ^13.1.1
-        version: 13.1.3(43ae1567bf95cdff677508bc5dd55220)
-=======
         specifier: '13'
         version: 13.1.3(@emotion/is-prop-valid@1.4.0)(@sanity/client@7.23.1)(@types/react@19.2.14)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-router@7.18.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(sanity@5.31.1(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.11)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3))(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@5.7.3)
->>>>>>> crm
       postcss:
         specifier: ^8.5.15
         version: 8.5.19
@@ -1011,16 +992,11 @@ importers:
         specifier: 19.2.6
         version: 19.2.6(react@19.2.6)
       sanity:
-<<<<<<< HEAD
-        specifier: ^6.4.0
-        version: 6.5.0(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(esbuild@0.28.1)(immer@11.1.11)(jiti@2.7.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(rolldown@1.1.5)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3)
-=======
         specifier: ^5.31.1
         version: 5.31.1(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.11)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3)
       styled-components:
         specifier: ^6.4.3
         version: 6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
->>>>>>> crm
       tailwind-merge:
         specifier: ^3.0.1
         version: 3.6.0
@@ -1076,13 +1052,12 @@ importers:
       '@repo/windmill':
         specifier: workspace:*
         version: link:../../packages/windmill
+      '@repo/zitadel':
+        specifier: workspace:*
+        version: link:../../packages/zitadel
       '@sentry/nextjs':
         specifier: ^10.65.0
-<<<<<<< HEAD
-        version: 10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))
-=======
         version: 10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))
->>>>>>> crm
       '@tailwindcss/postcss':
         specifier: ^4.1.18
         version: 4.3.2
@@ -1091,11 +1066,7 @@ importers:
         version: 0.44.0
       better-auth:
         specifier: ^1.4.19
-<<<<<<< HEAD
         version: 1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10)
-=======
-        version: 1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10)
->>>>>>> crm
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -1231,11 +1202,7 @@ importers:
         version: link:../shared
       better-auth:
         specifier: ^1.6.23
-<<<<<<< HEAD
         version: 1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10)
-=======
-        version: 1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10)
->>>>>>> crm
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -1456,11 +1423,7 @@ importers:
         version: 29.7.0(@types/node@20.19.43)
       ts-jest:
         specifier: ^29.4.11
-<<<<<<< HEAD
         version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@30.4.1(@babel/core@7.29.7))(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.43))(typescript@5.7.3)
-=======
-        version: 29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@30.4.1(@babel/core@7.29.7))(esbuild@0.27.7)(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.43))(typescript@5.7.3)
->>>>>>> crm
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(@swc/core@1.15.43(@swc/helpers@0.5.23))(jiti@2.7.0)(postcss@8.5.19)(tsx@4.23.1)(typescript@5.7.3)(yaml@2.9.0)
@@ -1922,16 +1885,6 @@ packages:
     resolution: {integrity: sha512-oJjYDranGTCkp21bziF/fIxJfLTucitqg/ar5mmLPHyroNG3XF3SUIMvuNd1GNIe4oy40wvGEXvTToKYvUeOLA==}
     engines: {node: '>=16'}
 
-<<<<<<< HEAD
-  '@architect/hydrate@6.0.2':
-    resolution: {integrity: sha512-7d3bFa7HsaspIRX5un37jWX1Kk3uWxBjGSIXfkNwPefHHvUVzrl3BypATjRVyocZ/iDbXWqJlZ+WKlAsgi14XA==}
-    engines: {node: '>=22'}
-    hasBin: true
-
-  '@architect/inventory@6.0.0':
-    resolution: {integrity: sha512-PQRC730De8lCYA+QMHpFjtf/i4iPjBSL8JvC5c9DQarnCPwf1/cLaCqJdGMVmlU7J1q7EgfIRHMUwLUdnq2ADg==}
-    engines: {node: '>=22'}
-=======
   '@architect/hydrate@5.0.2':
     resolution: {integrity: sha512-AnQeEP3fO6VaN5chpoV2gKykzk6B6BS3xQ1P0tqBdLmluHSNGFh7odi2SP27KHUrHSCfqpLwjy1TmCwvqkN12w==}
     engines: {node: '>=20'}
@@ -1940,21 +1893,14 @@ packages:
   '@architect/inventory@5.0.0':
     resolution: {integrity: sha512-Tlwo6wVFMhIZT2k5dBrU4gr21jboAXjaPvqOYsKKeEVG+1HLTdKSWLidAvKU0qDzGeT8T6oRTMH1WDlLTmhQmw==}
     engines: {node: '>=20'}
->>>>>>> crm
 
   '@architect/parser@8.0.1':
     resolution: {integrity: sha512-uXm4XCnMF7qeIjur69qIUiz4dq40t89M4umJW5hLZ9eEDQ2rtN/+A+kbWmbw+RV3mo2RTp4EeAb+lRnU0basew==}
     engines: {node: '>=20'}
 
-<<<<<<< HEAD
-  '@architect/utils@6.0.3':
-    resolution: {integrity: sha512-6m2Tpw/X5lHy0551TcGyDFY8RxNUegcZYbgt6N/fZ3o+fK0b03W6xecS8lXrnxxbUk9EWrweI/9TbJIysafdbg==}
-    engines: {node: '>=22'}
-=======
   '@architect/utils@5.0.2':
     resolution: {integrity: sha512-BNVXWpkXj6kDdIu6iu3Qh+Gbl1Ml0DKIDQ7s/VLaugvUBbvs+0cm7DA+N2xF6RtzBbnUm2NoyYaGvN5/0uYoEQ==}
     engines: {node: '>=20'}
->>>>>>> crm
 
   '@asamuzakjp/css-color@3.2.0':
     resolution: {integrity: sha512-K1A6z8tS3XsmCMM86xoWdn7Fkdn9m6RSVtocUrJYIwZnFVkng/PvkEoWtOWmP+Scc6saYWHWZYbndEEXxl24jw==}
@@ -2581,8 +2527,6 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
-<<<<<<< HEAD
-=======
   '@babel/plugin-transform-react-jsx-self@7.29.7':
     resolution: {integrity: sha512-TL0hMc9xzy86VD31nUiwzd5otRAcyEPcsegCxolO0PvcXuH1v0kECe/UIznYFihpkvU5wg/jk4v0TTEFfm53fw==}
     engines: {node: '>=6.9.0'}
@@ -2595,7 +2539,6 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
->>>>>>> crm
   '@babel/plugin-transform-react-jsx@7.29.7':
     resolution: {integrity: sha512-WsZulLVBUHXVj2cUcPVx6UE21TpalB6bHbSFErKT0Ib++ax24jjXe73FqlWvdylFOjiuPHYi6VCcgRad1ItN+A==}
     engines: {node: '>=6.9.0'}
@@ -2921,8 +2864,6 @@ packages:
   '@changesets/write@0.4.0':
     resolution: {integrity: sha512-CdTLvIOPiCNuH71pyDu3rA+Q0n65cmAbXnwWH84rKGiFumFzkmHNT8KHTMEchcxN+Kl8I54xGUhJ7l3E7X396Q==}
 
-<<<<<<< HEAD
-=======
   '@codemirror/autocomplete@6.20.3':
     resolution: {integrity: sha512-tlosUqb+3BbxCxZdu4tKeRghPFC+QM7q4X5YhKV2eCmPG+1r2F3f4AaSz5sCrFqUtX4Jh20VFTKecl16MgiV9g==}
 
@@ -2950,7 +2891,6 @@ packages:
   '@codemirror/view@6.43.6':
     resolution: {integrity: sha512-EVunGSYN1wz1p75WY1s3Xg7t3i8Yol0kGZGizNdX9BUFgMFILYVe8/u6EVpo7Ff5PwbZuILb4QAq7IZoKzIEQA==}
 
->>>>>>> crm
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
     engines: {node: '>=0.1.90'}
@@ -3061,17 +3001,10 @@ packages:
       react: 19.2.6
       react-dom: 19.2.6
 
-<<<<<<< HEAD
-  '@dnd-kit/modifiers@9.0.0':
-    resolution: {integrity: sha512-ybiLc66qRGuZoC20wdSSG6pDXFikui/dCNGthxv4Ndy8ylErY0N3KVxY2bgo7AWwIbxDmXDg3ylAFmnrjcbVvw==}
-    peerDependencies:
-      '@dnd-kit/core': ^6.3.0
-=======
   '@dnd-kit/modifiers@6.0.1':
     resolution: {integrity: sha512-rbxcsg3HhzlcMHVHWDuh9LCjpOVAgqbV78wLGI8tziXY3+qcMQ61qVXIvNKQFuhj75dSfD+o+PYZQ/NUk2A23A==}
     peerDependencies:
       '@dnd-kit/core': ^6.0.6
->>>>>>> crm
       react: 19.2.6
 
   '@dnd-kit/sortable@10.0.0':
@@ -3080,15 +3013,12 @@ packages:
       '@dnd-kit/core': ^6.3.0
       react: 19.2.6
 
-<<<<<<< HEAD
-=======
   '@dnd-kit/sortable@7.0.2':
     resolution: {integrity: sha512-wDkBHHf9iCi1veM834Gbk1429bd4lHX4RpAwT0y2cHLf246GAvU2sVw/oxWNpPKQNQRQaeGXhAVgrOl1IT+iyA==}
     peerDependencies:
       '@dnd-kit/core': ^6.0.7
       react: 19.2.6
 
->>>>>>> crm
   '@dnd-kit/utilities@3.2.2':
     resolution: {integrity: sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg==}
     peerDependencies:
@@ -3764,12 +3694,9 @@ packages:
     resolution: {integrity: sha512-93zYdMES/c1D69yZiKDBj0V24vqNzB/koF26KPaagAfd3P/4gUlh3Dys5ogAK+Exi9QyzlD8x/08Zt7wIKcDcA==}
     deprecated: Use @eslint/object-schema instead
 
-<<<<<<< HEAD
-=======
   '@iarna/toml@2.2.3':
     resolution: {integrity: sha512-FmuxfCuolpLl0AnQ2NHSzoUKWEJDFl63qXjzdoWBVyFCXzMGm1spBzk7LeHNoVCiWCF7mRVms9e6jEV9+MoPbg==}
 
->>>>>>> crm
   '@ibm-cloud/openapi-ruleset-utilities@1.9.2':
     resolution: {integrity: sha512-q9ZFdbtfxhaSeN6AykhVYk/EgkgV99dIW7ua15Wzy3s5BTH6tH1MZJA743QE9BQ+Iul/u1+XYNSaJm2/jiMQig==}
     engines: {node: '>=16.0.0'}
@@ -4594,8 +4521,6 @@ packages:
   '@kurkle/color@0.3.4':
     resolution: {integrity: sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==}
 
-<<<<<<< HEAD
-=======
   '@lezer/common@1.5.2':
     resolution: {integrity: sha512-sxQE460fPZyU3sdc8lafxiPwJHBzZRy/udNFynGQky1SePYBdhkBl1kOagA9uT3pxR8K09bOrmTUqA9wb/PjSQ==}
 
@@ -4608,7 +4533,6 @@ packages:
   '@lezer/lr@1.4.10':
     resolution: {integrity: sha512-rnCpTIBafOx4mRp43xOxDJbFipJm/c0cia/V5TiGlhmMa+wsSdoGmUN3w5Bqrks/09Q/D4tNAmWaT8p6NRi77A==}
 
->>>>>>> crm
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
     engines: {node: '>=8'}
@@ -4623,12 +4547,9 @@ packages:
   '@manypkg/get-packages@1.1.3':
     resolution: {integrity: sha512-fo+QhuU3qE/2TQMQmbVMqaQ6EWbMhi4ABWP+O4AM1NqPBuy0OrApV5LO6BrrgnhtAHS2NH6RrVk9OL181tTi8A==}
 
-<<<<<<< HEAD
-=======
   '@marijn/find-cluster-break@1.0.3':
     resolution: {integrity: sha512-FY+MKLBoTsLNJF/eLWaOsXGdz6uh3Iu1axjPf6TUq92IYumcTcXWHoS747JARLkcdlJ/Waiaxc5wQfFO8jC6NA==}
 
->>>>>>> crm
   '@mdit/plugin-alert@0.23.2':
     resolution: {integrity: sha512-pXIil0FLy9ilhvT6d324A4X+mt5i/zG8ml0VIpZwiUYh2k1Wi6VnZhFHfsnONTRu6dPL2EwQBIhQgQ+269f7LA==}
     engines: {node: '>= 20'}
@@ -4647,42 +4568,6 @@ packages:
   '@microsoft/tsdoc@0.16.0':
     resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
 
-<<<<<<< HEAD
-  '@module-federation/dts-plugin@2.7.0':
-    resolution: {integrity: sha512-mVKeGUf/7iqRMAFfikhsr2zXtA70WuzJdS1bPqqoeLQNRGXBLDjedcDG26RpIlsvuZcmIOqgN5Z6qw7Bh/HZUg==}
-    peerDependencies:
-      typescript: 5.7.3
-      vue-tsc: '>=1.0.24'
-    peerDependenciesMeta:
-      vue-tsc:
-        optional: true
-
-  '@module-federation/error-codes@2.7.0':
-    resolution: {integrity: sha512-syToF3H77IbBhJ7auGMCIb5ZDmJ5tvaqSeEvncJrOCq7JBT96F4UDlQDyNh6kCVznvYqqHsPeEMrfI9b5/Omlg==}
-
-  '@module-federation/managers@2.7.0':
-    resolution: {integrity: sha512-cWohiUvSrY6dIfhwsRABmEWfvJiAD5u/gxU7XRk7bx5nYPj7qn5gvYWJtvLNWzenluHZR6sib+03QMlyo+MYKQ==}
-
-  '@module-federation/runtime-core@2.7.0':
-    resolution: {integrity: sha512-5ROZLVIeV9YnWO2RwCwSHcy6sh48yclErO/2GZ2Xe8lFubPrFirgU8pbwBjZw+All0ZzN44BGS4ECRMVFzVcpg==}
-
-  '@module-federation/runtime@2.7.0':
-    resolution: {integrity: sha512-UtLozKKNvhT0D1+F0MEWsAmddJ39ItKW15E22LVMAwXmYZRSnzIvJQ2Y6kQ4LwhWABsw/GRSpUDex5OfhpSQPw==}
-
-  '@module-federation/sdk@2.7.0':
-    resolution: {integrity: sha512-piiLEjaIdjbNq8E11Di6vsfryhcdN/+sBCH6NjG7gSU2VHHoHEayZQWWL7VVdS6rVjexF9McLhPTSrl0adUU+A==}
-
-  '@module-federation/third-party-dts-extractor@2.7.0':
-    resolution: {integrity: sha512-hZJKkngQ4hwe0U+vrT3KOsU11qoHCQK0wB4x1bXoTgpTfV9j5NSuddOyRmwbvXpir9bDWh3xy7ghqsx3mFf3kA==}
-
-  '@module-federation/vite@1.16.14':
-    resolution: {integrity: sha512-Y004QqJ4nTnIl+lTtJKi+j2RwReOj124HRqIb8Vbz9CygSdIg+Xc3EjZCdkS2dEfck7ouiDXzPiXtrETzqKN6g==}
-    engines: {node: ^20.19.0 || >=22.12.0}
-    peerDependencies:
-      vite: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
-
-=======
->>>>>>> crm
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
     resolution: {integrity: sha512-LCkGo6JDfaBhgST7UpPWgNgLINpcpabaHfyz5OBx75nUYxBsaEPxjnyNjWpeb/xBup/682QnBfRBy2/LvPutZQ==}
     cpu: [arm64]
@@ -5508,13 +5393,8 @@ packages:
     resolution: {integrity: sha512-//0sR/cow/s4ICQaYoAobOl4aU8cjU6x/V24V7XkKotb9+O+3zySIYp146vpaobYHnxa4pZX8NkV54Z5AwbDKA==}
     engines: {node: '>=12'}
 
-<<<<<<< HEAD
-  '@portabletext/editor@7.10.7':
-    resolution: {integrity: sha512-a45rs82qNVTxsbANxLXWTzzRSZQ0lGaYAbNRQMWXLhwl5khQqkXdb71b7pSnCqKNk+jMTm5taJImjmpfoEEMlg==}
-=======
   '@portabletext/editor@6.6.7':
     resolution: {integrity: sha512-8rUi0gSwEdFGAZS8Vq3Hp9BkqCVybdv2n96lXnMJq9w6bIIVCerrJ+sR35R/FRY5ams8jjfmEXxahH3t6ZGaEw==}
->>>>>>> crm
     engines: {node: '>=20.19 <22 || >=22.12'}
     peerDependencies:
       react: 19.2.6
@@ -5535,62 +5415,6 @@ packages:
     resolution: {integrity: sha512-PUhFBFT+aToiU5G13v8uY3808RiFvFgxnPpk9bhMJuYOw1jZVEOfnmgQ2GA03sgO+bVbDQ13Hhx3axLwq73VUg==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
-<<<<<<< HEAD
-  '@portabletext/plugin-character-pair-decorator@8.0.35':
-    resolution: {integrity: sha512-g/jjJ+spuRgKJIbxirzPMuQfnXLjnuydEtypUbCD5zeV+DkaHSFl4LstEnbudJ7g4UObsxc7ngx1vDMFNUOB9Q==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@portabletext/editor': ^7.10.7
-      react: 19.2.6
-
-  '@portabletext/plugin-dnd@1.0.19':
-    resolution: {integrity: sha512-4jENAcSckoEljCpHWgzXUvZND7u85QP0WbWh1WPTj5TN+jbxith2963eGXkOvXLH3in/0XNLl9B3uHQ4byog8A==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@portabletext/editor': ^7.10.7
-      react: 19.2.6
-
-  '@portabletext/plugin-input-rule@6.0.4':
-    resolution: {integrity: sha512-hyi85dyN3Elr8lQLx43Q9w1dxrWtGujQSwuquoXjnsQk6o5plbwb1DTYEPE5zCSr2nMH+j5efM3xG0qBvr2VmA==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@portabletext/editor': ^7.10.7
-      react: 19.2.6
-
-  '@portabletext/plugin-list-index@1.0.19':
-    resolution: {integrity: sha512-NCZClukyi04YW2s8WsDkR2HJS7LpmmJKbmVtfq8IWHtB6Lfvi0Ul7826FGYtFYqvbWvJPn4ulFuE/cCTYf1dKA==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@portabletext/editor': ^7.10.7
-      react: 19.2.6
-
-  '@portabletext/plugin-markdown-shortcuts@8.0.35':
-    resolution: {integrity: sha512-jVchMcwIdctJwaU6X5qZ4YiIIPSajoYrlgKQtro3Hb8qgowAoNZnasXGUM62Fx105Opy3ZifoIeuha/D+CYIvw==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@portabletext/editor': ^7.10.7
-      react: 19.2.6
-
-  '@portabletext/plugin-one-line@7.0.34':
-    resolution: {integrity: sha512-ypnNid40lqyaFoJZ/LKCJQnFLwXkw9tgdOZhDrDHclZwgIDRYSBTC+BIg8cClQtVdqxHrcmD4rDVtmL5qwuvYw==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@portabletext/editor': ^7.10.7
-      react: 19.2.6
-
-  '@portabletext/plugin-paste-link@4.0.34':
-    resolution: {integrity: sha512-WUSdsvQY+NfvSzQNDNCGmy2F2Ie+OztDX6eyXAb2xSpaNXhu0IOSXnH2qGYqlq4uAOTdeOfzE0W7ArMeAvu19A==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@portabletext/editor': ^7.10.7
-      react: 19.2.6
-
-  '@portabletext/plugin-typography@8.0.35':
-    resolution: {integrity: sha512-LxdI82vxPZRjdHzIsT3uyvSidYWgeftodISNi87a3OHSkghVTJcPcCtvtuTwt2zVyWZnmmW1Skif1aysGOeKEQ==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@portabletext/editor': ^7.10.7
-=======
   '@portabletext/plugin-character-pair-decorator@7.0.31':
     resolution: {integrity: sha512-83Q8s8hDm+flptd3oRQtxiVTArPkQZOvmEfczefLUEQnhKziL/L6o5XfApvfEgXqz0Ox7fJ500XPHHFMh6rMXA==}
     engines: {node: '>=20.19 <22 || >=22.12'}
@@ -5631,7 +5455,6 @@ packages:
     engines: {node: '>=20.19 <22 || >=22.12'}
     peerDependencies:
       '@portabletext/editor': ^6.6.7
->>>>>>> crm
       react: 19.2.6
 
   '@portabletext/react@6.2.0':
@@ -6565,15 +6388,12 @@ packages:
     peerDependencies:
       react: 19.2.6
 
-<<<<<<< HEAD
-=======
   '@rexxars/react-split-pane@1.0.0':
     resolution: {integrity: sha512-Ewl8ugA2VQd+idzcg65WFbYh/oCLPOFjeDKpebexPgFDDX8ZwsHZWy5jNwiIWI8txDidVmRP98lsnmBHlIywWA==}
     peerDependencies:
       react: 19.2.6
       react-dom: 19.2.6
 
->>>>>>> crm
   '@rolldown/binding-android-arm64@1.1.5':
     resolution: {integrity: sha512-lZg8fqIv2v7FF237bwMgzGZEJvGL79/s5knJ/i6FmsGF4XXlzccZ4jb+TrFIxtSSxFtIpdsgrPZeMk1I9AFcyQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -6686,12 +6506,9 @@ packages:
       vite:
         optional: true
 
-<<<<<<< HEAD
-=======
   '@rolldown/pluginutils@1.0.0-rc.3':
     resolution: {integrity: sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q==}
 
->>>>>>> crm
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
@@ -6877,11 +6694,6 @@ packages:
     resolution: {integrity: sha512-mWgAMVq9VaKUrEs7FmBbYFRBa5YvNb4FUjHOh2Ie05Qzhqlv90UX8o4fWMZPANhoebu36zridWs0B0tgGi+2Tw==}
     engines: {node: '>=20'}
 
-<<<<<<< HEAD
-  '@sanity/cli-build@4.0.0':
-    resolution: {integrity: sha512-6tAPxX/wzRYkI66f6AdW21jGKXt/yvYIgnQSRTsM/gIhn7ZiWja6tIJE+cdYnftwe/MZIZWbuP+EpBWiPciSsQ==}
-    engines: {node: '>=22.12'}
-=======
   '@sanity/cli-build@0.2.2':
     resolution: {integrity: sha512-/q3vsxUOMCQAc33FlelwozHDMUvrio9bb9nhOempjviXL2VtA1g633wE/d4Np3aH1cjk9gsBZ+cXf8uLrp2IlQ==}
     engines: {node: '>=20.19.1 <22 || >=22.12'}
@@ -6894,7 +6706,6 @@ packages:
   '@sanity/cli-core@1.3.4':
     resolution: {integrity: sha512-rUw4QpVFeS2I3Fsygq0iHUrzJfTYHnxn7XviCWJWj9R8zKhd0uo7T5CwBeK8q5xo8G8je4ilJsv8Hk3Wb+bn7A==}
     engines: {node: '>=20.19.1 <22 || >=22.12'}
->>>>>>> crm
     peerDependencies:
       babel-plugin-react-compiler: '*'
     peerDependenciesMeta:
@@ -6910,15 +6721,9 @@ packages:
       babel-plugin-react-compiler:
         optional: true
 
-<<<<<<< HEAD
-  '@sanity/cli@7.8.0':
-    resolution: {integrity: sha512-jXsx9wp0opNkqetZgrr6/OIui140qCNpxryixJ9+54d+JxcGS461j6K+2XQHHAXsHquRapUTHg+qX2vnH53k1A==}
-    engines: {node: '>=22.12'}
-=======
   '@sanity/cli@6.7.2':
     resolution: {integrity: sha512-VKKUKbUe7ooTYXkOxf0BzaW8Dl94EgtrlmhNqprP5XvCdGWQydmrpjbkRmpkx35CXMgUtDNeNp6vXx0F485ccw==}
     engines: {node: '>=20.19.1 <22 || >=22.12'}
->>>>>>> crm
     hasBin: true
     peerDependencies:
       babel-plugin-react-compiler: '*'
@@ -6930,21 +6735,12 @@ packages:
     resolution: {integrity: sha512-zCKrdmsfFRYKXndkw5rVi3tyvr54QIdE+ISuAxFeHfJFiwWHFNu6pL4G8JmRyfxsD7Q9zyrD4C5hczVVmwGbgg==}
     engines: {node: '>=20'}
 
-<<<<<<< HEAD
-  '@sanity/codegen@7.0.3':
-    resolution: {integrity: sha512-t3Svo28RWX7OOvj4DkNX0fSWpzt+94pslKwvkKhSs4Lw24Ta1hYkE1a+OgwUjKBbw2Za54V7NpMwNlXjPEr2Fw==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@oclif/core': ^4.8.0
-      '@sanity/cli-core': ^2
-=======
   '@sanity/codegen@6.1.2':
     resolution: {integrity: sha512-b9jph5tBeQgF5y4ta7fD2tkB8Xdf9vC2ryVx2X71guv/0Gy9YT46lQFQyStC+SfG8ugXjGzgRwbMo9UBvniu/g==}
     engines: {node: '>=20.19 <22 || >=22.12'}
     peerDependencies:
       '@oclif/core': ^4.8.0
       '@sanity/cli-core': ^1
->>>>>>> crm
       oxfmt: '*'
     peerDependenciesMeta:
       oxfmt:
@@ -6974,15 +6770,9 @@ packages:
     resolution: {integrity: sha512-oJ5kZQV6C/DAlcpRLEU7AcVWXrSPuJb3Z1TQ9tm/qZOVWJENwWln45jtepQEYolTIuGx9jUlhYUi3hGIkOt8RA==}
     engines: {node: '>=18.2'}
 
-<<<<<<< HEAD
-  '@sanity/diff@6.5.0':
-    resolution: {integrity: sha512-qtEohNGv0jF3pHRXYK4T3kJG88TWa42OIKgsJ76n9C9cQmUkoYGI1ARiNkwY0bY6DwzwoZMvF57okwQlM+B37A==}
-    engines: {node: '>=22.12'}
-=======
   '@sanity/diff@5.31.1':
     resolution: {integrity: sha512-o4/CdUiOI/CSrbCTRNMmfFNXTam2Ygkg50Y0aclHkAWbS4NfcsMn4gCJQQVFBRiILLlx7iWk7SfVJM5IUX6b5g==}
     engines: {node: '>=20.19 <22 || >=22.12'}
->>>>>>> crm
 
   '@sanity/eventsource@5.0.2':
     resolution: {integrity: sha512-/B9PMkUvAlUrpRq0y+NzXgRv5lYCLxZNsBJD2WXVnqZYOfByL9oQBV7KiTaARuObp5hcQYuPfOAVjgXe3hrixA==}
@@ -7032,12 +6822,9 @@ packages:
     resolution: {integrity: sha512-skhIX8gT/hLritEBkjfc7+TBlJNu/NLisyA8noKceCk28OatFK0wX7dIuFawkt3pfhTYVomVPykAYFcIm2OqJg==}
     engines: {node: '>=18.2'}
 
-<<<<<<< HEAD
-=======
   '@sanity/lezer-groq@1.0.4':
     resolution: {integrity: sha512-KgCmAY7yXll+g3+1z+GZiQhlEW7ulJGUH8gGzbUgKVZShPop/dDjfwNAdGZKFY3AkF+m62oSa1X8m1P3sonD4A==}
 
->>>>>>> crm
   '@sanity/logos@2.2.2':
     resolution: {integrity: sha512-KIWFL7nYEOINXIzaTF9aVhd481hFF/ak+SRnpgksYuJXlo2hbY/UoEJBz6KhsEP5dfO/NwqG82QrkwzLvd6izA==}
     engines: {node: '>=14.0.0'}
@@ -7051,14 +6838,6 @@ packages:
     resolution: {integrity: sha512-UfQDuWRzbK4dRTfLURGCZo7ZlR0sK+2lwT2QMAfqsM5kMq5GR31lbX4LMcSw27h7rwUv8ZSf1hBEbluVpgRmlg==}
     engines: {node: '>=20.0.0'}
 
-<<<<<<< HEAD
-  '@sanity/migrate@7.0.3':
-    resolution: {integrity: sha512-6uh27/nC5Am71V+z6RY+j0xaantqCJ0y+fHKMpn7CDQk2QjehYQrqU+WMZ7lI5LrSz5Fvox362zhbRypwTObjg==}
-    engines: {node: '>=20.19 <22 || >=22.12'}
-    peerDependencies:
-      '@oclif/core': ^4.10.5
-      '@sanity/cli-core': ^2
-=======
   '@sanity/migrate@6.1.2':
     resolution: {integrity: sha512-PWVZnngPZrjxT8qhvX6qvS3pjHhYVMHC+yOLKaaxvWW7tDwlWVMcIt++0iKtDxqBtg2hMmWS5VQxSX9dJMblSQ==}
     engines: {node: '>=20.19 <22 || >=22.12'}
@@ -7074,7 +6853,6 @@ packages:
     peerDependenciesMeta:
       xstate:
         optional: true
->>>>>>> crm
 
   '@sanity/mutate@0.18.1':
     resolution: {integrity: sha512-28iICKl33s9yr8XtgpoCHOb+l5kKVbd6CpFYi4Vx0fHNZcFiKDGdY+RzZrC34GWqb6M16wkxwtHSVbEmXbfTpw==}
@@ -7084,12 +6862,9 @@ packages:
       xstate:
         optional: true
 
-<<<<<<< HEAD
-=======
   '@sanity/mutator@5.31.1':
     resolution: {integrity: sha512-ycfznUyQ8WabhLnwcCdxbLwsKxLbIjfdZz66gfOPzae8U3kPFnBhUtFncRVruIKLvCLm64ooFnmEzYFpZipJNA==}
 
->>>>>>> crm
   '@sanity/mutator@6.5.0':
     resolution: {integrity: sha512-XiV3oWYr8LsCQdKXJWXnG75TOoRhK1bufgVsEe9lU15ylaHrOBEIxq3TunzxgXdfHu1Y090dkNKwPGMkFGyW3Q==}
 
@@ -7111,13 +6886,6 @@ packages:
       prismjs:
         optional: true
 
-<<<<<<< HEAD
-  '@sanity/runtime-cli@17.1.0':
-    resolution: {integrity: sha512-2Se6htjIs+/oLzoN7uI191sO4w0OySP8nCGiX6YxN0j2j74LR9EKPb21+Qqu7Vup1c8hiaggUXR+xmaCFQ7m6g==}
-    engines: {node: '>=22.12'}
-    hasBin: true
-
-=======
   '@sanity/runtime-cli@15.2.1':
     resolution: {integrity: sha512-oSOEwDLFUbxIbiT2j1hyakMjfFuGu9+25ImkiebQIXcELoyskPjMeDpF+JKhbBfjs4IxSTEqunvyPrn4xxJ55A==}
     engines: {node: '>=20.19'}
@@ -7126,7 +6894,6 @@ packages:
   '@sanity/schema@5.31.1':
     resolution: {integrity: sha512-Grn66trcpB3HSXtMfXUJrEjVhnTWqNC8qJ64Nbh8RSKnofXFQ6ah6l5bJVlT0h/mO286+tLl0GI7XrZpkcRLDQ==}
 
->>>>>>> crm
   '@sanity/schema@6.5.0':
     resolution: {integrity: sha512-mWOqlNwEcZcSfg0O777ttgEIEiGDz5IyYdNwPRsult/UULfy+Dn421BLG/LTZcqOReZAurykRDeO9KBumK3q6w==}
 
@@ -7150,14 +6917,11 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-<<<<<<< HEAD
-=======
   '@sanity/types@5.31.1':
     resolution: {integrity: sha512-Tl5+C6KTfGO1+QdbHFFaJd9Wyncbz2yznGg1P06JvBfzpexSdBVz476QyDtWBQaCtSkTk8eXzrwPVvW5emA8/g==}
     peerDependencies:
       '@types/react': 19.2.14
 
->>>>>>> crm
   '@sanity/types@6.5.0':
     resolution: {integrity: sha512-H3Qs1yeizArl69i3VSDHC20RxLUNo/yWWmzUl2dMOtyooHPLOaKOUv8WrsH1gLg+w++LvuELfwEcxN431DRcnw==}
     peerDependencies:
@@ -7172,15 +6936,9 @@ packages:
       react-is: ^18 || >=19.0.0-0
       styled-components: ^5.2 || ^6
 
-<<<<<<< HEAD
-  '@sanity/util@6.5.0':
-    resolution: {integrity: sha512-PlRAkAUZZUUUPk8drODqd2e34g3nTjob7n36/v7/IrfIo2ONk9yMYE+O9r9GhrOLwQHixjwGeg3RGzbMGbEL6w==}
-    engines: {node: '>=22.12'}
-=======
   '@sanity/util@5.31.1':
     resolution: {integrity: sha512-+lPlOZ7cPKVQHOrt0u29clVnJuEmqcwKA1M+JtTgQVGjgbmev87n7HiMZ9zIswboSivWH0PUCuH1TDEvtBUtXQ==}
     engines: {node: '>=20.19 <22 || >=22.12'}
->>>>>>> crm
 
   '@sanity/uuid@3.0.2':
     resolution: {integrity: sha512-vzdhqOrX7JGbMyK40KuIwwyXHm7GMLOGuYgn3xlC09e4ZVNofUO5mgezQqnRv0JAMthIRhofqs9f6ufUjMKOvw==}
@@ -7188,8 +6946,6 @@ packages:
   '@sanity/uuid@3.0.3':
     resolution: {integrity: sha512-aJvKuFwzcZKRwuIjrRPfXfXKpSdnLF4CnedV5WcX1n5SzhufvRNHIot5lkx1+Y1DwiMVQOZ5gDSPJH+P6Ao70A==}
 
-<<<<<<< HEAD
-=======
   '@sanity/vision@5.31.1':
     resolution: {integrity: sha512-gG6V8GfeHTYQocLpmwhKlh+U4xzITo+5Cw36gHjVJsoE+3I/f1OaSKRKywzp+czLyPX4WdOqC7RWnyHi5kwHQw==}
     peerDependencies:
@@ -7197,7 +6953,6 @@ packages:
       sanity: ^4.0.0-0 || ^5.0.0-0
       styled-components: ^6.1.15
 
->>>>>>> crm
   '@sanity/visual-editing-csm@3.0.11':
     resolution: {integrity: sha512-biaPXe9Qqc7ybqTVEzsUFlL3aOZci+bUu+/TMTf05diz1Np1ZnFJXdLl1dhPjwmzzPVyycsu7aymNYg5ep6sWw==}
     engines: {node: '>=20.19 <22 || >=22.12'}
@@ -7252,13 +7007,6 @@ packages:
     resolution: {integrity: sha512-c8LmzR5Wx93zJ10ohhp0XlmPrTNSFyvPcLbNY/sN45Wj5VOngz4FbBMbX9j64sSQLt+676U6OhiVfjs1yw3YCw==}
     engines: {node: '>=20.0.0'}
 
-<<<<<<< HEAD
-  '@sanity/workbench-cli@1.3.0':
-    resolution: {integrity: sha512-VypASfPMTFvqQ5beQ0zxQ0rByDk81UatmuPreIN8PAHSczCQI/B1KZPB2TLOCj0RJicZiHoz4k64GjyOIJkcFQ==}
-    engines: {node: '>=22.12'}
-
-=======
->>>>>>> crm
   '@sanity/worker-channels@2.0.0':
     resolution: {integrity: sha512-mC+8yPQuw2rHXdHigFPU9thNa6vTaPmh7jFR6RvloE8s+6dmnk9bHdPXRbrrUqafxzK3L9aH2E170ubXyxcAIA==}
     engines: {node: '>=20.19.1 <22 || >=22.12'}
@@ -7269,8 +7017,6 @@ packages:
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
 
-<<<<<<< HEAD
-=======
   '@sentry-internal/browser-utils@8.55.2':
     resolution: {integrity: sha512-GnKod+gL/Y+1FUM/RGV8q6le1CoyiGbT40MitEK7eVwWe+bfTRq1gN7ioupyHFMUg1RlQkDQ4/sENmio/uow5A==}
     engines: {node: '>=14.18'}
@@ -7287,7 +7033,6 @@ packages:
     resolution: {integrity: sha512-+W43Z697EVe/OgpGW07B773sa8xO1UbpnW0Cr+E+3FMDb6ZbXlaBUoagPTUkkQPdwBe35SDh6r8y2M3EOPGbxg==}
     engines: {node: '>=14.18'}
 
->>>>>>> crm
   '@sentry/babel-plugin-component-annotate@5.3.0':
     resolution: {integrity: sha512-p4q8gn8wcFqZGP/s2MnJCAAd8fTikaU6A0mM97RDHQgStcrYiaS0Sc5zUNfb1V+UOLPuvdEdL6MwyxfzjYJQTA==}
     engines: {node: '>= 18'}
@@ -7300,13 +7045,10 @@ packages:
     resolution: {integrity: sha512-XUDDsx0qxzeIlcOu1fDEqTcDl0eiOqghsgV+ReuuNP4jYjZ9kUQxE3rXWM5mlT1pBi4VaQ4FHqvQZZrRXy+oDw==}
     engines: {node: '>=18'}
 
-<<<<<<< HEAD
-=======
   '@sentry/browser@8.55.2':
     resolution: {integrity: sha512-xHuPIEKhx9zw5quWvv4YgZprnwoVMCfxIhmOIf6KJ9iizyUHeUDcKpLS59xERroqwX4RpvK+l/27AZu4zfZlzQ==}
     engines: {node: '>=14.18'}
 
->>>>>>> crm
   '@sentry/bundler-plugin-core@5.3.0':
     resolution: {integrity: sha512-L5T60sWdAI3qWwdg3Ptwek/0TY59PERrxyqp4XMUkroayQvGd9r5dIW9Q1kSeXX9iJ442nXbFZKAOyCKV4Z13Q==}
     engines: {node: '>= 18'}
@@ -7383,18 +7125,14 @@ packages:
     resolution: {integrity: sha512-3aqtmM5NgNGo45BNaaBzi0LPQZAw//NEL4HKS5fXm12pJMa4KEkze8DEKnkTEIrGnWaOJKamecHKlnNg/Mqf/Q==}
     engines: {node: '>=18'}
 
-<<<<<<< HEAD
-=======
   '@sentry/core@8.55.2':
     resolution: {integrity: sha512-YlEBwybUcOQ/KjMHDmof1vwweVnBtBxYlQp7DE3fOdtW4pqqdHWTnTntQs4VgYfxzjJYgtkd9LHlGtg8qy+JVQ==}
     engines: {node: '>=14.18'}
 
->>>>>>> crm
   '@sentry/feedback@10.65.0':
     resolution: {integrity: sha512-ck8h7wgd3F3bYNk0v1OgohmyLBeXcKxqlfBJRtQq4k6KZUq+pXimOG7ckNguVMYjCo3PEfuG+ckKc21yqotKug==}
     engines: {node: '>=18'}
 
-<<<<<<< HEAD
   '@sentry/nestjs@10.65.0':
     resolution: {integrity: sha512-2MAwuyuxYXwrSj8K19En4YyTPOqTyhjH5YPlWaez5bNlTPzH17t5mdKGaN+t6uNyYCH3LAIU87HsEdoWWc1Xvw==}
     engines: {node: '>=18'}
@@ -7402,8 +7140,6 @@ packages:
       '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
       '@nestjs/core': ^8.0.0 || ^9.0.0 || ^10.0.0 || ^11.0.0
 
-=======
->>>>>>> crm
   '@sentry/nextjs@10.65.0':
     resolution: {integrity: sha512-9gDKQAAXcWh210fMI/ZNCa7940HYt7dGjnJVP0Tk9ozUR57W4C9vXvHJDTYPJrFxYxTHw7lwxWGervk8a6Tf4g==}
     engines: {node: '>=18'}
@@ -7449,15 +7185,12 @@ packages:
     peerDependencies:
       react: 19.2.6
 
-<<<<<<< HEAD
-=======
   '@sentry/react@8.55.2':
     resolution: {integrity: sha512-1TPfKZYkJal2Dyt2W0tf1roOZmu7sqr6/dTqjdsuu2WgGTilMEreK26YqB8ROOYdMjkVJpNCcIKXQHyMp2eCwA==}
     engines: {node: '>=14.18'}
     peerDependencies:
       react: 19.2.6
 
->>>>>>> crm
   '@sentry/replay-canvas@10.65.0':
     resolution: {integrity: sha512-A7X3RVk1Gk+knK8Ip/2EjejckNCLgCfRZo6eGlsy6qyz904KBpYmys1a0o7QkzFRjhIndjHAfcVxwt6jSLJlrQ==}
     engines: {node: '>=18'}
@@ -8571,8 +8304,6 @@ packages:
     resolution: {integrity: sha512-mrtuL8Nsn6gi2H4mo5KMTp823M+3Q19Ew/i+Zlikq20tIMm99C3Ez0dCmkWWnxut20esQvTg8aUSEhMcAOXhEw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-<<<<<<< HEAD
-=======
   '@uiw/codemirror-extensions-basic-setup@4.25.11':
     resolution: {integrity: sha512-otyFa+n9IOYtEjaKOxPedHkj15fTPUF21wdR9pv0GpZPfuGl27cvmcv6+tognbRu9VvEcsHKE+ESoszeo3KfTw==}
     peerDependencies:
@@ -8595,7 +8326,6 @@ packages:
       react: 19.2.6
       react-dom: 19.2.6
 
->>>>>>> crm
   '@ungap/structured-clone@1.3.3':
     resolution: {integrity: sha512-60YRaenCQcVjYEKOcG824+DRGGIQ3VKErcBoAEDJZz5bKIs2ZG+X/H9Nk+Q6EVkwJk5QNApxbrc5QtBSwtrXAg==}
 
@@ -8722,13 +8452,6 @@ packages:
   '@upstash/redis@1.38.0':
     resolution: {integrity: sha512-wu+dZBptlLy0+MCUEoHmzrY/TnmgDey3+c7EbIGwrLqAvkP8yi5MWZHYGIFtAygmL4Bkz2TdFu+eU0vFPncIcg==}
 
-<<<<<<< HEAD
-  '@vercel/error-utils@2.2.0':
-    resolution: {integrity: sha512-WFWiRxfPzoYWYifaj4thSKvAaZZwUOqD4k5GINRIgZgCiS2E3iAJbWbIsIZmkQdTecWFHcWGA6q48CjisgpOBA==}
-
-  '@vercel/frameworks@3.29.0':
-    resolution: {integrity: sha512-qqkIhTkSkWdaGOs6+oOTliY/1bLd8cLLNQYCBVYSRFU5RiPjm5pM2fhZGFJaosQpFBBBOLEKeCZqYhTcphs6OQ==}
-=======
   '@vercel/edge@1.3.1':
     resolution: {integrity: sha512-k0tKWeYEWOv6qU6+Z8+hv2Nt/u3vFHRZdB0uvwE0DxoddU/5kWX/Chu8F6ojvqmRlnZwuX/7kyZFVeCP6DxqBg==}
 
@@ -8737,7 +8460,6 @@ packages:
 
   '@vercel/frameworks@3.21.1':
     resolution: {integrity: sha512-N8ciri8NSz4vlc8Dqfa9cr1rn2RRbmG3T8Q+8/QM/4af4d1UbSdBG8cBBo7jQSQfNobjURRGL/miGBe+dS2wOQ==}
->>>>>>> crm
 
   '@vercel/stega@1.1.0':
     resolution: {integrity: sha512-DFOm3Gk78nKDkppQEG5aj8Wj8R8hPKu/xrz4Rtp0AfiaNbZNCoJbxn7VI6iMxqhGeLdUDy/8mTuTWMz/izAtPA==}
@@ -8766,15 +8488,12 @@ packages:
     peerDependencies:
       vite: ^4 || ^5 || ^6 || ^7 || ^8
 
-<<<<<<< HEAD
-=======
   '@vitejs/plugin-react@5.2.0':
     resolution: {integrity: sha512-YmKkfhOAi3wsB1PhJq5Scj3GXMn3WvtQ/JC0xoopuHoXSdmtdStOpFrYaT1kie2YgFBcIe64ROzMYRjCrYOdYw==}
     engines: {node: ^20.19.0 || >=22.12.0}
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
 
->>>>>>> crm
   '@vitejs/plugin-react@6.0.3':
     resolution: {integrity: sha512-vmFvco5/QuC2f9Oj+wTk0+9XeDFkHxSamwZKYc7MxYwKICfvUvlMhqKI0VuICPltGqh1neqBKDvO4kes1ya8vg==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -9034,13 +8753,6 @@ packages:
     resolution: {integrity: sha512-ynZ4w/nUUv5rrsR8UUGoe1VC9hZj6V5hU9Qw1HlMDJGEJw5S7TfTErWTjMys6M7vr0YWcPqs3qAr4ss0nDfP+A==}
     engines: {node: '>=0.8'}
 
-<<<<<<< HEAD
-  adm-zip@0.5.10:
-    resolution: {integrity: sha512-x0HvcHqVJNTPk/Bw8JbLWlWoo6Wwnsug0fnYYro1HBrjxZ3G7/AZk7Ahv8JwDe1uIcz8eBqvu86FuF1POiG7vQ==}
-    engines: {node: '>=6.0'}
-
-=======
->>>>>>> crm
   adm-zip@0.5.18:
     resolution: {integrity: sha512-ufJnssQGbxzLNS1Ho9bCtX4rQKCCvoVuDLHoJyc3F9dOGDB4BkWs2Ci0kv53lqocAEQ/Cbi+I2XCsNYGqVYqng==}
     engines: {node: '>=12.0'}
@@ -9819,12 +9531,9 @@ packages:
   classcat@5.0.5:
     resolution: {integrity: sha512-JhZUT7JFcQy/EzW605k/ktHtncoo9vnyW/2GspNYwFlN1C/WmjuV/xtS04e9SOkL2sTdw0VAZ2UGCcQ9lR6p6w==}
 
-<<<<<<< HEAD
-=======
   classnames@2.5.1:
     resolution: {integrity: sha512-saHYOzhIQs6wy2sVxTM6bUDsQO4F50V9RQ22qBpEdCW+I+/Wmke2HOl6lS6dTpdxVhb88/I6+Hs+438c3lfUow==}
 
->>>>>>> crm
   clean-regexp@1.0.0:
     resolution: {integrity: sha512-GfisEZEJvzKrmGWkvfhgzcz/BllN1USeqD2V6tg14OAOgaCD2Z/PUEuxnAZ/nPvmaHRG7a8y77p1T/IRQ4D1Hw==}
     engines: {node: '>=4'}
@@ -9916,12 +9625,9 @@ packages:
     resolution: {integrity: sha512-QVb0dM5HvG+uaxitm8wONl7jltx8dqhfU33DcqtOZcLSVIKSDDLDi7+0LbAKiyI8hD9u42m2YxXSkMGWThaecQ==}
     engines: {iojs: '>= 1.0.0', node: '>= 0.12.0'}
 
-<<<<<<< HEAD
-=======
   codemirror@6.0.2:
     resolution: {integrity: sha512-VhydHotNW5w1UGK0Qj96BwSk/Zqbp9WbnyK2W/eVMv4QyF41INRGpjUhFJY7/uDNuudSc33a/PKr4iDqRduvHw==}
 
->>>>>>> crm
   codepage@1.15.0:
     resolution: {integrity: sha512-3g6NUTPd/YtuuGrhMnOMRjFc+LJw/bnMp3+0r/Wcz3IXUuCosKRJvMphm5+Q+bvTVGcJJuRvVLuYba+WojaFaA==}
     engines: {node: '>=0.8'}
@@ -10100,12 +9806,9 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     hasBin: true
 
-<<<<<<< HEAD
-=======
   crelt@1.0.7:
     resolution: {integrity: sha512-aK6BbWfhf4U/wCcLHKPJl/xa6VkVstRaPywWtMKGwuOLc/wZTyQYuoxgvZnNsBvv7Kg3YTBQYYBCggcviQczuA==}
 
->>>>>>> crm
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
     engines: {node: '>=12.0.0'}
@@ -10327,13 +10030,10 @@ packages:
       babel-plugin-macros:
         optional: true
 
-<<<<<<< HEAD
-=======
   deeks@3.2.1:
     resolution: {integrity: sha512-D/o0k3pCG1aI1cxb/dDiWmtMc4Rh7ZQBybXpfMsw9Rbtqwg8kUA9SpYkWcw0pAUjZSnPm8MluctiS0o68r69jQ==}
     engines: {node: '>= 16'}
 
->>>>>>> crm
   deep-eql@5.0.2:
     resolution: {integrity: sha512-h5k/5U50IJJFpzfL6nO9jaaumfjO/f2NjK/oYB2Djzm4p9L+3T9qWpZqZ2hAbLPuuYq9wrU08WQyBTL5GbPk5Q==}
     engines: {node: '>=6'}
@@ -10450,13 +10150,10 @@ packages:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
 
-<<<<<<< HEAD
-=======
   doc-path@4.1.4:
     resolution: {integrity: sha512-yw5D++UCIB6a033PvQaUvSpW2QuKW0+DOId763n0Q4z3brxS7G8oQr8yBQ1nQFkognKrAVrV6I55TLeU9cfXTg==}
     engines: {node: '>=16'}
 
->>>>>>> crm
   doctrine@2.1.0:
     resolution: {integrity: sha512-35mSku4ZXK0vfCuHEDAwt55dg2jNajHZ1odvF+8SSr82EsZY4QmXfuWso8oEd8zRhVObSN18aM0CjSdoBX7zIw==}
     engines: {node: '>=0.10.0'}
@@ -10527,13 +10224,8 @@ packages:
     engines: {node: '>=0.10.0'}
     hasBin: true
 
-<<<<<<< HEAD
   electron-to-chromium@1.5.392:
     resolution: {integrity: sha512-1yQq3VQCZRwsnYc67Oc+1fge6Lwtn0hzi6zmEVkB61Zx21kTbwJAW4dFLadl5Rc1tKhG/kSpYXnfiAhu0f0a1g==}
-=======
-  electron-to-chromium@1.5.391:
-    resolution: {integrity: sha512-YmCu4856jkgKT1Nh6fwRdeVrM6Ydf/fBnq51tpmSfX+jOcUMTxh31yH6hjKScRenhB2oDSvA9oooxcpjogPeig==}
->>>>>>> crm
 
   embla-carousel-react@8.6.0:
     resolution: {integrity: sha512-0/PjqU7geVmo6F734pmPqpyHqiM99olvyecY7zdweCw+6tKEXnrE90pBiBbMMU8s5tICemzpQ3hi5EpxzGW+JA==}
@@ -11024,12 +10716,6 @@ packages:
     resolution: {integrity: sha512-BhC+hbc5lIVjygr840n5DEkW3MQq7H9o+mc1/N7Z5uIiCFVyESLL5DIE7LNq4CYUNxy+XjA+3jRrL/h0Kt2xcg==}
     engines: {node: '>=16.9.0'}
 
-<<<<<<< HEAD
-  exsolve@1.0.8:
-    resolution: {integrity: sha512-LmDxfWXwcTArk8fUEnOfSZpHOJ6zOMUJKOtFLFqJLoKJetuQG874Uc7/Kki7zFLzYybmZhp1M7+98pfMqeX8yA==}
-
-=======
->>>>>>> crm
   exsolve@1.1.0:
     resolution: {integrity: sha512-D+42+T12DdIlJM3uepa55qGiL3sYdLBOxIl2ifQCzCHz4c7eiolaHsi3BIqEr7JxBzxv2pYZQX9kw16ziMcEmw==}
 
@@ -11556,13 +11242,10 @@ packages:
     resolution: {integrity: sha512-6TZD6H1y3P7zk0BQharjFa7BOivV9nFL6KKVZbRZRH0yOSSyu2xHglTO48b1/2mCEdYoBQpvE7rjCDUf6XmQYQ==}
     engines: {node: '>=18'}
 
-<<<<<<< HEAD
-=======
   groq@5.31.1:
     resolution: {integrity: sha512-Gr/0LosgbleFl98iv3eaY7jkfEIc+fubAqg8Bhg2InK1ZRttExNk6OACKVacB3pEaOoOAs2if+gLt9TWX0SmAQ==}
     engines: {node: '>=20.19 <22 || >=22.12'}
 
->>>>>>> crm
   groq@6.5.0:
     resolution: {integrity: sha512-z2A5bRvvalegLLJ2FaJOUCmyOibl8rmPIv0DDJYlZS/LxArVtdgoItgC4+jG6AGit1pTixdPdVKJTdkE0i2T4Q==}
     engines: {node: '>=22.12'}
@@ -11635,12 +11318,9 @@ packages:
   hls.js@1.6.16:
     resolution: {integrity: sha512-VSIRpLfRwlAAdGL4wiTucx2ScRipo0ed1FBatWkyt832jC4CReKstga6yIhYVwGu9LOBjuX9wzmRMeQdBJtzEA==}
 
-<<<<<<< HEAD
-=======
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
->>>>>>> crm
   homedir-polyfill@1.0.3:
     resolution: {integrity: sha512-eSmmWE5bZTK2Nou4g0AI3zZ9rswp7GRKoKXS1BLUkvPviOqs4YTN1djQIqrXy9k5gEtdLPy86JjRwsNM9tnDcA==}
     engines: {node: '>=0.10.0'}
@@ -11652,13 +11332,10 @@ packages:
   hosted-git-info@2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
 
-<<<<<<< HEAD
-=======
   hosted-git-info@9.0.3:
     resolution: {integrity: sha512-Hc+ghLoSt6QaYZUv0WBiIvmMDZuZZ7oaDvdH8MbfOO4lOsxdXLEvuC6ePoGs9H1X9oCLyq6+NVN0MKqD+ydxyg==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
->>>>>>> crm
   hotscript@1.0.13:
     resolution: {integrity: sha512-C++tTF1GqkGYecL+2S1wJTfoH6APGAsbb7PAWQ3iVIwgG/EFseAfEVOKFgAFq4yK3+6j1EjUD4UQ9dRJHX/sSQ==}
 
@@ -11796,13 +11473,10 @@ packages:
     resolution: {integrity: sha512-EdDDZu4A2OyIK7Lr/2zG+w5jmbuk1DVBnEwREQvBzspBJkCEbRa8GxU1lghYcaGJCnRWibjDXlq779X1/y5xwg==}
     engines: {node: '>=8'}
 
-<<<<<<< HEAD
-=======
   index-to-position@1.2.0:
     resolution: {integrity: sha512-Yg7+ztRkqslMAS2iFaU+Oa4KTSidr63OsFGlOrJoW981kIYO3CGCS3wA95P1mUi/IVSJkn0D479KTJpVpvFNuw==}
     engines: {node: '>=18'}
 
->>>>>>> crm
   inflected@2.1.0:
     resolution: {integrity: sha512-hAEKNxvHf2Iq3H60oMBHkB4wl5jn3TPF3+fXek/sRwAB5gP9xWs4r7aweSF95f99HFoz69pnZTcu8f0SIHV18w==}
 
@@ -11999,13 +11673,6 @@ packages:
     resolution: {integrity: sha512-5KoIu2Ngpyek75jXodFvnafB6DJgr3u8uuK0LEZJjrU19DrMD3EVERaR8sjz8CCGgpZvxPl9SuE1GMVPFHx1mw==}
     engines: {node: '>= 0.4'}
 
-<<<<<<< HEAD
-  is-network-error@1.3.2:
-    resolution: {integrity: sha512-PhBY86zaxNZUuWP6h13Vu5oFe0XY6/UlKzQnYFELzGVHygP3MxmvTfYSG7GN3aIab/iWudSMgjSnG9Dq+nHrgA==}
-    engines: {node: '>=16'}
-
-=======
->>>>>>> crm
   is-number-object@1.1.1:
     resolution: {integrity: sha512-lZhclumE1G6VYD8VHe35wFaIif+CTy5SJIi5+3y4psDgWu4wPDoBhF8NxUOinEc7pHgiTsT6MaBb92rKhhD+Xw==}
     engines: {node: '>= 0.4'}
@@ -12138,25 +11805,14 @@ packages:
     resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
     engines: {node: '>=0.10.0'}
 
-<<<<<<< HEAD
-=======
   isomorphic-dompurify@2.26.0:
     resolution: {integrity: sha512-nZmoK4wKdzPs5USq4JHBiimjdKSVAOm2T1KyDoadtMPNXYHxiENd19ou4iU/V4juFM6LVgYQnpxCYmxqNP4Obw==}
     engines: {node: '>=18'}
 
->>>>>>> crm
   isomorphic-dompurify@2.36.0:
     resolution: {integrity: sha512-E8YkGyPY3a/U5s0WOoc8Ok+3SWL/33yn2IHCoxCFLBUUPVy9WGa++akJZFxQCcJIhI+UvYhbrbnTIFQkHKZbgA==}
     engines: {node: '>=20.19.5'}
 
-<<<<<<< HEAD
-  isomorphic-ws@5.0.0:
-    resolution: {integrity: sha512-muId7Zzn9ywDsyXgTIafTry2sV3nySZeUDe6YedVd1Hvuuep5AsIlqK+XefWpYTyJG5e503F2xIuT2lcU6rCSw==}
-    peerDependencies:
-      ws: '*'
-
-=======
->>>>>>> crm
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}
     engines: {node: '>=8'}
@@ -12565,13 +12221,10 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-<<<<<<< HEAD
-=======
   json-2-csv@5.5.11:
     resolution: {integrity: sha512-kVuwgVL7rfad9ETf02ZZxJPuMR5ZSUn139+T34BfmVxYhb/IsAIm/LzEeQ8YLJmXfuQ5z7LUAFrgPZZM6VLJPw==}
     engines: {node: '>= 16'}
 
->>>>>>> crm
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
 
@@ -12675,15 +12328,9 @@ packages:
     resolution: {integrity: sha512-VHtBdW6XB/pgoTSqraM3UAa2rYoYdNXqnNPpX+8XXP+cwYbVEFuAp3HyPt1vpNfU9l7Y2kpUrA9QDPsy8uUqOQ==}
     engines: {node: '>=22.0.0'}
 
-<<<<<<< HEAD
-  lambda-runtimes@3.0.0:
-    resolution: {integrity: sha512-fre88KwPAjsDq8jeenv8GlgkdqbKf4wPGTlnKMXEDA5K12A3IptirNFv1koG47IBcgSykCbWYF9T3wmmKJFJtQ==}
-    engines: {node: '>=22'}
-=======
   lambda-runtimes@2.0.5:
     resolution: {integrity: sha512-6BoLX9xuvr+B/f05MOhJnzRdF8Za5YYh82n45ndun9EU3uhJv9kIwnYrOrvuA7MoGwZgCMI7RUhBRzfw/l63SQ==}
     engines: {node: '>=14'}
->>>>>>> crm
 
   language-subtag-registry@0.3.23:
     resolution: {integrity: sha512-0K65Lea881pHotoGEa5gDlMxt3pctLi2RplBb7Ezh4rRdLEOtgi7n4EwK9lamnUCkKBqaeKRVebTq6BAxSkpXQ==}
@@ -12908,12 +12555,6 @@ packages:
     resolution: {integrity: sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==}
     engines: {node: '>= 0.6.0'}
 
-<<<<<<< HEAD
-  long-timeout@0.1.1:
-    resolution: {integrity: sha512-BFRuQUqc7x2NWxfJBCyUrN8iYUYznzL9JROmRz1gZ6KlOIgmoD+njPVbb+VNn2nGMKggMsK79iUNErillsrx7w==}
-
-=======
->>>>>>> crm
   long@5.3.2:
     resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
 
@@ -13089,12 +12730,9 @@ packages:
   mdurl@2.0.0:
     resolution: {integrity: sha512-Lf+9+2r+Tdp5wXDXC4PcIBjTDtq4UKjCPMQhKIuzpJNW0b96kVqSwW0bT7FhRSfmAiFYgP+SCRvdrDozfh0U5w==}
 
-<<<<<<< HEAD
-=======
   media-chrome@4.11.1:
     resolution: {integrity: sha512-+2niDc4qOwlpFAjwxg1OaizK/zKV6y7QqGm4nBFEVlSaG0ZBgOmfc4IXAPiirZqAlZGaFFUaMqCl1SpGU0/naA==}
 
->>>>>>> crm
   media-chrome@4.19.2:
     resolution: {integrity: sha512-4ai1ITN8wBhwugQcRgqe3tN0z6OSKGOXqHLNrS04MgKFfsLqu6Dm8MPq02pI9Y9ZKoXtFjIl85jOryIW9es3BA==}
 
@@ -13534,13 +13172,6 @@ packages:
     resolution: {integrity: sha512-wRNIrw4DmVLKQlbgOMdkMx27Wrpzes2hh5Jtbi2bjPd+4wJstWIqP5A+lscnqbm0xxmT5Bpg8Lec5ItEBwx6BQ==}
     engines: {node: '>=18'}
 
-<<<<<<< HEAD
-  node-schedule@2.1.1:
-    resolution: {integrity: sha512-OXdegQq03OmXEjt2hZP33W2YPs/E5BcFQks46+G2gAxs4gHOIVD1u7EqlYLYSKsaIpyKCK9Gbk0ta1/gjRSMRQ==}
-    engines: {node: '>=6'}
-
-=======
->>>>>>> crm
   nodemailer@7.0.13:
     resolution: {integrity: sha512-PNDFSJdP+KFgdsG3ZzMXCgquO7I6McjY2vlqILjtJd0hy8wEvtugS9xKRF2NWlPNGxvLCXlTNIae4serI7dinw==}
     engines: {node: '>=6.0.0'}
@@ -13548,13 +13179,10 @@ packages:
   normalize-package-data@2.5.0:
     resolution: {integrity: sha512-/5CMN3T0R4XTj4DcGaexo+roZSdSFW/0AOOTROrjxzCG1wrWXEsGbRKevjlIL+ZDE4sZlJr5ED4YW0yqmkK+eA==}
 
-<<<<<<< HEAD
-=======
   normalize-package-data@8.0.0:
     resolution: {integrity: sha512-RWk+PI433eESQ7ounYxIp67CYuVsS1uYSonX3kA6ps/3LWfjVQa/ptEg6Y3T6uAMq1mWpX9PQ+qx+QaHpsc7gQ==}
     engines: {node: ^20.17.0 || >=22.9.0}
 
->>>>>>> crm
   normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
@@ -13804,13 +13432,10 @@ packages:
     resolution: {integrity: sha512-ayCKvm/phCGxOkYRSCM82iDwct8/EonSEgCSxWxD7ve6jHggsFl4fZVQBPRNgQoKiuV/odhFrGzQXZwbifC8Rg==}
     engines: {node: '>=8'}
 
-<<<<<<< HEAD
-=======
   parse-json@8.3.0:
     resolution: {integrity: sha512-ybiGyvspI+fAoRQbIPRddCcSTV9/LsJbf0e/S85VLowVGzRmokfneg2kwVW/KU5rOXrPSbF1qAKPMgNTqqROQQ==}
     engines: {node: '>=18'}
 
->>>>>>> crm
   parse-ms@4.0.0:
     resolution: {integrity: sha512-TXfryirbmq34y8QBwgqCVLi+8oA3oWx2eAnSn62ITyEhEYaWRlVZ2DvMM9eZbMs/RfxPu/PK/aBLyGj4IrqMHw==}
     engines: {node: '>=18'}
@@ -13985,12 +13610,9 @@ packages:
   pkg-types@2.3.1:
     resolution: {integrity: sha512-y+ichcgc2LrADuhLNAx8DFjVfgz91pRxfZdI3UDhxHvcVEZsenLO+7XaU5vOp0u/7V/wZ+plyuQxtrDlZJ+yeg==}
 
-<<<<<<< HEAD
-=======
   player.style@0.1.10:
     resolution: {integrity: sha512-Jxv7tlaQ3SFCddsN35jzoGnCHB3/xMTbJOgn4zcsmF0lcZvRPq5UkRRAD5tZm8CvzKndUvtoDlG6GSPL/N/SrA==}
 
->>>>>>> crm
   player.style@0.3.4:
     resolution: {integrity: sha512-5O9bkbq0APQIkhptyZwp0gUgheCeImGPFo4hvPF2M5xBmgsUYzsUPHCfMye2xyeRE1zvQBKtziaC3jPgnHE1tw==}
 
@@ -14393,13 +14015,10 @@ packages:
     peerDependencies:
       react: 19.2.6
 
-<<<<<<< HEAD
-=======
   react-refresh@0.18.0:
     resolution: {integrity: sha512-QgT5//D3jfjJb6Gsjxv0Slpj23ip+HtOpnNgnb2S5zU3CB26G/IDPGoy4RJB42wzFE46DRsstbW6tKHoKbhAxw==}
     engines: {node: '>=0.10.0'}
 
->>>>>>> crm
   react-remove-scroll-bar@2.3.8:
     resolution: {integrity: sha512-9r+yi9+mgU33AKcj6IbT9oRCO78WriSj6t/cF8DWBZJ9aOGPOTEDvdUDz1FwKim7QXWwmHqtdHnRJfhAxEG46Q==}
     engines: {node: '>=10'}
@@ -14468,24 +14087,18 @@ packages:
     resolution: {integrity: sha512-sfWGGfavi0xr8Pg0sVsyHMAOziVYKgPLNrS7ig+ivMNb3wbCBw3KxtflsGBAwD3gYQlE/AEZsTLgToRrSCjb0Q==}
     engines: {node: '>=0.10.0'}
 
-<<<<<<< HEAD
-=======
   read-package-up@12.0.0:
     resolution: {integrity: sha512-Q5hMVBYur/eQNWDdbF4/Wqqr9Bjvtrw2kjGxxBbKLbx8bVCL8gcArjTy8zDUuLGQicftpMuU0riQNcAsbtOVsw==}
     engines: {node: '>=20'}
 
->>>>>>> crm
   read-pkg-up@7.0.1:
     resolution: {integrity: sha512-zK0TB7Xd6JpCLmlLmufqykGE+/TlOePD6qKClNW7hHDKFh/J7/7gCWGR7joEQEW1bKq3a3yUZSObOoWLFQ4ohg==}
     engines: {node: '>=8'}
 
-<<<<<<< HEAD
-=======
   read-pkg@10.1.0:
     resolution: {integrity: sha512-I8g2lArQiP78ll51UeMZojewtYgIRCKCWqZEgOO8c/uefTI+XDXvCSXu3+YNUaTNvZzobrL5+SqHjBrByRRTdg==}
     engines: {node: '>=20'}
 
->>>>>>> crm
   read-pkg@5.2.0:
     resolution: {integrity: sha512-Ug69mNOpfvKDAc2Q8DRpMjjzdtrnv9HcSMX+4VsZxD1aZ6ZzrIE7rlzXBtWTyhULSMKg076AW6WR5iZpD0JiOg==}
     engines: {node: '>=8'}
@@ -14804,15 +14417,9 @@ packages:
   safer-buffer@2.1.2:
     resolution: {integrity: sha512-YZo3K82SD7Riyi0E1EQPojLz7kpepnSQI9IyPbHHg1XXXevb5dJI7tpyN2ADxGcQbHG7vcyRHk0cbwqcQriUtg==}
 
-<<<<<<< HEAD
-  sanity@6.5.0:
-    resolution: {integrity: sha512-dZNKPwnhRPSgfeCjZW18LVE/bTuUrc+KE3eNYelnNx4L11dDUIZbHJxN+EUOGyVgKXbaQDtShMtqEmYq3i2OGA==}
-    engines: {node: '>=22.12'}
-=======
   sanity@5.31.1:
     resolution: {integrity: sha512-LNEbRag5oCZgibJh6ZOVw4pQg5i+zos865ZqoDYKrI8+k0WhXgGVrFsgx/jb8rQmUg9sTsdHQnAON5OEdYI/pw==}
     engines: {node: '>=20.19 <22 || >=22.12'}
->>>>>>> crm
     hasBin: true
     peerDependencies:
       react: 19.2.6
@@ -15001,13 +14608,6 @@ packages:
     resolution: {integrity: sha512-vZ7rfeehZui7wQs438JXBckYLkIIdfHOXsaVEUMyS5fHo1483l1bMdo0EDSWYclY0yZKFOipDy4KHuKs6ssvdg==}
     engines: {node: '>=8.0.0'}
 
-<<<<<<< HEAD
-  smol-toml@1.5.2:
-    resolution: {integrity: sha512-QlaZEqcAH3/RtNyet1IPIYPsEWAaYyXXv1Krsi+1L/QHppjX4Ifm8MQsBISz9vE8cHicIq3clogsheili5vhaQ==}
-    engines: {node: '>= 18'}
-
-=======
->>>>>>> crm
   smol-toml@1.7.0:
     resolution: {integrity: sha512-aqVvWoyO21L23mb+drl4RmMXbf6N7FdHjAhTRA9ZBL7apWBgfWC16KjrASI+1p9GAroljyMHj6fK67i0UiTNvQ==}
     engines: {node: '>= 18'}
@@ -15052,12 +14652,6 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
-<<<<<<< HEAD
-  sorted-array-functions@1.3.0:
-    resolution: {integrity: sha512-2sqgzeFlid6N4Z2fUQ1cvFmTOLRi/sEDzSQ0OKYchqgoPmQBVyM3959qYx3fpS6Esef80KjmpgPeEr028dP3OA==}
-
-=======
->>>>>>> crm
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
@@ -15260,12 +14854,9 @@ packages:
     resolution: {integrity: sha512-ki4hZQfh5rX0QDLLkOCj+h+CVNkqmp/CMf8v8kZpkNVK6jGQooMytqzLZYUVYIZcFZ6yDB70EfD8POcFXiF5oA==}
     engines: {node: '>=18'}
 
-<<<<<<< HEAD
-=======
   style-mod@4.1.3:
     resolution: {integrity: sha512-i/n8VsZydrugj3Iuzll8+x/00GH2vnYsk1eomD8QiRrSAeW6ItbCQDtfXCeJHd0iwiNagqjQkvpvREEPtW3IoQ==}
 
->>>>>>> crm
   style-to-js@1.1.21:
     resolution: {integrity: sha512-RjQetxJrrUJLQPHbLku6U/ocGtzyjbJMP9lCNK7Ag0CNh690nSH8woqWH9u16nMjYBAok+i7JO1NP2pOy8IsPQ==}
 
@@ -15367,13 +14958,10 @@ packages:
     resolution: {integrity: sha512-eNRKgb3z66Yp3D2CixVujOUvXLFUTij/zVnV8KRyvFdQwpz7I5DS8UfRkTeLzb64u+dkzDSdelE24izu+zSSUg==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-<<<<<<< HEAD
-=======
   tagged-tag@1.0.0:
     resolution: {integrity: sha512-yEFYrVhod+hdNyx7g5Bnkkb0G6si8HJurOoOEgC8B/O0uXLHlaey/65KRv6cuWBNhBgHKAROVpc7QyYqE5gFng==}
     engines: {node: '>=20'}
 
->>>>>>> crm
   tailwind-merge@2.6.1:
     resolution: {integrity: sha512-Oo6tHdpZsGpkKG88HJ8RR1rg/RdnEkQEfMoEk2x1XRI3F1AxeU+ijRXpiVUF4UbLfcxxRGw6TbUINKYdWVsQTQ==}
 
@@ -15778,13 +15366,10 @@ packages:
     resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
     engines: {node: '>=16'}
 
-<<<<<<< HEAD
-=======
   type-fest@5.8.0:
     resolution: {integrity: sha512-YGYEVz3Fm5iy/AybuA0oyNFq7H4CgQNfRp/qfe8nurE1kuCeNm3/vfm9X4Mtl+qLyaKJUh5xrFZwogr41SMjYA==}
     engines: {node: '>=20'}
 
->>>>>>> crm
   typed-array-buffer@1.0.3:
     resolution: {integrity: sha512-nAYYwfY3qnzX30IkA6AQZjVbtK6duGontcQm1WSG1MD94YLqK0515GNApXkoxKOWMusVssAHWLh9SeaoefYFGw==}
     engines: {node: '>= 0.4'}
@@ -15914,13 +15499,10 @@ packages:
     resolution: {integrity: sha512-+QBBXBCvifc56fsbuxZQ6Sic3wqqc3WWaqxs58gvJrcOuN83HGTCwz3oS5phzU9LthRNE9VrJCFCLUgHeeFnfA==}
     engines: {node: '>=18'}
 
-<<<<<<< HEAD
-=======
   unicorn-magic@0.4.0:
     resolution: {integrity: sha512-wH590V9VNgYH9g3lH9wWjTrUoKsjLF6sGLjhR4sH1LWpLmCOH0Zf7PukhDA8BiS7KHe4oPNkcTHqYkj7SOGUOw==}
     engines: {node: '>=20'}
 
->>>>>>> crm
   unified@11.0.5:
     resolution: {integrity: sha512-xKvGhPWw3k84Qjh8bI3ZeJjqnyadK+GEFtazSfZv/rKeTkTjOJho6mFqh2SM96iIcZokxiOpg78GazTSg8+KHA==}
 
@@ -16061,13 +15643,6 @@ packages:
     resolution: {integrity: sha512-vzi9uRZ926x4XV73S/4qQaTwPXM2JBj6/6lI/byHH1jOpCzb0zDbfytgA9LcN/hzb2l7WQSQnxITOVx5un/wGw==}
     hasBin: true
 
-<<<<<<< HEAD
-  uuid@14.0.1:
-    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
-    hasBin: true
-
-=======
->>>>>>> crm
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
@@ -16141,14 +15716,11 @@ packages:
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
     hasBin: true
 
-<<<<<<< HEAD
-=======
   vite-node@5.3.0:
     resolution: {integrity: sha512-8f20COPYJujc3OKPX6OuyBy3ZIv2det4eRRU4GY1y2MjbeGSUmPjedxg1b72KnTagCofwvZ65ThzjxDW2AtQFQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
 
->>>>>>> crm
   vite-node@6.0.0:
     resolution: {integrity: sha512-oj4PVrT+pDh6GYf5wfUXkcZyekYS8kKPfLPXVl8qe324Ec6l4K2DUKNadRbZ3LQl0qGcDz+PyOo7ZAh00Y+JjQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -16315,12 +15887,9 @@ packages:
     resolution: {integrity: sha512-Dhxzh5HZuiHQhbvTW9AMetFfBHDMYpo23Uo9btPXgdYP+3T5S+p+jgNy7spra+veYhBP2dCSgxR/i2Y02h5/6w==}
     engines: {node: '>=0.10.0'}
 
-<<<<<<< HEAD
-=======
   w3c-keyname@2.2.8:
     resolution: {integrity: sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ==}
 
->>>>>>> crm
   w3c-xmlserializer@5.0.0:
     resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
     engines: {node: '>=18'}
@@ -16523,21 +16092,6 @@ packages:
       utf-8-validate:
         optional: true
 
-<<<<<<< HEAD
-  ws@8.21.0:
-    resolution: {integrity: sha512-Vsp28b7DRcimFQvrqu2Wek3z1iYxDCWqHYB8Qsnk/S4RfaCQzPGPyBNuVjJV3cd6UiKtUtp6sNM77gWvzcCH+g==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
-=======
->>>>>>> crm
   ws@8.21.1:
     resolution: {integrity: sha512-+0NTnW77fFN/DjQi6k/Sq/Yvk4Sgajw7urW8V+asjXnRgDs9gyGkdb7EzgfhA4goXsRIZKE28fzIXBHEzhuiWw==}
     engines: {node: '>=10.0.0'}
@@ -16794,7 +16348,7 @@ snapshots:
   '@apidevtools/json-schema-ref-parser@14.0.1':
     dependencies:
       '@types/json-schema': 7.0.15
-      js-yaml: 4.1.1
+      js-yaml: 4.3.0
 
   '@apidevtools/openapi-schemas@2.1.0': {}
 
@@ -16857,20 +16411,6 @@ snapshots:
       '@aws-lite/client': 0.21.10
       '@aws-lite/s3': 0.1.22
 
-<<<<<<< HEAD
-  '@architect/hydrate@6.0.2':
-    dependencies:
-      '@architect/inventory': 6.0.0
-      '@architect/utils': 6.0.3
-      acorn-loose: 8.5.2
-      esquery: 1.6.0
-
-  '@architect/inventory@6.0.0':
-    dependencies:
-      '@architect/asap': 7.0.10
-      '@architect/parser': 8.0.1
-      '@architect/utils': 6.0.3
-=======
   '@architect/hydrate@5.0.2':
     dependencies:
       '@architect/inventory': 5.0.0
@@ -16883,23 +16423,15 @@ snapshots:
       '@architect/asap': 7.0.10
       '@architect/parser': 8.0.1
       '@architect/utils': 5.0.2
->>>>>>> crm
       '@aws-lite/client': 0.23.7
       '@aws-lite/ssm': 0.2.5
 
   '@architect/parser@8.0.1': {}
 
-<<<<<<< HEAD
-  '@architect/utils@6.0.3':
-    dependencies:
-      '@aws-lite/client': 0.23.7
-      lambda-runtimes: 3.0.0
-=======
   '@architect/utils@5.0.2':
     dependencies:
       '@aws-lite/client': 0.21.10
       lambda-runtimes: 2.0.5
->>>>>>> crm
 
   '@asamuzakjp/css-color@3.2.0':
     dependencies:
@@ -17722,8 +17254,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-<<<<<<< HEAD
-=======
   '@babel/plugin-transform-react-jsx-self@7.29.7(@babel/core@7.29.7)':
     dependencies:
       '@babel/core': 7.29.7
@@ -17734,7 +17264,6 @@ snapshots:
       '@babel/core': 7.29.7
       '@babel/helper-plugin-utils': 7.29.7
 
->>>>>>> crm
   '@babel/plugin-transform-react-jsx@7.29.7(@babel/core@7.29.7)':
     dependencies:
       '@babel/core': 7.29.7
@@ -18041,11 +17570,7 @@ snapshots:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
-<<<<<<< HEAD
       better-auth: 1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10)
-=======
-      better-auth: 1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10)
->>>>>>> crm
       better-call: 1.3.7(zod@4.4.3)
       jose: 6.2.3
       zod: 4.4.3
@@ -18223,8 +17748,6 @@ snapshots:
       human-id: 4.2.0
       prettier: 2.8.8
 
-<<<<<<< HEAD
-=======
   '@codemirror/autocomplete@6.20.3':
     dependencies:
       '@codemirror/language': 6.12.4
@@ -18288,7 +17811,6 @@ snapshots:
       style-mod: 4.1.3
       w3c-keyname: 2.2.8
 
->>>>>>> crm
   '@colors/colors@1.5.0':
     optional: true
 
@@ -18397,11 +17919,7 @@ snapshots:
       react-dom: 19.2.6(react@19.2.6)
       tslib: 2.8.1
 
-<<<<<<< HEAD
-  '@dnd-kit/modifiers@9.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)':
-=======
   '@dnd-kit/modifiers@6.0.1(@dnd-kit/core@6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)':
->>>>>>> crm
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@dnd-kit/utilities': 3.2.2(react@19.2.6)
@@ -18415,8 +17933,6 @@ snapshots:
       react: 19.2.6
       tslib: 2.8.1
 
-<<<<<<< HEAD
-=======
   '@dnd-kit/sortable@7.0.2(@dnd-kit/core@6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -18424,7 +17940,6 @@ snapshots:
       react: 19.2.6
       tslib: 2.8.1
 
->>>>>>> crm
   '@dnd-kit/utilities@3.2.2(react@19.2.6)':
     dependencies:
       react: 19.2.6
@@ -18917,11 +18432,8 @@ snapshots:
 
   '@humanwhocodes/object-schema@2.0.3': {}
 
-<<<<<<< HEAD
-=======
   '@iarna/toml@2.2.3': {}
 
->>>>>>> crm
   '@ibm-cloud/openapi-ruleset-utilities@1.9.2': {}
 
   '@ibm-cloud/openapi-ruleset@1.33.11':
@@ -19952,8 +19464,6 @@ snapshots:
 
   '@kurkle/color@0.3.4': {}
 
-<<<<<<< HEAD
-=======
   '@lezer/common@1.5.2': {}
 
   '@lezer/highlight@1.2.3':
@@ -19970,7 +19480,6 @@ snapshots:
     dependencies:
       '@lezer/common': 1.5.2
 
->>>>>>> crm
   '@lukeed/csprng@1.1.0': {}
 
   '@lukeed/ms@2.0.2': {}
@@ -19991,11 +19500,8 @@ snapshots:
       globby: 11.1.0
       read-yaml-file: 1.1.0
 
-<<<<<<< HEAD
-=======
   '@marijn/find-cluster-break@1.0.3': {}
 
->>>>>>> crm
   '@mdit/plugin-alert@0.23.2(markdown-it@14.3.0)':
     dependencies:
       '@types/markdown-it': 14.1.2
@@ -20013,62 +19519,6 @@ snapshots:
 
   '@microsoft/tsdoc@0.16.0': {}
 
-<<<<<<< HEAD
-  '@module-federation/dts-plugin@2.7.0(typescript@5.7.3)':
-    dependencies:
-      '@module-federation/error-codes': 2.7.0
-      '@module-federation/managers': 2.7.0
-      '@module-federation/sdk': 2.7.0
-      '@module-federation/third-party-dts-extractor': 2.7.0
-      adm-zip: 0.5.10
-      isomorphic-ws: 5.0.0(ws@8.21.0)
-      node-schedule: 2.1.1
-      typescript: 5.7.3
-      undici: 7.28.0
-      ws: 8.21.0
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-
-  '@module-federation/error-codes@2.7.0': {}
-
-  '@module-federation/managers@2.7.0':
-    dependencies:
-      '@module-federation/sdk': 2.7.0
-      empathic: 2.0.0
-
-  '@module-federation/runtime-core@2.7.0':
-    dependencies:
-      '@module-federation/error-codes': 2.7.0
-      '@module-federation/sdk': 2.7.0
-
-  '@module-federation/runtime@2.7.0':
-    dependencies:
-      '@module-federation/error-codes': 2.7.0
-      '@module-federation/runtime-core': 2.7.0
-      '@module-federation/sdk': 2.7.0
-
-  '@module-federation/sdk@2.7.0': {}
-
-  '@module-federation/third-party-dts-extractor@2.7.0':
-    dependencies:
-      empathic: 2.0.0
-      exsolve: 1.0.8
-
-  '@module-federation/vite@1.16.14(typescript@5.7.3)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))':
-    dependencies:
-      '@module-federation/dts-plugin': 2.7.0(typescript@5.7.3)
-      '@module-federation/runtime': 2.7.0
-      '@module-federation/sdk': 2.7.0
-      vite: 8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
-      - vue-tsc
-
-=======
->>>>>>> crm
   '@msgpackr-extract/msgpackr-extract-darwin-arm64@3.0.4':
     optional: true
 
@@ -20873,11 +20323,7 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-<<<<<<< HEAD
-  '@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6)':
-=======
   '@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6)':
->>>>>>> crm
     dependencies:
       '@portabletext/html': 1.1.1
       '@portabletext/keyboard-shortcuts': 2.1.3
@@ -20912,24 +20358,6 @@ snapshots:
     dependencies:
       '@sanity/diff-match-patch': 3.2.0
 
-<<<<<<< HEAD
-  '@portabletext/plugin-character-pair-decorator@8.0.35(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)':
-    dependencies:
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-      '@portabletext/plugin-input-rule': 6.0.4(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
-      react: 19.2.6
-    transitivePeerDependencies:
-      - '@types/react'
-
-  '@portabletext/plugin-dnd@1.0.19(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-      react: 19.2.6
-
-  '@portabletext/plugin-input-rule@6.0.4(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)':
-    dependencies:
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-=======
   '@portabletext/plugin-character-pair-decorator@7.0.31(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)':
     dependencies:
       '@portabletext/editor': 6.6.7(@types/react@19.2.14)(react@19.2.6)
@@ -20943,51 +20371,21 @@ snapshots:
   '@portabletext/plugin-input-rule@4.0.30(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)':
     dependencies:
       '@portabletext/editor': 6.6.7(@types/react@19.2.14)(react@19.2.6)
->>>>>>> crm
       '@xstate/react': 6.1.0(@types/react@19.2.14)(react@19.2.6)(xstate@5.32.5)
       react: 19.2.6
       xstate: 5.32.5
     transitivePeerDependencies:
       - '@types/react'
 
-<<<<<<< HEAD
-  '@portabletext/plugin-list-index@1.0.19(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-      react: 19.2.6
-
-  '@portabletext/plugin-markdown-shortcuts@8.0.35(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)':
-    dependencies:
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-      '@portabletext/plugin-character-pair-decorator': 8.0.35(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
-      '@portabletext/plugin-input-rule': 6.0.4(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
-=======
   '@portabletext/plugin-markdown-shortcuts@7.0.31(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)':
     dependencies:
       '@portabletext/editor': 6.6.7(@types/react@19.2.14)(react@19.2.6)
       '@portabletext/plugin-character-pair-decorator': 7.0.31(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
       '@portabletext/plugin-input-rule': 4.0.30(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
->>>>>>> crm
       react: 19.2.6
     transitivePeerDependencies:
       - '@types/react'
 
-<<<<<<< HEAD
-  '@portabletext/plugin-one-line@7.0.34(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-      react: 19.2.6
-
-  '@portabletext/plugin-paste-link@4.0.34(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)':
-    dependencies:
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-      react: 19.2.6
-
-  '@portabletext/plugin-typography@8.0.35(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)':
-    dependencies:
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-      '@portabletext/plugin-input-rule': 6.0.4(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
-=======
   '@portabletext/plugin-one-line@6.0.30(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)':
     dependencies:
       '@portabletext/editor': 6.6.7(@types/react@19.2.14)(react@19.2.6)
@@ -21002,7 +20400,6 @@ snapshots:
     dependencies:
       '@portabletext/editor': 6.6.7(@types/react@19.2.14)(react@19.2.6)
       '@portabletext/plugin-input-rule': 4.0.30(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
->>>>>>> crm
       react: 19.2.6
     transitivePeerDependencies:
       - '@types/react'
@@ -22075,14 +21472,11 @@ snapshots:
       md5-o-matic: 0.1.1
       react: 19.2.6
 
-<<<<<<< HEAD
-=======
   '@rexxars/react-split-pane@1.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
     dependencies:
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
->>>>>>> crm
   '@rolldown/binding-android-arm64@1.1.5':
     optional: true
 
@@ -22132,18 +21526,6 @@ snapshots:
   '@rolldown/binding-win32-x64-msvc@1.1.5':
     optional: true
 
-<<<<<<< HEAD
-  '@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))':
-    dependencies:
-      '@babel/core': 7.29.7
-      picomatch: 4.0.5
-      rolldown: 1.1.5
-    optionalDependencies:
-      '@babel/runtime': 7.29.7
-      vite: 8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-
-=======
->>>>>>> crm
   '@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
@@ -22154,11 +21536,8 @@ snapshots:
       vite: 8.1.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
     optional: true
 
-<<<<<<< HEAD
-=======
   '@rolldown/pluginutils@1.0.0-rc.3': {}
 
->>>>>>> crm
   '@rolldown/pluginutils@1.0.1': {}
 
   '@rollup/plugin-commonjs@28.0.1(rollup@4.62.2)':
@@ -22273,49 +21652,6 @@ snapshots:
 
   '@sanity/blueprints@0.20.2': {}
 
-<<<<<<< HEAD
-  '@sanity/cli-build@4.0.0(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@noble/hashes@2.2.0)(@types/node@20.19.43)(@types/react@19.2.14)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.1.5)(terser@5.49.0)(tsx@4.23.1)(typescript@5.7.3)(yaml@2.9.0)':
-    dependencies:
-      '@oclif/core': 4.11.14
-      '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
-      '@sanity/cli-core': 2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0)
-      '@sanity/generate-help-url': 4.0.0
-      '@sanity/schema': 6.5.0(@types/react@19.2.14)
-      '@sanity/telemetry': 1.1.0(react@19.2.6)
-      '@sanity/types': 6.5.0(@types/react@19.2.14)
-      '@sanity/workbench-cli': 1.3.0(@noble/hashes@2.2.0)(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(typescript@5.7.3)(yaml@2.9.0)
-      '@vitejs/plugin-react': 6.0.3(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
-      chokidar: 5.0.0
-      cjs-module-lexer: 2.2.0
-      debug: 4.4.3(supports-color@8.1.1)
-      empathic: 2.0.1
-      lodash-es: 4.18.1
-      node-html-parser: 7.1.0
-      oneline: 2.0.0
-      picomatch: 4.0.5
-      react: 19.2.6
-      react-dom: 19.2.6(react@19.2.6)
-      semver: 7.8.5
-      vite: 8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@babel/plugin-transform-runtime'
-      - '@babel/runtime'
-      - '@noble/hashes'
-      - '@types/node'
-      - '@types/react'
-      - '@vitejs/devtools'
-      - bare-abort-controller
-      - bare-buffer
-      - bufferutil
-      - canvas
-      - esbuild
-      - jiti
-      - less
-      - react-native-b4a
-      - rolldown
-=======
   '@sanity/cli-build@0.2.2(@noble/hashes@2.2.0)(@types/node@20.19.43)(@types/react@19.2.14)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)':
     dependencies:
       '@oclif/core': 4.11.14
@@ -22344,7 +21680,6 @@ snapshots:
       - jiti
       - less
       - lightningcss
->>>>>>> crm
       - sass
       - sass-embedded
       - stylus
@@ -22352,11 +21687,6 @@ snapshots:
       - supports-color
       - terser
       - tsx
-<<<<<<< HEAD
-      - typescript
-      - utf-8-validate
-      - vue-tsc
-=======
       - yaml
 
   '@sanity/cli-core@1.3.4(@noble/hashes@2.2.0)(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0)':
@@ -22392,7 +21722,6 @@ snapshots:
       - sugarss
       - supports-color
       - terser
->>>>>>> crm
       - yaml
 
   '@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0)':
@@ -22431,42 +21760,20 @@ snapshots:
       - terser
       - yaml
 
-<<<<<<< HEAD
-  '@sanity/cli@7.8.0(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@noble/hashes@2.2.0)(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(@types/node@20.19.43)(@types/react@19.2.14)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.1.5)(terser@5.49.0)(typescript@5.7.3)(xstate@5.32.5)':
-=======
   '@sanity/cli@6.7.2(@noble/hashes@2.2.0)(@types/node@20.19.43)(@types/react@19.2.14)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(typescript@5.7.3)(xstate@5.32.5)':
->>>>>>> crm
     dependencies:
       '@oclif/core': 4.11.14
       '@oclif/plugin-help': 6.2.53
       '@oclif/plugin-not-found': 3.2.88(@types/node@20.19.43)
-<<<<<<< HEAD
-      '@sanity/cli-build': 4.0.0(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@noble/hashes@2.2.0)(@types/node@20.19.43)(@types/react@19.2.14)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.1.5)(terser@5.49.0)(tsx@4.23.1)(typescript@5.7.3)(yaml@2.9.0)
-      '@sanity/cli-core': 2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0)
-      '@sanity/client': 7.23.1
-      '@sanity/codegen': 7.0.3(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(react@19.2.6)
-=======
       '@sanity/cli-build': 0.2.2(@noble/hashes@2.2.0)(@types/node@20.19.43)(@types/react@19.2.14)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
       '@sanity/cli-core': 1.3.4(@noble/hashes@2.2.0)(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0)
       '@sanity/client': 7.23.1
       '@sanity/codegen': 6.1.2(@oclif/core@4.11.14)(@sanity/cli-core@1.3.4(@noble/hashes@2.2.0)(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))(react@19.2.6)
->>>>>>> crm
       '@sanity/descriptors': 1.3.0
       '@sanity/export': 6.2.0
       '@sanity/generate-help-url': 4.0.0
       '@sanity/id-utils': 1.0.0
       '@sanity/import': 6.0.3(@sanity/client@7.23.1)(@types/react@19.2.14)
-<<<<<<< HEAD
-      '@sanity/migrate': 7.0.3(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/react@19.2.14)(xstate@5.32.5)
-      '@sanity/runtime-cli': 17.1.0(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-      '@sanity/schema': 6.5.0(@types/react@19.2.14)
-      '@sanity/telemetry': 1.1.0(react@19.2.6)
-      '@sanity/template-validator': 3.1.0
-      '@sanity/types': 6.5.0(@types/react@19.2.14)
-      '@sanity/workbench-cli': 1.3.0(@noble/hashes@2.2.0)(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(typescript@5.7.3)(yaml@2.9.0)
-      '@sanity/worker-channels': 2.0.0
-      '@vercel/frameworks': 3.29.0
-=======
       '@sanity/migrate': 6.1.2(@oclif/core@4.11.14)(@sanity/cli-core@1.3.4(@noble/hashes@2.2.0)(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))(@types/react@19.2.14)(xstate@5.32.5)
       '@sanity/runtime-cli': 15.2.1(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(typescript@5.7.3)(yaml@2.9.0)
       '@sanity/schema': 5.31.1(@types/react@19.2.14)
@@ -22475,7 +21782,6 @@ snapshots:
       '@sanity/types': 5.31.1(@types/react@19.2.14)
       '@sanity/worker-channels': 2.0.0
       '@vercel/frameworks': 3.21.1
->>>>>>> crm
       chokidar: 5.0.0
       console-table-printer: 2.16.1
       date-fns: 4.4.0
@@ -22517,47 +21823,23 @@ snapshots:
       tinyglobby: 0.2.17
       tsx: 4.23.1
       typeid-js: 1.2.0
-<<<<<<< HEAD
-      vite: 8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-=======
       vite: 7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
->>>>>>> crm
       which: 6.0.1
       yaml: 2.9.0
       zod: 4.4.3
     transitivePeerDependencies:
-<<<<<<< HEAD
-      - '@babel/core'
-      - '@babel/plugin-transform-runtime'
-      - '@babel/runtime'
-      - '@noble/hashes'
-      - '@rolldown/plugin-babel'
-      - '@types/node'
-      - '@types/react'
-      - '@vitejs/devtools'
-=======
       - '@noble/hashes'
       - '@types/node'
       - '@types/react'
->>>>>>> crm
       - bare-abort-controller
       - bare-buffer
       - bufferutil
       - canvas
-<<<<<<< HEAD
-      - esbuild
-      - jiti
-      - less
-      - oxfmt
-      - react-native-b4a
-      - rolldown
-=======
       - jiti
       - less
       - lightningcss
       - oxfmt
       - react-native-b4a
->>>>>>> crm
       - sass
       - sass-embedded
       - stylus
@@ -22566,10 +21848,6 @@ snapshots:
       - terser
       - typescript
       - utf-8-validate
-<<<<<<< HEAD
-      - vue-tsc
-=======
->>>>>>> crm
       - xstate
 
   '@sanity/client@7.23.1':
@@ -22579,11 +21857,7 @@ snapshots:
       nanoid: 3.3.16
       rxjs: 7.8.2
 
-<<<<<<< HEAD
-  '@sanity/codegen@7.0.3(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(react@19.2.6)':
-=======
   '@sanity/codegen@6.1.2(@oclif/core@4.11.14)(@sanity/cli-core@1.3.4(@noble/hashes@2.2.0)(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))(react@19.2.6)':
->>>>>>> crm
     dependencies:
       '@babel/core': 7.29.7
       '@babel/generator': 7.29.7
@@ -22594,21 +21868,13 @@ snapshots:
       '@babel/traverse': 7.29.7
       '@babel/types': 7.29.7
       '@oclif/core': 4.11.14
-<<<<<<< HEAD
-      '@sanity/cli-core': 2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0)
-=======
       '@sanity/cli-core': 1.3.4(@noble/hashes@2.2.0)(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0)
->>>>>>> crm
       '@sanity/telemetry': 1.1.0(react@19.2.6)
       '@sanity/worker-channels': 2.0.0
       chokidar: 3.6.0
       debug: 4.4.3(supports-color@8.1.1)
       globby: 11.1.0
-<<<<<<< HEAD
-      groq: 6.5.0
-=======
       groq: 5.31.1
->>>>>>> crm
       groq-js: 1.30.3
       json5: 2.2.3
       lodash-es: 4.18.1
@@ -22642,11 +21908,7 @@ snapshots:
     dependencies:
       '@sanity/diff-match-patch': 3.2.0
 
-<<<<<<< HEAD
-  '@sanity/diff@6.5.0':
-=======
   '@sanity/diff@5.31.1':
->>>>>>> crm
     dependencies:
       '@sanity/diff-match-patch': 3.2.0
 
@@ -22710,17 +21972,10 @@ snapshots:
       - react-native-b4a
       - supports-color
 
-<<<<<<< HEAD
-  '@sanity/insert-menu@3.0.9(@emotion/is-prop-valid@1.4.0)(@sanity/types@6.5.0(@types/react@19.2.14))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))':
-    dependencies:
-      '@sanity/icons': 5.1.0(react@19.2.6)
-      '@sanity/types': 6.5.0(@types/react@19.2.14)
-=======
   '@sanity/insert-menu@3.0.9(@emotion/is-prop-valid@1.4.0)(@sanity/types@5.31.1(@types/react@19.2.14))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))':
     dependencies:
       '@sanity/icons': 5.1.0(react@19.2.6)
       '@sanity/types': 5.31.1(@types/react@19.2.14)
->>>>>>> crm
       '@sanity/ui': 3.3.5(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.6(react@19.2.6))(react-is@19.2.7)(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       lodash-es: 4.18.1
       react: 19.2.6
@@ -22732,8 +21987,6 @@ snapshots:
 
   '@sanity/json-match@1.0.5': {}
 
-<<<<<<< HEAD
-=======
   '@sanity/lezer-groq@1.0.4':
     dependencies:
       '@codemirror/language': 6.12.4
@@ -22741,7 +21994,6 @@ snapshots:
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.10
 
->>>>>>> crm
   '@sanity/logos@2.2.2(react@19.2.6)':
     dependencies:
       '@sanity/color': 3.0.6
@@ -22753,16 +22005,6 @@ snapshots:
     dependencies:
       '@sanity/comlink': 4.0.1
 
-<<<<<<< HEAD
-  '@sanity/migrate@7.0.3(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/react@19.2.14)(xstate@5.32.5)':
-    dependencies:
-      '@oclif/core': 4.11.14
-      '@sanity/cli-core': 2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0)
-      '@sanity/client': 7.23.1
-      '@sanity/mutate': 0.18.1(xstate@5.32.5)
-      '@sanity/types': 6.5.0(@types/react@19.2.14)
-      '@sanity/util': 6.5.0(@types/react@19.2.14)
-=======
   '@sanity/migrate@6.1.2(@oclif/core@4.11.14)(@sanity/cli-core@1.3.4(@noble/hashes@2.2.0)(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(yaml@2.9.0))(@types/react@19.2.14)(xstate@5.32.5)':
     dependencies:
       '@oclif/core': 4.11.14
@@ -22771,7 +22013,6 @@ snapshots:
       '@sanity/mutate': 0.16.1(xstate@5.32.5)
       '@sanity/types': 5.31.1(@types/react@19.2.14)
       '@sanity/util': 5.31.1(@types/react@19.2.14)
->>>>>>> crm
       arrify: 2.0.1
       console-table-printer: 2.16.1
       debug: 4.4.3(supports-color@8.1.1)
@@ -22783,8 +22024,6 @@ snapshots:
       - supports-color
       - xstate
 
-<<<<<<< HEAD
-=======
   '@sanity/migrate@6.1.2(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/react@19.2.14)(xstate@5.32.5)':
     dependencies:
       '@oclif/core': 4.11.14
@@ -22817,7 +22056,6 @@ snapshots:
     optionalDependencies:
       xstate: 5.32.5
 
->>>>>>> crm
   '@sanity/mutate@0.18.1(xstate@5.32.5)':
     dependencies:
       '@isaacs/ttlcache': 2.1.5
@@ -22832,8 +22070,6 @@ snapshots:
     optionalDependencies:
       xstate: 5.32.5
 
-<<<<<<< HEAD
-=======
   '@sanity/mutator@5.31.1(@types/react@19.2.14)':
     dependencies:
       '@sanity/diff-match-patch': 3.2.0
@@ -22845,7 +22081,6 @@ snapshots:
       - '@types/react'
       - supports-color
 
->>>>>>> crm
   '@sanity/mutator@6.5.0(@types/react@19.2.14)':
     dependencies:
       '@sanity/diff-match-patch': 3.2.0
@@ -22857,8 +22092,6 @@ snapshots:
       - '@types/react'
       - supports-color
 
-<<<<<<< HEAD
-=======
   '@sanity/presentation-comlink@2.1.0(@sanity/client@7.23.1)(@sanity/types@5.31.1(@types/react@19.2.14))':
     dependencies:
       '@sanity/comlink': 4.0.1
@@ -22867,7 +22100,6 @@ snapshots:
       - '@sanity/client'
       - '@sanity/types'
 
->>>>>>> crm
   '@sanity/presentation-comlink@2.1.0(@sanity/client@7.23.1)(@sanity/types@6.5.0(@types/react@19.2.14))':
     dependencies:
       '@sanity/comlink': 4.0.1
@@ -22883,17 +22115,10 @@ snapshots:
 
   '@sanity/prism-groq@1.1.2': {}
 
-<<<<<<< HEAD
-  '@sanity/runtime-cli@17.1.0(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)':
-    dependencies:
-      '@architect/hydrate': 6.0.2
-      '@architect/inventory': 6.0.0
-=======
   '@sanity/runtime-cli@15.2.1(@types/node@20.19.43)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(typescript@5.7.3)(yaml@2.9.0)':
     dependencies:
       '@architect/hydrate': 5.0.2
       '@architect/inventory': 5.0.0
->>>>>>> crm
       '@inquirer/prompts': 8.5.2(@types/node@20.19.43)
       '@oclif/core': 4.11.14
       '@oclif/plugin-help': 6.2.53
@@ -22911,30 +22136,17 @@ snapshots:
       mime-types: 3.0.2
       ora: 9.4.1
       tar-stream: 3.2.0
-<<<<<<< HEAD
-      vite: 8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-=======
       vite: 7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
       vite-tsconfig-paths: 6.1.1(typescript@5.7.3)(vite@7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
->>>>>>> crm
       ws: 8.21.1
       xdg-basedir: 5.1.0
     transitivePeerDependencies:
       - '@types/node'
-<<<<<<< HEAD
-      - '@vitejs/devtools'
-      - bare-abort-controller
-      - bare-buffer
-      - bufferutil
-      - esbuild
-      - less
-=======
       - bare-abort-controller
       - bare-buffer
       - bufferutil
       - less
       - lightningcss
->>>>>>> crm
       - react-native-b4a
       - sass
       - sass-embedded
@@ -22943,11 +22155,6 @@ snapshots:
       - supports-color
       - terser
       - tsx
-<<<<<<< HEAD
-      - utf-8-validate
-      - yaml
-
-=======
       - typescript
       - utf-8-validate
       - yaml
@@ -22967,7 +22174,6 @@ snapshots:
       - '@types/react'
       - supports-color
 
->>>>>>> crm
   '@sanity/schema@6.5.0(@types/react@19.2.14)':
     dependencies:
       '@sanity/descriptors': 1.3.0
@@ -23029,15 +22235,12 @@ snapshots:
       '@actions/github': 9.1.1
       yaml: 2.9.0
 
-<<<<<<< HEAD
-=======
   '@sanity/types@5.31.1(@types/react@19.2.14)':
     dependencies:
       '@sanity/client': 7.23.1
       '@sanity/media-library-types': 1.5.0
       '@types/react': 19.2.14
 
->>>>>>> crm
   '@sanity/types@6.5.0(@types/react@19.2.14)':
     dependencies:
       '@sanity/client': 7.23.1
@@ -23062,20 +22265,12 @@ snapshots:
     transitivePeerDependencies:
       - '@emotion/is-prop-valid'
 
-<<<<<<< HEAD
-  '@sanity/util@6.5.0(@types/react@19.2.14)':
-=======
   '@sanity/util@5.31.1(@types/react@19.2.14)':
->>>>>>> crm
     dependencies:
       '@date-fns/tz': 1.5.0
       '@date-fns/utc': 2.1.1
       '@sanity/client': 7.23.1
-<<<<<<< HEAD
-      '@sanity/types': 6.5.0(@types/react@19.2.14)
-=======
       '@sanity/types': 5.31.1(@types/react@19.2.14)
->>>>>>> crm
       date-fns: 4.4.0
       rxjs: 7.8.2
     transitivePeerDependencies:
@@ -23090,8 +22285,6 @@ snapshots:
     dependencies:
       uuid: 11.1.1
 
-<<<<<<< HEAD
-=======
   '@sanity/vision@5.31.1(@babel/runtime@7.29.7)(@codemirror/lint@6.9.7)(@codemirror/theme-one-dark@6.1.3)(@emotion/is-prop-valid@1.4.0)(codemirror@6.0.2)(react-dom@19.2.6(react@19.2.6))(react-is@19.2.7)(react@19.2.6)(sanity@5.31.1(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.11)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3))(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))':
     dependencies:
       '@codemirror/autocomplete': 6.20.3
@@ -23129,7 +22322,6 @@ snapshots:
       - react-dom
       - react-is
 
->>>>>>> crm
   '@sanity/visual-editing-csm@3.0.11(@sanity/client@7.23.1)(@sanity/types@6.5.0(@types/react@19.2.14))(typescript@5.7.3)':
     dependencies:
       '@sanity/client': 7.23.1
@@ -23139,15 +22331,12 @@ snapshots:
       - '@sanity/types'
       - typescript
 
-<<<<<<< HEAD
-=======
   '@sanity/visual-editing-types@1.1.8(@sanity/client@7.23.1)(@sanity/types@5.31.1(@types/react@19.2.14))':
     dependencies:
       '@sanity/client': 7.23.1
     optionalDependencies:
       '@sanity/types': 5.31.1(@types/react@19.2.14)
 
->>>>>>> crm
   '@sanity/visual-editing-types@1.1.8(@sanity/client@7.23.1)(@sanity/types@6.5.0(@types/react@19.2.14))':
     dependencies:
       '@sanity/client': 7.23.1
@@ -23191,52 +22380,12 @@ snapshots:
 
   '@sanity/webhook@4.0.4': {}
 
-<<<<<<< HEAD
-  '@sanity/workbench-cli@1.3.0(@noble/hashes@2.2.0)(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(typescript@5.7.3)(yaml@2.9.0)':
-    dependencies:
-      '@module-federation/vite': 1.16.14(typescript@5.7.3)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
-      '@sanity/cli-core': 2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0)
-      '@vitejs/plugin-react': 6.0.3(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
-      form-data: 4.0.6
-      tar-fs: 3.1.3
-      vite: 8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-      zod: 4.4.3
-    transitivePeerDependencies:
-      - '@noble/hashes'
-      - '@rolldown/plugin-babel'
-      - '@types/node'
-      - '@vitejs/devtools'
-      - babel-plugin-react-compiler
-      - bare-abort-controller
-      - bare-buffer
-      - bufferutil
-      - canvas
-      - esbuild
-      - jiti
-      - less
-      - react-native-b4a
-      - sass
-      - sass-embedded
-      - stylus
-      - sugarss
-      - supports-color
-      - terser
-      - tsx
-      - typescript
-      - utf-8-validate
-      - vue-tsc
-      - yaml
-
-=======
->>>>>>> crm
   '@sanity/worker-channels@2.0.0': {}
 
   '@scarf/scarf@1.4.0': {}
 
   '@sec-ant/readable-stream@0.4.1': {}
 
-<<<<<<< HEAD
-=======
   '@sentry-internal/browser-utils@8.55.2':
     dependencies:
       '@sentry/core': 8.55.2
@@ -23255,7 +22404,6 @@ snapshots:
       '@sentry-internal/browser-utils': 8.55.2
       '@sentry/core': 8.55.2
 
->>>>>>> crm
   '@sentry/babel-plugin-component-annotate@5.3.0': {}
 
   '@sentry/browser-utils@10.65.0':
@@ -23272,8 +22420,6 @@ snapshots:
       '@sentry/replay': 10.65.0
       '@sentry/replay-canvas': 10.65.0
 
-<<<<<<< HEAD
-=======
   '@sentry/browser@8.55.2':
     dependencies:
       '@sentry-internal/browser-utils': 8.55.2
@@ -23282,7 +22428,6 @@ snapshots:
       '@sentry-internal/replay-canvas': 8.55.2
       '@sentry/core': 8.55.2
 
->>>>>>> crm
   '@sentry/bundler-plugin-core@5.3.0':
     dependencies:
       '@babel/core': 7.29.7
@@ -23292,6 +22437,22 @@ snapshots:
       find-up: 5.0.0
       glob: 13.0.6
       magic-string: 0.30.21
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@sentry/bundler-plugins@10.65.0(rollup@4.62.2)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19))':
+    dependencies:
+      '@babel/core': 7.29.7
+      '@sentry/cli': 2.58.6
+      '@sentry/core': 10.65.0
+      dotenv: 17.4.2
+      find-up: 5.0.0
+      glob: 13.0.6
+      magic-string: 0.30.21
+    optionalDependencies:
+      rollup: 4.62.2
+      webpack: 5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19)
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -23362,16 +22523,12 @@ snapshots:
     dependencies:
       '@sentry/conventions': 0.15.1
 
-<<<<<<< HEAD
-=======
   '@sentry/core@8.55.2': {}
 
->>>>>>> crm
   '@sentry/feedback@10.65.0':
     dependencies:
       '@sentry/core': 10.65.0
 
-<<<<<<< HEAD
   '@sentry/nestjs@10.65.0(@nestjs/common@11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.28)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))':
     dependencies:
       '@nestjs/common': 11.1.28(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -23386,10 +22543,32 @@ snapshots:
       - '@opentelemetry/exporter-trace-otlp-http'
       - supports-color
 
-  '@sentry/nextjs@10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))':
-=======
+  '@sentry/nextjs@10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19))':
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      '@rollup/plugin-commonjs': 28.0.1(rollup@4.62.2)
+      '@sentry/browser-utils': 10.65.0
+      '@sentry/bundler-plugin-core': 5.3.0
+      '@sentry/conventions': 0.15.1
+      '@sentry/core': 10.65.0
+      '@sentry/node': 10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))
+      '@sentry/opentelemetry': 10.65.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))
+      '@sentry/react': 10.65.0(react@19.2.6)
+      '@sentry/vercel-edge': 10.65.0
+      '@sentry/webpack-plugin': 5.4.0(rollup@4.62.2)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19))
+      next: 16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      rollup: 4.62.2
+      stacktrace-parser: 0.1.11
+    transitivePeerDependencies:
+      - '@opentelemetry/core'
+      - '@opentelemetry/exporter-trace-otlp-http'
+      - '@opentelemetry/sdk-trace-base'
+      - encoding
+      - react
+      - supports-color
+      - webpack
+
   '@sentry/nextjs@10.65.0(@opentelemetry/core@2.9.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.9.0(@opentelemetry/api@1.9.1))(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))':
->>>>>>> crm
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@rollup/plugin-commonjs': 28.0.1(rollup@4.62.2)
@@ -23457,8 +22636,6 @@ snapshots:
       '@sentry/core': 10.65.0
       react: 19.2.6
 
-<<<<<<< HEAD
-=======
   '@sentry/react@8.55.2(react@19.2.6)':
     dependencies:
       '@sentry/browser': 8.55.2
@@ -23466,7 +22643,6 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       react: 19.2.6
 
->>>>>>> crm
   '@sentry/replay-canvas@10.65.0':
     dependencies:
       '@sentry/core': 10.65.0
@@ -23492,6 +22668,15 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@sentry/core': 10.65.0
+
+  '@sentry/webpack-plugin@5.4.0(rollup@4.62.2)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19))':
+    dependencies:
+      '@sentry/bundler-plugins': 10.65.0(rollup@4.62.2)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19))
+      webpack: 5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19)
+    transitivePeerDependencies:
+      - encoding
+      - rollup
+      - supports-color
 
   '@sentry/webpack-plugin@5.4.0(rollup@4.62.2)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))':
     dependencies:
@@ -24771,8 +23956,6 @@ snapshots:
       '@typescript-eslint/types': 8.64.0
       eslint-visitor-keys: 5.0.1
 
-<<<<<<< HEAD
-=======
   '@uiw/codemirror-extensions-basic-setup@4.25.11(@codemirror/autocomplete@6.20.3)(@codemirror/commands@6.10.4)(@codemirror/language@6.12.4)(@codemirror/lint@6.9.7)(@codemirror/search@6.7.1)(@codemirror/state@6.7.1)(@codemirror/view@6.43.6)':
     dependencies:
       '@codemirror/autocomplete': 6.20.3
@@ -24800,7 +23983,6 @@ snapshots:
       - '@codemirror/lint'
       - '@codemirror/search'
 
->>>>>>> crm
   '@ungap/structured-clone@1.3.3': {}
 
   '@unrs/resolver-binding-android-arm-eabi@1.12.2':
@@ -24877,15 +24059,6 @@ snapshots:
     dependencies:
       uncrypto: 0.1.3
 
-<<<<<<< HEAD
-  '@vercel/error-utils@2.2.0': {}
-
-  '@vercel/frameworks@3.29.0':
-    dependencies:
-      '@vercel/error-utils': 2.2.0
-      js-yaml: 3.13.1
-      smol-toml: 1.5.2
-=======
   '@vercel/edge@1.3.1': {}
 
   '@vercel/error-utils@2.0.3': {}
@@ -24895,7 +24068,6 @@ snapshots:
       '@iarna/toml': 2.2.3
       '@vercel/error-utils': 2.0.3
       js-yaml: 3.13.1
->>>>>>> crm
 
   '@vercel/stega@1.1.0': {}
 
@@ -24938,14 +24110,6 @@ snapshots:
     transitivePeerDependencies:
       - '@swc/helpers'
 
-<<<<<<< HEAD
-  '@vitejs/plugin-react@6.0.3(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))':
-    dependencies:
-      '@rolldown/pluginutils': 1.0.1
-      vite: 8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
-    optionalDependencies:
-      '@rolldown/plugin-babel': 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
-=======
   '@vitejs/plugin-react@5.2.0(vite@7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7
@@ -24957,7 +24121,6 @@ snapshots:
       vite: 7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)
     transitivePeerDependencies:
       - supports-color
->>>>>>> crm
 
   '@vitejs/plugin-react@6.0.3(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))':
     dependencies:
@@ -24997,11 +24160,7 @@ snapshots:
       obug: 2.1.3
       std-env: 4.2.0
       tinyrainbow: 3.1.0
-<<<<<<< HEAD
       vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@22.20.1)(@vitest/coverage-v8@4.1.10)(jsdom@29.1.1(@noble/hashes@2.2.0))(vite@8.1.4(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
-=======
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@24.13.3)(@vitest/coverage-v8@4.1.10)(jsdom@27.4.0(@noble/hashes@2.2.0))(vite@8.1.4(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0))
->>>>>>> crm
 
   '@vitest/expect@3.2.7':
     dependencies:
@@ -25374,11 +24533,6 @@ snapshots:
 
   adler-32@1.3.1: {}
 
-<<<<<<< HEAD
-  adm-zip@0.5.10: {}
-
-=======
->>>>>>> crm
   adm-zip@0.5.18: {}
 
   agent-base@6.0.2:
@@ -25890,7 +25044,6 @@ snapshots:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
 
-<<<<<<< HEAD
   better-auth@1.6.23(@opentelemetry/api@1.9.1)(@prisma/client@7.8.0(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.10(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.22.0)(prisma@7.8.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.3)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.10):
     dependencies:
       '@better-auth/core': 1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.3.7(zod@4.4.3))(jose@6.2.3)(kysely@0.29.3)(nanostores@1.4.0)
@@ -25923,8 +25076,6 @@ snapshots:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
 
-=======
->>>>>>> crm
   better-call@1.3.7(zod@4.4.3):
     dependencies:
       '@better-auth/utils': 0.4.2
@@ -26016,11 +25167,7 @@ snapshots:
     dependencies:
       baseline-browser-mapping: 2.10.43
       caniuse-lite: 1.0.30001805
-<<<<<<< HEAD
       electron-to-chromium: 1.5.392
-=======
-      electron-to-chromium: 1.5.391
->>>>>>> crm
       node-releases: 2.0.51
       update-browserslist-db: 1.2.3(browserslist@4.28.6)
 
@@ -26253,11 +25400,8 @@ snapshots:
 
   classcat@5.0.5: {}
 
-<<<<<<< HEAD
-=======
   classnames@2.5.1: {}
 
->>>>>>> crm
   clean-regexp@1.0.0:
     dependencies:
       escape-string-regexp: 1.0.5
@@ -26340,8 +25484,6 @@ snapshots:
 
   co@4.6.0: {}
 
-<<<<<<< HEAD
-=======
   codemirror@6.0.2:
     dependencies:
       '@codemirror/autocomplete': 6.20.3
@@ -26352,7 +25494,6 @@ snapshots:
       '@codemirror/state': 6.7.1
       '@codemirror/view': 6.43.6
 
->>>>>>> crm
   codepage@1.15.0: {}
 
   collect-v8-coverage@1.0.3: {}
@@ -26522,11 +25663,8 @@ snapshots:
       - supports-color
       - ts-node
 
-<<<<<<< HEAD
-=======
   crelt@1.0.7: {}
 
->>>>>>> crm
   cron-parser@4.9.0:
     dependencies:
       luxon: 3.7.2
@@ -26752,11 +25890,8 @@ snapshots:
 
   dedent@1.7.2: {}
 
-<<<<<<< HEAD
-=======
   deeks@3.2.1: {}
 
->>>>>>> crm
   deep-eql@5.0.2: {}
 
   deep-is@0.1.4: {}
@@ -26836,11 +25971,8 @@ snapshots:
     dependencies:
       path-type: 4.0.0
 
-<<<<<<< HEAD
-=======
   doc-path@4.1.4: {}
 
->>>>>>> crm
   doctrine@2.1.0:
     dependencies:
       esutils: 2.0.3
@@ -26920,11 +26052,7 @@ snapshots:
     dependencies:
       jake: 10.9.4
 
-<<<<<<< HEAD
   electron-to-chromium@1.5.392: {}
-=======
-  electron-to-chromium@1.5.391: {}
->>>>>>> crm
 
   embla-carousel-react@8.6.0(react@19.2.6):
     dependencies:
@@ -27253,11 +26381,7 @@ snapshots:
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.10
       eslint-import-resolver-typescript: 3.10.1(eslint-plugin-import@2.32.0)(eslint@8.57.0)
-<<<<<<< HEAD
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0)
-=======
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-typescript@4.4.5)(eslint@8.57.0)
->>>>>>> crm
       eslint-plugin-jsx-a11y: 6.10.2(eslint@8.57.0)
       eslint-plugin-react: 7.37.5(eslint@8.57.0)
       eslint-plugin-react-hooks: 5.2.0(eslint@8.57.0)
@@ -27308,11 +26432,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-<<<<<<< HEAD
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0)
-=======
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint@8.57.0)
->>>>>>> crm
     transitivePeerDependencies:
       - supports-color
 
@@ -27327,11 +26447,7 @@ snapshots:
       tinyglobby: 0.2.17
       unrs-resolver: 1.12.2
     optionalDependencies:
-<<<<<<< HEAD
       eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0)
-=======
-      eslint-plugin-import: 2.32.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-typescript@4.4.5)(eslint@8.57.0)
->>>>>>> crm
     transitivePeerDependencies:
       - supports-color
 
@@ -27346,7 +26462,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-<<<<<<< HEAD
   eslint-module-utils@2.14.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@4.4.5)(eslint@8.57.0):
     dependencies:
       debug: 3.2.7
@@ -27358,19 +26473,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-=======
->>>>>>> crm
   eslint-plugin-eslint-comments@3.2.0(eslint@8.57.0):
     dependencies:
       escape-string-regexp: 1.0.5
       eslint: 8.57.0
       ignore: 5.3.2
 
-<<<<<<< HEAD
   eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0):
-=======
-  eslint-plugin-import@2.32.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-typescript@4.4.5)(eslint@8.57.0):
->>>>>>> crm
     dependencies:
       '@rtsao/scc': 1.1.0
       array-includes: 3.1.9
@@ -27410,11 +26519,7 @@ snapshots:
       doctrine: 2.1.0
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.10
-<<<<<<< HEAD
       eslint-module-utils: 2.14.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@4.4.5)(eslint@8.57.0)
-=======
-      eslint-module-utils: 2.14.0(@typescript-eslint/parser@8.61.0(eslint@8.57.0)(typescript@5.7.3))(eslint-import-resolver-node@0.3.10)(eslint-import-resolver-typescript@3.10.1)(eslint@8.57.0)
->>>>>>> crm
       hasown: 2.0.4
       is-core-module: 2.16.2
       is-glob: 4.0.3
@@ -27724,11 +26829,6 @@ snapshots:
 
   expr-eval-fork@3.0.3: {}
 
-<<<<<<< HEAD
-  exsolve@1.0.8: {}
-
-=======
->>>>>>> crm
   exsolve@1.1.0: {}
 
   ext-list@2.2.2:
@@ -28344,11 +27444,8 @@ snapshots:
 
   groq@3.88.1-typegen-experimental.0: {}
 
-<<<<<<< HEAD
-=======
   groq@5.31.1: {}
 
->>>>>>> crm
   groq@6.5.0: {}
 
   gunzip-maybe@1.4.2:
@@ -28443,13 +27540,10 @@ snapshots:
 
   hls.js@1.6.16: {}
 
-<<<<<<< HEAD
-=======
   hoist-non-react-statics@3.3.2:
     dependencies:
       react-is: 16.13.1
 
->>>>>>> crm
   homedir-polyfill@1.0.3:
     dependencies:
       parse-passwd: 1.0.0
@@ -28458,13 +27552,10 @@ snapshots:
 
   hosted-git-info@2.8.9: {}
 
-<<<<<<< HEAD
-=======
   hosted-git-info@9.0.3:
     dependencies:
       lru-cache: 11.5.2
 
->>>>>>> crm
   hotscript@1.0.13: {}
 
   hsl-to-hex@1.0.0:
@@ -28592,11 +27683,8 @@ snapshots:
 
   indent-string@4.0.0: {}
 
-<<<<<<< HEAD
-=======
   index-to-position@1.2.0: {}
 
->>>>>>> crm
   inflected@2.1.0: {}
 
   inflight@1.0.6:
@@ -28802,11 +27890,6 @@ snapshots:
 
   is-negative-zero@2.0.3: {}
 
-<<<<<<< HEAD
-  is-network-error@1.3.2: {}
-
-=======
->>>>>>> crm
   is-number-object@1.1.1:
     dependencies:
       call-bound: 1.0.4
@@ -28911,8 +27994,6 @@ snapshots:
 
   isobject@3.0.1: {}
 
-<<<<<<< HEAD
-=======
   isomorphic-dompurify@2.26.0:
     dependencies:
       dompurify: 3.4.12
@@ -28923,7 +28004,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
->>>>>>> crm
   isomorphic-dompurify@2.36.0(@noble/hashes@2.2.0):
     dependencies:
       dompurify: 3.4.12
@@ -28933,13 +28013,6 @@ snapshots:
       - canvas
       - supports-color
 
-<<<<<<< HEAD
-  isomorphic-ws@5.0.0(ws@8.21.0):
-    dependencies:
-      ws: 8.21.0
-
-=======
->>>>>>> crm
   istanbul-lib-coverage@3.2.2: {}
 
   istanbul-lib-instrument@5.2.1:
@@ -29385,11 +28458,7 @@ snapshots:
   jest-mock@30.4.1:
     dependencies:
       '@jest/types': 30.4.1
-<<<<<<< HEAD
-      '@types/node': 20.19.43
-=======
       '@types/node': 22.20.1
->>>>>>> crm
       jest-util: 30.4.1
 
   jest-pnp-resolver@1.2.3(jest-resolve@29.7.0):
@@ -29611,11 +28680,7 @@ snapshots:
   jest-util@30.4.1:
     dependencies:
       '@jest/types': 30.4.1
-<<<<<<< HEAD
-      '@types/node': 20.19.43
-=======
       '@types/node': 22.20.1
->>>>>>> crm
       chalk: 4.1.2
       ci-info: 4.4.0
       graceful-fs: 4.2.11
@@ -29876,14 +28941,11 @@ snapshots:
 
   jsesc@3.1.0: {}
 
-<<<<<<< HEAD
-=======
   json-2-csv@5.5.11:
     dependencies:
       deeks: 3.2.1
       doc-path: 4.1.4
 
->>>>>>> crm
   json-buffer@3.0.1: {}
 
   json-lexer@1.2.0: {}
@@ -29991,11 +29053,7 @@ snapshots:
 
   kysely@0.29.3: {}
 
-<<<<<<< HEAD
-  lambda-runtimes@3.0.0: {}
-=======
   lambda-runtimes@2.0.5: {}
->>>>>>> crm
 
   language-subtag-registry@0.3.23: {}
 
@@ -30163,11 +29221,6 @@ snapshots:
 
   loglevel@1.9.2: {}
 
-<<<<<<< HEAD
-  long-timeout@0.1.1: {}
-
-=======
->>>>>>> crm
   long@5.3.2: {}
 
   longest-streak@3.1.0: {}
@@ -30373,8 +29426,6 @@ snapshots:
 
   mdurl@2.0.0: {}
 
-<<<<<<< HEAD
-=======
   media-chrome@4.11.1(react@19.2.6):
     dependencies:
       '@vercel/edge': 1.3.1
@@ -30382,7 +29433,6 @@ snapshots:
     transitivePeerDependencies:
       - react
 
->>>>>>> crm
   media-chrome@4.19.2(react@19.2.6):
     dependencies:
       ce-la-react: 0.3.2(react@19.2.6)
@@ -30622,6 +29672,19 @@ snapshots:
 
   minimist@1.2.8: {}
 
+  minimizer-webpack-plugin@5.6.1(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.31
+      jest-worker: 27.5.1
+      schema-utils: 4.3.3
+      terser: 5.49.0
+      webpack: 5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19)
+    optionalDependencies:
+      '@swc/core': 1.15.43(@swc/helpers@0.5.23)
+      esbuild: 0.28.1
+      lightningcss: 1.32.0
+      postcss: 8.5.19
+
   minimizer-webpack-plugin@5.6.1(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
@@ -30741,11 +29804,7 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-<<<<<<< HEAD
-  next-sanity@13.1.3(43ae1567bf95cdff677508bc5dd55220):
-=======
   next-sanity@13.1.3(@emotion/is-prop-valid@1.4.0)(@sanity/client@7.23.1)(@types/react@19.2.14)(next@16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react-router@7.18.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(sanity@5.31.1(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.11)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3))(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@5.7.3):
->>>>>>> crm
     dependencies:
       '@portabletext/react': 6.2.0(react@19.2.6)
       '@sanity/client': 7.23.1
@@ -30758,11 +29817,7 @@ snapshots:
       next: 16.2.10(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
-<<<<<<< HEAD
-      sanity: 6.5.0(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(esbuild@0.28.1)(immer@11.1.11)(jiti@2.7.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(rolldown@1.1.5)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3)
-=======
       sanity: 5.31.1(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.11)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3)
->>>>>>> crm
       styled-components: 6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
     transitivePeerDependencies:
       - '@emotion/is-prop-valid'
@@ -30864,15 +29919,6 @@ snapshots:
 
   node-releases@2.0.51: {}
 
-<<<<<<< HEAD
-  node-schedule@2.1.1:
-    dependencies:
-      cron-parser: 4.9.0
-      long-timeout: 0.1.1
-      sorted-array-functions: 1.3.0
-
-=======
->>>>>>> crm
   nodemailer@7.0.13: {}
 
   normalize-package-data@2.5.0:
@@ -30882,15 +29928,12 @@ snapshots:
       semver: 5.7.2
       validate-npm-package-license: 3.0.4
 
-<<<<<<< HEAD
-=======
   normalize-package-data@8.0.0:
     dependencies:
       hosted-git-info: 9.0.3
       semver: 7.8.5
       validate-npm-package-license: 3.0.4
 
->>>>>>> crm
   normalize-path@3.0.0: {}
 
   normalize-svg-path@1.1.0:
@@ -31212,15 +30255,12 @@ snapshots:
       json-parse-even-better-errors: 2.3.1
       lines-and-columns: 1.2.4
 
-<<<<<<< HEAD
-=======
   parse-json@8.3.0:
     dependencies:
       '@babel/code-frame': 7.29.7
       index-to-position: 1.2.0
       type-fest: 4.41.0
 
->>>>>>> crm
   parse-ms@4.0.0: {}
 
   parse-passwd@1.0.0: {}
@@ -31388,15 +30428,12 @@ snapshots:
       exsolve: 1.1.0
       pathe: 2.0.3
 
-<<<<<<< HEAD
-=======
   player.style@0.1.10(react@19.2.6):
     dependencies:
       media-chrome: 4.11.1(react@19.2.6)
     transitivePeerDependencies:
       - react
 
->>>>>>> crm
   player.style@0.3.4(react@19.2.6):
     dependencies:
       media-chrome: 4.19.2(react@19.2.6)
@@ -31833,11 +30870,8 @@ snapshots:
       unist-util-filter: 5.0.1
       unist-util-visit-parents: 6.0.2
 
-<<<<<<< HEAD
-=======
   react-refresh@0.18.0: {}
 
->>>>>>> crm
   react-remove-scroll-bar@2.3.8(@types/react@19.2.14)(react@19.2.6):
     dependencies:
       react: 19.2.6
@@ -31898,23 +30932,18 @@ snapshots:
 
   react@19.2.6: {}
 
-<<<<<<< HEAD
-=======
   read-package-up@12.0.0:
     dependencies:
       find-up-simple: 1.0.1
       read-pkg: 10.1.0
       type-fest: 5.8.0
 
->>>>>>> crm
   read-pkg-up@7.0.1:
     dependencies:
       find-up: 4.1.0
       read-pkg: 5.2.0
       type-fest: 0.8.1
 
-<<<<<<< HEAD
-=======
   read-pkg@10.1.0:
     dependencies:
       '@types/normalize-package-data': 2.4.4
@@ -31923,7 +30952,6 @@ snapshots:
       type-fest: 5.8.0
       unicorn-magic: 0.4.0
 
->>>>>>> crm
   read-pkg@5.2.0:
     dependencies:
       '@types/normalize-package-data': 2.4.4
@@ -32331,31 +31359,11 @@ snapshots:
 
   safer-buffer@2.1.2: {}
 
-<<<<<<< HEAD
-  sanity@6.5.0(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(esbuild@0.28.1)(immer@11.1.11)(jiti@2.7.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(rolldown@1.1.5)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3):
-=======
   sanity@5.31.1(@emotion/is-prop-valid@1.4.0)(@noble/hashes@2.2.0)(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/node@20.19.43)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.11)(jiti@2.7.0)(lightningcss@1.32.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(terser@5.49.0)(typescript@5.7.3):
->>>>>>> crm
     dependencies:
       '@algorithm.ts/lcs': 4.0.6
       '@date-fns/tz': 1.5.0
       '@dnd-kit/core': 6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-<<<<<<< HEAD
-      '@dnd-kit/modifiers': 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
-      '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
-      '@dnd-kit/utilities': 3.2.2(react@19.2.6)
-      '@isaacs/ttlcache': 1.4.1
-      '@mux/mux-player-react': 3.13.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@portabletext/editor': 7.10.7(@types/react@19.2.14)(react@19.2.6)
-      '@portabletext/html': 1.1.1
-      '@portabletext/patches': 2.0.5
-      '@portabletext/plugin-dnd': 1.0.19(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
-      '@portabletext/plugin-list-index': 1.0.19(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
-      '@portabletext/plugin-markdown-shortcuts': 8.0.35(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
-      '@portabletext/plugin-one-line': 7.0.34(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
-      '@portabletext/plugin-paste-link': 4.0.34(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
-      '@portabletext/plugin-typography': 8.0.35(@portabletext/editor@7.10.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
-=======
       '@dnd-kit/modifiers': 6.0.1(@dnd-kit/core@6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       '@dnd-kit/sortable': 7.0.2(@dnd-kit/core@6.3.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)
       '@dnd-kit/utilities': 3.2.2(react@19.2.6)
@@ -32368,7 +31376,6 @@ snapshots:
       '@portabletext/plugin-one-line': 6.0.30(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
       '@portabletext/plugin-paste-link': 3.0.30(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
       '@portabletext/plugin-typography': 7.0.30(@portabletext/editor@6.6.7(@types/react@19.2.14)(react@19.2.6))(@types/react@19.2.14)(react@19.2.6)
->>>>>>> crm
       '@portabletext/react': 6.2.0(react@19.2.6)
       '@portabletext/sanity-bridge': 3.2.2(@types/react@19.2.14)
       '@portabletext/to-html': 5.0.2
@@ -32376,41 +31383,6 @@ snapshots:
       '@rexxars/react-json-inspector': 9.0.1(react@19.2.6)
       '@sanity/asset-utils': 2.3.0
       '@sanity/bifur-client': 1.0.0
-<<<<<<< HEAD
-      '@sanity/cli': 7.8.0(@babel/core@7.29.7)(@babel/runtime@7.29.7)(@noble/hashes@2.2.0)(@rolldown/plugin-babel@0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.1.5)(vite@8.1.4(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)))(@types/node@20.19.43)(@types/react@19.2.14)(esbuild@0.28.1)(jiti@2.7.0)(rolldown@1.1.5)(terser@5.49.0)(typescript@5.7.3)(xstate@5.32.5)
-      '@sanity/client': 7.23.1
-      '@sanity/color': 3.0.6
-      '@sanity/comlink': 4.0.1
-      '@sanity/diff': 6.5.0
-      '@sanity/diff-match-patch': 3.2.0
-      '@sanity/diff-patch': 5.0.0
-      '@sanity/eventsource': 5.0.2
-      '@sanity/icons': 5.1.0(react@19.2.6)
-      '@sanity/id-utils': 1.0.0
-      '@sanity/image-url': 2.1.1
-      '@sanity/insert-menu': 3.0.9(@emotion/is-prop-valid@1.4.0)(@sanity/types@6.5.0(@types/react@19.2.14))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
-      '@sanity/logos': 2.2.2(react@19.2.6)
-      '@sanity/media-library-types': 1.5.0
-      '@sanity/message-protocol': 0.23.0
-      '@sanity/migrate': 7.0.3(@oclif/core@4.11.14)(@sanity/cli-core@2.3.0(@noble/hashes@2.2.0)(@types/node@20.19.43)(esbuild@0.28.1)(terser@5.49.0)(yaml@2.9.0))(@types/react@19.2.14)(xstate@5.32.5)
-      '@sanity/mutate': 0.18.1(xstate@5.32.5)
-      '@sanity/mutator': 6.5.0(@types/react@19.2.14)
-      '@sanity/presentation-comlink': 2.1.0(@sanity/client@7.23.1)(@sanity/types@6.5.0(@types/react@19.2.14))
-      '@sanity/preview-url-secret': 4.0.8(@sanity/client@7.23.1)
-      '@sanity/prism-groq': 1.1.2
-      '@sanity/schema': 6.5.0(@types/react@19.2.14)
-      '@sanity/sdk': 2.15.0(@types/react@19.2.14)(immer@11.1.11)(react@19.2.6)(use-sync-external-store@1.6.0(react@19.2.6))(xstate@5.32.5)
-      '@sanity/telemetry': 1.1.0(react@19.2.6)
-      '@sanity/types': 6.5.0(@types/react@19.2.14)
-      '@sanity/ui': 3.3.5(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.6(react@19.2.6))(react-is@19.2.7)(react@19.2.6)(styled-components@6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
-      '@sanity/util': 6.5.0(@types/react@19.2.14)
-      '@sanity/uuid': 3.0.3
-      '@sentry/react': 10.65.0(react@19.2.6)
-      '@tanstack/react-table': 8.21.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@tanstack/react-virtual': 3.14.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@xstate/react': 6.1.0(@types/react@19.2.14)(react@19.2.6)(xstate@5.32.5)
-      clsx: 2.1.1
-=======
       '@sanity/cli': 6.7.2(@noble/hashes@2.2.0)(@types/node@20.19.43)(@types/react@19.2.14)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(typescript@5.7.3)(xstate@5.32.5)
       '@sanity/client': 7.23.1
       '@sanity/color': 3.0.6
@@ -32444,7 +31416,6 @@ snapshots:
       '@tanstack/react-virtual': 3.14.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@xstate/react': 6.1.0(@types/react@19.2.14)(react@19.2.6)(xstate@5.32.5)
       classnames: 2.5.1
->>>>>>> crm
       color2k: 2.0.4
       dataloader: 2.2.3
       date-fns: 4.4.0
@@ -32455,29 +31426,17 @@ snapshots:
       history: 5.3.0
       i18next: 26.3.6(typescript@5.7.3)
       is-hotkey-esm: 1.0.0
-<<<<<<< HEAD
-      is-network-error: 1.3.2
-      isomorphic-dompurify: 2.36.0(@noble/hashes@2.2.0)
-=======
       isomorphic-dompurify: 2.26.0
->>>>>>> crm
       json-reduce: 3.0.0
       json-stable-stringify: 1.3.0
       lodash-es: 4.18.1
       mendoza: 3.0.8
       motion: 12.42.2(@emotion/is-prop-valid@1.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       nano-pubsub: 3.0.0
-<<<<<<< HEAD
-      nanoid: 5.1.16
-      observable-callback: 1.0.3(rxjs@7.8.2)
-      path-to-regexp: 6.3.0
-      player.style: 0.3.4(react@19.2.6)
-=======
       nanoid: 3.3.16
       observable-callback: 1.0.3(rxjs@7.8.2)
       path-to-regexp: 6.3.0
       player.style: 0.1.10(react@19.2.6)
->>>>>>> crm
       polished: 4.3.1
       quick-lru: 7.3.0
       raf: 3.4.1
@@ -32499,27 +31458,10 @@ snapshots:
       shallow-equals: 1.0.0
       speakingurl: 14.0.1
       styled-components: 6.4.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-<<<<<<< HEAD
-      swr: 2.4.2(react@19.2.6)
-=======
->>>>>>> crm
       urlpattern-polyfill: 10.1.0
       use-device-pixel-ratio: 1.1.2(react@19.2.6)
       use-hot-module-reload: 2.0.0(react@19.2.6)
       use-sync-external-store: 1.6.0(react@19.2.6)
-<<<<<<< HEAD
-      uuid: 14.0.1
-      web-vitals: 5.3.0
-      xstate: 5.32.5
-    transitivePeerDependencies:
-      - '@babel/core'
-      - '@babel/plugin-transform-runtime'
-      - '@babel/runtime'
-      - '@emotion/is-prop-valid'
-      - '@noble/hashes'
-      - '@oclif/core'
-      - '@rolldown/plugin-babel'
-=======
       uuid: 11.1.1
       web-vitals: 5.3.0
       xstate: 5.32.5
@@ -32527,39 +31469,23 @@ snapshots:
       - '@emotion/is-prop-valid'
       - '@noble/hashes'
       - '@oclif/core'
->>>>>>> crm
       - '@sanity/cli-core'
       - '@types/node'
       - '@types/react'
       - '@types/react-dom'
-<<<<<<< HEAD
-      - '@vitejs/devtools'
-=======
->>>>>>> crm
       - babel-plugin-react-compiler
       - bare-abort-controller
       - bare-buffer
       - bufferutil
       - canvas
-<<<<<<< HEAD
-      - esbuild
-      - immer
-      - jiti
-      - less
-=======
       - immer
       - jiti
       - less
       - lightningcss
->>>>>>> crm
       - oxfmt
       - prismjs
       - react-native
       - react-native-b4a
-<<<<<<< HEAD
-      - rolldown
-=======
->>>>>>> crm
       - sass
       - sass-embedded
       - stylus
@@ -32568,10 +31494,6 @@ snapshots:
       - terser
       - typescript
       - utf-8-validate
-<<<<<<< HEAD
-      - vue-tsc
-=======
->>>>>>> crm
 
   saxes@6.0.0:
     dependencies:
@@ -32842,11 +31764,6 @@ snapshots:
 
   slugify@1.6.9: {}
 
-<<<<<<< HEAD
-  smol-toml@1.5.2: {}
-
-=======
->>>>>>> crm
   smol-toml@1.7.0: {}
 
   socket.io-adapter@2.5.8:
@@ -32919,11 +31836,6 @@ snapshots:
       sort-object-keys: 2.1.0
       tinyglobby: 0.2.17
 
-<<<<<<< HEAD
-  sorted-array-functions@1.3.0: {}
-
-=======
->>>>>>> crm
   source-map-js@1.2.1: {}
 
   source-map-support@0.5.13:
@@ -33144,11 +32056,8 @@ snapshots:
     dependencies:
       '@tokenizer/token': 0.3.0
 
-<<<<<<< HEAD
-=======
   style-mod@4.1.3: {}
 
->>>>>>> crm
   style-to-js@1.1.21:
     dependencies:
       style-to-object: 1.0.14
@@ -33255,11 +32164,8 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.3.6
 
-<<<<<<< HEAD
-=======
   tagged-tag@1.0.0: {}
 
->>>>>>> crm
   tailwind-merge@2.6.1: {}
 
   tailwind-merge@3.6.0: {}
@@ -33474,30 +32380,6 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-<<<<<<< HEAD
-=======
-  ts-jest@29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@30.4.1(@babel/core@7.29.7))(esbuild@0.27.7)(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.43))(typescript@5.7.3):
-    dependencies:
-      bs-logger: 0.2.6
-      fast-json-stable-stringify: 2.1.0
-      handlebars: 4.7.9
-      jest: 29.7.0(@types/node@20.19.43)
-      json5: 2.2.3
-      lodash.memoize: 4.1.2
-      make-error: 1.3.6
-      semver: 7.8.5
-      type-fest: 4.41.0
-      typescript: 5.7.3
-      yargs-parser: 21.1.1
-    optionalDependencies:
-      '@babel/core': 7.29.7
-      '@jest/transform': 30.4.1
-      '@jest/types': 30.4.1
-      babel-jest: 30.4.1(@babel/core@7.29.7)
-      esbuild: 0.27.7
-      jest-util: 30.4.1
-
->>>>>>> crm
   ts-jest@29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@30.4.1(@babel/core@7.29.7))(esbuild@0.28.1)(jest-util@30.4.1)(jest@30.4.2(@types/node@20.19.43))(typescript@5.7.3):
     dependencies:
       bs-logger: 0.2.6
@@ -33519,7 +32401,6 @@ snapshots:
       esbuild: 0.28.1
       jest-util: 30.4.1
 
-<<<<<<< HEAD
   ts-jest@29.4.11(@babel/core@7.29.7)(@jest/transform@30.4.1)(@jest/types@30.4.1)(babel-jest@30.4.1(@babel/core@7.29.7))(jest-util@30.4.1)(jest@29.7.0(@types/node@20.19.43))(typescript@5.7.3):
     dependencies:
       bs-logger: 0.2.6
@@ -33540,8 +32421,6 @@ snapshots:
       babel-jest: 30.4.1(@babel/core@7.29.7)
       jest-util: 30.4.1
 
-=======
->>>>>>> crm
   ts-loader@9.6.2(typescript@5.7.3)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19)):
     dependencies:
       chalk: 4.1.2
@@ -33693,13 +32572,10 @@ snapshots:
 
   type-fest@4.41.0: {}
 
-<<<<<<< HEAD
-=======
   type-fest@5.8.0:
     dependencies:
       tagged-tag: 1.0.0
 
->>>>>>> crm
   typed-array-buffer@1.0.3:
     dependencies:
       call-bound: 1.0.4
@@ -33833,11 +32709,8 @@ snapshots:
 
   unicorn-magic@0.3.0: {}
 
-<<<<<<< HEAD
-=======
   unicorn-magic@0.4.0: {}
 
->>>>>>> crm
   unified@11.0.5:
     dependencies:
       '@types/unist': 3.0.3
@@ -33996,11 +32869,6 @@ snapshots:
 
   uuid@13.0.2: {}
 
-<<<<<<< HEAD
-  uuid@14.0.1: {}
-
-=======
->>>>>>> crm
   uuid@8.3.2: {}
 
   uuid@9.0.1: {}
@@ -34095,8 +32963,6 @@ snapshots:
       - tsx
       - yaml
 
-<<<<<<< HEAD
-=======
   vite-node@5.3.0(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0):
     dependencies:
       cac: 6.7.14
@@ -34117,7 +32983,6 @@ snapshots:
       - tsx
       - yaml
 
->>>>>>> crm
   vite-node@6.0.0(@types/node@20.19.43)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0):
     dependencies:
       cac: 7.0.0
@@ -34139,8 +33004,6 @@ snapshots:
       - tsx
       - yaml
 
-<<<<<<< HEAD
-=======
   vite-tsconfig-paths@6.1.1(typescript@5.7.3)(vite@7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
@@ -34151,7 +33014,6 @@ snapshots:
       - supports-color
       - typescript
 
->>>>>>> crm
   vite-tsconfig-paths@6.1.1(typescript@5.7.3)(vite@8.1.4(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0)):
     dependencies:
       debug: 4.4.3(supports-color@8.1.1)
@@ -34162,8 +33024,6 @@ snapshots:
       - supports-color
       - typescript
 
-<<<<<<< HEAD
-=======
   vite@7.3.6(@types/node@20.19.43)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0):
     dependencies:
       esbuild: 0.28.1
@@ -34181,7 +33041,6 @@ snapshots:
       tsx: 4.23.1
       yaml: 2.9.0
 
->>>>>>> crm
   vite@7.3.6(@types/node@25.9.5)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.49.0)(tsx@4.23.1)(yaml@2.9.0):
     dependencies:
       esbuild: 0.28.1
@@ -34428,11 +33287,8 @@ snapshots:
 
   void-elements@3.1.0: {}
 
-<<<<<<< HEAD
-=======
   w3c-keyname@2.2.8: {}
 
->>>>>>> crm
   w3c-xmlserializer@5.0.0:
     dependencies:
       xml-name-validator: 5.0.0
@@ -34491,6 +33347,44 @@ snapshots:
       schema-utils: 4.3.3
       tapable: 2.3.3
       terser-webpack-plugin: 5.6.1(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19)(webpack@5.106.2(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(postcss@8.5.19))
+      watchpack: 2.5.2
+      webpack-sources: 3.5.1
+    transitivePeerDependencies:
+      - '@minify-html/node'
+      - '@swc/core'
+      - '@swc/css'
+      - '@swc/html'
+      - clean-css
+      - cssnano
+      - csso
+      - esbuild
+      - html-minifier-terser
+      - lightningcss
+      - postcss
+      - uglify-js
+
+  webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19):
+    dependencies:
+      '@types/estree': 1.0.9
+      '@types/json-schema': 7.0.15
+      '@webassemblyjs/ast': 1.14.1
+      '@webassemblyjs/wasm-edit': 1.14.1
+      '@webassemblyjs/wasm-parser': 1.14.1
+      acorn: 8.17.0
+      acorn-import-phases: 1.0.4(acorn@8.17.0)
+      browserslist: 4.28.6
+      chrome-trace-event: 1.0.4
+      enhanced-resolve: 5.24.2
+      es-module-lexer: 2.3.1
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      graceful-fs: 4.2.11
+      loader-runner: 4.3.2
+      mime-db: 1.54.0
+      minimizer-webpack-plugin: 5.6.1(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19)(webpack@5.108.4(@swc/core@1.15.43(@swc/helpers@0.5.23))(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.19))
+      neo-async: 2.6.2
+      schema-utils: 4.3.3
+      tapable: 2.3.3
       watchpack: 2.5.2
       webpack-sources: 3.5.1
     transitivePeerDependencies:
@@ -34692,11 +33586,6 @@ snapshots:
 
   ws@8.20.1: {}
 
-<<<<<<< HEAD
-  ws@8.21.0: {}
-
-=======
->>>>>>> crm
   ws@8.21.1: {}
 
   wsl-utils@0.3.1:

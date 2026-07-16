@@ -43,6 +43,7 @@ import {
   updateZitadelConfig,
   updatePlaneConfig,
   updateScrymeConfig,
+  provisionZitadel,
 } from "../actions/integrations";
 
 const INTEGRATIONS = [
@@ -102,11 +103,36 @@ export default function IntegrationsPage() {
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isProvisioning, setIsProvisioning] = useState(false);
   const [configValues, setConfigValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
     loadStatuses();
   }, []);
+
+  const handleOneClickProvision = async () => {
+    setIsProvisioning(true);
+    const toastId = toast.loading("Provisioning Zitadel organization, project, and application...");
+    try {
+      const res = await provisionZitadel();
+      if (res.success) {
+        toast.success("Zitadel workspace successfully provisioned!", { id: toastId });
+        setConfigValues({
+          zitadelOrgId: res.config.zitadelOrgId,
+          zitadelProjectId: res.config.zitadelProjectId,
+          zitadelAppId: res.config.zitadelAppId,
+        });
+        setSelectedIntegration(null);
+        loadStatuses();
+      } else {
+        toast.error("Failed to provision Zitadel.", { id: toastId });
+      }
+    } catch (error: any) {
+      toast.error(`Provisioning failed: ${error.message}`, { id: toastId });
+    } finally {
+      setIsProvisioning(false);
+    }
+  };
 
   const loadStatuses = async () => {
     setIsLoading(true);
@@ -223,29 +249,73 @@ export default function IntegrationsPage() {
           </div>
         );
       case "zitadel":
+        const isGlobalAdminConfigured = statuses.zitadel?.isGlobalAdminConfigured;
         return (
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Zitadel Org ID</Label>
-              <Input
-                value={configValues.zitadelOrgId || ""}
-                onChange={(e) => setConfigValues({ ...configValues, zitadelOrgId: e.target.value })}
-                placeholder="123456789"
-              />
+          <div className="space-y-6 py-4">
+            <div className="p-4 rounded-xl border border-dashed border-primary/20 bg-primary/5 flex flex-col gap-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-primary animate-pulse" />
+                    One-Click Auto-Provisioning
+                  </h4>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Automatically create a dedicated organization, project, and OIDC client credentials for your store.
+                  </p>
+                </div>
+                <Badge
+                  variant={isGlobalAdminConfigured ? "default" : "outline"}
+                  className={cn(
+                    "text-[9px] font-bold uppercase shrink-0",
+                    isGlobalAdminConfigured
+                      ? "bg-green-500 hover:bg-green-600 text-white border-transparent"
+                      : "bg-amber-50 text-amber-700 border-amber-200"
+                  )}
+                >
+                  {isGlobalAdminConfigured ? "Production Ready" : "Mock Sandbox"}
+                </Badge>
+              </div>
+
+              <Button
+                type="button"
+                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold gap-2 mt-2"
+                onClick={handleOneClickProvision}
+                disabled={isProvisioning}
+              >
+                {isProvisioning ? "Provisioning..." : "Provision Zitadel Workspace"}
+                <Zap className="w-4 h-4" />
+              </Button>
             </div>
-            <div className="space-y-2">
-              <Label>Project ID</Label>
-              <Input
-                value={configValues.zitadelProjectId || ""}
-                onChange={(e) => setConfigValues({ ...configValues, zitadelProjectId: e.target.value })}
-              />
+
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-gray-100"></div>
+              <span className="flex-shrink mx-4 text-[10px] text-gray-400 font-bold uppercase tracking-wider">or configure manually</span>
+              <div className="flex-grow border-t border-gray-100"></div>
             </div>
-            <div className="space-y-2">
-              <Label>App ID (OIDC)</Label>
-              <Input
-                value={configValues.zitadelAppId || ""}
-                onChange={(e) => setConfigValues({ ...configValues, zitadelAppId: e.target.value })}
-              />
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Zitadel Org ID</Label>
+                <Input
+                  value={configValues.zitadelOrgId || ""}
+                  onChange={(e) => setConfigValues({ ...configValues, zitadelOrgId: e.target.value })}
+                  placeholder="123456789"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Project ID</Label>
+                <Input
+                  value={configValues.zitadelProjectId || ""}
+                  onChange={(e) => setConfigValues({ ...configValues, zitadelProjectId: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>App ID (OIDC)</Label>
+                <Input
+                  value={configValues.zitadelAppId || ""}
+                  onChange={(e) => setConfigValues({ ...configValues, zitadelAppId: e.target.value })}
+                />
+              </div>
             </div>
           </div>
         );
