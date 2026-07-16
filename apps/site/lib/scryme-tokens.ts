@@ -19,19 +19,19 @@
 // to literal font-family strings so they render correctly either way.
 
 export const colors = {
-  inkBg: "#0B1220", // primary background — deep ledger-ink navy
-  inkPanel: "#121B2E", // raised surfaces / rows
-  inkPanelAlt: "#0E1626",
-  inkLine: "rgba(241,233,216,0.09)", // hairline rules on dark
-  paper: "#F1E9D8", // warm paper — used sparingly, never as a full section bg
-  brass: "#C89A4B", // primary accent — replaces the generic indigo
-  brassDim: "rgba(200,154,75,0.16)",
-  brassLine: "rgba(200,154,75,0.35)",
-  ledgerGreen: "#4B9073", // positive / synced entries
-  ledgerRust: "#B4553A", // pending / attention entries
-  textPrimary: "#F1E9D8",
-  textMuted: "rgba(241,233,216,0.56)",
-  textFaint: "rgba(241,233,216,0.32)",
+  inkBg: "var(--ink-bg, #0B1220)", // primary background — deep ledger-ink navy
+  inkPanel: "var(--ink-panel, #121B2E)", // raised surfaces / rows
+  inkPanelAlt: "var(--ink-panel-alt, #0E1626)",
+  inkLine: "var(--ink-line, rgba(241,233,216,0.09))", // hairline rules on dark
+  paper: "var(--paper, #F1E9D8)", // warm paper — used sparingly, never as a full section bg
+  brass: "var(--brass, #C89A4B)", // primary accent — replaces the generic indigo
+  brassDim: "var(--brass-dim, rgba(200,154,75,0.16))",
+  brassLine: "var(--brass-line, rgba(200,154,75,0.35))",
+  ledgerGreen: "var(--ledger-green, #4B9073)", // positive / synced entries
+  ledgerRust: "var(--ledger-rust, #B4553A)", // pending / attention entries
+  textPrimary: "var(--text-primary, #F1E9D8)",
+  textMuted: "var(--text-muted, rgba(241,233,216,0.56))",
+  textFaint: "var(--text-faint, rgba(241,233,216,0.32))",
 };
 
 export const fonts = {

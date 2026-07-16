@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
-import { Navbar } from "@/components/layout/navbar";
-import { Footer } from "@/components/layout/footer";
 import { StructuredData } from "@/components/seo/structured-data";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { LayoutContent } from "@/components/layout/layout-content";
 import "./globals.css";
 
 const inter = Inter({
@@ -139,14 +139,14 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className={`${inter.variable} bg-background`}>
+    <html lang="en" className={`${inter.variable} bg-background`} suppressHydrationWarning>
       <body className="font-sans antialiased text-foreground">
-        <StructuredData data={organizationData} />
-        <StructuredData data={websiteData} />
-        <StructuredData data={softwareData} />
-        <Navbar />
-        {children}
-        <Footer />
+        <ThemeProvider>
+          <StructuredData data={organizationData} />
+          <StructuredData data={websiteData} />
+          <StructuredData data={softwareData} />
+          <LayoutContent>{children}</LayoutContent>
+        </ThemeProvider>
       </body>
     </html>
   );
