@@ -103,6 +103,13 @@ const serverSchema = z.object({
   // Windmill
   WINDMILL_BASE_URL: z.string().default("http://windmill:8000"),
   WINDMILL_ADMIN_API_KEY: z.string().optional(),
+
+  // Scryme System Notifications
+  SCRYME_CHAT_API_URL: z.string().optional(),
+  SCRYME_CHAT_CLIENT_ID: z.string().optional(),
+  SCRYME_CHAT_CLIENT_SECRET: z.string().optional(),
+  SCRYME_SYSTEM_WORKSPACE_SLUG: z.string().optional(),
+  SCRYME_SYSTEM_CHANNEL_SLUG: z.string().optional(),
 });
 
 const clientSchema = z.object({
@@ -267,6 +274,12 @@ function getRawEnv() {
     // Windmill
     WINDMILL_BASE_URL: process.env.WINDMILL_BASE_URL,
     WINDMILL_ADMIN_API_KEY: process.env.WINDMILL_ADMIN_API_KEY,
+    // Scryme System Notifications
+    SCRYME_CHAT_API_URL: process.env.SCRYME_CHAT_API_URL,
+    SCRYME_CHAT_CLIENT_ID: process.env.SCRYME_CHAT_CLIENT_ID,
+    SCRYME_CHAT_CLIENT_SECRET: process.env.SCRYME_CHAT_CLIENT_SECRET,
+    SCRYME_SYSTEM_WORKSPACE_SLUG: process.env.SCRYME_SYSTEM_WORKSPACE_SLUG,
+    SCRYME_SYSTEM_CHANNEL_SLUG: process.env.SCRYME_SYSTEM_CHANNEL_SLUG,
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,

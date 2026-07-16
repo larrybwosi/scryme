@@ -349,3 +349,4 @@ export class NotificationEngine {
 
 export const notificationEngine = new NotificationEngine();
 export { isSafeUrl } from "./security";
+export { sendSystemNotification } from "./system";

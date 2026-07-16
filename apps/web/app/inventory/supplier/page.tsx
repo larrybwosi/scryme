@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { getSuppliers } from "../../actions/supplier";
-import { SupplierCard } from "../../../components/supplier/SupplierCard";
-import { SupplierTable } from "../../../components/supplier/supplier-table";
-import { PageHeader } from "../../../components/page-header";
+import { SupplierCard } from "@/components/supplier/SupplierCard";
+import { SupplierTable } from "@/components/supplier/supplier-table";
+import { PageHeader } from "@/components/page-header";
 import {
   Tabs,
   TabsContent,
@@ -12,8 +12,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import { Search, Filter, Truck, LayoutGrid, List } from "lucide-react";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { RegisterSupplierModal } from "../../../components/supplier/register-supplier-modal";
+import { RegisterSupplierModal } from "@/components/supplier/register-supplier-modal";
 import Link from "next/link";
 
 interface SupplierPageProps {

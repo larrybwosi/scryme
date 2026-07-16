@@ -29,6 +29,7 @@
     "date-fns": "^4.1.0",
     "lucide-react": "^0.454.0",
     "next": "16.2.9",
+    "nextjs-toploader": "^3.9.17",
     "nuqs": "^2.9.0",
     "pg": "^8.21.0",
     "postcss": "^8.5.15",
