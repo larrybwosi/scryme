@@ -21,6 +21,9 @@ vi.mock('@repo/db', () => ({
     notificationChannelConfig: {
       findUnique: vi.fn(),
     },
+    scrymeConfiguration: {
+      findUnique: vi.fn(),
+    },
   },
 }));
 

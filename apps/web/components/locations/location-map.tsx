@@ -82,7 +82,7 @@ export function LocationMap({
       <div
         ref={mapRef}
         onClick={handleMapClick}
-        className={`relative w-full h-[220px] rounded-xl border bg-sky-100 overflow-hidden select-none transition-all ${
+        className={`relative w-full h-55 rounded-xl border bg-sky-100 overflow-hidden select-none transition-all ${
           editable
             ? "cursor-crosshair border-dashed hover:border-blue-400"
             : "cursor-default border-solid"
@@ -249,7 +249,7 @@ export function LocationMap({
         </svg>
 
         {/* Map Grid Pattern Overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(#00000010_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(#00000010_1px,transparent_1px)] bg-size-[16px_16px] pointer-events-none" />
 
         {/* Animated radar rings if pinned */}
         {pinPos && (
