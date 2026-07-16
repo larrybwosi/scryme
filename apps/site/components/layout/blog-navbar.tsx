@@ -10,7 +10,7 @@ export function BlogNavbar() {
     <header
       className="fixed top-0 left-0 right-0 z-50 border-b transition-all duration-300 backdrop-blur-md"
       style={{
-        background: "var(--ink-bg, rgba(11,18,32,0.92))",
+        background: "var(--navbar-bg-scrolled)",
         borderColor: colors.inkLine,
       }}
     >
