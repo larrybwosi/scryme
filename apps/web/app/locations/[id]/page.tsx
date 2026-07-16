@@ -4,6 +4,7 @@ import {
   getLocations,
   getLocationStock,
   getMembersForSelect,
+  LocationSettings,
 } from "../../actions/locations";
 import { notFound } from "next/navigation";
 import { Button } from "@repo/ui/components/ui/button";
@@ -80,6 +81,7 @@ export default async function LocationDetailPage({
     notFound();
   }
 
+  const settings = (location.settings as LocationSettings) || {};
   const activeTab = tab || "hierarchy";
   const zoneCount = location.zones.length;
   const unitCount = location.storageUnits?.length ?? 0;
@@ -180,10 +182,10 @@ export default async function LocationDetailPage({
         <div className="space-y-5">
           {/* Branch Image/Banner Card */}
           <Card className="shadow-none border-[#E5E5E5] overflow-hidden">
-            {location?.settings?.imageUrl ? (
+            {settings.imageUrl ? (
               <div className="relative h-[160px] w-full">
                 <Image
-                  src={location.settings.imageUrl}
+                  src={settings.imageUrl}
                   alt={`${location.name} branch custom image`}
                   fill
                   className="object-cover"
@@ -288,8 +290,8 @@ export default async function LocationDetailPage({
             </CardHeader>
             <CardContent>
               <LocationMap
-                latitude={location?.settings?.latitude}
-                longitude={location?.settings?.longitude}
+                latitude={settings.latitude}
+                longitude={settings.longitude}
               />
             </CardContent>
           </Card>

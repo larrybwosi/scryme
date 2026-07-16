@@ -16,6 +16,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -99,6 +100,8 @@ export function LocationSheet({
   const [open, setOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const locationSettings = (location?.settings as any) || {};
+
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema) as any,
     defaultValues: {
@@ -125,9 +128,9 @@ export function LocationSheet({
         unit: location?.capacity?.unit || "units",
       },
       settings: {
-        imageUrl: location?.settings?.imageUrl || "",
-        latitude: location?.settings?.latitude || null,
-        longitude: location?.settings?.longitude || null,
+        imageUrl: locationSettings.imageUrl || "",
+        latitude: locationSettings.latitude || null,
+        longitude: locationSettings.longitude || null,
       },
     },
   });
@@ -158,7 +161,7 @@ export function LocationSheet({
         values.parentLocationId === "none" ? null : values.parentLocationId,
       managerId: values.managerId === "none" ? null : values.managerId,
       settings: {
-        ...(location?.settings || {}),
+        ...((location?.settings as any) || {}),
         ...values.settings,
       },
     };
