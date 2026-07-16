@@ -44,7 +44,7 @@ export default function PrivacyPage() {
               1. Information We Collect
             </h2>
             <p className="mb-4">
-              Scryme Technologies Ltd. ("we", "us", or "our") collects
+              Scryme Technologies Ltd. (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) collects
               information required to provide, configure, and maintain our
               enterprise B2B operating systems. This includes business accounts,
               operational records, transactional events, customer contact

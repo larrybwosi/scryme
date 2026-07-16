@@ -45,7 +45,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={cycleTheme}
-      className="p-2 rounded-lg transition-colors duration-200 border cursor-pointer hover:bg-[rgba(241,233,216,0.06)] hover:border-brass/40"
+      className="p-2 rounded-lg transition-colors duration-200 border cursor-pointer hover:bg-[var(--hover-bg-intense)] hover:border-brass/40"
       style={{
         color: colors.brass,
         borderColor: colors.inkLine,

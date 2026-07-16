@@ -112,6 +112,21 @@
   --text-primary: #111827;
   --text-muted: rgba(11, 18, 32, 0.64);
   --text-faint: rgba(11, 18, 32, 0.36);
+
+  /* Theme-adaptive helper variables — Light mode values */
+  --hover-bg: rgba(11, 18, 32, 0.04);
+  --hover-bg-intense: rgba(11, 18, 32, 0.08);
+  --navbar-bg-scrolled: rgba(251, 249, 244, 0.92);
+  --mobile-menu-bg: rgba(251, 249, 244, 0.97);
+
+  /* Pricing CTA adaptive variables (inverted from primary theme layout) */
+  --pricing-cta-text-muted: rgba(241, 233, 216, 0.68);
+  --pricing-cta-text-body: rgba(241, 233, 216, 0.8);
+  --pricing-cta-border-dim: rgba(241, 233, 216, 0.3);
+  --pricing-cta-card-bg: rgba(241, 233, 216, 0.04);
+  --pricing-cta-card-border: rgba(241, 233, 216, 0.14);
+  --pricing-cta-text-faint: rgba(241, 233, 216, 0.4);
+  --pricing-cta-text-muted-alt: rgba(241, 233, 216, 0.65);
 }
 
 /* ========================================
@@ -141,6 +156,21 @@
   --text-primary: #f1e9d8;
   --text-muted: rgba(241, 233, 216, 0.56);
   --text-faint: rgba(241, 233, 216, 0.32);
+
+  /* Theme-adaptive helper variables — Dark mode values */
+  --hover-bg: rgba(241, 233, 216, 0.04);
+  --hover-bg-intense: rgba(241, 233, 216, 0.08);
+  --navbar-bg-scrolled: rgba(11, 18, 32, 0.92);
+  --mobile-menu-bg: rgba(11, 18, 32, 0.97);
+
+  /* Pricing CTA adaptive variables (inverted from primary theme layout) */
+  --pricing-cta-text-muted: rgba(11, 18, 32, 0.68);
+  --pricing-cta-text-body: rgba(11, 18, 32, 0.8);
+  --pricing-cta-border-dim: rgba(11, 18, 32, 0.3);
+  --pricing-cta-card-bg: rgba(11, 18, 32, 0.04);
+  --pricing-cta-card-border: rgba(11, 18, 32, 0.14);
+  --pricing-cta-text-faint: rgba(11, 18, 32, 0.4);
+  --pricing-cta-text-muted-alt: rgba(11, 18, 32, 0.65);
 }
 
 /* ========================================

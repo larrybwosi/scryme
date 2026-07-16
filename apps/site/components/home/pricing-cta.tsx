@@ -84,7 +84,7 @@ export function PricingCTA({
           </h2>
           <p
             className="text-lg max-w-lg mx-auto lg:mx-0 text-pretty leading-relaxed"
-            style={{ color: "rgba(11,18,32,0.68)", fontFamily: fonts.body }}
+            style={{ color: "var(--pricing-cta-text-muted)", fontFamily: fonts.body }}
           >
             {displayDescription}
           </p>
@@ -93,7 +93,7 @@ export function PricingCTA({
               <li
                 key={item}
                 className="flex items-center gap-2 text-sm"
-                style={{ color: "rgba(11,18,32,0.8)", fontFamily: fonts.body }}
+                style={{ color: "var(--pricing-cta-text-body)", fontFamily: fonts.body }}
               >
                 <CheckCircle
                   className="w-4 h-4 shrink-0"
@@ -127,7 +127,7 @@ export function PricingCTA({
               href={`${webUrl}/sign-up`}
               className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-colors"
               style={{
-                border: `1px solid rgba(11,18,32,0.3)`,
+                border: "1px solid var(--pricing-cta-border-dim)",
                 color: colors.inkBg,
                 fontFamily: fonts.body,
               }}
@@ -150,13 +150,13 @@ export function PricingCTA({
           <div
             className="rounded-lg p-8"
             style={{
-              background: "rgba(11,18,32,0.04)",
-              border: `1px solid rgba(11,18,32,0.14)`,
+              background: "var(--pricing-cta-card-bg)",
+              border: "1px solid var(--pricing-cta-card-border)",
             }}
           >
             <div
               className="flex items-center justify-between pb-4 mb-5 border-b"
-              style={{ borderColor: "rgba(11,18,32,0.14)" }}
+              style={{ borderColor: "var(--pricing-cta-card-border)" }}
             >
               <span
                 className="text-[11px] uppercase tracking-widest"
@@ -166,7 +166,7 @@ export function PricingCTA({
               </span>
               <span
                 className="text-[11px]"
-                style={{ color: "rgba(11,18,32,0.4)", fontFamily: fonts.mono }}
+                style={{ color: "var(--pricing-cta-text-faint)", fontFamily: fonts.mono }}
               >
                 {new Date().getFullYear()}
               </span>
@@ -177,7 +177,7 @@ export function PricingCTA({
                   <span
                     className="text-sm shrink-0"
                     style={{
-                      color: "rgba(11,18,32,0.65)",
+                      color: "var(--pricing-cta-text-muted-alt)",
                       fontFamily: fonts.body,
                     }}
                   >
@@ -185,7 +185,7 @@ export function PricingCTA({
                   </span>
                   <span
                     className="flex-1 border-b border-dotted translate-y-[-3px]"
-                    style={{ borderColor: "rgba(11,18,32,0.3)" }}
+                    style={{ borderColor: "var(--pricing-cta-border-dim)" }}
                     aria-hidden="true"
                   />
                   <span

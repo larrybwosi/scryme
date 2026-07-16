@@ -53,7 +53,7 @@ export function Navbar() {
     <header
       className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
       style={{
-        background: scrolled ? "rgba(11,18,32,0.92)" : "transparent",
+        background: scrolled ? "var(--navbar-bg-scrolled)" : "transparent",
         backdropFilter: scrolled ? "blur(10px)" : "none",
         borderBottom: scrolled
           ? `1px solid ${colors.inkLine}`
@@ -122,7 +122,7 @@ export function Navbar() {
                   key={product.code}
                   href={product.href}
                   role="menuitem"
-                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[rgba(241,233,216,0.04)]"
+                  className="flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--hover-bg)]"
                   onClick={() => setProductsOpen(false)}
                 >
                   <div
@@ -232,7 +232,7 @@ export function Navbar() {
       <div
         className="lg:hidden overflow-y-auto transition-all duration-300"
         style={{
-          background: "rgba(11,18,32,0.97)",
+          background: "var(--mobile-menu-bg)",
           backdropFilter: "blur(10px)",
           borderTop: `1px solid ${colors.inkLine}`,
           maxHeight: mobileOpen ? "calc(100vh - 64px)" : 0,
@@ -251,7 +251,7 @@ export function Navbar() {
             <Link
               key={product.code}
               href={product.href}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[rgba(241,233,216,0.04)]"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-[var(--hover-bg)]"
               onClick={() => setMobileOpen(false)}
             >
               <div

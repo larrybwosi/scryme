@@ -46,7 +46,7 @@ function ManifestRow({
         duration: 0.5,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="group grid grid-cols-1 sm:grid-cols-[88px_minmax(0,1.4fr)_minmax(0,2fr)_140px] items-start sm:items-center gap-3 sm:gap-6 px-5 py-5 sm:py-4 border-b transition-colors hover:bg-[rgba(241,233,216,0.02)]"
+      className="group grid grid-cols-1 sm:grid-cols-[88px_minmax(0,1.4fr)_minmax(0,2fr)_140px] items-start sm:items-center gap-3 sm:gap-6 px-5 py-5 sm:py-4 border-b transition-colors hover:bg-[var(--hover-bg)]"
       style={{ borderColor: colors.inkLine }}
     >
       {/* Ticker code */}
