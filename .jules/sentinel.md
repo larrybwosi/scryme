@@ -159,3 +159,12 @@
 **Vulnerability:** The Attendance module allowed members to check in/out using location IDs belonging to other organizations, as the system only verified the member's identity but not the location's ownership.
 **Learning:** Security guards at the controller level that establish organization context do not transitively protect foreign keys provided in the request body. Each secondary ID must be explicitly validated against the established tenant context.
 **Prevention:** Always perform a scoped lookup (e.g., `inventoryLocation.findFirst({ where: { id: locationId, organizationId } })`) for all user-provided resource identifiers before using them in business logic or persisting them.
+
+## 2026-07-16 - Multi-tenant Isolation and Mass Assignment in V2 Members Service
+**Vulnerability:** Mass assignment in member creation/update and IDOR risk in mutation methods (update, delete, pin change).
+**Learning:** The `Member` model lacks a composite unique index on `[id, organizationId]`. Standard Prisma `update` calls require a unique selector; using a non-unique composite filter in `update` is either a type error or potentially ignores the non-unique part of the filter depending on implementation. Using spread operators (`...data`) in service methods bypasses mass assignment protections.
+**Prevention:** Always use explicit field whitelisting for mutation payloads. For models lacking a composite unique index on `[id, organizationId]`, use `updateMany` with a scoped `where` clause to enforce multi-tenant isolation, followed by a `findFirst` if the updated record needs to be returned.
+## 2026-07-16 - IDOR in Business Account Location Association
+**Vulnerability:** The `BusinessAccountService.createBusinessAccount` method accepted a `defaultLocationId` from the request body without verifying that it belonged to the authenticated `organizationId`, allowing cross-tenant resource association.
+**Learning:** Controller-level multi-tenancy guards (like `MultiTenancyGuard`) only establish the tenant context; they do not automatically validate foreign keys or linked resource IDs provided in the request body. Each secondary ID must be explicitly validated against the established `organizationId` to prevent IDOR vulnerabilities.
+**Prevention:** Always perform a scoped lookup (e.g., `findFirst` with `id` and `organizationId`) for all user-provided resource identifiers (foreign keys) before persisting them or using them in business logic.

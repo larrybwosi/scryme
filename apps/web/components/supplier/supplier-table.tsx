@@ -40,15 +40,23 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
   const router = useRouter();
 
   return (
-    <div className="rounded-xl border bg-white overflow-hidden shadow-sm">
+    <div className="rounded-md border bg-white overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50/50">
+        <TableHeader className="bg-gray-50">
           <TableRow>
-            <TableHead className="font-bold">Supplier Name</TableHead>
-            <TableHead className="font-bold">Code</TableHead>
-            <TableHead className="font-bold">Products</TableHead>
-            <TableHead className="font-bold">Total Purchases</TableHead>
-            <TableHead className="font-bold">Risk Level</TableHead>
+            <TableHead className="font-semibold text-gray-700">
+              Supplier Name
+            </TableHead>
+            <TableHead className="font-semibold text-gray-700">Code</TableHead>
+            <TableHead className="font-semibold text-gray-700">
+              Products
+            </TableHead>
+            <TableHead className="font-semibold text-gray-700">
+              Total Purchases
+            </TableHead>
+            <TableHead className="font-semibold text-gray-700">
+              Risk Level
+            </TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -65,13 +73,13 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
             data.map(supplier => (
               <TableRow
                 key={supplier.id}
-                className="cursor-pointer hover:bg-gray-50/50 transition-colors"
+                className="cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() =>
                   router.push(`/inventory/supplier/${supplier.id}`)
                 }>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/5 flex items-center justify-center text-primary font-bold relative overflow-hidden">
+                    <div className="w-9 h-9 rounded-sm border bg-gray-50 flex items-center justify-center text-gray-500 font-semibold relative overflow-hidden">
                       {supplier.logo ? (
                         <Image
                           src={supplier.logo}
@@ -80,17 +88,17 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                           className="object-cover"
                         />
                       ) : (
-                        <Building2 size={20} />
+                        <Building2 size={18} />
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-bold text-sm text-[#1D1D1F]">
+                      <span className="font-semibold text-sm text-[#1D1D1F]">
                         {supplier.name}
                       </span>
                       <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                         <Star
                           size={10}
-                          className="text-yellow-500 fill-yellow-500"
+                          className="text-amber-500 fill-amber-500"
                         />
                         <span>
                           {supplier.avgRating} ({supplier.reviewCount})
@@ -102,7 +110,7 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                 <TableCell>
                   <Badge
                     variant="outline"
-                    className="font-mono text-[11px] bg-muted/30">
+                    className="rounded-sm font-mono text-[11px] bg-muted/30">
                     {supplier.code}
                   </Badge>
                 </TableCell>
@@ -120,13 +128,13 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                   <Badge
                     variant="secondary"
                     className={cn(
-                      "text-[10px] px-2 py-0 h-5 font-bold uppercase",
+                      "rounded-sm text-[10px] px-2 py-0 h-5 font-semibold uppercase tracking-wide",
                       supplier.riskLevel === "low" &&
-                        "bg-green-100 text-green-700",
+                        "bg-emerald-50 text-emerald-700 border border-emerald-200",
                       supplier.riskLevel === "medium" &&
-                        "bg-amber-100 text-amber-700",
+                        "bg-amber-50 text-amber-700 border border-amber-200",
                       supplier.riskLevel === "high" &&
-                        "bg-red-100 text-red-700",
+                        "bg-red-50 text-red-700 border border-red-200",
                     )}>
                     {supplier.riskLevel}
                   </Badge>
@@ -134,11 +142,15 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                 <TableCell onClick={e => e.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
+                      <Button
+                        variant="ghost"
+                        className="h-8 w-8 p-0 rounded-sm">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-40 rounded-md">
                       <DropdownMenuItem
                         onClick={() =>
                           router.push(`/inventory/supplier/${supplier.id}`)
