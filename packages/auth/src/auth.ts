@@ -8,8 +8,6 @@ import { db } from "@repo/db";
 import { getRedisClient } from "@repo/shared/redis";
 import { env } from "@repo/env";
 
-import { sendSystemNotification } from "@repo/notifications";
-
 export const auth = betterAuth({
   ...(authOptions as any),
   databaseHooks: {
@@ -17,6 +15,7 @@ export const auth = betterAuth({
       create: {
         after: async (user: any) => {
           try {
+            const { sendSystemNotification } = await import("@repo/notifications");
             await sendSystemNotification(
               `🎉 *New User Joined*\n• *Name*: ${user.name || "N/A"}\n• *Email*: ${user.email}\n• *Role*: ${user.role || "MEMBER"}\n• *ID*: \`${user.id}\``
             );
