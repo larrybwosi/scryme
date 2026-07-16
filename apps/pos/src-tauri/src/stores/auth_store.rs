@@ -690,10 +690,15 @@ pub async fn get_locations_command(
         ));
     }
 
-    let data: serde_json::Value = res
+    let mut data: serde_json::Value = res
         .json()
         .await
         .map_err(|e| format!("Invalid JSON: {}", e))?;
+
+    if data["success"].as_bool().unwrap_or(false) && data.get("data").is_some() {
+        data = data["data"].clone();
+    }
+
     Ok(data)
 }
 
