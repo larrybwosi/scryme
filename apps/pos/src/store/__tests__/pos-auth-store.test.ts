@@ -71,4 +71,76 @@ describe('PosAuthStore', () => {
     );
     expect(useAuthStore.getState().isConfigured).toBe(true);
   });
+
+  it('should provision device with wrapped API response and matching location', async () => {
+    mockInvoke
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          apiKey: 'test-api-key',
+          device: {
+            deviceName: 'Test Terminal',
+            deviceType: 'MAIN_HUB',
+            locationId: 'loc-1',
+          },
+          organization: {
+            slug: 'test-org-slug',
+          },
+        },
+      })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({
+        locations: [{ id: 'loc-1', name: 'Test Location matching' }],
+      });
+
+    await useAuthStore.getState().provisionDevice('valid-setup-token');
+
+    expect(mockInvoke).toHaveBeenCalledWith('set_device_config', {
+      baseUrl: 'http://localhost:3000',
+      locationId: 'loc-1',
+      deviceKey: 'test-api-key',
+      orgSlug: 'test-org-slug',
+    });
+
+    const currentLocation = useAuthStore.getState().currentLocation;
+    expect(currentLocation).toBeDefined();
+    expect(currentLocation?.id).toBe('loc-1');
+    expect(currentLocation?.name).toBe('Test Location matching');
+  });
+
+  it('should provision device with unwrapped API response and fallback location', async () => {
+    mockInvoke
+      .mockResolvedValueOnce({
+        apiKey: 'test-api-key-unwrapped',
+        device: {
+          deviceName: 'Unwrapped Terminal',
+          deviceType: 'KDS',
+          locationId: 'loc-2',
+        },
+        organization: {
+          slug: 'unwrapped-org-slug',
+        },
+      })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({
+        success: true,
+        data: {
+          locations: [],
+        },
+      });
+
+    await useAuthStore.getState().provisionDevice('unwrapped-setup-token');
+
+    expect(mockInvoke).toHaveBeenCalledWith('set_device_config', {
+      baseUrl: 'http://localhost:3000',
+      locationId: 'loc-2',
+      deviceKey: 'test-api-key-unwrapped',
+      orgSlug: 'unwrapped-org-slug',
+    });
+
+    const currentLocation = useAuthStore.getState().currentLocation;
+    expect(currentLocation).toBeDefined();
+    expect(currentLocation?.id).toBe('loc-2');
+    expect(currentLocation?.name).toBe('Unwrapped Terminal');
+  });
 });
