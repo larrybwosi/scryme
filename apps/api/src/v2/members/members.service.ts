@@ -59,7 +59,25 @@ export class MembersService {
 
   async createMember(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
-    const { email, name, role, pin, cardId, ...otherData } = data;
+    // 🛡️ Sentinel: Explicit field whitelisting to prevent mass assignment.
+    const {
+      email,
+      name,
+      role,
+      pin,
+      cardId,
+      phone,
+      address,
+      age,
+      gender,
+      tags,
+      jobTitle,
+      employmentType,
+      joiningDate,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+    } = data;
 
     // Check if user exists or create one
     let user = await this.prisma.client.user.findUnique({
@@ -76,54 +94,125 @@ export class MembersService {
 
     return this.prisma.client.member.create({
       data: {
-        ...otherData,
         organizationId,
         userId: user.id,
         role: role || MemberRole.EMPLOYEE,
         cardId,
         pinHash,
+        phone,
+        address,
+        age,
+        gender,
+        tags,
+        jobTitle,
+        employmentType,
+        joiningDate: joiningDate ? new Date(joiningDate) : undefined,
+        emergencyContactName,
+        emergencyContactPhone,
+        emergencyContactRelation,
       },
     });
   }
 
   async updateMember(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    const { pin, ...updateData } = data;
+    // 🛡️ Sentinel: Explicit field whitelisting to prevent mass assignment.
+    const {
+      role,
+      pin,
+      cardId,
+      phone,
+      address,
+      age,
+      gender,
+      tags,
+      jobTitle,
+      employmentType,
+      joiningDate,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+      isActive,
+    } = data;
+
+    const updateData: any = {
+      role,
+      cardId,
+      phone,
+      address,
+      age,
+      gender,
+      tags,
+      jobTitle,
+      employmentType,
+      joiningDate: joiningDate ? new Date(joiningDate) : undefined,
+      emergencyContactName,
+      emergencyContactPhone,
+      emergencyContactRelation,
+      isActive,
+    };
 
     if (pin) {
       updateData.pinHash = await argon2.hash(pin);
     }
 
-    return this.prisma.client.member.update({
+    // Remove undefined fields
+    Object.keys(updateData).forEach(
+      key => updateData[key] === undefined && delete updateData[key],
+    );
+
+    // 🛡️ Sentinel: Use updateMany with organizationId for multi-tenant isolation.
+    const result = await this.prisma.client.member.updateMany({
       where: { id, organizationId },
       data: updateData,
+    });
+
+    if (result.count === 0) throw new NotFoundException("Member not found");
+
+    return this.prisma.client.member.findFirst({
+      where: { id, organizationId },
     });
   }
 
   async deleteMember(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
+    // 🛡️ Sentinel: Use updateMany with organizationId for multi-tenant isolation.
     // Soft delete
-    return this.prisma.client.member.update({
+    const result = await this.prisma.client.member.updateMany({
       where: { id, organizationId },
       data: { deletedAt: new Date(), isActive: false },
     });
+
+    if (result.count === 0) throw new NotFoundException("Member not found");
+
+    return { success: true };
   }
 
   async unbanMember(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    return this.prisma.client.member.update({
+    // 🛡️ Sentinel: Use updateMany with organizationId for multi-tenant isolation.
+    const result = await this.prisma.client.member.updateMany({
       where: { id, organizationId },
       data: { isActive: true },
     });
+
+    if (result.count === 0) throw new NotFoundException("Member not found");
+
+    return { success: true };
   }
 
   async changeMemberPin(ctx: V2ApiContext, id: string, pin: string) {
     const { organizationId } = ctx;
     const pinHash = await argon2.hash(pin);
-    return this.prisma.client.member.update({
+    // 🛡️ Sentinel: Use updateMany with organizationId for multi-tenant isolation.
+    const result = await this.prisma.client.member.updateMany({
       where: { id, organizationId },
       data: { pinHash },
     });
+
+    if (result.count === 0) throw new NotFoundException("Member not found");
+
+    return { success: true };
   }
 
   async login(
