@@ -16,6 +16,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -35,6 +36,8 @@ import { Switch } from "@repo/ui/components/ui/switch";
 import { createLocation, updateLocation } from "../../app/actions/locations";
 import { toast } from "sonner";
 import { LocationType } from "@repo/db/client";
+import { ImageUpload } from "../image-upload";
+import { LocationMap } from "./location-map";
 
 const locationSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -65,6 +68,13 @@ const locationSchema = z.object({
       unit: z.string().optional(),
     })
     .optional(),
+  settings: z
+    .object({
+      imageUrl: z.string().optional().nullable(),
+      latitude: z.number().optional().nullable(),
+      longitude: z.number().optional().nullable(),
+    })
+    .optional(),
 });
 
 type LocationFormValues = z.infer<typeof locationSchema>;
@@ -90,6 +100,8 @@ export function LocationSheet({
   const [open, setOpen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const locationSettings = (location?.settings as any) || {};
+
   const form = useForm<LocationFormValues>({
     resolver: zodResolver(locationSchema) as any,
     defaultValues: {
@@ -114,6 +126,11 @@ export function LocationSheet({
       capacity: {
         total: location?.capacity?.total || 0,
         unit: location?.capacity?.unit || "units",
+      },
+      settings: {
+        imageUrl: locationSettings.imageUrl || "",
+        latitude: locationSettings.latitude || null,
+        longitude: locationSettings.longitude || null,
       },
     },
   });
@@ -143,6 +160,10 @@ export function LocationSheet({
       parentLocationId:
         values.parentLocationId === "none" ? null : values.parentLocationId,
       managerId: values.managerId === "none" ? null : values.managerId,
+      settings: {
+        ...((location?.settings as any) || {}),
+        ...values.settings,
+      },
     };
 
     try {
@@ -440,6 +461,104 @@ export function LocationSheet({
                           <FormLabel>Phone</FormLabel>
                           <FormControl>
                             <Input placeholder="+1 (555) 000-0000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Branch Customization Section */}
+                <div className="space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                    Branch Customization
+                  </h3>
+                  <FormField
+                    control={form.control}
+                    name="settings.imageUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Branch Custom Image / Banner</FormLabel>
+                        <FormControl>
+                          <ImageUpload
+                            value={field.value ? [field.value] : []}
+                            onChange={urls => field.onChange(urls[0] || "")}
+                            maxImages={1}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Upload an image to represent this branch on its home
+                          page.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="space-y-1.5">
+                    <FormLabel>Select Location & Pin on Map</FormLabel>
+                    <LocationMap
+                      latitude={form.watch("settings.latitude")}
+                      longitude={form.watch("settings.longitude")}
+                      onPinChange={coords => {
+                        form.setValue("settings.latitude", coords.latitude);
+                        form.setValue("settings.longitude", coords.longitude);
+                      }}
+                      editable
+                    />
+                    <FormDescription>
+                      Click anywhere on the vector grid above to drop a physical
+                      pin.
+                    </FormDescription>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="settings.latitude"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Latitude</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="any"
+                              placeholder="e.g. 40.7589"
+                              value={field.value ?? ""}
+                              onChange={e =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : null,
+                                )
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="settings.longitude"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Longitude</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="any"
+                              placeholder="e.g. -73.9851"
+                              value={field.value ?? ""}
+                              onChange={e =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : null,
+                                )
+                              }
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
