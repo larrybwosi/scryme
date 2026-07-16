@@ -40,6 +40,12 @@ export const auth = betterAuth({
     protocol: env.NODE_ENV === "development" ? "http" : "https",
     fallback: env.BETTER_AUTH_URL || (env.NODE_ENV === "production" ? "https://app.scryme.tech" : "http://localhost:3000"),
   },
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+      domain: env.NODE_ENV === "production" ? "scryme.tech" : undefined,
+    },
+  },
   session: {
     preserveSessionInDatabase: true,
     storeSessionInDatabase: true,
