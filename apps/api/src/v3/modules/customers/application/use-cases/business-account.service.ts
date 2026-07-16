@@ -14,6 +14,18 @@ export class BusinessAccountService {
     organizationId: string,
     dto: CreateBusinessAccountDto,
   ) {
+    // SECURITY (Sentinel): Verify location ownership if provided
+    if (dto.defaultLocationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: dto.defaultLocationId, organizationId },
+        select: { id: true },
+      });
+
+      if (!location) {
+        throw new NotFoundException("Location not found");
+      }
+    }
+
     // 1. Create Business Account
     const businessAccount = await this.prisma.client.businessAccount.create({
       data: {
