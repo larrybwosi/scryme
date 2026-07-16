@@ -15,12 +15,16 @@ export const auth = betterAuth({
       create: {
         after: async (user: any) => {
           try {
-            const { sendSystemNotification } = await import("@repo/notifications");
+            const { sendSystemNotification } =
+              await import("@repo/notifications");
             await sendSystemNotification(
-              `🎉 *New User Joined*\n• *Name*: ${user.name || "N/A"}\n• *Email*: ${user.email}\n• *Role*: ${user.role || "MEMBER"}\n• *ID*: \`${user.id}\``
+              `🎉 *New User Joined*\n• *Name*: ${user.name || "N/A"}\n• *Email*: ${user.email}\n• *Role*: ${user.role || "MEMBER"}\n• *ID*: \`${user.id}\``,
             );
           } catch (error: any) {
-            console.error("Failed to send new user signup notification:", error);
+            console.error(
+              "Failed to send new user signup notification:",
+              error,
+            );
           }
         },
       },
@@ -38,17 +42,18 @@ export const auth = betterAuth({
       "*.scryme.tech",
     ],
     protocol: env.NODE_ENV === "development" ? "http" : "https",
-    fallback: env.BETTER_AUTH_URL || (env.NODE_ENV === "production" ? "https://app.scryme.tech" : "http://localhost:3000"),
+    fallback:
+      env.BETTER_AUTH_URL ||
+      (env.NODE_ENV === "production"
+        ? "https://app.scryme.tech"
+        : "http://localhost:3000"),
   },
-<<<<<<< HEAD
   advanced: {
     crossSubDomainCookies: {
       enabled: true,
       domain: env.NODE_ENV === "production" ? "scryme.tech" : undefined,
     },
   },
-=======
->>>>>>> main
   session: {
     preserveSessionInDatabase: true,
     storeSessionInDatabase: true,
