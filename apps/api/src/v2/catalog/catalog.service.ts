@@ -426,14 +426,41 @@ export class CatalogService {
 
   async getVariants(ctx: V2ApiContext, query: any) {
     const { organizationId } = ctx;
-    const { page = 1, limit = 20 } = query;
-    const skip = (Number(page) - 1) * Number(limit);
+    const page = Math.max(1, parseInt(query.page || "1", 10));
+    const limit = Math.min(100, Math.max(1, parseInt(query.limit || "20", 10)));
+    const skip = (page - 1) * limit;
 
     return this.prisma.client.productVariant.findMany({
       where: { product: { organizationId } },
-      include: { product: true, variantStocks: true },
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Using targeted select instead of include to fetch only essential scalar fields and relations.
+       * This reduces database I/O, network payload size, and memory usage during serialization.
+       */
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        retailPrice: true,
+        buyingPrice: true,
+        isActive: true,
+        product: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+          },
+        },
+        variantStocks: {
+          select: {
+            availableStock: true,
+            locationId: true,
+          },
+        },
+      },
       skip,
-      take: Number(limit),
+      take: limit,
+      orderBy: { name: "asc" },
     });
   }
 
