@@ -23,19 +23,24 @@ function formatDate(dateString: string) {
   }
 }
 
-// Rough word-count based reading time estimate from Portable Text blocks
-function estimateReadTime(body: any): number {
-  if (!Array.isArray(body)) return 1;
-  const words = body
+function getBodyDetails(body: any) {
+  if (!Array.isArray(body)) return { text: "", wordCount: 0, readTime: 1 };
+  const wordsList = body
     .filter(
-      (block) => block?._type === "block" && Array.isArray(block.children),
+      (block: any) => block?._type === "block" && Array.isArray(block.children),
     )
-    .flatMap((block) => block.children.map((c: any) => c.text || ""))
+    .flatMap((block: any) => block.children.map((c: any) => c.text || ""))
     .join(" ")
     .trim()
     .split(/\s+/)
-    .filter(Boolean).length;
-  return Math.max(1, Math.round(words / 200));
+    .filter(Boolean);
+  const wordCount = wordsList.length;
+  const readTime = Math.max(1, Math.round(wordCount / 200));
+  return {
+    text: wordsList.join(" "),
+    wordCount,
+    readTime,
+  };
 }
 
 interface Props {
@@ -197,21 +202,23 @@ const portableTextComponents = {
   },
   types: {
     image: ({ value }: any) => {
-      if (!value?.asset) return null;
+      if (!value) return null;
+      const imgUrl = value.url || (value.asset ? urlFor(value).width(1000).url() : null);
+      if (!imgUrl) return null;
       return (
         <figure
           className="my-6 sm:my-8 rounded-xl overflow-hidden border"
           style={{ borderColor: colors.inkLine }}
         >
           <img
-            src={urlFor(value).width(1000).url()}
+            src={imgUrl}
             alt={value.alt || "Article illustration"}
             className="w-full h-auto max-h-[450px] object-cover"
             loading="lazy"
           />
-          {value.caption && (
+          {(value.caption || value.attribution) && (
             <figcaption
-              className="px-4 py-2 text-xs sm:text-sm text-center border-t font-medium"
+              className="px-4 py-2 text-xs sm:text-sm text-center border-t font-medium flex flex-col gap-0.5"
               style={{
                 borderColor: colors.inkLine,
                 color: colors.textMuted,
@@ -219,7 +226,12 @@ const portableTextComponents = {
                 fontFamily: fonts.body,
               }}
             >
-              {value.caption}
+              {value.caption && <span>{value.caption}</span>}
+              {value.attribution && (
+                <span className="text-[10px] sm:text-xs opacity-75 font-normal italic">
+                  {value.attribution}
+                </span>
+              )}
             </figcaption>
           )}
         </figure>
@@ -234,25 +246,30 @@ export default async function BlogPost({ params }: Props) {
 
   if (!post) notFound();
 
-  const readTime = estimateReadTime(post.body);
+  const { text: plainTextBody, wordCount, readTime } = getBodyDetails(post.body);
   const ogImage = post.mainImage
-    ? urlFor(post.mainImage).width(1200).height(630).url()
+    ? (post.mainImage.url || urlFor(post.mainImage).width(1200).height(630).url())
     : "https://scryme.tech/og-image.png";
+
+  const authorName = post.author?.name || "Scryme Team";
+  const isTeam = authorName.toLowerCase().includes("team") || authorName.toLowerCase().includes("scryme");
 
   const articleData = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
     datePublished: post.publishedAt,
-    image: ogImage,
-    description: post.excerpt,
+    dateModified: post.publishedAt,
+    image: [ogImage],
+    description: post.excerpt || post.title,
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": `https://scryme.tech/blog/${slug}`,
     },
     author: {
-      "@type": "Organization",
-      name: "Scryme",
+      "@type": isTeam ? "Organization" : "Person",
+      name: authorName,
+      url: "https://scryme.tech/about",
     },
     publisher: {
       "@type": "Organization",
@@ -261,7 +278,10 @@ export default async function BlogPost({ params }: Props) {
         "@type": "ImageObject",
         url: "https://scryme.tech/logo.png",
       },
+      url: "https://scryme.tech",
     },
+    wordCount,
+    articleBody: plainTextBody || post.excerpt,
   };
 
   const allPosts = await getPosts();
@@ -332,17 +352,35 @@ export default async function BlogPost({ params }: Props) {
 
         {/* Post Main Image */}
         {post.mainImage && (
-          <div
+          <figure
             className="mt-8 sm:mt-10 rounded-2xl overflow-hidden border"
             style={{ borderColor: colors.inkLine }}
           >
             <img
-              src={urlFor(post.mainImage).width(1000).height(550).url()}
+              src={post.mainImage.url || urlFor(post.mainImage).width(1000).height(550).url()}
               alt={post.mainImage.alt || post.title}
               className="w-full h-auto max-h-[480px] object-cover"
               loading="eager"
             />
-          </div>
+            {(post.mainImage.caption || post.mainImage.attribution) && (
+              <figcaption
+                className="px-4 py-2.5 text-xs sm:text-sm text-center border-t font-medium flex flex-col gap-0.5"
+                style={{
+                  borderColor: colors.inkLine,
+                  color: colors.textMuted,
+                  background: colors.inkPanel,
+                  fontFamily: fonts.body,
+                }}
+              >
+                {post.mainImage.caption && <span>{post.mainImage.caption}</span>}
+                {post.mainImage.attribution && (
+                  <span className="text-[10px] sm:text-xs opacity-75 font-normal italic">
+                    {post.mainImage.attribution}
+                  </span>
+                )}
+              </figcaption>
+            )}
+          </figure>
         )}
 
         {post.author && (
