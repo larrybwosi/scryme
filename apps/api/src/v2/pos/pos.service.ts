@@ -418,10 +418,28 @@ export class PosService {
 
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: payload.transactionId, organizationId: ctx.organizationId },
-      include: {
-        customer: { select: { name: true, email: true, phone: true } },
-        items: true,
-        payments: true,
+      /**
+       * ⚡ Bolt: Performance Optimization
+       * Using targeted select instead of include to fetch only required fields.
+       * This removes the unused 'payments' join and reduces the database I/O
+       * and network payload for 'customer' and 'items'.
+       */
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        finalTotal: true,
+        paymentStatus: true,
+        createdAt: true,
+        customer: { select: { name: true } },
+        items: {
+          select: {
+            productName: true,
+            sku: true,
+            quantity: true,
+            lineTotal: true,
+          },
+        },
       },
     });
 

@@ -44,23 +44,43 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
+          # 1. Apply changesets if they exist
           if [ -d ".changeset" ] && [ "$(ls -A .changeset/*.md 2>/dev/null)" ]; then
             echo "Changesets found. Bumping versions..."
             pnpm version-packages
+          else
+            echo "No changesets found."
+          fi
 
-            NEW_VERSION=$(node -p "require('./apps/pos/package.json').version")
-            TAG="v$NEW_VERSION"
+          # 2. Run our unique version script to ensure version is unique and jump if needed
+          echo "Checking version uniqueness and jumping if needed..."
+          node scripts/ensure-unique-version.js
 
+          # 3. Retrieve final unique version
+          NEW_VERSION=$(node -p "require('./apps/pos/package.json').version")
+          TAG="v$NEW_VERSION"
+          echo "Final release version: $NEW_VERSION"
+
+          # 4. If there are changes to commit, or if the tag does not exist, push
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Changes detected. Committing and pushing..."
             git add .
             git commit -m "chore(release): version packages $TAG [skip ci]"
             git tag -a "$TAG" -m "Release $TAG"
             git push origin main --follow-tags
-
-            echo "published=true" >> $GITHUB_OUTPUT
           else
-            echo "No changesets found. Proceeding with standard build."
-            echo "published=false" >> $GITHUB_OUTPUT
+            echo "No file changes detected."
+            # Check if tag already exists on remote origin. If not, create and push it.
+            if ! git ls-remote --tags origin "refs/tags/$TAG" | grep -q "$TAG"; then
+              echo "Tag $TAG does not exist on remote. Tagging and pushing..."
+              git tag -a "$TAG" -m "Release $TAG"
+              git push origin "$TAG"
+            else
+              echo "Tag $TAG already exists on remote."
+            fi
           fi
+
+          echo "published=true" >> $GITHUB_OUTPUT
 
       - name: Publish to Changesets (if applicable)
         if: steps.auto-version.outputs.published != 'true'

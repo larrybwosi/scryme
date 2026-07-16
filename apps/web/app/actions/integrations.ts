@@ -95,6 +95,43 @@ export async function updateWindmillConfig(data: {
   return { success: true };
 }
 
+export async function provisionWindmill() {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const org = await prisma.organization.findUnique({
+    where: { id: context.organizationId },
+  });
+
+  if (!org) {
+    throw new Error("Organization not found");
+  }
+
+  const adminApiKey = process.env.WINDMILL_ADMIN_API_KEY;
+  if (!adminApiKey) {
+    throw new Error(
+      "Windmill automatic provisioning is not configured on this server (WINDMILL_ADMIN_API_KEY is missing)."
+    );
+  }
+
+  const { WindmillTemplateService } = await import("@repo/windmill");
+
+  try {
+    await WindmillTemplateService.provisionAndDeploy(
+      org.id,
+      org.name,
+      org.slug
+    );
+    revalidatePath("/integrations");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to provision Windmill for organization:", error);
+    throw new Error(error.message || "Failed to provision Windmill workspace");
+  }
+}
+
 export async function updateHulyConfig(data: {
   workspaceSlug: string;
   workspaceUrl: string;

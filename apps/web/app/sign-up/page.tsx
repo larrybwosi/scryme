@@ -1,5 +1,8 @@
 "use client";
-import { use, useState } from "react";
+
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,13 +13,14 @@ import {
   CheckCircle2,
   XCircle,
   ArrowRight,
-  Shield,
+  ShieldCheck,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+
 import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
+import { GithubIcon } from "@repo/ui/components/icons";
 
 // Zod validation schemas
 const signUpSchema = z.object({
@@ -51,31 +55,28 @@ const passwordRules = [
 function getPasswordStrength(password: string): {
   score: number;
   label: string;
-  color: string;
 } {
-  if (!password) return { score: 0, label: "", color: "" };
+  if (!password) return { score: 0, label: "" };
   const passed = passwordRules.filter(r => r.test(password)).length;
-  if (passed <= 1) return { score: 1, label: "Weak", color: "bg-red-500" };
-  if (passed === 2) return { score: 2, label: "Fair", color: "bg-amber-400" };
-  if (passed === 3) return { score: 3, label: "Good", color: "bg-blue-500" };
-  return { score: 4, label: "Strong", color: "bg-emerald-500" };
+  if (passed <= 1) return { score: 1, label: "Weak" };
+  if (passed === 2) return { score: 2, label: "Fair" };
+  if (passed === 3) return { score: 3, label: "Good" };
+  return { score: 4, label: "Strong" };
 }
 
-import { GithubIcon } from "@repo/ui/components/icons";
-
-const DealioLogo = () => (
+const ScrymeLogo = () => (
   <div className="flex items-center gap-1">
     <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
-      <span className="text-white font-black text-xs tracking-tight">D</span>
+      <span className="text-white font-black text-xs tracking-tight">S</span>
     </div>
     <span className="text-xl font-bold tracking-tight text-gray-900">
-      deal<span className="text-emerald-600">io</span>
+      scry<span className="text-emerald-600">me</span>
     </span>
   </div>
 );
 
 const MicrosoftIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
     <rect width="7" height="7" fill="#F25022" />
     <rect x="9" width="7" height="7" fill="#7FBA00" />
     <rect y="9" width="7" height="7" fill="#00A4EF" />
@@ -84,7 +85,7 @@ const MicrosoftIcon = () => (
 );
 
 const GoogleIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+  <svg width="15" height="15" viewBox="0 0 16 16" fill="none">
     <path
       d="M15.68 8.18c0-.57-.05-1.13-.15-1.68H8.16v3.18h4.24c-.18.97-.75 1.79-1.6 2.34v1.93h2.6c1.52-1.4 2.4-3.47 2.4-5.91l-.17.14z"
       fill="#4285F4"
@@ -104,23 +105,6 @@ const GoogleIcon = () => (
   </svg>
 );
 
-// Floating tag for hero panel
-const FloatingTag = ({
-  name,
-  className,
-}: {
-  name: string;
-  className: string;
-}) => (
-  <div
-    className={cn(
-      "absolute px-3 py-1.5 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-full shadow-lg hidden lg:block",
-      className,
-    )}>
-    {name}
-  </div>
-);
-
 // Social provider button
 const SocialButton = ({
   icon,
@@ -137,7 +121,7 @@ const SocialButton = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-colors duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
     {disabled ? (
       <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
     ) : (
@@ -158,7 +142,9 @@ const FieldWrapper = ({
   children: React.ReactNode;
 }) => (
   <div className="space-y-1.5">
-    <label className="block text-sm font-medium text-gray-700">{label}</label>
+    <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+      {label}
+    </label>
     {children}
     {error && (
       <p className="text-xs text-red-600 flex items-center gap-1">
@@ -169,36 +155,37 @@ const FieldWrapper = ({
   </div>
 );
 
-// Stat card for hero panel
-const StatCard = ({ value, label }: { value: string; label: string }) => (
-  <div className="flex flex-col">
-    <span className="text-2xl font-bold text-white">{value}</span>
-    <span className="text-xs text-emerald-200 mt-0.5">{label}</span>
+// Ledger row
+const LedgerRow = ({ label, value }: { label: string; value: string }) => (
+  <div className="flex items-baseline justify-between py-3 border-b border-white/10 last:border-b-0">
+    <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-200/60">
+      {label}
+    </span>
+    <span className="text-sm font-mono text-white">{value}</span>
   </div>
 );
 
-type Params = Promise<{ slug: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
-
-export const SignupPage = (props: {
-  params: Params;
-  searchParams: SearchParams;
-}) => {
+export function SignupPage() {
   const router = useRouter();
-
+  const searchParams = useSearchParams();
   const session = authClient.useSession();
-
-  if (session.data) {
-    router.push("/dashboard");
-  }
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [passwordValue, setPasswordValue] = useState("");
-  const searchParams = use(props.searchParams);
-  const callbackURL = (searchParams?.callbackUrl ||
-    searchParams?.redirect ||
-    searchParams?.returnTo) as string | undefined;
+
+  const [nuqsCallbackUrl] = useQueryState("callbackUrl");
+  const [nuqsRedirect] = useQueryState("redirect");
+  const [nuqsReturnTo] = useQueryState("returnTo");
+
+  const callbackURL =
+    nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo || undefined;
+
+  // Handle side effect navigation in useEffect
+  useEffect(() => {
+    if (session.data) {
+      router.push(callbackURL || "/create-org");
+    }
+  }, [session.data, router, callbackURL]);
 
   const {
     register,
@@ -220,7 +207,7 @@ export const SignupPage = (props: {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackURL || undefined,
+        callbackURL: callbackURL || "/create-org",
       });
     } catch (error) {
       console.error("Login failed:", error);
@@ -257,20 +244,24 @@ export const SignupPage = (props: {
     <div className="min-h-screen flex bg-white">
       {/* ── Left Panel ── */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
-        <div className="w-full max-w-105">
+        <div className="w-full max-w-[420px]">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
-            <DealioLogo />
+            <ScrymeLogo />
             <p className="text-sm text-gray-500">
               Already a member?{" "}
               <button
+                type="button"
                 onClick={() => {
+                  // Explicitly preserve the callbackURL search parameter when transitioning to login
                   const params = new URLSearchParams();
-                  if (callbackURL) params.set("callbackUrl", callbackURL);
+                  if (callbackURL) {
+                    params.set("callbackUrl", callbackURL);
+                  }
                   const queryString = params.toString();
                   router.push(`/login${queryString ? `?${queryString}` : ""}`);
                 }}
-                className="text-emerald-600 font-semibold hover:text-emerald-700 transition-colors">
+                className="text-emerald-700 font-semibold hover:text-emerald-800 transition-colors">
                 Log in
               </button>
             </p>
@@ -278,11 +269,14 @@ export const SignupPage = (props: {
 
           {/* Headline */}
           <div className="mb-8">
-            <h1 className="text-[1.75rem] font-bold text-gray-900 leading-tight tracking-tight">
+            <p className="text-[11px] font-mono uppercase tracking-widest text-emerald-700 mb-2">
+              New organization
+            </p>
+            <h1 className="text-[1.85rem] font-serif font-semibold text-gray-900 leading-tight tracking-tight">
               Create your account
             </h1>
             <p className="text-gray-500 text-sm mt-2">
-              Join thousands of teams hiring the world&#39;s best dev shops.
+              Join the procurement teams hiring the world&#39;s best dev shops.
             </p>
           </div>
 
@@ -311,267 +305,271 @@ export const SignupPage = (props: {
           {/* Divider */}
           <div className="relative flex items-center gap-3 mb-6">
             <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-xs text-gray-400 font-medium">
+            <span className="text-[11px] font-mono uppercase tracking-wide text-gray-400">
               or continue with email
             </span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
 
           {/* Form */}
-          <form
-            onSubmit={handleSubmit(handleEmailSignup)}
-            className="space-y-4">
-            {/* Name row */}
-            <div className="grid grid-cols-2 gap-3">
-              <FieldWrapper
-                label="First name"
-                error={errors.firstName?.message}>
-                <Input
-                  {...register("firstName")}
-                  placeholder="Adam"
-                  className={cn(
-                    "h-10 text-sm rounded-lg border-gray-200 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
-                    errors.firstName &&
-                      "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
-                  )}
-                />
-              </FieldWrapper>
-              <FieldWrapper label="Last name" error={errors.lastName?.message}>
-                <Input
-                  {...register("lastName")}
-                  placeholder="Johnson"
-                  className={cn(
-                    "h-10 text-sm rounded-lg border-gray-200 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
-                    errors.lastName &&
-                      "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
-                  )}
-                />
-              </FieldWrapper>
-            </div>
+          <div className="relative pt-1">
+            <span className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-emerald-700/30" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-emerald-700/30" />
 
-            {/* Email */}
-            <FieldWrapper label="Work email" error={errors.email?.message}>
-              <Input
-                type="email"
-                {...register("email")}
-                placeholder="adam@company.com"
-                className={cn(
-                  "h-10 text-sm rounded-lg border-gray-200 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
-                  errors.email &&
-                    "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
-                )}
-              />
-            </FieldWrapper>
-
-            {/* Password with toggle */}
-            <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  {...register("password")}
-                  placeholder="Create a strong password"
-                  className={cn(
-                    "h-10 text-sm rounded-lg border-gray-200 pr-10 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
-                    errors.password &&
-                      "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
-                  )}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(v => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  tabIndex={-1}
-                  aria-label={showPassword ? "Hide password" : "Show password"}>
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
+            <form
+              onSubmit={handleSubmit(handleEmailSignup)}
+              className="space-y-4 px-1">
+              {/* Name row */}
+              <div className="grid grid-cols-2 gap-3">
+                <FieldWrapper
+                  label="First name"
+                  error={errors.firstName?.message}>
+                  <Input
+                    {...register("firstName")}
+                    placeholder="Adam"
+                    className={cn(
+                      "h-10 text-sm rounded-md border-gray-200 focus-visible:ring-emerald-700/20 focus-visible:border-emerald-700",
+                      errors.firstName &&
+                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                    )}
+                  />
+                </FieldWrapper>
+                <FieldWrapper
+                  label="Last name"
+                  error={errors.lastName?.message}>
+                  <Input
+                    {...register("lastName")}
+                    placeholder="Johnson"
+                    className={cn(
+                      "h-10 text-sm rounded-md border-gray-200 focus-visible:ring-emerald-700/20 focus-visible:border-emerald-700",
+                      errors.lastName &&
+                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                    )}
+                  />
+                </FieldWrapper>
               </div>
 
-              {/* Strength meter — shown only when there's input */}
-              {watchedPassword?.length > 0 && (
-                <div className="space-y-2 pt-1">
-                  <div className="flex gap-1 items-center">
-                    {[1, 2, 3, 4].map(i => (
-                      <div
-                        key={i}
-                        className={cn(
-                          "h-1 flex-1 rounded-full transition-all duration-300",
-                          i <= strength.score ? strength.color : "bg-gray-100",
-                        )}
-                      />
-                    ))}
-                    {strength.label && (
-                      <span
-                        className={cn("text-xs font-medium ml-1", {
-                          "text-red-500": strength.score === 1,
-                          "text-amber-500": strength.score === 2,
-                          "text-blue-500": strength.score === 3,
-                          "text-emerald-600": strength.score === 4,
-                        })}>
-                        {strength.label}
-                      </span>
+              {/* Email */}
+              <FieldWrapper label="Work email" error={errors.email?.message}>
+                <Input
+                  type="email"
+                  {...register("email")}
+                  placeholder="adam@company.com"
+                  className={cn(
+                    "h-10 text-sm rounded-md border-gray-200 focus-visible:ring-emerald-700/20 focus-visible:border-emerald-700",
+                    errors.email &&
+                      "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                  )}
+                />
+              </FieldWrapper>
+
+              {/* Password with toggle */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Password
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    {...register("password")}
+                    placeholder="Create a strong password"
+                    className={cn(
+                      "h-10 text-sm rounded-md border-gray-200 pr-10 focus-visible:ring-emerald-700/20 focus-visible:border-emerald-700",
+                      errors.password &&
+                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
                     )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-                    {passwordRules.map(rule => {
-                      const ok = rule.test(watchedPassword ?? "");
-                      return (
-                        <div
-                          key={rule.label}
-                          className="flex items-center gap-1.5">
-                          {ok ? (
-                            <CheckCircle2 className="h-3 w-3 text-emerald-500 shrink-0" />
-                          ) : (
-                            <div className="h-3 w-3 rounded-full border border-gray-300 shrink-0" />
-                          )}
-                          <span
-                            className={cn(
-                              "text-xs",
-                              ok ? "text-emerald-700" : "text-gray-400",
-                            )}>
-                            {rule.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    tabIndex={-1}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }>
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-              )}
 
-              {errors.password && !watchedPassword?.length && (
-                <p className="text-xs text-red-600 flex items-center gap-1">
-                  <XCircle className="h-3 w-3 shrink-0" />
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
+                {/* Strength meter */}
+                {watchedPassword?.length > 0 && (
+                  <div className="space-y-2 pt-1">
+                    <div className="flex gap-1 items-center">
+                      {[1, 2, 3, 4].map(i => (
+                        <div
+                          key={i}
+                          className={cn(
+                            "h-1 flex-1 rounded-full transition-all duration-300",
+                            i <= strength.score
+                              ? "bg-emerald-700"
+                              : "bg-gray-100",
+                          )}
+                        />
+                      ))}
+                      {strength.label && (
+                        <span className="text-[11px] font-mono uppercase tracking-wide text-gray-500 ml-1">
+                          {strength.label}
+                        </span>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                      {passwordRules.map(rule => {
+                        const ok = rule.test(watchedPassword ?? "");
+                        return (
+                          <div
+                            key={rule.label}
+                            className="flex items-center gap-1.5">
+                            {ok ? (
+                              <CheckCircle2 className="h-3 w-3 text-emerald-700 shrink-0" />
+                            ) : (
+                              <div className="h-3 w-3 rounded-full border border-gray-300 shrink-0" />
+                            )}
+                            <span
+                              className={cn(
+                                "text-xs",
+                                ok ? "text-gray-700" : "text-gray-400",
+                              )}>
+                              {rule.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
-            {/* Terms */}
-            <p className="text-xs text-gray-400 leading-relaxed pt-1">
-              By signing up you agree to Dealio.ai&#39;s{" "}
-              <button
-                type="button"
-                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
-                Terms of Service
-              </button>{" "}
-              and{" "}
-              <button
-                type="button"
-                className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
-                Privacy Policy
-              </button>
-              .
-            </p>
+                {errors.password && !watchedPassword?.length && (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <XCircle className="h-3 w-3 shrink-0" />
+                    {errors.password.message}
+                  </p>
+                )}
+              </div>
 
-            {/* Submit */}
-            <Button
-              type="submit"
-              className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group"
-              disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating account…
-                </>
-              ) : (
-                <>
-                  Create account
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                </>
-              )}
-            </Button>
-          </form>
+              {/* Terms */}
+              <p className="text-xs text-gray-400 leading-relaxed pt-1">
+                By signing up you agree to Scryme&#39;s{" "}
+                <button
+                  type="button"
+                  className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
+                  Terms of Service
+                </button>{" "}
+                and{" "}
+                <button
+                  type="button"
+                  className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
+                  Privacy Policy
+                </button>
+                .
+              </p>
 
-          {/* Trust badge */}
+              {/* Submit */}
+              <Button
+                type="submit"
+                className="w-full h-11 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-md transition-colors duration-150 flex items-center justify-center gap-2 group"
+                disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Creating account…
+                  </>
+                ) : (
+                  <>
+                    Create account
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <span className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-emerald-700/30" />
+            <span className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-emerald-700/30" />
+          </div>
+
+          {/* Trust line */}
           <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
-            <Shield className="h-3.5 w-3.5 text-gray-300" />
-            <span>
-              SOC 2 Type II certified · 256-bit encryption · GDPR compliant
-            </span>
+            <ShieldCheck className="h-3.5 w-3.5 text-gray-300" />
+            <span>SOC 2 Type II · 256-bit encryption · GDPR compliant</span>
           </div>
         </div>
       </div>
 
       {/* ── Right Panel ── */}
-      <div className="hidden lg:flex flex-1 bg-[#0d3d2b] text-white relative overflow-hidden flex-col justify-between p-12">
-        {/* Subtle grid pattern */}
+      <div className="hidden lg:flex flex-1 bg-[#0A2018] text-white relative overflow-hidden flex-col justify-between p-12">
+        {/* Fine blueprint grid */}
         <div
-          className="absolute inset-0 opacity-[0.04]"
+          className="absolute inset-0 opacity-[0.05]"
           style={{
             backgroundImage: `linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px)`,
             backgroundSize: "40px 40px",
           }}
         />
+        <span className="absolute top-8 left-8 w-4 h-4 border-t-2 border-l-2 border-emerald-400/30" />
+        <span className="absolute top-8 right-8 w-4 h-4 border-t-2 border-r-2 border-emerald-400/30" />
 
-        {/* Glow blob */}
-        <div className="absolute top-[-80px] right-[-80px] w-[360px] h-[360px] rounded-full bg-emerald-400/10 blur-[80px] pointer-events-none" />
-        <div className="absolute bottom-[-60px] left-[-60px] w-[280px] h-[280px] rounded-full bg-emerald-500/10 blur-[70px] pointer-events-none" />
-
-        {/* Floating skill tags */}
-        {[
-          { name: "Website Design", className: "top-16 right-24" },
-          { name: "Blockchain", className: "top-28 left-10" },
-          { name: "Crypto", className: "top-36 right-10" },
-          { name: "E-Commerce", className: "top-52 right-28" },
-          { name: "Golang", className: "bottom-36 left-14" },
-          { name: "Automotive", className: "bottom-24 right-14" },
-          { name: "Ruby on Rails", className: "bottom-32 left-36" },
-        ].map((tag, i) => (
-          <FloatingTag key={i} name={tag.name} className={tag.className} />
-        ))}
-
-        {/* Avatars */}
-        {[
-          { bg: "bg-white", pos: "top-14 left-14" },
-          { bg: "bg-orange-400", pos: "top-36 right-44" },
-          { bg: "bg-sky-400", pos: "bottom-44 left-20" },
-          { bg: "bg-violet-400", pos: "bottom-64 right-36" },
-        ].map(({ bg, pos }, i) => (
-          <div
-            key={i}
-            className={cn(
-              "absolute w-10 h-10 rounded-full ring-2 ring-white/20 hidden xl:block",
-              bg,
-              pos,
-            )}
-          />
-        ))}
-
-        {/* Main copy */}
-        <div className="relative z-10 mt-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-500/20 border border-emerald-400/20 rounded-full mb-6">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-medium text-emerald-300">
+        {/* Eyebrow */}
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 border border-emerald-400/25 rounded-sm">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-[11px] font-mono uppercase tracking-widest text-emerald-300">
               Trusted by 2,400+ companies
             </span>
           </div>
+        </div>
 
-          <h2 className="text-4xl font-bold leading-tight tracking-tight mb-4">
+        {/* Capability index */}
+        <div className="relative z-10 self-end w-56">
+          <p className="text-[11px] font-mono uppercase tracking-widest text-emerald-200/50 mb-3">
+            Capability index
+          </p>
+          <ul className="space-y-2 text-sm text-emerald-50/80 font-mono">
+            {[
+              "Website Design",
+              "Blockchain / Crypto",
+              "E-Commerce",
+              "Golang / Backend",
+              "Ruby on Rails",
+              "Automotive Systems",
+            ].map(item => (
+              <li key={item} className="flex items-center gap-2">
+                <span className="w-1 h-1 rounded-full bg-emerald-400/60 shrink-0" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Main copy + verification ledger */}
+        <div className="relative z-10 mt-auto">
+          <h2 className="text-4xl font-serif font-semibold leading-tight tracking-tight mb-4">
             Welcome home to
             <br />
             the top 7%
           </h2>
           <p className="text-base text-emerald-100/70 leading-relaxed max-w-sm">
-            Access elite dev shops and fractional engineers. Move faster, build
-            better, hire smarter.
+            Access elite dev shops and fractional engineers, vetted against a
+            fixed bar before they ever reach your shortlist.
           </p>
 
-          {/* Stats row */}
-          <div className="flex gap-8 mt-10 pt-8 border-t border-white/10">
-            <StatCard value="7,200+" label="Vetted agencies" />
-            <StatCard value="94%" label="Client satisfaction" />
-            <StatCard value="3 days" label="Avg. time to hire" />
+          <div className="mt-10 pt-2 border-t border-white/10">
+            <LedgerRow label="Vetted agencies" value="7,200+" />
+            <LedgerRow label="Client satisfaction" value="94%" />
+            <LedgerRow label="Avg. time to hire" value="3 days" />
           </div>
         </div>
       </div>
     </div>
   );
-};
+}
 
-export default SignupPage;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <SignupPage />
+    </Suspense>
+  );
+}

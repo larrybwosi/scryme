@@ -12,6 +12,7 @@ import { V3AuthService } from "../../modules/auth/infrastructure/services/v3-aut
 import { UseGuards } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RealtimeRedisService } from "../../../v2/realtime/realtime-redis.service";
+import { auth } from "@repo/auth/nest";
 
 @WebSocketGateway({
   namespace: "v3",
@@ -41,7 +42,41 @@ export class V3RealtimeGateway
         return;
       }
 
-      const payload = await this.v3AuthService.verifyToken(token);
+      let payload = null;
+      try {
+        payload = await this.v3AuthService.verifyToken(token);
+      } catch (err) {
+        try {
+          const session = await auth.api.getSession({
+            headers: new Headers({
+              Authorization: `Bearer ${token}`,
+              Cookie: `better-auth.session_token=${token}`,
+            }),
+          });
+          if (session) {
+            const orgId = (session.user as any).activeOrganizationId || (session.session as any).activeOrganizationId;
+            const org = await this.prisma.client.organization.findUnique({
+              where: { id: orgId },
+              select: { slug: true },
+            });
+            payload = {
+              userId: session.user.id,
+              memberId: (session.user as any).memberId,
+              organizationId: orgId,
+              orgSlug: org?.slug || "",
+              type: "v3_hybrid",
+            };
+          }
+        } catch (e: any) {
+          console.error("V3 WS better-auth fallback error:", e.message);
+        }
+      }
+
+      if (!payload) {
+        client.disconnect();
+        return;
+      }
+
       (client as any).v3Context = payload;
 
       console.log(
