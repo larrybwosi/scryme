@@ -278,17 +278,10 @@ function getRawEnv() {
     REALTIME_PROVIDER: process.env.REALTIME_PROVIDER,
     ABLY_API_KEY: process.env.ABLY_API_KEY,
     SOCKET_URL: process.env.SOCKET_URL,
-<<<<<<< HEAD
-    // Sentry
-    SENTRY_DSN: process.env.SENTRY_DSN,
-    SENTRY_ORG: process.env.SENTRY_ORG,
-    SENTRY_PROJECT: process.env.SENTRY_PROJECT,
-    SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
-=======
     // Windmill
     WINDMILL_BASE_URL: process.env.WINDMILL_BASE_URL,
     WINDMILL_ADMIN_API_KEY: process.env.WINDMILL_ADMIN_API_KEY,
->>>>>>> main
+
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,

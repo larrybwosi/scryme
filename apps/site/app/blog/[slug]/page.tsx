@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { StructuredData } from "@/components/seo/structured-data";
 import { PortableText } from "@portabletext/react";
-import { getPostBySlug } from "../../../lib/sanity";
+import { getPostBySlug, getPosts } from "../../../lib/sanity";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { urlFor } from "@/sanity/lib/image";
+import { BookText, ArrowRight } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -263,6 +264,11 @@ export default async function BlogPost({ params }: Props) {
     },
   };
 
+  const allPosts = await getPosts();
+  const similarPosts = allPosts
+    .filter((p) => p.slug.current !== slug)
+    .slice(0, 3);
+
   return (
     <article className="min-h-screen pt-28 md:pt-36 pb-24 px-4 sm:px-6 md:px-8" style={{ background: colors.inkBg }}>
       <StructuredData data={articleData} />
@@ -412,6 +418,70 @@ export default async function BlogPost({ params }: Props) {
             Thanks for reading — Scryme
           </p>
         </footer>
+      </div>
+
+      {/* Similar Posts Section */}
+      <div className="max-w-3xl mx-auto mt-16 md:mt-24 pt-12 border-t" style={{ borderColor: colors.inkLine }}>
+        <h3 className="text-xl sm:text-2xl font-medium mb-8" style={{ color: colors.paper, fontFamily: fonts.display }}>
+          Similar Articles
+        </h3>
+        {similarPosts.length === 0 ? (
+          <p className="text-sm" style={{ color: colors.textMuted, fontFamily: fonts.body }}>
+            No other articles found.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {similarPosts.map((simPost) => (
+              <Link
+                key={simPost.slug.current}
+                href={`/blog/${simPost.slug.current}`}
+                className="group flex flex-col rounded-xl border overflow-hidden transition-all duration-300 hover:border-brass/35 hover:-translate-y-1 hover:shadow-lg hover:shadow-brass/5"
+                style={{
+                  borderColor: colors.inkLine,
+                  background: "var(--ink-panel, #121B2E)",
+                }}
+              >
+                {/* Image */}
+                {simPost.mainImage ? (
+                  <div className="relative h-32 w-full overflow-hidden border-b" style={{ borderColor: colors.inkLine }}>
+                    <img
+                      src={urlFor(simPost.mainImage).width(400).height(250).url()}
+                      alt={simPost.mainImage.alt || simPost.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : (
+                  <div
+                    className="relative h-32 w-full overflow-hidden flex items-center justify-center bg-gradient-to-br from-indigo-950/10 to-slate-900/20 border-b"
+                    style={{ borderColor: colors.inkLine }}
+                  >
+                    <BookText size={24} className="opacity-15" style={{ color: colors.brass }} />
+                  </div>
+                )}
+                {/* Content */}
+                <div className="p-4 flex flex-col flex-1">
+                  <div className="flex items-center gap-2 mb-1.5 text-[10px] font-medium" style={{ color: colors.textMuted, fontFamily: fonts.mono }}>
+                    <span>{formatDate(simPost.publishedAt)}</span>
+                  </div>
+                  <h4
+                    className="text-sm font-semibold mb-2 group-hover:text-brass transition-colors line-clamp-2"
+                    style={{ color: colors.paper, fontFamily: fonts.display }}
+                  >
+                    {simPost.title}
+                  </h4>
+                  <p className="text-xs leading-relaxed mb-4 line-clamp-2 mt-auto" style={{ color: colors.textMuted, fontFamily: fonts.body }}>
+                    {simPost.excerpt || "Read full article..."}
+                  </p>
+                  <div className="inline-flex items-center text-xs font-semibold mt-auto" style={{ color: colors.brass, fontFamily: fonts.mono }}>
+                    Read article
+                    <ArrowRight className="ml-1 w-3 h-3 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </article>
   );
