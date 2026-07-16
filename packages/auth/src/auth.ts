@@ -10,6 +10,22 @@ import { env } from "@repo/env";
 
 export const auth = betterAuth({
   ...(authOptions as any),
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user: any) => {
+          try {
+            const { sendSystemNotification } = await import("@repo/notifications");
+            await sendSystemNotification(
+              `🎉 *New User Joined*\n• *Name*: ${user.name || "N/A"}\n• *Email*: ${user.email}\n• *Role*: ${user.role || "MEMBER"}\n• *ID*: \`${user.id}\``
+            );
+          } catch (error: any) {
+            console.error("Failed to send new user signup notification:", error);
+          }
+        },
+      },
+    },
+  },
   baseURL: {
     allowedHosts: [
       "localhost:3000",
