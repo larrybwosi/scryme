@@ -56,3 +56,7 @@
 ## 2026-07-08 - [Standardized Deletion & Device Reset UX in Bakery]
 **Learning:** Native `confirm()` and icon-only buttons without feedback or tooltips degrade the terminal experience. Standardizing on themed `AlertDialog` and `TooltipProvider` with `useDeleteConfirmation` ensures a consistent, accessible, and high-quality UI across the monorepo.
 **Action:** Always wrap the application in `TooltipProvider` at the root. Replace native `confirm()` with `AlertDialog` and use `useDeleteConfirmation` for entity deletions to provide consistent visual feedback and loading states (`Loader2`).
+
+## 2026-07-15 - [Standardized Invitation Revocation UX]
+**Learning:** Native `confirm()` for revoking invitations lacked consistency with the monorepo's design language and provided no async feedback. Icon-only actions without tooltips or ARIA labels were inaccessible.
+**Action:** Replace `confirm()` with themed `AlertDialog`. Implement `invitationToRevoke` state to manage the dialog and provide context (recipient email). Wrap all action buttons in `Tooltip` with `aria-label`. Always include `Loader2` feedback in the `AlertDialogAction`.
