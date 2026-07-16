@@ -22,7 +22,7 @@ export class BusinessAccountService {
       });
 
       if (!location) {
-        throw new NotFoundException("Default location not found");
+        throw new NotFoundException("Location not found");
       }
     }
 
