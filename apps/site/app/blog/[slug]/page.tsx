@@ -1,9 +1,12 @@
+/* eslint-disable @next/next/no-img-element */
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { StructuredData } from "@/components/seo/structured-data";
 import { PortableText } from "@portabletext/react";
 import { getPostBySlug } from "../../../lib/sanity";
+import { colors, fonts } from "@/lib/scryme-tokens";
+import { urlFor } from "@/sanity/lib/image";
 
 export const dynamic = "force-dynamic";
 
@@ -44,17 +47,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!post) return {};
 
+  const ogImage = post.mainImage
+    ? urlFor(post.mainImage).width(1200).height(630).url()
+    : "https://scryme.tech/og-image.png";
+
   return {
     title: `${post.title} — Scryme Blog`,
     description: post.excerpt,
     alternates: {
-      canonical: `/blog/${slug}`,
+      canonical: `https://scryme.tech/blog/${slug}`,
     },
     openGraph: {
       type: "article",
       publishedTime: post.publishedAt,
-      title: post.title,
+      title: `${post.title} — Scryme Blog`,
       description: post.excerpt,
+      url: `https://scryme.tech/blog/${slug}`,
+      siteName: "Scryme",
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${post.title} — Scryme Blog`,
+      description: post.excerpt,
+      images: [ogImage],
     },
   };
 }
@@ -62,66 +85,95 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const portableTextComponents = {
   block: {
     h1: ({ children }: any) => (
-      <h1 className="scroll-mt-24 text-3xl md:text-4xl font-extrabold text-foreground mt-12 mb-5 tracking-tight">
+      <h1
+        className="scroll-mt-24 text-2xl sm:text-3xl md:text-4xl font-semibold mt-10 sm:mt-12 mb-4 sm:mb-5 tracking-tight"
+        style={{ color: colors.paper, fontFamily: fonts.display }}
+      >
         {children}
       </h1>
     ),
     h2: ({ children }: any) => (
-      <h2 className="scroll-mt-24 text-2xl md:text-3xl font-bold text-foreground mt-12 mb-5 tracking-tight border-b border-border/60 pb-3">
+      <h2
+        className="scroll-mt-24 text-xl sm:text-2xl md:text-3xl font-semibold mt-10 sm:mt-12 mb-4 sm:mb-5 tracking-tight border-b pb-3"
+        style={{ color: colors.paper, fontFamily: fonts.display, borderColor: colors.inkLine }}
+      >
         {children}
       </h2>
     ),
     h3: ({ children }: any) => (
-      <h3 className="scroll-mt-24 text-xl md:text-2xl font-semibold text-foreground mt-10 mb-4">
+      <h3
+        className="scroll-mt-24 text-lg sm:text-xl md:text-2xl font-semibold mt-8 sm:mt-10 mb-3 sm:mb-4"
+        style={{ color: colors.paper, fontFamily: fonts.display }}
+      >
         {children}
       </h3>
     ),
     h4: ({ children }: any) => (
-      <h4 className="scroll-mt-24 text-lg md:text-xl font-semibold text-foreground mt-8 mb-3">
+      <h4
+        className="scroll-mt-24 text-base sm:text-lg md:text-xl font-semibold mt-6 sm:mt-8 mb-2.5 sm:mb-3"
+        style={{ color: colors.paper, fontFamily: fonts.display }}
+      >
         {children}
       </h4>
     ),
     normal: ({ children }: any) => (
-      <p className="text-[1.0625rem] text-foreground/80 dark:text-neutral-200 leading-[1.85] mb-6">
+      <p
+        className="text-[0.975rem] sm:text-[1.0625rem] leading-[1.8] sm:leading-[1.85] mb-5 sm:mb-6"
+        style={{ color: colors.textMuted, fontFamily: fonts.body }}
+      >
         {children}
       </p>
     ),
     blockquote: ({ children }: any) => (
-      <blockquote className="border-l-[3px] border-primary pl-6 pr-4 py-1 my-8 italic text-foreground/90 bg-surface-1/40 rounded-r-lg">
+      <blockquote
+        className="border-l-[3px] pl-5 sm:pl-6 pr-4 py-2 sm:py-3 my-6 sm:my-8 italic rounded-r-lg"
+        style={{ borderColor: colors.brass, background: colors.inkPanel, color: colors.paper }}
+      >
         {children}
       </blockquote>
     ),
   },
   list: {
     bullet: ({ children }: any) => (
-      <ul className="list-disc pl-6 mb-6 space-y-2.5 text-[1.0625rem] text-foreground/80 dark:text-neutral-200 marker:text-primary/70">
+      <ul
+        className="list-disc pl-5 sm:pl-6 mb-5 sm:mb-6 space-y-2 sm:space-y-2.5 text-[0.975rem] sm:text-[1.0625rem]"
+        style={{ color: colors.textMuted, fontFamily: fonts.body }}
+      >
         {children}
       </ul>
     ),
     number: ({ children }: any) => (
-      <ol className="list-decimal pl-6 mb-6 space-y-2.5 text-[1.0625rem] text-foreground/80 dark:text-neutral-200 marker:text-primary/70 marker:font-semibold">
+      <ol
+        className="list-decimal pl-5 sm:pl-6 mb-5 sm:mb-6 space-y-2 sm:space-y-2.5 text-[0.975rem] sm:text-[1.0625rem]"
+        style={{ color: colors.textMuted, fontFamily: fonts.body }}
+      >
         {children}
       </ol>
     ),
   },
   listItem: {
     bullet: ({ children }: any) => (
-      <li className="leading-[1.85] pl-1">{children}</li>
+      <li className="leading-[1.8] sm:leading-[1.85] pl-0.5 sm:pl-1">{children}</li>
     ),
     number: ({ children }: any) => (
-      <li className="leading-[1.85] pl-1">{children}</li>
+      <li className="leading-[1.8] sm:leading-[1.85] pl-0.5 sm:pl-1">{children}</li>
     ),
   },
   marks: {
     strong: ({ children }: any) => (
-      <strong className="font-bold text-foreground">{children}</strong>
+      <strong className="font-semibold" style={{ color: colors.paper }}>
+        {children}
+      </strong>
     ),
     em: ({ children }: any) => <em className="italic">{children}</em>,
     underline: ({ children }: any) => (
       <span className="underline underline-offset-2">{children}</span>
     ),
     code: ({ children }: any) => (
-      <code className="bg-surface-2 px-1.5 py-0.5 rounded font-mono text-[0.9em] text-primary">
+      <code
+        className="px-1.5 py-0.5 rounded font-mono text-[0.85em] tracking-tight"
+        style={{ background: colors.inkPanel, color: colors.brass }}
+      >
         {children}
       </code>
     ),
@@ -134,10 +186,42 @@ const portableTextComponents = {
           href={value?.href}
           target={target}
           rel={target === "_blank" ? "noopener noreferrer" : undefined}
-          className="text-primary hover:underline underline-offset-2 font-medium decoration-primary/40"
+          className="hover:underline underline-offset-2 font-medium"
+          style={{ color: colors.brass }}
         >
           {children}
         </a>
+      );
+    },
+  },
+  types: {
+    image: ({ value }: any) => {
+      if (!value?.asset) return null;
+      return (
+        <figure
+          className="my-6 sm:my-8 rounded-xl overflow-hidden border"
+          style={{ borderColor: colors.inkLine }}
+        >
+          <img
+            src={urlFor(value).width(1000).url()}
+            alt={value.alt || "Article illustration"}
+            className="w-full h-auto max-h-[450px] object-cover"
+            loading="lazy"
+          />
+          {value.caption && (
+            <figcaption
+              className="px-4 py-2 text-xs sm:text-sm text-center border-t font-medium"
+              style={{
+                borderColor: colors.inkLine,
+                color: colors.textMuted,
+                background: colors.inkPanel,
+                fontFamily: fonts.body,
+              }}
+            >
+              {value.caption}
+            </figcaption>
+          )}
+        </figure>
       );
     },
   },
@@ -150,28 +234,45 @@ export default async function BlogPost({ params }: Props) {
   if (!post) notFound();
 
   const readTime = estimateReadTime(post.body);
+  const ogImage = post.mainImage
+    ? urlFor(post.mainImage).width(1200).height(630).url()
+    : "https://scryme.tech/og-image.png";
 
   const articleData = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
     datePublished: post.publishedAt,
+    image: ogImage,
+    description: post.excerpt,
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://scryme.tech/blog/${slug}`,
+    },
     author: {
       "@type": "Organization",
       name: "Scryme",
     },
-    description: post.excerpt,
+    publisher: {
+      "@type": "Organization",
+      name: "Scryme",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://scryme.tech/logo.png",
+      },
+    },
   };
 
   return (
-    <article className="pt-32 md:pt-40 pb-28 px-6">
+    <article className="min-h-screen pt-28 md:pt-36 pb-24 px-4 sm:px-6 md:px-8" style={{ background: colors.inkBg }}>
       <StructuredData data={articleData} />
 
       {/* Back link */}
-      <div className="max-w-3xl mx-auto mb-8">
+      <div className="max-w-3xl mx-auto mb-6 sm:mb-8">
         <Link
           href="/blog"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/60 hover:text-primary transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-opacity hover:opacity-80"
+          style={{ color: colors.brass, fontFamily: fonts.mono }}
         >
           <svg
             width="14"
@@ -190,42 +291,78 @@ export default async function BlogPost({ params }: Props) {
       </div>
 
       {/* Header */}
-      <header className="max-w-3xl mx-auto mb-14">
-        <div className="flex items-center gap-3 text-sm font-medium text-foreground/60 mb-5">
+      <header className="max-w-3xl mx-auto mb-10 sm:mb-12">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium mb-4">
           <time
             dateTime={post.publishedAt}
-            className="text-primary font-semibold"
+            className="font-semibold"
+            style={{ color: colors.brass, fontFamily: fonts.mono }}
           >
             {formatDate(post.publishedAt)}
           </time>
           <span
-            className="w-1 h-1 rounded-full bg-foreground/30"
+            className="w-1 h-1 rounded-full"
+            style={{ background: colors.textFaint }}
             aria-hidden="true"
           />
-          <span>{readTime} min read</span>
+          <span style={{ color: colors.textMuted, fontFamily: fonts.mono }}>{readTime} min read</span>
         </div>
 
-        <h1 className="text-4xl md:text-5xl lg:text-[3.25rem] font-bold text-foreground leading-[1.12] tracking-tight mb-6">
+        <h1
+          className="text-2xl sm:text-4xl md:text-5xl font-medium leading-[1.12] tracking-tight mb-5 sm:mb-6 text-balance"
+          style={{ color: colors.paper, fontFamily: fonts.display }}
+        >
           {post.title}
         </h1>
 
         {post.excerpt && (
-          <p className="text-xl text-foreground/65 dark:text-neutral-300 leading-relaxed">
+          <p
+            className="text-base sm:text-lg md:text-xl leading-relaxed text-pretty"
+            style={{ color: colors.textMuted, fontFamily: fonts.body }}
+          >
             {post.excerpt}
           </p>
         )}
 
+        {/* Post Main Image */}
+        {post.mainImage && (
+          <div
+            className="mt-8 sm:mt-10 rounded-2xl overflow-hidden border"
+            style={{ borderColor: colors.inkLine }}
+          >
+            <img
+              src={urlFor(post.mainImage).width(1000).height(550).url()}
+              alt={post.mainImage.alt || post.title}
+              className="w-full h-auto max-h-[480px] object-cover"
+              loading="eager"
+            />
+          </div>
+        )}
+
         {post.author && (
-          <div className="mt-8 pt-6 border-t border-border/60 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-sm font-semibold text-primary shrink-0">
+          <div
+            className="mt-8 pt-6 border-t flex items-center gap-3"
+            style={{ borderColor: colors.inkLine }}
+          >
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 border"
+              style={{
+                background: colors.brassDim,
+                borderColor: colors.brassLine,
+                color: colors.brass,
+                fontFamily: fonts.mono,
+              }}
+            >
               {post.author.name?.charAt(0) ?? "S"}
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-sm font-semibold" style={{ color: colors.paper, fontFamily: fonts.body }}>
                 {post.author.name}
               </p>
               {post.author.bio && (
-                <p className="text-xs text-foreground/60">{post.author.bio}</p>
+                <p className="text-xs" style={{ color: colors.textMuted, fontFamily: fonts.body }}>
+                  {post.author.bio}
+                </p>
               )}
             </div>
           </div>
@@ -234,22 +371,28 @@ export default async function BlogPost({ params }: Props) {
 
       {/* Body */}
       <div className="max-w-3xl mx-auto">
-        <div className="prose prose-invert prose-primary max-w-none">
+        <div className="prose max-w-none">
           {post.body && Array.isArray(post.body) ? (
             <PortableText
               value={post.body}
               components={portableTextComponents}
             />
           ) : (
-            <p className="text-muted leading-relaxed">No content found.</p>
+            <p className="text-sm leading-relaxed" style={{ color: colors.textMuted, fontFamily: fonts.body }}>
+              No content found.
+            </p>
           )}
         </div>
 
         {/* Footer / share & back-to-top affordance */}
-        <footer className="mt-16 pt-8 border-t border-border/60 flex items-center justify-between">
+        <footer
+          className="mt-12 sm:mt-16 pt-6 sm:pt-8 border-t flex items-center justify-between"
+          style={{ borderColor: colors.inkLine }}
+        >
           <Link
             href="/blog"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground/60 hover:text-primary transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-opacity hover:opacity-80"
+            style={{ color: colors.brass, fontFamily: fonts.mono }}
           >
             <svg
               width="14"
@@ -265,7 +408,7 @@ export default async function BlogPost({ params }: Props) {
             </svg>
             More articles
           </Link>
-          <p className="text-xs text-foreground/40">
+          <p className="text-xs" style={{ color: colors.textFaint, fontFamily: fonts.body }}>
             Thanks for reading — Scryme
           </p>
         </footer>
