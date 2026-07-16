@@ -92,7 +92,7 @@ export default function CookiesPage() {
               3. Managing Cookies
             </h2>
             <p>
-              You can disable or delete cookies inside your browser's security
+              You can disable or delete cookies inside your browser&apos;s security
               settings. Please note that blocking essential authentication
               cookies will prevent you from logging in to our B2B storefront
               portals.
