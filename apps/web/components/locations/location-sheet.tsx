@@ -187,7 +187,7 @@ export function LocationSheet({
         {children}
       </SheetTrigger>
       <SheetContent
-        className="sm:max-w-xl flex flex-col h-[100dvh] p-0"
+        className="sm:max-w-xl flex flex-col h-dvh p-0"
         side="right">
         {/* Fixed Header */}
         <div className="shrink-0 p-6 pb-4 border-b">

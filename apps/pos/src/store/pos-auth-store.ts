@@ -268,8 +268,9 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
             const { currentLocation } = get();
             if (!currentLocation?.id && config.location_id) {
               try {
-                const data = await invoke<{ locations: InventoryLocation[] }>('get_locations_command');
-                const location = data.locations?.find(loc => loc.id === config.location_id);
+                const data = await invoke<any>('get_locations_command');
+                const locationsList = data?.locations || data?.data?.locations || (Array.isArray(data) ? data : []);
+                const location = locationsList?.find((loc: any) => loc.id === config.location_id);
                 if (location) {
                   set({ currentLocation: location });
                 }
@@ -306,24 +307,42 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
           body: { setupToken },
         });
 
-        if (response.success) {
-          const { apiKey, device, organization } = response.data;
+        const isWrapped = response && response.success !== undefined;
+        const responseData = isWrapped ? response.data : response;
+
+        if (!isWrapped || response.success) {
+          const { apiKey, device, organization } = responseData || {};
+          if (!apiKey || !device || !organization) {
+            throw new Error('Invalid provisioning response structure');
+          }
+
+          const locationId = device.locationId || device.location_id;
+          const orgSlug = organization.slug || organization.orgSlug || organization.org_slug;
+
+          if (!locationId || !orgSlug) {
+            throw new Error('Required configuration parameters missing in API response');
+          }
 
           await invoke('set_device_config', {
             baseUrl: apiUrl,
-            locationId: device.locationId,
+            locationId,
             deviceKey: apiKey,
-            orgSlug: organization.slug,
+            orgSlug,
           });
 
           // We need to fetch the location details
-          const data = await invoke<{ locations: InventoryLocation[] }>('get_locations_command');
-          const location = data.locations?.find(loc => loc.id === device.locationId);
+          const data = await invoke<any>('get_locations_command');
+          const locationsList = data?.locations || data?.data?.locations || (Array.isArray(data) ? data : []);
+          const location = locationsList?.find((loc: any) => loc.id === locationId);
 
           set({
             // Do not set isConfigured here so that the Success UI can play out.
             // completeSetup() will be called after the animation.
-            currentLocation: location || ({ ...device, id: device.locationId, name: device.name || 'Terminal' } as any),
+            currentLocation: location || ({
+              ...device,
+              id: locationId,
+              name: device.name || device.deviceName || 'Terminal'
+            } as any),
           });
         } else {
           throw new Error(response.error?.message || 'Provisioning failed');

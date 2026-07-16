@@ -34,7 +34,7 @@ export function usePosLocations() {
   });
 
   return {
-    locations: data?.locations || [],
+    locations: data?.locations || (data as any)?.data?.locations || (Array.isArray(data) ? data : []),
     isLoading,
     error,
     refetchLocations: refetch,

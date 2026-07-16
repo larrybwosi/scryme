@@ -106,15 +106,7 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost:3100/ready",
-        ]
+      test: ["CMD", "/usr/bin/loki", "-health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -132,7 +124,11 @@ services:
 
   # --- APPLICATIONS ---
   api:
+<<<<<<< HEAD
+    image: ghcr.io/larrybwosi/scryme/api:9.19.0
+=======
     image: ghcr.io/larrybwosi/scryme/api:9.18.0
+>>>>>>> main
     restart: always
     deploy:
       resources:
@@ -182,7 +178,11 @@ services:
       retries: 3
 
   web:
+<<<<<<< HEAD
+    image: ghcr.io/larrybwosi/scryme/web:9.19.0
+=======
     image: ghcr.io/larrybwosi/scryme/web:9.18.0
+>>>>>>> main
     restart: always
     deploy:
       resources:
@@ -222,7 +222,11 @@ services:
       retries: 3
 
   crm:
+<<<<<<< HEAD
+    image: ghcr.io/larrybwosi/scryme/crm:9.19.0
+=======
     image: ghcr.io/larrybwosi/scryme/crm:9.18.0
+>>>>>>> main
     restart: always
     deploy:
       resources:
@@ -262,7 +266,11 @@ services:
       retries: 3
 
   bakery:
+<<<<<<< HEAD
+    image: ghcr.io/larrybwosi/scryme/bakery:9.19.0
+=======
     image: ghcr.io/larrybwosi/scryme/bakery:9.18.0
+>>>>>>> main
     restart: always
     deploy:
       resources:
