@@ -20,7 +20,7 @@ function InvoiceRow({ invoice }: { invoice: any }) {
   const isOverdue = invoice.status === 'OVERDUE';
 
   const downloadInvoice = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.scryme.app';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.scryme.tech';
     window.open(`${apiUrl}/public-invoices/${invoice.id}/download`, '_blank');
   };
 
