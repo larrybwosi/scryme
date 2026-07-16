@@ -92,21 +92,23 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-primary: 0 8px 32px -4px oklch(0.55 0.18 265 / 0.35);
 
   /* Scryme ledger variables — Light mode default values */
-  --ink-bg: #FBF9F4;
-  --ink-panel: #F4EFE2;
-  --ink-panel-alt: #ECE4D2;
+  --ink-bg: #fbf9f4;
+  --ink-panel: #f4efe2;
+  --ink-panel-alt: #ece4d2;
   --ink-line: rgba(11, 18, 32, 0.1);
   --paper: #111827;
-  --brass: #9E742A;
+  --brass: #9e742a;
   --brass-dim: rgba(158, 116, 42, 0.1);
   --brass-line: rgba(158, 116, 42, 0.25);
-  --ledger-green: #2F6A4F;
-  --ledger-rust: #933D25;
+  --ledger-green: #2f6a4f;
+  --ledger-rust: #933d25;
   --text-primary: #111827;
   --text-muted: rgba(11, 18, 32, 0.64);
   --text-faint: rgba(11, 18, 32, 0.36);
@@ -115,26 +117,28 @@
 /* ========================================
    SCRYME LEDGER TOKENS — DARK MODE
    ======================================== */
-.dark, :host-context(.dark), ::backdrop {
-  --background: #0B1220;
-  --foreground: #F1E9D8;
-  --card: #121B2E;
-  --card-foreground: #F1E9D8;
-  --popover: #121B2E;
-  --popover-foreground: #F1E9D8;
+.dark,
+::host-context(.dark),
+::backdrop {
+  --background: #0b1220;
+  --foreground: #f1e9d8;
+  --card: #121b2e;
+  --card-foreground: #f1e9d8;
+  --popover: #121b2e;
+  --popover-foreground: #f1e9d8;
   --border: rgba(241, 233, 216, 0.09);
 
-  --ink-bg: #0B1220;
-  --ink-panel: #121B2E;
-  --ink-panel-alt: #0E1626;
+  --ink-bg: #0b1220;
+  --ink-panel: #121b2e;
+  --ink-panel-alt: #0e1626;
   --ink-line: rgba(241, 233, 216, 0.09);
-  --paper: #F1E9D8;
-  --brass: #C89A4B;
+  --paper: #f1e9d8;
+  --brass: #c89a4b;
   --brass-dim: rgba(200, 154, 75, 0.16);
   --brass-line: rgba(200, 154, 75, 0.35);
-  --ledger-green: #4B9073;
-  --ledger-rust: #B4553A;
-  --text-primary: #F1E9D8;
+  --ledger-green: #4b9073;
+  --ledger-rust: #b4553a;
+  --text-primary: #f1e9d8;
   --text-muted: rgba(241, 233, 216, 0.56);
   --text-faint: rgba(241, 233, 216, 0.32);
 }
