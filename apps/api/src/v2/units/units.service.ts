@@ -22,30 +22,39 @@ export class UnitsService {
   }
 
   async createOrganizationUnit(ctx: V2ApiContext, data: any) {
-    const { organizationId } = ctx;
+    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    const { name, symbol, abbreviation, pluralName, type, category, description, baseSystemUnitId, conversionFactor, conversionOffset } = data;
     return this.prisma.client.organizationUnit.create({
-      data: {
-        ...data,
-        organizationId,
-      },
+      data: { name, symbol, abbreviation, pluralName, type, category, description, baseSystemUnitId, conversionFactor, conversionOffset, organizationId: ctx.organizationId },
     });
   }
 
   async updateOrganizationUnit(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.organizationUnit.update({
+    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    const { name, symbol, abbreviation, pluralName, type, category, description, baseSystemUnitId, conversionFactor, conversionOffset, isActive } = data;
+    const updateData = Object.fromEntries(Object.entries({ name, symbol, abbreviation, pluralName, type, category, description, baseSystemUnitId, conversionFactor, conversionOffset, isActive }).filter(([_, v]) => v !== undefined));
+
+    // SECURITY (Sentinel): Use updateMany with organizationId for multi-tenant isolation.
+    const result = await this.prisma.client.organizationUnit.updateMany({
       where: { id, organizationId },
-      data,
+      data: updateData,
     });
+
+    if (result.count === 0) throw new NotFoundException("Organization unit not found");
+    return this.prisma.client.organizationUnit.findFirst({ where: { id, organizationId } });
   }
 
   async deleteOrganizationUnit(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    // We do a soft delete for consistency
-    return this.prisma.client.organizationUnit.update({
+    // SECURITY (Sentinel): Use updateMany with organizationId for multi-tenant isolation.
+    const result = await this.prisma.client.organizationUnit.updateMany({
       where: { id, organizationId },
       data: { isActive: false },
     });
+
+    if (result.count === 0) throw new NotFoundException("Organization unit not found");
+    return this.prisma.client.organizationUnit.findFirst({ where: { id, organizationId } });
   }
 
   async syncUnits(ctx: V2ApiContext, lastSync?: string) {

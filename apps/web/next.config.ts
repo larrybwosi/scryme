@@ -6,7 +6,9 @@ const nextConfig: NextConfig = {
   transpilePackages: ["@react-pdf/renderer"],
   async rewrites() {
     const isDev = process.env.NODE_ENV === "development";
-    const defaultApiUrl = isDev ? "http://localhost:3002" : "https://api.scryme.tech";
+    const defaultApiUrl = isDev
+      ? "http://localhost:3002"
+      : "https://api.scryme.tech";
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 
     return [
@@ -15,8 +17,9 @@ const nextConfig: NextConfig = {
         destination: `${apiUrl}/.well-known/:path*`,
       },
       {
-        source: "/api/auth/:path*",
-        destination: `${apiUrl}/api/auth/:path*`,
+        source: "/api/auth/ably",
+        // Do not forward /api/auth/ably to API backend, instead run locally
+        destination: "/api/auth/ably",
       },
     ];
   },

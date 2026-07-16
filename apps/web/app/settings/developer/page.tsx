@@ -262,60 +262,65 @@ export default function DeveloperSettings() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {apps.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-primary font-bold text-xs">
-                          {app.name?.charAt(0) || "A"}
+                {apps.map((app) => {
+                  const appId = app.id || app.clientId || app.client_id;
+                  const clientId = app.clientId || app.client_id;
+                  const redirectUris = app.redirectUris || app.redirect_uris || [];
+                  return (
+                    <TableRow key={appId}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-primary/10 rounded flex items-center justify-center text-primary font-bold text-xs">
+                            {app.name?.charAt(0) || "A"}
+                          </div>
+                          {app.name}
                         </div>
-                        {app.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-xs bg-muted px-1 py-0.5 rounded">{app.clientId}</code>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
-                      {app.redirectUris?.join(", ")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              aria-label="Copy Client ID"
-                              onClick={() => copyToClipboard(app.clientId, app.id)}
-                            >
-                              {copiedId === app.id ? (
-                                <Check className="h-4 w-4" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Copy Client ID</TooltipContent>
-                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
+                        <code className="text-xs bg-muted px-1 py-0.5 rounded">{clientId}</code>
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate text-xs text-muted-foreground">
+                        {redirectUris.join(", ")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label="Copy Client ID"
+                                onClick={() => copyToClipboard(clientId, appId)}
+                              >
+                                {copiedId === appId ? (
+                                  <Check className="h-4 w-4" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Copy Client ID</TooltipContent>
+                          </Tooltip>
 
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive"
-                              aria-label="Delete Application"
-                              onClick={() => setAppToDelete(app.clientId)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Delete Application</TooltipContent>
-                        </Tooltip>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-destructive"
+                                aria-label="Delete Application"
+                                onClick={() => setAppToDelete(clientId)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Delete Application</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

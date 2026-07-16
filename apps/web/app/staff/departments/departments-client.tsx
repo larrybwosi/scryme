@@ -3,7 +3,7 @@
 import React, { useState, useTransition } from "react";
 import { getDepartments, getDepartmentStats } from "../../actions/department";
 import { DepartmentTable } from "../../../components/departments/department-table";
-import { AddDepartmentSheet } from "../../../components/departments/add-department-sheet";
+import { AddDepartmentDialog } from "../../../components/departments/add-department-dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import { Plus, Users, Search, Filter, Building2, Briefcase, Wallet } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";
@@ -51,12 +51,12 @@ export function DepartmentsClient({ initialDepartments, stats }: DepartmentsClie
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <AddDepartmentSheet>
+          <AddDepartmentDialog>
             <Button className="gap-2 bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white">
               <Plus size={16} />
               <span>Create Department</span>
             </Button>
-          </AddDepartmentSheet>
+          </AddDepartmentDialog>
         </div>
       </div>
 
