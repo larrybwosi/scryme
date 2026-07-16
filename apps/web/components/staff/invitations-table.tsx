@@ -11,6 +11,21 @@ import {
 } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@repo/ui/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { format } from "date-fns";
 import { Copy, Check, Trash2, Loader2, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +46,7 @@ interface Invitation {
 export function InvitationsTable({ data }: { data: Invitation[] }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [invitationToRevoke, setInvitationToRevoke] = useState<Invitation | null>(null);
 
   const handleCopyLink = async (invitation: Invitation) => {
     const link = `${window.location.origin}/invite/${invitation.token}`;
@@ -44,14 +60,15 @@ export function InvitationsTable({ data }: { data: Invitation[] }) {
     }
   };
 
-  const handleRevoke = async (id: string) => {
-    if (!confirm("Are you sure you want to revoke this invitation?")) return;
+  const handleRevoke = async () => {
+    if (!invitationToRevoke) return;
 
-    setRevokingId(id);
+    setRevokingId(invitationToRevoke.id);
     try {
-      const res = await revokeOrgInvitation(id);
+      const res = await revokeOrgInvitation(invitationToRevoke.id);
       if (res.success) {
         toast.success("Invitation revoked successfully");
+        setInvitationToRevoke(null);
       } else {
         toast.error(res.error || "Failed to revoke invitation");
       }
@@ -106,38 +123,50 @@ export function InvitationsTable({ data }: { data: Invitation[] }) {
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="gap-1.5 text-zinc-600 hover:text-zinc-900 h-8"
-                      onClick={() => handleCopyLink(invitation)}
-                    >
-                      {copiedId === invitation.id ? (
-                        <>
-                          <Check size={14} className="text-emerald-600" />
-                          <span>Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={14} />
-                          <span>Copy Link</span>
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                      disabled={revokingId === invitation.id}
-                      onClick={() => handleRevoke(invitation.id)}
-                      title="Revoke Invitation"
-                    >
-                      {revokingId === invitation.id ? (
-                        <Loader2 size={14} className="animate-spin" />
-                      ) : (
-                        <Trash2 size={14} />
-                      )}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1.5 text-zinc-600 hover:text-zinc-900 h-8"
+                          onClick={() => handleCopyLink(invitation)}
+                          aria-label="Copy invitation link"
+                        >
+                          {copiedId === invitation.id ? (
+                            <>
+                              <Check size={14} className="text-emerald-600" />
+                              <span>Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={14} />
+                              <span>Copy Link</span>
+                            </>
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Copy invitation link</TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                          disabled={revokingId === invitation.id}
+                          onClick={() => setInvitationToRevoke(invitation)}
+                          aria-label="Revoke invitation"
+                        >
+                          {revokingId === invitation.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            <Trash2 size={14} />
+                          )}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Revoke invitation</TooltipContent>
+                    </Tooltip>
                   </div>
                 </TableCell>
               </TableRow>
@@ -145,6 +174,42 @@ export function InvitationsTable({ data }: { data: Invitation[] }) {
           )}
         </TableBody>
       </Table>
+
+      <AlertDialog
+        open={!!invitationToRevoke}
+        onOpenChange={(open) => !open && setInvitationToRevoke(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Invitation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to revoke the invitation for{" "}
+              <strong>{invitationToRevoke?.email}</strong>? This action cannot be
+              undone and the recipient will no longer be able to use the link.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!revokingId}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                handleRevoke();
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={!!revokingId}
+            >
+              {revokingId ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Revoking...
+                </>
+              ) : (
+                "Revoke Invitation"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
