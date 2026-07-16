@@ -4,7 +4,7 @@ import { auth } from "@repo/auth/server";
 const authRoutes = ["/login", "/sign-up"];
 const publicRoutes = ["/api/auth", "/health", "/api/health", "/monitoring"];
 
-export async function proxy(request: NextRequest) {
+async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
   // Skip proxy processing for public routes, Sentry monitoring tunnel, and auth API
@@ -26,8 +26,26 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // If authenticated and on an auth route, redirect to home
+  // If authenticated and on an auth route, redirect to home or callbackUrl
   if (isAuthRoute) {
+    const callbackUrl = request.nextUrl.searchParams.get("callbackUrl") ||
+                        request.nextUrl.searchParams.get("redirect") ||
+                        request.nextUrl.searchParams.get("returnTo");
+
+    if (callbackUrl) {
+      try {
+        if (callbackUrl.startsWith("/")) {
+          return NextResponse.redirect(new URL(callbackUrl, request.url));
+        } else {
+          const parsedUrl = new URL(callbackUrl);
+          if (parsedUrl.hostname.endsWith("scryme.tech") || parsedUrl.hostname === "localhost") {
+            return NextResponse.redirect(parsedUrl);
+          }
+        }
+      } catch (e) {
+        console.error("Invalid callbackUrl in proxy redirect:", e);
+      }
+    }
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -56,6 +74,32 @@ export async function proxy(request: NextRequest) {
   }
 
   return NextResponse.next();
+}
+
+export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl;
+  const start = Date.now();
+
+  try {
+    const response = await handleProxy(request);
+    const duration = Date.now() - start;
+    const status = response.status;
+    const location = response.headers.get("location");
+    console.log(
+      `[CRM PROXY] ${request.method} ${pathname} - Status: ${status}${
+        location ? ` -> Redirect to: ${location}` : ""
+      } (${duration}ms)`
+    );
+    return response;
+  } catch (error) {
+    const duration = Date.now() - start;
+    console.error(
+      `[CRM PROXY ERROR] ${request.method} ${pathname} - Error:`,
+      error,
+      `(${duration}ms)`
+    );
+    throw error;
+  }
 }
 
 export const config = {

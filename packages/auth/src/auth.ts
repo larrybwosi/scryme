@@ -10,11 +10,32 @@ import { env } from "@repo/env";
 
 export const auth = betterAuth({
   ...(authOptions as any),
-  baseURL: env.BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: {
+    allowedHosts: [
+      "localhost:3000",
+      "localhost:3001",
+      "localhost:3002",
+      "scryme.tech",
+      "app.scryme.tech",
+      "crm.scryme.tech",
+      "api.scryme.tech",
+      "*.scryme.tech",
+    ],
+    protocol: env.NODE_ENV === "development" ? "http" : "https",
+    fallback: env.BETTER_AUTH_URL || (env.NODE_ENV === "production" ? "https://app.scryme.tech" : "http://localhost:3000"),
+  },
   session: {
     preserveSessionInDatabase: true,
     storeSessionInDatabase: true,
   },
+  trustedOrigins: [
+    "*.scryme.tech",
+    "https://scryme.tech",
+    "https://app.scryme.tech",
+    "https://crm.scryme.tech",
+    "http://localhost:3000",
+    "http://localhost:3001",
+  ],
   secondaryStorage: {
     get: async (key: string) => {
       try {

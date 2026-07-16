@@ -1,5 +1,5 @@
 "use client";
-import { use, useState } from "react";
+import { use, useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,6 +13,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { Input } from "@repo/ui/components/ui/input";
 import { cn } from "@repo/ui/lib/utils";
@@ -63,13 +64,13 @@ function getPasswordStrength(password: string): {
 
 import { GithubIcon } from "@repo/ui/components/icons";
 
-const DealioLogo = () => (
+const ScrymeLogo = () => (
   <div className="flex items-center gap-1">
     <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
-      <span className="text-white font-black text-xs tracking-tight">D</span>
+      <span className="text-white font-black text-xs tracking-tight">S</span>
     </div>
     <span className="text-xl font-bold tracking-tight text-gray-900">
-      deal<span className="text-emerald-600">io</span>
+      scry<span className="text-emerald-600">me</span>
     </span>
   </div>
 );
@@ -187,20 +188,29 @@ export const SignupPage = (props: {
   searchParams: SearchParams;
 }) => {
   const router = useRouter();
-
+  const searchParams = use(props.searchParams);
   const session = authClient.useSession();
 
-  if (session.data) {
-    router.push("/customers");
-  }
+  const [nuqsCallbackUrl] = useQueryState("callbackUrl");
+  const [nuqsRedirect] = useQueryState("redirect");
+  const [nuqsReturnTo] = useQueryState("returnTo");
+
+  const callbackURL = (nuqsCallbackUrl ||
+    nuqsRedirect ||
+    nuqsReturnTo ||
+    searchParams?.callbackUrl ||
+    searchParams?.redirect ||
+    searchParams?.returnTo) as string | undefined;
+
+  useEffect(() => {
+    if (session.data) {
+      router.push(callbackURL || "/customers");
+    }
+  }, [session.data, router, callbackURL]);
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [passwordValue, setPasswordValue] = useState("");
-  const searchParams = use(props.searchParams);
-  const callbackURL = (searchParams?.callbackUrl ||
-    searchParams?.redirect ||
-    searchParams?.returnTo) as string | undefined;
 
   const {
     register,
@@ -222,7 +232,7 @@ export const SignupPage = (props: {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackURL || undefined,
+        callbackURL: callbackURL || "/customers",
       });
     } catch (error) {
       console.error("Login failed:", error);
@@ -262,13 +272,16 @@ export const SignupPage = (props: {
         <div className="w-full max-w-[420px]">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
-            <DealioLogo />
+            <ScrymeLogo />
             <p className="text-sm text-gray-500">
               Already a member?{" "}
               <button
                 onClick={() => {
+                  // Explicitly preserve the callbackURL search parameter when transitioning to login
                   const params = new URLSearchParams();
-                  if (callbackURL) params.set("callbackUrl", callbackURL);
+                  if (callbackURL) {
+                    params.set("callbackUrl", callbackURL);
+                  }
                   const queryString = params.toString();
                   router.push(`/login${queryString ? `?${queryString}` : ""}`);
                 }}
@@ -463,7 +476,7 @@ export const SignupPage = (props: {
 
             {/* Terms */}
             <p className="text-xs text-gray-400 leading-relaxed pt-1">
-              By signing up you agree to Dealio.ai&#39;s{" "}
+              By signing up you agree to Scryme&#39;s{" "}
               <button
                 type="button"
                 className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors"

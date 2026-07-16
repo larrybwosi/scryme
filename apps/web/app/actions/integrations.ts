@@ -121,18 +121,14 @@ export async function provisionZitadel() {
     `${crmUrl}/api/auth/callback/zitadel`,
   ];
 
-  const postLogoutRedirectUris = [
-    "http://localhost:3000",
-    webUrl,
-    crmUrl,
-  ];
+  const postLogoutRedirectUris = ["http://localhost:3000", webUrl, crmUrl];
 
   const zitadelSvc = new ZitadelService();
   const provisionResult = await zitadelSvc.provisionOrganization(
     org.name,
     org.slug,
     redirectUris,
-    postLogoutRedirectUris
+    postLogoutRedirectUris,
   );
 
   await prisma.zitadelConfiguration.upsert({
@@ -156,6 +152,43 @@ export async function provisionZitadel() {
 
   revalidatePath("/integrations");
   return { success: true, config: provisionResult };
+}
+
+export async function provisionWindmill() {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const org = await prisma.organization.findUnique({
+    where: { id: context.organizationId },
+  });
+
+  if (!org) {
+    throw new Error("Organization not found");
+  }
+
+  const adminApiKey = process.env.WINDMILL_ADMIN_API_KEY;
+  if (!adminApiKey) {
+    throw new Error(
+      "Windmill automatic provisioning is not configured on this server (WINDMILL_ADMIN_API_KEY is missing).",
+    );
+  }
+
+  const { WindmillTemplateService } = await import("@repo/windmill");
+
+  try {
+    await WindmillTemplateService.provisionAndDeploy(
+      org.id,
+      org.name,
+      org.slug,
+    );
+    revalidatePath("/integrations");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to provision Windmill for organization:", error);
+    throw new Error(error.message || "Failed to provision Windmill workspace");
+  }
 }
 
 export async function updateHulyConfig(data: {
