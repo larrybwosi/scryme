@@ -3,6 +3,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import { BusinessAccountService } from "./business-account.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
+import { NotFoundException } from "@nestjs/common";
 
 describe("BusinessAccountService", () => {
   let service: BusinessAccountService;
@@ -44,6 +45,7 @@ describe("BusinessAccountService", () => {
       name: "Acme Corp",
       taxId: "TAX-123",
       crmRecordId: "hack-id",
+      defaultLocationId: "loc-123",
     } as any;
 
     const mockBA = {
@@ -53,16 +55,21 @@ describe("BusinessAccountService", () => {
       organizationId: orgId,
     };
 
+    prisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: "loc-123" });
     prisma.client.businessAccount.create.mockResolvedValue(mockBA);
     crmSyncService.enqueueSyncBusinessAccount.mockResolvedValue({});
 
     const result = await service.createBusinessAccount(orgId, dto);
 
+    expect(prisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
+      where: { id: "loc-123", organizationId: orgId },
+      select: { id: true },
+    });
     expect(prisma.client.businessAccount.create).toHaveBeenCalledWith({
       data: {
         name: "Acme Corp",
         taxId: "TAX-123",
-        defaultLocationId: undefined,
+        defaultLocationId: "loc-123",
         organizationId: orgId,
       },
     });

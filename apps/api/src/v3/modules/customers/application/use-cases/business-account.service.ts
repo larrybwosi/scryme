@@ -27,6 +27,7 @@ export class BusinessAccountService {
     }
 
     // 1. Create Business Account
+    // SECURITY (Sentinel): Explicitly map DTO fields to prevent mass assignment
     const businessAccount = await this.prisma.client.businessAccount.create({
       data: {
         name: dto.name,
