@@ -55,6 +55,7 @@ const serverSchema = z.object({
   ),
   ZITADEL_ORG_ID: z.string().optional(),
   ZITADEL_PROJECT_ID: z.string().optional(),
+  ZITADEL_ADMIN_TOKEN: z.string().optional(),
 
   // Slack
   SLACK_CLIENT_ID: z.string().optional(),
@@ -247,6 +248,7 @@ function getRawEnv() {
     ZITADEL_API_URL: process.env.ZITADEL_API_URL,
     ZITADEL_ORG_ID: process.env.ZITADEL_ORG_ID,
     ZITADEL_PROJECT_ID: process.env.ZITADEL_PROJECT_ID,
+    ZITADEL_ADMIN_TOKEN: process.env.ZITADEL_ADMIN_TOKEN,
     SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
     SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
     SLACK_REDIRECT_URI: process.env.SLACK_REDIRECT_URI,
