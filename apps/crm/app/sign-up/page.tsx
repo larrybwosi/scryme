@@ -3,7 +3,8 @@ import SignupPage from "./signup-client";
 
 export const metadata: Metadata = {
   title: "Create an Account",
-  description: "Create an enterprise CRM account with Scryme to collaborate with vetted agencies and streamline your client pipeline.",
+  description:
+    "Create an enterprise CRM account with Scryme to collaborate with vetted agencies and streamline your client pipeline.",
   alternates: {
     canonical: "/sign-up",
   },

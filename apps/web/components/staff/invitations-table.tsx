@@ -46,7 +46,8 @@ interface Invitation {
 export function InvitationsTable({ data }: { data: Invitation[] }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  const [invitationToRevoke, setInvitationToRevoke] = useState<Invitation | null>(null);
+  const [invitationToRevoke, setInvitationToRevoke] =
+    useState<Invitation | null>(null);
 
   const handleCopyLink = async (invitation: Invitation) => {
     const link = `${window.location.origin}/invite/${invitation.token}`;
@@ -130,8 +131,7 @@ export function InvitationsTable({ data }: { data: Invitation[] }) {
                           size="sm"
                           className="gap-1.5 text-zinc-600 hover:text-zinc-900 h-8"
                           onClick={() => handleCopyLink(invitation)}
-                          aria-label="Copy invitation link"
-                        >
+                          aria-label="Copy invitation link">
                           {copiedId === invitation.id ? (
                             <>
                               <Check size={14} className="text-emerald-600" />
@@ -156,8 +156,7 @@ export function InvitationsTable({ data }: { data: Invitation[] }) {
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
                           disabled={revokingId === invitation.id}
                           onClick={() => setInvitationToRevoke(invitation)}
-                          aria-label="Revoke invitation"
-                        >
+                          aria-label="Revoke invitation">
                           {revokingId === invitation.id ? (
                             <Loader2 size={14} className="animate-spin" />
                           ) : (
@@ -177,27 +176,28 @@ export function InvitationsTable({ data }: { data: Invitation[] }) {
 
       <AlertDialog
         open={!!invitationToRevoke}
-        onOpenChange={(open) => !open && setInvitationToRevoke(null)}
-      >
+        onOpenChange={open => !open && setInvitationToRevoke(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Revoke Invitation</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to revoke the invitation for{" "}
-              <strong>{invitationToRevoke?.email}</strong>? This action cannot be
-              undone and the recipient will no longer be able to use the link.
+              <strong>{invitationToRevoke?.email}</strong>? This action cannot
+              be undone and the recipient will no longer be able to use the
+              link.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={!!revokingId}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={!!revokingId}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => {
+              onClick={e => {
                 e.preventDefault();
                 handleRevoke();
               }}
               className="bg-red-600 hover:bg-red-700 text-white"
-              disabled={!!revokingId}
-            >
+              disabled={!!revokingId}>
               {revokingId ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
