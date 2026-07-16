@@ -6,6 +6,7 @@ import { Menu, X, ChevronDown, BookText, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts, modules } from "@/lib/scryme-tokens";
+import { ThemeToggle } from "./theme-toggle";
 
 const productLinks = modules.slice(0, 4);
 
@@ -188,6 +189,7 @@ export function Navbar() {
 
         {/* Desktop CTAs */}
         <div className="hidden lg:flex items-center gap-3 ml-auto">
+          <ThemeToggle />
           <Link
             href={`${webUrl}/login`}
             className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -308,6 +310,12 @@ export function Navbar() {
             >
               Sign in
             </Link>
+            <div className="flex items-center justify-between gap-3 px-3 py-1">
+              <span className="text-sm font-medium" style={{ color: colors.textPrimary, fontFamily: fonts.body }}>
+                Theme
+              </span>
+              <ThemeToggle />
+            </div>
             <Link
               href={`${webUrl}/sign-up`}
               className="px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-opacity hover:opacity-90"

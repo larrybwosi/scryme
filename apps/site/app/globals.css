@@ -95,6 +95,48 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-primary: 0 8px 32px -4px oklch(0.55 0.18 265 / 0.35);
+
+  /* Scryme ledger variables — Light mode default values */
+  --ink-bg: #FBF9F4;
+  --ink-panel: #F4EFE2;
+  --ink-panel-alt: #ECE4D2;
+  --ink-line: rgba(11, 18, 32, 0.1);
+  --paper: #111827;
+  --brass: #9E742A;
+  --brass-dim: rgba(158, 116, 42, 0.1);
+  --brass-line: rgba(158, 116, 42, 0.25);
+  --ledger-green: #2F6A4F;
+  --ledger-rust: #933D25;
+  --text-primary: #111827;
+  --text-muted: rgba(11, 18, 32, 0.64);
+  --text-faint: rgba(11, 18, 32, 0.36);
+}
+
+/* ========================================
+   SCRYME LEDGER TOKENS — DARK MODE
+   ======================================== */
+.dark, :host-context(.dark), ::backdrop {
+  --background: #0B1220;
+  --foreground: #F1E9D8;
+  --card: #121B2E;
+  --card-foreground: #F1E9D8;
+  --popover: #121B2E;
+  --popover-foreground: #F1E9D8;
+  --border: rgba(241, 233, 216, 0.09);
+
+  --ink-bg: #0B1220;
+  --ink-panel: #121B2E;
+  --ink-panel-alt: #0E1626;
+  --ink-line: rgba(241, 233, 216, 0.09);
+  --paper: #F1E9D8;
+  --brass: #C89A4B;
+  --brass-dim: rgba(200, 154, 75, 0.16);
+  --brass-line: rgba(200, 154, 75, 0.35);
+  --ledger-green: #4B9073;
+  --ledger-rust: #B4553A;
+  --text-primary: #F1E9D8;
+  --text-muted: rgba(241, 233, 216, 0.56);
+  --text-faint: rgba(241, 233, 216, 0.32);
 }
 
 /* ========================================
@@ -126,6 +168,20 @@
   --color-site-dark-card: var(--site-dark-card);
   --color-site-dark-border: var(--site-dark-border);
   --color-site-dark-muted: var(--site-dark-muted);
+
+  --color-inkBg: var(--ink-bg);
+  --color-inkPanel: var(--ink-panel);
+  --color-inkPanelAlt: var(--ink-panel-alt);
+  --color-inkLine: var(--ink-line);
+  --color-paper: var(--paper);
+  --color-brass: var(--brass);
+  --color-brassDim: var(--brass-dim);
+  --color-brassLine: var(--brass-line);
+  --color-ledgerGreen: var(--ledger-green);
+  --color-ledgerRust: var(--ledger-rust);
+  --color-textPrimary: var(--text-primary);
+  --color-textMuted: var(--text-muted);
+  --color-textFaint: var(--text-faint);
 
   /* Convenience surface aliases — noticeably different from background */
   --color-surface-1: oklch(0.96 0.008 265);
