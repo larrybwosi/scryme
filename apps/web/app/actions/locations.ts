@@ -193,6 +193,9 @@ export interface LocationSettings {
   requiresQC?: boolean;
   restrictedAccess?: boolean;
   operatingHours?: string;
+  imageUrl?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export async function createLocation(data: {

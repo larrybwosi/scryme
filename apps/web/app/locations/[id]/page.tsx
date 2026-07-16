@@ -41,6 +41,8 @@ import { UnitList } from "../../../components/locations/unit-list";
 import { LocationManagementTab } from "../../../components/locations/location-management-tab";
 import { LocationStockTable } from "../../../components/locations/location-stock-table";
 import { db } from "@repo/db";
+import Image from "next/image";
+import { LocationMap } from "../../../components/locations/location-map";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -176,6 +178,38 @@ export default async function LocationDetailPage({
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 p-8">
         {/* Left rail: details + stats */}
         <div className="space-y-5">
+          {/* Branch Image/Banner Card */}
+          <Card className="shadow-none border-[#E5E5E5] overflow-hidden">
+            {location?.settings?.imageUrl ? (
+              <div className="relative h-[160px] w-full">
+                <Image
+                  src={location.settings.imageUrl}
+                  alt={`${location.name} branch custom image`}
+                  fill
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                  <span className="text-white text-[10px] font-semibold uppercase tracking-wider backdrop-blur-sm bg-black/35 px-2 py-1 rounded">
+                    Branch Showcase Image
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 bg-slate-50 border-b flex flex-col items-center text-center gap-2">
+                <div className="w-10 h-10 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500">
+                  <Building2 size={18} />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-[12px] font-semibold text-slate-900">Custom Home Page Image</h4>
+                  <p className="text-[11px] text-muted-foreground leading-normal max-w-[200px]">
+                    Customize this branch with a showcase image for your public homepage.
+                  </p>
+                </div>
+              </div>
+            )}
+          </Card>
+
           <div className="grid grid-cols-3 gap-2.5">
             <StatTile label="Sub-locations" value={childCount} />
             <StatTile label="Zones" value={zoneCount} accent="orange" />
@@ -241,6 +275,22 @@ export default async function LocationDetailPage({
                   </p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Map Card */}
+          <Card className="shadow-none border-[#E5E5E5]">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-[13px] font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                <MapPin size={14} className="text-red-500" />
+                Physical Location Map
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LocationMap
+                latitude={location?.settings?.latitude}
+                longitude={location?.settings?.longitude}
+              />
             </CardContent>
           </Card>
         </div>
