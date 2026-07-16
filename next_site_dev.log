@@ -1,0 +1,19 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> site@1.0.0 dev /app/apps/site
+> next dev --port 3005
+
+⨯ Failed to start server
+Error: listen EADDRINUSE: address already in use :::3005
+    at <unknown> (Error: listen EADDRINUSE: address already in use :::3005)
+    at new Promise (<anonymous>) {
+  code: 'EADDRINUSE',
+  errno: -98,
+  syscall: 'listen',
+  address: '::',
+  port: 3005
+}
+[?25h
+/app/apps/site:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  site@1.0.0 dev: `next dev --port 3005`
+Exit status 1

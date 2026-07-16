@@ -42,11 +42,14 @@ export interface Post {
   publishedAt: string;
   excerpt?: string;
   mainImage?: {
-    asset: {
+    asset?: {
       _ref: string;
       _type: "reference";
     };
+    url?: string;
     alt?: string;
+    caption?: string;
+    attribution?: string;
   };
   author?: Author;
   body: any; // Portable Text block array
@@ -60,6 +63,12 @@ export const FALLBACK_POSTS: Post[] = [
     slug: { current: "scaling-retail-business" },
     publishedAt: "2025-06-15T09:00:00.000Z",
     excerpt: "Learn the essential strategies for multi-location retail management, from centralized inventory to unified CRM data.",
+    mainImage: {
+      url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=80",
+      alt: "Multi-location retail storefronts highlighting rapid business scaling",
+      caption: "Scaling successfully across multiple physical stores requires unified operating ledgers.",
+      attribution: "Photo by Markus Spiske on Unsplash"
+    },
     author: {
       name: "Scryme Team",
       bio: "Retail automation experts dedicated to building robust ERP and POS systems.",
@@ -90,6 +99,14 @@ export const FALLBACK_POSTS: Post[] = [
             text: "Expanding from a single retail store to multiple locations is a major milestone. However, it also introduces significant operational complexity. Managing stock across different locations, keeping track of staff, and maintaining a unified customer relationship strategy requires robust systems and clear processes.",
           },
         ],
+      },
+      {
+        _key: "inline-image-1",
+        _type: "image",
+        url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1000&q=80",
+        alt: "Centralized modern retail point-of-sale setup",
+        caption: "Seamless integration between multiple registers minimizes latency and sync issues.",
+        attribution: "Photo by Blake Wisz on Unsplash"
       },
       {
         _key: "block-3",
@@ -177,6 +194,12 @@ export const FALLBACK_POSTS: Post[] = [
     slug: { current: "importance-of-offline-first-pos" },
     publishedAt: "2025-06-10T10:30:00.000Z",
     excerpt: "Why relying on a constant internet connection for your point of sale is a risk you shouldn't take.",
+    mainImage: {
+      url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+      alt: "Tablets and devices in a modern checkout workflow",
+      caption: "Offline-first architectures guarantee continuous operations even when network connectivity drops.",
+      attribution: "Photo by CardMapr.nl on Unsplash"
+    },
     author: {
       name: "Scryme Team",
       bio: "Engineers of offline-first POS systems that never let retail transactions pause.",
@@ -207,6 +230,14 @@ export const FALLBACK_POSTS: Post[] = [
             text: "In modern retail, a fast and reliable checkout experience is critical. Many cloud-based Point of Sale (POS) systems require a constant internet connection. If your ISP experiences an outage or your Wi-Fi flickers, your entire checkout lane stops, leading to lost revenue and frustrated customers.",
           },
         ],
+      },
+      {
+        _key: "inline-image-2",
+        _type: "image",
+        url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80",
+        alt: "Enterprise server database tracking syncing operations",
+        caption: "A localized database ensures sub-second speeds before queued transactions sync to the cloud.",
+        attribution: "Photo by Carlos Muza on Unsplash"
       },
       {
         _key: "b3",

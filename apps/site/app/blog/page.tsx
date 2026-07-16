@@ -124,7 +124,7 @@ export default async function BlogPage() {
               {featured.mainImage && (
                 <div className="w-full lg:w-1/2 relative min-h-[220px] sm:min-h-[300px] lg:min-h-[400px] overflow-hidden">
                   <img
-                    src={urlFor(featured.mainImage).width(800).height(500).url()}
+                    src={featured.mainImage.url || urlFor(featured.mainImage).width(800).height(500).url()}
                     alt={featured.mainImage.alt || featured.title}
                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                     loading="eager"
@@ -223,7 +223,7 @@ export default async function BlogPage() {
                     style={{ borderColor: colors.inkLine }}
                   >
                     <img
-                      src={urlFor(post.mainImage).width(600).height(400).url()}
+                      src={post.mainImage.url || urlFor(post.mainImage).width(600).height(400).url()}
                       alt={post.mainImage.alt || post.title}
                       className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       loading="lazy"
