@@ -69,7 +69,20 @@ export const blockContentType = defineType({
           name: 'alt',
           type: 'string',
           title: 'Alternative Text',
-        }
+          description: 'Crucial for search engines (SEO) and screen readers (accessibility).',
+        },
+        {
+          name: 'caption',
+          type: 'string',
+          title: 'Caption',
+          description: 'A description that appears below the image in the post.',
+        },
+        {
+          name: 'attribution',
+          type: 'string',
+          title: 'Attribution / Credits',
+          description: 'Link or name of the image creator (e.g. Unsplash / Jane Doe).',
+        },
       ]
     }),
   ],

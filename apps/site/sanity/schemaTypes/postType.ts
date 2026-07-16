@@ -34,8 +34,28 @@ export const postType = defineType({
           name: 'alt',
           type: 'string',
           title: 'Alternative text',
-        })
+          description: 'Crucial for search engines (SEO) and screen readers.',
+        }),
+        defineField({
+          name: 'caption',
+          type: 'string',
+          title: 'Caption',
+          description: 'A description that appears below the main image.',
+        }),
+        defineField({
+          name: 'attribution',
+          type: 'string',
+          title: 'Attribution / Credits',
+          description: 'Link or name of the image creator (e.g. Unsplash / Jane Doe).',
+        }),
       ]
+    }),
+    defineField({
+      name: 'excerpt',
+      title: 'Excerpt',
+      type: 'text',
+      description: 'A short summary of the article for blog lists and SEO.',
+      validation: (Rule) => Rule.max(300),
     }),
     defineField({
       name: 'categories',
