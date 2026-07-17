@@ -82,16 +82,14 @@ describe('PosAuthStore', () => {
             deviceName: 'Test Terminal',
             deviceType: 'MAIN_HUB',
             locationId: 'loc-1',
+            location: { id: 'loc-1', name: 'Test Location matching' },
           },
           organization: {
             slug: 'test-org-slug',
           },
         },
       })
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({
-        locations: [{ id: 'loc-1', name: 'Test Location matching' }],
-      });
+      .mockResolvedValueOnce({});
 
     await useAuthStore.getState().provisionDevice('valid-setup-token');
 
@@ -121,13 +119,7 @@ describe('PosAuthStore', () => {
           slug: 'unwrapped-org-slug',
         },
       })
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce({
-        success: true,
-        data: {
-          locations: [],
-        },
-      });
+      .mockResolvedValueOnce({});
 
     await useAuthStore.getState().provisionDevice('unwrapped-setup-token');
 
