@@ -168,3 +168,8 @@
 **Vulnerability:** The `BusinessAccountService.createBusinessAccount` method accepted a `defaultLocationId` from the request body without verifying that it belonged to the authenticated `organizationId`, allowing cross-tenant resource association.
 **Learning:** Controller-level multi-tenancy guards (like `MultiTenancyGuard`) only establish the tenant context; they do not automatically validate foreign keys or linked resource IDs provided in the request body. Each secondary ID must be explicitly validated against the established `organizationId` to prevent IDOR vulnerabilities.
 **Prevention:** Always perform a scoped lookup (e.g., `findFirst` with `id` and `organizationId`) for all user-provided resource identifiers (foreign keys) before persisting them or using them in business logic.
+
+## 2026-07-17 - Plaintext Storage of Standalone POS Setup Tokens and Device Keys
+**Vulnerability:** Standalone POS setup tokens and long-lived device keys were stored in plaintext in the database, risking exposure of sensitive active credentials if the database was compromised.
+**Learning:** API keys and device tokens are highly sensitive credentials. Storing them in plaintext violates the principle of defense-in-depth and the rule of secure credential storage.
+**Prevention:** Always hash setup tokens and long-lived keys using a cryptographically secure hash function (like SHA-256) before storing them in database records. Perform validation by hashing user-supplied inputs and performing `@unique` database lookups on the hashed values.
