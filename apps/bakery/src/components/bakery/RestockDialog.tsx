@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@repo/ui/components/ui/alert';
 import { Switch } from '@repo/ui/components/ui/switch';
 import { Checkbox } from '@repo/ui/components/ui/checkbox';
 import { toast } from 'sonner';
+import sdk from '@/lib/sdk';
 import { useRestockInventory } from '@/lib/api/inventory';
 import { useFormattedCurrency } from '@/lib/utils';
 import { SupplierSelect } from '@/components/common/supplier-select';
@@ -82,13 +83,14 @@ export function RestockDialog({ open, onOpenChange, selectedIngredient }: Restoc
       for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);
-        const response = await fetch('/api/upload?file=true', {
-          method: 'POST',
-          body: formData,
-        });
-        if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
-        const data = await response.json();
-        if (!data.url) throw new Error(`No URL returned for ${file.name}`);
+        const response = await sdk.client.post('/upload', formData, {
+          useProxy: false,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        } as any);
+        const data = response.data || response;
+        if (!data || !data.url) throw new Error(`No URL returned for ${file.name}`);
         uploadedUrls.push(data.url);
       }
       toast.success(`Successfully uploaded ${files.length} file(s)`, { id: uploadToast });
