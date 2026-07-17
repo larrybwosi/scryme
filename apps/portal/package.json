@@ -13,6 +13,7 @@
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
+    "@repo/sdk": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/zitadel": "workspace:*",

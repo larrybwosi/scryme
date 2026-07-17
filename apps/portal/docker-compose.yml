@@ -1,0 +1,39 @@
+services:
+  portal:
+    build:
+      context: ../..
+      dockerfile: apps/portal/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+    image: scryme-portal:latest
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${PORTAL_PORT:-3006}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+      NEXT_PUBLIC_APP_URL: https://${PORTAL_DOMAIN:-portal.scryme.tech}
+      PORT: ${PORTAL_PORT:-3006}
+      NODE_ENV: production
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      ZITADEL_DOMAIN: ${ZITADEL_DOMAIN:-auth.scryme.tech}
+      ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
+    networks:
+      - scryme-network
+      - proxy-network
+
+networks:
+  scryme-network:
+    external: true
+  proxy-network:
+    name: ${PROXY_NETWORK_NAME:-dokploy-network}
+    external: true

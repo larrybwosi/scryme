@@ -620,6 +620,9 @@ importers:
       '@repo/env':
         specifier: workspace:*
         version: link:../../packages/env
+      '@repo/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@repo/shared':
         specifier: workspace:*
         version: link:../../packages/shared
