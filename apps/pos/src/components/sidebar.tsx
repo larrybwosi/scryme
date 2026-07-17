@@ -62,7 +62,6 @@ const routeMap: Record<string, string> = {
   settings: '/settings',
   pricing: '/pricing',
   barcodes: '/barcodes',
-  'barcode-registration': '/barcode-registration',
   'petty-cash': '/petty-cash',
 };
 
@@ -299,7 +298,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
           })}
 
           <div className="mt-4 space-y-2">
-            {!isCollapsed && checkedInMembers.length > 1 && (
+            {!isCollapsed && checkedInMembers.length >= 1 && (
               <div className="px-2 pb-2">
                 <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2 px-1">
                   Switch User

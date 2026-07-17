@@ -20,7 +20,6 @@ const ManageTablesPage = import.meta.env.VITE_BUSINESS_MODE === 'restaurant' || 
   : () => null;
 const CashDrawerPage = lazy(() => import('@/pages/cash-drawer-page'));
 const PettyCashPage = lazy(() => import('@/pages/petty-cash-page'));
-const BarcodeRegistrationPage = lazy(() => import('@/pages/barcode-registration-page'));
 const TillManagementPage = lazy(() => import('@/pages/till-management-page'));
 const ReceiptSettingsPage = lazy(() => import('@/pages/receipt-settings-page'));
 const PendingTransactionsPage = lazy(() => import('@/pages/pending-transactions'));
@@ -171,7 +170,6 @@ const AppRoutes = () => {
 
         <Route path="/product-management" element={<ProductManagementPage />} />
         <Route path="/barcodes" element={<BarcodePrintingPage />} />
-        <Route path="/barcode-registration" element={<BarcodeRegistrationPage />} />
         <Route path="/logs" element={<LogsPage />} />
       </Route>
 

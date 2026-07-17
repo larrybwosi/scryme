@@ -41,6 +41,7 @@ export class PosController {
   ) {}
 
   @Post("check-in")
+  @Permissions("pos:auth")
   @ApiOperation({ summary: "Member check-in" })
   @UsePipes(new ZodValidationPipe(CheckInSchema))
   async checkIn(
@@ -63,13 +64,22 @@ export class PosController {
   }
 
   @Post("check-out")
+  @Permissions("pos:auth")
   @ApiOperation({ summary: "Member check-out" })
   @UsePipes(new ZodValidationPipe(CheckOutSchema))
   async checkOut(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posService.checkOut(ctx, body);
   }
 
+  @Get("attendance/status")
+  @Permissions("pos:auth")
+  @ApiOperation({ summary: "Get member attendance status" })
+  async getAttendanceStatus(@v2Context() ctx: V2ApiContext) {
+    return this.posService.getAttendanceStatus(ctx);
+  }
+
   @Get("locations")
+  @Permissions("pos:location:read")
   @ApiOperation({ summary: "List active locations" })
   async listLocations(@v2Context() ctx: V2ApiContext) {
     return this.posService.listLocations(ctx);
@@ -120,12 +130,14 @@ export class PosController {
   }
 
   @Get("incoming")
+  @Permissions("pos:sale:read")
   @ApiOperation({ summary: "List incoming shipments" })
   async getIncoming(@v2Context() ctx: V2ApiContext, @Query() query: any) {
     return this.posService.getIncoming(ctx, query);
   }
 
   @Post("transaction/scan")
+  @Permissions("pos:sale:read")
   @ApiOperation({ summary: "Scan transaction QR" })
   async scanTransaction(
     @v2Context() ctx: V2ApiContext,
@@ -135,6 +147,7 @@ export class PosController {
   }
 
   @Post("ably-auth")
+  @Permissions("pos:auth")
   @ApiOperation({ summary: "Ably realtime auth" })
   async ablyAuth(@v2Context() ctx: V2ApiContext) {
     return this.posService.ablyAuth(ctx);
@@ -163,6 +176,7 @@ export class PosController {
   }
 
   @Get("customers")
+  @Permissions("pos:sync")
   @ApiOperation({ summary: "POS customer delta sync" })
   async getCustomersDelta(
     @v2Context() ctx: V2ApiContext,
@@ -172,6 +186,7 @@ export class PosController {
   }
 
   @Post("customers")
+  @Permissions("pos:sale:create")
   @ApiOperation({ summary: "Create POS customer" })
   @UsePipes(new ZodValidationPipe(CreateCustomerSchema))
   async createCustomer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
@@ -179,6 +194,7 @@ export class PosController {
   }
 
   @Post("deliveries/dispatch")
+  @Permissions("pos:sale:update")
   @ApiOperation({ summary: "Dispatch delivery" })
   async dispatchDelivery(
     @v2Context() ctx: V2ApiContext,
@@ -189,6 +205,7 @@ export class PosController {
   }
 
   @Post("deliveries/reconcile-pod")
+  @Permissions("pos:sale:update")
   @ApiOperation({ summary: "Reconcile delivery (POD)" })
   async reconcileDelivery(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     const proofImage = body.proofImage?.value;
@@ -196,12 +213,14 @@ export class PosController {
   }
 
   @Get("stock-requests")
+  @Permissions("pos:product:read")
   @ApiOperation({ summary: "List stock requests" })
   async listStockRequests(@v2Context() ctx: V2ApiContext) {
     return this.posService.listStockRequests(ctx);
   }
 
   @Post("stock-requests")
+  @Permissions("pos:stock:manage")
   @ApiOperation({ summary: "Create stock request" })
   @UsePipes(new ZodValidationPipe(CreateStockRequestSchema))
   async createStockRequest(@v2Context() ctx: V2ApiContext, @Body() body: any) {
@@ -209,6 +228,7 @@ export class PosController {
   }
 
   @Post("stock-requests/:id/cancel")
+  @Permissions("pos:stock:manage")
   @ApiOperation({ summary: "Cancel stock request" })
   async cancelStockRequest(
     @v2Context() ctx: V2ApiContext,
@@ -218,12 +238,14 @@ export class PosController {
   }
 
   @Get("pricing")
+  @Permissions("pos:product:read")
   @ApiOperation({ summary: "Get POS pricing data" })
   async getPricing(@v2Context() ctx: V2ApiContext) {
     return this.posService.getPricing(ctx);
   }
 
   @Get("pricing/sync")
+  @Permissions("pos:product:read")
   @ApiOperation({ summary: "Sync POS pricing data" })
   async syncPricing(
     @v2Context() ctx: V2ApiContext,
@@ -233,6 +255,7 @@ export class PosController {
   }
 
   @Post("shifts/sync")
+  @Permissions("pos:sync")
   @ApiOperation({ summary: "Sync POS shifts" })
   @UsePipes(new ZodValidationPipe(ShiftSyncSchema))
   async syncShifts(@v2Context() ctx: V2ApiContext, @Body() body: any) {
@@ -240,18 +263,21 @@ export class PosController {
   }
 
   @Get("waybill/:id")
+  @Permissions("pos:sale:read")
   @ApiOperation({ summary: "Get transaction waybill" })
   async getWaybill(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
     return this.posService.getWaybill(ctx, id);
   }
 
   @Get("inventory/requests")
+  @Permissions("pos:stock:manage")
   @ApiOperation({ summary: "List inventory requests" })
   async listInventoryRequests(@v2Context() ctx: V2ApiContext) {
     return this.posService.listStockRequests(ctx);
   }
 
   @Post("inventory/requests")
+  @Permissions("pos:stock:manage")
   @ApiOperation({ summary: "Create inventory request" })
   @UsePipes(new ZodValidationPipe(CreateStockRequestSchema))
   async createInventoryRequest(
@@ -262,6 +288,7 @@ export class PosController {
   }
 
   @Post("inventory/process")
+  @Permissions("pos:product:update")
   @ApiOperation({ summary: "Process inventory adjustments" })
   @UsePipes(new ZodValidationPipe(AdjustStockSchema))
   async processInventory(@v2Context() ctx: V2ApiContext, @Body() body: any) {
@@ -269,6 +296,7 @@ export class PosController {
   }
 
   @Post("purchases/:id/receive")
+  @Permissions("pos:sale:update")
   @ApiOperation({ summary: "Receive purchase order" })
   async receivePurchase(
     @v2Context() ctx: V2ApiContext,
@@ -279,6 +307,7 @@ export class PosController {
   }
 
   @Post("inventory/transfers/:id/receive")
+  @Permissions("pos:sale:update")
   @ApiOperation({ summary: "Receive stock transfer" })
   async receiveTransfer(
     @v2Context() ctx: V2ApiContext,
@@ -289,18 +318,21 @@ export class PosController {
   }
 
   @Post("orders")
+  @Permissions("pos:sale:create")
   @ApiOperation({ summary: "Create order" })
   async createOrder(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.posSaleService.handleOrder(ctx, body);
   }
 
   @Get("drivers")
+  @Permissions("pos:sale:read")
   @ApiOperation({ summary: "List drivers" })
   async getDrivers(@v2Context() ctx: V2ApiContext) {
     return this.posService.getDrivers(ctx);
   }
 
   @Post("inventory/transfers")
+  @Permissions("pos:stock:manage")
   @ApiOperation({ summary: "Create stock transfer" })
   @UsePipes(new ZodValidationPipe(CreateStockTransferSchema))
   async createStockTransfer(@v2Context() ctx: V2ApiContext, @Body() body: any) {
@@ -308,6 +340,7 @@ export class PosController {
   }
 
   @Post("petty-cash")
+  @Permissions("pos:petty-cash:create")
   @ApiOperation({ summary: "Register a new petty cash expense" })
   @UsePipes(new ZodValidationPipe(RegisterPettyCashSchema))
   async registerPettyCash(@v2Context() ctx: V2ApiContext, @Body() body: any) {
@@ -315,12 +348,14 @@ export class PosController {
   }
 
   @Get("petty-cash/funds")
+  @Permissions("pos:petty-cash:read")
   @ApiOperation({ summary: "List available petty cash funds" })
   async getPettyCashFunds(@v2Context() ctx: V2ApiContext) {
     return this.posService.getPettyCashFunds(ctx);
   }
 
   @Get("petty-cash/transactions")
+  @Permissions("pos:petty-cash:read")
   @ApiOperation({ summary: "List recent petty cash transactions" })
   async getPettyCashTransactions(
     @v2Context() ctx: V2ApiContext,
@@ -331,6 +366,7 @@ export class PosController {
   }
 
   @Post("inventory/barcode")
+  @Permissions("pos:product:update")
   @ApiOperation({ summary: "Register or update product variant barcode" })
   @UsePipes(new ZodValidationPipe(RegisterBarcodeSchema))
   async registerBarcode(@v2Context() ctx: V2ApiContext, @Body() body: any) {

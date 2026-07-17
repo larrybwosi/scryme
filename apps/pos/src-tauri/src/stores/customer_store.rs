@@ -265,7 +265,7 @@ pub async fn run_sync(
 
     let target_url = format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::CUSTOMERS);
 
-    let last_sync: Option<String> = sqlx::query("SELECT last_sync FROM customer_sync_meta WHERE id = 1")
+    let _last_sync: Option<String> = sqlx::query("SELECT last_sync FROM customer_sync_meta WHERE id = 1")
         .fetch_optional(&pool)
         .await.map_err(|e| anyhow::anyhow!(e))?
         .map(|r| r.get("last_sync"));

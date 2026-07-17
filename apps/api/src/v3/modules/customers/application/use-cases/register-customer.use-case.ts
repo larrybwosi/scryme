@@ -49,6 +49,7 @@ export class RegisterCustomerUseCase {
         tx,
         organizationId,
         dto.zitadelUserId,
+        dto.email,
       );
 
       if (existingCustomer && existingCustomer.id !== internalId) {
@@ -116,6 +117,7 @@ export class RegisterCustomerUseCase {
     tx: any,
     organizationId: string,
     zitadelUserId: string,
+    email?: string,
   ) {
     const mapping = await tx.externalMapping.findFirst({
       where: {
@@ -128,7 +130,22 @@ export class RegisterCustomerUseCase {
 
     if (mapping) return mapping.internalId!;
 
-    const internalId = randomUUID();
+    let internalId = randomUUID();
+
+    // If a customer already exists with the same email in the organization, reuse their ID
+    const cleanEmail = email?.trim() || null;
+    if (cleanEmail && tx.customer?.findFirst) {
+      const existingCustomer = await tx.customer.findFirst({
+        where: {
+          organizationId,
+          email: cleanEmail,
+        },
+      });
+      if (existingCustomer) {
+        internalId = existingCustomer.id;
+      }
+    }
+
     await tx.externalMapping.create({
       data: {
         organizationId,

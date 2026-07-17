@@ -158,7 +158,7 @@ export const useSessionActivityListener = () => {
         // We can use authenticated_api_request to ping and verify token
         const response = await invoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: `api/v2/members/attendance/me/status`,
+          path: `api/v2/pos/attendance/status`,
         });
 
         // The API returns { success: true, data: { isCheckedIn: true, ... } }

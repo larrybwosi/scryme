@@ -35,7 +35,7 @@ describe("RegisterCustomerUseCase", () => {
         },
         customer: {
           upsert: vi.fn(),
-          findUnique: vi.fn(),
+          findFirst: vi.fn(),
         },
         address: {
           findFirst: vi.fn(),

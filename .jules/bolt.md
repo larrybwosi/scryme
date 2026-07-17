@@ -84,3 +84,7 @@
 ## 2026-07-11 - [Select Optimization & Sync Protocol Integrity]
 **Learning:** When optimizing database lookups for synchronization protocols (e.g., POS customer delta sync), it is critical to include 'updatedAt' in the 'select' block even if it's not explicitly displayed in the UI. Sync protocols rely on this field to determine the next 'since' token; omitting it can lead to redundant syncs or data inconsistencies. Additionally, ensure all fields required by client-side local storage models (like Rust structs in Tauri) are preserved to avoid breaking local persistence.
 **Action:** Always cross-reference 'select' blocks with both the API sync protocol requirements and the target client's data models before finalizing.
+
+## 2026-07-17 - [O(N*M) to O(N+M) Map-based Lookup in E-Commerce Order Creation]
+**Learning:** Performing multiple nested `.find()` searches over arrays inside loops (like verifying variant stocks and mapping order items in `OrdersService.createOrder`) creates an $O(N \times M)$ performance bottleneck. Pre-indexing the retrieved entity array into a `Map` structure reduces search time to constant-time $O(1)$, resulting in an overall $O(N + M)$ complexity.
+**Action:** Always pre-index arrays into Maps when performing lookups inside loops to ensure constant-time data reconciliation under load.

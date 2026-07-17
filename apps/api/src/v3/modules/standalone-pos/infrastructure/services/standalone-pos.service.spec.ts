@@ -7,6 +7,7 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import * as crypto from "crypto";
 
 describe("StandalonePosService", () => {
   let service: StandalonePosService;
@@ -52,17 +53,31 @@ describe("StandalonePosService", () => {
   });
 
   describe("createSetupKey", () => {
-    it("should create a setup key", async () => {
+    it("should create a setup key and return the raw token, saving the hashed token to db", async () => {
       const dto = { name: "Test Device", deviceId: "POS-1" };
-      mockPrisma.client.standaloneSetupKey.create.mockResolvedValue({
-        id: "1",
-        ...dto,
+      mockPrisma.client.standaloneSetupKey.create.mockImplementation(({ data }) => {
+        return Promise.resolve({
+          id: "1",
+          name: data.name,
+          deviceId: data.deviceId,
+          token: data.token, // This is hashedToken
+        });
       });
 
       const result = await service.createSetupKey(dto);
 
       expect(result).toBeDefined();
-      expect(mockPrisma.client.standaloneSetupKey.create).toHaveBeenCalled();
+      // Raw token is 64-char hex string
+      expect(result.token).toHaveLength(64);
+      // Hashed token in db create call should be SHA-256 hash of raw token
+      const expectedHashedToken = crypto.createHash("sha256").update(result.token).digest("hex");
+      expect(mockPrisma.client.standaloneSetupKey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            token: expectedHashedToken,
+          }),
+        }),
+      );
     });
   });
 
@@ -110,6 +125,45 @@ describe("StandalonePosService", () => {
         service.activateDevice({ token: "token", machineId: "m1" }),
       ).rejects.toThrow(ConflictException);
     });
+
+    it("should look up and update using hashed token, and return raw key", async () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 1);
+
+      const setupKey = {
+        id: "s1",
+        name: "Test Setup",
+        deviceId: "POS-1",
+        expiresAt: futureDate,
+        usedAt: null,
+      };
+
+      mockPrisma.client.standaloneSetupKey.findUnique.mockResolvedValue(setupKey);
+      mockPrisma.client.standaloneDevice.findUnique.mockResolvedValue(null);
+      mockPrisma.client.standaloneDevice.create.mockResolvedValue({ id: "d1", name: "Test Setup" });
+      mockPrisma.client.standaloneDeviceKey.create.mockImplementation(({ data }) => Promise.resolve({
+        key: data.key, // hashedKey
+        expiresAt: futureDate,
+      }));
+
+      const result = await service.activateDevice({ token: "my-token", machineId: "m1" });
+
+      const expectedHashedToken = crypto.createHash("sha256").update("my-token").digest("hex");
+      expect(mockPrisma.client.standaloneSetupKey.findUnique).toHaveBeenCalledWith({
+        where: { token: expectedHashedToken },
+      });
+
+      // Hashed key should be SHA-256 of result.key
+      expect(result.key).toHaveLength(32); // 16 bytes rawKey hex is 32 chars
+      const expectedHashedKey = crypto.createHash("sha256").update(result.key).digest("hex");
+      expect(mockPrisma.client.standaloneDeviceKey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            key: expectedHashedKey,
+          }),
+        }),
+      );
+    });
   });
 
   describe("validateKey", () => {
@@ -129,8 +183,15 @@ describe("StandalonePosService", () => {
         device: { name: "Device" },
       });
 
-      const result = await service.validateKey("valid-key");
+      const rawKey = "my-secret-key";
+      const expectedHashedKey = crypto.createHash("sha256").update(rawKey).digest("hex");
+
+      const result = await service.validateKey(rawKey);
       expect(result.valid).toBe(true);
+      expect(mockPrisma.client.standaloneDeviceKey.findUnique).toHaveBeenCalledWith({
+        where: { key: expectedHashedKey },
+        include: { device: true },
+      });
     });
   });
 });

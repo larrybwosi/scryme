@@ -102,25 +102,113 @@ export class B2BUseCase {
   }
 
   async getInvoices(organizationId: string, businessAccountId: string) {
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced broad findMany query with targeted 'select' block.
+     * Excluding the heavy legal text (termsAndConditions), notes, and metadata JSON fields
+     * significantly reduces database I/O and network payload size for B2B list views.
+     */
     return this.prisma.client.transaction.findMany({
       where: {
         organizationId,
         businessAccountId: businessAccountId || undefined,
         type: "POS_SALE" as any, // Using existing TransactionType
       },
+      select: {
+        id: true,
+        number: true,
+        type: true,
+        status: true,
+        paymentStatus: true,
+        totalPaid: true,
+        organizationId: true,
+        customerId: true,
+        businessAccountId: true,
+        deliveryPartnerId: true,
+        memberId: true,
+        locationId: true,
+        subtotal: true,
+        discountTotal: true,
+        taxTotal: true,
+        shippingTotal: true,
+        finalTotal: true,
+        currencyCode: true,
+        exchangeRate: true,
+        baseCurrencyTotal: true,
+        createdAt: true,
+        confirmedAt: true,
+        completedAt: true,
+        cancelledAt: true,
+        expiresAt: true,
+        updatedAt: true,
+        receiptUrl: true,
+      },
       orderBy: { createdAt: "desc" },
     });
   }
 
   async getOrders(organizationId: string, businessAccountId: string) {
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced broad include on items with a targeted select block.
+     * Selecting only essential scalar fields for transactions and their related items
+     * prevents the over-fetching of heavy fields like item.customFields, item.notes,
+     * and transaction.metadata/termsAndConditions to optimize DB/network performance.
+     */
     return this.prisma.client.transaction.findMany({
       where: {
         organizationId,
         businessAccountId: businessAccountId || undefined,
         type: "SALES_ORDER" as any, // Using existing TransactionType
       },
-      include: {
-        items: true,
+      select: {
+        id: true,
+        number: true,
+        type: true,
+        status: true,
+        paymentStatus: true,
+        totalPaid: true,
+        organizationId: true,
+        customerId: true,
+        businessAccountId: true,
+        deliveryPartnerId: true,
+        memberId: true,
+        locationId: true,
+        subtotal: true,
+        discountTotal: true,
+        taxTotal: true,
+        shippingTotal: true,
+        finalTotal: true,
+        currencyCode: true,
+        exchangeRate: true,
+        baseCurrencyTotal: true,
+        createdAt: true,
+        confirmedAt: true,
+        completedAt: true,
+        cancelledAt: true,
+        expiresAt: true,
+        updatedAt: true,
+        receiptUrl: true,
+        items: {
+          select: {
+            id: true,
+            transactionId: true,
+            variantId: true,
+            productName: true,
+            variantName: true,
+            sku: true,
+            quantity: true,
+            listPrice: true,
+            unitPrice: true,
+            unitCost: true,
+            subtotal: true,
+            discountAmount: true,
+            taxAmount: true,
+            lineTotal: true,
+            sellingUnitId: true,
+            sellingOrgUnitId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });

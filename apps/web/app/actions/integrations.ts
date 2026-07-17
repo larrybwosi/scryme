@@ -154,6 +154,135 @@ export async function provisionZitadel() {
   return { success: true, config: provisionResult };
 }
 
+export async function provisionScryme() {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const org = await prisma.organization.findUnique({
+    where: { id: context.organizationId },
+  });
+
+  if (!org) {
+    throw new Error("Organization not found");
+  }
+
+  const clientId = process.env.SCRYME_CHAT_CLIENT_ID;
+  const clientSecret = process.env.SCRYME_CHAT_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "Scryme Chat automatic provisioning is not configured on this server (SCRYME_CHAT_CLIENT_ID or SCRYME_CHAT_CLIENT_SECRET is missing).",
+    );
+  }
+
+  const { ScrymeChatApiClient } = await import("@repo/scryme");
+  const scrymeClient = new ScrymeChatApiClient(
+    process.env.SCRYME_CHAT_API_URL || "https://api.scryme.tech",
+    clientId,
+    clientSecret,
+  );
+
+  const workspaceSlug = `org-${org.slug}`.toLowerCase();
+  const ownerEmail = context.user?.email || "admin@scryme.tech";
+
+  // Fetch organization members to add as initial members
+  const dbMembers = await prisma.member.findMany({
+    where: {
+      organizationId: org.id,
+      isActive: true,
+      user: {
+        deletedAt: null,
+      },
+    },
+    include: {
+      user: true,
+    },
+  });
+
+  const initialMembers = dbMembers
+    .filter(m => m.user && m.user.email && m.user.email !== ownerEmail)
+    .map(m => ({
+      email: m.user.email,
+      role: (m.role === "OWNER" || m.role === "ADMIN" ? "admin" : "member") as
+        "admin" | "member",
+    }));
+
+  try {
+    const scrymeWorkspace = await scrymeClient.createWorkspace(
+      org.name,
+      workspaceSlug,
+      ownerEmail,
+      initialMembers,
+    );
+
+    // Create default channels for announcements, alerts, and general
+    const channels = [
+      { name: "Announcements", slug: "announcements" },
+      { name: "Alerts", slug: "alerts" },
+      { name: "General", slug: "general" },
+    ];
+
+    for (const channel of channels) {
+      try {
+        await scrymeClient.createChannel(
+          scrymeWorkspace.slug,
+          channel.name,
+          channel.slug,
+          "public",
+        );
+      } catch (channelErr: any) {
+        console.error(
+          `Failed to create default channel ${channel.slug} for workspace ${scrymeWorkspace.slug}:`,
+          channelErr.message,
+        );
+      }
+    }
+
+    await prisma.scrymeConfiguration.upsert({
+      where: { organizationId: org.id },
+      update: {
+        workspaceId: scrymeWorkspace.id,
+        workspaceSlug: scrymeWorkspace.slug,
+        isActive: true,
+      },
+      create: {
+        organizationId: org.id,
+        workspaceId: scrymeWorkspace.id,
+        workspaceSlug: scrymeWorkspace.slug,
+        isActive: true,
+      },
+    });
+
+    // Register workspace webhook for interactive action webhook processing
+    const publicUrl =
+      process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (publicUrl) {
+      const webhookUrl = `${publicUrl.replace(/\/$/, "")}/v2/scryme/webhook`;
+      try {
+        await scrymeClient.registerWorkspaceWebhook(
+          scrymeWorkspace.slug,
+          webhookUrl,
+        );
+      } catch (webhookErr: any) {
+        console.error(
+          "Failed to register workspace webhook in web route:",
+          webhookErr.message,
+        );
+      }
+    }
+
+    revalidatePath("/integrations");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to provision Scryme Chat for organization:", error);
+    throw new Error(
+      error.message || "Failed to provision Scryme Chat workspace",
+    );
+  }
+}
+
 export async function provisionWindmill() {
   const context = await getOrganizationContext();
   if (!context?.organizationId) {

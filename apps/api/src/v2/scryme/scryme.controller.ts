@@ -47,10 +47,19 @@ export class ScrymeController {
       throw new NotFoundException("Organization not found");
     }
 
+    let ownerEmail: string | undefined;
+    if (ctx.userId) {
+      const user = await this.prisma.client.user.findUnique({
+        where: { id: ctx.userId },
+      });
+      ownerEmail = user?.email || undefined;
+    }
+
     const config = await this.scrymeService.provisionWorkspace(
       org.id,
       org.name,
       org.slug,
+      ownerEmail,
     );
 
     // Also sync all existing entity channels

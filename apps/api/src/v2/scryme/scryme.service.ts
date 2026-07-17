@@ -21,7 +21,12 @@ export class ScrymeService {
     });
   }
 
-  async provisionWorkspace(organizationId: string, name: string, slug: string) {
+  async provisionWorkspace(
+    organizationId: string,
+    name: string,
+    slug: string,
+    ownerEmail?: string,
+  ) {
     const workspaceSlug = `org-${slug}`.toLowerCase();
 
     this.logger.log(
@@ -29,9 +34,27 @@ export class ScrymeService {
     );
 
     try {
+      let finalOwnerEmail = ownerEmail;
+      if (!finalOwnerEmail) {
+        // Find the first member/admin in the organization to act as owner
+        const firstMember = await this.prisma.client.member.findFirst({
+          where: { organizationId },
+          include: { user: true },
+          orderBy: { createdAt: "asc" },
+        });
+        finalOwnerEmail = firstMember?.user?.email;
+      }
+      if (!finalOwnerEmail) {
+        finalOwnerEmail = "admin@scryme.tech";
+      }
+
       let workspace;
       try {
-        workspace = await this.scrymeClient.createWorkspace(name, workspaceSlug);
+        workspace = await this.scrymeClient.createWorkspace(
+          name,
+          workspaceSlug,
+          finalOwnerEmail,
+        );
       } catch (error: any) {
         if (error.response?.status === 409) {
           this.logger.log(
@@ -58,13 +81,33 @@ export class ScrymeService {
         },
       });
 
+      // Register the workspace-specific webhook in V3 API for interactive actions
+      const publicUrl =
+        process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
+      if (publicUrl) {
+        const webhookUrl = `${publicUrl.replace(/\/$/, "")}/v2/scryme/webhook`;
+        try {
+          await this.scrymeClient.registerWorkspaceWebhook(
+            workspace.slug,
+            webhookUrl,
+          );
+          this.logger.log(
+            `Registered V3 workspace webhook for ${workspace.slug}: ${webhookUrl}`,
+          );
+        } catch (webhookErr: any) {
+          this.logger.error(
+            `Failed to register V3 workspace webhook: ${webhookErr.message}`,
+          );
+        }
+      }
+
       // Background sync users for enterprise robust mapping
-      this.syncUsers(organizationId).catch((err) =>
+      this.syncUsers(organizationId).catch(err =>
         this.logger.error(`Initial user sync failed: ${err.message}`),
       );
 
       // Provision default channels
-      this.setupDefaultChannels(organizationId).catch((err) =>
+      this.setupDefaultChannels(organizationId).catch(err =>
         this.logger.error(`Failed to setup default channels: ${err.message}`),
       );
 
@@ -150,7 +193,9 @@ export class ScrymeService {
       return channel;
     } catch (error: any) {
       if (error.response?.status === 409) {
-        this.logger.warn(`Channel ${channelSlug} already exists for ${entityType} ${entityId}`);
+        this.logger.warn(
+          `Channel ${channelSlug} already exists for ${entityType} ${entityId}`,
+        );
         // We could potentially try to find the channel ID by slug here if we had a getChannelBySlug method
       } else {
         this.logger.error(
@@ -177,7 +222,11 @@ export class ScrymeService {
     );
 
     for (const dept of departments) {
-      await this.provisionChannelForEntity(organizationId, "department", dept.id);
+      await this.provisionChannelForEntity(
+        organizationId,
+        "department",
+        dept.id,
+      );
     }
 
     for (const loc of locations) {
@@ -193,7 +242,9 @@ export class ScrymeService {
     if (!force && config.lastSyncAt) {
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       if (config.lastSyncAt > twentyFourHoursAgo) {
-        this.logger.debug(`Skipping automatic Scryme user sync for org ${organizationId}: recently synced`);
+        this.logger.debug(
+          `Skipping automatic Scryme user sync for org ${organizationId}: recently synced`,
+        );
         return;
       }
     }
@@ -345,7 +396,9 @@ export class ScrymeService {
               );
             }
           } catch (err: any) {
-            this.logger.error(`Failed to process Scryme side effects: ${err.message}`);
+            this.logger.error(
+              `Failed to process Scryme side effects: ${err.message}`,
+            );
           }
 
           return { status: "success", message: `Action ${status} processed` };
@@ -396,10 +449,15 @@ export class ScrymeService {
         }
 
         // Send confirmation back to Scryme
-        await this.scrymeClient.updateMessage(workspaceSlug, message.channelSlug || message.channelId, message.id, {
-          content: `${message.content}\n\n✅ *Action processed by ${user.name}*`,
-          actions: [],
-        });
+        await this.scrymeClient.updateMessage(
+          workspaceSlug,
+          message.channelSlug || message.channelId,
+          message.id,
+          {
+            content: `${message.content}\n\n✅ *Action processed by ${user.name}*`,
+            actions: [],
+          },
+        );
 
         return { status: "success", message: "Windmill job resumed" };
       }

@@ -60,3 +60,7 @@
 ## 2026-07-15 - [Standardized Invitation Revocation UX]
 **Learning:** Native `confirm()` for revoking invitations lacked consistency with the monorepo's design language and provided no async feedback. Icon-only actions without tooltips or ARIA labels were inaccessible.
 **Action:** Replace `confirm()` with themed `AlertDialog`. Implement `invitationToRevoke` state to manage the dialog and provide context (recipient email). Wrap all action buttons in `Tooltip` with `aria-label`. Always include `Loader2` feedback in the `AlertDialogAction`.
+
+## 2026-07-16 - [Radix Nested Triggers & Tooltips in DropdownMenus]
+**Learning:** When nesting Radix UI components (such as a `TooltipTrigger` inside a `DropdownMenuTrigger`), both triggers must have the `asChild` property. Additionally, the innermost interactive button or trigger must have a descriptive `aria-label` to satisfy screen readers.
+**Action:** Ensure both the `TooltipTrigger` and `DropdownMenuTrigger` utilize `asChild`, and the nested `Button` has a descriptive `aria-label` and `TooltipContent` companion.

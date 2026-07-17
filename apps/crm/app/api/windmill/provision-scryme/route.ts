@@ -27,14 +27,16 @@ export async function POST() {
       org.slug
     );
 
-    // Provision Scryme independently
+    // Provision Scryme independently using V3 API
     if (process.env.SCRYME_CHAT_CLIENT_ID && process.env.SCRYME_CHAT_CLIENT_SECRET) {
       const scrymeClient = new ScrymeChatApiClient();
       const workspaceSlug = `org-${org.slug}`.toLowerCase();
+      const ownerEmail = auth.user?.email || 'admin@scryme.tech';
 
       const scrymeWorkspace = await scrymeClient.createWorkspace(
         org.name,
         workspaceSlug,
+        ownerEmail,
       );
 
       await db.scrymeConfiguration.upsert({
@@ -51,6 +53,17 @@ export async function POST() {
           isActive: true,
         },
       });
+
+      // Register the workspace webhook for interactive action webhook processing
+      const publicUrl = process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
+      if (publicUrl) {
+        const webhookUrl = `${publicUrl.replace(/\/$/, '')}/v2/scryme/webhook`;
+        try {
+          await scrymeClient.registerWorkspaceWebhook(scrymeWorkspace.slug, webhookUrl);
+        } catch (webhookErr: any) {
+          console.error('Failed to register workspace webhook in CRM route:', webhookErr.message);
+        }
+      }
     }
 
     // Provision Plane

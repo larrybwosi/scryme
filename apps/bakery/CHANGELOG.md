@@ -1,5 +1,11 @@
 # bakery
 
+## 9.23.0
+
+### Minor Changes
+
+- ec69d8d: Update
+
 ## 9.21.0
 
 ### Minor Changes
