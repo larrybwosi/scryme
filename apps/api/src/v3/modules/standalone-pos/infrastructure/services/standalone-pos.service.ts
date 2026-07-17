@@ -18,23 +18,32 @@ export class StandalonePosService {
   constructor(private readonly prisma: PrismaService) {}
 
   async createSetupKey(dto: CreateSetupKeyDto) {
-    const token = crypto.randomBytes(32).toString("hex");
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    // SECURITY (Sentinel): Setup tokens are credentials. Hash them using SHA-256 to prevent compromise from database leaks.
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + (dto.expiresInDays || 7));
 
-    return this.prisma.client.standaloneSetupKey.create({
+    const result = await this.prisma.client.standaloneSetupKey.create({
       data: {
         name: dto.name,
         deviceId: dto.deviceId,
-        token,
+        token: hashedToken,
         expiresAt,
       },
     });
+
+    return {
+      ...result,
+      token: rawToken, // Return raw token to the client so it can be registered on the device
+    };
   }
 
   async activateDevice(dto: ActivateDeviceDto) {
+    // SECURITY (Sentinel): Setup tokens are hashed in the database.
+    const hashedToken = crypto.createHash("sha256").update(dto.token).digest("hex");
     const setupKey = await this.prisma.client.standaloneSetupKey.findUnique({
-      where: { token: dto.token },
+      where: { token: hashedToken },
     });
 
     if (!setupKey) {
@@ -72,12 +81,14 @@ export class StandalonePosService {
 
     // Create long-lived key
     const rawKey = crypto.randomBytes(16).toString("hex");
+    // SECURITY (Sentinel): Device API keys are sensitive credentials. Hash them using SHA-256 to prevent expose on db compromise.
+    const hashedKey = crypto.createHash("sha256").update(rawKey).digest("hex");
     const keyExpiresAt = new Date();
     keyExpiresAt.setFullYear(keyExpiresAt.getFullYear() + 1);
 
     const deviceKey = await this.prisma.client.standaloneDeviceKey.create({
       data: {
-        key: rawKey,
+        key: hashedKey,
         deviceId: device.id,
         expiresAt: keyExpiresAt,
       },
@@ -91,14 +102,16 @@ export class StandalonePosService {
 
     return {
       device,
-      key: deviceKey.key,
+      key: rawKey, // Return raw key to the client
       expiresAt: deviceKey.expiresAt,
     };
   }
 
   async validateKey(key: string) {
+    // SECURITY (Sentinel): Validate key by hashing it and looking up the hashed value.
+    const hashedKey = crypto.createHash("sha256").update(key).digest("hex");
     const deviceKey = await this.prisma.client.standaloneDeviceKey.findUnique({
-      where: { key },
+      where: { key: hashedKey },
       include: { device: true },
     });
 
