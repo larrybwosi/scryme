@@ -62,7 +62,6 @@ const routeMap: Record<string, string> = {
   settings: '/settings',
   pricing: '/pricing',
   barcodes: '/barcodes',
-  'barcode-registration': '/barcode-registration',
   'petty-cash': '/petty-cash',
 };
 

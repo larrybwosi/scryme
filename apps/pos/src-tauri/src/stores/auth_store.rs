@@ -258,24 +258,6 @@ impl AuthState {
             Ok(None)
         }
     }
-
-    fn load_token_from_keyring() -> Option<String> {
-        let entry = Entry::new(KEYRING_SERVICE, "member-token").ok()?;
-        entry.get_password().ok()
-    }
-
-    fn save_token_to_keyring(token: &str) -> Result<(), String> {
-        let entry = Entry::new(KEYRING_SERVICE, "member-token").map_err(|e| e.to_string())?;
-        entry.set_password(token).map_err(|e| e.to_string())?;
-        Ok(())
-    }
-
-    fn delete_token_from_keyring() -> Result<(), String> {
-        if let Ok(entry) = Entry::new(KEYRING_SERVICE, "member-token") {
-            let _ = entry.delete_password();
-        }
-        Ok(())
-    }
 }
 
 // --- API Response Models ---
