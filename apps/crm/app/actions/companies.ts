@@ -33,11 +33,11 @@ export async function createCompany(data: BusinessAccountFormValues, organizatio
 
 export async function updateCompany(id: string, data: BusinessAccountFormValues) {
   try {
-    const validatedData = businessAccountSchema.parse(data);
+    const { contacts, ...rest } = businessAccountSchema.parse(data);
 
     const company = await db.businessAccount.update({
       where: { id },
-      data: validatedData,
+      data: rest,
     });
 
     revalidatePath('/companies');
