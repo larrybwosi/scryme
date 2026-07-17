@@ -56,6 +56,12 @@ export class BakeryController {
     return this.bakeryService.getBakeryOverview(ctx);
   }
 
+  @Get("attendance/status")
+  @RequirePermission("bakery:batch:view")
+  async getAttendanceStatus(@v2Context() ctx: V2ApiContext) {
+    return this.bakeryService.getAttendanceStatus(ctx);
+  }
+
   // Ingredients
   @Get("ingredients")
   @RequirePermission("bakery:recipe:view")

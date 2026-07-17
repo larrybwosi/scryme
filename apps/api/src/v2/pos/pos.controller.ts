@@ -71,6 +71,13 @@ export class PosController {
     return this.posService.checkOut(ctx, body);
   }
 
+  @Get("attendance/status")
+  @Permissions("pos:auth")
+  @ApiOperation({ summary: "Get member attendance status" })
+  async getAttendanceStatus(@v2Context() ctx: V2ApiContext) {
+    return this.posService.getAttendanceStatus(ctx);
+  }
+
   @Get("locations")
   @Permissions("pos:location:read")
   @ApiOperation({ summary: "List active locations" })

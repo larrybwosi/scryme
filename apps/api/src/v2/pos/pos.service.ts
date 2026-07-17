@@ -234,6 +234,26 @@ export class PosService {
     return { message: "Check-out successful." };
   }
 
+  async getAttendanceStatus(ctx: V2ApiContext) {
+    if (!ctx.memberId) {
+      throw new UnauthorizedException("Member authentication required.");
+    }
+    const { organizationId, memberId } = ctx;
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId },
+      select: {
+        id: true,
+        status: true,
+        isCheckedIn: true,
+        lastCheckInTime: true,
+        currentCheckInLocationId: true,
+      },
+    });
+
+    if (!member) throw new NotFoundException("Member not found");
+    return member;
+  }
+
   async listLocations(ctx: V2ApiContext) {
     const locations = await this.prisma.client.inventoryLocation.findMany({
       where: { organizationId: ctx.organizationId, isActive: true },
