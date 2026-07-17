@@ -42,13 +42,13 @@ const resetPasswordSchema = z
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 // Logos
-const DealioLogo = () => (
+const ScrymeLogo = () => (
   <div className="flex items-center gap-1">
     <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
-      <span className="text-white font-black text-xs tracking-tight">D</span>
+      <span className="text-white font-black text-xs tracking-tight">S</span>
     </div>
     <span className="text-xl font-bold tracking-tight text-gray-900">
-      deal<span className="text-emerald-600">io</span>
+      scry<span className="text-emerald-600">me</span>
     </span>
   </div>
 );
@@ -190,7 +190,7 @@ const PasswordResetPageContent = () => {
         <div className="w-full max-w-[420px]">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
-            <DealioLogo />
+            <ScrymeLogo />
           </div>
 
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -345,7 +345,7 @@ const PasswordResetPageContent = () => {
           <h2 className="text-4xl font-bold leading-tight tracking-tight mb-4">
             Secure your account
             <br />
-            with Dealio
+            with Scryme
           </h2>
           <p className="text-base text-emerald-100/70 leading-relaxed max-w-sm">
             Create a strong password to protect your ecommerce empire. Sync

@@ -956,7 +956,7 @@ export const usePosStore = create<PosStore>()(
       products: [],
       lastCompletedOrder: null,
       settings: {
-        businessName: 'Dealio',
+        businessName: 'Scryme',
         businessType: 'restaurant',
         currency: 'KSH',
         taxRate: 2,
@@ -982,7 +982,7 @@ export const usePosStore = create<PosStore>()(
         enableCustomerDisplay: true,
         customerDisplayConfig: {
           enabled: true,
-          welcomeMessage: 'Dealio Enterprise',
+          welcomeMessage: 'Scryme Enterprise',
           subMessage: 'Welcome to our store',
           showTime: true,
           slideIntervalSeconds: 8,
@@ -1237,7 +1237,7 @@ export const usePosStore = create<PosStore>()(
           orders: [],
           products: [],
           settings: {
-            businessName: 'Dealio',
+            businessName: 'Scryme',
             businessType: 'retail' as BusinessType,
             currency: 'USD',
             taxRate: 16,
@@ -1268,7 +1268,7 @@ export const usePosStore = create<PosStore>()(
             enableCustomerDisplay: true,
             customerDisplayConfig: {
               enabled: true,
-              welcomeMessage: 'Dealio Enterprise',
+              welcomeMessage: 'Scryme Enterprise',
               subMessage: 'Welcome to our store',
               showTime: true,
               slideIntervalSeconds: 8,

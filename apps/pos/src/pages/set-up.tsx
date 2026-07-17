@@ -437,7 +437,7 @@ export default function SetupPage() {
             <div className="w-10 h-10 bg-blue-600 flex items-center justify-center rounded-none shadow-none">
               <Store className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight uppercase">Dealio POS</span>
+            <span className="font-bold text-xl tracking-tight uppercase">Scryme POS</span>
           </div>
 
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
