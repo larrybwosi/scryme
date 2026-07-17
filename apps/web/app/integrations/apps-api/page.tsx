@@ -693,11 +693,24 @@ function AppsApiContent() {
                               const deviceType = val as any;
                               const permissions =
                                 deviceType === "BAKERY_TERMINAL"
-                                  ? ["bakery:production", "bakery:recipes"]
+                                  ? [
+                                      "bakery:batch:view",
+                                      "bakery:batch:manage",
+                                      "bakery:recipe:view",
+                                      "bakery:recipe:manage",
+                                      "bakery:template:view",
+                                      "bakery:template:manage",
+                                    ]
                                   : [
-                                      "pos:transactions",
-                                      "pos:orders",
-                                      "pos:inventory",
+                                      "pos:auth",
+                                      "pos:location:read",
+                                      "pos:product:read",
+                                      "pos:product:update",
+                                      "pos:sale:read",
+                                      "pos:sale:create",
+                                      "pos:sale:update",
+                                      "pos:stock:manage",
+                                      "pos:sync",
                                     ];
 
                               setNewDevice({
@@ -761,14 +774,26 @@ function AppsApiContent() {
 
                       <div className="space-y-3">
                         <Label className="text-xs font-bold uppercase text-gray-400">Permissions</Label>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100 max-h-48 overflow-y-auto">
                           {[
-                            "pos:transactions",
-                            "pos:orders",
-                            "pos:inventory",
-                            "pos:customers",
-                            "bakery:production",
-                            "bakery:recipes",
+                            "pos:auth",
+                            "pos:location:read",
+                            "pos:product:read",
+                            "pos:product:update",
+                            "pos:sale:read",
+                            "pos:sale:create",
+                            "pos:sale:update",
+                            "pos:stock:manage",
+                            "pos:petty-cash:create",
+                            "pos:petty-cash:read",
+                            "pos:sync",
+                            "bakery:batch:view",
+                            "bakery:batch:manage",
+                            "bakery:recipe:view",
+                            "bakery:recipe:manage",
+                            "bakery:template:view",
+                            "bakery:template:manage",
+                            "bakery:settings:manage",
                           ].map(perm => (
                             <div
                               key={perm}
