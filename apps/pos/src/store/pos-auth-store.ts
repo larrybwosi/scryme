@@ -4,14 +4,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { API_ENDPOINT_DEFAULT } from '@/lib/api-config';
 
 type LocationType =
-  | 'RETAIL_SHOP'
-  | 'WAREHOUSE'
-  | 'DISTRIBUTION'
-  | 'PRODUCTION'
-  | 'SUPPLIER'
-  | 'CUSTOMER'
-  | 'TEMPORARY'
-  | 'OTHER';
+  'RETAIL_SHOP' | 'WAREHOUSE' | 'DISTRIBUTION' | 'PRODUCTION' | 'SUPPLIER' | 'CUSTOMER' | 'TEMPORARY' | 'OTHER';
 
 type InventoryLocation = {
   name: string;
@@ -134,9 +127,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       setMemberSession: (member: Member, isRestored = false) => {
         set(state => {
           const alreadyCheckedIn = state.checkedInMembers.find(m => m.id === member.id);
-          const newCheckedInMembers = alreadyCheckedIn
-            ? state.checkedInMembers
-            : [...state.checkedInMembers, member];
+          const newCheckedInMembers = alreadyCheckedIn ? state.checkedInMembers : [...state.checkedInMembers, member];
 
           return {
             currentMember: member,
@@ -204,9 +195,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       applyApiUrl: async () => {
         const { rawApiUrl } = get();
         // Sanitize URL: remove trailing /api/v2 and trailing slashes
-        const sanitizedUrl = rawApiUrl
-          .replace(/\/api\/v2\/?$/, '')
-          .replace(/\/+$/, '');
+        const sanitizedUrl = rawApiUrl.replace(/\/api\/v2\/?$/, '').replace(/\/+$/, '');
 
         set({ apiUrl: sanitizedUrl });
 
@@ -336,11 +325,13 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
           set({
             // Do not set isConfigured here so that the Success UI can play out.
             // completeSetup() will be called after the animation.
-            currentLocation: location || ({
-              ...device,
-              id: locationId,
-              name: device.name || device.deviceName || 'Terminal'
-            } as any),
+            currentLocation:
+              location ||
+              ({
+                ...device,
+                id: locationId,
+                name: device.name || device.deviceName || 'Terminal',
+              } as any),
           });
         } else {
           throw new Error(response.error?.message || 'Provisioning failed');

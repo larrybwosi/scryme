@@ -44,6 +44,7 @@ import {
   updateZitadelConfig,
   updatePlaneConfig,
   updateScrymeConfig,
+  provisionScryme,
 } from "../actions/integrations";
 
 const INTEGRATIONS = [
@@ -104,6 +105,7 @@ export default function IntegrationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isProvisioning, setIsProvisioning] = useState(false);
+  const [isScrymeProvisioning, setIsScrymeProvisioning] = useState(false);
   const [configValues, setConfigValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
@@ -123,6 +125,22 @@ export default function IntegrationsPage() {
       toast.error(error.message || "Failed to provision Windmill workspace automatically.");
     } finally {
       setIsProvisioning(false);
+    }
+  };
+
+  const handleScrymeProvision = async () => {
+    setIsScrymeProvisioning(true);
+    try {
+      const result = await provisionScryme();
+      if (result.success) {
+        toast.success("Scryme Chat workspace successfully provisioned and channels created!");
+        setSelectedIntegration(null);
+        loadStatuses();
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to provision Scryme Chat workspace automatically.");
+    } finally {
+      setIsScrymeProvisioning(false);
     }
   };
 
@@ -336,6 +354,27 @@ export default function IntegrationsPage() {
       case "scryme":
         return (
           <div className="space-y-4 py-4">
+            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
+              <h4 className="font-semibold text-purple-900 text-sm mb-1">One-Click Automatic Provisioning</h4>
+              <p className="text-purple-700 text-xs mb-3">
+                Let Scryme automatically spin up a dedicated Chat workspace and configure default channels (Announcements, Alerts, General) for your organization.
+              </p>
+              <Button
+                type="button"
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white h-10 text-xs font-semibold"
+                disabled={isScrymeProvisioning}
+                onClick={handleScrymeProvision}
+              >
+                {isScrymeProvisioning ? "Provisioning..." : "Provision Automatically"}
+              </Button>
+            </div>
+
+            <div className="relative flex py-2 items-center">
+              <div className="flex-grow border-t border-gray-200"></div>
+              <span className="flex-shrink mx-4 text-gray-400 text-xs uppercase font-medium">Or Configure Manually</span>
+              <div className="flex-grow border-t border-gray-200"></div>
+            </div>
+
             <div className="space-y-2">
               <Label>Workspace ID</Label>
               <Input

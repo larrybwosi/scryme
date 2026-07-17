@@ -47,7 +47,15 @@ export class ScrymeController {
       throw new NotFoundException("Organization not found");
     }
 
-    return this.scrymeService.provisionWorkspace(org.id, org.name, org.slug);
+    let ownerEmail: string | undefined;
+    if (ctx.userId) {
+      const user = await this.prisma.client.user.findUnique({
+        where: { id: ctx.userId },
+      });
+      ownerEmail = user?.email;
+    }
+
+    return this.scrymeService.provisionWorkspace(org.id, org.name, org.slug, ownerEmail);
   }
 
   @Post("notify")
