@@ -152,12 +152,23 @@ function PrintLabelsPanel() {
     try {
       const response = await invoke<any>("search_products_command", {
         query: searchQuery,
-        limit: 20,
+        category: "all",
+        page: 1,
+        pageSize: 20,
       });
-      setSearchResults(response.products || []);
+      const mappedProducts = (response.products || []).map((p: any) => ({
+        ...p,
+        productName: p.productName || p.name || '',
+        stock: p.stock ?? p.totalStock ?? 0,
+        variants: p.variants?.map((v: any) => ({
+          ...v,
+          variantName: v.variantName || v.name || '',
+        })) || [],
+      }));
+      setSearchResults(mappedProducts);
 
-      if (response.products?.length > 0) {
-        generatePreview(response.products[0]);
+      if (mappedProducts.length > 0) {
+        generatePreview(mappedProducts[0]);
       } else {
         setPreviewBarcode(null);
       }
@@ -636,11 +647,20 @@ function RegisterBarcodePanel({ onRegistered }: { onRegistered?: () => void }) {
     try {
       const response = await invoke<any>("search_products_command", {
         query: searchQuery,
-        category: "All",
+        category: "all",
         page: 1,
-        page_size: 20,
+        pageSize: 20,
       });
-      setProducts(response.products || []);
+      const mappedProducts = (response.products || []).map((p: any) => ({
+        ...p,
+        productName: p.productName || p.name || '',
+        stock: p.stock ?? p.totalStock ?? 0,
+        variants: p.variants?.map((v: any) => ({
+          ...v,
+          variantName: v.variantName || v.name || '',
+        })) || [],
+      }));
+      setProducts(mappedProducts);
     } catch (error) {
       console.error("Search failed:", error);
       toast.error("Failed to search products");
@@ -650,7 +670,12 @@ function RegisterBarcodePanel({ onRegistered }: { onRegistered?: () => void }) {
   };
 
   const handleSelectVariant = (variant: any, product: any) => {
-    setSelectedVariant({ ...variant, productName: product.productName });
+    setSelectedVariant({
+      ...variant,
+      productName: product.productName,
+      productId: product.productId,
+      product,
+    });
     setBarcode(variant.barcode || "");
     setStep("configure");
     if (variant.barcode) {
@@ -686,15 +711,43 @@ function RegisterBarcodePanel({ onRegistered }: { onRegistered?: () => void }) {
     if (!selectedVariant || !barcode) return;
     setIsSubmitting(true);
     try {
+      const targetVariantId = selectedVariant.variantId || selectedVariant.id;
       await invoke("authenticated_api_request", {
         method: "POST",
         path: "api/v2/pos/inventory/barcode",
         body: {
-          variantId: selectedVariant.id,
+          variantId: targetVariantId,
           barcode,
         },
       });
-      toast.success("Barcode registered successfully");
+
+      // Synchronize the local SQLite product store immediately
+      if (selectedVariant.product) {
+        const updatedProduct = { ...selectedVariant.product };
+        updatedProduct.variants = (updatedProduct.variants || []).map((v: any) => {
+          const vId = v.variantId || v.id;
+          if (vId === targetVariantId) {
+            return { ...v, barcode };
+          }
+          return v;
+        });
+
+        // Also update primary product barcode if the updated variant was the first/primary one
+        if (updatedProduct.variants[0]?.variantId === targetVariantId || updatedProduct.variants[0]?.id === targetVariantId) {
+          updatedProduct.barcode = barcode;
+        }
+
+        try {
+          await invoke("update_local_product_command", { product: updatedProduct });
+          toast.success("Barcode registered and synced locally successfully");
+        } catch (localErr: any) {
+          console.error("Local sync failed:", localErr);
+          toast.success("Barcode registered on cloud, but failed to sync locally");
+        }
+      } else {
+        toast.success("Barcode registered successfully");
+      }
+
       setStep("success");
     } catch (error: any) {
       console.error("Registration failed:", error);
@@ -806,14 +859,14 @@ function RegisterBarcodePanel({ onRegistered }: { onRegistered?: () => void }) {
                         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                           {product.variants.map((v: any) => (
                             <div
-                              key={v.id}
+                              key={v.variantId || v.id}
                               className="group flex cursor-pointer items-center justify-between rounded-lg border bg-card p-3 transition-colors hover:bg-accent"
                               onClick={() => handleSelectVariant(v, product)}
                             >
                               <div className="flex items-center gap-3">
                                 <Package className="h-5 w-5 text-muted-foreground" />
                                 <div>
-                                  <div className="font-medium">{v.name || "Default Variant"}</div>
+                                  <div className="font-medium">{v.variantName || v.name || "Default Variant"}</div>
                                   <div className="text-xs text-muted-foreground">
                                     SKU: {v.sku || "N/A"} • Barcode: {v.barcode || "None"}
                                   </div>
