@@ -21,7 +21,12 @@ export class ScrymeService {
     });
   }
 
-  async provisionWorkspace(organizationId: string, name: string, slug: string) {
+  async provisionWorkspace(
+    organizationId: string,
+    name: string,
+    slug: string,
+    ownerEmail?: string,
+  ) {
     const workspaceSlug = `org-${slug}`.toLowerCase();
 
     this.logger.log(
@@ -29,9 +34,24 @@ export class ScrymeService {
     );
 
     try {
+      let finalOwnerEmail = ownerEmail;
+      if (!finalOwnerEmail) {
+        // Find the first member/admin in the organization to act as owner
+        const firstMember = await this.prisma.client.member.findFirst({
+          where: { organizationId },
+          include: { user: true },
+          orderBy: { createdAt: "asc" },
+        });
+        finalOwnerEmail = firstMember?.user?.email;
+      }
+      if (!finalOwnerEmail) {
+        finalOwnerEmail = "admin@scryme.tech";
+      }
+
       const workspace = await this.scrymeClient.createWorkspace(
         name,
         workspaceSlug,
+        finalOwnerEmail,
       );
 
       const config = await this.prisma.client.scrymeConfiguration.upsert({
@@ -48,6 +68,18 @@ export class ScrymeService {
           isActive: true,
         },
       });
+
+      // Register the workspace-specific webhook in V3 API for interactive actions
+      const publicUrl = process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
+      if (publicUrl) {
+        const webhookUrl = `${publicUrl.replace(/\/$/, "")}/v2/scryme/webhook`;
+        try {
+          await this.scrymeClient.registerWorkspaceWebhook(workspace.slug, webhookUrl);
+          this.logger.log(`Registered V3 workspace webhook for ${workspace.slug}: ${webhookUrl}`);
+        } catch (webhookErr: any) {
+          this.logger.error(`Failed to register V3 workspace webhook: ${webhookErr.message}`);
+        }
+      }
 
       // Background sync users for enterprise robust mapping
       this.syncUsers(organizationId).catch((err) =>
