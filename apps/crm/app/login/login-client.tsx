@@ -37,13 +37,13 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 import { GithubIcon } from "@repo/ui/components/icons";
 
-const DealioLogo = () => (
+const ScrymeLogo = () => (
   <div className="flex items-center gap-1">
     <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
-      <span className="text-white font-black text-xs tracking-tight">D</span>
+      <span className="text-white font-black text-xs tracking-tight">S</span>
     </div>
     <span className="text-xl font-bold tracking-tight text-gray-900">
-      deal<span className="text-emerald-600">io</span>
+      scry<span className="text-emerald-600">me</span>
     </span>
   </div>
 );
@@ -280,7 +280,7 @@ const LoginContent = () => {
         <div className="w-full max-w-[420px]">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
-            <DealioLogo />
+            <ScrymeLogo />
             {currentView === "login" && (
               <p className="text-sm text-gray-500">
                 New here?{" "}

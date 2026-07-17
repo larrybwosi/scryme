@@ -330,10 +330,8 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
             orgSlug,
           });
 
-          // We need to fetch the location details
-          const data = await invoke<any>('get_locations_command');
-          const locationsList = data?.locations || data?.data?.locations || (Array.isArray(data) ? data : []);
-          const location = locationsList?.find((loc: any) => loc.id === locationId);
+          // Location details are already returned in the provisioned response
+          const location = device.location;
 
           set({
             // Do not set isConfigured here so that the Success UI can play out.

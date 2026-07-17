@@ -81,7 +81,7 @@ export default function StandaloneSetup() {
             <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <Key className="text-primary" />
             </div>
-            <CardTitle>Activate Dealio Standalone</CardTitle>
+            <CardTitle>Activate Scryme Standalone</CardTitle>
             <CardDescription>Enter your license key to activate this device.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -29,6 +29,7 @@ export async function provisionDeviceV2(
           slug: true,
         },
       },
+      location: true,
     },
   });
   console.log(
@@ -144,6 +145,7 @@ export async function provisionDeviceV2(
       locationId: setupToken.locationId,
       permissions: setupToken.permissions,
       environment: setupToken.environment,
+      location: setupToken.location,
     },
     createdAt: new Date(),
   };

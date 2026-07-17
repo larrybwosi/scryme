@@ -5,6 +5,7 @@ import * as crypto from 'crypto';
 
 // Mock the dependencies
 const mockPrisma = {
+  $transaction: vi.fn((cb) => cb(mockPrisma)),
   deviceSetupToken: {
     create: vi.fn(),
     findUnique: vi.fn(),
@@ -66,6 +67,7 @@ describe('Provisioning Logic', () => {
         deviceName: 'Test Device',
         deviceType: 'POS_TERMINAL',
         locationId: 'loc-1',
+        location: { id: 'loc-1', name: 'Test Location' },
         permissions: ['pos:orders'],
         environment: 'LIVE',
         expiresAt: new Date(Date.now() + 10000),
@@ -74,7 +76,7 @@ describe('Provisioning Logic', () => {
         createdById: 'user-1',
       };
 
-      (mockPrisma.deviceSetupToken.findFirst as any).mockResolvedValue(mockSetupToken);
+      (mockPrisma.deviceSetupToken.findUnique as any).mockResolvedValue(mockSetupToken);
       (mockPrisma.apiKey.create as any).mockResolvedValue({ id: 'key-1' });
       (mockPrisma.deviceRegistry.create as any).mockResolvedValue({ id: 'reg-1' });
       (mockPrisma.deviceSetupToken.update as any).mockResolvedValue({});

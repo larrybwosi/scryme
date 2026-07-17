@@ -82,7 +82,7 @@ export default function CustomerDisplay() {
   const settings = usePosStore(state => state.settings);
   const config = settings.customerDisplayConfig || {
       enabled: true,
-      welcomeMessage: "Dealio Enterprise",
+      welcomeMessage: "Scryme Enterprise",
       subMessage: "Welcome to our store",
       showTime: true,
       slideIntervalSeconds: 8,
