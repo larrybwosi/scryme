@@ -142,7 +142,7 @@ export default function DeveloperSettings() {
           <div>
             <CardTitle>My Applications</CardTitle>
             <CardDescription>
-              Applications you&apos;ve created to integrate with Dealio.
+              Applications you&apos;ve created to integrate with Scryme.
             </CardDescription>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={(open) => {
@@ -161,7 +161,7 @@ export default function DeveloperSettings() {
                   <DialogHeader>
                     <DialogTitle>Create OAuth Application</DialogTitle>
                     <DialogDescription>
-                      Register a new application to enable &quot;Login with Dealio&quot;.
+                      Register a new application to enable &quot;Login with Scryme&quot;.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
@@ -178,7 +178,7 @@ export default function DeveloperSettings() {
                       <Label htmlFor="redirect">Redirect URI</Label>
                       <Input
                         id="redirect"
-                        placeholder="https://yourapp.com/api/auth/callback/dealio"
+                        placeholder="https://yourapp.com/api/auth/callback/scryme"
                         value={newApp.redirectUri}
                         onChange={(e) => setNewApp({ ...newApp, redirectUri: e.target.value })}
                       />
@@ -363,7 +363,7 @@ export default function DeveloperSettings() {
         <CardHeader>
           <CardTitle>Documentation</CardTitle>
           <CardDescription>
-            Learn how to integrate &quot;Login with Dealio&quot; into your applications.
+            Learn how to integrate &quot;Login with Scryme&quot; into your applications.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">

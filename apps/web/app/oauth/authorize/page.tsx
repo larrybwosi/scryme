@@ -155,7 +155,7 @@ function AuthorizeContent() {
               <CheckCircle2 className="h-10 w-10 text-primary" />
             )}
           </div>
-          <CardTitle className="text-2xl font-bold italic text-primary">Login with Dealio</CardTitle>
+          <CardTitle className="text-2xl font-bold italic text-primary">Login with Scryme</CardTitle>
           <CardDescription className="text-base mt-2">
             <strong>{clientInfo?.name}</strong> is requesting access to your account.
           </CardDescription>
@@ -170,7 +170,7 @@ function AuthorizeContent() {
                     <CheckCircle2 className="h-3 w-3 text-primary" />
                   </div>
                   <span>
-                    {s === "openid" && "Identify you on Dealio"}
+                    {s === "openid" && "Identify you on Scryme"}
                     {s === "profile" && "Access your name, profile picture, and username"}
                     {s === "email" && "Access your email address"}
                     {s === "org_info" && "View details about your organizations"}
@@ -207,7 +207,7 @@ function AuthorizeContent() {
             </Button>
           </div>
           <p className="text-[10px] text-center text-muted-foreground px-4">
-            By clicking Allow Access, you authorize this application to use your data in accordance with their privacy policy and terms of service. You can revoke this access at any time in your Dealio settings.
+            By clicking Allow Access, you authorize this application to use your data in accordance with their privacy policy and terms of service. You can revoke this access at any time in your Scryme settings.
           </p>
         </CardFooter>
       </Card>
