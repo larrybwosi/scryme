@@ -46,10 +46,29 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
         capture_pageview: false, // captured manually in PostHogPageView
         capture_pageleave: true,
         person_profiles: "always",
+        disable_session_recording: true,
         session_recording: {
           maskAllInputs: true,
         },
       });
+
+      const handleError = () => {
+        try {
+          if (typeof posthog !== "undefined" && typeof posthog.startSessionRecording === "function") {
+            posthog.startSessionRecording();
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      window.addEventListener("error", handleError);
+      window.addEventListener("unhandledrejection", handleError);
+
+      return () => {
+        window.removeEventListener("error", handleError);
+        window.removeEventListener("unhandledrejection", handleError);
+      };
     }
   }, []);
 
