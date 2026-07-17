@@ -3,30 +3,30 @@
 import { motion } from "framer-motion";
 import { colors, fonts } from "@/lib/scryme-tokens";
 
-const stats = [
-  {
-    value: "500+",
-    label: "Enterprise businesses",
-    sublabel: "across 12 countries",
-  },
-  {
-    value: "$2B+",
-    label: "Transactions processed",
-    sublabel: "annually on the platform",
-  },
-  {
-    value: "99.9%",
-    label: "Platform uptime SLA",
-    sublabel: "guaranteed & monitored",
-  },
-  {
-    value: "24/7",
-    label: "Expert support",
-    sublabel: "dedicated account teams",
-  },
-];
+export function StatsStrip({ stats }: { stats?: Array<{ value: string; label: string; sublabel: string }> }) {
+  const statList = stats && stats.length > 0 ? stats : [
+    {
+      value: "500+",
+      label: "Enterprise businesses",
+      sublabel: "across 12 countries",
+    },
+    {
+      value: "$2B+",
+      label: "Transactions processed",
+      sublabel: "annually on the platform",
+    },
+    {
+      value: "99.9%",
+      label: "Platform uptime SLA",
+      sublabel: "guaranteed & monitored",
+    },
+    {
+      value: "24/7",
+      label: "Expert support",
+      sublabel: "dedicated account teams",
+    },
+  ];
 
-export function StatsStrip() {
   return (
     <section
       className="py-20"
@@ -46,7 +46,7 @@ export function StatsStrip() {
           </span>
         </div>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4">
-          {stats.map((stat, i) => (
+          {statList.map((stat, i) => (
             <motion.div
               key={stat.label}
               initial={{ opacity: 0, y: 20 }}

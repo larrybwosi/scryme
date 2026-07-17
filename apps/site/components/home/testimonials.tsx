@@ -2,37 +2,37 @@
 
 import { colors, fonts } from "@/lib/scryme-tokens";
 
-const testimonials = [
-  {
-    quote:
-      "Scryme replaced four separate systems we were running. Our operations team now has a single dashboard for everything — inventory, POS, CRM, and finance. The ROI in the first quarter alone paid for the full-year subscription.",
-    name: "Amara Diallo",
-    title: "Chief Operating Officer",
-    company: "Fontaine Group",
-    ticker: "FTN",
-    initials: "AD",
-  },
-  {
-    quote:
-      "We run 23 retail branches across three regions. Before Scryme, reconciling end-of-day sales was a half-day job. Now it takes minutes. The multi-branch inventory visibility alone is a game changer.",
-    name: "Marcus Chen",
-    title: "Head of Retail Operations",
-    company: "Westfield Retail Holdings",
-    ticker: "WRH",
-    initials: "MC",
-  },
-  {
-    quote:
-      "The CRM pipeline gave our sales team a new level of accountability. We went from guessing what was in the pipeline to having real-time data on every deal. Deal velocity improved 40% in our first six months.",
-    name: "Sophia Hargreaves",
-    title: "VP of Sales",
-    company: "Meridian Corp",
-    ticker: "MRD",
-    initials: "SH",
-  },
-];
+export function Testimonials({ testimonials }: { testimonials?: Array<{ quote: string; name: string; title: string; company: string; ticker: string; initials: string }> }) {
+  const testimonialList = testimonials && testimonials.length > 0 ? testimonials : [
+    {
+      quote:
+        "Scryme replaced four separate systems we were running. Our operations team now has a single dashboard for everything — inventory, POS, CRM, and finance. The ROI in the first quarter alone paid for the full-year subscription.",
+      name: "Amara Diallo",
+      title: "Chief Operating Officer",
+      company: "Fontaine Group",
+      ticker: "FTN",
+      initials: "AD",
+    },
+    {
+      quote:
+        "We run 23 retail branches across three regions. Before Scryme, reconciling end-of-day sales was a half-day job. Now it takes minutes. The multi-branch inventory visibility alone is a game changer.",
+      name: "Marcus Chen",
+      title: "Head of Retail Operations",
+      company: "Westfield Retail Holdings",
+      ticker: "WRH",
+      initials: "MC",
+    },
+    {
+      quote:
+        "The CRM pipeline gave our sales team a new level of accountability. We went from guessing what was in the pipeline to having real-time data on every deal. Deal velocity improved 40% in our first six months.",
+      name: "Sophia Hargreaves",
+      title: "VP of Sales",
+      company: "Meridian Corp",
+      ticker: "MRD",
+      initials: "SH",
+    },
+  ];
 
-export function Testimonials() {
   return (
     <section
       className="py-24"
@@ -64,7 +64,7 @@ export function Testimonials() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {testimonials.map((t) => (
+          {testimonialList.map((t) => (
             <blockquote
               key={t.name}
               className="group rounded-xl p-7 flex flex-col transition-colors duration-300"

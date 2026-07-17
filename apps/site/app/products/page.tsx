@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { colors, fonts, modules } from "@/lib/scryme-tokens";
+import { colors, fonts, modules as defaultModules } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { getHomePageContent } from "../../lib/sanity";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "The Operating Ledger — Integrated Enterprise Modules",
@@ -20,7 +23,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ProductsPage() {
+export default async function ProductsPage() {
+  const content = await getHomePageContent();
+  const modulesList = content.modules && content.modules.length > 0 ? content.modules : defaultModules;
+
   return (
     <main style={{ background: colors.inkBg }} className="min-h-screen">
       {/* Hero Section */}
@@ -64,7 +70,7 @@ export default function ProductsPage() {
       {/* Modules Grid */}
       <section className="py-24 max-w-6xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {modules.map((m) => (
+          {modulesList.map((m) => (
             <div
               key={m.code}
               className="p-8 rounded-xl transition-all hover:-translate-y-1 duration-300 flex flex-col justify-between"

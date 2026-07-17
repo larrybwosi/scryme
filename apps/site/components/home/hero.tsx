@@ -142,14 +142,13 @@ function LedgerTape() {
   );
 }
 
-function ReconciledTotal() {
-  const [value, setValue] = useState(261480);
-  const target = 284900;
+function ReconciledTotal({ target }: { target: number }) {
+  const [value, setValue] = useState(Math.round(target * 0.9));
   const frame = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     const start = performance.now();
-    const from = 261480;
+    const from = Math.round(target * 0.9);
     const duration = 2200;
     const tick = (now: number) => {
       const t = Math.min((now - start) / duration, 1);
@@ -163,7 +162,7 @@ function ReconciledTotal() {
         cancelAnimationFrame(frame.current);
       }
     };
-  }, []);
+  }, [target]);
 
   return (
     <div
@@ -195,7 +194,11 @@ const fadeUp = {
   }),
 };
 
-export function Hero() {
+export function Hero({ data }: { data?: { heroTitle: string; heroSubtitle: string; reconciledToday: number } }) {
+  const title = data?.heroTitle || "Every sale, deal, and shipment. One reconciled record.";
+  const subtitle = data?.heroSubtitle || "Scryme merges CRM, Point of Sale, Inventory, and Finance into a single ledger — so nothing you run your business on ever needs reconciling by hand again.";
+  const reconciledToday = data?.reconciledToday ?? 284900;
+
   return (
     <section
       className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-16"
@@ -256,10 +259,7 @@ export function Hero() {
             className="text-4xl sm:text-5xl lg:text-6xl font-medium leading-[1.08] tracking-tight text-balance"
             style={{ color: colors.textPrimary, fontFamily: fonts.display }}
           >
-            Every sale, deal, and shipment.{" "}
-            <span style={{ color: colors.brass, fontStyle: "italic" }}>
-              One reconciled record.
-            </span>
+            {title}
           </motion.h1>
 
           <motion.p
@@ -270,9 +270,7 @@ export function Hero() {
             className="mt-6 text-lg leading-relaxed max-w-xl mx-auto"
             style={{ color: colors.textMuted, fontFamily: fonts.body }}
           >
-            Scryme merges CRM, Point of Sale, Inventory, and Finance into a
-            single ledger — so nothing you run your business on ever needs
-            reconciling by hand again.
+            {subtitle}
           </motion.p>
 
           <motion.div
@@ -349,7 +347,7 @@ export function Hero() {
               <LedgerTape />
             </div>
             <div className="px-5 py-4 sm:py-3 flex items-center">
-              <ReconciledTotal />
+              <ReconciledTotal target={reconciledToday} />
             </div>
           </div>
         </motion.div>
