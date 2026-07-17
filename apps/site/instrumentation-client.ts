@@ -13,6 +13,7 @@ if (posthogKey) {
     capture_pageview: true,
     capture_pageleave: true,
     capture_exceptions: true,
+    disable_session_recording: true,
     debug: process.env.NODE_ENV === "development",
   });
 }
