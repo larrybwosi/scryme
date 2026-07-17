@@ -32,9 +32,7 @@ export const auth = betterAuth({
   },
   baseURL: {
     allowedHosts: [
-      "localhost:3000",
-      "localhost:3001",
-      "localhost:3002",
+      "localhost:*",
       "scryme.tech",
       "app.scryme.tech",
       "crm.scryme.tech",
