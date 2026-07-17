@@ -67,13 +67,28 @@ import { Loader2 } from "lucide-react";
 
 const PREDEFINED_PERMISSIONS = [
   { id: "*", label: "Super Admin (Full Access)" },
-  { id: "pos:sales:create", label: "Create POS Sales" },
-  { id: "pos:sales:view", label: "View POS Sales" },
-  { id: "pos:inventory:view", label: "View POS Inventory" },
-  { id: "pos:petty-cash:create", label: "Create Petty Cash Transactions" },
-  { id: "bakery:batch:create", label: "Create Bakery Batches" },
-  { id: "bakery:recipe:view", label: "View Bakery Recipes" },
-  { id: "bakery:inventory:view", label: "View Bakery Inventory" },
+
+  // POS App Permissions
+  { id: "pos:auth", label: "POS: Device Authentication & Realtime" },
+  { id: "pos:location:read", label: "POS: Read Locations" },
+  { id: "pos:product:read", label: "POS: View Products & Pricing" },
+  { id: "pos:product:update", label: "POS: Manage Inventory Levels & Barcodes" },
+  { id: "pos:sale:read", label: "POS: View Sales History & Transactions" },
+  { id: "pos:sale:create", label: "POS: Process Sales & Orders" },
+  { id: "pos:sale:update", label: "POS: Record Payments & Manage Deliveries" },
+  { id: "pos:stock:manage", label: "POS: Create & Manage Stock Requests" },
+  { id: "pos:petty-cash:create", label: "POS: Create Petty Cash Transactions" },
+  { id: "pos:petty-cash:read", label: "POS: View Petty Cash Status & Logs" },
+  { id: "pos:sync", label: "POS: Database Synchronization" },
+
+  // Bakery App Permissions
+  { id: "bakery:batch:view", label: "Bakery: View Batches & Deliveries" },
+  { id: "bakery:batch:manage", label: "Bakery: Manage Batches, Partners & Deliveries" },
+  { id: "bakery:recipe:view", label: "Bakery: View Recipes, Ingredients & Categories" },
+  { id: "bakery:recipe:manage", label: "Bakery: Manage Recipes, Ingredients & Categories" },
+  { id: "bakery:template:view", label: "Bakery: View Templates" },
+  { id: "bakery:template:manage", label: "Bakery: Manage Templates" },
+  { id: "bakery:settings:manage", label: "Bakery: Manage Settings, Bakers & Reports" },
 ];
 
 export function DeviceList({ devices }: { devices: any[] }) {
