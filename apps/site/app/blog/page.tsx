@@ -6,7 +6,7 @@ import { getPosts } from "../../lib/sanity";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { urlFor } from "@/sanity/lib/image";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Blog — Insights on Retail, CRM, and Inventory Management",

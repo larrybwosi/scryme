@@ -1,16 +1,16 @@
 import { colors, fonts } from "@/lib/scryme-tokens";
 
-const brands = [
-  "Westfield Retail",
-  "Meridian Corp",
-  "Fontaine Group",
-  "Harlen & Co.",
-  "Argent Industries",
-  "Solis Distributors",
-  "Kestrel Holdings",
-];
+export function TrustBar({ brands }: { brands?: string[] }) {
+  const brandList = brands && brands.length > 0 ? brands : [
+    "Westfield Retail",
+    "Meridian Corp",
+    "Fontaine Group",
+    "Harlen & Co.",
+    "Argent Industries",
+    "Solis Distributors",
+    "Kestrel Holdings",
+  ];
 
-export function TrustBar() {
   return (
     <section
       className="py-10"
@@ -29,7 +29,7 @@ export function TrustBar() {
           On the ledger — enterprise teams across industries
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-3">
-          {brands.map((brand, i) => (
+          {brandList.map((brand, i) => (
             <span key={brand} className="flex items-center gap-3">
               <span
                 className="text-sm font-medium tracking-tight"
@@ -37,7 +37,7 @@ export function TrustBar() {
               >
                 {brand}
               </span>
-              {i !== brands.length - 1 && (
+              {i !== brandList.length - 1 && (
                 <span
                   aria-hidden="true"
                   style={{ color: colors.brass, opacity: 0.5 }}

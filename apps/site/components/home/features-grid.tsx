@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { colors, fonts, modules, type ModuleCode } from "@/lib/scryme-tokens";
+import { colors, fonts, modules as defaultModules, type ModuleCode } from "@/lib/scryme-tokens";
 
 function ConnectsTo({ codes }: { codes: ModuleCode[] }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {codes.map((c) => {
-        const target = modules.find((m) => m.code === c);
+        const target = defaultModules.find((m) => m.code === c);
         return (
           <span
             key={c}
@@ -33,7 +33,7 @@ function ManifestRow({
   module,
   index,
 }: {
-  module: (typeof modules)[number];
+  module: any;
   index: number;
 }) {
   return (
@@ -99,7 +99,9 @@ function ManifestRow({
   );
 }
 
-export function FeaturesGrid() {
+export function FeaturesGrid({ modules }: { modules?: any[] }) {
+  const moduleList = modules && modules.length > 0 ? modules : defaultModules;
+
   return (
     <section
       id="features"
@@ -161,7 +163,7 @@ export function FeaturesGrid() {
             ))}
           </div>
 
-          {modules.map((module, index) => (
+          {moduleList.map((module, index) => (
             <ManifestRow key={module.code} module={module} index={index} />
           ))}
         </div>
