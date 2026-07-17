@@ -29,6 +29,26 @@ export class BakeryService {
     private readonly authService: AuthService,
   ) {}
 
+  async getAttendanceStatus(ctx: V2ApiContext) {
+    if (!ctx.memberId) {
+      throw new UnauthorizedException("Member authentication required.");
+    }
+    const { organizationId, memberId } = ctx;
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId },
+      select: {
+        id: true,
+        status: true,
+        isCheckedIn: true,
+        lastCheckInTime: true,
+        currentCheckInLocationId: true,
+      },
+    });
+
+    if (!member) throw new NotFoundException("Member not found");
+    return member;
+  }
+
   async getCategory(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
     return this.prisma.client.bakeryCategory.findFirst({

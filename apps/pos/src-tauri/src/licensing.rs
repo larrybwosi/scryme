@@ -1,11 +1,6 @@
 use tauri::command;
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize)]
-pub struct ActivationRequest {
-    pub machine_id: String,
-    pub license_key: String,
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct ActivationResponse {

@@ -79,13 +79,14 @@ describe('B2BUseCase', () => {
       expect(prisma.client.transaction.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ type: 'POS_SALE' }),
+          select: expect.objectContaining({ id: true, number: true }),
         }),
       );
     });
   });
 
   describe('getOrders', () => {
-    it('should return transactions of type SALES_ORDER with items included', async () => {
+    it('should return transactions of type SALES_ORDER with items included via select', async () => {
       const mockOrders = [{ id: 'o1', type: 'SALES_ORDER', items: [] }];
       vi.spyOn(prisma.client.transaction, 'findMany').mockResolvedValue(mockOrders as any);
 
@@ -95,7 +96,11 @@ describe('B2BUseCase', () => {
       expect(prisma.client.transaction.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ type: 'SALES_ORDER' }),
-          include: { items: true },
+          select: expect.objectContaining({
+            id: true,
+            number: true,
+            items: expect.any(Object),
+          }),
         }),
       );
     });

@@ -75,10 +75,10 @@ export const processFileDownload = async (blob: Blob, fileName: string, loadingT
             const arrayBuffer = await blob.arrayBuffer();
             const uint8Array = new Uint8Array(arrayBuffer);
             
-            const folderName = 'Dealio';
+            const folderName = 'Scryme';
             const relativePath = `${folderName}/${fileName}`; // Path relative to Documents
 
-            // 1. Check/Create 'Dealio' folder in DOCUMENTS
+            // 1. Check/Create 'Scryme' folder in DOCUMENTS
             const dirExists = await exists(folderName, { baseDir: BaseDirectory.Document });
             if (!dirExists) {
                 await mkdir(folderName, { baseDir: BaseDirectory.Document, recursive: true });

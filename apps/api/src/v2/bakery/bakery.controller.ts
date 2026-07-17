@@ -56,6 +56,12 @@ export class BakeryController {
     return this.bakeryService.getBakeryOverview(ctx);
   }
 
+  @Get("attendance/status")
+  @RequirePermission("bakery:batch:view")
+  async getAttendanceStatus(@v2Context() ctx: V2ApiContext) {
+    return this.bakeryService.getAttendanceStatus(ctx);
+  }
+
   // Ingredients
   @Get("ingredients")
   @RequirePermission("bakery:recipe:view")
@@ -416,13 +422,13 @@ export class BakeryController {
   }
 
   @Post("ingredients")
-  @RequirePermission("product:create")
+  @RequirePermission("bakery:recipe:manage")
   async createIngredient(@v2Context() ctx: V2ApiContext, @Body() data: any) {
     return this.bakeryService.createIngredient(ctx, data);
   }
 
   @Patch("ingredients/:id")
-  @RequirePermission("product:update")
+  @RequirePermission("bakery:recipe:manage")
   async updateIngredient(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,
@@ -432,7 +438,7 @@ export class BakeryController {
   }
 
   @Delete("ingredients/:id")
-  @RequirePermission("product:delete")
+  @RequirePermission("bakery:recipe:manage")
   async deleteIngredient(
     @v2Context() ctx: V2ApiContext,
     @Param("id") id: string,

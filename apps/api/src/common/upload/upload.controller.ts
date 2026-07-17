@@ -9,19 +9,19 @@ import { storageService, StorageCoreService } from "@repo/shared/storage";
 import { v7 as uuidv7 } from "uuid";
 import { PrismaService } from "../../prisma/prisma.service";
 
-@Controller("upload")
+@Controller()
 export class UploadController {
   constructor(private readonly prisma: PrismaService) {}
 
-  @Post()
+  @Post(["upload", "v2/upload"])
   async uploadFile(@Req() req: any, @Res() res: any) {
     const data = await req.file();
     if (!data) {
       throw new BadRequestException("No file provided");
     }
 
-    const organizationId = req.v2Context?.organizationId;
-    const memberId = req.v2Context?.memberId;
+    const organizationId = req.v2Context?.organizationId || req.organization?.id || req.user?.organizationId;
+    const memberId = req.v2Context?.memberId || req.member?.id || req.user?.memberId;
 
     if (!organizationId) {
       throw new BadRequestException("Organization context missing");

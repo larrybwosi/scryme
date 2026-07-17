@@ -9,13 +9,17 @@ describe("PosController", () => {
   let controller: PosController;
   let posSaleService: PosSaleService;
 
+  let posService: PosService;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PosController],
       providers: [
         {
           provide: PosService,
-          useValue: {},
+          useValue: {
+            getAttendanceStatus: vi.fn(),
+          },
         },
         {
           provide: PosSaleService,
@@ -27,6 +31,7 @@ describe("PosController", () => {
     }).compile();
 
     controller = module.get<PosController>(PosController);
+    posService = module.get<PosService>(PosService);
     posSaleService = module.get<PosSaleService>(PosSaleService);
   });
 
@@ -51,6 +56,20 @@ describe("PosController", () => {
         mockBody,
         true,
       );
+    });
+  });
+
+  describe("getAttendanceStatus", () => {
+    it("should delegate to posService.getAttendanceStatus", async () => {
+      const mockCtx: any = { organizationId: "org_1", memberId: "member_1" };
+      const expectedResult = { id: "member_1", isCheckedIn: true };
+
+      vi.mocked(posService.getAttendanceStatus).mockResolvedValue(expectedResult);
+
+      const result = await controller.getAttendanceStatus(mockCtx);
+
+      expect(result).toEqual(expectedResult);
+      expect(posService.getAttendanceStatus).toHaveBeenCalledWith(mockCtx);
     });
   });
 });

@@ -394,7 +394,7 @@ export default function SettingsPage() {
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold">Cloud Migration</h2>
-                    <p className="text-sm text-muted-foreground">Push local data to your Dealio Cloud account</p>
+                    <p className="text-sm text-muted-foreground">Push local data to your Scryme Cloud account</p>
                   </div>
                 </div>
                 <Button
@@ -1430,7 +1430,7 @@ export default function SettingsPage() {
                         <Input
                           value={settings.customerDisplayConfig?.welcomeMessage || ''}
                           onChange={e => updateCustomerDisplayConfig({ welcomeMessage: e.target.value })}
-                          placeholder="e.g. Welcome to Dealio"
+                          placeholder="e.g. Welcome to Scryme"
                         />
                       </div>
                       <div className="space-y-2">

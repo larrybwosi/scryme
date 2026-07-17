@@ -42,6 +42,11 @@ import {
   User,
   Eye,
 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@repo/ui/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import {
   blockMember,
@@ -163,11 +168,16 @@ export function MemberActions({ member }: MemberActionsProps) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal size={16} />
-          </Button>
-        </DropdownMenuTrigger>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="More actions">
+                <MoreHorizontal size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>More actions</TooltipContent>
+        </Tooltip>
         <DropdownMenuContent align="end" className="w-50">
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem asChild>
@@ -279,13 +289,19 @@ export function MemberActions({ member }: MemberActionsProps) {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                    onClick={() => handleRevokeSession(session.token)}>
-                    <Trash2 size={16} />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => handleRevokeSession(session.token)}
+                        aria-label="Revoke session">
+                        <Trash2 size={16} />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Revoke session</TooltipContent>
+                  </Tooltip>
                 </div>
               ))
             )}

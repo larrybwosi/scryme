@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { tauriInvoke } from '@/lib/tauri-bridge';
-import { isTauri } from '@/lib/sdk';
+import { isTauri, isOfflineMode } from '@/lib/sdk';
 import { useAuth } from '@/lib/providers/auth-context';
 import { toast } from 'sonner';
 import throttle from 'lodash/throttle';
@@ -10,18 +10,21 @@ export const useSessionActivityListener = () => {
 
   // Periodic session check (refresh mechanism)
   useEffect(() => {
-    if (!isAuthenticated || !isTauri()) return;
+    if (!isAuthenticated || !isTauri() || isOfflineMode()) return;
 
     const checkSession = async () => {
       try {
         // We use authenticated_api_request to ping and verify token
         const response = await tauriInvoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: '/devices/me', // Using /devices/me as a stable health check for authenticated device + member
+          path: '/bakery/attendance/status', // Using /bakery/attendance/status to verify the member attendance status
         });
 
-        // If it returns successfully, the session is likely still valid
-        if (response && response.organizationId) {
+        // Ensure compatibility with both wrapped and unwrapped response payloads
+        const isCheckedIn = response?.data?.isCheckedIn ?? response?.isCheckedIn;
+
+        // If it returns successfully and member is checked in, the session is valid
+        if (response && isCheckedIn) {
           // Session is valid
         } else {
           console.warn('Session invalid or expired according to server, clearing session');

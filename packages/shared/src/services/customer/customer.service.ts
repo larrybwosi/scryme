@@ -215,13 +215,25 @@ export class CustomerService {
       const { id, name, email, phone, company, ...extraFields } = formData;
       const { firstName, lastName } = this.splitName(name);
 
-      const customerData = {
+      const cleanEmail = email?.trim() || null;
+      const cleanPhone = phone?.trim() || null;
+      const cleanCompany = company?.trim() || null;
+
+      const customerData: any = {
         name,
-        email: email ?? null,
-        phone: phone ?? null,
-        company: company ?? null,
+        email: cleanEmail,
+        phone: cleanPhone,
+        company: cleanCompany,
         organizationId,
       };
+
+      if (formData.customerType !== undefined) customerData.customerType = formData.customerType || null;
+      if (formData.dateOfBirth !== undefined) customerData.dateOfBirth = formData.dateOfBirth || null;
+      if (formData.loyaltyPoints !== undefined) customerData.loyaltyPoints = Number(formData.loyaltyPoints) || 0;
+      if (formData.isActive !== undefined) customerData.isActive = formData.isActive ?? true;
+      if (formData.deliveryNotes !== undefined) customerData.deliveryNotes = formData.deliveryNotes || null;
+      if (formData.pinnedLocation !== undefined) customerData.pinnedLocation = formData.pinnedLocation || null;
+      if (formData.tags !== undefined) customerData.tags = formData.tags || [];
 
       // 1. Ensure CRM Object Definition exists for "person"
       let personObject = await this.schemaService.getObjectByName(
@@ -250,12 +262,15 @@ export class CustomerService {
           where: { id },
           include: { crmRecord: true },
         });
-      } else if (email || phone) {
+      } else if (cleanEmail || cleanPhone) {
         // Safe lookup: only if email or phone is provided
         customer = await this.prisma.customer.findFirst({
           where: {
             organizationId,
-            OR: [...(email ? [{ email }] : []), ...(phone ? [{ phone }] : [])],
+            OR: [
+              ...(cleanEmail ? [{ email: cleanEmail }] : []),
+              ...(cleanPhone ? [{ phone: cleanPhone }] : []),
+            ],
           },
           include: { crmRecord: true },
         });

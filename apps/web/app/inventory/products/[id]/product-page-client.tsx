@@ -1918,7 +1918,19 @@ export function ProductPageClient({
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="v-barcode">Barcode</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="v-barcode">Barcode</Label>
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="h-auto p-0 text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
+                      onClick={() => {
+                        const randomNum = Math.floor(100000000000 + Math.random() * 900000000000).toString();
+                        setVariantForm((prev: any) => ({ ...prev, barcode: randomNum }));
+                      }}>
+                      (Generate)
+                    </Button>
+                  </div>
                   <span className="text-[10px] text-green-600 font-medium flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                     Scanner Ready
