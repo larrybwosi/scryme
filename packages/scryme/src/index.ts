@@ -235,13 +235,6 @@ export class ScrymeChatApiClient {
   }
 
   /**
-   * Get workspace details.
-   */
-  async getWorkspace(slug: string): Promise<ScrymeChatWorkspace> {
-    return this.request<ScrymeChatWorkspace>("GET", `/api/workspaces/${slug}`);
-  }
-
-  /**
    * List channels in a workspace.
    */
   async listChannels(workspaceSlug: string): Promise<ScrymeChatChannel[]> {
@@ -372,24 +365,6 @@ export class ScrymeChatApiClient {
       slug: dm.id,
       type: "dm",
     };
-  }
-
-  /**
-   * Register a webhook for a specific workspace.
-   */
-  async registerWorkspaceWebhook(
-    workspaceSlug: string,
-    webhookUrl: string,
-  ): Promise<any> {
-    return this.request(
-      "POST",
-      `/api/v2/workspaces/${workspaceSlug}/webhooks`,
-      {
-        name: "Dealio Integration Webhook",
-        url: webhookUrl,
-        events: ["message.action"],
-      },
-    );
   }
 
   /**
