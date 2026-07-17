@@ -107,7 +107,7 @@ export function ThermalReceiptPreview({
               className={cn('font-bold leading-tight', template === 'modern' ? 'tracking-tight' : 'uppercase')}
               style={{ fontSize: `${titleSize}px` }}
             >
-              {businessName || 'DEALIO POS'}
+              {businessName || 'SCRYME POS'}
             </h1>
 
             {config.showTagline && config.tagline && (
