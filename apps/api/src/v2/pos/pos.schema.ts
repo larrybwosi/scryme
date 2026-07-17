@@ -35,9 +35,28 @@ export const AdjustStockSchema = z.object({
 
 export const CreateCustomerSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email().optional().nullable(),
+  email: z.string().email().optional().nullable().or(z.literal("")),
   phone: z.string().optional().nullable(),
-  address: z.string().optional().nullable(),
+  address: z.any().optional().nullable(),
+  notes: z.string().optional().nullable(),
+  company: z.string().optional().nullable(),
+  avatar: z.string().optional().nullable(),
+  gender: z.string().optional().nullable(),
+  customerType: z.string().optional().nullable(),
+  dateOfBirth: z.string().optional().nullable(),
+  loyaltyPoints: z.coerce.number().int().optional().nullable(),
+  isActive: z.boolean().optional().nullable(),
+  loyaltyTierId: z.string().optional().nullable(),
+  deliveryNotes: z.string().optional().nullable(),
+  pinnedLocation: z.any().optional().nullable(),
+  tags: z.array(z.string()).optional().nullable(),
+  isBusiness: z.boolean().optional().nullable(),
+  taxId: z.string().optional().nullable(),
+  medicalHistory: z.string().optional().nullable(),
+  allergies: z.string().optional().nullable(),
+  chronicConditions: z.string().optional().nullable(),
+  insuranceProvider: z.string().optional().nullable(),
+  policyNumber: z.string().optional().nullable(),
 });
 
 export const DispatchDeliverySchema = z.object({

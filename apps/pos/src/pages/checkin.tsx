@@ -264,6 +264,7 @@ export default function CheckinPage() {
     setPassword('');
     setShowPassword(false);
     cardInputRef.current?.focus();
+    navigate('/');
   };
 
   const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>): void => {

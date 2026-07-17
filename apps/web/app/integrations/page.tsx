@@ -203,7 +203,7 @@ export default function IntegrationsPage() {
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
               <h4 className="font-semibold text-amber-900 text-sm mb-1">One-Click Automatic Provisioning</h4>
               <p className="text-amber-700 text-xs mb-3">
-                Let Dealio automatically spin up a dedicated Windmill tenant workspace and deploy all automation templates for your organization using global credentials.
+                Let Scryme automatically spin up a dedicated Windmill tenant workspace and deploy all automation templates for your organization using global credentials.
               </p>
               <Button
                 type="button"

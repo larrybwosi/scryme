@@ -181,9 +181,17 @@ export class OrdersService {
       },
     });
 
+    /**
+     * ⚡ Bolt Optimization: Index variants into a Map to avoid O(N*M) nested array searches
+     * across missing checks, stock verification, and item list mapping.
+     * This reduces lookups to O(1) constant-time complexity, ensuring fast performance
+     * even for large orders with many items.
+     */
+    const variantMap = new Map(variants.map((v) => [v.id, v]));
+
     if (variants.length !== variantIds.length) {
       const missing = variantIds.filter(
-        (id) => !variants.find((v) => v.id === id),
+        (id) => !variantMap.has(id),
       );
       throw new NotFoundException({
         message: "One or more variants not found",
@@ -194,7 +202,7 @@ export class OrdersService {
     // Check stock levels
     const insufficientStock: any[] = [];
     for (const item of data.items) {
-      const variant = variants.find((v) => v.id === item.variantId)!;
+      const variant = variantMap.get(item.variantId)!;
       const stock = Number(variant.variantStocks[0]?.availableStock ?? 0);
       if (stock < item.quantity) {
         insufficientStock.push({
@@ -253,7 +261,7 @@ export class OrdersService {
             },
             items: {
               create: data.items.map((item) => {
-                const variant = variants.find((v) => v.id === item.variantId)!;
+                const variant = variantMap.get(item.variantId)!;
                 return {
                   variantId: item.variantId,
                   productName: variant.product.name,

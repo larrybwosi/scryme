@@ -15,6 +15,7 @@ describe("BakeryController", () => {
 
   const mockBakeryService = {
     getBakeryOverview: vi.fn(),
+    getAttendanceStatus: vi.fn(),
     getIngredients: vi.fn(),
     getIngredientRecords: vi.fn(),
     getRecipes: vi.fn(),
@@ -113,6 +114,18 @@ describe("BakeryController", () => {
       const data = { transactionId: "tx-1", partnerId: "p-1" };
       await controller.dispatchDelivery(mockCtx, data);
       expect(service.dispatchDelivery).toHaveBeenCalledWith(mockCtx, data);
+    });
+  });
+
+  describe("getAttendanceStatus", () => {
+    it("should call service.getAttendanceStatus", async () => {
+      const expectedResult = { id: "mem-1", isCheckedIn: true };
+      vi.mocked(service.getAttendanceStatus).mockResolvedValue(expectedResult as any);
+
+      const result = await controller.getAttendanceStatus(mockCtx);
+
+      expect(result).toEqual(expectedResult);
+      expect(service.getAttendanceStatus).toHaveBeenCalledWith(mockCtx);
     });
   });
 });
