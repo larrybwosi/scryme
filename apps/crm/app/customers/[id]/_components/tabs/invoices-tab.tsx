@@ -5,7 +5,7 @@ import { Receipt, Download, ChevronDown, ChevronUp, Plus, X, AlertCircle } from 
 import { cn } from '@/lib/utils';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { createInvoiceAction } from '@/app/actions/invoices';
+import { createInvoiceAction, getInvoiceDownloadUrl } from '@/app/actions/invoices';
 import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { CustomerWithRelations } from '@/lib/types';
@@ -19,9 +19,14 @@ function InvoiceRow({ invoice }: { invoice: any }) {
   const balance = invoice.balanceDue;
   const isOverdue = invoice.status === 'OVERDUE';
 
-  const downloadInvoice = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.scryme.tech';
-    window.open(`${apiUrl}/public-invoices/${invoice.id}/download`, '_blank');
+  const downloadInvoice = async () => {
+    try {
+      const url = await getInvoiceDownloadUrl(invoice.id, invoice.organizationId);
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Failed to get download URL:', error);
+      toast.error('Failed to download invoice PDF');
+    }
   };
 
   return (

@@ -12,6 +12,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
@@ -22,6 +23,7 @@ import { CreateBusinessAccountDto } from "../../application/dto/business-account
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @Controller(":orgSlug/business-accounts")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class BusinessAccountController {
   constructor(
     private readonly businessAccountService: BusinessAccountService,

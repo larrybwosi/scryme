@@ -10,7 +10,7 @@ export default async function WorkflowEditorPage({ params }: { params: Promise<{
   const workflow = await getWorkflow(id);
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <WorkflowEditor workflow={workflow} organizationId={organizationId} />
     </OrgProvider>
   );

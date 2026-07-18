@@ -3,6 +3,7 @@
 import { db } from '@repo/db';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { generateDocumentToken } from '@repo/shared/api/v2';
 
 const invoiceSchema = z.object({
   customerId: z.string(),
@@ -48,5 +49,16 @@ export async function createInvoiceAction(data: CreateInvoiceInput): Promise<any
   } catch (error: any) {
     console.error('Error creating invoice:', error);
     return { success: false, error: error.message || 'Failed to create invoice' };
+  }
+}
+
+export async function getInvoiceDownloadUrl(invoiceId: string, organizationId: string): Promise<string> {
+  try {
+    const token = generateDocumentToken('invoice', invoiceId, organizationId);
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.scryme.tech';
+    return `${apiUrl}/public-invoices/${invoiceId}/download?token=${token}`;
+  } catch (error) {
+    console.error('Error generating invoice download token:', error);
+    throw new Error('Failed to generate secure download link');
   }
 }

@@ -15,6 +15,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from "@nestjs/swagger";
 import * as crypto from "crypto";
 import { isSafeUrl } from "@repo/shared/server";
@@ -31,6 +32,7 @@ import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 @ApiTags("V3 Webhooks")
 @ApiBearerAuth()
 @Controller(":orgSlug/webhooks")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @UseInterceptors(StandardResponseInterceptor)
 export class WebhookController {

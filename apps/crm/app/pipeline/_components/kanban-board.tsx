@@ -10,41 +10,28 @@ import {
   useSensor,
   useSensors,
   type DragStartEvent as DragStart,
-  type DragOverEvent as DragOver,
   type DragEndEvent as DragEnd,
-  defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
 import {
-  arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { KanbanColumn } from './kanban-column';
+import { KanbanColumn, STAGE_CONFIGS } from './kanban-column';
 import { KanbanCard } from './kanban-card';
 
 interface KanbanBoardProps {
   deals: any[];
   onDealUpdate: (dealId: string, updates: any) => Promise<void>;
+  onAddDeal?: (stage: string) => void;
 }
 
-const STAGES = [
-  { id: 'discovery', title: 'Discovery' },
-  { id: 'qualification', title: 'Qualification' },
-  { id: 'proposal', title: 'Proposal' },
-  { id: 'negotiation', title: 'Negotiation' },
-  { id: 'closed_won', title: 'Closed Won' },
-  { id: 'closed_lost', title: 'Closed Lost' },
-];
-
-export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
+export function KanbanBoard({ deals, onDealUpdate, onAddDeal }: KanbanBoardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
+      activationConstraint: { distance: 6 },
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
@@ -53,11 +40,21 @@ export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
 
   const dealsByStage = useMemo(() => {
     const map: Record<string, any[]> = {};
-    STAGES.forEach(stage => map[stage.id] = []);
-    deals.forEach(deal => {
+    STAGE_CONFIGS.forEach((s) => (map[s.id] = []));
+    deals.forEach((deal) => {
       const stage = deal.data.stage || 'discovery';
-      if (map[stage]) {
-        map[stage].push(deal);
+      if (map[stage]) map[stage].push(deal);
+    });
+    return map;
+  }, [deals]);
+
+  const stageValues = useMemo(() => {
+    const map: Record<string, number> = {};
+    STAGE_CONFIGS.forEach((s) => (map[s.id] = 0));
+    deals.forEach((deal) => {
+      const stage = deal.data.stage || 'discovery';
+      if (map[stage] !== undefined) {
+        map[stage] += Number(deal.data.amount) || 0;
       }
     });
     return map;
@@ -68,6 +65,11 @@ export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
     [activeId, deals]
   );
 
+  const activeStageConfig = useMemo(() => {
+    if (!activeDeal) return STAGE_CONFIGS[0];
+    return STAGE_CONFIGS.find((s) => s.id === (activeDeal.data.stage || 'discovery')) || STAGE_CONFIGS[0];
+  }, [activeDeal]);
+
   const handleDragStart = (event: DragStart) => {
     setActiveId(event.active.id as string);
   };
@@ -75,27 +77,22 @@ export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
   const handleDragEnd = async (event: DragEnd) => {
     const { active, over } = event;
     setActiveId(null);
-
     if (!over) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
-
-    // If dropped over a column or a card in a different column
-    const deal = deals.find(d => d.id === activeId);
+    const deal = deals.find((d) => d.id === activeId);
     if (!deal) return;
 
     let newStage = overId;
-    if (!STAGES.find(s => s.id === overId)) {
-        // Dropped over a card, get its stage
-        const overDeal = deals.find(d => d.id === overId);
-        if (overDeal) {
-            newStage = overDeal.data.stage;
-        }
+    // If dropped over a card (not a column), look up that card's stage
+    if (!STAGE_CONFIGS.find((s) => s.id === overId)) {
+      const overDeal = deals.find((d) => d.id === overId);
+      if (overDeal) newStage = overDeal.data.stage;
     }
 
     if (deal.data.stage !== newStage) {
-        await onDealUpdate(activeId, { stage: newStage });
+      await onDealUpdate(activeId, { stage: newStage });
     }
   };
 
@@ -106,31 +103,43 @@ export function KanbanBoard({ deals, onDealUpdate }: KanbanBoardProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 h-full overflow-x-auto pb-4 custom-scrollbar">
-        {STAGES.map((stage) => (
-          <KanbanColumn
-            key={stage.id}
-            id={stage.id}
-            title={stage.title}
-            count={dealsByStage[stage.id].length}
+      {/* Horizontally scrollable board with snap on mobile */}
+      <div className="flex gap-3 h-full pb-4 overflow-x-auto custom-scrollbar snap-x snap-mandatory md:snap-none">
+        {STAGE_CONFIGS.map((stageConfig) => (
+          <div
+            key={stageConfig.id}
+            className="snap-start flex-shrink-0"
           >
-            <SortableContext
-              items={dealsByStage[stage.id].map(d => d.id)}
-              strategy={verticalListSortingStrategy}
+            <KanbanColumn
+              id={stageConfig.id}
+              title={stageConfig.title}
+              count={dealsByStage[stageConfig.id].length}
+              totalValue={stageValues[stageConfig.id]}
+              stageConfig={stageConfig}
+              onAddDeal={onAddDeal ? () => onAddDeal(stageConfig.id) : undefined}
             >
-              <div className="flex flex-col gap-3">
-                {dealsByStage[stage.id].map((deal) => (
-                  <KanbanCard key={deal.id} deal={deal} />
-                ))}
-              </div>
-            </SortableContext>
-          </KanbanColumn>
+              <SortableContext
+                items={dealsByStage[stageConfig.id].map((d) => d.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div>
+                  {dealsByStage[stageConfig.id].map((deal) => (
+                    <KanbanCard
+                      key={deal.id}
+                      deal={deal}
+                      stageConfig={stageConfig}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </KanbanColumn>
+          </div>
         ))}
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeId && activeDeal ? (
-          <KanbanCard deal={activeDeal} isOverlay />
+          <KanbanCard deal={activeDeal} isOverlay stageConfig={activeStageConfig} />
         ) : null}
       </DragOverlay>
     </DndContext>

@@ -9,10 +9,11 @@ import { ICustomerRepository } from "../../domain/repositories/customer-reposito
 import { RegisterCustomerDto } from "../dto/register-customer.dto";
 import { Customer } from "../../domain/entities/customer.entity";
 import { PrismaService } from "@/prisma/prisma.service";
-// import { ZitadelService } from "@repo/zitadel/server";
+import { ZitadelService } from "@repo/zitadel";
 import { randomUUID } from "crypto";
 import { emitCustomerCreated } from "@repo/windmill/server";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
+import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
 
 @Injectable()
 export class RegisterCustomerUseCase {
@@ -23,6 +24,7 @@ export class RegisterCustomerUseCase {
     private readonly customerRepository: ICustomerRepository,
     private readonly prisma: PrismaService,
     private readonly crmSyncService: CrmSyncService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   async execute(organizationId: string, dto: RegisterCustomerDto) {
@@ -32,13 +34,30 @@ export class RegisterCustomerUseCase {
 
     await this.verifyZitadelUser(dto.zitadelUserId);
 
-    const result = await this.prisma.client.$transaction(async tx => {
+    const result = await this.prisma.client.$transaction(async (tx) => {
+      // Security: Check if customer with this email already exists in this organization
+      const existingCustomer = await tx.customer.findUnique({
+        where: {
+          organizationId_email: {
+            organizationId,
+            email: dto.email,
+          },
+        },
+      });
+
       const internalId = await this.getOrCreateInternalMapping(
         tx,
         organizationId,
         dto.zitadelUserId,
         dto.email,
       );
+
+      if (existingCustomer && existingCustomer.id !== internalId) {
+        throw new BadRequestException(
+          "A customer with this email already exists",
+        );
+      }
+
       const customer = await this.upsertCustomer(
         tx,
         internalId,
@@ -60,6 +79,13 @@ export class RegisterCustomerUseCase {
 
     await this.triggerExternalAutomations(organizationId, result);
 
+    // Auto-enroll in loyalty program
+    try {
+      await this.loyaltyService.handleCustomerSignup(organizationId, result.id);
+    } catch (e) {
+      this.logger.warn(`Failed to auto-enroll customer ${result.id} in loyalty program: ${e instanceof Error ? e.message : String(e)}`);
+    }
+
     return new Customer(
       result.id,
       result.name,
@@ -72,18 +98,19 @@ export class RegisterCustomerUseCase {
   }
 
   private async verifyZitadelUser(zitadelUserId: string) {
-    // const zitadelSvc = new ZitadelService();
-    // try {
-    //   const user = await zitadelSvc.getUser(zitadelUserId);
-    //   if (!user)
-    //     throw new NotFoundException(
-    //       `Zitadel user with ID ${zitadelUserId} not found`,
-    //     );
-    // } catch (e) {
-    //   throw new NotFoundException(
-    //     `Zitadel user with ID ${zitadelUserId} not found`,
-    //   );
-    // }
+    const zitadelSvc = new ZitadelService();
+    try {
+      const user = await zitadelSvc.getUser(zitadelUserId);
+      if (!user) {
+        throw new NotFoundException(
+          `Zitadel user with ID ${zitadelUserId} not found`,
+        );
+      }
+    } catch (e) {
+      throw new NotFoundException(
+        `Zitadel user with ID ${zitadelUserId} not found`,
+      );
+    }
   }
 
   private async getOrCreateInternalMapping(

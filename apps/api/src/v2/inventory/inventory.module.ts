@@ -7,9 +7,10 @@ import { StockTransferUseCase } from "../../v3/modules/stocking/application/use-
 import { StockRequestUseCase } from "../../v3/modules/stocking/application/use-cases/stock-request.use-case";
 import { InventoryModule as V3InventoryModule } from "../../v3/modules/inventory/inventory.module";
 import { FinanceModule } from "../../v3/modules/finance/finance.module";
+import { ScrymeModule } from "../scryme/scryme.module";
 
 @Module({
-  imports: [DocumentModule, V3InventoryModule, FinanceModule],
+  imports: [DocumentModule, V3InventoryModule, FinanceModule, ScrymeModule],
   controllers: [InventoryController],
   providers: [
     InventoryService,

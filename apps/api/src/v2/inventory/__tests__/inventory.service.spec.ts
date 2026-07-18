@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { InventoryService } from "../inventory.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApiRealtimeService } from "../../../common/services/realtime.service";
+import { ScrymeService } from "../../scryme/scryme.service";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NotFoundException } from "@nestjs/common";
 
@@ -17,6 +18,12 @@ describe("InventoryService", () => {
           provide: ApiRealtimeService,
           useValue: {
             publish: vi.fn(),
+          },
+        },
+        {
+          provide: ScrymeService,
+          useValue: {
+            provisionChannelForEntity: vi.fn().mockResolvedValue({ id: "ch-1" }),
           },
         },
         {

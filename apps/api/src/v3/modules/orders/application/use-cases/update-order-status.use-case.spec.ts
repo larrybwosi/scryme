@@ -69,7 +69,7 @@ describe("UpdateOrderStatusUseCase", () => {
     repository.findById.mockResolvedValue(order);
     repository.save.mockImplementation((o) => Promise.resolve(o));
 
-    const result = await useCase.execute(orgId, orderId, "COMPLETED");
+    const result = await useCase.execute(orgId, "member-1", orderId, "COMPLETED");
 
     expect(result.status).toBe("COMPLETED");
     expect(repository.findById).toHaveBeenCalledWith(orderId, orgId);
@@ -84,7 +84,7 @@ describe("UpdateOrderStatusUseCase", () => {
     // Repository returns null because of organization mismatch in findFirst (mocked here)
     repository.findById.mockResolvedValue(null);
 
-    await expect(useCase.execute(hackerOrgId, orderId, "COMPLETED")).rejects.toThrow(
+    await expect(useCase.execute(hackerOrgId, "member-1", orderId, "COMPLETED")).rejects.toThrow(
       NotFoundException,
     );
     expect(repository.findById).toHaveBeenCalledWith(orderId, hackerOrgId);

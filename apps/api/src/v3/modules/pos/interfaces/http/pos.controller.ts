@@ -12,6 +12,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from "@nestjs/swagger";
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
@@ -35,6 +36,7 @@ import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 
 @ApiTags("V3 POS")
 @Controller(":orgSlug/pos")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseInterceptors(StandardResponseInterceptor)
 export class PosController {
   constructor(

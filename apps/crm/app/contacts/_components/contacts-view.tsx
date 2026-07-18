@@ -162,55 +162,50 @@ export function ContactsView() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-background/50">
-      <div className="px-8 pt-7 pb-6">
-        <div className="flex items-center justify-between mb-6">
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
+      {/* Page Header */}
+      <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Contacts</h1>
-            <p className="text-[13px] text-muted-foreground mt-0.5">
-              Manage and organize your business contacts and relationships.
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Contacts</h1>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                <SheetTrigger asChild>
-                <Button size="sm" className="h-9 gap-2">
-                    <Plus size={15} />
-                    Add Contact
-                </Button>
-                </SheetTrigger>
-                <SheetContent className="sm:max-w-[440px] overflow-y-auto">
-                <SheetHeader>
-                    <SheetTitle>Add New Contact</SheetTitle>
-                </SheetHeader>
-                <ContactForm onSuccess={handleSuccess} />
-                </SheetContent>
-            </Sheet>
-          </div>
+          <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <SheetTrigger asChild>
+              <Button size="sm" className="h-8 gap-1.5 text-[12.5px]">
+                <Plus size={13} />
+                Add Contact
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Add New Contact</SheetTitle>
+              </SheetHeader>
+              <ContactForm onSuccess={handleSuccess} />
+            </SheetContent>
+          </Sheet>
         </div>
 
-        <div className="flex items-center justify-between mb-6">
-            <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-auto">
-                <TabsList className="bg-muted/50 p-1">
-                    <TabsTrigger value="all" className="text-xs px-4 h-7">All Contacts</TabsTrigger>
-                    <TabsTrigger value="customer" className="text-xs px-4 h-7">Customers</TabsTrigger>
-                    <TabsTrigger value="lead" className="text-xs px-4 h-7">Leads</TabsTrigger>
-                </TabsList>
-            </Tabs>
-
-            <div className="relative w-64">
-                <Search
-                    size={14}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                />
-                <input
-                    type="text"
-                    placeholder="Search contacts..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-9 pr-3 py-1.5 text-xs bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
-            </div>
+        <div className="flex items-center justify-between gap-3">
+          <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-auto">
+            <TabsList className="h-8">
+              <TabsTrigger value="all" className="text-[11.5px] px-3 h-6">All</TabsTrigger>
+              <TabsTrigger value="customer" className="text-[11.5px] px-3 h-6">Customers</TabsTrigger>
+              <TabsTrigger value="lead" className="text-[11.5px] px-3 h-6">Leads</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <div className="relative w-56">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search contacts..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-8 pr-3 py-1.5 text-[12px] bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+            />
+          </div>
         </div>
       </div>
 

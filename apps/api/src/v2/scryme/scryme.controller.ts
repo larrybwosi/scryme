@@ -52,10 +52,27 @@ export class ScrymeController {
       const user = await this.prisma.client.user.findUnique({
         where: { id: ctx.userId },
       });
-      ownerEmail = user?.email;
+      ownerEmail = user?.email || undefined;
     }
 
-    return this.scrymeService.provisionWorkspace(org.id, org.name, org.slug, ownerEmail);
+    const config = await this.scrymeService.provisionWorkspace(
+      org.id,
+      org.name,
+      org.slug,
+      ownerEmail,
+    );
+
+    // Also sync all existing entity channels
+    await this.scrymeService.syncAllChannels(ctx.organizationId);
+
+    return config;
+  }
+
+  @Post("sync-channels")
+  @RequirePermission("settings:manage")
+  async syncChannels(@v2Context() ctx: V2ApiContext) {
+    await this.scrymeService.syncAllChannels(ctx.organizationId);
+    return { status: "success", message: "Channel sync completed" };
   }
 
   @Post("notify")

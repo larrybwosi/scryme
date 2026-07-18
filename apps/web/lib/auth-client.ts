@@ -4,10 +4,15 @@ import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { ac, ADMIN, CASHIER, DEVELOPER } from "./permissions";
 
 const isDev = process.env.NODE_ENV === "development";
-const defaultAppUrl = isDev ? "http://localhost:3000" : "https://app.scryme.tech";
+const defaultAppUrl = isDev
+  ? "http://localhost:3000"
+  : "https://app.scryme.tech";
 
-export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_URL || defaultAppUrl,
+export const authClient: any = createAuthClient({
+  baseURL:
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_WEB_URL ||
+    defaultAppUrl,
   plugins: [
     oauthProviderClient(),
     adminClient({

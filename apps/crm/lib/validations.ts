@@ -16,7 +16,12 @@ export type CustomerFormValues = z.infer<typeof customerSchema>;
 
 export const businessAccountSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  taxId: z.string().optional(),
+  taxId: z.string().optional().nullable(),
+  logoUrl: z.string().url('Invalid URL').optional().or(z.literal('')).nullable(),
+  customTheme: z.string().optional().nullable(),
+  isEnterprise: z.boolean().default(false),
+  discountPercentage: z.coerce.number().min(0).max(100).optional().nullable(),
+  paymentTermsDays: z.coerce.number().int().min(0).optional().nullable(),
   contacts: z.array(z.object({
     name: z.string().min(1, 'Name is required'),
     email: z.string().email().optional().or(z.literal('')),

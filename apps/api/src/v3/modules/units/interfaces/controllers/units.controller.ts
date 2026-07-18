@@ -1,5 +1,5 @@
 import { Controller, Get, Query, Req, UseGuards, UseInterceptors } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery, ApiParam } from "@nestjs/swagger";
 import { GetUnitsUseCase } from "../../application/use-cases/get-units.use-case";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
@@ -8,6 +8,7 @@ import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-r
 @ApiTags("V3 Units")
 @ApiBearerAuth()
 @Controller(":orgSlug/units")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @UseInterceptors(StandardResponseInterceptor)
 export class UnitsController {

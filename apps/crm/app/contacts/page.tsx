@@ -8,7 +8,7 @@ export default async function ContactsPage() {
   const { organizationId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <ContactsView />
     </OrgProvider>
   );

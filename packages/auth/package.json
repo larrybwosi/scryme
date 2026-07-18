@@ -36,7 +36,7 @@
     "@repo/env": "workspace:*",
     "@repo/shared": "workspace:*",
     "better-auth": "^1.6.23",
-    "zod": "latest"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

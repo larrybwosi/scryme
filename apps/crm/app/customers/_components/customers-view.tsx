@@ -183,18 +183,19 @@ export function CustomersView() {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
-      <div className="px-8 pt-7 pb-6">
-        <div className="flex items-start justify-between">
+      {/* Page Header */}
+      <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-[22px] font-bold text-foreground">Customers</h1>
-            <p className="text-[13px] text-muted-foreground mt-0.5">
-              Manage and track all your customer relationships.
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Customers</h1>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              {customers.length} customer{customers.length !== 1 ? 's' : ''} &bull; {activeCount} active
             </p>
           </div>
           <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <SheetTrigger asChild>
-              <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-[13px] font-semibold hover:bg-primary/90 transition-colors">
-                <Plus size={15} />
+              <button className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-[12.5px] font-semibold hover:bg-primary/90 transition-colors h-8">
+                <Plus size={13} />
                 Add Customer
               </button>
             </SheetTrigger>
@@ -207,7 +208,7 @@ export function CustomersView() {
           </Sheet>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mt-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard
             title="Total Customers"
             value={customers.length}
@@ -215,6 +216,14 @@ export function CustomersView() {
             icon={Users}
             iconColor="text-primary"
             iconBg="bg-primary/10"
+          />
+          <StatCard
+            title="Active"
+            value={activeCount}
+            trend={{ value: "4.1%", positive: true }}
+            icon={Users}
+            iconColor="text-green-600"
+            iconBg="bg-green-50 dark:bg-green-950/30"
           />
         </div>
       </div>
