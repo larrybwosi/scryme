@@ -17,7 +17,7 @@ const originalQuery = Client.prototype.query;
       return (originalQuery as any).call(this, config, callback);
     }
   }
-  return originalQuery.apply(this, [config, values, callback, ...args]);
+  return (originalQuery as any).apply(this, [config, values, callback, ...args]);
 };
 
 const globalForPrisma = global as unknown as {
