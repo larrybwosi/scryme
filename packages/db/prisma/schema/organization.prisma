@@ -183,6 +183,15 @@ model Organization {
   // Loyalty Program
   loyaltyPrograms LoyaltyProgram[]
 
+  // Service Module Relations
+  serviceCategories ServiceCategory[]
+  services          Service[]
+  serviceResources  ServiceResource[]
+  serviceBookings   ServiceBooking[]
+  bookingRecurrences BookingRecurrence[]
+  staffShifts       StaffShift[]
+  bookingVerificationCodes BookingVerificationCode[]
+
   standaloneDevices StandaloneDevice[]
 
   qcTemplates        QCTemplate[]
@@ -333,6 +342,15 @@ model Member {
   createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
 
   bakeryRoles BakeryBaker[]
+
+  // Cal.com Integration
+  calComId       String?
+  calComApiKey   String? // Encrypted
+
+  // Service Module Relations
+  serviceAssignments ServiceStaffAssignment[]
+  staffShifts        StaffShift[]
+  bookingAssignments BookingStaff[]
 
   submittedExpenses        Expense[]          @relation("ExpenseSubmitter")
   approvedExpenses         Expense[]          @relation("ExpenseApprover")

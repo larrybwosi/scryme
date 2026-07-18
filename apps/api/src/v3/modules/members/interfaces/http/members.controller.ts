@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
@@ -38,6 +39,7 @@ import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/members")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class MembersController {
   constructor(private readonly memberUseCase: MemberUseCase) {}
 

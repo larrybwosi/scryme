@@ -3,12 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
 
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
-const publicRoutes = ["/api/auth", "/health", "/api/health"];
+const publicRoutes = ["/api/auth", "/health", "/api/health", "/monitoring"];
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Skip proxy processing for public routes and auth API
+  // Skip proxy processing for public routes, Sentry monitoring tunnel, and auth API
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
@@ -107,8 +107,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Skip Sentry monitoring, Next.js internals, and all static files, unless found in search params
+    "/((?!monitoring|_next|[^?]*\\.(?:html|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],

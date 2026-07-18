@@ -48,11 +48,23 @@ export class ScrymeService {
         finalOwnerEmail = "admin@scryme.tech";
       }
 
-      const workspace = await this.scrymeClient.createWorkspace(
-        name,
-        workspaceSlug,
-        finalOwnerEmail,
-      );
+      let workspace;
+      try {
+        workspace = await this.scrymeClient.createWorkspace(
+          name,
+          workspaceSlug,
+          finalOwnerEmail,
+        );
+      } catch (error: any) {
+        if (error.response?.status === 409) {
+          this.logger.log(
+            `Workspace ${workspaceSlug} already exists, fetching...`,
+          );
+          workspace = await this.scrymeClient.getWorkspace(workspaceSlug);
+        } else {
+          throw error;
+        }
+      }
 
       const config = await this.prisma.client.scrymeConfiguration.upsert({
         where: { organizationId },
@@ -70,20 +82,33 @@ export class ScrymeService {
       });
 
       // Register the workspace-specific webhook in V3 API for interactive actions
-      const publicUrl = process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
+      const publicUrl =
+        process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
       if (publicUrl) {
         const webhookUrl = `${publicUrl.replace(/\/$/, "")}/v2/scryme/webhook`;
         try {
-          await this.scrymeClient.registerWorkspaceWebhook(workspace.slug, webhookUrl);
-          this.logger.log(`Registered V3 workspace webhook for ${workspace.slug}: ${webhookUrl}`);
+          await this.scrymeClient.registerWorkspaceWebhook(
+            workspace.slug,
+            webhookUrl,
+          );
+          this.logger.log(
+            `Registered V3 workspace webhook for ${workspace.slug}: ${webhookUrl}`,
+          );
         } catch (webhookErr: any) {
-          this.logger.error(`Failed to register V3 workspace webhook: ${webhookErr.message}`);
+          this.logger.error(
+            `Failed to register V3 workspace webhook: ${webhookErr.message}`,
+          );
         }
       }
 
       // Background sync users for enterprise robust mapping
-      this.syncUsers(organizationId).catch((err) =>
+      this.syncUsers(organizationId).catch(err =>
         this.logger.error(`Initial user sync failed: ${err.message}`),
+      );
+
+      // Provision default channels
+      this.setupDefaultChannels(organizationId).catch(err =>
+        this.logger.error(`Failed to setup default channels: ${err.message}`),
       );
 
       return config;
@@ -96,6 +121,119 @@ export class ScrymeService {
     }
   }
 
+  async setupDefaultChannels(organizationId: string) {
+    const config = await this.getConfiguration(organizationId);
+    if (!config?.workspaceSlug || !config.isActive) return;
+
+    const defaultChannels = [
+      { name: "Notifications", slug: "notifications" },
+      { name: "Approvals", slug: "approvals" },
+    ];
+
+    for (const ch of defaultChannels) {
+      try {
+        await this.scrymeClient.createChannel(
+          config.workspaceSlug,
+          ch.name,
+          ch.slug,
+        );
+      } catch (error: any) {
+        if (error.response?.status !== 409) {
+          this.logger.error(
+            `Failed to create default channel ${ch.slug}: ${error.message}`,
+          );
+        }
+      }
+    }
+  }
+
+  async provisionChannelForEntity(
+    organizationId: string,
+    entityType: "department" | "location",
+    entityId: string,
+  ) {
+    const config = await this.getConfiguration(organizationId);
+    if (!config?.workspaceSlug || !config.isActive) return;
+
+    let entity;
+    if (entityType === "department") {
+      entity = await this.prisma.client.department.findUnique({
+        where: { id: entityId },
+      });
+    } else {
+      entity = await this.prisma.client.inventoryLocation.findUnique({
+        where: { id: entityId },
+      });
+    }
+
+    if (!entity || (entity as any).scrymeChannelId) return;
+
+    const prefix = entityType === "department" ? "dept" : "loc";
+    const channelSlug = `${prefix}-${entity.name.toLowerCase().replace(/\s+/g, "-")}`;
+
+    try {
+      const channel = await this.scrymeClient.createChannel(
+        config.workspaceSlug,
+        entity.name,
+        channelSlug,
+      );
+
+      if (entityType === "department") {
+        await this.prisma.client.department.update({
+          where: { id: entityId },
+          data: { scrymeChannelId: channel.id },
+        });
+      } else {
+        await this.prisma.client.inventoryLocation.update({
+          where: { id: entityId },
+          data: { scrymeChannelId: channel.id },
+        });
+      }
+
+      return channel;
+    } catch (error: any) {
+      if (error.response?.status === 409) {
+        this.logger.warn(
+          `Channel ${channelSlug} already exists for ${entityType} ${entityId}`,
+        );
+        // We could potentially try to find the channel ID by slug here if we had a getChannelBySlug method
+      } else {
+        this.logger.error(
+          `Failed to provision channel for ${entityType} ${entityId}: ${error.message}`,
+        );
+      }
+    }
+  }
+
+  async syncAllChannels(organizationId: string) {
+    const config = await this.getConfiguration(organizationId);
+    if (!config?.workspaceSlug || !config.isActive) return;
+
+    const departments = await this.prisma.client.department.findMany({
+      where: { organizationId, scrymeChannelId: null },
+    });
+
+    const locations = await this.prisma.client.inventoryLocation.findMany({
+      where: { organizationId, scrymeChannelId: null },
+    });
+
+    this.logger.log(
+      `Syncing channels for ${departments.length} departments and ${locations.length} locations`,
+    );
+
+    for (const dept of departments) {
+      await this.provisionChannelForEntity(
+        organizationId,
+        "department",
+        dept.id,
+      );
+    }
+
+    for (const loc of locations) {
+      await this.provisionChannelForEntity(organizationId, "location", loc.id);
+    }
+  }
+
   async syncUsers(organizationId: string, force = false) {
     const config = await this.getConfiguration(organizationId);
     if (!config || !config.workspaceSlug || !config.isActive) return;
@@ -104,7 +242,9 @@ export class ScrymeService {
     if (!force && config.lastSyncAt) {
       const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
       if (config.lastSyncAt > twentyFourHoursAgo) {
-        this.logger.debug(`Skipping automatic Scryme user sync for org ${organizationId}: recently synced`);
+        this.logger.debug(
+          `Skipping automatic Scryme user sync for org ${organizationId}: recently synced`,
+        );
         return;
       }
     }
@@ -256,7 +396,9 @@ export class ScrymeService {
               );
             }
           } catch (err: any) {
-            this.logger.error(`Failed to process Scryme side effects: ${err.message}`);
+            this.logger.error(
+              `Failed to process Scryme side effects: ${err.message}`,
+            );
           }
 
           return { status: "success", message: `Action ${status} processed` };
@@ -307,10 +449,15 @@ export class ScrymeService {
         }
 
         // Send confirmation back to Scryme
-        await this.scrymeClient.updateMessage(workspaceSlug, message.channelSlug || message.channelId, message.id, {
-          content: `${message.content}\n\n✅ *Action processed by ${user.name}*`,
-          actions: [],
-        });
+        await this.scrymeClient.updateMessage(
+          workspaceSlug,
+          message.channelSlug || message.channelId,
+          message.id,
+          {
+            content: `${message.content}\n\n✅ *Action processed by ${user.name}*`,
+            actions: [],
+          },
+        );
 
         return { status: "success", message: "Windmill job resumed" };
       }

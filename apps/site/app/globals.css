@@ -1,0 +1,257 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ========================================
+   CONTAINER
+   ======================================== */
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1.25rem;
+  @media (width >= 640px) {
+    padding-inline: 2rem;
+  }
+  @media (width >= 1024px) {
+    padding-inline: 4rem;
+    max-width: 1280px;
+  }
+  @media (width >= 1400px) {
+    padding-inline: 5rem;
+    max-width: 1440px;
+  }
+}
+
+@layer base {
+  html {
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border, currentColor);
+  }
+}
+
+/* ========================================
+   DESIGN TOKENS — LIGHT
+   ======================================== */
+:root {
+  /* Surfaces */
+  --background: oklch(0.985 0.005 265);
+  --foreground: oklch(0.2 0.02 265);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.02 265);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.02 265);
+
+  /* Brand */
+  --primary: oklch(0.55 0.18 265);
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.96 0.01 265);
+  --secondary-foreground: oklch(0.25 0.02 265);
+
+  --muted: oklch(0.96 0.01 265);
+  --muted-foreground: oklch(0.5 0.02 265);
+
+  --accent: oklch(0.95 0.02 265);
+  --accent-foreground: oklch(0.25 0.02 265);
+
+  --destructive: oklch(0.6 0.18 25);
+  --destructive-foreground: oklch(1 0 0);
+
+  --border: oklch(0.92 0.01 265);
+  --input: oklch(0.92 0.01 265);
+  --ring: oklch(0.55 0.18 265);
+
+  /* Site-specific: Dark hero/section backgrounds */
+  --site-dark: oklch(0.07 0.018 240);
+  --site-dark-surface: oklch(0.11 0.016 240);
+  --site-dark-card: oklch(0.14 0.018 240);
+  --site-dark-border: oklch(0.22 0.016 240);
+  --site-dark-muted: oklch(0.55 0.01 240);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius: 0.5rem;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-primary: 0 8px 32px -4px oklch(0.55 0.18 265 / 0.35);
+
+  /* Scryme ledger variables — Light mode default values */
+  --ink-bg: #fbf9f4;
+  --ink-panel: #f4efe2;
+  --ink-panel-alt: #ece4d2;
+  --ink-line: rgba(11, 18, 32, 0.1);
+  --paper: #111827;
+  --brass: #9e742a;
+  --brass-dim: rgba(158, 116, 42, 0.1);
+  --brass-line: rgba(158, 116, 42, 0.25);
+  --ledger-green: #2f6a4f;
+  --ledger-rust: #933d25;
+  --text-primary: #111827;
+  --text-muted: rgba(11, 18, 32, 0.64);
+  --text-faint: rgba(11, 18, 32, 0.36);
+
+  /* Theme-adaptive helper variables — Light mode values */
+  --hover-bg: rgba(11, 18, 32, 0.04);
+  --hover-bg-intense: rgba(11, 18, 32, 0.08);
+  --navbar-bg-scrolled: rgba(251, 249, 244, 0.92);
+  --mobile-menu-bg: rgba(251, 249, 244, 0.97);
+
+  /* Pricing CTA adaptive variables (inverted from primary theme layout) */
+  --pricing-cta-text-muted: rgba(241, 233, 216, 0.68);
+  --pricing-cta-text-body: rgba(241, 233, 216, 0.8);
+  --pricing-cta-border-dim: rgba(241, 233, 216, 0.3);
+  --pricing-cta-card-bg: rgba(241, 233, 216, 0.04);
+  --pricing-cta-card-border: rgba(241, 233, 216, 0.14);
+  --pricing-cta-text-faint: rgba(241, 233, 216, 0.4);
+  --pricing-cta-text-muted-alt: rgba(241, 233, 216, 0.65);
+}
+
+/* ========================================
+   SCRYME LEDGER TOKENS — DARK MODE
+   ======================================== */
+.dark,
+::host-context(.dark),
+::backdrop {
+  --background: #0b1220;
+  --foreground: #f1e9d8;
+  --card: #121b2e;
+  --card-foreground: #f1e9d8;
+  --popover: #121b2e;
+  --popover-foreground: #f1e9d8;
+  --border: rgba(241, 233, 216, 0.09);
+
+  --ink-bg: #0b1220;
+  --ink-panel: #121b2e;
+  --ink-panel-alt: #0e1626;
+  --ink-line: rgba(241, 233, 216, 0.09);
+  --paper: #f1e9d8;
+  --brass: #c89a4b;
+  --brass-dim: rgba(200, 154, 75, 0.16);
+  --brass-line: rgba(200, 154, 75, 0.35);
+  --ledger-green: #4b9073;
+  --ledger-rust: #b4553a;
+  --text-primary: #f1e9d8;
+  --text-muted: rgba(241, 233, 216, 0.56);
+  --text-faint: rgba(241, 233, 216, 0.32);
+
+  /* Theme-adaptive helper variables — Dark mode values */
+  --hover-bg: rgba(241, 233, 216, 0.04);
+  --hover-bg-intense: rgba(241, 233, 216, 0.08);
+  --navbar-bg-scrolled: rgba(11, 18, 32, 0.92);
+  --mobile-menu-bg: rgba(11, 18, 32, 0.97);
+
+  /* Pricing CTA adaptive variables (inverted from primary theme layout) */
+  --pricing-cta-text-muted: rgba(11, 18, 32, 0.68);
+  --pricing-cta-text-body: rgba(11, 18, 32, 0.8);
+  --pricing-cta-border-dim: rgba(11, 18, 32, 0.3);
+  --pricing-cta-card-bg: rgba(11, 18, 32, 0.04);
+  --pricing-cta-card-border: rgba(11, 18, 32, 0.14);
+  --pricing-cta-text-faint: rgba(11, 18, 32, 0.4);
+  --pricing-cta-text-muted-alt: rgba(11, 18, 32, 0.65);
+}
+
+/* ========================================
+   TAILWIND THEME MAPPING
+   ======================================== */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-site-dark: var(--site-dark);
+  --color-site-dark-surface: var(--site-dark-surface);
+  --color-site-dark-card: var(--site-dark-card);
+  --color-site-dark-border: var(--site-dark-border);
+  --color-site-dark-muted: var(--site-dark-muted);
+
+  --color-inkBg: var(--ink-bg);
+  --color-inkPanel: var(--ink-panel);
+  --color-inkPanelAlt: var(--ink-panel-alt);
+  --color-inkLine: var(--ink-line);
+  --color-paper: var(--paper);
+  --color-brass: var(--brass);
+  --color-brassDim: var(--brass-dim);
+  --color-brassLine: var(--brass-line);
+  --color-ledgerGreen: var(--ledger-green);
+  --color-ledgerRust: var(--ledger-rust);
+  --color-textPrimary: var(--text-primary);
+  --color-textMuted: var(--text-muted);
+  --color-textFaint: var(--text-faint);
+
+  /* Convenience surface aliases — noticeably different from background */
+  --color-surface-1: oklch(0.96 0.008 265);
+  --color-surface-2: oklch(0.925 0.012 265);
+
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+
+  --shadow-sm: var(--shadow-sm);
+  --shadow: var(--shadow);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+  --shadow-primary: var(--shadow-primary);
+}
+
+/* ========================================
+   UTILITIES
+   ======================================== */
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+}

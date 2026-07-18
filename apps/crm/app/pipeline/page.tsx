@@ -7,7 +7,7 @@ export default async function PipelinePage() {
   const { organizationId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <KanbanBoardView />
     </OrgProvider>
   );

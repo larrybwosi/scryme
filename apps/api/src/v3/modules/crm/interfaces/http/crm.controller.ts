@@ -14,6 +14,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiParam,
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
@@ -45,6 +46,7 @@ import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-r
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/crm")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class CrmController {
   constructor(
     private readonly recordService: CrmRecordService,

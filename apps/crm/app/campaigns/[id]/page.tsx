@@ -11,7 +11,7 @@ export default async function CampaignPage({ params }: { params: Promise<{ id: s
   const campaign = await getCampaign(id);
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <CampaignAnalyticsView campaign={campaign} memberId={memberId!} />
     </OrgProvider>
   );
