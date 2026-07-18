@@ -107,7 +107,14 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
         </div>
 
         <div className="mb-3">
-          <h2 className="text-[16px] font-bold text-foreground">{customer.name}</h2>
+          <h2 className="text-[16px] font-bold text-foreground flex items-center gap-2 flex-wrap">
+            {customer.name}
+            {customer.customId && (
+              <span className="text-[11px] font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-md font-semibold">
+                {customer.customId}
+              </span>
+            )}
+          </h2>
           <div className="flex items-center gap-1.5 mt-1">
             <Building2 size={12} className="text-muted-foreground" />
             <span className="text-[12.5px] text-muted-foreground">{customer.company || 'Private'}</span>

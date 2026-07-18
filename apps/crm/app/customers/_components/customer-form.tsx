@@ -43,6 +43,7 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
       taxId: '',
       isActive: true,
       deliveryNotes: '',
+      customId: '',
     },
   });
 
@@ -115,6 +116,19 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
           )}
         />
         {/* For B2C individuals, the type is fixed as B2C to maintain view consistency */}
+        <FormField
+          control={form.control}
+          name="customId"
+          render={({ field }: { field: any }) => (
+            <FormItem>
+              <FormLabel>Custom Customer ID / Code</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. CUST-5001 (Leave blank to auto-generate)" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="taxId"
