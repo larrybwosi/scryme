@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import {
@@ -16,6 +17,17 @@ export class PettyCashUseCase {
 
   async createFund(organizationId: string, dto: CreatePettyCashFundDto) {
     return await this.prisma.client.$transaction(async (tx) => {
+      // 🛡️ Sentinel: IDOR Prevention - Verify the responsible member belongs to the organization
+      const memberCount = await tx.member.count({
+        where: { id: dto.responsibleMemberId, organizationId },
+      });
+
+      if (memberCount === 0) {
+        throw new ForbiddenException(
+          "The responsible member does not belong to this organization or does not exist",
+        );
+      }
+
       const fund = await tx.pettyCashFund.create({
         data: {
           name: dto.name,
