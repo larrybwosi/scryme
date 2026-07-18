@@ -173,3 +173,8 @@
 **Vulnerability:** Standalone POS setup tokens and long-lived device keys were stored in plaintext in the database, risking exposure of sensitive active credentials if the database was compromised.
 **Learning:** API keys and device tokens are highly sensitive credentials. Storing them in plaintext violates the principle of defense-in-depth and the rule of secure credential storage.
 **Prevention:** Always hash setup tokens and long-lived keys using a cryptographically secure hash function (like SHA-256) before storing them in database records. Perform validation by hashing user-supplied inputs and performing `@unique` database lookups on the hashed values.
+
+## 2026-07-18 - Webhook Signature Verification Timing Attack and Length Leakage
+**Vulnerability:** Webhook signature verification compared signature lengths using early-return and short-circuit evaluation (`signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(...)`). This allowed attackers to infer the expected signature's length via timing differences.
+**Learning:** Checking signature lengths or using short-circuit conditions prior to `crypto.timingSafeEqual` leaks structural information of the expected signature. Pre-hashing both the user-supplied and expected signatures with a fixed-length hash algorithm (such as SHA-256) ensures both inputs are of identical length, eliminating the timing difference entirely.
+**Prevention:** Always hash both comparison inputs with SHA-256 using `crypto.createHash('sha256')` before performing timing-safe buffer comparisons, guaranteeing constant-time behavior regardless of input lengths.
