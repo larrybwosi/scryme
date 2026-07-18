@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { isSafeUrl } from "../node-utils";
 import dns from "dns";
 
@@ -117,5 +117,30 @@ describe("isSafeUrl", () => {
       cb(new Error("DNS Error"));
     });
     expect(await isSafeUrl("https://non-existent-domain.test")).toBe(false);
+  });
+
+  describe("Whitelisting of local RustFS endpoints", () => {
+    const originalEndpoint = process.env.RUSTFS_ENDPOINT;
+    const originalPublicUrl = process.env.RUSTFS_PUBLIC_URL;
+
+    afterEach(() => {
+      process.env.RUSTFS_ENDPOINT = originalEndpoint;
+      process.env.RUSTFS_PUBLIC_URL = originalPublicUrl;
+    });
+
+    it("should allow localhost URLs if they match RUSTFS_ENDPOINT", async () => {
+      process.env.RUSTFS_ENDPOINT = "http://localhost:9000";
+      expect(await isSafeUrl("http://localhost:9000/dealio-uploads/invoice.pdf")).toBe(true);
+    });
+
+    it("should allow localhost URLs if they match RUSTFS_PUBLIC_URL", async () => {
+      process.env.RUSTFS_PUBLIC_URL = "http://127.0.0.1:9000";
+      expect(await isSafeUrl("http://127.0.0.1:9000/dealio-uploads/invoice.pdf")).toBe(true);
+    });
+
+    it("should still block localhost URLs if they do not match configured whitelist", async () => {
+      process.env.RUSTFS_ENDPOINT = "http://localhost:9000";
+      expect(await isSafeUrl("http://127.0.0.1:9000/dealio-uploads/invoice.pdf")).toBe(false);
+    });
   });
 });
