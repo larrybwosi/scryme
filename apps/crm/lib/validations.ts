@@ -11,6 +11,8 @@ export const customerSchema = z.object({
   isActive: z.boolean().default(true),
   deliveryNotes: z.string().optional(),
   customId: z.string().optional().or(z.literal('')),
+  creationType: z.enum(['MEMBER_CREATED', 'SELF_REGISTERED', 'IMPORTED', 'API_CREATED', 'OTHER']).optional(),
+  defaultLocationId: z.string().optional().nullable(),
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;
