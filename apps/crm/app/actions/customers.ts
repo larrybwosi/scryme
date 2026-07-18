@@ -5,13 +5,90 @@ import { customerSchema, type CustomerFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
 import { realtimeService } from '@repo/shared/realtime';
 
+export async function getCustomerIdSettings(organizationId: string): Promise<any> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { customFields: true }
+  });
+  const customFields = org?.customFields as any;
+  return customFields?.customerIdSettings || {
+    autoGenerate: false,
+    prefix: 'CUST-',
+    sequence: 1001,
+  };
+}
+
+export async function saveCustomerIdSettings(organizationId: string, settings: any): Promise<any> {
+  try {
+    const org = await db.organization.findUnique({
+      where: { id: organizationId },
+      select: { customFields: true }
+    });
+    const customFields = (org?.customFields || {}) as any;
+    await db.organization.update({
+      where: { id: organizationId },
+      data: {
+        customFields: {
+          ...customFields,
+          customerIdSettings: {
+            autoGenerate: settings.autoGenerate,
+            prefix: settings.prefix || 'CUST-',
+            sequence: parseInt(settings.sequence) || 1001,
+          }
+        }
+      }
+    });
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+export async function generateNextCustomId(organizationId: string): Promise<string | null> {
+  const org = await db.organization.findUnique({
+    where: { id: organizationId },
+    select: { customFields: true }
+  });
+  if (!org) return null;
+  const customFields = org.customFields as any;
+  const settings = customFields?.customerIdSettings;
+  if (!settings || !settings.autoGenerate) return null;
+
+  const prefix = settings.prefix || 'CUST-';
+  const sequence = settings.sequence || 1001;
+  const nextSequence = sequence + 1;
+
+  await db.organization.update({
+    where: { id: organizationId },
+    data: {
+      customFields: {
+        ...customFields,
+        customerIdSettings: {
+          ...settings,
+          sequence: nextSequence
+        }
+      }
+    }
+  });
+
+  return `${prefix}${sequence}`;
+}
+
 export async function createCustomer(data: CustomerFormValues, organizationId: string): Promise<any> {
   try {
     const validatedData = customerSchema.parse(data);
+    let finalCustomId = validatedData.customId;
+    if (!finalCustomId) {
+      const generated = await generateNextCustomId(organizationId);
+      if (generated) {
+        finalCustomId = generated;
+      }
+    }
 
     const customer = await db.customer.create({
       data: {
         ...validatedData,
+        customId: finalCustomId || null,
         organizationId,
       },
     });
@@ -31,7 +108,10 @@ export async function updateCustomer(id: string, data: CustomerFormValues): Prom
 
     const customer = await db.customer.update({
       where: { id },
-      data: validatedData,
+      data: {
+        ...validatedData,
+        customId: validatedData.customId || null,
+      },
     });
 
     revalidatePath('/customers');
