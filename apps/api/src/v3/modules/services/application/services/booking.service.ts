@@ -25,10 +25,40 @@ export class BookingService {
 
     if (!service) throw new NotFoundException("Service not found");
 
-    // Validate Customer
-    if (dto.customerId) {
+    // Validate or Auto-Register Customer
+    let resolvedCustomerId = dto.customerId;
+
+    if (!resolvedCustomerId && dto.customerContact) {
+      const contact = dto.customerContact.trim();
+      const isEmail = contact.includes("@");
+
+      let customer = await this.prisma.client.customer.findFirst({
+        where: {
+          organizationId: orgId,
+          OR: [
+            isEmail ? { email: contact } : { phone: contact }
+          ]
+        }
+      });
+
+      if (!customer) {
+        customer = await this.prisma.client.customer.create({
+          data: {
+            organizationId: orgId,
+            email: isEmail ? contact : undefined,
+            phone: !isEmail ? contact : undefined,
+            name: isEmail ? contact.split("@")[0] : `Customer ${contact.slice(-4)}`,
+            isActive: true,
+          }
+        });
+      }
+
+      resolvedCustomerId = customer.id;
+    }
+
+    if (resolvedCustomerId) {
       const customer = await this.prisma.client.customer.findFirst({
-        where: { id: dto.customerId, organizationId: orgId }
+        where: { id: resolvedCustomerId, organizationId: orgId }
       });
       if (!customer) {
         throw new BadRequestException("Customer does not exist or does not belong to this organization");
@@ -130,7 +160,7 @@ export class BookingService {
       data: {
         organizationId: orgId,
         serviceId: dto.serviceId,
-        customerId: dto.customerId,
+        customerId: resolvedCustomerId,
         locationId: dto.locationId,
         scheduledStartTime: startTime,
         scheduledEndTime: endTime,
@@ -164,7 +194,7 @@ export class BookingService {
                 channel: TransactionChannel.ECOMMERCE_STORE,
                 status: TransactionStatus.PENDING_CONFIRMATION,
                 paymentStatus: PaymentStatus.UNPAID,
-                customerId: dto.customerId,
+                customerId: resolvedCustomerId,
                 locationId: dto.locationId || (await this.prisma.client.inventoryLocation.findFirst({ where: { organizationId: orgId } }))?.id || "",
                 subtotal: depositValue,
                 taxTotal: 0,
@@ -198,7 +228,7 @@ export class BookingService {
                 data: {
                     organizationId: orgId,
                     serviceId: dto.serviceId,
-                    customerId: dto.customerId,
+                    customerId: resolvedCustomerId,
                     locationId: dto.locationId,
                     scheduledStartTime: occStartTime,
                     scheduledEndTime: occEndTime,

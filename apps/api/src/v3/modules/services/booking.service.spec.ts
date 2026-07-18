@@ -26,6 +26,7 @@ describe('BookingService', () => {
               },
               customer: {
                 findFirst: vi.fn(),
+                create: vi.fn(),
               },
               inventoryLocation: {
                 findFirst: vi.fn(),
@@ -78,6 +79,90 @@ describe('BookingService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  describe('createBooking with customerContact', () => {
+    it('should find existing customer by email and associate the booking', async () => {
+      const mockService = {
+        id: 'srv1',
+        name: 'Service 1',
+        price: new Decimal(100),
+        pricingModel: PricingModel.FIXED,
+        estimatedDuration: 60,
+        bufferTimeBefore: 0,
+        bufferTimeAfter: 0,
+        requiresDeposit: false,
+      };
+
+      vi.spyOn(prisma.client.service, 'findFirst').mockResolvedValue(mockService as any);
+      vi.spyOn(prisma.client.customer, 'findFirst').mockResolvedValue({ id: 'cust-123', email: 'john@example.com' } as any);
+      vi.spyOn(prisma.client.serviceBooking, 'create').mockResolvedValue({ id: 'booking1' } as any);
+
+      const dto = {
+        serviceId: 'srv1',
+        customerContact: 'john@example.com',
+        scheduledStartTime: new Date().toISOString(),
+      };
+
+      await service.createBooking('org1', dto);
+
+      expect(prisma.client.customer.findFirst).toHaveBeenCalledWith({
+        where: {
+          organizationId: 'org1',
+          OR: [
+            { email: 'john@example.com' }
+          ]
+        }
+      });
+      expect(prisma.client.serviceBooking.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          customerId: 'cust-123',
+        })
+      }));
+    });
+
+    it('should create a new customer if email does not exist and associate the booking', async () => {
+      const mockService = {
+        id: 'srv1',
+        name: 'Service 1',
+        price: new Decimal(100),
+        pricingModel: PricingModel.FIXED,
+        estimatedDuration: 60,
+        bufferTimeBefore: 0,
+        bufferTimeAfter: 0,
+        requiresDeposit: false,
+      };
+
+      vi.spyOn(prisma.client.service, 'findFirst').mockResolvedValue(mockService as any);
+      vi.spyOn(prisma.client.customer, 'findFirst')
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ id: 'cust-new', email: 'new@example.com' } as any);
+      vi.spyOn(prisma.client.customer, 'create').mockResolvedValue({ id: 'cust-new', email: 'new@example.com' } as any);
+      vi.spyOn(prisma.client.serviceBooking, 'create').mockResolvedValue({ id: 'booking1' } as any);
+
+      const dto = {
+        serviceId: 'srv1',
+        customerContact: 'new@example.com',
+        scheduledStartTime: new Date().toISOString(),
+      };
+
+      await service.createBooking('org1', dto);
+
+      expect(prisma.client.customer.create).toHaveBeenCalledWith({
+        data: {
+          organizationId: 'org1',
+          email: 'new@example.com',
+          phone: undefined,
+          name: 'new',
+          isActive: true,
+        }
+      });
+      expect(prisma.client.serviceBooking.create).toHaveBeenCalledWith(expect.objectContaining({
+        data: expect.objectContaining({
+          customerId: 'cust-new',
+        })
+      }));
+    });
   });
 
   describe('createBooking validations', () => {
