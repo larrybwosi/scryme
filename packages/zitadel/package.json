@@ -1,0 +1,29 @@
+{
+  "name": "@repo/zitadel",
+  "version": "0.1.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts"
+  },
+  "scripts": {
+    "build": "tsc --emitDeclarationOnly false --noEmit false",
+    "lint": "echo \"no lint script defined\"",
+    "type-check": "tsc --noEmit",
+    "dev": "echo \"no dev needed\""
+  },
+  "dependencies": {
+    "@repo/db": "workspace:*",
+    "@repo/env": "workspace:*",
+    "jose": "^5.9.6",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "^22.0.0",
+    "typescript": "5.7.3"
+  }
+}

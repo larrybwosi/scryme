@@ -1,0 +1,36 @@
+{
+  "name": "portal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3006",
+    "build": "next build",
+    "start": "next start -p 3006",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "dependencies": {
+    "@repo/auth": "workspace:*",
+    "@repo/db": "workspace:*",
+    "@repo/documents": "workspace:*",
+    "@repo/env": "workspace:*",
+    "@repo/sdk": "workspace:*",
+    "@repo/shared": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@repo/zitadel": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.18",
+    "next": "16.2.10",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "lucide-react": "^0.454.0",
+    "zod": "^4.4.3",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.0"
+  }
+}

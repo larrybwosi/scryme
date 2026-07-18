@@ -8,7 +8,7 @@ import {
   Res,
   All,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { AllowPublic } from "../../../../../common/decorators/auth.decorator";
 import { ExchangeTokenUseCase } from "../../application/use-cases/exchange-token.use-case";
 import {
@@ -53,6 +53,7 @@ export class AuthController {
 
   @AllowPublic()
   @All("oauth2/*")
+  @ApiParam({ name: "path", type: "string" })
   @ApiOperation({
     summary: "Handle OAuth2 provider requests",
     description:

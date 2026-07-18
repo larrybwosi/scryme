@@ -45,7 +45,7 @@ export const getSDK = (config: SDKConfig) => {
         config.onUnauthorized();
       }
       return Promise.reject(error);
-    }
+    },
   );
 
   const sdk = {
@@ -228,16 +228,36 @@ export const getSDK = (config: SDKConfig) => {
         sdk.client.get("/workflows/history", { params }),
     },
     b2b: {
-      getCatalog: (orgSlug: string, params?: any) =>
-        sdk.client.get(`/${orgSlug}/b2b/catalog`, { params }),
-      getOrders: (orgSlug: string) =>
-        sdk.client.get(`/${orgSlug}/b2b/orders`),
+      getCatalog: (orgSlug: string) =>
+        sdk.client.get(`/${orgSlug}/b2b/catalog`),
       getInvoices: (orgSlug: string) =>
         sdk.client.get(`/${orgSlug}/b2b/invoices`),
+      getOrders: (orgSlug: string) => sdk.client.get(`/${orgSlug}/b2b/orders`),
       createOrder: (orgSlug: string, data: any) =>
         sdk.client.post(`/${orgSlug}/b2b/orders`, data),
-      requestQuote: (orgSlug: string, data: any) =>
-        sdk.client.post(`/${orgSlug}/b2b/quotes`, data),
+    },
+    cart: {
+      getCart: (orgSlug: string, sessionId?: string) =>
+        sdk.client.get(`/${orgSlug}/cart`, { params: { sessionId } }),
+      addItem: (
+        orgSlug: string,
+        data: {
+          variantId: string;
+          quantity: number;
+          customerId?: string;
+          sessionId?: string;
+        },
+      ) => sdk.client.post(`/${orgSlug}/cart/items`, data),
+      removeItem: (
+        orgSlug: string,
+        data: { variantId: string; customerId?: string; sessionId?: string },
+      ) => sdk.client.delete(`/${orgSlug}/cart/items`, { data }),
+    },
+    customers: {
+      getCustomer: (orgSlug: string, id: string) =>
+        sdk.client.get(`/${orgSlug}/customers/${id}`),
+      updateCustomer: (orgSlug: string, id: string, data: any) =>
+        sdk.client.patch(`/${orgSlug}/customers/${id}`, data),
     },
   };
 
@@ -254,14 +274,28 @@ export interface BakeryBatchListResponse {
   };
 }
 
-export type RecipeDifficulty = 'EASY' | 'MEDIUM' | 'HARD' | 'EXPERT';
-export type BatchStatus = 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
-export type ExpirationStatus = 'FRESH' | 'NEAR_EXPIRY' | 'EXPIRED' | 'DISPOSED';
-export type DisposalReason = 'EXPIRED' | 'NEAR_EXPIRY_UNSOLD' | 'DAMAGED' | 'QUALITY_ISSUE' | 'CONTAMINATION' | 'RECALL' | 'OTHER';
-export type DeliveryBenefitType = 'COMMISSION' | 'FIXED_FEE' | 'PROFIT_MARGIN' | 'NONE';
-export type ReconciliationPolicy = 'RETURN_TO_STOCK' | 'MARK_AS_WASTE' | 'PARTNER_CHARGED';
-export type WalletTransactionType = 'BENEFIT_ACCRUAL' | 'WITHDRAWAL' | 'ADJUSTMENT' | 'RECONCILIATION_CHARGE' | 'DEPOSIT';
-export type DeliveryStatus = 'DELIVERED' | 'FAILED' | 'RETURNED';
+export type RecipeDifficulty = "EASY" | "MEDIUM" | "HARD" | "EXPERT";
+export type BatchStatus = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+export type ExpirationStatus = "FRESH" | "NEAR_EXPIRY" | "EXPIRED" | "DISPOSED";
+export type DisposalReason =
+  | "EXPIRED"
+  | "NEAR_EXPIRY_UNSOLD"
+  | "DAMAGED"
+  | "QUALITY_ISSUE"
+  | "CONTAMINATION"
+  | "RECALL"
+  | "OTHER";
+export type DeliveryBenefitType =
+  "COMMISSION" | "FIXED_FEE" | "PROFIT_MARGIN" | "NONE";
+export type ReconciliationPolicy =
+  "RETURN_TO_STOCK" | "MARK_AS_WASTE" | "PARTNER_CHARGED";
+export type WalletTransactionType =
+  | "BENEFIT_ACCRUAL"
+  | "WITHDRAWAL"
+  | "ADJUSTMENT"
+  | "RECONCILIATION_CHARGE"
+  | "DEPOSIT";
+export type DeliveryStatus = "DELIVERED" | "FAILED" | "RETURNED";
 
 export interface CreateRecipeInput {
   name: string;
@@ -335,7 +369,7 @@ export interface BakerySettingsUpdate {
   defaultBakerId?: string | null;
   autoCreateDailyBatches?: boolean;
   expiryWarningDays?: number;
-  authMode?: 'SSO' | 'CARD_PIN';
+  authMode?: "SSO" | "CARD_PIN";
   batchPrefix?: string;
   batchSeparator?: string;
   batchDateFormat?: string;

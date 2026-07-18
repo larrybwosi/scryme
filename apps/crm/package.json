@@ -21,6 +21,7 @@
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/windmill": "workspace:*",
+    "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/pg": "^8.20.0",
     "@xyflow/react": "^12.11.0",

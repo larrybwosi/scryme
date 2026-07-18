@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   const { organizationId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <DashboardView />
     </OrgProvider>
   );

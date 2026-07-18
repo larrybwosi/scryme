@@ -52,6 +52,7 @@ import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 @ApiTags("V3 Inventory")
 @ApiBearerAuth()
 @Controller(":orgSlug/inventory")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class InventoryController {

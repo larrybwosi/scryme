@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from "@nestjs/swagger";
 import { GetProductsUseCase } from "../../application/use-cases/get-products.use-case";
 import { CreateProductUseCase } from "../../application/use-cases/create-product.use-case";
@@ -40,6 +41,7 @@ import { ReviewPriceChangeUseCase } from "../../application/use-cases/review-pri
 @ApiTags("V3 Catalog")
 @ApiBearerAuth()
 @Controller(":orgSlug/catalog")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class ProductController {

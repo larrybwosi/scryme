@@ -76,6 +76,83 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
         />
         <FormField
           control={form.control}
+          name="logoUrl"
+          render={({ field }: { field: any }) => (
+            <FormItem>
+              <FormLabel>Logo URL</FormLabel>
+              <FormControl>
+                <Input placeholder="https://example.com/logo.png" {...field} value={field.value || ''} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="customTheme"
+            render={({ field }: { field: any }) => (
+              <FormItem>
+                <FormLabel>Custom Theme/Color (Hex)</FormLabel>
+                <FormControl>
+                  <Input placeholder="#000000" {...field} value={field.value || ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="isEnterprise"
+            render={({ field }: { field: any }) => (
+              <FormItem className="flex flex-col pt-2.5">
+                <FormLabel className="mb-2">Enterprise Plan</FormLabel>
+                <FormControl>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!field.value}
+                      onChange={field.onChange}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-primary/30"
+                    />
+                    <span className="text-[13px] text-muted-foreground">Enable enterprise SLA & customization</span>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="discountPercentage"
+            render={({ field }: { field: any }) => (
+              <FormItem>
+                <FormLabel>B2B Discount (%)</FormLabel>
+                <FormControl>
+                  <Input type="number" step="0.01" min="0" max="100" placeholder="0.00" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="paymentTermsDays"
+            render={({ field }: { field: any }) => (
+              <FormItem>
+                <FormLabel>Payment Terms (Days)</FormLabel>
+                <FormControl>
+                  <Input type="number" min="0" placeholder="e.g. 30" {...field} value={field.value ?? ''} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
           name="taxId"
           render={({ field }: { field: any }) => (
             <FormItem>
