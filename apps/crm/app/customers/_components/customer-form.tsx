@@ -49,10 +49,16 @@ export function CustomerForm({ initialData, onSuccess, type = 'B2C' }: CustomerF
 
   const onSubmit = async (values: CustomerFormValues) => {
     try {
-      if (initialData) {
-        await updateCustomer(initialData.id, values);
+      const payload = {
+        ...values,
+        businessAccountId: initialData?.businessAccountId,
+        customerType: initialData?.customerType || type,
+        isActive: values.isActive ?? initialData?.isActive ?? true,
+      };
+      if (initialData?.id) {
+        await updateCustomer(initialData.id, payload);
       } else {
-        await createCustomer(values, organizationId);
+        await createCustomer(payload, organizationId);
       }
       onSuccess();
     } catch (error) {

@@ -93,9 +93,43 @@ export async function createCustomer(data: CustomerFormValues, organizationId: s
       },
     });
 
+    // Proactively initialize CRM Record for customer
+    let objectDef = await db.crmObjectDefinition.findUnique({
+      where: { organizationId_name: { organizationId, name: 'customer' } }
+    });
+
+    if (!objectDef) {
+      objectDef = await db.crmObjectDefinition.create({
+        data: {
+          organizationId,
+          name: 'customer',
+          label: 'Customer',
+          labelPlural: 'Customers',
+          isSystem: true,
+        }
+      });
+    }
+
+    const record = await db.crmRecord.create({
+      data: {
+        objectId: objectDef.id,
+        organizationId,
+        data: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+        }
+      }
+    });
+
+    const updatedCustomer = await db.customer.update({
+      where: { id: customer.id },
+      data: { crmRecordId: record.id }
+    });
+
     revalidatePath('/customers');
     revalidatePath('/contacts');
-    return { success: true, data: customer };
+    return { success: true, data: updatedCustomer };
   } catch (error: any) {
     console.error('Error creating customer:', error);
     return { success: false, error: error.message || 'Failed to create customer' };
@@ -186,7 +220,7 @@ export async function getCustomers(
 
 export async function getCustomer(id: string): Promise<any> {
   try {
-    const customer = await db.customer.findUnique({
+    let customer = await db.customer.findUnique({
       where: { id },
       include: {
         businessAccount: true,
@@ -249,6 +283,102 @@ export async function getCustomer(id: string): Promise<any> {
         },
       },
     });
+
+    if (customer && !customer.crmRecordId) {
+      let objectDef = await db.crmObjectDefinition.findUnique({
+        where: { organizationId_name: { organizationId: customer.organizationId, name: 'customer' } }
+      });
+
+      if (!objectDef) {
+        objectDef = await db.crmObjectDefinition.create({
+          data: {
+            organizationId: customer.organizationId,
+            name: 'customer',
+            label: 'Customer',
+            labelPlural: 'Customers',
+            isSystem: true,
+          }
+        });
+      }
+
+      const record = await db.crmRecord.create({
+        data: {
+          objectId: objectDef.id,
+          organizationId: customer.organizationId,
+          data: {
+            name: customer.name,
+            email: customer.email,
+            phone: customer.phone,
+          }
+        }
+      });
+
+      customer = await db.customer.update({
+        where: { id },
+        data: { crmRecordId: record.id },
+        include: {
+          businessAccount: true,
+          addresses: true,
+          invoices: {
+            include: {
+              items: true,
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+          },
+          transactions: {
+            include: {
+              items: true,
+              fulfillments: {
+                include: {
+                  items: true,
+                },
+              },
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 20,
+          },
+          crmRecord: {
+            include: {
+              activities: {
+                include: {
+                  member: {
+                    include: {
+                      user: true,
+                    },
+                  },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 20,
+              },
+              notes: {
+                include: {
+                  createdBy: {
+                    include: {
+                      user: true,
+                    },
+                  },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 20,
+              },
+              followUps: {
+                include: {
+                  assignedTo: {
+                    include: {
+                      user: true,
+                    },
+                  },
+                },
+                orderBy: { dueDate: 'asc' },
+                take: 20,
+              },
+            },
+          },
+        },
+      });
+    }
+
     return customer;
   } catch (error) {
     console.error('Error fetching customer:', error);
