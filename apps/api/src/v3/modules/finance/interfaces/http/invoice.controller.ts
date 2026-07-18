@@ -155,6 +155,36 @@ export class PublicInvoiceController {
     return new StreamableFile(stream);
   }
 
+  @Get("transactions/:transactionId/download")
+  @ApiOperation({ summary: "Download invoice PDF by transaction ID" })
+  async downloadInvoiceByTransaction(
+    @Param("transactionId") transactionId: string,
+    @Query("token") token: string,
+    @Res({ passthrough: true }) res: Fastify.FastifyReply,
+  ) {
+    if (!token) throw new UnauthorizedException("Token required");
+    const payload = verifyDocumentToken(token);
+
+    if (
+      !payload ||
+      payload.type !== "invoice" ||
+      payload.id !== transactionId
+    ) {
+      throw new ForbiddenException("Invalid or expired link");
+    }
+
+    const stream = await this.invoiceUseCase.getInvoiceDownloadStreamByTransaction(
+      transactionId,
+      payload.orgId,
+    );
+    res.header("Content-Type", "application/pdf");
+    res.header(
+      "Content-Disposition",
+      `attachment; filename=invoice-${transactionId}.pdf`,
+    );
+    return new StreamableFile(stream);
+  }
+
   @Get("receipts/:transactionId/download")
   @ApiOperation({ summary: "Download receipt PDF" })
   async downloadReceipt(

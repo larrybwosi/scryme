@@ -406,23 +406,21 @@ export async function addPayment(
     },
   });
 
-  // Generation of invoice and receipt on payment
-  const { documentService } = await import("@repo/shared/lib");
+  // Generation of invoice and receipt on payment via API delegation
   try {
+    const { generateDocumentToken } = await import("@repo/shared/api/v2");
+    const defaultApiUrl = "http://localhost:3002";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+
+    const invoiceToken = generateDocumentToken("invoice", transactionId, auth.organizationId!);
+    const receiptToken = generateDocumentToken("receipt", transactionId, auth.organizationId!);
+
     await Promise.all([
-      documentService.generateAndSaveInvoice(
-        transactionId,
-        auth.organizationId!,
-        auth.memberId!,
-      ),
-      documentService.generateAndSaveReceipt(
-        transactionId,
-        auth.organizationId!,
-        auth.memberId!,
-      ),
+      fetch(`${apiUrl}/public-invoices/transactions/${transactionId}/download?token=${invoiceToken}`),
+      fetch(`${apiUrl}/public-invoices/receipts/${transactionId}/download?token=${receiptToken}`),
     ]);
   } catch (err) {
-    console.error("Failed to generate documents on payment:", err);
+    console.error("Failed to trigger generation of documents on payment via API:", err);
   }
 
   revalidatePath("/sales/transactions");
@@ -454,20 +452,23 @@ export async function generateDocumentAction(
     return { success: true, alreadyExists: true };
   }
 
-  const { documentService } = await import("@repo/shared/lib");
+  try {
+    const { generateDocumentToken } = await import("@repo/shared/api/v2");
+    const defaultApiUrl = "http://localhost:3002";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 
-  if (type === "invoice") {
-    await documentService.generateAndSaveInvoice(
-      transactionId,
-      auth.organizationId!,
-      auth.memberId!,
-    );
-  } else {
-    await documentService.generateAndSaveReceipt(
-      transactionId,
-      auth.organizationId!,
-      auth.memberId!,
-    );
+    const token = generateDocumentToken(type, transactionId, auth.organizationId!);
+    const fetchUrl = type === "invoice"
+      ? `${apiUrl}/public-invoices/transactions/${transactionId}/download?token=${token}`
+      : `${apiUrl}/public-invoices/receipts/${transactionId}/download?token=${token}`;
+
+    const res = await fetch(fetchUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to generate ${type} on API: ${res.statusText}`);
+    }
+  } catch (err) {
+    console.error(`Failed to generate document ${type} via API:`, err);
+    throw err;
   }
 
   revalidatePath("/sales/transactions");
