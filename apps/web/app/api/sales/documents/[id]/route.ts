@@ -42,13 +42,16 @@ export async function GET(
 
       const defaultApiUrl = "http://localhost:3002";
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
-      const fetchUrl = type === "invoice"
-        ? `${apiUrl}/public-invoices/transactions/${id}/download?token=${token}`
-        : `${apiUrl}/public-invoices/receipts/${id}/download?token=${token}`;
+      const fetchUrl =
+        type === "invoice"
+          ? `${apiUrl}/api/v3/public-invoices/transactions/${id}/download?token=${token}`
+          : `${apiUrl}/api/v3/public-invoices/receipts/${id}/download?token=${token}`;
 
       const response = await fetch(fetchUrl);
       if (!response.ok) {
-        throw new Error(`Failed to fetch ${type} from API: ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch ${type} from API: ${response.statusText}`,
+        );
       }
 
       const arrayBuffer = await response.arrayBuffer();

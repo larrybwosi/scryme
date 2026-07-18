@@ -62,17 +62,34 @@ export class DocumentService {
     await Promise.all([
       (async () => {
         try {
-          const { generateDocumentToken } = await import("../../api/v2/utils/tokens");
-          const token = generateDocumentToken("invoice", transactionId, organizationId);
+          const { generateDocumentToken } =
+            await import("../../api/v2/utils/tokens");
+          const token = generateDocumentToken(
+            "invoice",
+            transactionId,
+            organizationId,
+          );
           const defaultApiUrl = "http://localhost:3002";
-          const apiUrl = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) || defaultApiUrl;
-          const res = await fetch(`${apiUrl}/public-invoices/transactions/${transactionId}/download?token=${token}`);
+          const apiUrl =
+            (typeof process !== "undefined" &&
+              process.env.NEXT_PUBLIC_API_URL) ||
+            defaultApiUrl;
+          const res = await fetch(
+            `${apiUrl}/api/v3/public-invoices/transactions/${transactionId}/download?token=${token}`,
+          );
           if (!res.ok) {
             throw new Error(`API returned status ${res.status}`);
           }
         } catch (error) {
-          console.error("Failed to delegate invoice generation to API, falling back to local:", error);
-          await this.generateAndSaveInvoice(transactionId, organizationId, memberId);
+          console.error(
+            "Failed to delegate invoice generation to API, falling back to local:",
+            error,
+          );
+          await this.generateAndSaveInvoice(
+            transactionId,
+            organizationId,
+            memberId,
+          );
         }
       })(),
       (async () => {
@@ -179,7 +196,8 @@ export class DocumentService {
 
     if (!transaction) throw new Error("Transaction not found");
 
-    const templateId = transaction.organization?.settings?.defaultInvoiceTemplate;
+    const templateId =
+      transaction.organization?.settings?.defaultInvoiceTemplate;
 
     let stream;
     let qrCode = "";
@@ -193,7 +211,10 @@ export class DocumentService {
       const template = getTemplateById(templateId!);
       if (!template) throw new Error(`Template not found: ${templateId}`);
 
-      const documentData = Mappers.toV3DocumentData(transaction as any, "invoice");
+      const documentData = Mappers.toV3DocumentData(
+        transaction as any,
+        "invoice",
+      );
       stream = await DocumentGenerator.renderToStream(
         React.createElement(template.component, { data: documentData, qrCode }),
       );
@@ -276,7 +297,8 @@ export class DocumentService {
 
     if (!transaction) throw new Error("Transaction not found");
 
-    const templateId = transaction.organization?.settings?.defaultReceiptTemplate;
+    const templateId =
+      transaction.organization?.settings?.defaultReceiptTemplate;
 
     let stream;
     let qrCode = "";
@@ -290,7 +312,10 @@ export class DocumentService {
       const template = getTemplateById(templateId!);
       if (!template) throw new Error(`Template not found: ${templateId}`);
 
-      const documentData = Mappers.toV3DocumentData(transaction as any, "receipt");
+      const documentData = Mappers.toV3DocumentData(
+        transaction as any,
+        "receipt",
+      );
       stream = await DocumentGenerator.renderToStream(
         React.createElement(template.component, { data: documentData, qrCode }),
       );

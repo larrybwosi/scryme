@@ -412,15 +412,30 @@ export async function addPayment(
     const defaultApiUrl = "http://localhost:3002";
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 
-    const invoiceToken = generateDocumentToken("invoice", transactionId, auth.organizationId!);
-    const receiptToken = generateDocumentToken("receipt", transactionId, auth.organizationId!);
+    const invoiceToken = generateDocumentToken(
+      "invoice",
+      transactionId,
+      auth.organizationId!,
+    );
+    const receiptToken = generateDocumentToken(
+      "receipt",
+      transactionId,
+      auth.organizationId!,
+    );
 
     await Promise.all([
-      fetch(`${apiUrl}/public-invoices/transactions/${transactionId}/download?token=${invoiceToken}`),
-      fetch(`${apiUrl}/public-invoices/receipts/${transactionId}/download?token=${receiptToken}`),
+      fetch(
+        `${apiUrl}/api/v3/public-invoices/transactions/${transactionId}/download?token=${invoiceToken}`,
+      ),
+      fetch(
+        `${apiUrl}/api/v3/public-invoices/receipts/${transactionId}/download?token=${receiptToken}`,
+      ),
     ]);
   } catch (err) {
-    console.error("Failed to trigger generation of documents on payment via API:", err);
+    console.error(
+      "Failed to trigger generation of documents on payment via API:",
+      err,
+    );
   }
 
   revalidatePath("/sales/transactions");
@@ -457,10 +472,15 @@ export async function generateDocumentAction(
     const defaultApiUrl = "http://localhost:3002";
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 
-    const token = generateDocumentToken(type, transactionId, auth.organizationId!);
-    const fetchUrl = type === "invoice"
-      ? `${apiUrl}/public-invoices/transactions/${transactionId}/download?token=${token}`
-      : `${apiUrl}/public-invoices/receipts/${transactionId}/download?token=${token}`;
+    const token = generateDocumentToken(
+      type,
+      transactionId,
+      auth.organizationId!,
+    );
+    const fetchUrl =
+      type === "invoice"
+        ? `${apiUrl}/api/v3/public-invoices/transactions/${transactionId}/download?token=${token}`
+        : `${apiUrl}/api/v3/public-invoices/receipts/${transactionId}/download?token=${token}`;
 
     const res = await fetch(fetchUrl);
     if (!res.ok) {
@@ -488,8 +508,12 @@ export async function generatePublicLinkAction(
     const defaultApiUrl = "http://localhost:3002";
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 
-    const token = generateDocumentToken(type, transactionId, auth.organizationId!);
-    const fetchUrl = `${apiUrl}/public-invoices/transactions/${transactionId}/generate-public-link?token=${token}`;
+    const token = generateDocumentToken(
+      type,
+      transactionId,
+      auth.organizationId!,
+    );
+    const fetchUrl = `${apiUrl}/api/v3/public-invoices/transactions/${transactionId}/generate-public-link?token=${token}`;
 
     const res = await fetch(fetchUrl, {
       method: "POST",
@@ -501,7 +525,9 @@ export async function generatePublicLinkAction(
 
     if (!res.ok) {
       const errorText = await res.text();
-      throw new Error(`Failed to generate public link on API: ${res.statusText} - ${errorText}`);
+      throw new Error(
+        `Failed to generate public link on API: ${res.statusText} - ${errorText}`,
+      );
     }
 
     const data = await res.json();

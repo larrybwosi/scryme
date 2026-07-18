@@ -133,7 +133,12 @@ export class ShortUrlController {
         `);
       }
 
-      const { organizationId, mimeType, id: attachmentId, isPublic } = attachment;
+      const {
+        organizationId,
+        mimeType,
+        id: attachmentId,
+        isPublic,
+      } = attachment;
 
       // 1. Check Authorization for private attachments
       // We check organization settings for forced privacy or if the attachment itself is private
@@ -220,7 +225,10 @@ export class ShortUrlController {
           mimeType: string;
         }>(fileCacheKey);
 
-        const disposition = (download === "true" || download === "1" || download === "") ? "attachment" : "inline";
+        const disposition =
+          download === "true" || download === "1" || download === ""
+            ? "attachment"
+            : "inline";
 
         res.header("Content-Type", mimeType);
         res.header("Cache-Control", cacheControl);
