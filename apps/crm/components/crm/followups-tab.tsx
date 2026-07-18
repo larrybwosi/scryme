@@ -1,7 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CalendarClock, CheckCircle2, Circle, Clock, Plus, X, AlertTriangle } from 'lucide-react';
+import { CalendarClock, CheckCircle2, Circle, Clock, Plus, X, AlertTriangle, CalendarIcon } from 'lucide-react';
+import { Button } from '@repo/ui/components/ui/button';
+import { Calendar } from '@repo/ui/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui/components/ui/select';
+import { format } from 'date-fns';
 import { cn } from '@repo/ui/lib/utils';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -218,22 +229,23 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
             )}
           </p>
         </div>
-        <button
+        <Button
+          variant={showForm ? "secondary" : "default"}
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-white border border-primary hover:bg-primary/90 transition-colors"
+          className="h-9 gap-1.5 text-[12.5px] font-semibold px-4 py-2"
         >
           {showForm ? <X size={13} /> : <Plus size={13} />}
           {showForm ? 'Cancel' : 'Add Follow-up'}
-        </button>
+        </Button>
       </div>
 
       {/* Add form */}
       {showForm && (
-        <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
-          <h4 className="text-[13px] font-bold text-foreground mb-4">New Follow-up</h4>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="mb-5 bg-card border border-border rounded-xl p-5 shadow-sm space-y-4">
+          <h4 className="text-[13px] font-bold text-foreground">New Follow-up</h4>
+          <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Title *</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Title *</label>
               <input
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -242,22 +254,72 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Due Date *</label>
-              <input type="date" value={form.dueDate} onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors" />
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Due Date *</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal text-sm h-9 px-3",
+                      !form.dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                    {form.dueDate ? format(new Date(form.dueDate), "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={form.dueDate ? new Date(form.dueDate) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const yyyy = date.getFullYear();
+                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                        const dd = String(date.getDate()).padStart(2, '0');
+                        setForm((f) => ({ ...f, dueDate: `${yyyy}-${mm}-${dd}` }));
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Priority</label>
-              <select value={form.priority} onChange={(e) => setForm((f) => ({ ...f, priority: e.target.value as any }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
-                {['HIGH', 'MEDIUM', 'LOW'].map((p) => <option key={p} value={p}>{p}</option>)}
-              </select>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Priority</label>
+              <Select
+                value={form.priority}
+                onValueChange={(val) => setForm((f) => ({ ...f, priority: val as any }))}
+              >
+                <SelectTrigger className="w-full h-9 bg-background">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="LOW">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Type</label>
-              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as any }))} className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors">
-                {['CALL', 'MEETING', 'EMAIL', 'PREPARATION', 'OTHER'].map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Type</label>
+              <Select
+                value={form.type}
+                onValueChange={(val) => setForm((f) => ({ ...f, type: val as any }))}
+              >
+                <SelectTrigger className="w-full h-9 bg-background">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CALL">Call</SelectItem>
+                  <SelectItem value="MEETING">Meeting</SelectItem>
+                  <SelectItem value="EMAIL">Email</SelectItem>
+                  <SelectItem value="PREPARATION">Preparation</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="col-span-2 flex items-center gap-3 py-1">
+            <div className="col-span-2 flex items-center justify-between py-1 bg-muted/10 px-3 rounded-lg border border-border">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <div className="relative flex items-center">
                   <input
@@ -279,32 +341,42 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
               </label>
 
               {form.isRecurring && (
-                <select
+                <Select
                   value={form.recurringInterval}
-                  onChange={(e) => setForm((f) => ({ ...f, recurringInterval: e.target.value }))}
-                  className="text-[12px] bg-background border border-border rounded-md px-2 py-1 outline-none focus:border-primary transition-colors ml-auto"
+                  onValueChange={(val) => setForm((f) => ({ ...f, recurringInterval: val }))}
                 >
-                  <option value="DAILY">Daily</option>
-                  <option value="WEEKLY">Weekly</option>
-                  <option value="MONTHLY">Monthly</option>
-                </select>
+                  <SelectTrigger className="w-[120px] h-8 bg-background">
+                    <SelectValue placeholder="Select interval" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DAILY">Daily</SelectItem>
+                    <SelectItem value="WEEKLY">Weekly</SelectItem>
+                    <SelectItem value="MONTHLY">Monthly</SelectItem>
+                  </SelectContent>
+                </Select>
               )}
             </div>
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Assigned To</label>
-              <select
-                value={form.assignedToId}
-                onChange={(e) => setForm((f) => ({ ...f, assignedToId: e.target.value }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Assigned To</label>
+              <Select
+                value={form.assignedToId || "unassigned"}
+                onValueChange={(val) => setForm((f) => ({ ...f, assignedToId: val === "unassigned" ? "" : val }))}
               >
-                <option value="">Unassigned</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>{m.user.name || m.user.email}</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-9 bg-background">
+                  <SelectValue placeholder="Select member" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {members.map((m) => (
+                    <SelectItem key={m.id} value={m.id}>
+                      {m.user.name || m.user.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Description</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Description</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -314,10 +386,14 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
               />
             </div>
           </div>
-          <div className="flex justify-end mt-4">
-            <button onClick={handleAdd} disabled={loading || !form.title.trim() || !form.dueDate} className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          <div className="flex justify-end pt-2">
+            <Button
+              onClick={handleAdd}
+              disabled={loading || !form.title.trim() || !form.dueDate}
+              className="text-[12.5px] font-semibold h-9 px-5"
+            >
               {loading ? 'Saving...' : 'Save Follow-up'}
-            </button>
+            </Button>
           </div>
         </div>
       )}
