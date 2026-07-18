@@ -180,25 +180,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const handleGenerateDocument = async (trxId: string, type: "invoice" | "receipt") => {
     setIsGeneratingDoc(`${trxId}-${type}`);
     try {
-      const result = await generateDocumentAction(trxId, type);
-      if (result && result.success) {
-        const downloadUrl = result.shortUrl ? `${result.shortUrl}?download=true` : result.publicUrl;
-        toast.success(
-          `${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`,
-          {
-            action: {
-              label: "Download",
-              onClick: () => {
-                if (downloadUrl) {
-                  window.open(downloadUrl, "_blank");
-                }
-              },
-            },
-          }
-        );
-      } else {
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`);
-      }
+      await generateDocumentAction(trxId, type);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`);
     } catch (error) {
       toast.error(`Failed to generate ${type}`);
     } finally {

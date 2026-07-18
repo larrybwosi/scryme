@@ -100,27 +100,10 @@ export function TransactionDetailsSheet({
     else setIsGeneratingReceipt(true);
 
     try {
-      const result = await generateDocumentAction(transaction.id, type);
-      if (result && result.success) {
-        const downloadUrl = result.shortUrl ? `${result.shortUrl}?download=true` : result.publicUrl;
-        toast.success(
-          `${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`,
-          {
-            action: {
-              label: "Download",
-              onClick: () => {
-                if (downloadUrl) {
-                  window.open(downloadUrl, "_blank");
-                }
-              },
-            },
-          }
-        );
-      } else {
-        toast.success(
-          `${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`
-        );
-      }
+      await generateDocumentAction(transaction.id, type);
+      toast.success(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`,
+      );
       fetchTransaction();
     } catch (error) {
       toast.error(`Failed to generate ${type}`);

@@ -441,12 +441,6 @@ export async function generateDocumentAction(
 
   if (!transaction) throw new Error("Transaction not found");
 
-  const { generateDocumentToken } = await import("@repo/shared/api/v2");
-  const token = generateDocumentToken(type, transactionId, auth.organizationId!);
-  const webUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-  const pathPart = type === "invoice" ? "transactions" : "receipts";
-  const publicUrl = `${webUrl}/public-invoices/${pathPart}/${transactionId}/download?token=${token}`;
-
   // Check if an up-to-date document already exists
   const existingDoc = transaction.attachments?.find(
     a =>
@@ -455,19 +449,15 @@ export async function generateDocumentAction(
   );
 
   if (existingDoc) {
-    return {
-      success: true,
-      alreadyExists: true,
-      shortUrl: existingDoc.shortUrl,
-      fileUrl: existingDoc.fileUrl,
-      publicUrl,
-    };
+    return { success: true, alreadyExists: true };
   }
 
   try {
+    const { generateDocumentToken } = await import("@repo/shared/api/v2");
     const defaultApiUrl = "http://localhost:3002";
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 
+    const token = generateDocumentToken(type, transactionId, auth.organizationId!);
     const fetchUrl = type === "invoice"
       ? `${apiUrl}/public-invoices/transactions/${transactionId}/download?token=${token}`
       : `${apiUrl}/public-invoices/receipts/${transactionId}/download?token=${token}`;
@@ -476,33 +466,14 @@ export async function generateDocumentAction(
     if (!res.ok) {
       throw new Error(`Failed to generate ${type} on API: ${res.statusText}`);
     }
-
-    // Retrieve the newly created document
-    const updatedTransaction = await db.transaction.findUnique({
-      where: { id: transactionId, organizationId: auth.organizationId },
-      include: { attachments: true },
-    });
-
-    const newDoc = updatedTransaction?.attachments?.find(
-      a =>
-        a.description === (type === "invoice" ? "Invoice" : "Receipt") &&
-        new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
-    );
-
-    revalidatePath("/sales/transactions");
-    revalidatePath(`/sales/transactions/${transactionId}`);
-
-    return {
-      success: true,
-      alreadyExists: false,
-      shortUrl: newDoc?.shortUrl || null,
-      fileUrl: newDoc?.fileUrl || null,
-      publicUrl,
-    };
   } catch (err) {
     console.error(`Failed to generate document ${type} via API:`, err);
     throw err;
   }
+
+  revalidatePath("/sales/transactions");
+  revalidatePath(`/sales/transactions/${transactionId}`);
+  return { success: true };
 }
 
 export async function getFulfillments(params: {
