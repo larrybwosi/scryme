@@ -3,7 +3,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  transpilePackages: ["@react-pdf/renderer"],
+  transpilePackages: ["@react-pdf/renderer", "@repo/documents", "@repo/shared"],
   async rewrites() {
     const isDev = process.env.NODE_ENV === "development";
     const defaultApiUrl = isDev
