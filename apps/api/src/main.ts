@@ -111,6 +111,7 @@ async function bootstrap() {
       { path: "public-invoices/:id/download", method: RequestMethod.GET },
       { path: "public-invoices/transactions/:transactionId/download", method: RequestMethod.GET },
       { path: "public-invoices/receipts/:transactionId/download", method: RequestMethod.GET },
+      { path: "public-invoices/transactions/:transactionId/generate-public-link", method: RequestMethod.POST },
     ],
   });
   app.useGlobalPipes(

@@ -35,6 +35,7 @@ import {
   Plus,
   ExternalLink,
   Loader2,
+  Copy,
 } from "lucide-react";
 import {
   getTransactionById,
@@ -42,6 +43,7 @@ import {
   uploadFileAction,
   addAttachmentToPayment,
   generateDocumentAction,
+  generatePublicLinkAction,
 } from "../../app/actions/sales";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
@@ -63,6 +65,7 @@ export function TransactionDetailsSheet({
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
+  const [isLoadingPublicLink, setIsLoadingPublicLink] = useState(false);
 
   const fetchTransaction = useCallback(async () => {
     if (!transactionId) return;
@@ -144,6 +147,11 @@ export function TransactionDetailsSheet({
       style: "currency",
       currency: transaction?.currencyCode || "USD",
     }).format(amount);
+  };
+
+  const handleCopyLink = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast.success("Link copied to clipboard!");
   };
 
   if (!transaction && isLoading) {
@@ -363,6 +371,81 @@ export function TransactionDetailsSheet({
                 value="documents"
                 className="mt-4 space-y-4 outline-none">
                 <div className="space-y-6">
+                  {/* Generate Public Link Form Card */}
+                  <div className="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-sm shadow-zinc-100/50 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-zinc-950" />
+                      <h3 className="text-sm font-semibold text-zinc-950">
+                        Generate Secure Public Link
+                      </h3>
+                    </div>
+                    <p className="text-xs text-zinc-500">
+                      Create an unguessable public link with a customizable expiry period to share with clients.
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block">
+                          Document Type
+                        </label>
+                        <select
+                          id="public-doc-type"
+                          className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-900">
+                          <option value="invoice">Invoice</option>
+                          <option value="receipt">Receipt</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block">
+                          Expiry Period
+                        </label>
+                        <select
+                          id="public-doc-expiry"
+                          className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-900">
+                          <option value="7">7 Days (Default)</option>
+                          <option value="1">1 Day</option>
+                          <option value="30">30 Days</option>
+                          <option value="0">Never Expires</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      className="w-full h-8 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white"
+                      onClick={async () => {
+                        const typeSelect = document.getElementById("public-doc-type") as HTMLSelectElement;
+                        const expirySelect = document.getElementById("public-doc-expiry") as HTMLSelectElement;
+                        if (!typeSelect || !expirySelect) return;
+
+                        const type = typeSelect.value as "invoice" | "receipt";
+                        const daysVal = parseInt(expirySelect.value, 10);
+                        const customExpiryDays = daysVal === 0 ? null : daysVal;
+
+                        setIsLoadingPublicLink(true);
+                        try {
+                          await generatePublicLinkAction(transaction.id, type, customExpiryDays);
+                          toast.success("Public link generated successfully!");
+                          fetchTransaction();
+                        } catch (err) {
+                          toast.error("Failed to generate public link");
+                        } finally {
+                          setIsLoadingPublicLink(false);
+                        }
+                      }}
+                      disabled={isLoadingPublicLink}>
+                      {isLoadingPublicLink ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+                          Generating...
+                        </>
+                      ) : (
+                        "Generate Public Link"
+                      )}
+                    </Button>
+                  </div>
+
                   {transaction.attachments?.length > 0 ? (
                     (() => {
                       const sortedAttachments = [...transaction.attachments].sort(
@@ -375,7 +458,8 @@ export function TransactionDetailsSheet({
                         (acc: any, att: any) => {
                           const desc = att.description?.toLowerCase() || "";
                           let group = "Others";
-                          if (desc.includes("invoice")) group = "Invoices";
+                          if (desc.includes("public")) group = "Public Document Links";
+                          else if (desc.includes("invoice")) group = "Invoices";
                           else if (desc.includes("receipt")) group = "Receipts";
                           else if (
                             desc.includes("proof") ||
@@ -391,6 +475,7 @@ export function TransactionDetailsSheet({
                       );
 
                       const order = [
+                        "Public Document Links",
                         "Invoices",
                         "Receipts",
                         "Delivery & Proofs",
@@ -412,65 +497,103 @@ export function TransactionDetailsSheet({
                               </h3>
                             </div>
                             <div className="divide-y divide-zinc-100">
-                              {docs.map((att: any) => (
-                                <div
-                                  key={att.id}
-                                  className="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-400">
-                                      {att.mimeType === "application/pdf" ? (
-                                        <FileText className="w-5 h-5 text-red-500" />
-                                      ) : att.mimeType.startsWith("image/") ? (
-                                        <Paperclip className="w-5 h-5 text-blue-500" />
-                                      ) : (
-                                        <Paperclip className="w-5 h-5" />
-                                      )}
-                                    </div>
-                                    <div>
-                                      <p className="text-sm font-semibold text-zinc-900">
-                                        {att.fileName}
-                                      </p>
-                                      <div className="flex items-center gap-2 mt-0.5">
-                                        <span className="text-[10px] text-zinc-400 font-medium">
-                                          {att.description || "No description"}
-                                        </span>
-                                        <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                                        <span className="text-[10px] text-zinc-400 font-medium">
-                                          {format(
-                                            new Date(att.uploadedAt),
-                                            "MMM d, yyyy HH:mm",
+                              {docs.map((att: any) => {
+                                const isPublicLink = groupName === "Public Document Links";
+                                return (
+                                  <div
+                                    key={att.id}
+                                    className="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                      <div className={cn(
+                                        "w-10 h-10 rounded-lg flex items-center justify-center",
+                                        isPublicLink ? "bg-emerald-50 border border-emerald-200 text-emerald-600" : "bg-zinc-50 border border-zinc-200 text-zinc-400"
+                                      )}>
+                                        {att.mimeType === "application/pdf" ? (
+                                          <FileText className={cn("w-5 h-5", isPublicLink ? "text-emerald-600" : "text-red-500")} />
+                                        ) : att.mimeType.startsWith("image/") ? (
+                                          <Paperclip className="w-5 h-5 text-blue-500" />
+                                        ) : (
+                                          <Paperclip className="w-5 h-5" />
+                                        )}
+                                      </div>
+                                      <div>
+                                        <p className="text-sm font-semibold text-zinc-900 flex flex-wrap items-center gap-1.5">
+                                          {isPublicLink ? (
+                                            <>
+                                              {att.description}
+                                              {att.expiresAt ? (
+                                                new Date(att.expiresAt) < new Date() ? (
+                                                  <Badge variant="outline" className="text-[9px] text-red-600 border-red-200 bg-red-50 py-0 px-1 rounded font-normal uppercase">Expired</Badge>
+                                                ) : (
+                                                  <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-200 bg-emerald-50 py-0 px-1 rounded font-normal uppercase">
+                                                    Active • Expir. {format(new Date(att.expiresAt), "MMM d")}
+                                                  </Badge>
+                                                )
+                                              ) : (
+                                                <Badge variant="outline" className="text-[9px] text-blue-600 border-blue-200 bg-blue-50 py-0 px-1 rounded font-normal uppercase">Never Expires</Badge>
+                                              )}
+                                            </>
+                                          ) : (
+                                            att.fileName
                                           )}
-                                        </span>
+                                        </p>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                          <span className="text-[10px] text-zinc-400 font-medium font-mono truncate max-w-[280px]">
+                                            {isPublicLink ? (att.shortUrl || att.fileUrl) : (att.description || "No description")}
+                                          </span>
+                                          {!isPublicLink && (
+                                            <>
+                                              <span className="w-1 h-1 rounded-full bg-zinc-300" />
+                                              <span className="text-[10px] text-zinc-400 font-medium">
+                                                {format(
+                                                  new Date(att.uploadedAt),
+                                                  "MMM d, yyyy HH:mm",
+                                                )}
+                                              </span>
+                                            </>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
+                                    <div className="flex items-center gap-2">
+                                      {isPublicLink && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                                          onClick={() => handleCopyLink(att.shortUrl || att.fileUrl!)}>
+                                          <Copy className="w-4 h-4" />
+                                        </Button>
+                                      )}
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                                        asChild>
+                                        <a
+                                          href={att.shortUrl || att.fileUrl!}
+                                          target="_blank"
+                                          rel="noopener noreferrer">
+                                          <ExternalLink className="w-4 h-4" />
+                                        </a>
+                                      </Button>
+                                      {!isPublicLink && (
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                                          asChild>
+                                          <a
+                                            href={att.shortUrl || att.fileUrl!}
+                                            download={att.fileName!}>
+                                            <Download className="w-4 h-4" />
+                                          </a>
+                                        </Button>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
-                                      asChild>
-                                      <a
-                                        href={att.shortUrl || att.fileUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer">
-                                        <ExternalLink className="w-4 h-4" />
-                                      </a>
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
-                                      asChild>
-                                      <a
-                                        href={att.shortUrl || att.fileUrl}
-                                        download={att.fileName}>
-                                        <Download className="w-4 h-4" />
-                                      </a>
-                                    </Button>
-                                  </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         );
