@@ -2,7 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { PettyCashUseCase } from "../petty-cash.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { PettyCashTransactionType, Prisma } from "@repo/db";
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException, ForbiddenException } from "@nestjs/common";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 describe("PettyCashUseCase", () => {
@@ -10,6 +10,9 @@ describe("PettyCashUseCase", () => {
   let prisma: PrismaService;
 
   const mockPrismaClient = {
+    member: {
+      count: vi.fn(),
+    },
     pettyCashFund: {
       create: vi.fn(),
       findFirst: vi.fn(),
@@ -51,6 +54,7 @@ describe("PettyCashUseCase", () => {
         currencyCode: "KES",
       };
 
+      mockPrismaClient.member.count.mockResolvedValue(1);
       mockPrismaClient.pettyCashFund.create.mockResolvedValue({
         id: "fund-1",
         ...dto,
@@ -59,6 +63,9 @@ describe("PettyCashUseCase", () => {
       const result = await useCase.createFund(orgId, dto);
 
       expect(result.id).toBe("fund-1");
+      expect(mockPrismaClient.member.count).toHaveBeenCalledWith({
+        where: { id: dto.responsibleMemberId, organizationId: orgId },
+      });
       expect(mockPrismaClient.pettyCashFund.create).toHaveBeenCalled();
       expect(mockPrismaClient.pettyCashTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -68,6 +75,23 @@ describe("PettyCashUseCase", () => {
           }),
         }),
       );
+    });
+
+    it("should throw ForbiddenException if the responsible member does not belong to the organization", async () => {
+      const orgId = "org-1";
+      const dto = {
+        name: "Office Petty Cash",
+        floatAmount: 5000,
+        responsibleMemberId: "member-1",
+        currencyCode: "KES",
+      };
+
+      mockPrismaClient.member.count.mockResolvedValue(0);
+
+      await expect(useCase.createFund(orgId, dto)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockPrismaClient.pettyCashFund.create).not.toHaveBeenCalled();
     });
   });
 
