@@ -173,3 +173,8 @@
 **Vulnerability:** Standalone POS setup tokens and long-lived device keys were stored in plaintext in the database, risking exposure of sensitive active credentials if the database was compromised.
 **Learning:** API keys and device tokens are highly sensitive credentials. Storing them in plaintext violates the principle of defense-in-depth and the rule of secure credential storage.
 **Prevention:** Always hash setup tokens and long-lived keys using a cryptographically secure hash function (like SHA-256) before storing them in database records. Perform validation by hashing user-supplied inputs and performing `@unique` database lookups on the hashed values.
+
+## 2026-07-18 - IDOR in Petty Cash Fund Creation via Linked Member ID
+**Vulnerability:** The `PettyCashUseCase.createFund` method accepted a `responsibleMemberId` in the request body without verifying that the referenced member belongs to the authenticated `organizationId`. This allowed users to associate any member from any organization with their organization's petty cash fund.
+**Learning:** Even when controller-level guards secure the tenant context, nested reference identifiers (foreign keys) passed in request DTOs are untrusted and can cross-cut tenant boundaries. Failing to validate association bounds inside transactional use cases can lead to illegitimate cross-tenant relationships.
+**Prevention:** Always validate all user-provided foreign keys by performing a scoped lookup or count verification (e.g., `tx.member.count({ where: { id, organizationId } })`) inside the transactional boundary before persisting the model or relations.
