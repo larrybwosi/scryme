@@ -33,6 +33,7 @@ import { env } from "@repo/env";
 import { RedisService } from "./redis/redis.service";
 import { RedisThrottlerStorage } from "./common/throttling/redis-throttler-storage";
 import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-throttler.guard";
+import { PublicInvoiceController } from "./v3/modules/finance/interfaces/http/invoice.controller";
 
 @Module({
   imports: [
@@ -89,7 +90,7 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
       },
     ]),
   ],
-  controllers: [AppController],
+  controllers: [AppController, PublicInvoiceController],
   providers: [
     AppService,
     {
