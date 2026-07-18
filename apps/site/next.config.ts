@@ -11,6 +11,9 @@ const posthogIngestHost = posthogHost || "https://us.i.posthog.com";
 const nextConfig: NextConfig = {
   output: "standalone",
   skipTrailingSlashRedirect: true,
+  experimental: {
+    webpackMemoryOptimizations: true,
+  },
   images: {
     dangerouslyAllowSVG: true,
     remotePatterns: [
@@ -78,4 +81,15 @@ export default withSentryConfig(nextConfig, {
 
   // Suppress non-CI output
   silent: !process.env.CI,
+
+  // Disable Sentry sourcemaps generation and upload during local build to reduce resources
+  sourcemaps: {
+    disable: true,
+  },
+
+  // Bundle size optimizations to exclude heavy features from the build
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+  },
 });
