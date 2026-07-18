@@ -60,13 +60,18 @@ export class WindmillCallbackUseCase {
       .update(JSON.stringify(payload))
       .digest("hex");
 
-    const signatureBuffer = Buffer.from(signature);
-    const expectedBuffer = Buffer.from(expectedSignature);
+    // Use SHA-256 pre-hashing to ensure both buffers have identical length,
+    // preventing timing attacks and leakage of the secret signature length.
+    const expectedHash = crypto
+      .createHash("sha256")
+      .update(expectedSignature)
+      .digest();
+    const actualHash = crypto
+      .createHash("sha256")
+      .update(signature || "")
+      .digest();
 
-    if (
-      signatureBuffer.length !== expectedBuffer.length ||
-      !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
-    ) {
+    if (!crypto.timingSafeEqual(expectedHash, actualHash)) {
       this.logger.warn(`Invalid Windmill signature for org ${organizationId}`);
       throw new UnauthorizedException("Invalid signature");
     }

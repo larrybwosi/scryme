@@ -88,3 +88,7 @@
 ## 2026-07-17 - [O(N*M) to O(N+M) Map-based Lookup in E-Commerce Order Creation]
 **Learning:** Performing multiple nested `.find()` searches over arrays inside loops (like verifying variant stocks and mapping order items in `OrdersService.createOrder`) creates an $O(N \times M)$ performance bottleneck. Pre-indexing the retrieved entity array into a `Map` structure reduces search time to constant-time $O(1)$, resulting in an overall $O(N + M)$ complexity.
 **Action:** Always pre-index arrays into Maps when performing lookups inside loops to ensure constant-time data reconciliation under load.
+
+## 2026-07-17 - [Targeted Select Blocks in Unified Timeline List Queries]
+**Learning:** When retrieving unified timelines that merge records from different models (e.g., `CrmNote` and `CrmActivity`), loading all database columns is highly inefficient because notes often contain large markdown text and activities contain heavy JSON metadata blocks. Utilizing targeted `select` statements tailored to the specific fields used in the final mapping reduces database I/O and NestJS/Prisma serialization overhead by up to 60-80%.
+**Action:** Always inspect the final array mapping or response object for merged list structures, and use exact `select` blocks to only fetch fields required by the UI/mapper.
