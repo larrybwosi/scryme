@@ -5,6 +5,23 @@ import { customerSchema, type CustomerFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
 import { realtimeService } from '@repo/shared/realtime';
 
+export async function getLocations(organizationId: string): Promise<any[]> {
+  try {
+    return await db.inventoryLocation.findMany({
+      where: {
+        organizationId,
+        isActive: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching locations:', error);
+    return [];
+  }
+}
+
 export async function getCustomerIdSettings(organizationId: string): Promise<any> {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
@@ -85,9 +102,20 @@ export async function createCustomer(data: CustomerFormValues, organizationId: s
       }
     }
 
+    const cleanData = {
+      ...validatedData,
+      phone: validatedData.phone === '' ? null : validatedData.phone || null,
+      company: validatedData.company === '' ? null : validatedData.company || null,
+      taxId: validatedData.taxId === '' ? null : validatedData.taxId || null,
+      deliveryNotes: validatedData.deliveryNotes === '' ? null : validatedData.deliveryNotes || null,
+      defaultLocationId: (validatedData.defaultLocationId === '' || validatedData.defaultLocationId === 'none')
+        ? null
+        : validatedData.defaultLocationId || null,
+    };
+
     const customer = await db.customer.create({
       data: {
-        ...validatedData,
+        ...cleanData,
         customId: finalCustomId || null,
         organizationId,
       },
@@ -140,10 +168,21 @@ export async function updateCustomer(id: string, data: CustomerFormValues): Prom
   try {
     const validatedData = customerSchema.parse(data);
 
+    const cleanData = {
+      ...validatedData,
+      phone: validatedData.phone === '' ? null : validatedData.phone || null,
+      company: validatedData.company === '' ? null : validatedData.company || null,
+      taxId: validatedData.taxId === '' ? null : validatedData.taxId || null,
+      deliveryNotes: validatedData.deliveryNotes === '' ? null : validatedData.deliveryNotes || null,
+      defaultLocationId: (validatedData.defaultLocationId === '' || validatedData.defaultLocationId === 'none')
+        ? null
+        : validatedData.defaultLocationId || null,
+    };
+
     const customer = await db.customer.update({
       where: { id },
       data: {
-        ...validatedData,
+        ...cleanData,
         customId: validatedData.customId || null,
       },
     });
