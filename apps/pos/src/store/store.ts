@@ -2297,7 +2297,7 @@ export const usePosStore = create<PosStore>()(
         }),
     }),
     {
-      name: 'dealio-pos-storage-v1',
+      name: 'scryme-pos-storage-v1',
       storage: createJSONStorage(() => localStorage),
       skipHydration: false,
       partialize: state => ({

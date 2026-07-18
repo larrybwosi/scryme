@@ -343,7 +343,11 @@ export default function CustomerDisplay() {
              {/* Header Info */}
              <div className="absolute top-0 left-0 right-0 p-8 flex justify-between text-white/60">
                 <div className="flex items-center gap-3">
-                   {config.showCompanyLogo && <LucideIcons.Store className="h-6 w-6" />}
+                   {config.showCompanyLogo && (
+                     <div className="h-8 w-8 bg-[#34A853] rounded-lg flex items-center justify-center shadow-lg shadow-[#34A853]/20">
+                       <span className="text-white font-bold text-lg font-sans">S</span>
+                     </div>
+                   )}
                   <span className="font-bold uppercase tracking-widest">{config.welcomeMessage}</span>
                 </div>
                 {config.showTime && (
@@ -392,8 +396,8 @@ export default function CustomerDisplay() {
               <header className="h-16 md:h-20 px-6 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
                 <div className="flex items-center gap-4">
                   {config.showCompanyLogo && (
-                      <div className="h-10 w-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg shadow-slate-900/20">
-                        <LucideIcons.Store className="h-5 w-5 text-white" />
+                      <div className="h-10 w-10 bg-[#34A853] rounded-lg flex items-center justify-center shadow-lg shadow-[#34A853]/20">
+                        <span className="text-white font-bold text-2xl font-sans">S</span>
                       </div>
                   )}
                   <div>

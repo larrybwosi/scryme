@@ -51,13 +51,13 @@
         { "path": "$DOWNLOAD/*" },
         { "path": "$DOCUMENT/*" },
         { "path": "$APPDATA/*" },
-        { "path": "$DOWNLOAD/Dealio" },
-        { "path": "$DOWNLOAD/Dealio/*" },
-        { "path": "$DOCUMENT/Dealio" },
-        { "path": "$DOCUMENT/Dealio/*" },
+        { "path": "$DOWNLOAD/Scryme" },
+        { "path": "$DOWNLOAD/Scryme/*" },
+        { "path": "$DOCUMENT/Scryme" },
+        { "path": "$DOCUMENT/Scryme/*" },
         { "path": "$APP_DATA/**" },
-        { "path": "$APPDATA/com.dealio.pos" },
-        { "path": "$APPDATA/com.dealio.pos/**" }
+        { "path": "$APPDATA/com.scryme.pos" },
+        { "path": "$APPDATA/com.scryme.pos/**" }
       ]
     },
     {
@@ -65,18 +65,18 @@
       "allow": [
         { "path": "$DOWNLOAD" },
         { "path": "$DOWNLOAD/*" },
-        { "path": "$DOWNLOAD/Dealio" },
-        { "path": "$DOWNLOAD/Dealio/*" },
+        { "path": "$DOWNLOAD/Scryme" },
+        { "path": "$DOWNLOAD/Scryme/*" },
         { "path": "$DOCUMENT" },
         { "path": "$DOCUMENT/*" },
-        { "path": "$DOCUMENT/Dealio" },
-        { "path": "$DOCUMENT/Dealio/*" },
+        { "path": "$DOCUMENT/Scryme" },
+        { "path": "$DOCUMENT/Scryme/*" },
         { "path": "$APPDATA" },
         { "path": "$APPDATA/*" },
         { "path": "$APP_DATA" },
         { "path": "$APP_DATA/**" },
-        { "path": "$APPDATA/com.dealio.pos" },
-        { "path": "$APPDATA/com.dealio.pos/**" }
+        { "path": "$APPDATA/com.scryme.pos" },
+        { "path": "$APPDATA/com.scryme.pos/**" }
       ]
     },
     {

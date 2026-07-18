@@ -133,9 +133,9 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             to="/"
             className="flex items-center gap-3 no-underline hover:opacity-80 transition-opacity overflow-hidden"
           >
-            <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-              <span className="text-primary-foreground font-bold text-sm">
-                {(businessName || 'DL').substring(0, 2).toUpperCase()}
+            <div className="w-8 h-8 rounded-lg bg-[#34A853] flex items-center justify-center shrink-0 shadow-sm">
+              <span className="text-white font-black text-lg">
+                {(businessName || 'SC').substring(0, 1).toUpperCase()}
               </span>
             </div>
             {!isCollapsed && (
