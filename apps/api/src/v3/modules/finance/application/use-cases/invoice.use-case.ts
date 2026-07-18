@@ -470,6 +470,75 @@ export class InvoiceUseCase {
     return this.documentService.generateInvoicePDF(invoiceData);
   }
 
+  async getInvoiceDownloadStreamByTransaction(transactionId: string, organizationId: string) {
+    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: transactionId, organizationId },
+      include: {
+        attachments: true,
+        items: true,
+        member: { include: { user: { select: { name: true } } } },
+        location: true,
+        customer: { include: { addresses: true } },
+        payments: true,
+        organization: {
+          include: {
+            settings: true,
+            invoiceConfig: true,
+            receiptConfig: true,
+          },
+        },
+      },
+    });
+
+    if (!transaction) throw new NotFoundException("Transaction not found");
+
+    // Check if we should use V3 templates (if any default invoice template is V3)
+    const templateId =
+      transaction.organization?.settings?.defaultInvoiceTemplate;
+    if (templateId?.startsWith("invoice-v3-")) {
+      const v3Data = Mappers.toV3DocumentData(transaction as any, "invoice");
+
+      let qrCode: string | undefined;
+      try {
+        const QRCode = await import("qrcode");
+        qrCode = await QRCode.toDataURL(transaction.number);
+      } catch (e) {
+        console.error("Failed to generate QR code", e);
+      }
+
+      return this.documentService.generateV3DocumentPDF(
+        templateId,
+        v3Data,
+        qrCode,
+      );
+    }
+
+    const existingDoc = transaction.attachments?.find(
+      (a) =>
+        a.description === "Invoice" &&
+        new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+    );
+
+    if (existingDoc?.fileUrl) {
+      const { storageService } = await import("@repo/shared/storage");
+      return await storageService.getDownloadStream(existingDoc.fileUrl);
+    }
+
+    // Generate and save
+    const { documentService: sharedDocService } = await import(
+      "@repo/shared/lib"
+    );
+    const attachment = await sharedDocService.generateAndSaveInvoice(
+      transactionId,
+      transaction.organizationId,
+      null,
+    );
+
+    const { storageService } = await import("@repo/shared/storage");
+    return await storageService.getDownloadStream(attachment.fileUrl!);
+  }
+
   async getReceiptDownloadStream(transactionId: string, organizationId: string) {
     // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
     const transaction = await this.prisma.client.transaction.findFirst({

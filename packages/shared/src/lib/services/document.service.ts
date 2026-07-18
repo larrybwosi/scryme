@@ -60,7 +60,21 @@ export class DocumentService {
 
     // 3. Generate and save Invoice & Delivery Note
     await Promise.all([
-      this.generateAndSaveInvoice(transactionId, organizationId, memberId),
+      (async () => {
+        try {
+          const { generateDocumentToken } = await import("../../api/v2/utils/tokens");
+          const token = generateDocumentToken("invoice", transactionId, organizationId);
+          const defaultApiUrl = "http://localhost:3002";
+          const apiUrl = (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) || defaultApiUrl;
+          const res = await fetch(`${apiUrl}/public-invoices/transactions/${transactionId}/download?token=${token}`);
+          if (!res.ok) {
+            throw new Error(`API returned status ${res.status}`);
+          }
+        } catch (error) {
+          console.error("Failed to delegate invoice generation to API, falling back to local:", error);
+          await this.generateAndSaveInvoice(transactionId, organizationId, memberId);
+        }
+      })(),
       (async () => {
         const dnData = Mappers.toDeliveryNoteData(transaction, fulfillment);
         const dnStream = await DocumentGenerator.renderToStream(
