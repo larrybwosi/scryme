@@ -1,5 +1,11 @@
 # web
 
+## 6.23.0
+
+### Minor Changes
+
+- 9fc2bbb: Update
+
 ## 6.22.0
 
 ### Minor Changes
