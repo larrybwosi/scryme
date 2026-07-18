@@ -108,6 +108,9 @@ async function bootstrap() {
       { path: ".well-known/openid-configuration", method: RequestMethod.GET },
       { path: ".well-known/oauth-authorization-server", method: RequestMethod.GET },
       { path: ".well-known/oauth-authorization-server/:issuerPath", method: RequestMethod.GET },
+      { path: "public-invoices/:id/download", method: RequestMethod.GET },
+      { path: "public-invoices/transactions/:transactionId/download", method: RequestMethod.GET },
+      { path: "public-invoices/receipts/:transactionId/download", method: RequestMethod.GET },
     ],
   });
   app.useGlobalPipes(
