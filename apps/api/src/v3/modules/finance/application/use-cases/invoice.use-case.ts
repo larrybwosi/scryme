@@ -671,4 +671,86 @@ export class InvoiceUseCase {
       },
     });
   }
+
+  async generatePublicLink(
+    transactionId: string,
+    organizationId: string,
+    type: "invoice" | "receipt",
+    customExpiryDays: number | null,
+  ) {
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: transactionId, organizationId },
+      include: { attachments: true },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException("Transaction not found");
+    }
+
+    const descPattern = type === "invoice" ? "Invoice" : "Receipt";
+    let existingDoc = transaction.attachments?.find(
+      (a) =>
+        a.description === descPattern &&
+        new Date(a.uploadedAt) >= new Date(transaction.updatedAt) &&
+        !a.expiresAt,
+    );
+
+    if (!existingDoc) {
+      const { documentService: sharedDocService } = await import(
+        "@repo/shared/lib"
+      );
+      if (type === "invoice") {
+        existingDoc = await sharedDocService.generateAndSaveInvoice(
+          transactionId,
+          organizationId,
+          null,
+        );
+      } else {
+        existingDoc = await sharedDocService.generateAndSaveReceipt(
+          transactionId,
+          organizationId,
+          null,
+        );
+      }
+    }
+
+    const { v4: uuidv4 } = await import("uuid");
+    const uuidCode = uuidv4();
+
+    let expiresAt: Date | null = null;
+    if (customExpiryDays !== null && customExpiryDays > 0) {
+      expiresAt = new Date(Date.now() + customExpiryDays * 24 * 60 * 60 * 1000);
+    }
+
+    const defaultAppUrl = "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || defaultAppUrl;
+    const publicUrl = `${appUrl}/s/${uuidCode}`;
+
+    const publicAttachment = await this.prisma.client.attachment.create({
+      data: {
+        organizationId,
+        memberId: existingDoc.memberId,
+        transactionId,
+        fileName: existingDoc.fileName,
+        fileUrl: existingDoc.fileUrl,
+        mimeType: existingDoc.mimeType,
+        isPublic: true,
+        description: `Public ${type === "invoice" ? "Invoice" : "Receipt"} Link`,
+        sizeBytes: existingDoc.sizeBytes,
+        shortCode: uuidCode,
+        shortUrl: publicUrl,
+        expiresAt,
+      },
+    });
+
+    return {
+      id: publicAttachment.id,
+      fileName: publicAttachment.fileName,
+      fileUrl: publicAttachment.fileUrl,
+      shortCode: publicAttachment.shortCode,
+      shortUrl: publicAttachment.shortUrl,
+      expiresAt: publicAttachment.expiresAt,
+      description: publicAttachment.description,
+    };
+  }
 }

@@ -476,6 +476,44 @@ export async function generateDocumentAction(
   return { success: true };
 }
 
+export async function generatePublicLinkAction(
+  transactionId: string,
+  type: "invoice" | "receipt",
+  customExpiryDays: number | null,
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  try {
+    const { generateDocumentToken } = await import("@repo/shared/api/v2");
+    const defaultApiUrl = "http://localhost:3002";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+
+    const token = generateDocumentToken(type, transactionId, auth.organizationId!);
+    const fetchUrl = `${apiUrl}/public-invoices/transactions/${transactionId}/generate-public-link?token=${token}`;
+
+    const res = await fetch(fetchUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ type, customExpiryDays }),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to generate public link on API: ${res.statusText} - ${errorText}`);
+    }
+
+    const data = await res.json();
+    revalidatePath("/sales/transactions");
+    revalidatePath(`/sales/transactions/${transactionId}`);
+    return { success: true, data };
+  } catch (err) {
+    console.error(`Failed to generate public link for ${type} via API:`, err);
+    throw err;
+  }
+}
+
 export async function getFulfillments(params: {
   status?: FulfillmentStatus | "all";
   driverId?: string;

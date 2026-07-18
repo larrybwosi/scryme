@@ -204,4 +204,29 @@ describe("ShortUrlController", () => {
       'attachment; filename="test.pdf"',
     );
   });
+
+  it("should block access and return custom GONE page for expired link", async () => {
+    const mockAttachment = {
+      id: "att-1",
+      organizationId: "org-1",
+      mimeType: "application/pdf",
+      fileName: "test.pdf",
+      isPublic: true,
+      expiresAt: new Date(Date.now() - 1000 * 60), // Expired 1 minute ago
+    };
+    mockRedis.get.mockResolvedValue(null);
+    mockPrisma.client.attachment.findUnique.mockResolvedValue(mockAttachment);
+
+    const res = {
+      header: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    };
+
+    await controller.handleShortUrl("short123", {} as any, res as any);
+
+    expect(res.header).toHaveBeenCalledWith("Content-Type", "text/html");
+    expect(res.status).toHaveBeenCalledWith(HttpStatus.GONE);
+    expect(res.send).toHaveBeenCalledWith(expect.stringContaining("This document link has expired"));
+  });
 });
