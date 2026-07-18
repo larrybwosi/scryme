@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { Prisma } from "@/prisma/client";
+import { ScrymeService } from "../scryme/scryme.service";
 import { ApiRealtimeService } from "../../common/services/realtime.service";
 import type { V2ApiContext } from "@repo/shared/api/v2";
 import { paginate } from "../../v3/common/utils/pagination";
@@ -14,6 +16,7 @@ export class InventoryService {
   constructor(
     private prisma: PrismaService,
     private realtime: ApiRealtimeService,
+    private scryme: ScrymeService,
   ) {}
 
   async getInventory(ctx: V2ApiContext, query: any) {
@@ -169,7 +172,8 @@ export class InventoryService {
 
     const updateData: any = {};
     if (currentStock !== undefined) updateData.currentStock = currentStock;
-    if (availableStock !== undefined) updateData.availableStock = availableStock;
+    if (availableStock !== undefined)
+      updateData.availableStock = availableStock;
     if (reorderPoint !== undefined) updateData.reorderPoint = reorderPoint;
     if (reorderQty !== undefined) updateData.reorderQty = reorderQty;
     if (reservedStock !== undefined) updateData.reservedStock = reservedStock;
@@ -222,9 +226,10 @@ export class InventoryService {
     const { organizationId } = ctx;
 
     // SECURITY (Sentinel): Validate that the inventory item belongs to the organization
-    const inventoryItem = await this.prisma.client.productVariantStock.findFirst({
-      where: { id: inventoryId, organizationId },
-    });
+    const inventoryItem =
+      await this.prisma.client.productVariantStock.findFirst({
+        where: { id: inventoryId, organizationId },
+      });
 
     if (!inventoryItem) {
       throw new NotFoundException("Inventory item not found");
@@ -402,12 +407,23 @@ export class InventoryService {
 
   async createLocation(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
-    return this.prisma.client.inventoryLocation.create({
+    const location = await this.prisma.client.inventoryLocation.create({
       data: {
         ...data,
         organizationId,
       },
     });
+
+    // Background provision Scryme channel
+    this.scryme
+      .provisionChannelForEntity(organizationId, "location", location.id)
+      .catch(err =>
+        console.error(
+          `Failed to provision Scryme channel for location: ${err.message}`,
+        ),
+      );
+
+    return location;
   }
 
   async getLocation(ctx: V2ApiContext, id: string) {

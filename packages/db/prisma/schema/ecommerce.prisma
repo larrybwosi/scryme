@@ -7,6 +7,7 @@ enum EcommercePlatform {
   BIGCOMMERCE
   PRESTASHOP
   OPENCART
+  STRAPI
   CUSTOM
 }
 
@@ -74,6 +75,7 @@ model EcommerceConnection {
   orderMappings    EcommerceOrderMapping[]
   customerMappings EcommerceCustomerMapping[]
   webhookLogs      EcommerceWebhookLog[]
+  strapiConfig     StrapiConnectionConfig?
 
   @@unique([organizationId, storeUrl])
   @@index([organizationId])
@@ -280,20 +282,21 @@ model CartItem {
   cartId String
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
-  productId String // Reference to your local product/pricing catalog
-  variantId String @default("base") // Reference to specific product variant (default to "base" to avoid NULL in unique constraint)
+  productId String
+  product   Product @relation("ProductToCartItems", fields: [productId], references: [id], onDelete: Cascade)
+  variantId String
+  variant   ProductVariant @relation("VariantToCartItems", fields: [variantId], references: [id], onDelete: Cascade)
   quantity  Int    @default(1)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([cartId, productId, variantId])
 }
-
 enum CartStatus {
   ACTIVE
   CHECKED_OUT
   ABANDONED
+  COMPLETED
 }
 
 model Favorite {
@@ -315,6 +318,47 @@ model Favorite {
   @@index([customerId])
   @@index([productId])
   @@map("favorites")
+}
+
+// Strapi-specific connection configuration stored alongside EcommerceConnection
+// (linked via the EcommerceConnection.settings JSON field + this helper model)
+model StrapiConnectionConfig {
+  id           String              @id @default(cuid())
+  connectionId String              @unique
+  connection   EcommerceConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  // Strapi v4 base URL, e.g. https://cms.example.com
+  strapiUrl    String
+
+  // Full-access API token generated in Strapi admin → API Tokens
+  apiToken     String
+
+  // Optional: dedicated read-only token for storefront queries
+  publicToken  String?
+
+  // Optional: shared secret for verifying incoming Strapi webhook signatures (HMAC-SHA256)
+  webhookSecret String?
+
+  // GraphQL endpoint relative to strapiUrl (default: /graphql)
+  graphqlPath  String  @default("/graphql")
+
+  // Whether to enable real-time webhook processing
+  webhooksEnabled Boolean @default(true)
+
+  // Which Strapi content types to sync, e.g. ["api::product.product", "api::customer.customer"]
+  contentTypes String[]
+
+  // Multi-location: map Strapi storefront slugs to internal InventoryLocation IDs
+  locationMap Json? // { "store-lagos": "loc_abc123", "store-abuja": "loc_def456" }
+
+  // Cached Strapi server version info
+  strapiVersion String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([connectionId])
+  @@map("strapi_connection_config")
 }
 
 model ProductReview {

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios from "axios";
 
 export interface ScrymeChatWorkspace {
   id: string;
@@ -16,8 +16,8 @@ export interface ScrymeChatMessage {
 export interface ScrymeChatAction {
   id: string;
   label: string;
-  type: 'button';
-  style?: 'primary' | 'secondary' | 'danger';
+  type: "button";
+  style?: "primary" | "secondary" | "danger";
   value?: string;
 }
 
@@ -30,7 +30,8 @@ export interface ScrymeChatUser {
 export interface ScrymeChatChannel {
   id: string;
   slug: string;
-  type: 'public' | 'private' | 'dm';
+  type: "public" | "private" | "dm";
+  name?: string;
 }
 
 export class ScrymeChatApiClient {
@@ -39,38 +40,45 @@ export class ScrymeChatApiClient {
   private readonly clientSecret: string;
   private accessToken: string | null = null;
   private tokenExpiresAt: number | null = null;
+  private authPromise: Promise<void> | null = null;
+  private channelCache = new Map<string, Map<string, string>>();
 
   constructor(
-    baseUrl: string = process.env.SCRYME_CHAT_API_URL || 'https://api.scryme.tech',
-    clientId: string = process.env.SCRYME_CHAT_CLIENT_ID || '',
-    clientSecret: string = process.env.SCRYME_CHAT_CLIENT_SECRET || ''
+    baseUrl: string = process.env.SCRYME_CHAT_API_URL ||
+      "https://api.scryme.tech",
+    clientId: string = process.env.SCRYME_CHAT_CLIENT_ID || "",
+    clientSecret: string = process.env.SCRYME_CHAT_CLIENT_SECRET || "",
   ) {
-    this.baseUrl = baseUrl.replace(/\/$/, '');
+    this.baseUrl = baseUrl.replace(/\/$/, "");
     this.clientId = clientId;
     this.clientSecret = clientSecret;
   }
 
   private async ensureAuthenticated(): Promise<void> {
-    if (this.accessToken && this.tokenExpiresAt && Date.now() < this.tokenExpiresAt) {
+    if (
+      this.accessToken &&
+      this.tokenExpiresAt &&
+      Date.now() < this.tokenExpiresAt
+    ) {
       return;
     }
 
-    if (!this.clientId || !this.clientSecret) {
-      throw new Error('Scryme Chat M2M credentials missing');
+    if (this.authPromise) {
+      return this.authPromise;
     }
 
     const response = await axios.post(
       `${this.baseUrl}/api/v3/oauth/token`,
       {
-        grant_type: 'client_credentials',
+        grant_type: "client_credentials",
         client_id: this.clientId,
         client_secret: this.clientSecret,
-        scope: '*',
+        scope: "*",
       },
       {
         timeout: 10000,
         maxContentLength: 1 * 1024 * 1024, // 1MB for token
-      }
+      },
     );
 
     const responseData = response.data?.data || response.data;
@@ -81,25 +89,87 @@ export class ScrymeChatApiClient {
   }
 
   private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
+    method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH",
     path: string,
-    data?: any
+    data?: any,
   ): Promise<T> {
     await this.ensureAuthenticated();
 
-    const response = await axios({
-      method,
-      url: `${this.baseUrl}${path}`,
-      data,
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 10000,
-      maxContentLength: 10 * 1024 * 1024, // 10MB limit
-    });
+    try {
+      const response = await axios({
+        method,
+        url: `${this.baseUrl}${path}`,
+        data,
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          "Content-Type": "application/json",
+        },
+        timeout: 10000,
+        maxContentLength: 10 * 1024 * 1024, // 10MB limit
+      });
 
-    return response.data;
+      return response.data;
+    } catch (error: any) {
+      if (error.response) {
+        console.error(`Scryme API Error [${method} ${path}]:`, {
+          status: error.response.status,
+          data: error.response.data,
+        });
+      } else {
+        console.error(`Scryme API Error [${method} ${path}]:`, error.message);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Helper to resolve channel slug to channelId
+   */
+  private async resolveChannelId(
+    workspaceSlug: string,
+    channelSlugOrId: string,
+  ): Promise<string> {
+    if (
+      /^[a-f0-9-]{36}$/i.test(channelSlugOrId) ||
+      channelSlugOrId.startsWith("ch_") ||
+      channelSlugOrId.startsWith("channel_")
+    ) {
+      return channelSlugOrId;
+    }
+
+    let wsCache = this.channelCache.get(workspaceSlug);
+    if (wsCache && wsCache.has(channelSlugOrId)) {
+      return wsCache.get(channelSlugOrId)!;
+    }
+
+    try {
+      const channels = await this.listChannels(workspaceSlug);
+      if (!wsCache) {
+        wsCache = new Map<string, string>();
+        this.channelCache.set(workspaceSlug, wsCache);
+      }
+      for (const ch of channels) {
+        wsCache.set(ch.slug, ch.id);
+        wsCache.set(ch.id, ch.id);
+        if (ch.name) {
+          wsCache.set(ch.name.toLowerCase(), ch.id);
+        }
+      }
+
+      const cachedId =
+        wsCache.get(channelSlugOrId) ||
+        wsCache.get(channelSlugOrId.toLowerCase());
+      if (cachedId) {
+        return cachedId;
+      }
+    } catch (err: any) {
+      console.error(
+        `Failed to resolve channel ID for slug ${channelSlugOrId}:`,
+        err.message,
+      );
+    }
+
+    return channelSlugOrId;
   }
 
   /**
@@ -109,16 +179,16 @@ export class ScrymeChatApiClient {
     name: string,
     slug: string,
     ownerEmail?: string,
-    initialMembers?: { email: string; role?: 'admin' | 'member' }[]
+    initialMembers?: { email: string; role?: "admin" | "member" }[],
   ): Promise<ScrymeChatWorkspace> {
     const payload = {
       name,
       slug,
-      ownerEmail: ownerEmail || 'admin@scryme.tech',
+      ownerEmail: ownerEmail || "admin@scryme.tech",
       ...(initialMembers ? { initialMembers } : {}),
     };
 
-    const res = await this.request<any>('POST', '/api/v3/workspaces', payload);
+    const res = await this.request<any>("POST", "/api/v3/workspaces", payload);
     const dataObj = res?.data || res;
     const workspace = dataObj?.workspace || dataObj;
 
@@ -133,7 +203,7 @@ export class ScrymeChatApiClient {
    * Get workspace details using V3 API.
    */
   async getWorkspace(slug: string): Promise<ScrymeChatWorkspace> {
-    const res = await this.request<any>('GET', `/api/v3/workspaces/${slug}`);
+    const res = await this.request<any>("GET", `/api/v3/workspaces/${slug}`);
     const dataObj = res?.data || res;
     const workspace = dataObj?.workspace || dataObj;
 
@@ -150,30 +220,47 @@ export class ScrymeChatApiClient {
   async registerWorkspaceWebhook(
     workspaceSlug: string,
     webhookUrl: string,
-    events: string[] = ['message.action']
+    events: string[] = ["message.action"],
   ): Promise<any> {
-    return this.request('POST', `/api/v3/workspaces/${workspaceSlug}/webhooks`, {
-      name: 'Interactive Action Webhook',
-      url: webhookUrl,
-      events,
-      active: true,
-    });
+    return this.request(
+      "POST",
+      `/api/v3/workspaces/${workspaceSlug}/webhooks`,
+      {
+        name: "Interactive Action Webhook",
+        url: webhookUrl,
+        events,
+        active: true,
+      },
+    );
   }
 
   /**
-   * Create a new channel in a workspace (using V2 path as fallback).
+   * List channels in a workspace.
+   */
+  async listChannels(workspaceSlug: string): Promise<ScrymeChatChannel[]> {
+    return this.request<ScrymeChatChannel[]>(
+      "GET",
+      `/api/v2/workspaces/${workspaceSlug}/channels`,
+    );
+  }
+
+  /**
+   * Create a new channel in a workspace.
    */
   async createChannel(
     workspaceSlug: string,
     name: string,
-    slug: string,
-    type: 'public' | 'private' = 'public'
+    slug?: string,
+    type: "public" | "private" = "public",
   ): Promise<ScrymeChatChannel> {
-    return this.request<ScrymeChatChannel>('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels`, {
-      name,
-      slug,
-      type,
-    });
+    return this.request<ScrymeChatChannel>(
+      "POST",
+      `/api/v2/workspaces/${workspaceSlug}/channels`,
+      {
+        name,
+        type,
+      },
+    );
   }
 
   /**
@@ -181,50 +268,129 @@ export class ScrymeChatApiClient {
    */
   async addUserToChannel(
     workspaceSlug: string,
-    channelSlug: string,
-    email: string
+    channelSlugOrId: string,
+    email: string,
   ): Promise<any> {
-    return this.request('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/members`, {
-      email
+    return this.request("POST", `/api/v2/workspaces/${workspaceSlug}/members`, {
+      email,
+      role: "member",
     });
   }
 
   /**
    * Send a message to a Scryme Chat channel (using V2 path as fallback).
    */
-  async sendMessage(workspaceSlug: string, channelSlug: string, message: ScrymeChatMessage): Promise<any> {
-    return this.request('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/messages`, message);
+  async sendMessage(
+    workspaceSlug: string,
+    channelSlugOrId: string,
+    message: ScrymeChatMessage,
+  ): Promise<any> {
+    const channelId = await this.resolveChannelId(
+      workspaceSlug,
+      channelSlugOrId,
+    );
+    return this.request(
+      "POST",
+      `/api/v2/workspaces/${workspaceSlug}/messages`,
+      {
+        channelId,
+        content: message.content,
+        attachments: message.attachments,
+        actions: message.actions,
+        threadId: message.threadId,
+      },
+    );
   }
 
   /**
    * Update an existing message (using V2 path as fallback).
    */
-  async updateMessage(workspaceSlug: string, channelSlug: string, messageId: string, message: ScrymeChatMessage): Promise<any> {
-    return this.request('PATCH', `/api/v2/m2m/workspaces/${workspaceSlug}/channels/${channelSlug}/messages/${messageId}`, message);
+  async updateMessage(
+    workspaceSlug: string,
+    channelSlugOrId: string,
+    messageId: string,
+    message: ScrymeChatMessage,
+  ): Promise<any> {
+    const channelId = await this.resolveChannelId(
+      workspaceSlug,
+      channelSlugOrId,
+    );
+    return this.request(
+      "PATCH",
+      `/api/workspaces/${workspaceSlug}/channels/${channelId}/messages/${messageId}`,
+      {
+        content: message.content,
+        actions: message.actions,
+        attachments: message.attachments,
+      },
+    );
   }
 
   /**
    * Find a user in the workspace by email (using V2 path as fallback).
    */
-  async findUserByEmail(workspaceSlug: string, email: string): Promise<ScrymeChatUser | null> {
-    const users = await this.request<ScrymeChatUser[]>('GET', `/api/v2/m2m/workspaces/${workspaceSlug}/users?email=${encodeURIComponent(email)}`);
-    return users.length > 0 ? users[0] : null;
+  async findUserByEmail(
+    workspaceSlug: string,
+    email: string,
+  ): Promise<ScrymeChatUser | null> {
+    const members = await this.request<any[]>(
+      "GET",
+      `/api/v2/workspaces/${workspaceSlug}/search/members?q=${encodeURIComponent(email)}`,
+    );
+    const found = members.find(
+      (m) => m.email === email || m.user?.email === email,
+    );
+    if (found) {
+      return {
+        id: found.userId || found.user?.id || found.id,
+        email: found.email || found.user?.email,
+        name: found.name || found.user?.name,
+      };
+    }
+    return null;
   }
 
   /**
    * Get or create a direct message channel with a user (using V2 path as fallback).
    */
-  async getDirectMessageChannel(workspaceSlug: string, userId: string): Promise<ScrymeChatChannel> {
-    return this.request<ScrymeChatChannel>('POST', `/api/v2/m2m/workspaces/${workspaceSlug}/users/${userId}/dm`);
+  async getDirectMessageChannel(
+    workspaceSlug: string,
+    userId: string,
+  ): Promise<ScrymeChatChannel> {
+    const dm = await this.request<any>("POST", "/api/dms", {
+      userId,
+    });
+    return {
+      id: dm.id,
+      slug: dm.id,
+      type: "dm",
+    };
   }
 
   /**
    * Register a global webhook for interactive actions (using V2 path as fallback).
    */
   async registerGlobalWebhook(webhookUrl: string): Promise<any> {
-     return this.request('POST', '/api/v2/m2m/webhooks', {
-       url: webhookUrl,
-       events: ['message.action']
-     });
+    await this.ensureAuthenticated();
+    try {
+      const workspaces = await this.request<any[]>("GET", "/api/workspaces");
+      for (const ws of workspaces) {
+        try {
+          await this.registerWorkspaceWebhook(ws.slug, webhookUrl);
+        } catch (err: any) {
+          if (err.response?.status !== 409) {
+            console.error(
+              `Failed to register webhook for workspace ${ws.slug}:`,
+              err.message,
+            );
+          }
+        }
+      }
+    } catch (err: any) {
+      console.error(
+        "Failed to register webhooks across workspaces:",
+        err.message,
+      );
+    }
   }
 }

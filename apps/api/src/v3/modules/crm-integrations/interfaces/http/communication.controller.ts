@@ -9,7 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { CommunicationIntegrationService } from "../../application/use-cases/communication-integration.service";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { CurrentUser } from "@/v3/common/decorators/current-user.decorator";
@@ -19,6 +19,7 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 @ApiTags("V3 CRM")
 @ApiBearerAuth()
 @Controller(":orgSlug/crm-integrations")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseInterceptors(StandardResponseInterceptor)
 export class CommunicationController {
   constructor(private readonly service: CommunicationIntegrationService) {}

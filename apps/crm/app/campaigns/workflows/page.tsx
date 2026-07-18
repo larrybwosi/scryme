@@ -7,7 +7,7 @@ export default async function WorkflowsPage() {
   const { organizationId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <WorkflowsView organizationId={organizationId} />
     </OrgProvider>
   );

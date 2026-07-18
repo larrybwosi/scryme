@@ -9,7 +9,7 @@ export default async function CustomersPage() {
   const { organizationId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <CustomersView />
     </OrgProvider>
   );

@@ -87,6 +87,17 @@ test.describe('Order Creation and Invoice Download Flow', () => {
             ];
         }
 
+        if (cmd === 'get_ably_auth_token_command') return {
+            data: {
+                tokenRequest: {
+                    token: 'mock-jwt-token'
+                },
+                metadata: {
+                    paymentChannel: 'mock-payment-channel'
+                }
+            }
+        };
+
         if (cmd === 'get_pos_pricing_command') return [];
         if (cmd === 'resolve_price_batch_command') return {};
 
@@ -156,6 +167,26 @@ test.describe('Order Creation and Invoice Download Flow', () => {
         }
       };
 
+      // Mock Ably
+      (window as any).Ably = {
+          Realtime: function() {
+              this.connection = {
+                  on: () => {},
+                  state: 'connected'
+              };
+              this.channels = {
+                  get: () => ({
+                      subscribe: () => {},
+                      unsubscribe: () => {},
+                      presence: {
+                          enter: () => Promise.resolve()
+                      },
+                      history: () => Promise.resolve({ items: [] })
+                  })
+              };
+              this.close = () => {};
+          }
+      };
       localStorage.setItem('ably-disabled', 'true');
     });
 

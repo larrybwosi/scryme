@@ -14,7 +14,12 @@ import {
   UnauthorizedException,
   ForbiddenException,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiParam,
+} from "@nestjs/swagger";
 import { verifyDocumentToken } from "@repo/shared/api/v2";
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "../../../../common/guards/multi-tenancy.guard";
@@ -160,7 +165,11 @@ export class PublicInvoiceController {
     if (!token) throw new UnauthorizedException("Token required");
     const payload = verifyDocumentToken(token);
 
-    if (!payload || payload.type !== "receipt" || payload.id !== transactionId) {
+    if (
+      !payload ||
+      payload.type !== "receipt" ||
+      payload.id !== transactionId
+    ) {
       throw new ForbiddenException("Invalid or expired link");
     }
 

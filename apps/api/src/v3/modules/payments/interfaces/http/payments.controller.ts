@@ -1,5 +1,5 @@
 import { Controller, Post, Body, Param, Req, UseGuards } from "@nestjs/common";
-import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiParam } from "@nestjs/swagger";
 import { MpesaService } from "@repo/shared/mpesa/server";
 import type { FastifyRequest } from "fastify";
 import { AllowPublic } from "../../../../../common/decorators/auth.decorator";
@@ -9,6 +9,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 
 @ApiTags("Payments")
 @Controller(":orgSlug/payments")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard)
 export class PaymentsController {
   constructor(

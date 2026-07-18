@@ -14,6 +14,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from "@nestjs/swagger";
 import { GetOrdersUseCase } from "../../application/use-cases/get-orders.use-case";
 import { CreateOrderUseCase } from "../../application/use-cases/create-order.use-case";
@@ -38,6 +39,7 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 @ApiTags("V3 Orders")
 @ApiBearerAuth()
 @Controller(":orgSlug/orders")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class OrderController {
@@ -124,6 +126,7 @@ export class OrderController {
   ) {
     return this.updateOrderStatusUseCase.execute(
       req.organization.id,
+      req.user?.memberId,
       id,
       body.status,
     );
@@ -135,7 +138,7 @@ export class OrderController {
     summary: "Request a B2B product quote and check availability",
     operationId: "Orders_RequestB2BQuote",
   })
-  @ApiResponse({ status: 201, description: "Quote created successfully" })
+  @ApiResponse({ status: 201, description: "Created successfully" })
   @ApiResponse({
     status: 400,
     type: ApiErrorResponseDto,

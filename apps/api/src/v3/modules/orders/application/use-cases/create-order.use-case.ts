@@ -4,14 +4,15 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from "@nestjs/common";
-import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
-import { CreateOrderDto } from "../dto/create-order.dto";
 import { PrismaService } from "@/prisma/prisma.service";
-import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
-import { ApiRealtimeService } from "../../../../../common/services/realtime.service";
+import { ApiRealtimeService } from "@/common/services/realtime.service";
 import { emitOrderPlaced } from "@repo/windmill/server";
 import { createOrder } from "@repo/shared/actions";
-import { type CreateOrderInput } from "@repo/shared/lib";
+import { CreateOrderInput, OrderTransactionStatus } from "@repo/shared/lib";
+import { WebhookService } from "@/v3/modules/webhooks/infrastructure/services/webhook.service";
+import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
+import { CreateOrderDto } from "../dto/create-order.dto";
+import { ScrymeNotificationService } from "@/v2/scryme/scryme-notification.service";
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -21,6 +22,7 @@ export class CreateOrderUseCase {
     private readonly prisma: PrismaService,
     private readonly webhookService: WebhookService,
     private readonly realtimeService: ApiRealtimeService,
+    private readonly scrymeNotificationService: ScrymeNotificationService,
   ) {}
 
   async execute(organizationId: string, dto: CreateOrderDto, memberId: string) {
@@ -29,7 +31,8 @@ export class CreateOrderUseCase {
       customerId: dto.customerId,
       locationId: dto.locationId,
       items: dto.items,
-      type: dto.channel as any, // Map channel to transaction type
+      type: "ONLINE_ORDER", // Force ONLINE_ORDER for e-commerce/mobile
+      status: OrderTransactionStatus.PENDING_CONFIRMATION, // Orders start as pending confirmation
       notes: dto.notes,
     } as CreateOrderInput);
 
@@ -64,9 +67,14 @@ export class CreateOrderUseCase {
         quantity: Number(i.quantity),
         lineTotal: Number(i.lineTotal),
       })),
-    }).catch((err) =>
+    }).catch(err =>
       console.error("[v3 Order] Failed to emit Windmill event:", err),
     );
+
+    // 6. Notify Scryme
+    await this.scrymeNotificationService
+      .notifyOrderCreated(organizationId, order.id)
+      .catch(err => console.error("[v3 Order] Failed to notify Scryme:", err));
 
     return order;
   }

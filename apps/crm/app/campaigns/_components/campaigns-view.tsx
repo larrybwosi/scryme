@@ -201,178 +201,154 @@ export function CampaignsView({
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Campaigns</h1>
-          <p className="text-muted-foreground">
-            Manage and track your marketing automation.
-          </p>
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
+      {/* Page Header */}
+      <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Campaigns</h1>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              {campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''} &bull; {campaigns.filter((c: any) => c.status === 'ACTIVE').length} active
+            </p>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="h-8 gap-1.5 text-[12.5px]">
+                <Plus size={13} />
+                New Campaign
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create New Campaign</DialogTitle>
+              </DialogHeader>
+              <CampaignForm
+                organizationId={organizationId}
+                memberId={memberId}
+                onSuccess={handleCampaignCreated}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" /> New Campaign
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create New Campaign</DialogTitle>
-            </DialogHeader>
-            <CampaignForm
-              organizationId={organizationId}
-              memberId={memberId}
-              onSuccess={handleCampaignCreated}
+
+        {/* Stats strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {stats.map((stat, i) => (
+            <div key={i} className="bg-card border border-border rounded-xl px-4 py-3 flex items-center gap-3">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted`}>
+                <stat.icon size={15} className={stat.color} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider truncate">{stat.label}</p>
+                <p className="text-[16px] font-bold text-foreground tabular-nums">{stat.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="flex-1 px-6 py-5">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search campaigns..."
+              className="pl-8 h-8 text-[12.5px]"
+              value={searchQuery}
+              onChange={(e: any) => setSearchQuery(e.target.value)}
             />
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.label}
-              </CardTitle>
-              <stat.icon className={`h-4 w-4 ${stat.color}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search campaigns..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e: any) => setSearchQuery(e.target.value)}
-          />
+          </div>
+          <Button variant="outline" size="sm" className="h-8 text-[12.5px]">Filters</Button>
         </div>
-        <Button variant="outline">Filters</Button>
-      </div>
 
-      <Card>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Campaign Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Channel</TableHead>
-              <TableHead>Recipients</TableHead>
-              <TableHead>Performance</TableHead>
-              <TableHead className="text-right">Revenue</TableHead>
-              <TableHead></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-10">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <p className="text-muted-foreground">
-                      Loading campaigns...
-                    </p>
-                  </div>
-                </TableCell>
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Campaign</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Status</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Channel</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Recipients</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Open Rate</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3 text-right">Revenue</TableHead>
+                <TableHead className="py-3" />
               </TableRow>
-            ) : filteredCampaigns.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={7}
-                  className="text-center py-10 text-muted-foreground"
-                >
-                  {searchQuery
-                    ? "No campaigns match your search."
-                    : "No campaigns found. Create your first campaign to get started!"}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredCampaigns.map((campaign: any) => (
-                <TableRow
-                  key={campaign.id}
-                  className="hover:bg-slate-50 transition-colors"
-                >
-                  <TableCell className="font-medium">
-                    <Link
-                      href={`/campaigns/${campaign.id}`}
-                      className="flex flex-col hover:text-primary"
-                    >
-                      <span>{campaign.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {campaign.segment?.name || "All Customers"}
-                      </span>
-                    </Link>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(campaign.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      {getChannelIcon(campaign.channel)}
-                      <span className="text-xs capitalize">
-                        {campaign.channel.toLowerCase()}
-                      </span>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-12">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                      <p className="text-[12.5px] text-muted-foreground">Loading campaigns...</p>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    {campaign.totalSent?.toLocaleString() || 0}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-col gap-1 w-24">
-                      <div className="flex justify-between text-xs">
-                        <span>Open Rate</span>
-                        <span className="font-medium">
-                          {campaign.totalSent > 0
-                            ? Math.round(
-                                (campaign.totalOpened / campaign.totalSent) *
-                                  100,
-                              )
-                            : 0}
-                          %
-                        </span>
-                      </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5">
-                        <div
-                          className="bg-blue-500 h-1.5 rounded-full"
-                          style={{
-                            width: `${campaign.totalSent > 0 ? (campaign.totalOpened / campaign.totalSent) * 100 : 0}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    ${Number(campaign.totalRevenue || 0).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+              ) : filteredCampaigns.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-12 text-[12.5px] text-muted-foreground">
+                    {searchQuery ? "No campaigns match your search." : "No campaigns yet. Create your first campaign."}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredCampaigns.map((campaign: any) => {
+                  const openRate = campaign.totalSent > 0
+                    ? Math.round((campaign.totalOpened / campaign.totalSent) * 100)
+                    : 0;
+                  return (
+                    <TableRow key={campaign.id} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="py-3.5">
+                        <Link href={`/campaigns/${campaign.id}`} className="flex flex-col group/link hover:opacity-80">
+                          <span className="text-[13px] font-semibold text-foreground group-hover/link:text-primary transition-colors">{campaign.name}</span>
+                          <span className="text-[11px] text-muted-foreground mt-0.5">{campaign.segment?.name || "All Customers"}</span>
+                        </Link>
+                      </TableCell>
+                      <TableCell className="py-3.5">{getStatusBadge(campaign.status)}</TableCell>
+                      <TableCell className="py-3.5">
+                        <div className="flex items-center gap-2">
+                          {getChannelIcon(campaign.channel)}
+                          <span className="text-[12px] capitalize text-muted-foreground">{campaign.channel.toLowerCase()}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3.5 text-[13px] text-foreground tabular-nums">
+                        {(campaign.totalSent || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-16 bg-muted rounded-full h-1.5">
+                            <div className="bg-primary h-1.5 rounded-full transition-all" style={{ width: `${openRate}%` }} />
+                          </div>
+                          <span className="text-[12px] font-medium text-foreground tabular-nums">{openRate}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-3.5 text-right text-[13px] font-semibold text-foreground tabular-nums">
+                        ${Number(campaign.totalRevenue || 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="py-3.5">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-1.5 rounded-md text-muted-foreground hover:bg-accent transition-colors">
+                              <MoreVertical size={13} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="text-[12.5px]">
+                            <DropdownMenuLabel className="text-[10.5px] uppercase tracking-wider text-muted-foreground">Actions</DropdownMenuLabel>
+                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive focus:text-destructive">Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
@@ -35,6 +36,7 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 @ApiBearerAuth()
 @UseInterceptors(StandardResponseInterceptor)
 @Controller(":orgSlug/members/invitations")
+@ApiParam({ name: "orgSlug", type: "string" })
 export class InvitationController {
   constructor(private readonly invitationUseCase: InvitationUseCase) {}
 

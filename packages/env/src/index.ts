@@ -55,6 +55,7 @@ const serverSchema = z.object({
   ),
   ZITADEL_ORG_ID: z.string().optional(),
   ZITADEL_PROJECT_ID: z.string().optional(),
+  ZITADEL_ADMIN_TOKEN: z.string().optional(),
 
   // Slack
   SLACK_CLIENT_ID: z.string().optional(),
@@ -100,6 +101,11 @@ const serverSchema = z.object({
   ABLY_API_KEY: z.string().optional(),
   SOCKET_URL: z.url().default("http://localhost:3002"),
 
+  // Sentry Configuration
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
+  SENTRY_AUTH_TOKEN: z.string().optional(),
   // Windmill
   WINDMILL_BASE_URL: z.string().default("http://windmill:8000"),
   WINDMILL_ADMIN_API_KEY: z.string().optional(),
@@ -137,6 +143,13 @@ const clientSchema = z.object({
     (val) => (val === "" ? undefined : val),
     z.url().default("http://localhost:3002"),
   ),
+
+  // PostHog Config
+  NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
+  NEXT_PUBLIC_POSTHOG_HOST: z.string().default("https://us.i.posthog.com"),
+
+  // Sentry Public Configuration
+  NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
 });
 
 // ─────────────────────────────────────────────
@@ -242,6 +255,7 @@ function getRawEnv() {
     ZITADEL_API_URL: process.env.ZITADEL_API_URL,
     ZITADEL_ORG_ID: process.env.ZITADEL_ORG_ID,
     ZITADEL_PROJECT_ID: process.env.ZITADEL_PROJECT_ID,
+    ZITADEL_ADMIN_TOKEN: process.env.ZITADEL_ADMIN_TOKEN,
     SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
     SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
     SLACK_REDIRECT_URI: process.env.SLACK_REDIRECT_URI,
@@ -271,6 +285,11 @@ function getRawEnv() {
     REALTIME_PROVIDER: process.env.REALTIME_PROVIDER,
     ABLY_API_KEY: process.env.ABLY_API_KEY,
     SOCKET_URL: process.env.SOCKET_URL,
+    // Sentry
+    SENTRY_DSN: process.env.SENTRY_DSN,
+    SENTRY_ORG: process.env.SENTRY_ORG,
+    SENTRY_PROJECT: process.env.SENTRY_PROJECT,
+    SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
     // Windmill
     WINDMILL_BASE_URL: process.env.WINDMILL_BASE_URL,
     WINDMILL_ADMIN_API_KEY: process.env.WINDMILL_ADMIN_API_KEY,
@@ -288,6 +307,9 @@ function getRawEnv() {
     NEXT_PUBLIC_COOKIE_DOMAIN: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
     NEXT_PUBLIC_REALTIME_PROVIDER: process.env.NEXT_PUBLIC_REALTIME_PROVIDER,
     NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
+    NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
+    NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
   };
 }
 

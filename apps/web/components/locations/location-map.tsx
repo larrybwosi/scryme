@@ -4,10 +4,10 @@ import React, { useRef, useState, useEffect } from "react";
 import { MapPin, HelpCircle, Navigation } from "lucide-react";
 
 // Coordinate bounds of our mock city canvas (Times Square area)
-const MIN_LAT = 40.70;
-const MAX_LAT = 40.80;
+const MIN_LAT = 40.7;
+const MAX_LAT = 40.8;
 const MIN_LNG = -74.05;
-const MAX_LNG = -73.90;
+const MAX_LNG = -73.9;
 
 interface LocationMapProps {
   latitude?: number | null;
@@ -31,7 +31,10 @@ export function LocationMap({
     const y = ((MAX_LAT - lat) / (MAX_LAT - MIN_LAT)) * 100;
     // lng of MIN_LNG maps to x = 0%, MAX_LNG maps to x = 100%
     const x = ((lng - MIN_LNG) / (MAX_LNG - MIN_LNG)) * 100;
-    return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
+    return {
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    };
   };
 
   // Convert SVG % coordinate (0-100) back to Latitude / Longitude
@@ -47,7 +50,12 @@ export function LocationMap({
 
   // Keep pin position updated whenever props change
   useEffect(() => {
-    if (latitude !== undefined && latitude !== null && longitude !== undefined && longitude !== null) {
+    if (
+      latitude !== undefined &&
+      latitude !== null &&
+      longitude !== undefined &&
+      longitude !== null
+    ) {
       setPinPos(coordsToPos(latitude, longitude));
     } else {
       setPinPos(null);
@@ -74,17 +82,17 @@ export function LocationMap({
       <div
         ref={mapRef}
         onClick={handleMapClick}
-        className={`relative w-full h-[220px] rounded-xl border bg-sky-100 overflow-hidden select-none transition-all ${
-          editable ? "cursor-crosshair border-dashed hover:border-blue-400" : "cursor-default border-solid"
-        }`}
-      >
+        className={`relative w-full h-55 rounded-xl border bg-sky-100 overflow-hidden select-none transition-all ${
+          editable
+            ? "cursor-crosshair border-dashed hover:border-blue-400"
+            : "cursor-default border-solid"
+        }`}>
         {/* Beautiful vector city map design using SVGs */}
         <svg
           className="absolute inset-0 w-full h-full"
           xmlns="http://www.w3.org/2000/svg"
           preserveAspectRatio="none"
-          viewBox="0 0 400 220"
-        >
+          viewBox="0 0 400 220">
           {/* Waterbody / River */}
           <path
             d="M 0,180 Q 150,150 250,220 L 0,220 Z"
@@ -104,34 +112,144 @@ export function LocationMap({
 
           {/* Major Roads / Highways Grid */}
           {/* Vertical highway */}
-          <line x1="120" y1="0" x2="150" y2="220" stroke="#FFFFFF" strokeWidth="10" />
-          <line x1="120" y1="0" x2="150" y2="220" stroke="#FED7AA" strokeWidth="6" />
+          <line
+            x1="120"
+            y1="0"
+            x2="150"
+            y2="220"
+            stroke="#FFFFFF"
+            strokeWidth="10"
+          />
+          <line
+            x1="120"
+            y1="0"
+            x2="150"
+            y2="220"
+            stroke="#FED7AA"
+            strokeWidth="6"
+          />
 
           {/* Horizontal highway */}
-          <line x1="0" y1="120" x2="400" y2="100" stroke="#FFFFFF" strokeWidth="8" />
-          <line x1="0" y1="120" x2="400" y2="100" stroke="#FED7AA" strokeWidth="4" />
+          <line
+            x1="0"
+            y1="120"
+            x2="400"
+            y2="100"
+            stroke="#FFFFFF"
+            strokeWidth="8"
+          />
+          <line
+            x1="0"
+            y1="120"
+            x2="400"
+            y2="100"
+            stroke="#FED7AA"
+            strokeWidth="4"
+          />
 
           {/* Minor Grid Streets */}
           {/* Vertical streets */}
-          <line x1="60" y1="0" x2="60" y2="220" stroke="#F3F4F6" strokeWidth="2" strokeDasharray="3,3" />
-          <line x1="220" y1="0" x2="220" y2="220" stroke="#F3F4F6" strokeWidth="3" />
-          <line x1="280" y1="0" x2="280" y2="220" stroke="#F3F4F6" strokeWidth="3" />
-          <line x1="340" y1="0" x2="340" y2="220" stroke="#F3F4F6" strokeWidth="3" />
+          <line
+            x1="60"
+            y1="0"
+            x2="60"
+            y2="220"
+            stroke="#F3F4F6"
+            strokeWidth="2"
+            strokeDasharray="3,3"
+          />
+          <line
+            x1="220"
+            y1="0"
+            x2="220"
+            y2="220"
+            stroke="#F3F4F6"
+            strokeWidth="3"
+          />
+          <line
+            x1="280"
+            y1="0"
+            x2="280"
+            y2="220"
+            stroke="#F3F4F6"
+            strokeWidth="3"
+          />
+          <line
+            x1="340"
+            y1="0"
+            x2="340"
+            y2="220"
+            stroke="#F3F4F6"
+            strokeWidth="3"
+          />
 
           {/* Horizontal streets */}
-          <line x1="0" y1="40" x2="400" y2="40" stroke="#F3F4F6" strokeWidth="3" />
-          <line x1="0" y1="80" x2="400" y2="80" stroke="#F3F4F6" strokeWidth="3" />
-          <line x1="0" y1="160" x2="400" y2="160" stroke="#F3F4F6" strokeWidth="3" />
+          <line
+            x1="0"
+            y1="40"
+            x2="400"
+            y2="40"
+            stroke="#F3F4F6"
+            strokeWidth="3"
+          />
+          <line
+            x1="0"
+            y1="80"
+            x2="400"
+            y2="80"
+            stroke="#F3F4F6"
+            strokeWidth="3"
+          />
+          <line
+            x1="0"
+            y1="160"
+            x2="400"
+            y2="160"
+            stroke="#F3F4F6"
+            strokeWidth="3"
+          />
 
           {/* Pinned Landmarks / Neighborhood Labels */}
-          <text x="195" y="65" fill="#15803D" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Central Park</text>
-          <text x="25" y="115" fill="#4B5563" fontSize="6" fontWeight="semibold" fontFamily="sans-serif">Downtown District</text>
-          <text x="245" y="155" fill="#4B5563" fontSize="6" fontWeight="semibold" fontFamily="sans-serif">Eastside Port</text>
-          <text x="280" y="200" fill="#0369A1" fontSize="7" fontWeight="bold" fontFamily="sans-serif">Grand Bay</text>
+          <text
+            x="195"
+            y="65"
+            fill="#15803D"
+            fontSize="7"
+            fontWeight="bold"
+            fontFamily="sans-serif">
+            Central Park
+          </text>
+          <text
+            x="25"
+            y="115"
+            fill="#4B5563"
+            fontSize="6"
+            fontWeight="semibold"
+            fontFamily="sans-serif">
+            Downtown District
+          </text>
+          <text
+            x="245"
+            y="155"
+            fill="#4B5563"
+            fontSize="6"
+            fontWeight="semibold"
+            fontFamily="sans-serif">
+            Eastside Port
+          </text>
+          <text
+            x="280"
+            y="200"
+            fill="#0369A1"
+            fontSize="7"
+            fontWeight="bold"
+            fontFamily="sans-serif">
+            Grand Bay
+          </text>
         </svg>
 
         {/* Map Grid Pattern Overlay */}
-        <div className="absolute inset-0 bg-[radial-gradient(#00000010_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(#00000010_1px,transparent_1px)] bg-size-[16px_16px] pointer-events-none" />
 
         {/* Animated radar rings if pinned */}
         {pinPos && (
@@ -149,8 +267,7 @@ export function LocationMap({
               left: `${pinPos.x}%`,
               top: `${pinPos.y}%`,
               transform: "translate(-50%, -100%)",
-            }}
-          >
+            }}>
             <div className="relative flex flex-col items-center">
               {/* Tooltip */}
               <div className="bg-slate-900 text-white text-[10px] font-medium px-2 py-1 rounded shadow-md whitespace-nowrap mb-1 flex items-center gap-1">
@@ -166,12 +283,19 @@ export function LocationMap({
           </div>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/40 text-white p-4 text-center">
-            <HelpCircle size={32} className="text-slate-200 animate-pulse mb-2" />
+            <HelpCircle
+              size={32}
+              className="text-slate-200 animate-pulse mb-2"
+            />
             <p className="text-[13px] font-semibold">No Pinned Location</p>
             {editable ? (
-              <p className="text-[11px] text-slate-300 mt-0.5">Click anywhere on the map grid to pin this branch.</p>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                Click anywhere on the map grid to pin this branch.
+              </p>
             ) : (
-              <p className="text-[11px] text-slate-300 mt-0.5">Physical location coordinates not yet configured.</p>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                Physical location coordinates not yet configured.
+              </p>
             )}
           </div>
         )}
@@ -185,9 +309,19 @@ export function LocationMap({
             <span className="font-medium text-slate-700">Coordinates:</span>
           </div>
           <div className="font-mono text-slate-900 bg-slate-50 px-2 py-0.5 rounded border flex gap-3">
-            <span>Lat: <strong className="text-blue-600 font-semibold">{latitude?.toFixed(4)}</strong></span>
+            <span>
+              Lat:{" "}
+              <strong className="text-blue-600 font-semibold">
+                {latitude?.toFixed(4)}
+              </strong>
+            </span>
             <span className="text-slate-300">|</span>
-            <span>Lng: <strong className="text-blue-600 font-semibold">{longitude?.toFixed(4)}</strong></span>
+            <span>
+              Lng:{" "}
+              <strong className="text-blue-600 font-semibold">
+                {longitude?.toFixed(4)}
+              </strong>
+            </span>
           </div>
         </div>
       )}

@@ -52,6 +52,7 @@ model Customer {
 
   vouchers            LoyaltyVoucher[]
   loyaltyTransactions LoyaltyTransaction[]
+  serviceBookings     ServiceBooking[]
 
   @@unique([organizationId, email])
   @@index([email, organizationId])

@@ -11,12 +11,14 @@ import { RedisModule } from "@/redis/redis.module";
 import { BusinessAccountController } from "./interfaces/http/business-account.controller";
 import { BusinessAccountService } from "./application/use-cases/business-account.service";
 import { CrmModule } from "../crm/crm.module";
+import { LoyaltyModule } from "../loyalty/loyalty.module";
 
 @Module({
   imports: [
     PrismaModule,
     RedisModule,
     CrmModule,
+    LoyaltyModule,
   ],
   controllers: [CustomerController, BusinessAccountController],
   providers: [

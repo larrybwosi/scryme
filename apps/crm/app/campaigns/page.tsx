@@ -7,7 +7,7 @@ export default async function CampaignsPage() {
   const { organizationId, memberId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <CampaignsView organizationId={organizationId} memberId={memberId!} />
     </OrgProvider>
   );
