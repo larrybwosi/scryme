@@ -835,9 +835,16 @@ export class PosService {
       },
     });
 
+    /**
+     * ⚡ Bolt Optimization: Index variants into a Map to avoid O(N*M) nested array searches.
+     * This reduces lookups to O(1) constant-time complexity, ensuring high performance
+     * for bulk stock request creation even with large numbers of items.
+     */
+    const variantMap = new Map(variants.map(v => [v.id, v]));
+
     let totalEstimatedCost = new Decimal(0);
     const itemsToCreate = validated.items.map((item: any) => {
-      const variant = variants.find(v => v.id === item.variantId);
+      const variant = variantMap.get(item.variantId);
       if (!variant)
         throw new BadRequestException(`Variant ${item.variantId} not found`);
       const itemCost = new Decimal(
