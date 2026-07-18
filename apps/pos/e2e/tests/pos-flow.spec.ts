@@ -4,7 +4,7 @@ test.describe('POS Application', () => {
   test('should load the application and show the login or setup screen', async ({ page }) => {
     await page.goto('/');
     // The app title should always be present
-    await expect(page).toHaveTitle(/Dealio/i);
+    await expect(page).toHaveTitle(/Scryme/i);
 
     // Check for common elements in setup or login
     const bodyText = await page.innerText('body');

@@ -323,10 +323,10 @@ export default function CheckinPage() {
         </div>
 
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <Terminal className="text-white w-6 h-6" />
+          <div className="w-10 h-10 rounded-lg bg-[#34A853] flex items-center justify-center shadow-lg shadow-[#34A853]/20">
+            <span className="text-white font-bold text-2xl font-sans">S</span>
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">Skryme</span>
+          <span className="text-xl font-bold tracking-tight text-white">Scryme</span>
         </div>
 
         <div className="relative z-10 max-w-md space-y-6">

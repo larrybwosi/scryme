@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Dealio Supermarket",
+  "productName": "Scryme Supermarket",
   "version": "9.24.0",
-  "identifier": "com.dealio.pos.supermarket",
+  "identifier": "com.scryme.pos.supermarket",
   "build": {
     "beforeDevCommand": "cross-env VITE_BUSINESS_MODE=supermarket pnpm dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Dealio Supermarket",
+        "title": "Scryme Supermarket",
         "width": 1200,
         "height": 800,
         "resizable": true,

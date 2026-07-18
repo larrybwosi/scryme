@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Dealio Standalone",
+  "productName": "Scryme Standalone",
   "version": "9.24.0",
-  "identifier": "com.dealio.pos.standalone",
+  "identifier": "com.scryme.pos.standalone",
   "build": {
     "beforeDevCommand": "pnpm dev --mode standalone",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Dealio Standalone",
+        "title": "Scryme Standalone",
         "width": 1200,
         "height": 800,
         "resizable": true,
