@@ -1,0 +1,308 @@
+enum PricingModel {
+  FIXED
+  HOURLY
+  VARIABLE
+}
+
+enum BookingStatus {
+  REQUESTED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NOSHOW
+}
+
+enum DepositType {
+  FIXED
+  PERCENTAGE
+}
+
+model ServiceCategory {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  services       Service[]
+
+  parentId       String?
+  parent         ServiceCategory? @relation("ServiceCategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  subcategories  ServiceCategory[] @relation("ServiceCategoryHierarchy")
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("service_category")
+}
+
+model Service {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  sku            String       @unique
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  categoryId     String
+  category       ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  pricingModel   PricingModel @default(FIXED)
+  price          Decimal      @db.Decimal(12, 2)
+  minPrice       Decimal?     @db.Decimal(12, 2) // For VARIABLE pricing
+
+  requiresDeposit Boolean     @default(false)
+  depositAmount   Decimal?    @db.Decimal(12, 2)
+  depositType     DepositType @default(FIXED)
+
+  estimatedDuration Int?      // In minutes
+  bufferTimeBefore  Int       @default(0) // In minutes
+  bufferTimeAfter   Int       @default(0) // In minutes
+
+  isActive       Boolean      @default(true)
+  customFields   Json?
+
+  // Relations
+  bookings       ServiceBooking[]
+  materials      ServiceMaterial[]
+  resources      ServiceResourceAssignment[]
+  staff          ServiceStaffAssignment[]
+  taxRates       ServiceTaxRate[]
+  transactionItems TransactionServiceItem[]
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, sku])
+  @@index([organizationId])
+  @@map("service")
+}
+
+model ServiceMaterial {
+  id             String       @id @default(cuid())
+  serviceId      String
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  quantity       Decimal      @db.Decimal(12, 4)
+
+  @@unique([serviceId, variantId])
+  @@map("service_material")
+}
+
+model ServiceResource {
+  id             String       @id @default(cuid())
+  name           String
+  type           String?      // e.g., "Room", "Equipment"
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  isActive       Boolean      @default(true)
+
+  assignments    ServiceResourceAssignment[]
+  bookings       BookingResource[]
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@map("service_resource")
+}
+
+model ServiceResourceAssignment {
+  id             String       @id @default(cuid())
+  serviceId      String
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  resourceId     String
+  resource       ServiceResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, resourceId])
+  @@map("service_resource_assignment")
+}
+
+model ServiceStaffAssignment {
+  id             String       @id @default(cuid())
+  serviceId      String
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, memberId])
+  @@map("service_staff_assignment")
+}
+
+model ServiceTaxRate {
+  id             String       @id @default(cuid())
+  serviceId      String
+  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  taxRateId      String
+  taxRate        TaxRate      @relation(fields: [taxRateId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, taxRateId])
+  @@map("service_tax_rate")
+}
+
+model ServiceBooking {
+  id             String       @id @default(cuid())
+  locationId     String?
+  location       InventoryLocation? @relation(fields: [locationId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  serviceId      String
+  service        Service      @relation(fields: [serviceId], references: [id])
+
+  customerId     String?
+  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  status         BookingStatus @default(REQUESTED)
+
+  scheduledStartTime DateTime
+  scheduledEndTime   DateTime?
+
+  actualStartTime    DateTime?
+  actualEndTime      DateTime?
+
+  notes          String?
+  customFields   Json?
+
+  // Snapshots
+  serviceName    String
+  price          Decimal      @db.Decimal(12, 2)
+  pricingModel   PricingModel
+
+  // Relations
+  staff          BookingStaff[]
+  resources      BookingResource[]
+  materials      BookingConsumedMaterial[]
+
+  recurrenceId   String?
+  recurrence     BookingRecurrence? @relation(fields: [recurrenceId], references: [id], onDelete: SetNull)
+
+  transactionId  String?
+  transaction    Transaction? @relation(fields: [transactionId], references: [id])
+  transactionItem TransactionServiceItem?
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId])
+  @@index([serviceId])
+  @@index([customerId])
+  @@index([status])
+  @@map("service_booking")
+}
+
+model BookingRecurrence {
+  id              String           @id @default(cuid())
+  organizationId  String
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  rule            String           // RRULE string
+  startDate       DateTime
+  endDate         DateTime?
+
+  bookings        ServiceBooking[]
+
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([organizationId])
+  @@map("booking_recurrence")
+}
+
+model StaffShift {
+  id              String       @id @default(cuid())
+  memberId        String
+  member          Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  organizationId  String
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  dayOfWeek       Int          // 0 (Sunday) to 6 (Saturday)
+  startTime       String       // "HH:mm"
+  endTime         String       // "HH:mm"
+
+  isActive        Boolean      @default(true)
+
+  breaks          StaffBreak[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([memberId, dayOfWeek, startTime])
+  @@index([organizationId])
+  @@map("staff_shift")
+}
+
+model StaffBreak {
+  id              String     @id @default(cuid())
+  shiftId         String
+  shift           StaffShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  startTime       String     // "HH:mm"
+  endTime         String     // "HH:mm"
+  description     String?
+
+  @@map("staff_break")
+}
+
+model BookingVerificationCode {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  phoneNumber    String?
+  email          String?
+  code           String
+
+  expiresAt      DateTime
+  verifiedAt     DateTime?
+
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([phoneNumber])
+  @@index([email])
+  @@map("booking_verification_code")
+}
+
+model BookingStaff {
+  id             String       @id @default(cuid())
+  bookingId      String
+  booking        ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, memberId])
+  @@map("booking_staff")
+}
+
+model BookingResource {
+  id             String       @id @default(cuid())
+  bookingId      String
+  booking        ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  resourceId     String
+  resource       ServiceResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, resourceId])
+  @@map("booking_resource")
+}
+
+model BookingConsumedMaterial {
+  id             String       @id @default(cuid())
+  bookingId      String
+  booking        ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  variantId      String
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+
+  quantity       Decimal      @db.Decimal(12, 4)
+
+  @@unique([bookingId, variantId])
+  @@map("booking_consumed_material")
+}

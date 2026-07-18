@@ -1,6 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { db, LoyaltyTransactionType, VoucherStatus } from "@repo/db";
+import {
+  LoyaltyTransactionType,
+  VoucherStatus,
+  LoyaltyRuleType,
+  db,
+} from "@repo/db";
 import {
   emitLoyaltyPointsAwarded,
   emitLoyaltyVoucherCreated,
@@ -8,7 +13,35 @@ import {
 
 @Injectable()
 export class LoyaltyService {
-  constructor() {}
+  constructor(private readonly prisma: PrismaService) {}
+
+  async handleCustomerSignup(organizationId: string, customerId: string) {
+    const program = await this.prisma.client.loyaltyProgram.findFirst({
+      where: { organizationId, isActive: true },
+      include: {
+        rules: {
+          where: { ruleType: LoyaltyRuleType.FIXED_POINTS, isActive: true },
+        },
+      },
+    });
+
+    if (!program) return;
+
+    const signupRule = program.rules.find(
+      r =>
+        r.name.toLowerCase().includes("signup") ||
+        r.name.toLowerCase().includes("sign up"),
+    );
+    if (signupRule) {
+      await this.awardPoints(
+        customerId,
+        signupRule.pointsValue,
+        organizationId,
+        signupRule.description || "Signup bonus",
+        "SIGNUP",
+      );
+    }
+  }
 
   async calculatePointsForTransaction(
     transactionId: string,
@@ -175,7 +208,7 @@ export class LoyaltyService {
 
     if (!program) return;
 
-    return await db.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async tx => {
       const customer = await tx.customer.update({
         where: { id: customerId },
         data: {
@@ -244,7 +277,7 @@ export class LoyaltyService {
       throw new Error("Insufficient points");
     }
 
-    return await db.$transaction(async tx => {
+    return await this.prisma.client.$transaction(async tx => {
       // 1. Deduct points
       const updatedCustomer = await tx.customer.update({
         where: { id: customerId },

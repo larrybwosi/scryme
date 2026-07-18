@@ -187,7 +187,7 @@ export function LocationSheet({
         {children}
       </SheetTrigger>
       <SheetContent
-        className="sm:max-w-xl flex flex-col h-[100dvh] p-0"
+        className="sm:max-w-xl flex flex-col h-dvh p-0"
         side="right">
         {/* Fixed Header */}
         <div className="shrink-0 p-6 pb-4 border-b">
@@ -483,12 +483,13 @@ export function LocationSheet({
                         <FormControl>
                           <ImageUpload
                             value={field.value ? [field.value] : []}
-                            onChange={(urls) => field.onChange(urls[0] || "")}
+                            onChange={urls => field.onChange(urls[0] || "")}
                             maxImages={1}
                           />
                         </FormControl>
                         <FormDescription>
-                          Upload an image to represent this branch on its home page.
+                          Upload an image to represent this branch on its home
+                          page.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
@@ -500,14 +501,15 @@ export function LocationSheet({
                     <LocationMap
                       latitude={form.watch("settings.latitude")}
                       longitude={form.watch("settings.longitude")}
-                      onPinChange={(coords) => {
+                      onPinChange={coords => {
                         form.setValue("settings.latitude", coords.latitude);
                         form.setValue("settings.longitude", coords.longitude);
                       }}
                       editable
                     />
                     <FormDescription>
-                      Click anywhere on the vector grid above to drop a physical pin.
+                      Click anywhere on the vector grid above to drop a physical
+                      pin.
                     </FormDescription>
                   </div>
 
@@ -524,7 +526,13 @@ export function LocationSheet({
                               step="any"
                               placeholder="e.g. 40.7589"
                               value={field.value ?? ""}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                              onChange={e =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : null,
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -543,7 +551,13 @@ export function LocationSheet({
                               step="any"
                               placeholder="e.g. -73.9851"
                               value={field.value ?? ""}
-                              onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : null)}
+                              onChange={e =>
+                                field.onChange(
+                                  e.target.value
+                                    ? parseFloat(e.target.value)
+                                    : null,
+                                )
+                              }
                             />
                           </FormControl>
                           <FormMessage />

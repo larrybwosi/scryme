@@ -15,6 +15,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from "@nestjs/swagger";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";
@@ -26,6 +27,7 @@ import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { AuditInterceptor } from "../../../../common/interceptors/audit.interceptor";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
+import { AllowPublic } from "@/common/decorators/auth.decorator";
 import { CustomerResponseDto } from "../../application/dto/customer.dto";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
@@ -34,6 +36,7 @@ import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 @ApiTags("V3 Customers")
 @ApiBearerAuth()
 @Controller(":orgSlug/customers")
+@ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class CustomerController {
@@ -70,7 +73,7 @@ export class CustomerController {
   }
 
   @Post("register")
-  @Permissions("customer:create")
+  @AllowPublic()
   @ApiOperation({
     summary: "Register a new customer (Zitadel)",
     operationId: "Customers_Register",

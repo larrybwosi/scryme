@@ -46,6 +46,15 @@
       "outputs": ["generated/**"],
       "cache": true
     },
+    "generate:openapi": {
+      "outputs": ["packages/v3-sdk/openapi.json"],
+      "cache": false
+    },
+    "generate:sdk": {
+      "dependsOn": ["api#generate:openapi"],
+      "outputs": ["packages/v3-sdk/src/generated/**"],
+      "cache": false
+    },
     "lint": {
       "dependsOn": ["^generate"]
     },

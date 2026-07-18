@@ -3,6 +3,8 @@
 import { db as prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
+import { ZitadelService } from "@repo/zitadel";
+import { env } from "@repo/env";
 
 export async function getIntegrationsStatus() {
   const context = await getOrganizationContext();
@@ -52,6 +54,7 @@ export async function getIntegrationsStatus() {
     zitadel: {
       connected: !!org.zitadelConfiguration,
       config: org.zitadelConfiguration,
+      isGlobalAdminConfigured: !!env.ZITADEL_ADMIN_TOKEN,
     },
     plane: {
       connected: !!org.planeConfiguration,
@@ -95,6 +98,62 @@ export async function updateWindmillConfig(data: {
   return { success: true };
 }
 
+export async function provisionZitadel() {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const org = await prisma.organization.findUnique({
+    where: { id: context.organizationId },
+  });
+
+  if (!org) {
+    throw new Error("Organization not found");
+  }
+
+  const webUrl = env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+  const crmUrl = env.NEXT_PUBLIC_CRM_URL || "https://crm.scryme.tech";
+
+  const redirectUris = [
+    "http://localhost:3000/api/auth/callback/zitadel",
+    `${webUrl}/api/auth/callback/zitadel`,
+    `${crmUrl}/api/auth/callback/zitadel`,
+  ];
+
+  const postLogoutRedirectUris = ["http://localhost:3000", webUrl, crmUrl];
+
+  const zitadelSvc = new ZitadelService();
+  const provisionResult = await zitadelSvc.provisionOrganization(
+    org.name,
+    org.slug,
+    redirectUris,
+    postLogoutRedirectUris,
+  );
+
+  await prisma.zitadelConfiguration.upsert({
+    where: { organizationId: context.organizationId },
+    update: {
+      zitadelOrgId: provisionResult.zitadelOrgId,
+      zitadelProjectId: provisionResult.zitadelProjectId,
+      zitadelAppId: provisionResult.zitadelAppId,
+      connectionStatus: "CONNECTED",
+      lastTestedAt: new Date(),
+    },
+    create: {
+      organizationId: context.organizationId,
+      zitadelOrgId: provisionResult.zitadelOrgId,
+      zitadelProjectId: provisionResult.zitadelProjectId,
+      zitadelAppId: provisionResult.zitadelAppId,
+      connectionStatus: "CONNECTED",
+      lastTestedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/integrations");
+  return { success: true, config: provisionResult };
+}
+
 export async function provisionScryme() {
   const context = await getOrganizationContext();
   if (!context?.organizationId) {
@@ -114,7 +173,7 @@ export async function provisionScryme() {
 
   if (!clientId || !clientSecret) {
     throw new Error(
-      "Scryme Chat automatic provisioning is not configured on this server (SCRYME_CHAT_CLIENT_ID or SCRYME_CHAT_CLIENT_SECRET is missing)."
+      "Scryme Chat automatic provisioning is not configured on this server (SCRYME_CHAT_CLIENT_ID or SCRYME_CHAT_CLIENT_SECRET is missing).",
     );
   }
 
@@ -122,7 +181,7 @@ export async function provisionScryme() {
   const scrymeClient = new ScrymeChatApiClient(
     process.env.SCRYME_CHAT_API_URL || "https://api.scryme.tech",
     clientId,
-    clientSecret
+    clientSecret,
   );
 
   const workspaceSlug = `org-${org.slug}`.toLowerCase();
@@ -143,10 +202,11 @@ export async function provisionScryme() {
   });
 
   const initialMembers = dbMembers
-    .filter((m) => m.user && m.user.email && m.user.email !== ownerEmail)
-    .map((m) => ({
+    .filter(m => m.user && m.user.email && m.user.email !== ownerEmail)
+    .map(m => ({
       email: m.user.email,
-      role: (m.role === "OWNER" || m.role === "ADMIN" ? "admin" : "member") as "admin" | "member",
+      role: (m.role === "OWNER" || m.role === "ADMIN" ? "admin" : "member") as
+        "admin" | "member",
     }));
 
   try {
@@ -154,7 +214,7 @@ export async function provisionScryme() {
       org.name,
       workspaceSlug,
       ownerEmail,
-      initialMembers
+      initialMembers,
     );
 
     // Create default channels for announcements, alerts, and general
@@ -170,10 +230,13 @@ export async function provisionScryme() {
           scrymeWorkspace.slug,
           channel.name,
           channel.slug,
-          "public"
+          "public",
         );
       } catch (channelErr: any) {
-        console.error(`Failed to create default channel ${channel.slug} for workspace ${scrymeWorkspace.slug}:`, channelErr.message);
+        console.error(
+          `Failed to create default channel ${channel.slug} for workspace ${scrymeWorkspace.slug}:`,
+          channelErr.message,
+        );
       }
     }
 
@@ -193,13 +256,20 @@ export async function provisionScryme() {
     });
 
     // Register workspace webhook for interactive action webhook processing
-    const publicUrl = process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
+    const publicUrl =
+      process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
     if (publicUrl) {
       const webhookUrl = `${publicUrl.replace(/\/$/, "")}/v2/scryme/webhook`;
       try {
-        await scrymeClient.registerWorkspaceWebhook(scrymeWorkspace.slug, webhookUrl);
+        await scrymeClient.registerWorkspaceWebhook(
+          scrymeWorkspace.slug,
+          webhookUrl,
+        );
       } catch (webhookErr: any) {
-        console.error("Failed to register workspace webhook in web route:", webhookErr.message);
+        console.error(
+          "Failed to register workspace webhook in web route:",
+          webhookErr.message,
+        );
       }
     }
 
@@ -207,7 +277,9 @@ export async function provisionScryme() {
     return { success: true };
   } catch (error: any) {
     console.error("Failed to provision Scryme Chat for organization:", error);
-    throw new Error(error.message || "Failed to provision Scryme Chat workspace");
+    throw new Error(
+      error.message || "Failed to provision Scryme Chat workspace",
+    );
   }
 }
 
@@ -228,7 +300,7 @@ export async function provisionWindmill() {
   const adminApiKey = process.env.WINDMILL_ADMIN_API_KEY;
   if (!adminApiKey) {
     throw new Error(
-      "Windmill automatic provisioning is not configured on this server (WINDMILL_ADMIN_API_KEY is missing)."
+      "Windmill automatic provisioning is not configured on this server (WINDMILL_ADMIN_API_KEY is missing).",
     );
   }
 
@@ -238,7 +310,7 @@ export async function provisionWindmill() {
     await WindmillTemplateService.provisionAndDeploy(
       org.id,
       org.name,
-      org.slug
+      org.slug,
     );
     revalidatePath("/integrations");
     return { success: true };

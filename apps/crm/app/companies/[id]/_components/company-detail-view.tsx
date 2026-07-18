@@ -1,7 +1,8 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
-import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { Suspense, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Building2, Users, FileText, Activity as ActivityIcon } from 'lucide-react';
 import Link from 'next/link';
 import { DetailTabs, type TabId } from '@/components/crm/detail-tabs';
@@ -9,6 +10,11 @@ import { NotesTab } from '@/components/crm/notes-tab';
 import { FollowUpsTab } from '@/components/crm/followups-tab';
 import { ActivitiesTab } from '@/components/crm/activities-tab';
 import { cn } from '@repo/ui/lib/utils';
+import { toast } from 'sonner';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@repo/ui/components/ui/dialog';
+import { CustomerForm } from '../../../customers/_components/customer-form';
+import { createInvoiceAction } from '@/app/actions/invoices';
 
 interface CompanyDetailViewProps {
   company: any;
@@ -88,6 +94,7 @@ function OrdersTab({ company }: { company: any }) {
 }
 
 function DetailViewInner({ company }: CompanyDetailViewProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const tab = (searchParams.get('tab') as TabId) ?? 'notes';
 
@@ -100,6 +107,65 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
   };
 
   const availableTabs: TabId[] = ['notes', 'activities', 'contacts', 'orders', 'followups'];
+
+  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
+  const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
+
+  // New Invoice form state
+  const [selectedContactId, setSelectedContactId] = useState('');
+  const [invoiceItemName, setInvoiceItemName] = useState('');
+  const [invoiceAmount, setInvoiceAmount] = useState('');
+  const [invoicePostingDate, setInvoicePostingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [invoiceDueDate, setInvoiceDueDate] = useState('');
+  const [isInvoiceSubmitting, setIsInvoiceSubmitting] = useState(false);
+
+  const contacts = company.customers || [];
+
+  const handleInvoiceCreate = async () => {
+    const amount = parseFloat(invoiceAmount) || 0;
+    if (!selectedContactId || !invoiceItemName.trim() || !invoicePostingDate || amount <= 0) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    setIsInvoiceSubmitting(true);
+    try {
+      const result = await createInvoiceAction({
+        customerId: selectedContactId,
+        organizationId: company.organizationId,
+        postingDate: new Date(invoicePostingDate),
+        dueDate: invoiceDueDate ? new Date(invoiceDueDate) : undefined,
+        status: 'DRAFT',
+        items: [
+          {
+            itemCode: 'GENERIC',
+            itemName: invoiceItemName.trim(),
+            quantity: 1,
+            rate: amount,
+            amount: amount,
+          }
+        ]
+      });
+
+      if (result.success) {
+        toast.success('B2B Invoice created successfully');
+        setIsNewInvoiceOpen(false);
+        // Reset form
+        setSelectedContactId('');
+        setInvoiceItemName('');
+        setInvoiceAmount('');
+        setInvoiceDueDate('');
+        router.refresh();
+      } else {
+        toast.error(result.error || 'Failed to create invoice');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to create invoice');
+    } finally {
+      setIsInvoiceSubmitting(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -121,11 +187,26 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
         <div className="w-[320px] flex-shrink-0 border-r border-border overflow-y-auto p-6 custom-scrollbar">
            <div className="space-y-6">
               <div className="flex flex-col items-center text-center">
-                 <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4">
-                    <Building2 size={32} />
-                 </div>
+                 {company.logoUrl ? (
+                    <img
+                       src={company.logoUrl}
+                       className="w-16 h-16 rounded-xl object-contain border border-border mb-4 bg-background p-1"
+                       alt={`${company.name} Logo`}
+                    />
+                 ) : (
+                    <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center text-primary mb-4" style={company.customTheme ? { backgroundColor: `${company.customTheme}15`, color: company.customTheme } : {}}>
+                       <Building2 size={32} />
+                    </div>
+                 )}
                  <h2 className="text-xl font-bold">{company.name}</h2>
-                 <p className="text-sm text-muted-foreground">Business Account</p>
+                 <div className="flex items-center gap-1.5 mt-1 justify-center">
+                    <span className="text-xs text-muted-foreground">Business Account</span>
+                    {company.isEnterprise && (
+                       <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500/10 text-amber-500 rounded border border-amber-500/20 uppercase tracking-wider">
+                          Enterprise
+                       </span>
+                    )}
+                 </div>
               </div>
 
               <div className="space-y-4">
@@ -133,6 +214,30 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
                     <div className="text-muted-foreground font-medium mb-1">Tax ID / KRA PIN</div>
                     <div className="font-medium">{company.taxId || 'Not provided'}</div>
                  </div>
+
+                 {company.customTheme && (
+                    <div className="text-sm">
+                       <div className="text-muted-foreground font-medium mb-1">Brand Theme Color</div>
+                       <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 rounded-full border border-border" style={{ backgroundColor: company.customTheme }} />
+                          <span className="font-mono text-xs">{company.customTheme}</span>
+                       </div>
+                    </div>
+                 )}
+
+                 {company.discountPercentage !== undefined && company.discountPercentage !== null && (
+                    <div className="text-sm">
+                       <div className="text-muted-foreground font-medium mb-1">B2B Discount Rate</div>
+                       <div className="font-semibold text-status-success">{company.discountPercentage}% off</div>
+                    </div>
+                 )}
+
+                 {company.paymentTermsDays !== undefined && company.paymentTermsDays !== null && (
+                    <div className="text-sm">
+                       <div className="text-muted-foreground font-medium mb-1">Payment Terms</div>
+                       <div className="font-medium">{company.paymentTermsDays} Days Net</div>
+                    </div>
+                 )}
 
                  <div className="text-sm">
                     <div className="text-muted-foreground font-medium mb-1">Total Spent</div>
@@ -147,11 +252,17 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
               <div className="pt-4 border-t border-border">
                  <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Quick Actions</div>
                  <div className="grid grid-cols-2 gap-2">
-                    <button className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-[11px] font-medium">
+                    <button
+                       onClick={() => setIsAddContactOpen(true)}
+                       className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-[11px] font-medium"
+                    >
                        <Users size={16} className="text-primary" />
                        Add Contact
                     </button>
-                    <button className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-[11px] font-medium">
+                    <button
+                       onClick={() => setIsNewInvoiceOpen(true)}
+                       className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-border hover:bg-muted transition-colors text-[11px] font-medium"
+                    >
                        <FileText size={16} className="text-primary" />
                        New Invoice
                     </button>
@@ -168,6 +279,133 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
           </div>
         </div>
       </div>
+
+      {/* Add Contact Sheet */}
+      <Sheet open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
+         <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+            <SheetHeader>
+               <SheetTitle>Add Contact to {company.name}</SheetTitle>
+            </SheetHeader>
+            <CustomerForm
+               initialData={{
+                  name: '',
+                  email: '',
+                  phone: '',
+                  company: company.name,
+                  businessAccountId: company.id,
+                  customerType: 'B2B',
+                  isActive: true,
+               } as any}
+               onSuccess={() => {
+                  setIsAddContactOpen(false);
+                  toast.success('Contact added successfully');
+                  router.refresh();
+               }}
+               type="CONTACT"
+            />
+         </SheetContent>
+      </Sheet>
+
+      {/* New Invoice Dialog */}
+      <Dialog open={isNewInvoiceOpen} onOpenChange={setIsNewInvoiceOpen}>
+         <DialogContent className="sm:max-w-[440px]">
+            <DialogHeader>
+               <DialogTitle>New B2B Invoice</DialogTitle>
+            </DialogHeader>
+            {contacts.length === 0 ? (
+               <div className="py-6 text-center space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                     This company does not have any contacts yet. Please add a contact first before creating an invoice.
+                  </p>
+                  <button
+                     onClick={() => {
+                        setIsNewInvoiceOpen(false);
+                        setIsAddContactOpen(true);
+                     }}
+                     className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                     Add Contact
+                  </button>
+               </div>
+            ) : (
+               <div className="space-y-4 py-2">
+                  <div>
+                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                        Select Contact *
+                     </label>
+                     <select
+                        value={selectedContactId}
+                        onChange={(e) => setSelectedContactId(e.target.value)}
+                        className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                     >
+                        <option value="">Select a contact...</option>
+                        {contacts.map((c: any) => (
+                           <option key={c.id} value={c.id}>
+                              {c.name} ({c.email || 'No email'})
+                           </option>
+                        ))}
+                     </select>
+                  </div>
+                  <div>
+                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                        Description *
+                     </label>
+                     <input
+                        value={invoiceItemName}
+                        onChange={(e) => setInvoiceItemName(e.target.value)}
+                        placeholder="e.g. Monthly Consulting Fee"
+                        className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                     />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                     <div>
+                        <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                           Amount ($) *
+                        </label>
+                        <input
+                           type="number"
+                           value={invoiceAmount}
+                           onChange={(e) => setInvoiceAmount(e.target.value)}
+                           placeholder="0.00"
+                           className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                        />
+                     </div>
+                     <div>
+                        <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                           Issue Date *
+                        </label>
+                        <input
+                           type="date"
+                           value={invoicePostingDate}
+                           onChange={(e) => setInvoicePostingDate(e.target.value)}
+                           className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                        />
+                     </div>
+                  </div>
+                  <div>
+                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                        Due Date
+                     </label>
+                     <input
+                        type="date"
+                        value={invoiceDueDate}
+                        onChange={(e) => setInvoiceDueDate(e.target.value)}
+                        className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                     />
+                  </div>
+                  <DialogFooter className="pt-4">
+                     <button
+                        onClick={handleInvoiceCreate}
+                        disabled={isInvoiceSubmitting || !selectedContactId || !invoiceItemName.trim() || !invoiceAmount}
+                        className="px-5 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-40 transition-colors ml-auto"
+                     >
+                        {isInvoiceSubmitting ? 'Creating...' : 'Create Invoice'}
+                     </button>
+                  </DialogFooter>
+               </div>
+            )}
+         </DialogContent>
+      </Dialog>
     </div>
   );
 }

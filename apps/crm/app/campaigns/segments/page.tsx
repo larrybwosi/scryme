@@ -7,7 +7,7 @@ export default async function SegmentsPage() {
   const { organizationId } = context;
 
   return (
-    <OrgProvider organizationId={organizationId || 'default-org-id'}>
+    <OrgProvider organizationId={organizationId}>
       <SegmentsView organizationId={organizationId} />
     </OrgProvider>
   );
