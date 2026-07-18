@@ -39,6 +39,7 @@ export class ShortUrlController {
     @Query("h") h?: string,
     @Query("q") q?: string,
     @Query("fm") fm?: string,
+    @Query("download") download?: string,
   ) {
     try {
       const cacheKey = `attachment:${shortCode}`;
@@ -149,11 +150,13 @@ export class ShortUrlController {
           mimeType: string;
         }>(fileCacheKey);
 
+        const disposition = (download === "true" || download === "1" || download === "") ? "attachment" : "inline";
+
         res.header("Content-Type", mimeType);
         res.header("Cache-Control", cacheControl);
         res.header(
           "Content-Disposition",
-          `inline; filename="${attachment.fileName || "file"}"`,
+          `${disposition}; filename="${attachment.fileName || "file"}"`,
         );
 
         if (cachedFile) {
