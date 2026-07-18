@@ -120,6 +120,16 @@ test.describe('Order Creation and Invoice Download Flow', () => {
         if (cmd === 'discover_network_printers') return [];
         if (cmd.includes('event|listen')) return 123;
         if (cmd.includes('updater|check')) return null;
+        if (cmd === 'get_ably_auth_token_command') return {
+            data: {
+                tokenRequest: {
+                    token: 'mock-jwt-token'
+                },
+                metadata: {
+                    paymentChannel: 'mock-payment-channel'
+                }
+            }
+        };
 
         return null;
       };
