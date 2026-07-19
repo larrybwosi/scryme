@@ -424,7 +424,7 @@ export function DashboardView() {
                   />
                   <Tooltip
                     contentStyle={tooltipStyle}
-                    formatter={(v: number) => formatCurrency(v)}
+                    formatter={(v: any) => formatCurrency(Number(v))}
                   />
                   <Bar dataKey="value" radius={[0, 6, 6, 0]} barSize={22}>
                     {(pipelineData || []).map((entry: any) => (

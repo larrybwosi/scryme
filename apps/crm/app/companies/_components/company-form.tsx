@@ -201,6 +201,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                         <Input
                           placeholder="Tax ID or Registration Number"
                           {...field}
+                          value={field.value || ""}
                           className="h-11 transition-colors focus:ring-2 focus:ring-primary/20"
                         />
                       </FormControl>
@@ -314,31 +315,6 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                         </FormControl>
                         <FormDescription>
                           Number of days allowed for payment.
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="currency"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1.5">
-                          <CreditCard className="h-4 w-4 text-muted-foreground" />
-                          Currency
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="USD"
-                            {...field}
-                            value={field.value || ""}
-                            className="h-11 transition-colors focus:ring-2 focus:ring-primary/20"
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          Default currency for billing.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

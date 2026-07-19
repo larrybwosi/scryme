@@ -109,6 +109,47 @@ export async function createSegment(data: CampaignSegmentFormValues, organizatio
   }
 }
 
+export async function deleteWorkflow(id: string): Promise<any> {
+  try {
+    await db.campaignWorkflow.delete({
+      where: { id },
+    });
+    revalidatePath('/campaigns/workflows');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting workflow:', error);
+    return { success: false, error: error.message || 'Failed to delete workflow' };
+  }
+}
+
+export async function duplicateWorkflow(id: string): Promise<any> {
+  try {
+    const original = await db.campaignWorkflow.findUnique({
+      where: { id },
+    });
+
+    if (!original) {
+      return { success: false, error: 'Original workflow not found' };
+    }
+
+    const duplicated = await db.campaignWorkflow.create({
+      data: {
+        name: `${original.name} (Copy)`,
+        organizationId: original.organizationId,
+        nodes: original.nodes || [],
+        edges: original.edges || [],
+        isActive: false,
+      },
+    });
+
+    revalidatePath('/campaigns/workflows');
+    return { success: true, data: duplicated };
+  } catch (error: any) {
+    console.error('Error duplicating workflow:', error);
+    return { success: false, error: error.message || 'Failed to duplicate workflow' };
+  }
+}
+
 export async function getSegments(organizationId: string): Promise<any[]> {
   return await db.campaignSegment.findMany({
     where: { organizationId },
