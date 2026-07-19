@@ -67,12 +67,6 @@ const serverSchema = z.object({
   GITHUB_REPO: z.string().default("dealio"),
   GITHUB_TOKEN: z.string().optional(),
 
-  // OpenObserve
-  OPENOBSERVE_URL: z.url().optional(),
-  OPENOBSERVE_ORG: z.string().optional(),
-  OPENOBSERVE_STREAM: z.string().optional(),
-  OPENOBSERVE_TOKEN: z.string().optional(),
-
   // Storage Configuration
   STORAGE_PROVIDER: z.enum(["sanity", "rustfs"]).default("sanity"),
 
@@ -262,11 +256,6 @@ function getRawEnv() {
     GITHUB_OWNER: process.env.GITHUB_OWNER,
     GITHUB_REPO: process.env.GITHUB_REPO,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
-    // OpenObserve
-    OPENOBSERVE_URL: process.env.OPENOBSERVE_URL,
-    OPENOBSERVE_ORG: process.env.OPENOBSERVE_ORG,
-    OPENOBSERVE_STREAM: process.env.OPENOBSERVE_STREAM,
-    OPENOBSERVE_TOKEN: process.env.OPENOBSERVE_TOKEN,
     // Storage Configuration
     STORAGE_PROVIDER: process.env.STORAGE_PROVIDER,
     // Sanity Configuration

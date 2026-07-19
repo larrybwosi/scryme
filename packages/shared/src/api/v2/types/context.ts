@@ -1,5 +1,4 @@
 export interface V2ApiContext {
-  openObserveService?: any; // Using any here to avoid circular dependency with API service
   organizationId: string;
   deviceId?: string;
   deviceName?: string;
@@ -11,7 +10,7 @@ export interface V2ApiContext {
   apiKeyId?: string;
   zitadelUserId?: string;
   customerId?: string;
-  authType: 'device' | 'member' | 'zitadel' | 'oauth' | 'hybrid';
+  authType: "device" | "member" | "zitadel" | "oauth" | "hybrid";
   permissions: string[];
   scopes: string[];
   jwtPayload?: any;
