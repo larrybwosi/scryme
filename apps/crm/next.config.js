@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 module.exports = {
   reactStrictMode: true,
-  transpilePackages: ["@repo/ui", "@react-pdf/renderer"],
+  transpilePackages: ["@repo/ui", "@react-pdf/renderer", "@repo/documents", "@repo/shared"],
   output: "standalone",
   compiler: {
     removeConsole:

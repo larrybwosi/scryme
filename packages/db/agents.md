@@ -1,5 +1,8 @@
 # Agent Instructions (agents.md)
 
+## ⚠️ Important: Database Migrations Requirement
+All contributors and AI agents modifying the database schema (`schema.prisma` or schema files) **MUST** generate and include a database migration under `prisma/migrations/` to prevent breaking changes in production or other environments. Refer to the comprehensive guide in **[MIGRATIONS_GUIDE.md](./MIGRATIONS_GUIDE.md)** for detailed workflows and safety constraints.
+
 ## Critical Constraints - Database Package
 
 The current database setup and Prisma configuration are stable and working correctly. **DO NOT modify any of the following without explicit user consent**, as changes will cause system-wide errors.

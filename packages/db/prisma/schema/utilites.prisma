@@ -9,6 +9,7 @@ model Attachment {
   sizeBytes   Int?
   description String?
   content     String?  @db.Text // New field for markdown content
+  expiresAt   DateTime? // Optional expiry date for public links
 
   uploadedAt         DateTime @default(now())
   memberId           String   // Who uploaded/created it

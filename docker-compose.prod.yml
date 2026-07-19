@@ -3,6 +3,8 @@ services:
   db:
     image: postgres:17-alpine
     restart: always
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -24,6 +26,8 @@ services:
   zitadel-db:
     image: postgres:17-alpine
     restart: always
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${ZITADEL_DB_USER}
       POSTGRES_PASSWORD: ${ZITADEL_DB_PASSWORD}
@@ -41,6 +45,8 @@ services:
   windmill-db:
     image: postgres:17-alpine
     restart: always
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${WINDMILL_DB_USER}
       POSTGRES_PASSWORD: ${WINDMILL_DB_PASSWORD}
@@ -77,6 +83,12 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    env_file:
+      - .env
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
@@ -85,10 +97,10 @@ services:
     networks:
       - scryme-prod-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "nc", "-z", "localhost", "5672"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   rustfs-perms:
     image: alpine
@@ -107,6 +119,8 @@ services:
   rustfs:
     image: rustfs/rustfs:latest
     restart: always
+    env_file:
+      - .env
     environment:
       - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY}
       - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY}
@@ -198,6 +212,8 @@ services:
   zitadel-setup:
     image: ghcr.io/zitadel/zitadel:latest
     command: "setup"
+    env_file:
+      - .env
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
@@ -219,6 +235,8 @@ services:
       resources:
         limits:
           memory: 512M
+    env_file:
+      - .env
     environment:
       - ZITADEL_MASTERKEY=${ZITADEL_MASTERKEY}
       - ZITADEL_DATABASE_POSTGRES_HOST=zitadel-db
@@ -266,6 +284,8 @@ services:
       resources:
         limits:
           memory: 512M
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
       - MODE=server
@@ -304,6 +324,8 @@ services:
       resources:
         limits:
           memory: 512M
+    env_file:
+      - .env
     environment:
       - DATABASE_URL=postgres://${WINDMILL_DB_USER}:${WINDMILL_DB_PASSWORD}@windmill-db:5432/${WINDMILL_DB_NAME}?sslmode=disable
       - MODE=worker
@@ -323,6 +345,8 @@ services:
       resources:
         limits:
           memory: 1G
+    env_file:
+      - .env
     healthcheck:
       test:
         [
@@ -386,6 +410,8 @@ services:
       resources:
         limits:
           memory: 512M
+    env_file:
+      - .env
     healthcheck:
       test:
         [
@@ -438,6 +464,8 @@ services:
       resources:
         limits:
           memory: 768M
+    env_file:
+      - .env
     healthcheck:
       test:
         [
@@ -485,6 +513,8 @@ services:
       resources:
         limits:
           memory: 256M
+    env_file:
+      - .env
     healthcheck:
       test:
         [
@@ -531,6 +561,8 @@ services:
       resources:
         limits:
           memory: 512M
+    env_file:
+      - .env
     healthcheck:
       test:
         [

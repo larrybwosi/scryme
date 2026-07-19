@@ -24,9 +24,35 @@ export async function isSafeUrl(urlString: string): Promise<boolean> {
     }
 
     const hostname = parsedUrl.hostname;
+    const lowerHostname = hostname.toLowerCase();
+
+    // Whitelist check: Allow our own configured storage endpoints even if they point to localhost or private IPs
+    const rustfsEndpoint = process.env.RUSTFS_ENDPOINT;
+    const rustfsPublicUrl = process.env.RUSTFS_PUBLIC_URL;
+
+    if (rustfsEndpoint) {
+      try {
+        const parsedEndpoint = new URL(rustfsEndpoint);
+        if (parsedEndpoint.hostname.toLowerCase() === lowerHostname) {
+          return true;
+        }
+      } catch (e) {
+        // ignore invalid URL configuration
+      }
+    }
+
+    if (rustfsPublicUrl) {
+      try {
+        const parsedPublic = new URL(rustfsPublicUrl);
+        if (parsedPublic.hostname.toLowerCase() === lowerHostname) {
+          return true;
+        }
+      } catch (e) {
+        // ignore invalid URL configuration
+      }
+    }
 
     // Explicitly block string literal localhosts and similar
-    const lowerHostname = hostname.toLowerCase();
     if (
       lowerHostname === "localhost" ||
       lowerHostname === "127.0.0.1" ||

@@ -4,15 +4,15 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dealio</title>
+    <title>Scryme</title>
 
     <style>
       /* SPLASH VARIABLES */
       :root {
-        --splash-primary: #6366f1;
-        --splash-primary-dark: #4f46e5;
-        --splash-glow: rgba(99, 102, 241, 0.15);
-        --splash-glow-intense: rgba(99, 102, 241, 0.3);
+        --splash-primary: #34a853;
+        --splash-primary-dark: #2d944a;
+        --splash-glow: rgba(52, 168, 83, 0.15);
+        --splash-glow-intense: rgba(52, 168, 83, 0.3);
       }
 
       /* SPLASH CONTAINER */
@@ -109,24 +109,21 @@
         animation: icon-glow 3s ease-in-out infinite;
       }
 
-      /* ICON INNER DESIGN - Minimalist Chip/Terminal Symbol */
+      /* ICON INNER DESIGN - Scryme S */
       .brand-icon::before {
-        content: '';
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(255, 255, 255, 0.95);
-        border-radius: 8px;
-        position: relative;
+        content: 'S';
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 44px;
+        font-weight: 800;
+        color: white;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       .brand-icon::after {
-        content: '';
-        position: absolute;
-        width: 12px;
-        height: 12px;
-        background: white;
-        border-radius: 3px;
-        box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+        content: none;
       }
 
       /* BRAND TEXT */
@@ -285,7 +282,7 @@
           <div class="brand-icon"></div>
 
           <div class="brand-text">
-            <span class="brand-name">Dealio</span>
+            <span class="brand-name">Scryme</span>
             <span class="brand-tagline">Enterprise POS</span>
           </div>
         </div>

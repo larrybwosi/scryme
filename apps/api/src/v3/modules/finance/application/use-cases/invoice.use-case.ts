@@ -470,6 +470,75 @@ export class InvoiceUseCase {
     return this.documentService.generateInvoicePDF(invoiceData);
   }
 
+  async getInvoiceDownloadStreamByTransaction(transactionId: string, organizationId: string) {
+    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: transactionId, organizationId },
+      include: {
+        attachments: true,
+        items: true,
+        member: { include: { user: { select: { name: true } } } },
+        location: true,
+        customer: { include: { addresses: true } },
+        payments: true,
+        organization: {
+          include: {
+            settings: true,
+            invoiceConfig: true,
+            receiptConfig: true,
+          },
+        },
+      },
+    });
+
+    if (!transaction) throw new NotFoundException("Transaction not found");
+
+    // Check if we should use V3 templates (if any default invoice template is V3)
+    const templateId =
+      transaction.organization?.settings?.defaultInvoiceTemplate;
+    if (templateId?.startsWith("invoice-v3-")) {
+      const v3Data = Mappers.toV3DocumentData(transaction as any, "invoice");
+
+      let qrCode: string | undefined;
+      try {
+        const QRCode = await import("qrcode");
+        qrCode = await QRCode.toDataURL(transaction.number);
+      } catch (e) {
+        console.error("Failed to generate QR code", e);
+      }
+
+      return this.documentService.generateV3DocumentPDF(
+        templateId,
+        v3Data,
+        qrCode,
+      );
+    }
+
+    const existingDoc = transaction.attachments?.find(
+      (a) =>
+        a.description === "Invoice" &&
+        new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+    );
+
+    if (existingDoc?.fileUrl) {
+      const { storageService } = await import("@repo/shared/storage");
+      return await storageService.getDownloadStream(existingDoc.fileUrl);
+    }
+
+    // Generate and save
+    const { documentService: sharedDocService } = await import(
+      "@repo/shared/lib"
+    );
+    const attachment = await sharedDocService.generateAndSaveInvoice(
+      transactionId,
+      transaction.organizationId,
+      null,
+    );
+
+    const { storageService } = await import("@repo/shared/storage");
+    return await storageService.getDownloadStream(attachment.fileUrl!);
+  }
+
   async getReceiptDownloadStream(transactionId: string, organizationId: string) {
     // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
     const transaction = await this.prisma.client.transaction.findFirst({
@@ -601,5 +670,87 @@ export class InvoiceUseCase {
         organizationId,
       },
     });
+  }
+
+  async generatePublicLink(
+    transactionId: string,
+    organizationId: string,
+    type: "invoice" | "receipt",
+    customExpiryDays: number | null,
+  ) {
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: transactionId, organizationId },
+      include: { attachments: true },
+    });
+
+    if (!transaction) {
+      throw new NotFoundException("Transaction not found");
+    }
+
+    const descPattern = type === "invoice" ? "Invoice" : "Receipt";
+    let existingDoc = transaction.attachments?.find(
+      (a) =>
+        a.description === descPattern &&
+        new Date(a.uploadedAt) >= new Date(transaction.updatedAt) &&
+        !a.expiresAt,
+    );
+
+    if (!existingDoc) {
+      const { documentService: sharedDocService } = await import(
+        "@repo/shared/lib"
+      );
+      if (type === "invoice") {
+        existingDoc = await sharedDocService.generateAndSaveInvoice(
+          transactionId,
+          organizationId,
+          null,
+        );
+      } else {
+        existingDoc = await sharedDocService.generateAndSaveReceipt(
+          transactionId,
+          organizationId,
+          null,
+        );
+      }
+    }
+
+    const { v4: uuidv4 } = await import("uuid");
+    const uuidCode = uuidv4();
+
+    let expiresAt: Date | null = null;
+    if (customExpiryDays !== null && customExpiryDays > 0) {
+      expiresAt = new Date(Date.now() + customExpiryDays * 24 * 60 * 60 * 1000);
+    }
+
+    const defaultAppUrl = "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || defaultAppUrl;
+    const publicUrl = `${appUrl}/s/${uuidCode}`;
+
+    const publicAttachment = await this.prisma.client.attachment.create({
+      data: {
+        organizationId,
+        memberId: existingDoc.memberId,
+        transactionId,
+        fileName: existingDoc.fileName,
+        fileUrl: existingDoc.fileUrl,
+        mimeType: existingDoc.mimeType,
+        isPublic: true,
+        description: `Public ${type === "invoice" ? "Invoice" : "Receipt"} Link`,
+        sizeBytes: existingDoc.sizeBytes,
+        shortCode: uuidCode,
+        shortUrl: publicUrl,
+        expiresAt,
+      },
+    });
+
+    return {
+      id: publicAttachment.id,
+      fileName: publicAttachment.fileName,
+      fileUrl: publicAttachment.fileUrl,
+      shortCode: publicAttachment.shortCode,
+      shortUrl: publicAttachment.shortUrl,
+      expiresAt: publicAttachment.expiresAt,
+      description: publicAttachment.description,
+    };
   }
 }

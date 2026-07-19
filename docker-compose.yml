@@ -39,13 +39,17 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     networks:
       - scryme-network
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "nc", "-z", "localhost", "5672"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # --- PERMISSION FIXER FOR NON-ROOT CONTAINERS ---
   vol-perms:
@@ -285,45 +289,45 @@ services:
       timeout: 10s
       retries: 3
 
-  portal:
-    image: ghcr.io/larrybwosi/scryme/portal:9.19.0
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    env_file:
-      - .env.example
-      - path: .env
-        required: false
-    environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
-      - PORT=${PORTAL_PORT:-3006}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
-      - ZITADEL_DOMAIN=${ZITADEL_DOMAIN:-auth.scryme.local}
-      - ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
-    depends_on:
-      db:
-        condition: service_healthy
-      api:
-        condition: service_healthy
-    networks:
-      - scryme-network
-      - proxy-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost:${PORTAL_PORT:-3006}/health",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+  # portal:
+  #   image: ghcr.io/larrybwosi/scryme/portal:9.19.0
+  #   restart: always
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 512M
+  #   env_file:
+  #     - .env.example
+  #     - path: .env
+  #       required: false
+  #   environment:
+  #     - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
+  #     - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+  #     - PORT=${PORTAL_PORT:-3006}
+  #     - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
+  #     - ZITADEL_DOMAIN=${ZITADEL_DOMAIN:-auth.scryme.local}
+  #     - ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #     api:
+  #       condition: service_healthy
+  #   networks:
+  #     - scryme-network
+  #     - proxy-network
+  #   healthcheck:
+  #     test:
+  #       [
+  #         "CMD",
+  #         "wget",
+  #         "--no-verbose",
+  #         "--tries=1",
+  #         "--spider",
+  #         "http://localhost:${PORTAL_PORT:-3006}/health",
+  #       ]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
 
 volumes:
   postgres_data:

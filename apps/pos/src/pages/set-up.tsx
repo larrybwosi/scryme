@@ -434,8 +434,8 @@ export default function SetupPage() {
         {/* Content */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-10 h-10 bg-blue-600 flex items-center justify-center rounded-none shadow-none">
-              <Store className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-[#34A853] flex items-center justify-center rounded-lg shadow-lg shadow-[#34A853]/20">
+              <span className="text-white font-bold text-2xl font-sans">S</span>
             </div>
             <span className="font-bold text-xl tracking-tight uppercase">Scryme POS</span>
           </div>

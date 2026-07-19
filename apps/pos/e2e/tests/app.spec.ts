@@ -5,5 +5,5 @@ test('has title', async ({ page }) => {
 
   // Expect a title "to contain" a substring.
   // Adjust this expectation based on actual app title
-  await expect(page).toHaveTitle(/Dealio/i);
+  await expect(page).toHaveTitle(/Scryme/i);
 });

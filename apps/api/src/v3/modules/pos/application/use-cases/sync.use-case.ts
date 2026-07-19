@@ -37,7 +37,10 @@ export class SyncUseCase {
       productsPromise,
       this.posCustomerService.getCustomersDelta(ctx.organizationId, lastSync),
       this.prisma.client.category.findMany({
-        where: { organizationId: ctx.organizationId },
+        where: {
+          organizationId: ctx.organizationId,
+          ...(lastSync ? { updatedAt: { gt: new Date(lastSync) } } : {}),
+        },
         select: { id: true, name: true, description: true },
       }),
     ]);

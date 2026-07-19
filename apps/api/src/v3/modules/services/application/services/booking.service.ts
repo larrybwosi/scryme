@@ -428,14 +428,115 @@ export class BookingService {
   }
 
   async getBookings(orgId: string) {
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced broad Prisma 'include' with a targeted 'select' block
+     * to avoid over-fetching heavy fields (such as service description/customFields) and unused
+     * relational columns. This reduces database I/O, network payload size, and NestJS/Prisma
+     * serialization overhead.
+     */
     return this.prisma.client.serviceBooking.findMany({
       where: { organizationId: orgId },
-      include: {
-        service: true,
-        customer: true,
-        staff: { include: { member: { include: { user: true } } } },
-        resources: { include: { resource: true } }
-      }
+      select: {
+        id: true,
+        locationId: true,
+        organizationId: true,
+        serviceId: true,
+        customerId: true,
+        status: true,
+        scheduledStartTime: true,
+        scheduledEndTime: true,
+        actualStartTime: true,
+        actualEndTime: true,
+        notes: true,
+        customFields: true,
+        serviceName: true,
+        price: true,
+        pricingModel: true,
+        recurrenceId: true,
+        transactionId: true,
+        createdAt: true,
+        updatedAt: true,
+        service: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            organizationId: true,
+            categoryId: true,
+            pricingModel: true,
+            price: true,
+            minPrice: true,
+            requiresDeposit: true,
+            depositAmount: true,
+            depositType: true,
+            estimatedDuration: true,
+            bufferTimeBefore: true,
+            bufferTimeAfter: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            company: true,
+            customerType: true,
+            dateOfBirth: true,
+            loyaltyPoints: true,
+            taxId: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            createdById: true,
+            updatedById: true,
+            creationType: true,
+            defaultLocationId: true,
+            organizationId: true,
+            businessAccountId: true,
+            crmRecordId: true,
+          },
+        },
+        staff: {
+          select: {
+            id: true,
+            bookingId: true,
+            memberId: true,
+            member: {
+              select: {
+                id: true,
+                organizationId: true,
+                role: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        resources: {
+          select: {
+            id: true,
+            bookingId: true,
+            resourceId: true,
+            resource: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                isActive: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 

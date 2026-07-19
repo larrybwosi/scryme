@@ -155,6 +155,36 @@ export class PublicInvoiceController {
     return new StreamableFile(stream);
   }
 
+  @Get("transactions/:transactionId/download")
+  @ApiOperation({ summary: "Download invoice PDF by transaction ID" })
+  async downloadInvoiceByTransaction(
+    @Param("transactionId") transactionId: string,
+    @Query("token") token: string,
+    @Res({ passthrough: true }) res: Fastify.FastifyReply,
+  ) {
+    if (!token) throw new UnauthorizedException("Token required");
+    const payload = verifyDocumentToken(token);
+
+    if (
+      !payload ||
+      payload.type !== "invoice" ||
+      payload.id !== transactionId
+    ) {
+      throw new ForbiddenException("Invalid or expired link");
+    }
+
+    const stream = await this.invoiceUseCase.getInvoiceDownloadStreamByTransaction(
+      transactionId,
+      payload.orgId,
+    );
+    res.header("Content-Type", "application/pdf");
+    res.header(
+      "Content-Disposition",
+      `attachment; filename=invoice-${transactionId}.pdf`,
+    );
+    return new StreamableFile(stream);
+  }
+
   @Get("receipts/:transactionId/download")
   @ApiOperation({ summary: "Download receipt PDF" })
   async downloadReceipt(
@@ -183,5 +213,33 @@ export class PublicInvoiceController {
       `attachment; filename=receipt-${transactionId}.pdf`,
     );
     return new StreamableFile(stream);
+  }
+
+  @Post("transactions/:transactionId/generate-public-link")
+  @ApiOperation({ summary: "Generate public link with custom expiry" })
+  async generatePublicLink(
+    @Param("transactionId") transactionId: string,
+    @Query("token") token: string,
+    @Body() body: { type?: "invoice" | "receipt"; customExpiryDays?: number | null },
+  ) {
+    if (!token) throw new UnauthorizedException("Token required");
+    const payload = verifyDocumentToken(token);
+
+    const type = body.type || "invoice";
+
+    if (
+      !payload ||
+      payload.type !== type ||
+      payload.id !== transactionId
+    ) {
+      throw new ForbiddenException("Invalid or expired token");
+    }
+
+    return this.invoiceUseCase.generatePublicLink(
+      transactionId,
+      payload.orgId,
+      type,
+      body.customExpiryDays !== undefined ? body.customExpiryDays : 7,
+    );
   }
 }

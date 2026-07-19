@@ -39,9 +39,9 @@
     "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",
     "rrule": "^2.8.1",
+    "socket.io-client": "^4.8.3",
     "tsup": "^8.5.1",
-    "zod": "^4.4.3",
-    "socket.io-client": "^4.8.3"
+    "zod": "^4.4.3"
   },
   "pnpm": {
     "overrides": {
@@ -51,6 +51,19 @@
       "@types/react-dom": "19.2.3",
       "react": "19.2.6",
       "react-dom": "19.2.6"
-    }
+    },
+    "ignoredBuiltDependencies": [
+      "@prisma/engines",
+      "@scarf/scarf",
+      "@sentry/cli",
+      "@swc/core",
+      "argon2",
+      "core-js",
+      "esbuild",
+      "msgpackr-extract",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
