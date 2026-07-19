@@ -1,5 +1,11 @@
 # web
 
+## 6.24.0
+
+### Minor Changes
+
+- afb85da: Update
+
 ## 6.23.0
 
 ### Minor Changes
