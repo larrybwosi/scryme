@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --port 3005",
-    "build": "next build --webpack",
+    "build": "next build",
     "start": "next start --port 3005",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit"

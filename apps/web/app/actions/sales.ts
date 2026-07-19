@@ -406,23 +406,36 @@ export async function addPayment(
     },
   });
 
-  // Generation of invoice and receipt on payment
-  const { documentService } = await import("@repo/shared/lib");
+  // Generation of invoice and receipt on payment via API delegation
   try {
+    const { generateDocumentToken } = await import("@repo/shared/api/v2");
+    const defaultApiUrl = "http://localhost:3002";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+
+    const invoiceToken = generateDocumentToken(
+      "invoice",
+      transactionId,
+      auth.organizationId!,
+    );
+    const receiptToken = generateDocumentToken(
+      "receipt",
+      transactionId,
+      auth.organizationId!,
+    );
+
     await Promise.all([
-      documentService.generateAndSaveInvoice(
-        transactionId,
-        auth.organizationId!,
-        auth.memberId!,
+      fetch(
+        `${apiUrl}/api/v3/public-invoices/transactions/${transactionId}/download?token=${invoiceToken}`,
       ),
-      documentService.generateAndSaveReceipt(
-        transactionId,
-        auth.organizationId!,
-        auth.memberId!,
+      fetch(
+        `${apiUrl}/api/v3/public-invoices/receipts/${transactionId}/download?token=${receiptToken}`,
       ),
     ]);
   } catch (err) {
-    console.error("Failed to generate documents on payment:", err);
+    console.error(
+      "Failed to trigger generation of documents on payment via API:",
+      err,
+    );
   }
 
   revalidatePath("/sales/transactions");
@@ -454,25 +467,77 @@ export async function generateDocumentAction(
     return { success: true, alreadyExists: true };
   }
 
-  const { documentService } = await import("@repo/shared/lib");
+  try {
+    const { generateDocumentToken } = await import("@repo/shared/api/v2");
+    const defaultApiUrl = "http://localhost:3002";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 
-  if (type === "invoice") {
-    await documentService.generateAndSaveInvoice(
+    const token = generateDocumentToken(
+      type,
       transactionId,
       auth.organizationId!,
-      auth.memberId!,
     );
-  } else {
-    await documentService.generateAndSaveReceipt(
-      transactionId,
-      auth.organizationId!,
-      auth.memberId!,
-    );
+    const fetchUrl =
+      type === "invoice"
+        ? `${apiUrl}/api/v3/public-invoices/transactions/${transactionId}/download?token=${token}`
+        : `${apiUrl}/api/v3/public-invoices/receipts/${transactionId}/download?token=${token}`;
+
+    const res = await fetch(fetchUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to generate ${type} on API: ${res.statusText}`);
+    }
+  } catch (err) {
+    console.error(`Failed to generate document ${type} via API:`, err);
+    throw err;
   }
 
   revalidatePath("/sales/transactions");
   revalidatePath(`/sales/transactions/${transactionId}`);
   return { success: true };
+}
+
+export async function generatePublicLinkAction(
+  transactionId: string,
+  type: "invoice" | "receipt",
+  customExpiryDays: number | null,
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  try {
+    const { generateDocumentToken } = await import("@repo/shared/api/v2");
+    const defaultApiUrl = "http://localhost:3002";
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+
+    const token = generateDocumentToken(
+      type,
+      transactionId,
+      auth.organizationId!,
+    );
+    const fetchUrl = `${apiUrl}/api/v3/public-invoices/transactions/${transactionId}/generate-public-link?token=${token}`;
+
+    const res = await fetch(fetchUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ type, customExpiryDays }),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(
+        `Failed to generate public link on API: ${res.statusText} - ${errorText}`,
+      );
+    }
+
+    const data = await res.json();
+    revalidatePath("/sales/transactions");
+    revalidatePath(`/sales/transactions/${transactionId}`);
+    return { success: true, data };
+  } catch (err) {
+    console.error(`Failed to generate public link for ${type} via API:`, err);
+    throw err;
+  }
 }
 
 export async function getFulfillments(params: {

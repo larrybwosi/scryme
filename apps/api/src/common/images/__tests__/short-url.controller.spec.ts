@@ -175,4 +175,58 @@ describe("ShortUrlController", () => {
       "public, max-age=31536000, immutable",
     );
   });
+
+  it("should set Content-Disposition to attachment if download parameter is provided", async () => {
+    const mockAttachment = {
+      id: "att-1",
+      organizationId: "org-1",
+      mimeType: "application/pdf",
+      fileName: "test.pdf",
+      isPublic: true,
+    };
+    mockRedis.get.mockResolvedValue(null);
+    mockPrisma.client.attachment.findUnique.mockResolvedValue(mockAttachment);
+    mockRedis.get.mockResolvedValueOnce(null); // Settings cache
+    mockPrisma.client.organizationSettings.findUnique.mockResolvedValue({
+      forcePrivateAttachments: false,
+    });
+
+    const res = {
+      header: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    };
+
+    await controller.handleShortUrl("short123", {} as any, res as any, undefined, undefined, undefined, undefined, "true");
+
+    expect(res.header).toHaveBeenCalledWith(
+      "Content-Disposition",
+      'attachment; filename="test.pdf"',
+    );
+  });
+
+  it("should block access and return custom GONE page for expired link", async () => {
+    const mockAttachment = {
+      id: "att-1",
+      organizationId: "org-1",
+      mimeType: "application/pdf",
+      fileName: "test.pdf",
+      isPublic: true,
+      expiresAt: new Date(Date.now() - 1000 * 60), // Expired 1 minute ago
+    };
+    mockRedis.get.mockResolvedValue(null);
+    mockPrisma.client.attachment.findUnique.mockResolvedValue(mockAttachment);
+
+    const res = {
+      header: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    };
+
+    await controller.handleShortUrl("short123", {} as any, res as any);
+
+    expect(res.header).toHaveBeenCalledWith("Content-Type", "text/html");
+    expect(res.status).toHaveBeenCalledWith(HttpStatus.GONE);
+    expect(res.send).toHaveBeenCalledWith(expect.stringContaining("This document link has expired"));
+  });
 });

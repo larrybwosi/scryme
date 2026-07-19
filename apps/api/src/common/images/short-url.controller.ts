@@ -39,6 +39,7 @@ export class ShortUrlController {
     @Query("h") h?: string,
     @Query("q") q?: string,
     @Query("fm") fm?: string,
+    @Query("download") download?: string,
   ) {
     try {
       const cacheKey = `attachment:${shortCode}`;
@@ -62,7 +63,82 @@ export class ShortUrlController {
         return res.status(HttpStatus.NOT_FOUND).send("Link not found");
       }
 
-      const { organizationId, mimeType, id: attachmentId, isPublic } = attachment;
+      // Check for link expiration
+      if (attachment.expiresAt && new Date(attachment.expiresAt) < new Date()) {
+        res.header("Content-Type", "text/html");
+        return res.status(HttpStatus.GONE).send(`
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Link Expired - Scryme</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #fafafa;
+      color: #1a1a1a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      padding: 2.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      border: 1px solid #eaeaea;
+    }
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #e11d48;
+    }
+    p {
+      font-size: 0.95rem;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 1.5rem;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #18181b;
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .btn:hover {
+      background-color: #27272a;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Link Expired</h1>
+    <p>This document link has expired or is no longer valid. Please request a new link from the organization.</p>
+    <a href="https://scryme.tech" class="btn">Go to Scryme</a>
+  </div>
+</body>
+</html>
+        `);
+      }
+
+      const {
+        organizationId,
+        mimeType,
+        id: attachmentId,
+        isPublic,
+      } = attachment;
 
       // 1. Check Authorization for private attachments
       // We check organization settings for forced privacy or if the attachment itself is private
@@ -149,11 +225,16 @@ export class ShortUrlController {
           mimeType: string;
         }>(fileCacheKey);
 
+        const disposition =
+          download === "true" || download === "1" || download === ""
+            ? "attachment"
+            : "inline";
+
         res.header("Content-Type", mimeType);
         res.header("Cache-Control", cacheControl);
         res.header(
           "Content-Disposition",
-          `inline; filename="${attachment.fileName || "file"}"`,
+          `${disposition}; filename="${attachment.fileName || "file"}"`,
         );
 
         if (cachedFile) {

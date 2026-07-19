@@ -1,7 +1,24 @@
-import { Pool } from "pg";
+import { Pool, Client } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/client";
 import { env } from "@repo/env";
+
+// Monkey-patch pg.Client.prototype.query to avoid deprecation warnings in @prisma/adapter-pg
+const originalQuery = Client.prototype.query;
+(Client.prototype as any).query = function (
+  this: any,
+  config: any,
+  values: any,
+  callback: any,
+  ...args: any[]
+) {
+  if (config && typeof config === "object" && Array.isArray(values)) {
+    if (config.values === values) {
+      return (originalQuery as any).call(this, config, callback);
+    }
+  }
+  return (originalQuery as any).apply(this, [config, values, callback, ...args]);
+};
 
 const globalForPrisma = global as unknown as {
   prisma: PrismaClient;
