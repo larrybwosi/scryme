@@ -9,6 +9,7 @@ model Customer {
   loyaltyPoints Int     @default(0)
   taxId         String? // KRA PIN for Kenyan customers
   isActive      Boolean @default(true)
+  customId      String?
 
   // Timestamps
   createdAt DateTime @default(now())
@@ -59,6 +60,7 @@ model Customer {
   @@index([name])
   @@index([email])
   @@index([organizationId])
+  @@index([customId])
 }
 
 // ===================================

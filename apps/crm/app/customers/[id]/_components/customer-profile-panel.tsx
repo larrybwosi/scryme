@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Mail,
   Phone,
@@ -14,11 +14,25 @@ import {
   User,
   Building2,
   Tag,
+  Clock,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CustomerWithRelations } from '@/lib/types';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatCurrency } from '@/lib/utils';
+import { formatDistanceToNow } from 'date-fns';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@repo/ui/components/ui/sheet';
+import { CustomerForm } from '../../_components/customer-form';
+import useSWR from 'swr';
+import { getLocations } from '../../../actions/customers';
+import { useOrg } from '../../../../components/org-context';
+import { useRouter } from 'next/navigation';
 
 interface CustomerProfilePanelProps {
   customer: CustomerWithRelations;
@@ -55,6 +69,17 @@ function HealthRing({ score }: { score: number }) {
 }
 
 export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
+  const { organizationId } = useOrg();
+  const router = useRouter();
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
+  const { data: locations = [] } = useSWR(
+    organizationId ? ['locations-for-select', organizationId] : null,
+    () => getLocations(organizationId)
+  );
+
+  const defaultBranch = locations.find((loc: any) => loc.id === customer.defaultLocationId);
+
   const initials = customer.name
     .split(' ')
     .map((n) => n[0])
@@ -93,6 +118,17 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
     ? `${defaultAddress.street1}${defaultAddress.street2 ? `, ${defaultAddress.street2}` : ''}, ${defaultAddress.city}, ${defaultAddress.country}`
     : 'No address provided';
 
+  const acquisitionChannelLabels: Record<string, string> = {
+    MEMBER_CREATED: 'Member Created',
+    SELF_REGISTERED: 'Self Registered',
+    IMPORTED: 'Imported',
+    API_CREATED: 'API Created',
+    OTHER: 'Other',
+  };
+
+  const formattedAcquisition = acquisitionChannelLabels[customer.creationType || 'MEMBER_CREATED'] || 'Member Created';
+  const timeAgo = formatDistanceToNow(new Date(customer.createdAt), { addSuffix: true });
+
   return (
     <aside className="w-[300px] flex-shrink-0 flex flex-col gap-4">
       {/* Identity Card */}
@@ -101,13 +137,51 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
           <div className="w-14 h-14 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xl">
             {initials}
           </div>
-          <button className="p-2 rounded-lg border border-border hover:bg-accent transition-colors">
+          <button
+            onClick={() => setIsEditOpen(true)}
+            className="p-2 rounded-lg border border-border hover:bg-accent transition-colors"
+          >
             <Edit2 size={13} className="text-muted-foreground" />
           </button>
         </div>
 
+        <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
+          <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Edit Customer</SheetTitle>
+            </SheetHeader>
+            <CustomerForm
+              initialData={{
+                id: customer.id,
+                name: customer.name,
+                email: customer.email || '',
+                phone: customer.phone || '',
+                company: customer.company || '',
+                customerType: customer.customerType || 'B2C',
+                taxId: customer.taxId || '',
+                isActive: customer.isActive,
+                deliveryNotes: customer.deliveryNotes || '',
+                customId: customer.customId || '',
+                creationType: customer.creationType || 'MEMBER_CREATED',
+                defaultLocationId: customer.defaultLocationId || '',
+              }}
+              onSuccess={() => {
+                setIsEditOpen(false);
+                router.refresh();
+              }}
+            />
+          </SheetContent>
+        </Sheet>
+
         <div className="mb-3">
-          <h2 className="text-[16px] font-bold text-foreground">{customer.name}</h2>
+          <h2 className="text-[16px] font-bold text-foreground flex items-center gap-2 flex-wrap">
+            {customer.name}
+            {customer.customId && (
+              <span className="text-[11px] font-mono bg-primary/10 text-primary px-2 py-0.5 rounded-md font-semibold">
+                {customer.customId}
+              </span>
+            )}
+          </h2>
           <div className="flex items-center gap-1.5 mt-1">
             <Building2 size={12} className="text-muted-foreground" />
             <span className="text-[12.5px] text-muted-foreground">{customer.company || 'Private'}</span>
@@ -136,6 +210,31 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
               {addressString}
             </span>
           </div>
+          {defaultBranch && (
+            <div className="flex items-center gap-2.5 text-[12.5px]">
+              <ExternalLink size={13} className="text-muted-foreground flex-shrink-0" />
+              <span className="text-muted-foreground">
+                Default Branch: <span className="font-semibold text-foreground">{defaultBranch.name}</span>
+              </span>
+            </div>
+          )}
+          <div className="flex items-start gap-2.5 text-[12.5px] border-t border-border/60 pt-2.5 mt-2">
+            <Clock size={13} className="text-muted-foreground flex-shrink-0 mt-0.5" />
+            <div className="text-[12px]">
+              <div className="text-muted-foreground">
+                Acquired: <span className="font-semibold text-foreground">{formattedAcquisition}</span>
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                Registered {timeAgo}
+              </div>
+            </div>
+          </div>
+          {customer.deliveryNotes && (
+            <div className="text-[12px] bg-amber-500/10 text-amber-600 dark:text-amber-500 border border-amber-500/20 rounded-lg p-2.5 mt-2.5">
+              <span className="font-semibold block mb-0.5">Delivery Notes:</span>
+              <span className="text-muted-foreground line-clamp-3">{customer.deliveryNotes}</span>
+            </div>
+          )}
         </div>
 
         {/* Tags */}

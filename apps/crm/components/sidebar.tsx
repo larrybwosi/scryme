@@ -230,10 +230,14 @@ export function Sidebar() {
     });
   };
 
-  const userInitials = session?.user?.name
-    ? session.user.name
+  const displayName = member?.user?.name || session?.user?.name || 'User';
+  const displayEmail = member?.user?.email || session?.user?.email || '';
+  const displayRole = member?.jobTitle || (member?.role === 'OWNER' ? 'Owner' : 'Member');
+
+  const userInitials = displayName
+    ? displayName
         .split(' ')
-        .map((n) => n[0])
+        .map((n: string) => n[0])
         .join('')
         .toUpperCase()
         .substring(0, 2)
@@ -356,10 +360,13 @@ export function Sidebar() {
           <>
             <div className="flex-1 min-w-0">
               <div className="text-[12px] font-semibold text-sidebar-foreground/85 truncate leading-none">
-                {session?.user?.name || 'User'}
+                {displayName}
               </div>
-              <div className="text-[10.5px] text-sidebar-foreground/40 mt-0.5 leading-none truncate">
-                {member?.jobTitle || (member?.role === 'OWNER' ? 'Owner' : 'Member')}
+              <div className="text-[10px] text-sidebar-foreground/40 mt-1 leading-none truncate">
+                {displayEmail}
+              </div>
+              <div className="text-[10px] text-primary/70 mt-0.5 leading-none truncate font-medium">
+                {displayRole}
               </div>
             </div>
             <button

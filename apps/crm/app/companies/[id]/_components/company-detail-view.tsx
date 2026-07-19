@@ -15,6 +15,18 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/component
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@repo/ui/components/ui/dialog';
 import { CustomerForm } from '../../../customers/_components/customer-form';
 import { createInvoiceAction } from '@/app/actions/invoices';
+import { CalendarIcon } from 'lucide-react';
+import { Button } from '@repo/ui/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui/components/ui/select';
+import { Calendar as CalendarComponent } from '@repo/ui/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
+import { format } from 'date-fns';
 
 interface CompanyDetailViewProps {
   company: any;
@@ -317,37 +329,40 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
                   <p className="text-sm text-muted-foreground">
                      This company does not have any contacts yet. Please add a contact first before creating an invoice.
                   </p>
-                  <button
+                  <Button
                      onClick={() => {
                         setIsNewInvoiceOpen(false);
                         setIsAddContactOpen(true);
                      }}
-                     className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 transition-colors"
+                     className="px-4 py-2 text-xs font-semibold"
                   >
                      Add Contact
-                  </button>
+                  </Button>
                </div>
             ) : (
                <div className="space-y-4 py-2">
                   <div>
-                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1.5">
                         Select Contact *
                      </label>
-                     <select
+                     <Select
                         value={selectedContactId}
-                        onChange={(e) => setSelectedContactId(e.target.value)}
-                        className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                        onValueChange={(val) => setSelectedContactId(val)}
                      >
-                        <option value="">Select a contact...</option>
-                        {contacts.map((c: any) => (
-                           <option key={c.id} value={c.id}>
-                              {c.name} ({c.email || 'No email'})
-                           </option>
-                        ))}
-                     </select>
+                        <SelectTrigger className="w-full h-9 bg-background">
+                           <SelectValue placeholder="Select a contact..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                           {contacts.map((c: any) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                 {c.name} ({c.email || 'No email'})
+                              </SelectItem>
+                           ))}
+                        </SelectContent>
+                     </Select>
                   </div>
                   <div>
-                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1.5">
                         Description *
                      </label>
                      <input
@@ -359,7 +374,7 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                      <div>
-                        <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                        <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1.5">
                            Amount ($) *
                         </label>
                         <input
@@ -371,36 +386,84 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
                         />
                      </div>
                      <div>
-                        <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                        <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1.5">
                            Issue Date *
                         </label>
-                        <input
-                           type="date"
-                           value={invoicePostingDate}
-                           onChange={(e) => setInvoicePostingDate(e.target.value)}
-                           className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-                        />
+                        <Popover>
+                           <PopoverTrigger asChild>
+                              <Button
+                                 variant="outline"
+                                 className={cn(
+                                    "w-full justify-start text-left font-normal text-sm h-9 px-3",
+                                    !invoicePostingDate && "text-muted-foreground"
+                                 )}
+                              >
+                                 <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                                 {invoicePostingDate ? format(new Date(invoicePostingDate), "PPP") : <span>Pick a date</span>}
+                              </Button>
+                           </PopoverTrigger>
+                           <PopoverContent className="w-auto p-0" align="start">
+                              <CalendarComponent
+                                 mode="single"
+                                 selected={invoicePostingDate ? new Date(invoicePostingDate) : undefined}
+                                 onSelect={(date) => {
+                                    if (date) {
+                                       const yyyy = date.getFullYear();
+                                       const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                       const dd = String(date.getDate()).padStart(2, '0');
+                                       setInvoicePostingDate(`${yyyy}-${mm}-${dd}`);
+                                    }
+                                 }}
+                                 initialFocus
+                              />
+                           </PopoverContent>
+                        </Popover>
                      </div>
                   </div>
                   <div>
-                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1">
+                     <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1.5">
                         Due Date
                      </label>
-                     <input
-                        type="date"
-                        value={invoiceDueDate}
-                        onChange={(e) => setInvoiceDueDate(e.target.value)}
-                        className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-                     />
+                     <Popover>
+                        <PopoverTrigger asChild>
+                           <Button
+                              variant="outline"
+                              className={cn(
+                                 "w-full justify-start text-left font-normal text-sm h-9 px-3",
+                                 !invoiceDueDate && "text-muted-foreground"
+                              )}
+                           >
+                              <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                              {invoiceDueDate ? format(new Date(invoiceDueDate), "PPP") : <span>Pick a date</span>}
+                           </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                           <CalendarComponent
+                              mode="single"
+                              selected={invoiceDueDate ? new Date(invoiceDueDate) : undefined}
+                              onSelect={(date) => {
+                                 if (date) {
+                                    const yyyy = date.getFullYear();
+                                    const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                    const dd = String(date.getDate()).padStart(2, '0');
+                                    setInvoiceDueDate(`${yyyy}-${mm}-${dd}`);
+                                 } else {
+                                    setInvoiceDueDate('');
+                                 }
+                              }}
+                              initialFocus
+                           />
+                        </PopoverContent>
+                     </Popover>
                   </div>
                   <DialogFooter className="pt-4">
-                     <button
+                     <Button
                         onClick={handleInvoiceCreate}
                         disabled={isInvoiceSubmitting || !selectedContactId || !invoiceItemName.trim() || !invoiceAmount}
-                        className="px-5 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:bg-primary/90 disabled:opacity-40 transition-colors ml-auto"
+                        className="px-5 py-2 font-semibold h-9 ml-auto"
                      >
                         {isInvoiceSubmitting ? 'Creating...' : 'Create Invoice'}
-                     </button>
+                     </Button>
                   </DialogFooter>
                </div>
             )}
