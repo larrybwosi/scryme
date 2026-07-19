@@ -1038,19 +1038,23 @@ export function WorkflowEditor({ workflow, organizationId }: WorkflowEditorProps
             <p className="text-[12px] text-muted-foreground">
               Select a customer to run through this workflow sequentially. Placeholders like <code className="font-mono bg-muted p-0.5 rounded text-[11px]">{`{customer.name}`}</code> will be dynamically resolved.
             </p>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">Select Test Customer</label>
-              <select
+              <Select
                 value={selectedCustomerId}
-                onChange={(e) => setSelectedCustomerId(e.target.value)}
-                className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                onValueChange={(val) => setSelectedCustomerId(val)}
               >
-                {customersList.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.email || 'No email'})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full h-9 bg-background">
+                  <SelectValue placeholder="Select a customer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customersList.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} ({c.email || 'No email'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex justify-end pt-2">
               <Button onClick={handleRunSimulation} disabled={isSimulating || customersList.length === 0}>
