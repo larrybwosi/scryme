@@ -1,5 +1,11 @@
 # crm
 
+## 7.25.0
+
+### Minor Changes
+
+- 429ad2e: Update
+
 ## 7.24.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # api
 
+## 6.25.0
+
+### Minor Changes
+
+- 429ad2e: Update
+
 ## 6.24.0
 
 ### Minor Changes
