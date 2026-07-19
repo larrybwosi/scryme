@@ -102,8 +102,12 @@ export class ProcessSaleUseCase {
   }
 
   private prepI(items: any[], variants: any[], organizationId: string) {
+    // ⚡ Bolt Optimization: Use a Map for O(1) constant-time variant lookups.
+    // This reduces lookup complexity from O(N*M) nested search to O(N+M) mapping.
+    const variantMap = new Map(variants.map((v) => [v.id, v]));
+
     return items.map((i) => {
-      const v = variants.find((v) => v.id === i.variantId)!;
+      const v = variantMap.get(i.variantId)!;
       const p = Number(v.retailPrice || 0);
       return {
         variantId: v.id,
