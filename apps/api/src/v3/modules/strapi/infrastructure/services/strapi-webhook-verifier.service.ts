@@ -36,13 +36,18 @@ export class StrapiWebhookVerifierService {
       .update(rawBody)
       .digest("hex");
 
-    const sigBuffer = Buffer.from(signature, "hex");
-    const expBuffer = Buffer.from(expected, "hex");
+    // Use SHA-256 pre-hashing to ensure both buffers have identical length,
+    // preventing timing attacks and leakage of the secret signature length.
+    const expectedHash = crypto
+      .createHash("sha256")
+      .update(expected)
+      .digest();
+    const actualHash = crypto
+      .createHash("sha256")
+      .update(signature)
+      .digest();
 
-    if (
-      sigBuffer.length !== expBuffer.length ||
-      !crypto.timingSafeEqual(sigBuffer, expBuffer)
-    ) {
+    if (!crypto.timingSafeEqual(expectedHash, actualHash)) {
       this.logger.warn(`Strapi webhook signature mismatch. Received: ${signature}`);
       throw new UnauthorizedException("Invalid Strapi webhook signature");
     }
