@@ -31,6 +31,14 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@repo/ui/components/ui/dialog";
+import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -100,7 +108,7 @@ export default function WorkflowsPage() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
     null,
   );
-  const [isProvisionSheetOpen, setIsProvisionSheetOpen] = useState(false);
+  const [isProvisionDialogOpen, setIsProvisionDialogOpen] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
   const [isProvisioning, setIsProvisioning] = useState(false);
@@ -178,7 +186,7 @@ export default function WorkflowsPage() {
 
       if (response.success) {
         toast.success("Workflow provisioned successfully");
-        setIsProvisionSheetOpen(false);
+        setIsProvisionDialogOpen(false);
         mutateWorkflows(); // Refresh workflows list
       } else {
         toast.error(response.error || "Failed to provision workflow");
@@ -280,7 +288,7 @@ export default function WorkflowsPage() {
     }
 
     setConfigValues(initialValues);
-    setIsProvisionSheetOpen(true);
+    setIsProvisionDialogOpen(true);
   };
 
   // Group fields by their "group" property
@@ -500,26 +508,28 @@ export default function WorkflowsPage() {
         </Table>
       </div>
 
-      {/* Provisioning Sheet */}
-      <Sheet open={isProvisionSheetOpen} onOpenChange={setIsProvisionSheetOpen}>
-        <SheetContent className="sm:max-w-[550px] overflow-y-auto">
-          <SheetHeader className="space-y-4">
+      {/* Provisioning Dialog */}
+      <Dialog
+        open={isProvisionDialogOpen}
+        onOpenChange={setIsProvisionDialogOpen}>
+        <DialogContent className="sm:max-w-[550px] overflow-y-auto">
+          <DialogHeader className="space-y-4">
             <div className="flex items-center gap-2 text-[#34A853]">
               <Settings className="w-5 h-5" />
               <span className="text-xs font-bold uppercase tracking-wider">
                 Workflow Configuration
               </span>
             </div>
-            <SheetTitle className="text-2xl font-bold">
+            <DialogTitle className="text-2xl font-bold">
               {selectedWorkflow?.isProvisioned
                 ? "Edit Settings"
                 : "Provision Workflow"}
-            </SheetTitle>
-            <SheetDescription className="text-base">
+            </DialogTitle>
+            <DialogDescription className="text-base">
               Configure <strong>{selectedWorkflow?.name}</strong> to match your
               organization&apos;s needs.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="py-8 space-y-10">
             {Object.entries(groupedFields).map(([groupName, fields]) => (
@@ -624,10 +634,10 @@ export default function WorkflowsPage() {
             ))}
           </div>
 
-          <SheetFooter className="pt-6 border-t mt-auto">
+          <DialogFooter className="pt-6 border-t mt-auto">
             <Button
               variant="ghost"
-              onClick={() => setIsProvisionSheetOpen(false)}
+              onClick={() => setIsProvisionDialogOpen(false)}
               className="px-6">
               Cancel
             </Button>
@@ -644,11 +654,11 @@ export default function WorkflowsPage() {
                 ? "Update Configuration"
                 : "Activate Workflow"}
             </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* History Sheet */}
+      {/* History Dialog */}
       <Sheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen}>
         <SheetContent className="sm:max-w-[700px] overflow-y-auto">
           <SheetHeader className="pb-6 border-b">

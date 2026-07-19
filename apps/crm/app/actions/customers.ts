@@ -1,9 +1,9 @@
-'use server';
+"use server";
 
-import { db } from '@repo/db';
-import { customerSchema, type CustomerFormValues } from '../../lib/validations';
-import { revalidatePath } from 'next/cache';
-import { realtimeService } from '@repo/shared/realtime';
+import { db } from "@repo/db";
+import { customerSchema, type CustomerFormValues } from "../../lib/validations";
+import { revalidatePath } from "next/cache";
+import { realtimeService } from "@repo/shared/realtime";
 
 export async function getLocations(organizationId: string): Promise<any[]> {
   try {
@@ -13,33 +13,40 @@ export async function getLocations(organizationId: string): Promise<any[]> {
         isActive: true,
       },
       orderBy: {
-        name: 'asc',
+        name: "asc",
       },
     });
   } catch (error) {
-    console.error('Error fetching locations:', error);
+    console.error("Error fetching locations:", error);
     return [];
   }
 }
 
-export async function getCustomerIdSettings(organizationId: string): Promise<any> {
+export async function getCustomerIdSettings(
+  organizationId: string,
+): Promise<any> {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { customFields: true }
+    select: { customFields: true },
   });
   const customFields = org?.customFields as any;
-  return customFields?.customerIdSettings || {
-    autoGenerate: false,
-    prefix: 'CUST-',
-    sequence: 1001,
-  };
+  return (
+    customFields?.customerIdSettings || {
+      autoGenerate: false,
+      prefix: "CUST-",
+      sequence: 1001,
+    }
+  );
 }
 
-export async function saveCustomerIdSettings(organizationId: string, settings: any): Promise<any> {
+export async function saveCustomerIdSettings(
+  organizationId: string,
+  settings: any,
+): Promise<any> {
   try {
     const org = await db.organization.findUnique({
       where: { id: organizationId },
-      select: { customFields: true }
+      select: { customFields: true },
     });
     const customFields = (org?.customFields || {}) as any;
     await db.organization.update({
@@ -49,11 +56,11 @@ export async function saveCustomerIdSettings(organizationId: string, settings: a
           ...customFields,
           customerIdSettings: {
             autoGenerate: settings.autoGenerate,
-            prefix: settings.prefix || 'CUST-',
+            prefix: settings.prefix || "CUST-",
             sequence: parseInt(settings.sequence) || 1001,
-          }
-        }
-      }
+          },
+        },
+      },
     });
     return { success: true };
   } catch (error: any) {
@@ -61,17 +68,19 @@ export async function saveCustomerIdSettings(organizationId: string, settings: a
   }
 }
 
-export async function generateNextCustomId(organizationId: string): Promise<string | null> {
+export async function generateNextCustomId(
+  organizationId: string,
+): Promise<string | null> {
   const org = await db.organization.findUnique({
     where: { id: organizationId },
-    select: { customFields: true }
+    select: { customFields: true },
   });
   if (!org) return null;
   const customFields = org.customFields as any;
   const settings = customFields?.customerIdSettings;
   if (!settings || !settings.autoGenerate) return null;
 
-  const prefix = settings.prefix || 'CUST-';
+  const prefix = settings.prefix || "CUST-";
   const sequence = settings.sequence || 1001;
   const nextSequence = sequence + 1;
 
@@ -82,16 +91,19 @@ export async function generateNextCustomId(organizationId: string): Promise<stri
         ...customFields,
         customerIdSettings: {
           ...settings,
-          sequence: nextSequence
-        }
-      }
-    }
+          sequence: nextSequence,
+        },
+      },
+    },
   });
 
   return `${prefix}${sequence}`;
 }
 
-export async function createCustomer(data: CustomerFormValues, organizationId: string): Promise<any> {
+export async function createCustomer(
+  data: CustomerFormValues,
+  organizationId: string,
+): Promise<any> {
   try {
     const validatedData = customerSchema.parse(data);
     let finalCustomId = validatedData.customId;
@@ -104,13 +116,19 @@ export async function createCustomer(data: CustomerFormValues, organizationId: s
 
     const cleanData = {
       ...validatedData,
-      phone: validatedData.phone === '' ? null : validatedData.phone || null,
-      company: validatedData.company === '' ? null : validatedData.company || null,
-      taxId: validatedData.taxId === '' ? null : validatedData.taxId || null,
-      deliveryNotes: validatedData.deliveryNotes === '' ? null : validatedData.deliveryNotes || null,
-      defaultLocationId: (validatedData.defaultLocationId === '' || validatedData.defaultLocationId === 'none')
-        ? null
-        : validatedData.defaultLocationId || null,
+      phone: validatedData.phone === "" ? null : validatedData.phone || null,
+      company:
+        validatedData.company === "" ? null : validatedData.company || null,
+      taxId: validatedData.taxId === "" ? null : validatedData.taxId || null,
+      deliveryNotes:
+        validatedData.deliveryNotes === ""
+          ? null
+          : validatedData.deliveryNotes || null,
+      defaultLocationId:
+        validatedData.defaultLocationId === "" ||
+        validatedData.defaultLocationId === "none"
+          ? null
+          : validatedData.defaultLocationId || null,
     };
 
     const customer = await db.customer.create({
@@ -123,18 +141,18 @@ export async function createCustomer(data: CustomerFormValues, organizationId: s
 
     // Proactively initialize CRM Record for customer
     let objectDef = await db.crmObjectDefinition.findUnique({
-      where: { organizationId_name: { organizationId, name: 'customer' } }
+      where: { organizationId_name: { organizationId, name: "customer" } },
     });
 
     if (!objectDef) {
       objectDef = await db.crmObjectDefinition.create({
         data: {
           organizationId,
-          name: 'customer',
-          label: 'Customer',
-          labelPlural: 'Customers',
+          name: "customer",
+          label: "Customer",
+          labelPlural: "Customers",
           isSystem: true,
-        }
+        },
       });
     }
 
@@ -146,37 +164,49 @@ export async function createCustomer(data: CustomerFormValues, organizationId: s
           name: customer.name,
           email: customer.email,
           phone: customer.phone,
-        }
-      }
+        },
+      },
     });
 
     const updatedCustomer = await db.customer.update({
       where: { id: customer.id },
-      data: { crmRecordId: record.id }
+      data: { crmRecordId: record.id },
     });
 
-    revalidatePath('/customers');
-    revalidatePath('/contacts');
+    revalidatePath("/customers");
+    revalidatePath("/contacts");
     return { success: true, data: updatedCustomer };
   } catch (error: any) {
-    console.error('Error creating customer:', error);
-    return { success: false, error: error.message || 'Failed to create customer' };
+    console.error("Error creating customer:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to create customer",
+    };
   }
 }
 
-export async function updateCustomer(id: string, data: CustomerFormValues): Promise<any> {
+export async function updateCustomer(
+  id: string,
+  data: CustomerFormValues,
+): Promise<any> {
   try {
     const validatedData = customerSchema.parse(data);
 
     const cleanData = {
       ...validatedData,
-      phone: validatedData.phone === '' ? null : validatedData.phone || null,
-      company: validatedData.company === '' ? null : validatedData.company || null,
-      taxId: validatedData.taxId === '' ? null : validatedData.taxId || null,
-      deliveryNotes: validatedData.deliveryNotes === '' ? null : validatedData.deliveryNotes || null,
-      defaultLocationId: (validatedData.defaultLocationId === '' || validatedData.defaultLocationId === 'none')
-        ? null
-        : validatedData.defaultLocationId || null,
+      phone: validatedData.phone === "" ? null : validatedData.phone || null,
+      company:
+        validatedData.company === "" ? null : validatedData.company || null,
+      taxId: validatedData.taxId === "" ? null : validatedData.taxId || null,
+      deliveryNotes:
+        validatedData.deliveryNotes === ""
+          ? null
+          : validatedData.deliveryNotes || null,
+      defaultLocationId:
+        validatedData.defaultLocationId === "" ||
+        validatedData.defaultLocationId === "none"
+          ? null
+          : validatedData.defaultLocationId || null,
     };
 
     const customer = await db.customer.update({
@@ -187,13 +217,16 @@ export async function updateCustomer(id: string, data: CustomerFormValues): Prom
       },
     });
 
-    revalidatePath('/customers');
-    revalidatePath('/contacts');
+    revalidatePath("/customers");
+    revalidatePath("/contacts");
     revalidatePath(`/customers/${id}`);
     return { success: true, data: customer };
   } catch (error: any) {
-    console.error('Error updating customer:', error);
-    return { success: false, error: error.message || 'Failed to update customer' };
+    console.error("Error updating customer:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to update customer",
+    };
   }
 }
 
@@ -211,31 +244,34 @@ export async function deleteCustomer(id: string): Promise<any> {
     if (customer?.organizationId) {
       await realtimeService.publish(
         `organization:${customer.organizationId}:customers`,
-        'customer-deleted',
-        { customerId: id }
+        "customer-deleted",
+        { customerId: id },
       );
     }
 
-    revalidatePath('/customers');
-    revalidatePath('/contacts');
+    revalidatePath("/customers");
+    revalidatePath("/contacts");
     return { success: true };
   } catch (error: any) {
-    console.error('Error deleting customer:', error);
-    return { success: false, error: error.message || 'Failed to delete customer' };
+    console.error("Error deleting customer:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to delete customer",
+    };
   }
 }
 
 export async function getCustomers(
   organizationId: string,
-  filter?: { type?: 'B2C' | 'B2B' | 'CONTACT'; businessAccountId?: string }
+  filter?: { type?: "B2C" | "B2B" | "CONTACT"; businessAccountId?: string },
 ): Promise<any[]> {
   try {
     const where: any = { organizationId };
 
-    if (filter?.type === 'B2C') {
-      where.customerType = 'B2C';
+    if (filter?.type === "B2C") {
+      where.customerType = "B2C";
       where.businessAccountId = null;
-    } else if (filter?.type === 'CONTACT') {
+    } else if (filter?.type === "CONTACT") {
       where.businessAccountId = { not: null };
     }
 
@@ -248,12 +284,12 @@ export async function getCustomers(
       include: {
         businessAccount: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
     return customers;
   } catch (error) {
-    console.error('Error fetching customers:', error);
-    throw new Error('Failed to fetch customers');
+    console.error("Error fetching customers:", error);
+    throw new Error("Failed to fetch customers");
   }
 }
 
@@ -268,7 +304,7 @@ export async function getCustomer(id: string): Promise<any> {
           include: {
             items: true,
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 20,
         },
         transactions: {
@@ -280,7 +316,7 @@ export async function getCustomer(id: string): Promise<any> {
               },
             },
           },
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 20,
         },
         crmRecord: {
@@ -293,7 +329,7 @@ export async function getCustomer(id: string): Promise<any> {
                   },
                 },
               },
-              orderBy: { createdAt: 'desc' },
+              orderBy: { createdAt: "desc" },
               take: 20,
             },
             notes: {
@@ -304,7 +340,7 @@ export async function getCustomer(id: string): Promise<any> {
                   },
                 },
               },
-              orderBy: { createdAt: 'desc' },
+              orderBy: { createdAt: "desc" },
               take: 20,
             },
             followUps: {
@@ -315,7 +351,7 @@ export async function getCustomer(id: string): Promise<any> {
                   },
                 },
               },
-              orderBy: { dueDate: 'asc' },
+              orderBy: { dueDate: "asc" },
               take: 20,
             },
           },
@@ -325,18 +361,23 @@ export async function getCustomer(id: string): Promise<any> {
 
     if (customer && !customer.crmRecordId) {
       let objectDef = await db.crmObjectDefinition.findUnique({
-        where: { organizationId_name: { organizationId: customer.organizationId, name: 'customer' } }
+        where: {
+          organizationId_name: {
+            organizationId: customer.organizationId,
+            name: "customer",
+          },
+        },
       });
 
       if (!objectDef) {
         objectDef = await db.crmObjectDefinition.create({
           data: {
             organizationId: customer.organizationId,
-            name: 'customer',
-            label: 'Customer',
-            labelPlural: 'Customers',
+            name: "customer",
+            label: "Customer",
+            labelPlural: "Customers",
             isSystem: true,
-          }
+          },
         });
       }
 
@@ -348,8 +389,8 @@ export async function getCustomer(id: string): Promise<any> {
             name: customer.name,
             email: customer.email,
             phone: customer.phone,
-          }
-        }
+          },
+        },
       });
 
       customer = await db.customer.update({
@@ -362,7 +403,7 @@ export async function getCustomer(id: string): Promise<any> {
             include: {
               items: true,
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
             take: 20,
           },
           transactions: {
@@ -374,7 +415,7 @@ export async function getCustomer(id: string): Promise<any> {
                 },
               },
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: { createdAt: "desc" },
             take: 20,
           },
           crmRecord: {
@@ -387,7 +428,7 @@ export async function getCustomer(id: string): Promise<any> {
                     },
                   },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: { createdAt: "desc" },
                 take: 20,
               },
               notes: {
@@ -398,7 +439,7 @@ export async function getCustomer(id: string): Promise<any> {
                     },
                   },
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: { createdAt: "desc" },
                 take: 20,
               },
               followUps: {
@@ -409,7 +450,7 @@ export async function getCustomer(id: string): Promise<any> {
                     },
                   },
                 },
-                orderBy: { dueDate: 'asc' },
+                orderBy: { dueDate: "asc" },
                 take: 20,
               },
             },
@@ -420,7 +461,7 @@ export async function getCustomer(id: string): Promise<any> {
 
     return customer;
   } catch (error) {
-    console.error('Error fetching customer:', error);
-    throw new Error('Failed to fetch customer');
+    console.error("Error fetching customer:", error);
+    throw new Error("Failed to fetch customer");
   }
 }

@@ -17,7 +17,12 @@ import {
   Settings,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
-import { getCustomers, deleteCustomer, getCustomerIdSettings, saveCustomerIdSettings } from "../../actions/customers";
+import {
+  getCustomers,
+  deleteCustomer,
+  getCustomerIdSettings,
+  saveCustomerIdSettings,
+} from "../../actions/customers";
 import {
   Dialog,
   DialogContent,
@@ -75,7 +80,11 @@ export function CustomersView() {
   const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [idSettings, setIdSettings] = useState({ autoGenerate: false, prefix: "CUST-", sequence: 1001 });
+  const [idSettings, setIdSettings] = useState({
+    autoGenerate: false,
+    prefix: "CUST-",
+    sequence: 1001,
+  });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const openSettings = async () => {
@@ -113,7 +122,7 @@ export function CustomersView() {
     mutate,
   } = useSWR(
     organizationId ? ["customers-b2c", organizationId] : null,
-    () => getCustomers(organizationId, { type: 'B2C' }),
+    () => getCustomers(organizationId, { type: "B2C" }),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -225,9 +234,12 @@ export function CustomersView() {
       <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Customers</h1>
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">
+              Customers
+            </h1>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              {customers.length} customer{customers.length !== 1 ? 's' : ''} &bull; {activeCount} active
+              {customers.length} customer{customers.length !== 1 ? "s" : ""}{" "}
+              &bull; {activeCount} active
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -245,7 +257,7 @@ export function CustomersView() {
                   Add Customer
                 </button>
               </SheetTrigger>
-              <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+              <SheetContent className="sm:max-w-2xl overflow-y-scroll">
                 <SheetHeader>
                   <SheetTitle>Add New Customer</SheetTitle>
                 </SheetHeader>
@@ -368,7 +380,10 @@ export function CustomersView() {
                       )}
                     >
                       <td className="px-5 py-3.5">
-                        <Link href={`/customers/${customer.id}`} className="flex items-center gap-3">
+                        <Link
+                          href={`/customers/${customer.id}`}
+                          className="flex items-center gap-3"
+                        >
                           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
                             {customer.name.charAt(0).toUpperCase()}
                           </div>
@@ -519,38 +534,61 @@ export function CustomersView() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="flex items-center justify-between">
-              <label className="text-[13px] font-semibold text-foreground">Auto-generate Customer IDs</label>
+              <label className="text-[13px] font-semibold text-foreground">
+                Auto-generate Customer IDs
+              </label>
               <input
                 type="checkbox"
                 checked={idSettings.autoGenerate}
-                onChange={(e) => setIdSettings({ ...idSettings, autoGenerate: e.target.checked })}
+                onChange={(e) =>
+                  setIdSettings({
+                    ...idSettings,
+                    autoGenerate: e.target.checked,
+                  })
+                }
                 className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">ID Prefix</label>
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                ID Prefix
+              </label>
               <input
                 type="text"
                 value={idSettings.prefix}
-                onChange={(e) => setIdSettings({ ...idSettings, prefix: e.target.value })}
+                onChange={(e) =>
+                  setIdSettings({ ...idSettings, prefix: e.target.value })
+                }
                 className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="e.g. CUST-"
                 disabled={!idSettings.autoGenerate}
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">Next Sequence Number</label>
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                Next Sequence Number
+              </label>
               <input
                 type="number"
                 value={idSettings.sequence}
-                onChange={(e) => setIdSettings({ ...idSettings, sequence: parseInt(e.target.value) || 1001 })}
+                onChange={(e) =>
+                  setIdSettings({
+                    ...idSettings,
+                    sequence: parseInt(e.target.value) || 1001,
+                  })
+                }
                 className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
                 placeholder="e.g. 1001"
                 disabled={!idSettings.autoGenerate}
               />
             </div>
             <div className="flex justify-end gap-3 pt-4">
-              <Button variant="outline" onClick={() => setIsSettingsOpen(false)}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsSettingsOpen(false)}
+              >
+                Cancel
+              </Button>
               <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
                 {isSavingSettings ? "Saving..." : "Save Settings"}
               </Button>
@@ -559,7 +597,10 @@ export function CustomersView() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
