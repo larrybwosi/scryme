@@ -21,7 +21,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { useOrg } from "../../../components/org-context";
 import { createLead } from "../../actions/leads";
 import { toast } from "sonner";
 
@@ -41,7 +40,6 @@ interface LeadFormProps {
 }
 
 export function LeadForm({ onSuccess }: LeadFormProps) {
-  const { organizationId } = useOrg();
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadFormSchema),
     defaultValues: {
@@ -56,7 +54,7 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
 
   const onSubmit = async (values: LeadFormValues) => {
     try {
-      const result = await createLead(values, organizationId);
+      const result = await createLead(values);
       if (result.success) {
         onSuccess();
       } else {
@@ -147,7 +145,10 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Status</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
@@ -167,7 +168,11 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
         </div>
 
         <div className="pt-4">
-          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+          >
             {form.formState.isSubmitting ? "Creating..." : "Create Lead"}
           </Button>
         </div>

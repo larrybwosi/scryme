@@ -18,7 +18,6 @@ import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import { getCompanies, deleteCompany } from "../../actions/companies";
 import { StatCard } from "../../../components/ui/stat-card";
-import { useOrg } from "../../../components/org-context";
 import {
   Sheet,
   SheetContent,
@@ -55,7 +54,6 @@ import {
 const PAGE_SIZE = 10;
 
 export function CompaniesView() {
-  const { organizationId } = useOrg();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -70,15 +68,11 @@ export function CompaniesView() {
     error,
     isLoading,
     mutate,
-  } = useSWR(
-    organizationId ? ["companies", organizationId] : null,
-    () => getCompanies(organizationId),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 60000, // 1 minute
-    },
-  );
+  } = useSWR(["companies"], () => getCompanies(), {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 60000, // 1 minute
+  });
 
   const filtered = useMemo(() => {
     return companies.filter((c: any) => {

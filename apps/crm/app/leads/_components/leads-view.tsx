@@ -16,7 +16,6 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { getLeads, qualifyLead } from "../../actions/leads";
 import { StatCard } from "../../../components/ui/stat-card";
-import { useOrg } from "../../../components/org-context";
 import {
   Sheet,
   SheetContent,
@@ -35,11 +34,11 @@ import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "sonner";
 import { StatusBadge } from "../../../components/ui/status-badge";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@repo/ui/components/ui/dialog";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Input } from "@repo/ui/components/ui/input";
@@ -64,10 +63,7 @@ export function LeadsView() {
     error,
     isLoading,
     mutate,
-  } = useSWR(
-    organizationId ? ["leads", organizationId] : null,
-    () => getLeads(organizationId)
-  );
+  } = useSWR(["leads"], () => getLeads());
 
   const filtered = useMemo(() => {
     return leads.filter((l: any) => {
@@ -75,8 +71,10 @@ export function LeadsView() {
       const matchesSearch =
         search === "" ||
         data.name.toLowerCase().includes(search.toLowerCase()) ||
-        (data.email && data.email.toLowerCase().includes(search.toLowerCase())) ||
-        (data.company && data.company.toLowerCase().includes(search.toLowerCase()));
+        (data.email &&
+          data.email.toLowerCase().includes(search.toLowerCase())) ||
+        (data.company &&
+          data.company.toLowerCase().includes(search.toLowerCase()));
 
       return matchesSearch;
     });
@@ -108,7 +106,7 @@ export function LeadsView() {
       const result = await qualifyLead(selectedLead.id, organizationId, {
         createDeal,
         dealName,
-        dealAmount: parseFloat(dealAmount) || 0
+        dealAmount: parseFloat(dealAmount) || 0,
       });
       if (result.success) {
         toast.success("Lead qualified and converted to customer");
@@ -136,9 +134,12 @@ export function LeadsView() {
       <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Leads</h1>
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">
+              Leads
+            </h1>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              {leads.length} lead{leads.length !== 1 ? 's' : ''} &bull; {leads.filter((l: any) => l.data.status === 'new').length} new
+              {leads.length} lead{leads.length !== 1 ? "s" : ""} &bull;{" "}
+              {leads.filter((l: any) => l.data.status === "new").length} new
             </p>
           </div>
           <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -168,7 +169,7 @@ export function LeadsView() {
           />
           <StatCard
             title="New"
-            value={leads.filter((l: any) => l.data.status === 'new').length}
+            value={leads.filter((l: any) => l.data.status === "new").length}
             sub="Awaiting contact"
             icon={UserPlus}
             iconColor="text-blue-600"
@@ -176,7 +177,9 @@ export function LeadsView() {
           />
           <StatCard
             title="Qualified"
-            value={leads.filter((l: any) => l.data.status === 'qualified').length}
+            value={
+              leads.filter((l: any) => l.data.status === "qualified").length
+            }
             sub="Converted to customer"
             icon={UserPlus}
             iconColor="text-green-600"
@@ -228,54 +231,79 @@ export function LeadsView() {
                     <td colSpan={5} className="text-center py-16">
                       <div className="flex flex-col items-center gap-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        <p className="text-[13px] text-muted-foreground">Loading leads...</p>
+                        <p className="text-[13px] text-muted-foreground">
+                          Loading leads...
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : paged.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-16 text-[13px] text-muted-foreground">
-                      {search ? "No leads match your search." : "No leads found."}
+                    <td
+                      colSpan={5}
+                      className="text-center py-16 text-[13px] text-muted-foreground"
+                    >
+                      {search
+                        ? "No leads match your search."
+                        : "No leads found."}
                     </td>
                   </tr>
                 ) : (
                   paged.map((lead: any) => (
-                    <tr key={lead.id} className="hover:bg-muted/30 transition-colors group">
+                    <tr
+                      key={lead.id}
+                      className="hover:bg-muted/30 transition-colors group"
+                    >
                       <td className="px-5 py-3.5">
-                        <Link href={`/leads/${lead.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                        <Link
+                          href={`/leads/${lead.id}`}
+                          className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                        >
                           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
                             {lead.data.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-[13px] font-semibold text-foreground">{lead.data.name}</div>
-                            <div className="text-[11.5px] text-muted-foreground">{lead.data.email || "No email"}</div>
+                            <div className="text-[13px] font-semibold text-foreground">
+                              {lead.data.name}
+                            </div>
+                            <div className="text-[11.5px] text-muted-foreground">
+                              {lead.data.email || "No email"}
+                            </div>
                           </div>
                         </Link>
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2 text-[13px] text-foreground font-medium">
-                          <Building2 size={14} className="text-muted-foreground" />
+                          <Building2
+                            size={14}
+                            className="text-muted-foreground"
+                          />
                           {lead.data.company || "—"}
                         </div>
                       </td>
                       <td className="px-4 py-3.5">
-                         <StatusBadge status={lead.data.status} />
+                        <StatusBadge status={lead.data.status} />
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-muted-foreground">
                         {lead.data.source || "—"}
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center justify-end gap-1">
-                          {lead.data.status !== 'qualified' && (
+                          {lead.data.status !== "qualified" && (
                             <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 gap-1.5 text-[11.5px]"
-                                onClick={() => openQualifyDialog(lead)}
-                                disabled={qualifyingId === lead.id}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 gap-1.5 text-[11.5px]"
+                              onClick={() => openQualifyDialog(lead)}
+                              disabled={qualifyingId === lead.id}
                             >
-                                <CheckCircle2 size={14} className="text-green-600" />
-                                {qualifyingId === lead.id ? "Qualifying..." : "Qualify"}
+                              <CheckCircle2
+                                size={14}
+                                className="text-green-600"
+                              />
+                              {qualifyingId === lead.id
+                                ? "Qualifying..."
+                                : "Qualify"}
                             </Button>
                           )}
                           <DropdownMenu>
@@ -286,7 +314,9 @@ export function LeadsView() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem>Edit Lead</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive">
+                                Delete
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </div>
@@ -303,10 +333,22 @@ export function LeadsView() {
               Showing {startItem}–{endItem} of {filtered.length} leads
             </p>
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safeCurrentPage === 1} className="w-8 h-8">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={safeCurrentPage === 1}
+                className="w-8 h-8"
+              >
                 <ChevronLeft size={14} />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safeCurrentPage === totalPages} className="w-8 h-8">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safeCurrentPage === totalPages}
+                className="w-8 h-8"
+              >
                 <ChevronRight size={14} />
               </Button>
             </div>
@@ -315,54 +357,63 @@ export function LeadsView() {
       </div>
 
       <Dialog open={isQualifyDialogOpen} onOpenChange={setIsQualifyDialogOpen}>
-         <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-                <DialogTitle>Qualify Lead</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-                <p className="text-sm text-muted-foreground">
-                    This will convert <strong>{selectedLead?.data.name}</strong> into a customer.
-                </p>
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="createDeal"
-                        checked={createDeal}
-                        onCheckedChange={(checked) => setCreateDeal(!!checked)}
-                    />
-                    <Label htmlFor="createDeal" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                        Create a deal in the pipeline
-                    </Label>
-                </div>
-
-                {createDeal && (
-                    <div className="space-y-4 pt-2">
-                        <div className="grid gap-2">
-                            <Label htmlFor="dealName">Deal Name</Label>
-                            <Input
-                                id="dealName"
-                                value={dealName}
-                                onChange={(e) => setDealName(e.target.value)}
-                            />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label htmlFor="dealAmount">Expected Amount</Label>
-                            <Input
-                                id="dealAmount"
-                                type="number"
-                                value={dealAmount}
-                                onChange={(e) => setDealAmount(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                )}
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Qualify Lead</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              This will convert <strong>{selectedLead?.data.name}</strong> into
+              a customer.
+            </p>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="createDeal"
+                checked={createDeal}
+                onCheckedChange={(checked) => setCreateDeal(!!checked)}
+              />
+              <Label
+                htmlFor="createDeal"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                Create a deal in the pipeline
+              </Label>
             </div>
-            <DialogFooter>
-                <Button variant="outline" onClick={() => setIsQualifyDialogOpen(false)}>Cancel</Button>
-                <Button onClick={handleQualify} disabled={!!qualifyingId}>
-                    {qualifyingId ? "Qualifying..." : "Confirm Qualification"}
-                </Button>
-            </DialogFooter>
-         </DialogContent>
+
+            {createDeal && (
+              <div className="space-y-4 pt-2">
+                <div className="grid gap-2">
+                  <Label htmlFor="dealName">Deal Name</Label>
+                  <Input
+                    id="dealName"
+                    value={dealName}
+                    onChange={(e) => setDealName(e.target.value)}
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="dealAmount">Expected Amount</Label>
+                  <Input
+                    id="dealAmount"
+                    type="number"
+                    value={dealAmount}
+                    onChange={(e) => setDealAmount(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsQualifyDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleQualify} disabled={!!qualifyingId}>
+              {qualifyingId ? "Qualifying..." : "Confirm Qualification"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </div>
   );

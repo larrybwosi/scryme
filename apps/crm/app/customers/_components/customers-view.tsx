@@ -30,7 +30,6 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { StatCard } from "../../../components/ui/stat-card";
-import { useOrg } from "../../../components/org-context";
 import {
   Sheet,
   SheetContent,
@@ -67,7 +66,6 @@ import { toast } from "sonner";
 const PAGE_SIZE = 10;
 
 export function CustomersView() {
-  const { organizationId } = useOrg();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<
     "All" | "Active" | "Inactive"
@@ -90,7 +88,7 @@ export function CustomersView() {
   const openSettings = async () => {
     setIsSettingsOpen(true);
     try {
-      const res = await getCustomerIdSettings(organizationId);
+      const res = await getCustomerIdSettings();
       setIdSettings(res);
     } catch (err) {
       toast.error("Failed to load customer ID settings");
@@ -100,7 +98,7 @@ export function CustomersView() {
   const handleSaveSettings = async () => {
     setIsSavingSettings(true);
     try {
-      const res = await saveCustomerIdSettings(organizationId, idSettings);
+      const res = await saveCustomerIdSettings(idSettings);
       if (res.success) {
         toast.success("Customer ID settings saved successfully");
         setIsSettingsOpen(false);
@@ -120,15 +118,11 @@ export function CustomersView() {
     error,
     isLoading,
     mutate,
-  } = useSWR(
-    organizationId ? ["customers-b2c", organizationId] : null,
-    () => getCustomers(organizationId, { type: "B2C" }),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 60000, // 1 minute
-    },
-  );
+  } = useSWR(["customers-b2c"], () => getCustomers({ type: "B2C" }), {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 60000, // 1 minute
+  });
 
   const filtered = useMemo(() => {
     return customers.filter((c: any) => {

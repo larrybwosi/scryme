@@ -12,7 +12,6 @@ import {
   updateCustomer,
   getLocations,
 } from "../../actions/customers";
-import { useOrg } from "../../../components/org-context";
 import useSWR from "swr";
 import {
   Form,
@@ -55,10 +54,8 @@ export function CustomerForm({
   onSuccess,
   type = "B2C",
 }: CustomerFormProps) {
-  const { organizationId } = useOrg();
-  const { data: locations = [] } = useSWR(
-    organizationId ? ["locations-for-select", organizationId] : null,
-    () => getLocations(organizationId),
+  const { data: locations = [] } = useSWR(["locations-for-select"], () =>
+    getLocations(),
   );
 
   const form = useForm<CustomerFormValues>({
@@ -92,7 +89,7 @@ export function CustomerForm({
       if (initialData?.id) {
         await updateCustomer(initialData.id, payload);
       } else {
-        await createCustomer(payload, organizationId);
+        await createCustomer(payload);
       }
       onSuccess();
     } catch (error) {
