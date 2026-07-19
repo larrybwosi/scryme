@@ -28,17 +28,20 @@ import {
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 
 @ApiTags("V3 Webhooks")
 @ApiBearerAuth()
 @Controller(":orgSlug/webhooks")
 @ApiParam({ name: "orgSlug", type: "string" })
-@UseGuards(V3AuthGuard, MultiTenancyGuard)
+@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
 export class WebhookController {
   constructor(private readonly prisma: PrismaService) {}
 
   @Post()
+  @Permissions("webhooks:write")
   @ApiOperation({
     summary: "Register a new webhook subscription",
     operationId: "Webhooks_Create",
@@ -77,6 +80,7 @@ export class WebhookController {
   }
 
   @Get()
+  @Permissions("webhooks:read")
   @ApiOperation({
     summary: "List all webhooks",
     operationId: "Webhooks_List",
@@ -93,6 +97,7 @@ export class WebhookController {
   }
 
   @Delete(":id")
+  @Permissions("webhooks:write")
   @ApiOperation({
     summary: "Delete a webhook",
     operationId: "Webhooks_Delete",
