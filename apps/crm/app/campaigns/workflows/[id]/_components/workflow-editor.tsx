@@ -56,7 +56,15 @@ import {
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { updateWorkflow } from '@/app/actions/campaigns';
+import { simulateWorkflow } from '@/app/actions/workflows';
+import { getCustomers } from '@/app/actions/customers';
 import { cn } from '@repo/ui/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@repo/ui/components/ui/dialog';
 
 // ──────────────────────────────────────────────────────────────
 //  Node type definitions
@@ -115,6 +123,17 @@ const NODE_PALETTE = [
   {
     group: 'Actions',
     items: [
+      {
+        type: 'action',
+        subType: 'SCRYMECHAT',
+        label: 'ScrymeChat Message',
+        icon: MessageSquare,
+        description: 'Send a native ScrymeChat message',
+        color: '#06b6d4',
+        bg: 'bg-cyan-50 dark:bg-cyan-950/30',
+        border: 'border-cyan-300 dark:border-cyan-700',
+        text: 'text-cyan-700 dark:text-cyan-300',
+      },
       {
         type: 'action',
         subType: 'EMAIL',
@@ -547,15 +566,15 @@ function NodeInspector({
           </div>
         )}
 
-        {/* Message content (email / sms actions) */}
+        {/* Message content (email / sms / scrymechat actions) */}
         {node.type === 'action' &&
-          ['EMAIL', 'SMS'].includes((node.data as any).subType as string) && (
+          ['EMAIL', 'SMS', 'SCRYMECHAT'].includes((node.data as any).subType as string) && (
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {(node.data as any).subType === 'EMAIL' ? 'Email Body' : 'SMS Message'}
+                {(node.data as any).subType === 'EMAIL' ? 'Email Body' : (node.data as any).subType === 'SMS' ? 'SMS Message' : 'ScrymeChat Message'}
               </label>
               <Textarea
-                placeholder={`Enter ${(node.data as any).subType === 'EMAIL' ? 'email' : 'SMS'} content...`}
+                placeholder={`Enter ${(node.data as any).subType === 'EMAIL' ? 'email' : (node.data as any).subType === 'SMS' ? 'SMS' : 'ScrymeChat'} content...`}
                 rows={5}
                 className="text-[12.5px] resize-none"
                 value={(node.data as any).content as string || ''}
@@ -565,6 +584,23 @@ function NodeInspector({
               />
             </div>
           )}
+
+        {/* ScrymeChat specific fields */}
+        {node.type === 'action' && (node.data as any).subType === 'SCRYMECHAT' && (
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Chat Target / Channel ID
+            </label>
+            <Input
+              value={(node.data as any).channelId as string || ''}
+              onChange={(e) =>
+                onUpdate(node.id, { ...node.data, channelId: e.target.value })
+              }
+              className="h-8 text-[12.5px]"
+              placeholder="e.g. general, support, customer"
+            />
+          </div>
+        )}
 
         {/* Tag name */}
         {node.type === 'action' && (node.data as any).subType === 'TAG' && (
@@ -666,6 +702,47 @@ export function WorkflowEditor({ workflow, organizationId }: WorkflowEditorProps
   const [workflowName, setWorkflowName] = useState(workflow?.name || 'Untitled Workflow');
   const [showInspector, setShowInspector] = useState(false);
   const isActive = workflow?.isActive;
+
+  const [isSimOpen, setIsSimOpen] = useState(false);
+  const [customersList, setCustomersList] = useState<any[]>([]);
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationLogs, setSimulationLogs] = useState<any[]>([]);
+
+  const handleOpenSimulation = async () => {
+    setIsSimOpen(true);
+    setSimulationLogs([]);
+    try {
+      const list = await getCustomers(organizationId);
+      setCustomersList(list);
+      if (list.length > 0) {
+        setSelectedCustomerId(list[0].id);
+      }
+    } catch {
+      toast.error('Failed to load customers for testing');
+    }
+  };
+
+  const handleRunSimulation = async () => {
+    if (!selectedCustomerId) {
+      toast.error('Please select a customer first');
+      return;
+    }
+    setIsSimulating(true);
+    try {
+      const res = await simulateWorkflow(workflow.id, selectedCustomerId);
+      if (res.success) {
+        setSimulationLogs(res.logs || []);
+        toast.success('Simulation executed successfully');
+      } else {
+        toast.error(res.error || 'Simulation failed');
+      }
+    } catch {
+      toast.error('An error occurred during simulation');
+    } finally {
+      setIsSimulating(false);
+    }
+  };
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     setSelectedNode(node);
@@ -819,6 +896,15 @@ export function WorkflowEditor({ workflow, organizationId }: WorkflowEditorProps
           <Button
             variant="outline"
             size="sm"
+            className="h-7 gap-1.5 text-[12px] border-primary text-primary hover:bg-primary/5"
+            onClick={handleOpenSimulation}
+          >
+            <Play size={13} />
+            Run Test
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             className="h-7 gap-1.5 text-[12px]"
             onClick={onSave}
             disabled={isSaving}
@@ -942,6 +1028,70 @@ export function WorkflowEditor({ workflow, organizationId }: WorkflowEditorProps
           </aside>
         )}
       </div>
+
+      <Dialog open={isSimOpen} onOpenChange={setIsSimOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>Simulate/Test Workflow</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-[12px] text-muted-foreground">
+              Select a customer to run through this workflow sequentially. Placeholders like <code className="font-mono bg-muted p-0.5 rounded text-[11px]">{`{customer.name}`}</code> will be dynamically resolved.
+            </p>
+            <div className="space-y-2">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">Select Test Customer</label>
+              <Select
+                value={selectedCustomerId}
+                onValueChange={(val) => setSelectedCustomerId(val)}
+              >
+                <SelectTrigger className="w-full h-9 bg-background">
+                  <SelectValue placeholder="Select a customer..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customersList.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} ({c.email || 'No email'})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end pt-2">
+              <Button onClick={handleRunSimulation} disabled={isSimulating || customersList.length === 0}>
+                {isSimulating ? 'Simulating...' : 'Run Simulation'}
+              </Button>
+            </div>
+
+            {simulationLogs.length > 0 && (
+              <div className="border border-border rounded-xl overflow-hidden mt-4">
+                <div className="bg-muted px-4 py-2 border-b border-border">
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Execution Logs</span>
+                </div>
+                <div className="p-4 space-y-3.5 max-h-[250px] overflow-y-auto custom-scrollbar">
+                  {simulationLogs.map((log, idx) => (
+                    <div key={idx} className="flex gap-3 text-left items-start">
+                      <div className="w-5 h-5 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 text-xs mt-0.5">
+                        ✓
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-[12.5px] font-semibold text-foreground flex items-center gap-1.5 flex-wrap">
+                          {log.label || 'Step'}
+                          <span className="text-[9.5px] uppercase tracking-wider px-1.5 py-0.5 bg-accent text-accent-foreground rounded font-bold">
+                            {log.type}
+                          </span>
+                        </div>
+                        <p className="text-[11.5px] text-muted-foreground mt-1 whitespace-pre-wrap leading-relaxed">
+                          {log.details}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

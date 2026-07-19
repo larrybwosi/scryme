@@ -4,15 +4,12 @@ import { db } from '@repo/db';
 import { startOfMonth, subMonths, endOfMonth } from 'date-fns';
 import { getOrganizationContext } from './auth';
 
-async function verifyOrg(organizationId: string) {
+export async function getDashboardStats() {
   const context = await getOrganizationContext();
-  if (!context || context.organizationId !== organizationId) {
+  if (!context) {
     throw new Error('Unauthorized');
   }
-}
-
-export async function getDashboardStats(organizationId: string) {
-  await verifyOrg(organizationId);
+  const { organizationId } = context;
 
   try {
     // 1. Total Revenue (from completed transactions)
@@ -84,11 +81,19 @@ export async function getDashboardStats(organizationId: string) {
         });
     }
 
+    // Fetch Organization Default Currency
+    const settings = await db.organizationSettings.findUnique({
+      where: { organizationId },
+      select: { defaultCurrency: true }
+    });
+    const currency = settings?.defaultCurrency || 'USD';
+
     return {
       revenue: Number(revenue._sum.finalTotal || 0),
       activeLeads: activeLeadsCount,
       totalCustomers,
       openDeals: openDealsCount,
+      currency,
     };
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
@@ -97,12 +102,17 @@ export async function getDashboardStats(organizationId: string) {
       activeLeads: 0,
       totalCustomers: 0,
       openDeals: 0,
+      currency: 'USD',
     };
   }
 }
 
-export async function getRecentActivity(organizationId: string) {
-    await verifyOrg(organizationId);
+export async function getRecentActivity() {
+    const context = await getOrganizationContext();
+    if (!context) {
+        throw new Error('Unauthorized');
+    }
+    const { organizationId } = context;
 
     try {
         const recentCustomers = await db.customer.findMany({
@@ -156,41 +166,41 @@ export async function getRecentActivity(organizationId: string) {
     }
 }
 
-export async function getSalesData(organizationId: string) {
-    await verifyOrg(organizationId);
+export async function getCustomerData() {
+    const context = await getOrganizationContext();
+    if (!context) {
+        throw new Error('Unauthorized');
+    }
+    const { organizationId } = context;
 
     try {
         const months = 6;
-        const salesData = [];
+        const customerData = [];
 
         for (let i = months - 1; i >= 0; i--) {
             const date = subMonths(new Date(), i);
             const start = startOfMonth(date);
             const end = endOfMonth(date);
 
-            const revenue = await db.transaction.aggregate({
+            const count = await db.customer.count({
                 where: {
                     organizationId,
-                    status: 'COMPLETED',
                     createdAt: {
                         gte: start,
                         lte: end,
                     }
-                },
-                _sum: {
-                    finalTotal: true,
                 }
             });
 
-            salesData.push({
+            customerData.push({
                 name: date.toLocaleString('default', { month: 'short' }),
-                sales: Number(revenue._sum.finalTotal || 0),
+                customers: count,
             });
         }
 
-        return salesData;
+        return customerData;
     } catch (error) {
-        console.error('Error fetching sales data:', error);
+        console.error('Error fetching customer data:', error);
         return [];
     }
 }

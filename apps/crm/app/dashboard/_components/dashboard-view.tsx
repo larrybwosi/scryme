@@ -21,7 +21,6 @@ import {
 } from "recharts";
 import { cn } from "@repo/ui/lib/utils";
 import { StatCard } from "../../../components/ui/stat-card";
-import { useOrg } from "../../../components/org-context";
 import {
   Card,
   CardContent,
@@ -30,25 +29,36 @@ import {
   CardDescription,
 } from "@repo/ui/components/ui/card";
 import { Button } from "@repo/ui/components/ui/button";
-import { getDashboardStats, getRecentActivity, getSalesData } from "../../actions/dashboard";
+import { getDashboardStats, getRecentActivity, getCustomerData } from "../../actions/dashboard";
 import { formatDistanceToNow } from "date-fns";
 
-export function DashboardView() {
-  const { organizationId } = useOrg();
+const formatCurrency = (value: number, currency: string = "USD") => {
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  } catch (e) {
+    return `${currency} ${value.toLocaleString()}`;
+  }
+};
 
+export function DashboardView() {
   const { data: stats, isLoading: statsLoading } = useSWR(
-    organizationId ? ["dashboard-stats", organizationId] : null,
-    () => getDashboardStats(organizationId!)
+    "dashboard-stats",
+    () => getDashboardStats()
   );
 
   const { data: activity, isLoading: activityLoading } = useSWR(
-    organizationId ? ["dashboard-activity", organizationId] : null,
-    () => getRecentActivity(organizationId!)
+    "dashboard-activity",
+    () => getRecentActivity()
   );
 
-  const { data: salesData } = useSWR(
-    organizationId ? ["dashboard-sales", organizationId] : null,
-    () => getSalesData(organizationId!)
+  const { data: customerData } = useSWR(
+    "dashboard-customers",
+    () => getCustomerData()
   );
 
   return (
@@ -80,7 +90,7 @@ export function DashboardView() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <StatCard
             title="Total Revenue"
-            value={statsLoading ? "—" : `$${(stats?.revenue || 0).toLocaleString()}`}
+            value={statsLoading ? "—" : formatCurrency(stats?.revenue || 0, stats?.currency || "USD")}
             trend={{ value: "12.5%", positive: true }}
             icon={DollarSign}
             iconColor="text-emerald-600"
@@ -114,13 +124,13 @@ export function DashboardView() {
 
         {/* Charts + Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Sales chart */}
+          {/* Customers chart */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between pb-4">
               <div className="space-y-0.5">
-                <CardTitle className="text-[14px] font-semibold">Sales Overview</CardTitle>
+                <CardTitle className="text-[14px] font-semibold">Customer Acquisition</CardTitle>
                 <CardDescription className="text-[11.5px]">
-                  Monthly revenue performance
+                  Monthly new customer registrations
                 </CardDescription>
               </div>
               <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -130,9 +140,9 @@ export function DashboardView() {
             <CardContent>
               <div className="h-[260px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={salesData || []}>
+                  <AreaChart data={customerData || []}>
                     <defs>
-                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="colorCustomers" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.15} />
                         <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                       </linearGradient>
@@ -149,7 +159,7 @@ export function DashboardView() {
                       axisLine={false}
                       tickLine={false}
                       tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-                      tickFormatter={(v: number) => `$${v}`}
+                      tickFormatter={(v: number) => String(v)}
                     />
                     <Tooltip
                       contentStyle={{
@@ -162,11 +172,11 @@ export function DashboardView() {
                     />
                     <Area
                       type="monotone"
-                      dataKey="sales"
+                      dataKey="customers"
                       stroke="var(--color-primary)"
                       strokeWidth={2}
                       fillOpacity={1}
-                      fill="url(#colorSales)"
+                      fill="url(#colorCustomers)"
                     />
                   </AreaChart>
                 </ResponsiveContainer>

@@ -78,7 +78,12 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
 
         {/* Right content — tabs + panel */}
         <div className="flex flex-col flex-1 overflow-hidden">
-          <DetailTabs activeTab={tab} customerId={customer.id} counts={counts} />
+          <DetailTabs
+            activeTab={tab}
+            customerId={customer.id}
+            counts={counts}
+            availableTabs={['notes', 'activities', 'deliveries', 'invoices', 'orders', 'conversations', 'followups']}
+          />
           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
             <TabContent customer={customer} tab={tab} />
           </div>

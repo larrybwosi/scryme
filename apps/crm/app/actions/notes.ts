@@ -3,15 +3,22 @@
 import { db, type CrmNote } from '@repo/db';
 import { crmNoteSchema, type CrmNoteFormValues } from '../../lib/validations';
 import { revalidatePath } from 'next/cache';
+import { getCurrentMember } from './auth';
 
 export async function createNote(data: CrmNoteFormValues, organizationId: string, memberId?: string | null): Promise<CrmNote> {
   const validatedData = crmNoteSchema.parse(data);
+
+  let creatorId = memberId;
+  if (!creatorId) {
+    const currentMember = await getCurrentMember();
+    creatorId = currentMember?.id || null;
+  }
 
   const note = await db.crmNote.create({
     data: {
       ...validatedData,
       organizationId,
-      createdById: memberId,
+      createdById: creatorId,
     },
     include: {
       record: {

@@ -1,13 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Truck, Package, MapPin, Calendar, Hash, ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
+import { Truck, Package, MapPin, Calendar, Hash, ChevronDown, ChevronUp, Plus, X, CalendarIcon } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import type { CustomerWithRelations } from '@/lib/types';
 import { createFulfillmentAction } from '@/app/actions/fulfillments';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
+import { Button } from '@repo/ui/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui/components/ui/select';
+import { Calendar as CalendarComponent } from '@repo/ui/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@repo/ui/lib/utils';
 
 interface DeliveriesTabProps {
   customer: CustomerWithRelations;
@@ -171,65 +183,79 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
             {deliveries.length} total deliveries
           </p>
         </div>
-        <button
+        <Button
+          variant={showForm ? "secondary" : "default"}
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg border bg-primary text-white border-primary hover:bg-primary/90 transition-colors"
+          className="h-9 gap-1.5 text-[12.5px] font-semibold px-4 py-2"
         >
           {showForm ? <X size={13} /> : <Plus size={13} />}
           {showForm ? 'Cancel' : 'Log Delivery'}
-        </button>
+        </Button>
       </div>
 
       {/* Add form */}
       {showForm && (
-        <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
-          <h4 className="text-[13px] font-bold text-foreground mb-4">New Delivery</h4>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="mb-5 bg-card border border-border rounded-xl p-5 shadow-sm space-y-4">
+          <h4 className="text-[13px] font-bold text-foreground">New Delivery</h4>
+          <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                 Select Order *
               </label>
-              <select
+              <Select
                 value={form.transactionId}
-                onChange={(e) => setForm((f) => ({ ...f, transactionId: e.target.value }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                onValueChange={(val) => setForm((f) => ({ ...f, transactionId: val }))}
               >
-                <option value="">Select an order...</option>
-                {customer.transactions.map(t => (
-                  <option key={t.id} value={t.id}>{t.number} - {t.type} ({t.status})</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full bg-background h-9">
+                  <SelectValue placeholder="Select an order..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {customer.transactions.map(t => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.number} - {t.type} ({t.status})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                 Type
               </label>
-              <select
+              <Select
                 value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as any }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                onValueChange={(val) => setForm((f) => ({ ...f, type: val as any }))}
               >
-                {FULFILLMENT_TYPES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full bg-background h-9">
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FULFILLMENT_TYPES.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                 Status
               </label>
-              <select
+              <Select
                 value={form.status}
-                onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as any }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                onValueChange={(val) => setForm((f) => ({ ...f, status: val as any }))}
               >
-                {FULFILLMENT_STATUSES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full bg-background h-9">
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  {FULFILLMENT_STATUSES.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                 Carrier
               </label>
               <input
@@ -240,7 +266,7 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                 Tracking Number
               </label>
               <input
@@ -251,18 +277,41 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                 Scheduled Date *
               </label>
-              <input
-                type="date"
-                value={form.scheduledAt}
-                onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal text-sm h-9 px-3",
+                      !form.scheduledAt && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                    {form.scheduledAt ? format(new Date(form.scheduledAt), "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={form.scheduledAt ? new Date(form.scheduledAt) : undefined}
+                    onSelect={(date) => {
+                      if (date) {
+                        const yyyy = date.getFullYear();
+                        const mm = String(date.getMonth() + 1).padStart(2, '0');
+                        const dd = String(date.getDate()).padStart(2, '0');
+                        setForm((f) => ({ ...f, scheduledAt: `${yyyy}-${mm}-${dd}` }));
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
                 Delivery Notes
               </label>
               <textarea
@@ -274,14 +323,14 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
               />
             </div>
           </div>
-          <div className="flex justify-end mt-4">
-            <button
+          <div className="flex justify-end pt-2">
+            <Button
               onClick={handleAdd}
               disabled={loading || !form.transactionId || !form.scheduledAt}
-              className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="text-[12.5px] font-semibold h-9 px-5"
             >
               {loading ? 'Logging...' : 'Log Delivery'}
-            </button>
+            </Button>
           </div>
         </div>
       )}
