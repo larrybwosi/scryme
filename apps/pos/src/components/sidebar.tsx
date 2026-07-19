@@ -153,6 +153,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
 
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
               'absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border bg-background flex items-center justify-center hover:bg-accent transition-colors z-10 shadow-sm',
               isCollapsed && 'right-1/2 translate-x-1/2'

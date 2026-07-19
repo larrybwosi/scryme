@@ -64,3 +64,7 @@
 ## 2026-07-16 - [Radix Nested Triggers & Tooltips in DropdownMenus]
 **Learning:** When nesting Radix UI components (such as a `TooltipTrigger` inside a `DropdownMenuTrigger`), both triggers must have the `asChild` property. Additionally, the innermost interactive button or trigger must have a descriptive `aria-label` to satisfy screen readers.
 **Action:** Ensure both the `TooltipTrigger` and `DropdownMenuTrigger` utilize `asChild`, and the nested `Button` has a descriptive `aria-label` and `TooltipContent` companion.
+
+## 2026-07-20 - [Aria-Labels on Custom Interactive Icon-Only Buttons]
+**Learning:** Standard UI packages often provide components like `Button` with nested icons that lack intrinsic labels. Icon-only buttons (such as quantity adjustment controls (+/-), guest count controls, edit triggers, and sidebar collapse controls) must always have an explicit, descriptive `aria-label` attribute to be accessible to screen reader users.
+**Action:** For all custom and standard icon-only buttons, supply a dynamic or static `aria-label` attribute describing the exact action (e.g., `aria-label="Decrease quantity"` or `aria-label={${item.productName}: Decrease quantity}`).
