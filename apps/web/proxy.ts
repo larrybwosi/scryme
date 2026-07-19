@@ -3,12 +3,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
 
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
-const publicRoutes = ["/api/auth", "/health", "/api/health", "/monitoring"];
+const publicRoutes = ["/api/auth", "/health", "/api/health"];
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // Skip proxy processing for public routes, Sentry monitoring tunnel, and auth API
+  // Skip proxy processing for public routes and auth API
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
@@ -34,9 +34,10 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
 
   // If authenticated and on an auth route, redirect to dashboard or callbackUrl
   if (isAuthRoute) {
-    const callbackUrl = request.nextUrl.searchParams.get("callbackUrl") ||
-                        request.nextUrl.searchParams.get("redirect") ||
-                        request.nextUrl.searchParams.get("returnTo");
+    const callbackUrl =
+      request.nextUrl.searchParams.get("callbackUrl") ||
+      request.nextUrl.searchParams.get("redirect") ||
+      request.nextUrl.searchParams.get("returnTo");
 
     if (callbackUrl) {
       try {
@@ -44,7 +45,10 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
           return NextResponse.redirect(new URL(callbackUrl, request.url));
         } else {
           const parsedUrl = new URL(callbackUrl);
-          if (parsedUrl.hostname.endsWith("scryme.tech") || parsedUrl.hostname === "localhost") {
+          if (
+            parsedUrl.hostname.endsWith("scryme.tech") ||
+            parsedUrl.hostname === "localhost"
+          ) {
             return NextResponse.redirect(parsedUrl);
           }
         }
@@ -91,7 +95,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     console.log(
       `[WEB PROXY] ${request.method} ${pathname} - Status: ${status}${
         location ? ` -> Redirect to: ${location}` : ""
-      } (${duration}ms)`
+      } (${duration}ms)`,
     );
     return response;
   } catch (error) {
@@ -99,7 +103,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     console.error(
       `[WEB PROXY ERROR] ${request.method} ${pathname} - Error:`,
       error,
-      `(${duration}ms)`
+      `(${duration}ms)`,
     );
     throw error;
   }
@@ -107,8 +111,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    // Skip Sentry monitoring, Next.js internals, and all static files, unless found in search params
-    "/((?!monitoring|_next|[^?]*\\.(?:html|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Skip Next.js internals and all static files, unless found in search params
+    "/((?!_next|[^?]*\\.(?:html|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
   ],
