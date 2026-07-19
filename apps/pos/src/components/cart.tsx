@@ -363,6 +363,7 @@ export function Cart() {
             isCollapsed ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 pointer-events-none'
           )}
           title="Open Cart"
+          aria-label="Open Cart"
         >
           <PanelRightOpen className="h-4 w-4" />
           {currentOrder.items.length > 0 && (
@@ -403,6 +404,7 @@ export function Cart() {
                 className="h-8 w-8 text-muted-foreground hover:text-foreground -mr-2"
                 onClick={() => setIsCollapsed(true)}
                 title="Collapse Cart"
+                aria-label="Collapse Cart"
               >
                 <PanelRightClose className="h-5 w-5" />
               </Button>
@@ -454,6 +456,7 @@ export function Cart() {
                     <div className="relative flex items-center bg-muted/40 rounded-md border border-input h-9 overflow-hidden">
                       <button 
                         className="px-2 h-full text-muted-foreground hover:bg-muted/80 transition-colors"
+                        aria-label="Decrease guest count"
                         onClick={() => {
                           const currentStr = usePosStore.getState().currentOrder.metadata?.guestsCount;
                           const guests = Math.max(1, (parseInt(currentStr) || 1) - 1);
@@ -470,6 +473,7 @@ export function Cart() {
                       </div>
                       <button 
                         className="px-2 h-full text-muted-foreground hover:bg-muted/80 transition-colors"
+                        aria-label="Increase guest count"
                         onClick={() => {
                           const currentStr = usePosStore.getState().currentOrder.metadata?.guestsCount;
                           const guests = (parseInt(currentStr) || 1) + 1;
@@ -555,6 +559,7 @@ export function Cart() {
                         <div className="flex items-center gap-1 bg-muted/50 rounded-md border border-border/50 h-7 px-1">
                           <button
                             className="h-full px-2 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                            aria-label={`Decrease quantity of ${item.productName}`}
                             onClick={() => updateItemInOrder({ ...item, quantity: Math.max(1, item.quantity - 1) })}
                             disabled={item.quantity <= 1}
                           >
@@ -565,6 +570,7 @@ export function Cart() {
                           </span>
                           <button
                             className="h-full px-2 text-muted-foreground hover:text-foreground"
+                            aria-label={`Increase quantity of ${item.productName}`}
                             onClick={() => updateItemInOrder({ ...item, quantity: item.quantity + 1 })}
                           >
                             <Plus className="w-3 h-3" />
@@ -576,6 +582,8 @@ export function Cart() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-muted-foreground hover:text-primary"
+                            aria-label={`Edit ${item.productName}`}
+                            title={`Edit ${item.productName}`}
                             onClick={() => handleOpenEdit(item)}
                           >
                             <Edit2 className="w-3.5 h-3.5" />
@@ -584,6 +592,8 @@ export function Cart() {
                             variant="ghost"
                             size="icon"
                             className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            aria-label={`Remove ${item.productName} from cart`}
+                            title={`Remove ${item.productName} from cart`}
                             onClick={() => removeItemFromOrder(item.productId, item.variantId, unitId)}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -779,6 +789,7 @@ export function Cart() {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
+                  aria-label="Decrease quantity"
                   onClick={() => setEditQuantity(prev => Math.max(1, prev - 1))}
                 >
                   <Minus className="h-4 w-4" />
@@ -794,6 +805,7 @@ export function Cart() {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8"
+                  aria-label="Increase quantity"
                   onClick={() => setEditQuantity(prev => prev + 1)}
                 >
                   <Plus className="h-4 w-4" />

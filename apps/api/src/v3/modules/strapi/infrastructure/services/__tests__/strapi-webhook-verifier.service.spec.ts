@@ -1,10 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { StrapiWebhookVerifierService } from "../strapi-webhook-verifier.service";
 import { UnauthorizedException } from "@nestjs/common";
 import * as crypto from "crypto";
 import { describe, it, expect, beforeEach } from "vitest";
-import { StrapiWebhookVerifierService } from "../strapi-webhook-verifier.service";
 
-describe("StrapiWebhookVerifierService - Signature Verification", () => {
+describe("StrapiWebhookVerifierService", () => {
   let service: StrapiWebhookVerifierService;
 
   const mockSecret = "my-secure-strapi-webhook-secret-key";
@@ -27,58 +27,68 @@ describe("StrapiWebhookVerifierService - Signature Verification", () => {
     expect(service).toBeDefined();
   });
 
-  it("should verify a valid signature successfully", () => {
-    const signature = crypto
-      .createHmac("sha256", mockSecret)
-      .update(rawBody)
-      .digest("hex");
+  describe("verify", () => {
+    it("should verify a valid signature successfully", () => {
+      const signature = crypto
+        .createHmac("sha256", mockSecret)
+        .update(rawBody)
+        .digest("hex");
 
-    expect(() => service.verify(rawBody, signature, mockSecret)).not.toThrow();
+      expect(() => service.verify(rawBody, signature, mockSecret)).not.toThrow();
+    });
+
+    it("should throw UnauthorizedException if the signature header is missing or empty", () => {
+      expect(() => service.verify(rawBody, undefined, mockSecret)).toThrow(
+        UnauthorizedException,
+      );
+
+      expect(() => service.verify(rawBody, "", mockSecret)).toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it("should throw UnauthorizedException for an invalid signature of the correct length", () => {
+      const wrongSignature = crypto
+        .createHmac("sha256", "wrong-secret")
+        .update(rawBody)
+        .digest("hex");
+
+      expect(() => service.verify(rawBody, wrongSignature, mockSecret)).toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it("should throw UnauthorizedException for an invalid signature of a different/incorrect length", () => {
+      const shortSignature = "abc123def456";
+
+      expect(() => service.verify(rawBody, shortSignature, mockSecret)).toThrow(
+        UnauthorizedException,
+      );
+    });
   });
 
-  it("should throw UnauthorizedException if the signature header is missing", () => {
-    expect(() => service.verify(rawBody, undefined, mockSecret)).toThrow(
-      UnauthorizedException,
-    );
+  describe("isValid", () => {
+    it("should correctly validate using isValid helper", () => {
+      const validSignature = crypto
+        .createHmac("sha256", mockSecret)
+        .update(rawBody)
+        .digest("hex");
+
+      expect(service.isValid(rawBody, validSignature, mockSecret)).toBe(true);
+      expect(service.isValid(rawBody, "invalid", mockSecret)).toBe(false);
+      expect(service.isValid(rawBody, undefined, mockSecret)).toBe(false);
+    });
   });
 
-  it("should throw UnauthorizedException for an invalid signature of the correct length", () => {
-    const wrongSignature = crypto
-      .createHmac("sha256", "wrong-secret")
-      .update(rawBody)
-      .digest("hex");
+  describe("sign", () => {
+    it("should generate correct signatures using the sign helper", () => {
+      const expected = crypto
+        .createHmac("sha256", mockSecret)
+        .update(JSON.stringify(mockPayload))
+        .digest("hex");
 
-    expect(() => service.verify(rawBody, wrongSignature, mockSecret)).toThrow(
-      UnauthorizedException,
-    );
-  });
-
-  it("should throw UnauthorizedException for an invalid signature of a different/incorrect length", () => {
-    const shortSignature = "abc123def456";
-
-    expect(() => service.verify(rawBody, shortSignature, mockSecret)).toThrow(
-      UnauthorizedException,
-    );
-  });
-
-  it("should correctly validate using isValid helper", () => {
-    const validSignature = crypto
-      .createHmac("sha256", mockSecret)
-      .update(rawBody)
-      .digest("hex");
-
-    expect(service.isValid(rawBody, validSignature, mockSecret)).toBe(true);
-    expect(service.isValid(rawBody, "invalid", mockSecret)).toBe(false);
-    expect(service.isValid(rawBody, undefined, mockSecret)).toBe(false);
-  });
-
-  it("should generate correct signatures using the sign helper", () => {
-    const expected = crypto
-      .createHmac("sha256", mockSecret)
-      .update(JSON.stringify(mockPayload))
-      .digest("hex");
-
-    const signed = service.sign(mockPayload, mockSecret);
-    expect(signed).toBe(expected);
+      const signed = service.sign(mockPayload, mockSecret);
+      expect(signed).toBe(expected);
+    });
   });
 });
