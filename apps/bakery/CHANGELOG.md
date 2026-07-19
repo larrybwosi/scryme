@@ -1,5 +1,11 @@
 # bakery
 
+## 9.26.0
+
+### Minor Changes
+
+- afb85da: Update
+
 ## 9.24.0
 
 ### Minor Changes

@@ -14,9 +14,16 @@ import {
   Globe,
   AlertCircle,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
-import { getCustomers, deleteCustomer } from "../../actions/customers";
+import { getCustomers, deleteCustomer, getCustomerIdSettings, saveCustomerIdSettings } from "../../actions/customers";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
 import { StatCard } from "../../../components/ui/stat-card";
 import { useOrg } from "../../../components/org-context";
 import {
@@ -66,6 +73,37 @@ export function CustomersView() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<string | null>(null);
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [idSettings, setIdSettings] = useState({ autoGenerate: false, prefix: "CUST-", sequence: 1001 });
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  const openSettings = async () => {
+    setIsSettingsOpen(true);
+    try {
+      const res = await getCustomerIdSettings(organizationId);
+      setIdSettings(res);
+    } catch (err) {
+      toast.error("Failed to load customer ID settings");
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    setIsSavingSettings(true);
+    try {
+      const res = await saveCustomerIdSettings(organizationId, idSettings);
+      if (res.success) {
+        toast.success("Customer ID settings saved successfully");
+        setIsSettingsOpen(false);
+      } else {
+        toast.error(res.error || "Failed to save settings");
+      }
+    } catch (err) {
+      toast.error("An error occurred");
+    } finally {
+      setIsSavingSettings(false);
+    }
+  };
 
   // Use SWR for data fetching
   const {
@@ -192,20 +230,29 @@ export function CustomersView() {
               {customers.length} customer{customers.length !== 1 ? 's' : ''} &bull; {activeCount} active
             </p>
           </div>
-          <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <SheetTrigger asChild>
-              <button className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-[12.5px] font-semibold hover:bg-primary/90 transition-colors h-8">
-                <Plus size={13} />
-                Add Customer
-              </button>
-            </SheetTrigger>
-            <SheetContent className="sm:max-w-[440px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Add New Customer</SheetTitle>
-              </SheetHeader>
-              <CustomerForm onSuccess={handleCustomerSuccess} type="B2C" />
-            </SheetContent>
-          </Sheet>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openSettings}
+              className="flex items-center gap-1.5 bg-background hover:bg-accent border border-border px-3 py-1.5 rounded-lg text-[12.5px] font-semibold transition-colors h-8 text-foreground"
+            >
+              <Settings size={13} />
+              ID Settings
+            </button>
+            <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <SheetTrigger asChild>
+                <button className="flex items-center gap-1.5 bg-primary text-primary-foreground px-3 py-1.5 rounded-lg text-[12.5px] font-semibold hover:bg-primary/90 transition-colors h-8">
+                  <Plus size={13} />
+                  Add Customer
+                </button>
+              </SheetTrigger>
+              <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Add New Customer</SheetTitle>
+                </SheetHeader>
+                <CustomerForm onSuccess={handleCustomerSuccess} type="B2C" />
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -326,8 +373,13 @@ export function CustomersView() {
                             {customer.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">
+                            <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 flex-wrap">
                               {customer.name}
+                              {customer.customId && (
+                                <span className="text-[10px] font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded font-semibold">
+                                  {customer.customId}
+                                </span>
+                              )}
                             </div>
                             <div className="text-[11.5px] text-muted-foreground">
                               {customer.email || "No email"}
@@ -459,6 +511,53 @@ export function CustomersView() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle>Customer ID Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <label className="text-[13px] font-semibold text-foreground">Auto-generate Customer IDs</label>
+              <input
+                type="checkbox"
+                checked={idSettings.autoGenerate}
+                onChange={(e) => setIdSettings({ ...idSettings, autoGenerate: e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">ID Prefix</label>
+              <input
+                type="text"
+                value={idSettings.prefix}
+                onChange={(e) => setIdSettings({ ...idSettings, prefix: e.target.value })}
+                className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="e.g. CUST-"
+                disabled={!idSettings.autoGenerate}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">Next Sequence Number</label>
+              <input
+                type="number"
+                value={idSettings.sequence}
+                onChange={(e) => setIdSettings({ ...idSettings, sequence: parseInt(e.target.value) || 1001 })}
+                className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="e.g. 1001"
+                disabled={!idSettings.autoGenerate}
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button variant="outline" onClick={() => setIsSettingsOpen(false)}>Cancel</Button>
+              <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+                {isSavingSettings ? "Saving..." : "Save Settings"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>

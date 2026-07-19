@@ -18,6 +18,14 @@ import type { CustomerWithRelations } from '@/lib/types';
 import { createActivity } from '@/app/actions/activities';
 import { toast } from 'sonner';
 import { formatDate } from '@/lib/utils';
+import { Button } from '@repo/ui/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@repo/ui/components/ui/select';
 
 interface ConversationsTabProps {
   customer: CustomerWithRelations;
@@ -159,42 +167,55 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
             {activities.length} logged interactions
           </p>
         </div>
-        <button
+        <Button
+          variant={showForm ? "secondary" : "default"}
           onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-1.5 text-[12.5px] font-semibold px-3.5 py-2 rounded-lg bg-primary text-white border border-primary hover:bg-primary/90 transition-colors"
+          className="h-9 gap-1.5 text-[12.5px] font-semibold px-4 py-2"
         >
           {showForm ? <X size={13} /> : <Plus size={13} />}
           {showForm ? 'Cancel' : 'Log Conversation'}
-        </button>
+        </Button>
       </div>
 
       {/* Add form */}
       {showForm && (
-        <div className="mb-5 bg-card border border-primary/30 rounded-xl p-5">
-          <h4 className="text-[13px] font-bold text-foreground mb-4">Log Conversation</h4>
-          <div className="grid grid-cols-2 gap-3">
+        <div className="mb-5 bg-card border border-border rounded-xl p-5 shadow-sm space-y-4">
+          <h4 className="text-[13px] font-bold text-foreground">Log Conversation</h4>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Channel</label>
-              <select
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Channel</label>
+              <Select
                 value={form.type}
-                onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                onValueChange={(val) => setForm((f) => ({ ...f, type: val }))}
               >
-                {CHANNELS.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
-              </select>
+                <SelectTrigger className="w-full h-9 bg-background">
+                  <SelectValue placeholder="Select channel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CHANNELS.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Direction</label>
-              <select
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Direction</label>
+              <Select
                 value={form.direction}
-                onChange={(e) => setForm((f) => ({ ...f, direction: e.target.value }))}
-                className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+                onValueChange={(val) => setForm((f) => ({ ...f, direction: val }))}
               >
-                {DIRECTIONS.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
+                <SelectTrigger className="w-full h-9 bg-background">
+                  <SelectValue placeholder="Select direction" />
+                </SelectTrigger>
+                <SelectContent>
+                  {DIRECTIONS.map((d) => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Duration</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Duration</label>
               <input
                 value={form.duration}
                 onChange={(e) => setForm((f) => ({ ...f, duration: e.target.value }))}
@@ -203,7 +224,7 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
               />
             </div>
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">Summary *</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Summary *</label>
               <textarea
                 value={form.description}
                 onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -213,14 +234,14 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
               />
             </div>
           </div>
-          <div className="flex justify-end mt-4">
-            <button
+          <div className="flex justify-end pt-2">
+            <Button
               onClick={handleAdd}
               disabled={loading || !form.description.trim()}
-              className="text-[12.5px] font-semibold px-5 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="text-[12.5px] font-semibold h-9 px-5"
             >
               {loading ? 'Saving...' : 'Save Conversation'}
-            </button>
+            </Button>
           </div>
         </div>
       )}

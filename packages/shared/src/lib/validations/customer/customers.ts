@@ -73,6 +73,7 @@ export const CustomerFormSchema = z
     // --- NEW FIELDS ---
     isBusiness: z.boolean().optional().default(false), // Trigger for Business Account creation
     taxId: z.string().optional(), // Maps to BusinessAccount.taxId
+    customId: z.string().optional(),
   })
   .strict();
 
