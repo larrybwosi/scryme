@@ -11,6 +11,7 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Separator } from "@repo/ui/components/ui/separator";
+import { Card, CardContent, CardHeader } from "@repo/ui/components/ui/card";
 import {
   Tabs,
   TabsContent,
@@ -36,6 +37,7 @@ import {
   ExternalLink,
   Loader2,
   Copy,
+  Check,
 } from "lucide-react";
 import {
   getTransactionById,
@@ -55,6 +57,15 @@ interface TransactionDetailsSheetProps {
   onClose: () => void;
 }
 
+const STATUS_ACCENT: Record<string, string> = {
+  COMPLETED: "bg-emerald-500",
+  PENDING_CONFIRMATION: "bg-amber-500",
+  CONFIRMED: "bg-blue-500",
+  PROCESSING: "bg-indigo-500",
+  CANCELLED: "bg-red-500",
+  DRAFT: "bg-zinc-300",
+};
+
 export function TransactionDetailsSheet({
   transactionId,
   isOpen,
@@ -66,6 +77,7 @@ export function TransactionDetailsSheet({
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
   const [isLoadingPublicLink, setIsLoadingPublicLink] = useState(false);
+  const [copiedNumber, setCopiedNumber] = useState(false);
 
   const fetchTransaction = useCallback(async () => {
     if (!transactionId) return;
@@ -154,12 +166,19 @@ export function TransactionDetailsSheet({
     toast.success("Link copied to clipboard!");
   };
 
+  const handleCopyNumber = () => {
+    if (!transaction) return;
+    navigator.clipboard.writeText(transaction.number);
+    setCopiedNumber(true);
+    setTimeout(() => setCopiedNumber(false), 1500);
+  };
+
   if (!transaction && isLoading) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent className="sm:max-w-[650px]">
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-6 w-6 border-2 border-zinc-900 border-t-transparent" />
+          <div className="flex h-full items-center justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
           </div>
         </SheetContent>
       </Sheet>
@@ -170,15 +189,34 @@ export function TransactionDetailsSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-[720px] p-0 flex flex-col h-full bg-zinc-50 border-l border-zinc-200">
+      <SheetContent className="sm:max-w-[740px] p-0 flex flex-col h-full bg-zinc-50 border-l border-zinc-200">
+        {/* Status Accent Bar */}
+        <div
+          className={cn(
+            "h-1 w-full shrink-0",
+            STATUS_ACCENT[transaction.status] || "bg-zinc-300",
+          )}
+        />
+
         {/* Header Block */}
         <div className="p-6 bg-white border-b border-zinc-200 sticky top-0 z-10 shadow-sm shadow-zinc-100/40">
           <div className="flex items-start justify-between mb-6">
             <div className="space-y-1.5">
-              <div className="flex items-center gap-2.5">
-                <SheetTitle className="text-xl font-mono tracking-tight font-semibold text-zinc-900">
+              <div className="flex items-center gap-2">
+                <SheetTitle className="text-xl font-mono tracking-tight font-semibold text-zinc-900 tabular-nums">
                   {transaction.number}
                 </SheetTitle>
+                <button
+                  type="button"
+                  onClick={handleCopyNumber}
+                  className="text-zinc-300 hover:text-zinc-600 transition-colors"
+                  aria-label="Copy transaction number">
+                  {copiedNumber ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
                 <Badge
                   variant="secondary"
                   className="font-mono text-[10px] tracking-wider uppercase bg-zinc-100 text-zinc-700 hover:bg-zinc-100 rounded border border-zinc-200/60 px-1.5 py-0">
@@ -195,11 +233,11 @@ export function TransactionDetailsSheet({
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/60 p-1">
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50 font-medium"
+                className="h-7 gap-1.5 text-xs text-zinc-600 hover:bg-white hover:shadow-sm font-medium"
                 onClick={() => handleGenerateDocument("invoice")}
                 disabled={isGeneratingInvoice}>
                 {isGeneratingInvoice ? (
@@ -207,12 +245,13 @@ export function TransactionDetailsSheet({
                 ) : (
                   <FileText className="w-3.5 h-3.5 text-zinc-500" />
                 )}
-                Gen Invoice
+                Invoice
               </Button>
+              <Separator orientation="vertical" className="h-4 bg-zinc-200" />
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 text-xs text-zinc-600 border-zinc-200 hover:bg-zinc-50 font-medium"
+                className="h-7 gap-1.5 text-xs text-zinc-600 hover:bg-white hover:shadow-sm font-medium"
                 onClick={() => handleGenerateDocument("receipt")}
                 disabled={isGeneratingReceipt}>
                 {isGeneratingReceipt ? (
@@ -220,7 +259,7 @@ export function TransactionDetailsSheet({
                 ) : (
                   <Receipt className="w-3.5 h-3.5 text-zinc-500" />
                 )}
-                Gen Receipt
+                Receipt
               </Button>
             </div>
           </div>
@@ -243,7 +282,7 @@ export function TransactionDetailsSheet({
               <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
                 Total Gross Amount
               </span>
-              <span className="text-lg font-semibold tracking-tight font-mono text-zinc-900">
+              <span className="text-lg font-semibold tracking-tight font-mono tabular-nums text-zinc-900">
                 {formatCurrency(transaction.finalTotal)}
               </span>
             </div>
@@ -254,13 +293,13 @@ export function TransactionDetailsSheet({
         <ScrollArea className="flex-1 bg-zinc-50">
           <div className="p-6 space-y-6">
             {/* Timeline Workflow Component */}
-            <div className="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-sm shadow-zinc-100/50">
+            <Card className="p-5 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
               <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-zinc-400" />
                 Fulfillment Workflow Line
               </h3>
               <TransactionTimeline currentStatus={transaction.status} />
-            </div>
+            </Card>
 
             {/* Core Tab System */}
             <Tabs defaultValue="items" className="w-full">
@@ -289,7 +328,7 @@ export function TransactionDetailsSheet({
 
               {/* Items Panel */}
               <TabsContent value="items" className="mt-4 outline-none">
-                <div className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-sm shadow-zinc-100/50">
+                <Card className="overflow-hidden shadow-sm shadow-zinc-100/50 border-zinc-200/80 py-0 gap-0">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
@@ -326,13 +365,13 @@ export function TransactionDetailsSheet({
                                 </span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-center font-mono text-zinc-600">
+                            <td className="px-4 py-3 text-center font-mono tabular-nums text-zinc-600">
                               {item.quantity}
                             </td>
-                            <td className="px-4 py-3 text-right font-mono text-zinc-600">
+                            <td className="px-4 py-3 text-right font-mono tabular-nums text-zinc-600">
                               {formatCurrency(item.unitPrice)}
                             </td>
-                            <td className="px-4 py-3 text-right font-mono font-semibold text-zinc-900">
+                            <td className="px-4 py-3 text-right font-mono tabular-nums font-semibold text-zinc-900">
                               {formatCurrency(item.lineTotal)}
                             </td>
                           </tr>
@@ -345,25 +384,25 @@ export function TransactionDetailsSheet({
                   <div className="bg-zinc-50/50 border-t border-zinc-200/80 p-4 font-medium text-xs space-y-2.5 w-full ml-auto sm:max-w-[340px]">
                     <div className="flex justify-between text-zinc-500">
                       <span>Subtotal</span>
-                      <span className="font-mono text-zinc-700">
+                      <span className="font-mono tabular-nums text-zinc-700">
                         {formatCurrency(transaction.subtotal)}
                       </span>
                     </div>
                     <div className="flex justify-between text-zinc-500">
                       <span>Tax Ledger</span>
-                      <span className="font-mono text-zinc-700">
+                      <span className="font-mono tabular-nums text-zinc-700">
                         {formatCurrency(transaction.taxTotal)}
                       </span>
                     </div>
                     <Separator className="bg-zinc-200/60 my-1" />
                     <div className="flex justify-between items-baseline text-zinc-900">
                       <span className="font-semibold">Grand Total</span>
-                      <span className="font-mono text-base font-bold text-zinc-950 tracking-tight">
+                      <span className="font-mono tabular-nums text-base font-bold text-zinc-950 tracking-tight">
                         {formatCurrency(transaction.finalTotal)}
                       </span>
                     </div>
                   </div>
-                </div>
+                </Card>
               </TabsContent>
 
               {/* Documents Panel */}
@@ -372,7 +411,7 @@ export function TransactionDetailsSheet({
                 className="mt-4 space-y-4 outline-none">
                 <div className="space-y-6">
                   {/* Generate Public Link Form Card */}
-                  <div className="bg-white border border-zinc-200/80 rounded-xl p-5 shadow-sm shadow-zinc-100/50 space-y-4">
+                  <Card className="p-5 shadow-sm shadow-zinc-100/50 border-zinc-200/80 space-y-4">
                     <div className="flex items-center gap-2">
                       <FileText className="w-4 h-4 text-zinc-950" />
                       <h3 className="text-sm font-semibold text-zinc-950">
@@ -380,7 +419,8 @@ export function TransactionDetailsSheet({
                       </h3>
                     </div>
                     <p className="text-xs text-zinc-500">
-                      Create an unguessable public link with a customizable expiry period to share with clients.
+                      Create an unguessable public link with a customizable
+                      expiry period to share with clients.
                     </p>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -413,10 +453,14 @@ export function TransactionDetailsSheet({
 
                     <Button
                       size="sm"
-                      className="w-full h-8 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white"
+                      className="w-full h-8 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white shadow-sm"
                       onClick={async () => {
-                        const typeSelect = document.getElementById("public-doc-type") as HTMLSelectElement;
-                        const expirySelect = document.getElementById("public-doc-expiry") as HTMLSelectElement;
+                        const typeSelect = document.getElementById(
+                          "public-doc-type",
+                        ) as HTMLSelectElement;
+                        const expirySelect = document.getElementById(
+                          "public-doc-expiry",
+                        ) as HTMLSelectElement;
                         if (!typeSelect || !expirySelect) return;
 
                         const type = typeSelect.value as "invoice" | "receipt";
@@ -425,7 +469,11 @@ export function TransactionDetailsSheet({
 
                         setIsLoadingPublicLink(true);
                         try {
-                          await generatePublicLinkAction(transaction.id, type, customExpiryDays);
+                          await generatePublicLinkAction(
+                            transaction.id,
+                            type,
+                            customExpiryDays,
+                          );
                           toast.success("Public link generated successfully!");
                           fetchTransaction();
                         } catch (err) {
@@ -444,11 +492,13 @@ export function TransactionDetailsSheet({
                         "Generate Public Link"
                       )}
                     </Button>
-                  </div>
+                  </Card>
 
                   {transaction.attachments?.length > 0 ? (
                     (() => {
-                      const sortedAttachments = [...transaction.attachments].sort(
+                      const sortedAttachments = [
+                        ...transaction.attachments,
+                      ].sort(
                         (a, b) =>
                           new Date(b.uploadedAt).getTime() -
                           new Date(a.uploadedAt).getTime(),
@@ -458,7 +508,8 @@ export function TransactionDetailsSheet({
                         (acc: any, att: any) => {
                           const desc = att.description?.toLowerCase() || "";
                           let group = "Others";
-                          if (desc.includes("public")) group = "Public Document Links";
+                          if (desc.includes("public"))
+                            group = "Public Document Links";
                           else if (desc.includes("invoice")) group = "Invoices";
                           else if (desc.includes("receipt")) group = "Receipts";
                           else if (
@@ -487,9 +538,9 @@ export function TransactionDetailsSheet({
                         if (!docs) return null;
 
                         return (
-                          <div
+                          <Card
                             key={groupName}
-                            className="bg-white border border-zinc-200/80 rounded-xl overflow-hidden shadow-sm shadow-zinc-100/50">
+                            className="overflow-hidden shadow-sm shadow-zinc-100/50 border-zinc-200/80 py-0 gap-0">
                             <div className="p-4 border-b border-zinc-100 bg-zinc-50/50">
                               <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                                 <FileText className="w-3.5 h-3.5 text-zinc-400" />
@@ -498,19 +549,32 @@ export function TransactionDetailsSheet({
                             </div>
                             <div className="divide-y divide-zinc-100">
                               {docs.map((att: any) => {
-                                const isPublicLink = groupName === "Public Document Links";
+                                const isPublicLink =
+                                  groupName === "Public Document Links";
                                 return (
                                   <div
                                     key={att.id}
                                     className="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
                                     <div className="flex items-center gap-3">
-                                      <div className={cn(
-                                        "w-10 h-10 rounded-lg flex items-center justify-center",
-                                        isPublicLink ? "bg-emerald-50 border border-emerald-200 text-emerald-600" : "bg-zinc-50 border border-zinc-200 text-zinc-400"
-                                      )}>
+                                      <div
+                                        className={cn(
+                                          "w-10 h-10 rounded-lg flex items-center justify-center",
+                                          isPublicLink
+                                            ? "bg-emerald-50 border border-emerald-200 text-emerald-600"
+                                            : "bg-zinc-50 border border-zinc-200 text-zinc-400",
+                                        )}>
                                         {att.mimeType === "application/pdf" ? (
-                                          <FileText className={cn("w-5 h-5", isPublicLink ? "text-emerald-600" : "text-red-500")} />
-                                        ) : att.mimeType.startsWith("image/") ? (
+                                          <FileText
+                                            className={cn(
+                                              "w-5 h-5",
+                                              isPublicLink
+                                                ? "text-emerald-600"
+                                                : "text-red-500",
+                                            )}
+                                          />
+                                        ) : att.mimeType.startsWith(
+                                            "image/",
+                                          ) ? (
                                           <Paperclip className="w-5 h-5 text-blue-500" />
                                         ) : (
                                           <Paperclip className="w-5 h-5" />
@@ -522,15 +586,30 @@ export function TransactionDetailsSheet({
                                             <>
                                               {att.description}
                                               {att.expiresAt ? (
-                                                new Date(att.expiresAt) < new Date() ? (
-                                                  <Badge variant="outline" className="text-[9px] text-red-600 border-red-200 bg-red-50 py-0 px-1 rounded font-normal uppercase">Expired</Badge>
+                                                new Date(att.expiresAt) <
+                                                new Date() ? (
+                                                  <Badge
+                                                    variant="outline"
+                                                    className="text-[9px] text-red-600 border-red-200 bg-red-50 py-0 px-1 rounded font-normal uppercase">
+                                                    Expired
+                                                  </Badge>
                                                 ) : (
-                                                  <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-200 bg-emerald-50 py-0 px-1 rounded font-normal uppercase">
-                                                    Active • Expir. {format(new Date(att.expiresAt), "MMM d")}
+                                                  <Badge
+                                                    variant="outline"
+                                                    className="text-[9px] text-emerald-600 border-emerald-200 bg-emerald-50 py-0 px-1 rounded font-normal uppercase">
+                                                    Active • Expir.{" "}
+                                                    {format(
+                                                      new Date(att.expiresAt),
+                                                      "MMM d",
+                                                    )}
                                                   </Badge>
                                                 )
                                               ) : (
-                                                <Badge variant="outline" className="text-[9px] text-blue-600 border-blue-200 bg-blue-50 py-0 px-1 rounded font-normal uppercase">Never Expires</Badge>
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-[9px] text-blue-600 border-blue-200 bg-blue-50 py-0 px-1 rounded font-normal uppercase">
+                                                  Never Expires
+                                                </Badge>
                                               )}
                                             </>
                                           ) : (
@@ -539,7 +618,10 @@ export function TransactionDetailsSheet({
                                         </p>
                                         <div className="flex items-center gap-2 mt-0.5">
                                           <span className="text-[10px] text-zinc-400 font-medium font-mono truncate max-w-[280px]">
-                                            {isPublicLink ? (att.shortUrl || att.fileUrl) : (att.description || "No description")}
+                                            {isPublicLink
+                                              ? att.shortUrl || att.fileUrl
+                                              : att.description ||
+                                                "No description"}
                                           </span>
                                           {!isPublicLink && (
                                             <>
@@ -561,7 +643,11 @@ export function TransactionDetailsSheet({
                                           variant="ghost"
                                           size="icon"
                                           className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
-                                          onClick={() => handleCopyLink(att.shortUrl || att.fileUrl!)}>
+                                          onClick={() =>
+                                            handleCopyLink(
+                                              att.shortUrl || att.fileUrl!,
+                                            )
+                                          }>
                                           <Copy className="w-4 h-4" />
                                         </Button>
                                       )}
@@ -595,12 +681,12 @@ export function TransactionDetailsSheet({
                                 );
                               })}
                             </div>
-                          </div>
+                          </Card>
                         );
                       });
                     })()
                   ) : (
-                    <div className="bg-white border border-zinc-200/80 rounded-xl p-12 text-center space-y-2">
+                    <Card className="p-12 text-center space-y-2 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
                       <div className="w-12 h-12 rounded-full bg-zinc-50 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-300 mb-2">
                         <FileText className="w-6 h-6" />
                       </div>
@@ -611,7 +697,7 @@ export function TransactionDetailsSheet({
                         Invoices and receipts for orders are automatically
                         stored here.
                       </p>
-                    </div>
+                    </Card>
                   )}
                 </div>
               </TabsContent>
@@ -623,16 +709,16 @@ export function TransactionDetailsSheet({
                 <div className="space-y-3">
                   {transaction.payments?.length > 0 ? (
                     transaction.payments.map((payment: any) => (
-                      <div
+                      <Card
                         key={payment.id}
-                        className="bg-white border border-zinc-200/80 rounded-xl p-4 shadow-sm shadow-zinc-100/50 space-y-3">
+                        className="p-4 shadow-sm shadow-zinc-100/50 border-zinc-200/80 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3.5">
                             <div className="w-9 h-9 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-600 shadow-sm">
                               <CreditCard className="w-4 h-4 text-zinc-500" />
                             </div>
                             <div className="space-y-0.5">
-                              <span className="font-mono text-sm font-semibold text-zinc-900 block">
+                              <span className="font-mono tabular-nums text-sm font-semibold text-zinc-900 block">
                                 {formatCurrency(payment.amount)}
                               </span>
                               <span className="text-[11px] text-zinc-400 block font-medium">
@@ -739,14 +825,14 @@ export function TransactionDetailsSheet({
                             </p>
                           )}
                         </div>
-                      </div>
+                      </Card>
                     ))
                   ) : (
-                    <div className="bg-white border border-dashed border-zinc-200 rounded-xl p-8 text-center">
+                    <Card className="border-dashed p-8 text-center shadow-none border-zinc-200">
                       <p className="text-zinc-400 text-xs font-medium">
                         No financial transactions recorded.
                       </p>
-                    </div>
+                    </Card>
                   )}
 
                   {transaction.type !== "POS_SALE" &&
@@ -767,7 +853,7 @@ export function TransactionDetailsSheet({
                 value="details"
                 className="mt-4 space-y-4 outline-none">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white border border-zinc-200/80 rounded-xl p-4 space-y-3 shadow-sm shadow-zinc-100/50">
+                  <Card className="p-4 space-y-3 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
                     <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
                       <User className="w-3 h-3 text-zinc-400" /> Account Profile
                     </h4>
@@ -784,9 +870,9 @@ export function TransactionDetailsSheet({
                           "No active contact record"}
                       </p>
                     </div>
-                  </div>
+                  </Card>
 
-                  <div className="bg-white border border-zinc-200/80 rounded-xl p-4 space-y-3 shadow-sm shadow-zinc-100/50">
+                  <Card className="p-4 space-y-3 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
                     <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
                       <MapPin className="w-3 h-3 text-zinc-400" /> Hub &
                       Management
@@ -803,11 +889,11 @@ export function TransactionDetailsSheet({
                         </span>
                       </p>
                     </div>
-                  </div>
+                  </Card>
                 </div>
 
                 {/* Logistics Block */}
-                <div className="bg-white border border-zinc-200/80 rounded-xl p-4 space-y-3.5 shadow-sm shadow-zinc-100/50">
+                <Card className="p-4 space-y-3.5 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
                   <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
                     <Truck className="w-3 h-3 text-zinc-400" /> Order
                     Fulfillment Registry
@@ -850,18 +936,18 @@ export function TransactionDetailsSheet({
                       No historical logistics/fulfillment updates initialized.
                     </p>
                   )}
-                </div>
+                </Card>
 
                 {/* Audit & Manifest Notes */}
                 {transaction.notes && (
-                  <div className="bg-amber-50/40 border border-amber-200/60 rounded-xl p-4 space-y-1.5">
+                  <Card className="bg-amber-50/40 border-amber-200/60 p-4 space-y-1.5 shadow-none">
                     <h4 className="text-[10px] font-semibold text-amber-800 uppercase tracking-wider">
                       Internal Operations Memo
                     </h4>
                     <p className="text-xs text-amber-900/90 leading-relaxed font-medium">
                       {transaction.notes}
                     </p>
-                  </div>
+                  </Card>
                 )}
               </TabsContent>
             </Tabs>
@@ -869,7 +955,7 @@ export function TransactionDetailsSheet({
         </ScrollArea>
 
         {/* Global Action Footer */}
-        <div className="p-4 bg-white border-t border-zinc-200 flex items-center gap-3 shadow-md shadow-zinc-900/10">
+        <div className="p-4 bg-white/95 backdrop-blur border-t border-zinc-200 flex items-center gap-3 shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.08)]">
           <Button
             variant="outline"
             className="flex-1 h-10 text-xs font-semibold text-red-600 border-zinc-200 hover:bg-red-50/50 hover:border-red-200 hover:text-red-700 transition-colors"

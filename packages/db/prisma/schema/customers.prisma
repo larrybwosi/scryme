@@ -75,6 +75,12 @@ model BusinessAccount {
 
   defaultLocationId String?
 
+  logoUrl            String?
+  customTheme        String?
+  isEnterprise       Boolean      @default(false)
+  discountPercentage Float?
+  paymentTermsDays   Int?
+
   crmRecordId String?    @unique
   crmRecord   CrmRecord? @relation(fields: [crmRecordId], references: [id], onDelete: SetNull)
 

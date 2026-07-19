@@ -18,10 +18,12 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
+      test:
+        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -q"]
+      interval: 10s
+      timeout: 3s
       retries: 5
+      start_period: 10s
 
   # --- CACHE ---
   redis:
@@ -31,9 +33,10 @@ services:
       - scryme-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
+      interval: 10s
+      timeout: 3s
       retries: 5
+      start_period: 5s
 
   # --- MESSAGE BROKER ---
   rabbitmq:
@@ -48,8 +51,9 @@ services:
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "5672"]
       interval: 30s
-      timeout: 10s
+      timeout: 5s
       retries: 3
+      start_period: 30s
 
   # --- PERMISSION FIXER FOR NON-ROOT CONTAINERS ---
   vol-perms:
@@ -61,9 +65,10 @@ services:
     command: sh -c "chown -R 10001:10001 /fix_rustfs /fix_loki && touch /tmp/done && sleep infinity"
     healthcheck:
       test: ["CMD", "test", "-f", "/tmp/done"]
-      interval: 5s
+      interval: 3s
       timeout: 2s
       retries: 3
+      start_period: 2s
     networks:
       - scryme-network
 
@@ -91,11 +96,12 @@ services:
       test:
         [
           "CMD-SHELL",
-          "curl -f http://localhost:9000/health || wget --no-verbose --tries=1 --spider http://localhost:9000/health || nc -z localhost 9000 || exit 1",
+          "curl -fsS --max-time 3 http://localhost:9000/health || nc -z localhost 9000",
         ]
-      interval: 10s
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
   # --- LOGGING INFRASTRUCTURE ---
   loki:
@@ -110,10 +116,20 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test: ["CMD", "/usr/bin/loki", "-health"]
-      interval: 10s
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--timeout=3",
+          "--spider",
+          "http://localhost:3100/ready",
+        ]
+      interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
   promtail:
     image: grafana/promtail:latest
@@ -125,6 +141,21 @@ services:
     command: -config.file=/mnt/config/config.yml
     networks:
       - scryme-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--timeout=3",
+          "--spider",
+          "http://localhost:9080/ready",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   # --- APPLICATIONS ---
   api:
@@ -170,12 +201,14 @@ services:
           "wget",
           "--no-verbose",
           "--tries=1",
+          "--timeout=3",
           "--spider",
           "http://localhost:${API_PORT:-4000}/api/v2/health",
         ]
-      interval: 30s
-      timeout: 10s
+      interval: 15s
+      timeout: 5s
       retries: 3
+      start_period: 20s
 
   web:
     image: ghcr.io/larrybwosi/scryme/web:9.22.0
@@ -210,12 +243,14 @@ services:
           "wget",
           "--no-verbose",
           "--tries=1",
+          "--timeout=3",
           "--spider",
           "http://localhost:${WEB_PORT:-3000}/api/health",
         ]
-      interval: 30s
-      timeout: 10s
+      interval: 15s
+      timeout: 5s
       retries: 3
+      start_period: 20s
 
   crm:
     image: ghcr.io/larrybwosi/scryme/crm:9.22.0
@@ -250,12 +285,14 @@ services:
           "wget",
           "--no-verbose",
           "--tries=1",
+          "--timeout=3",
           "--spider",
           "http://localhost:${CRM_PORT:-3001}/api/health",
         ]
-      interval: 30s
-      timeout: 10s
+      interval: 15s
+      timeout: 5s
       retries: 3
+      start_period: 20s
 
   bakery:
     image: ghcr.io/larrybwosi/scryme/bakery:9.22.0
@@ -282,12 +319,14 @@ services:
           "wget",
           "--no-verbose",
           "--tries=1",
+          "--timeout=3",
           "--spider",
           "http://localhost:${BAKERY_PORT:-3003}/api/health",
         ]
-      interval: 30s
-      timeout: 10s
+      interval: 15s
+      timeout: 5s
       retries: 3
+      start_period: 15s
 
   # portal:
   #   image: ghcr.io/larrybwosi/scryme/portal:9.19.0

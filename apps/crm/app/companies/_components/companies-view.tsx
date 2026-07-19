@@ -175,9 +175,12 @@ export function CompaniesView() {
       <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Companies</h1>
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">
+              Companies
+            </h1>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              {companies.length} compan{companies.length !== 1 ? 'ies' : 'y'} &bull; B2B accounts
+              {companies.length} compan{companies.length !== 1 ? "ies" : "y"}{" "}
+              &bull; B2B accounts
             </p>
           </div>
           <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -187,7 +190,7 @@ export function CompaniesView() {
                 Add Company
               </button>
             </SheetTrigger>
-            <SheetContent className="sm:max-w-[440px]">
+            <SheetContent className="sm:max-w-2xl overflow-y-scroll">
               <SheetHeader>
                 <SheetTitle>Add New Company</SheetTitle>
               </SheetHeader>
@@ -281,7 +284,10 @@ export function CompaniesView() {
                       )}
                     >
                       <td className="px-5 py-3.5">
-                        <Link href={`/companies/${company.id}`} className="flex items-center gap-3">
+                        <Link
+                          href={`/companies/${company.id}`}
+                          className="flex items-center gap-3"
+                        >
                           <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
                             {company.name.charAt(0).toUpperCase()}
                           </div>
@@ -402,7 +408,10 @@ export function CompaniesView() {
         </div>
       </div>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>

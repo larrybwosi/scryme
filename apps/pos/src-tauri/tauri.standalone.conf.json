@@ -26,9 +26,7 @@
       "csp": "default-src 'self'; script-src 'self' 'unsafe-eval' https://unpkg.com blob:; connect-src 'self' https://unpkg.com blob: https://asset.localhost; img-src 'self' asset: https://asset.localhost blob: data: https://*.unsplash.com; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; style-src-attr 'self' 'unsafe-inline'; font-src 'self' data:;",
       "assetProtocol": {
         "enable": true,
-        "scope": [
-          "**/*"
-        ]
+        "scope": ["**/*"]
       }
     }
   },
@@ -36,19 +34,11 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": false,
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ]
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
   },
   "plugins": {
     "sql": {
-      "preload": [
-        "sqlite:pos_standalone.db"
-      ]
+      "preload": ["sqlite:pos_standalone.db"]
     }
   }
 }

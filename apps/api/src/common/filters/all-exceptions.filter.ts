@@ -5,10 +5,8 @@ import {
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
-import { FastifyReply } from "fastify";
 import { ApiError } from "@repo/shared/api/v2";
 import { env } from "@repo/env";
-import { OpenObserveService } from "../services/openobserve.service";
 import { redactSensitiveData } from "../utils/redaction";
 import * as Sentry from "@sentry/nestjs";
 
@@ -74,7 +72,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
         const businessAccountId = request.v3Context?.businessAccountId;
         const clientId = request.v3Context?.clientId;
 
-        Sentry.withScope((scope) => {
+        Sentry.withScope(scope => {
           if (userId || email || memberId) {
             scope.setUser({
               id: userId || undefined,
@@ -85,7 +83,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
           }
 
           if (organizationId) scope.setTag("organizationId", organizationId);
-          if (businessAccountId) scope.setTag("businessAccountId", businessAccountId);
+          if (businessAccountId)
+            scope.setTag("businessAccountId", businessAccountId);
           if (clientId) scope.setTag("clientId", clientId);
           if (correlationId) scope.setTag("correlationId", correlationId);
           scope.setTag("method", request.method || "unknown");
@@ -101,47 +100,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
       } catch (sentryError) {
         console.error("Failed to capture exception in Sentry:", sentryError);
       }
-    }
-
-    // Log to OpenObserve if it's an auth error or unhandled exception
-    try {
-      const openObserveService =
-        host.switchToHttp().getRequest().v2Context?.openObserveService ||
-        host.switchToHttp().getRequest().openObserveService;
-
-      if (openObserveService) {
-        const request = ctx.getRequest<any>();
-        const ip =
-          (request.headers["x-forwarded-for"] as string) ||
-          request.ip ||
-          "unknown";
-        const correlationId =
-          request.headers["x-correlation-id"] ||
-          request.v2Context?.correlationId;
-
-        if (
-          status === HttpStatus.UNAUTHORIZED ||
-          status === HttpStatus.FORBIDDEN
-        ) {
-          openObserveService.logAuthFailure({
-            ip,
-            userAgent: request.headers["user-agent"] || "unknown",
-            reason: message,
-            path: request.url,
-            method: request.method,
-            correlationId,
-          });
-        } else if (status === HttpStatus.INTERNAL_SERVER_ERROR) {
-          openObserveService.logException(redactedException, {
-            path: request.url,
-            method: request.method,
-            ip,
-            correlationId,
-          });
-        }
-      }
-    } catch (e) {
-      console.error("Failed to log to OpenObserve from filter:", e);
     }
 
     response.status(status).send({
