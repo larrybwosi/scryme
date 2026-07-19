@@ -24,6 +24,9 @@ export async function getOrganizationContext() {
       userId: session.user.id,
       organizationId,
     },
+    include: {
+      user: true,
+    },
   });
 
   return {
@@ -51,6 +54,9 @@ export async function getCurrentMember() {
     where: {
       userId: session.user.id,
       organizationId,
+    },
+    include: {
+      user: true,
     },
   });
 
