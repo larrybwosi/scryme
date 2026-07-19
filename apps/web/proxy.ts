@@ -18,9 +18,18 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Natively fetch the session using the direct auth API via incoming request headers
+  // Construct a clean Headers object to avoid any NextRequest header wrapper issues
+  const headers = new Headers();
+  const cookie = request.headers.get("cookie");
+  const host = request.headers.get("host") || request.nextUrl.host;
+  if (cookie) headers.set("cookie", cookie);
+  if (host) headers.set("host", host);
+  const xForwardedHost = request.headers.get("x-forwarded-host");
+  if (xForwardedHost) headers.set("x-forwarded-host", xForwardedHost);
+
+  // Natively fetch the session using the direct auth API via clean headers
   const session = await auth.api.getSession({
-    headers: request.headers,
+    headers,
   });
 
   const isAuthRoute = authRoutes.includes(pathname);
