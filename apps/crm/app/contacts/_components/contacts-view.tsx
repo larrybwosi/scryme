@@ -21,12 +21,12 @@ import { useOrg } from "../../../components/org-context";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { StatusBadge } from "../../../components/ui/status-badge";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@repo/ui/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@repo/ui/components/ui/dialog";
 import { ContactForm } from "./contact-form";
 import {
   DropdownMenu,
@@ -74,7 +74,7 @@ export function ContactsView() {
     mutate,
   } = useSWR(
     organizationId ? ["contacts", organizationId] : null,
-    () => getCustomers(organizationId, { type: 'CONTACT' }),
+    () => getCustomers(organizationId, { type: "CONTACT" }),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
@@ -88,7 +88,8 @@ export function ContactsView() {
         search === "" ||
         c.name.toLowerCase().includes(search.toLowerCase()) ||
         (c.email && c.email.toLowerCase().includes(search.toLowerCase())) ||
-        (c.businessAccount?.name && c.businessAccount.name.toLowerCase().includes(search.toLowerCase()));
+        (c.businessAccount?.name &&
+          c.businessAccount.name.toLowerCase().includes(search.toLowerCase()));
 
       const matchesStatus =
         statusFilter === "all" ||
@@ -151,8 +152,12 @@ export function ContactsView() {
             <CardContent className="py-8">
               <div className="text-center text-red-600">
                 <AlertCircle className="h-12 w-12 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Error loading contacts</h3>
-                <Button onClick={() => mutate()} className="mt-4">Retry</Button>
+                <h3 className="text-lg font-semibold mb-2">
+                  Error loading contacts
+                </h3>
+                <Button onClick={() => mutate()} className="mt-4">
+                  Retry
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -167,37 +172,52 @@ export function ContactsView() {
       <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Contacts</h1>
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">
+              Contacts
+            </h1>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              {contacts.length} contact{contacts.length !== 1 ? 's' : ''}
+              {contacts.length} contact{contacts.length !== 1 ? "s" : ""}
             </p>
           </div>
-          <Sheet open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <SheetTrigger asChild>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
               <Button size="sm" className="h-8 gap-1.5 text-[12.5px]">
                 <Plus size={13} />
                 Add Contact
               </Button>
-            </SheetTrigger>
-            <SheetContent className="sm:max-w-[440px] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Add New Contact</SheetTitle>
-              </SheetHeader>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[440px] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Add New Contact</DialogTitle>
+              </DialogHeader>
               <ContactForm onSuccess={handleSuccess} />
-            </SheetContent>
-          </Sheet>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-auto">
+          <Tabs
+            value={statusFilter}
+            onValueChange={setStatusFilter}
+            className="w-auto"
+          >
             <TabsList className="h-8">
-              <TabsTrigger value="all" className="text-[11.5px] px-3 h-6">All</TabsTrigger>
-              <TabsTrigger value="customer" className="text-[11.5px] px-3 h-6">Customers</TabsTrigger>
-              <TabsTrigger value="lead" className="text-[11.5px] px-3 h-6">Leads</TabsTrigger>
+              <TabsTrigger value="all" className="text-[11.5px] px-3 h-6">
+                All
+              </TabsTrigger>
+              <TabsTrigger value="customer" className="text-[11.5px] px-3 h-6">
+                Customers
+              </TabsTrigger>
+              <TabsTrigger value="lead" className="text-[11.5px] px-3 h-6">
+                Leads
+              </TabsTrigger>
             </TabsList>
           </Tabs>
           <div className="relative w-56">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search
+              size={13}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               type="text"
               placeholder="Search contacts..."
@@ -211,7 +231,6 @@ export function ContactsView() {
 
       <div className="flex-1 px-8 pb-8">
         <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -237,43 +256,73 @@ export function ContactsView() {
                     <td colSpan={4} className="text-center py-16">
                       <div className="flex flex-col items-center gap-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        <p className="text-[13px] text-muted-foreground">Loading contacts...</p>
+                        <p className="text-[13px] text-muted-foreground">
+                          Loading contacts...
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : paged.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center py-16 text-[13px] text-muted-foreground">
-                      {search ? "No contacts match your search." : "No contacts found."}
+                    <td
+                      colSpan={4}
+                      className="text-center py-16 text-[13px] text-muted-foreground"
+                    >
+                      {search
+                        ? "No contacts match your search."
+                        : "No contacts found."}
                     </td>
                   </tr>
                 ) : (
                   paged.map((contact: any) => (
-                    <tr key={contact.id} className={cn("hover:bg-muted/30 transition-colors group", deletingId === contact.id && "opacity-50 pointer-events-none")}>
+                    <tr
+                      key={contact.id}
+                      className={cn(
+                        "hover:bg-muted/30 transition-colors group",
+                        deletingId === contact.id &&
+                          "opacity-50 pointer-events-none",
+                      )}
+                    >
                       <td className="px-5 py-3.5">
-                        <Link href={`/customers/${contact.id}`} className="flex items-center gap-3">
+                        <Link
+                          href={`/customers/${contact.id}`}
+                          className="flex items-center gap-3"
+                        >
                           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
                             {contact.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">{contact.name}</div>
-                            <div className="text-[11.5px] text-muted-foreground">{contact.email || "No email"}</div>
+                            <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {contact.name}
+                            </div>
+                            <div className="text-[11.5px] text-muted-foreground">
+                              {contact.email || "No email"}
+                            </div>
                           </div>
                         </Link>
                       </td>
                       <td className="px-4 py-3.5">
-                         <StatusBadge status={contact.customerType === 'B2B' ? 'customer' : 'lead'} />
+                        <StatusBadge
+                          status={
+                            contact.customerType === "B2B" ? "customer" : "lead"
+                          }
+                        />
                       </td>
                       <td className="px-4 py-3.5">
                         {contact.businessAccount ? (
-                          <Link href={`/companies/${contact.businessAccountId}`} className="flex items-center gap-2 text-[13px] text-foreground font-medium hover:text-primary transition-colors">
-                            <Building2 size={14} className="text-muted-foreground" />
+                          <Link
+                            href={`/companies/${contact.businessAccountId}`}
+                            className="flex items-center gap-2 text-[13px] text-foreground font-medium hover:text-primary transition-colors"
+                          >
+                            <Building2
+                              size={14}
+                              className="text-muted-foreground"
+                            />
                             {contact.businessAccount.name}
                           </Link>
                         ) : (
                           <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
-                            <Building2 size={14} />
-                            —
+                            <Building2 size={14} />—
                           </div>
                         )}
                       </td>
@@ -282,17 +331,28 @@ export function ContactsView() {
                       </td>
                       <td className="px-4 py-3.5">
                         <div className="flex items-center justify-end gap-1">
-                          <Sheet open={editingContact?.id === contact.id} onOpenChange={(open) => !open && setEditingContact(null)}>
-                            <button onClick={() => setEditingContact(contact)} className="px-2.5 py-1.5 text-[11.5px] font-medium bg-primary/8 text-primary rounded-md hover:bg-primary/15 transition-colors">
+                          <Dialog
+                            open={editingContact?.id === contact.id}
+                            onOpenChange={(open) =>
+                              !open && setEditingContact(null)
+                            }
+                          >
+                            <button
+                              onClick={() => setEditingContact(contact)}
+                              className="px-2.5 py-1.5 text-[11.5px] font-medium bg-primary/8 text-primary rounded-md hover:bg-primary/15 transition-colors"
+                            >
                               Edit
                             </button>
-                            <SheetContent className="sm:max-w-[440px] overflow-y-auto">
-                              <SheetHeader>
-                                <SheetTitle>Edit Contact</SheetTitle>
-                              </SheetHeader>
-                              <ContactForm initialData={contact} onSuccess={handleSuccess} />
-                            </SheetContent>
-                          </Sheet>
+                            <DialogContent className="sm:max-w-[440px] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Edit Contact</DialogTitle>
+                              </DialogHeader>
+                              <ContactForm
+                                initialData={contact}
+                                onSuccess={handleSuccess}
+                              />
+                            </DialogContent>
+                          </Dialog>
                           <DropdownMenu>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -317,7 +377,9 @@ export function ContactsView() {
                                 }}
                                 disabled={deletingId === contact.id}
                               >
-                                {deletingId === contact.id ? "Deleting..." : "Delete"}
+                                {deletingId === contact.id
+                                  ? "Deleting..."
+                                  : "Delete"}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -370,7 +432,10 @@ export function ContactsView() {
         </div>
       </div>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
