@@ -1,5 +1,11 @@
 # crm
 
+## 7.24.0
+
+### Minor Changes
+
+- afb85da: Update
+
 ## 7.23.0
 
 ### Minor Changes
