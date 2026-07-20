@@ -17,7 +17,8 @@ export async function createCompany(data: BusinessAccountFormValues) {
 
     const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
     const taxId = rest.taxId === "" ? null : rest.taxId || null;
-    const customTheme = rest.customTheme === "" ? null : rest.customTheme || null;
+    const customTheme =
+      rest.customTheme === "" ? null : rest.customTheme || null;
 
     const company = await db.businessAccount.create({
       data: {
@@ -49,7 +50,12 @@ export async function createCompany(data: BusinessAccountFormValues) {
 
         // Initialize CRM Record
         let objectDef = await db.crmObjectDefinition.findUnique({
-          where: { organizationId_name: { organizationId: auth.organizationId, name: "customer" } },
+          where: {
+            organizationId_name: {
+              organizationId: auth.organizationId,
+              name: "customer",
+            },
+          },
         });
 
         if (!objectDef) {
@@ -145,7 +151,8 @@ export async function updateCompany(
 
     const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
     const taxId = rest.taxId === "" ? null : rest.taxId || null;
-    const customTheme = rest.customTheme === "" ? null : rest.customTheme || null;
+    const customTheme =
+      rest.customTheme === "" ? null : rest.customTheme || null;
 
     const company = await db.businessAccount.update({
       where: { id },
@@ -171,7 +178,9 @@ export async function updateCompany(
         .filter(Boolean) as string[];
 
       // Contacts to delete/unlink
-      const toDelete = existingIds.filter((extId) => !submittedIds.includes(extId));
+      const toDelete = existingIds.filter(
+        (extId) => !submittedIds.includes(extId),
+      );
 
       if (toDelete.length > 0) {
         await db.customer.deleteMany({
@@ -202,7 +211,12 @@ export async function updateCompany(
 
           // Proactively initialize CRM Record for customer
           let objectDef = await db.crmObjectDefinition.findUnique({
-            where: { organizationId_name: { organizationId: auth.organizationId, name: "customer" } },
+            where: {
+              organizationId_name: {
+                organizationId: auth.organizationId,
+                name: "customer",
+              },
+            },
           });
 
           if (!objectDef) {
