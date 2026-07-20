@@ -81,7 +81,6 @@ function HealthRing({ score }: { score: number }) {
 export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
-  const { organizationId } = useOrg();
 
   const { data: locations = [] } = useSWR(["locations-for-select"], () =>
     getLocations(),
