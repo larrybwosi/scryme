@@ -1,9 +1,14 @@
-// proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
 
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
-const publicRoutes = ["/api/auth", "/health", "/api/health", "/monitoring"];
+const publicRoutes = [
+  "/api/auth",
+  "/health",
+  "/api/health",
+  "/monitoring",
+  "/invite",
+];
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
@@ -13,12 +18,6 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Skip proxy processing for invitation routes
-  if (pathname.startsWith("/invite")) {
-    return NextResponse.next();
-  }
-
-  // Natively fetch the session using the direct auth API via incoming request headers
   const session = await auth.api.getSession({
     headers: request.headers,
   });
