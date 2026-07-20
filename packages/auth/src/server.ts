@@ -12,11 +12,10 @@ export async function getServerAuth(permission?: string) {
     return null;
   }
 
-  const user = session.user as any;
   const organizationId =
-    (session.session as any).activeOrganizationId || user.activeOrganizationId;
-  const memberId = user.memberId;
-  const role = user.role;
+    (session.session as any).activeOrganizationId || (session.user as any).activeOrganizationId;
+  const memberId = (session.user as any).memberId;
+  const role = (session.user as any).role;
 
   if (permission) {
     if (!role || !hasMemberPermission(role, permission)) {
