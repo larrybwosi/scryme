@@ -128,6 +128,11 @@ export async function createCustomer(data: CustomerFormValues): Promise<any> {
 
     const cleanData = {
       ...validatedData,
+      email: validatedData.email === "" ? null : validatedData.email || null,
+      businessAccountId:
+        validatedData.businessAccountId === ""
+          ? null
+          : validatedData.businessAccountId || null,
       phone: validatedData.phone === "" ? null : validatedData.phone || null,
       company:
         validatedData.company === "" ? null : validatedData.company || null,
@@ -206,6 +211,11 @@ export async function updateCustomer(
 
     const cleanData = {
       ...validatedData,
+      email: validatedData.email === "" ? null : validatedData.email || null,
+      businessAccountId:
+        validatedData.businessAccountId === ""
+          ? null
+          : validatedData.businessAccountId || null,
       phone: validatedData.phone === "" ? null : validatedData.phone || null,
       company:
         validatedData.company === "" ? null : validatedData.company || null,

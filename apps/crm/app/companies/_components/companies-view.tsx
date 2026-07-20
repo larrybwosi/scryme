@@ -313,7 +313,7 @@ export function CompaniesView() {
                             >
                               Edit
                             </button>
-                            <SheetContent className="sm:max-w-[440px]">
+                            <SheetContent className="sm:max-w-2xl overflow-y-scroll">
                               <SheetHeader>
                                 <SheetTitle>Edit Company</SheetTitle>
                               </SheetHeader>

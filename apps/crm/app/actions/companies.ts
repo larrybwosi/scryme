@@ -15,22 +15,73 @@ export async function createCompany(data: BusinessAccountFormValues) {
     if (!auth) redirect("/login");
     const { contacts, ...rest } = businessAccountSchema.parse(data);
 
+    const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
+    const taxId = rest.taxId === "" ? null : rest.taxId || null;
+    const customTheme = rest.customTheme === "" ? null : rest.customTheme || null;
+
     const company = await db.businessAccount.create({
       data: {
-        ...rest,
+        name: rest.name,
+        taxId,
+        logoUrl,
+        customTheme,
+        isEnterprise: rest.isEnterprise,
+        discountPercentage: rest.discountPercentage,
+        paymentTermsDays: rest.paymentTermsDays,
         organizationId: auth.organizationId,
-        customers:
-          contacts && contacts.length > 0
-            ? {
-                create: contacts.map((contact) => ({
-                  ...contact,
-                  organizationId: auth.organizationId,
-                  customerType: "B2B",
-                })),
-              }
-            : undefined,
       },
     });
+
+    if (contacts && contacts.length > 0) {
+      for (const contact of contacts) {
+        const cleanContact = {
+          name: contact.name,
+          email: contact.email === "" ? null : contact.email || null,
+          phone: contact.phone === "" ? null : contact.phone || null,
+          organizationId: auth.organizationId,
+          customerType: "B2B",
+          businessAccountId: company.id,
+        };
+
+        const customer = await db.customer.create({
+          data: cleanContact,
+        });
+
+        // Initialize CRM Record
+        let objectDef = await db.crmObjectDefinition.findUnique({
+          where: { organizationId_name: { organizationId: auth.organizationId, name: "customer" } },
+        });
+
+        if (!objectDef) {
+          objectDef = await db.crmObjectDefinition.create({
+            data: {
+              organizationId: auth.organizationId,
+              name: "customer",
+              label: "Customer",
+              labelPlural: "Customers",
+              isSystem: true,
+            },
+          });
+        }
+
+        const record = await db.crmRecord.create({
+          data: {
+            objectId: objectDef.id,
+            organizationId: auth.organizationId,
+            data: {
+              name: customer.name,
+              email: customer.email,
+              phone: customer.phone,
+            },
+          },
+        });
+
+        await db.customer.update({
+          where: { id: customer.id },
+          data: { crmRecordId: record.id },
+        });
+      }
+    }
 
     // Proactively initialize CRM Record for business account / company
     let objectDef = await db.crmObjectDefinition.findUnique({
@@ -87,14 +138,107 @@ export async function updateCompany(
   data: BusinessAccountFormValues,
 ) {
   try {
+    const auth = await getServerAuth();
+    if (!auth) redirect("/login");
+
     const { contacts, ...rest } = businessAccountSchema.parse(data);
+
+    const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
+    const taxId = rest.taxId === "" ? null : rest.taxId || null;
+    const customTheme = rest.customTheme === "" ? null : rest.customTheme || null;
 
     const company = await db.businessAccount.update({
       where: { id },
-      data: rest,
+      data: {
+        ...rest,
+        logoUrl,
+        taxId,
+        customTheme,
+      },
     });
 
+    if (contacts) {
+      // Get existing contacts for this company
+      const existingCustomers = await db.customer.findMany({
+        where: { businessAccountId: id },
+        select: { id: true },
+      });
+      const existingIds = existingCustomers.map((c) => c.id);
+
+      // Extract IDs from submitted contacts
+      const submittedIds = contacts
+        .map((c: any) => c.contactId)
+        .filter(Boolean) as string[];
+
+      // Contacts to delete/unlink
+      const toDelete = existingIds.filter((extId) => !submittedIds.includes(extId));
+
+      if (toDelete.length > 0) {
+        await db.customer.deleteMany({
+          where: { id: { in: toDelete } },
+        });
+      }
+
+      // Contacts to update or create
+      for (const contact of contacts) {
+        const cleanContact = {
+          name: contact.name,
+          email: contact.email === "" ? null : contact.email || null,
+          phone: contact.phone === "" ? null : contact.phone || null,
+          organizationId: auth.organizationId,
+          customerType: "B2B",
+          businessAccountId: id,
+        };
+
+        if (contact.contactId) {
+          await db.customer.update({
+            where: { id: contact.contactId },
+            data: cleanContact,
+          });
+        } else {
+          const newCustomer = await db.customer.create({
+            data: cleanContact,
+          });
+
+          // Proactively initialize CRM Record for customer
+          let objectDef = await db.crmObjectDefinition.findUnique({
+            where: { organizationId_name: { organizationId: auth.organizationId, name: "customer" } },
+          });
+
+          if (!objectDef) {
+            objectDef = await db.crmObjectDefinition.create({
+              data: {
+                organizationId: auth.organizationId,
+                name: "customer",
+                label: "Customer",
+                labelPlural: "Customers",
+                isSystem: true,
+              },
+            });
+          }
+
+          const record = await db.crmRecord.create({
+            data: {
+              objectId: objectDef.id,
+              organizationId: auth.organizationId,
+              data: {
+                name: newCustomer.name,
+                email: newCustomer.email,
+                phone: newCustomer.phone,
+              },
+            },
+          });
+
+          await db.customer.update({
+            where: { id: newCustomer.id },
+            data: { crmRecordId: record.id },
+          });
+        }
+      }
+    }
+
     revalidatePath("/companies");
+    revalidatePath("/contacts");
     revalidatePath(`/companies/${id}`);
     return { success: true, data: company };
   } catch (error: any) {
@@ -131,6 +275,7 @@ export async function getCompanies() {
     const companies = await db.businessAccount.findMany({
       where: { organizationId: auth.organizationId },
       include: {
+        customers: true,
         _count: {
           select: { customers: true },
         },
