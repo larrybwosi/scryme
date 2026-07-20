@@ -20,7 +20,7 @@ export async function createActivity(data: CrmActivityFormValues) {
   let activeMemberId = auth.memberId;
   if (!activeMemberId) {
     const currentMember = await getCurrentMember();
-    activeMemberId = currentMember?.id || null;
+    activeMemberId = currentMember?.id || undefined;
   }
 
   const activity = await db.crmActivity.create({

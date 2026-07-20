@@ -10,13 +10,13 @@ import { getRedisClient } from "@repo/shared/redis";
 import { env } from "@repo/env";
 
 // Extended User interface matching custom schema attributes
-interface ExtendedUser extends User {
+export interface ExtendedUser extends User {
   role?: UserRole | string;
   username?: string;
 }
 
 // Extended Session interface including activeOrganizationId
-interface ExtendedSession extends Session {
+export interface ExtendedSession extends Session {
   activeOrganizationId?: string | null;
 }
 
