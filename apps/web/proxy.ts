@@ -1,52 +1,38 @@
+// proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
-import { getSessionCookie } from "better-auth/cookies";
+import { auth } from "@repo/auth/server";
 
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
-const publicRoutes = [
-  "/api/auth",
-  "/health",
-  "/api/health",
-  "/monitoring",
-  "/invite",
-];
-
-// Helper function to safely derive base public URL behind reverse proxies
-function getRedirectUrl(path: string, request: NextRequest): URL {
-  const url = request.nextUrl.clone();
-  url.pathname = path;
-  url.search = ""; // clear query params unless explicitly needed
-
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const forwardedProto = request.headers.get("x-forwarded-proto");
-
-  if (forwardedHost) {
-    url.host = forwardedHost;
-    url.protocol = forwardedProto ? `${forwardedProto}:` : "https:";
-  }
-  return url;
-}
+const publicRoutes = ["/api/auth", "/health", "/api/health"];
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
 
-  // 1. Skip public routes & auth API endpoints
+  // Skip proxy processing for public routes and auth API
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // 2. Optimistic cookie check (Works reliably in proxy/middleware without DB hits)
-  const sessionCookie = getSessionCookie(request);
+  // Skip proxy processing for invitation routes
+  if (pathname.startsWith("/invite")) {
+    return NextResponse.next();
+  }
+
+  // Natively fetch the session using the direct auth API via incoming request headers
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  });
+
   const isAuthRoute = authRoutes.includes(pathname);
 
-  // Unauthenticated Access Check
-  if (!sessionCookie) {
+  if (!session) {
     if (isAuthRoute) {
       return NextResponse.next();
     }
-    return NextResponse.redirect(getRedirectUrl("/login", request));
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Authenticated Access on Auth Routes (e.g. user visits /login while logged in)
+  // If authenticated and on an auth route, redirect to dashboard or callbackUrl
   if (isAuthRoute) {
     const callbackUrl =
       request.nextUrl.searchParams.get("callbackUrl") ||
@@ -56,35 +42,68 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     if (callbackUrl) {
       try {
         if (callbackUrl.startsWith("/")) {
-          return NextResponse.redirect(getRedirectUrl(callbackUrl, request));
-        }
-        const parsedUrl = new URL(callbackUrl);
-        if (
-          parsedUrl.hostname.endsWith("scryme.tech") ||
-          parsedUrl.hostname === "localhost"
-        ) {
-          return NextResponse.redirect(parsedUrl);
+          return NextResponse.redirect(new URL(callbackUrl, request.url));
+        } else {
+          const parsedUrl = new URL(callbackUrl);
+          if (
+            parsedUrl.hostname.endsWith("scryme.tech") ||
+            parsedUrl.hostname === "localhost"
+          ) {
+            return NextResponse.redirect(parsedUrl);
+          }
         }
       } catch (e) {
-        console.error("[WEB PROXY ERROR] Invalid callbackUrl:", e);
+        console.error("Invalid callbackUrl in proxy redirect:", e);
       }
     }
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
 
-    return NextResponse.redirect(getRedirectUrl("/dashboard", request));
+  // Check if user is banned
+  if ((session.user as any).banned && pathname !== "/banned") {
+    return NextResponse.redirect(new URL("/banned", request.url));
+  }
+
+  // Check for organization (except on /create-org and error pages)
+  const organizationId =
+    (session.session as any).activeOrganizationId ||
+    (session.user as any).activeOrganizationId;
+
+  const isExcludedFromOrgCheck = [
+    "/create-org",
+    "/banned",
+    "/forbidden",
+    "/unauthorized",
+  ].includes(pathname);
+
+  if (!organizationId && !isExcludedFromOrgCheck) {
+    return NextResponse.redirect(new URL("/create-org", request.url));
   }
 
   return NextResponse.next();
 }
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl;
   const start = Date.now();
+
   try {
     const response = await handleProxy(request);
+    const duration = Date.now() - start;
+    const status = response.status;
+    const location = response.headers.get("location");
+    console.log(
+      `[WEB PROXY] ${request.method} ${pathname} - Status: ${status}${
+        location ? ` -> Redirect to: ${location}` : ""
+      } (${duration}ms)`,
+    );
     return response;
   } catch (error) {
+    const duration = Date.now() - start;
     console.error(
-      `[WEB PROXY ERROR] ${request.method} ${request.nextUrl.pathname}:`,
+      `[WEB PROXY ERROR] ${request.method} ${pathname} - Error:`,
       error,
+      `(${duration}ms)`,
     );
     throw error;
   }
@@ -92,7 +111,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const config = {
   matcher: [
-    "/((?!monitoring|_next|[^?]*\\.(?:html|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Skip Next.js internals and all static files, unless found in search params
+    "/((?!_next|[^?]*\\.(?:html|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    // Always run for API routes
     "/(api|trpc)(.*)",
   ],
 };

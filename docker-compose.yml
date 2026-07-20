@@ -159,7 +159,7 @@ services:
 
   # --- APPLICATIONS ---
   api:
-    image: ghcr.io/larrybwosi/scryme/api:9.29.0
+    image: ghcr.io/larrybwosi/scryme/api:9.30.0
     restart: always
     deploy:
       resources:
@@ -213,7 +213,7 @@ services:
 
   # --- APPLICATIONS ---
   web:
-    image: ghcr.io/larrybwosi/scryme/web:9.29.0
+    image: ghcr.io/larrybwosi/scryme/web:9.30.0
     restart: always
     deploy:
       resources:
@@ -257,7 +257,7 @@ services:
       start_period: 20s
 
   crm:
-    image: ghcr.io/larrybwosi/scryme/crm:9.29.0
+    image: ghcr.io/larrybwosi/scryme/crm:9.30.0
     restart: always
     deploy:
       resources:
@@ -299,7 +299,7 @@ services:
       start_period: 20s
 
   bakery:
-    image: ghcr.io/larrybwosi/scryme/bakery:9.29.0
+    image: ghcr.io/larrybwosi/scryme/bakery:9.30.0
     restart: always
     deploy:
       resources:
