@@ -64,6 +64,15 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://localhost:3001",
   ],
+  rateLimit: {
+    enabled: true,
+    window: 60, // 60 seconds
+    max: 1000,  // Relaxed default max requests per window
+    storage: "secondary-storage", // Store in Redis secondary-storage
+    customRules: {
+      "/get-session": false, // Disable rate limiting completely for get-session to prevent false positive logouts
+    },
+  },
   secondaryStorage: {
     get: async (key: string) => {
       try {
@@ -158,7 +167,7 @@ export const auth = betterAuth({
       const customUserData = {
         activeOrganizationId,
         memberId: memberData.memberId,
-        role: memberData.role,
+        role: memberData.role || user.role,
       };
 
       try {

@@ -48,7 +48,6 @@ export function hasMemberPermission(role: string, action: string) {
             'view_sales', 'view_inventory_reports', 'view_financial_reports',
             'view_attendance_reports'
         ],
-        CUSTOMER: [],
         GUEST: []
     };
     // Check if the action is allowed for the role

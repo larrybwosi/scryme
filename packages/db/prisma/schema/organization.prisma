@@ -433,7 +433,6 @@ enum MemberRole {
   EMPLOYEE // Standard user, can perform assigned tasks (e.g., make sales, receive stock)
   CASHIER // Limited role, primarily for making sales
   REPORTER // View-only access to reports
-  CUSTOMER // Can access customer portal, view own data
   GUEST // Add GUEST role for temporary external users
 }
 
