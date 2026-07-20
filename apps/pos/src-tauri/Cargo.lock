@@ -1694,7 +1694,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dealio-desktop"
+name = "scryme"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",

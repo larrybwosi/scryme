@@ -2,7 +2,7 @@ use base64::{engine::general_purpose, Engine as _};
 use keyring::Entry;
 use rand::RngCore;
 
-const KEYRING_SERVICE: &str = "dealio-desktop";
+const KEYRING_SERVICE: &str = "scryme";
 
 pub fn get_or_create_key(key_name: &str) -> Result<[u8; 32], String> {
     let entry = Entry::new(KEYRING_SERVICE, key_name).map_err(|e| e.to_string())?;

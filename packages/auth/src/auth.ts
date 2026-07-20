@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import type { User, Session } from "better-auth";
 import { authOptions } from "./index";
 import { admin, customSession, jwt } from "better-auth/plugins";
 import { oauthProvider } from "@better-auth/oauth-provider";
@@ -8,19 +9,51 @@ import { db } from "@repo/db";
 import { getRedisClient } from "@repo/shared/redis";
 import { env } from "@repo/env";
 
+// Extended User interface matching custom schema attributes
+export interface ExtendedUser extends User {
+  role?: UserRole | string;
+  username?: string;
+}
+
+// Extended Session interface including activeOrganizationId
+export interface ExtendedSession extends Session {
+  activeOrganizationId?: string | null;
+}
+
+// Session cache interface
+interface CachedUserData {
+  activeOrganizationId?: string | null;
+  memberId?: string;
+  role?: MemberRole | UserRole | string;
+}
+
+// OAuth claim interfaces
+interface OrganizationClaim {
+  id: string;
+  name: string;
+  slug: string;
+  logo: string | null;
+}
+
+interface MembershipClaim {
+  organizationId: string;
+  memberId: string | undefined;
+  role: MemberRole | undefined;
+}
+
 export const auth = betterAuth({
-  ...(authOptions as any),
+  ...authOptions,
   databaseHooks: {
     user: {
       create: {
-        after: async (user: any) => {
+        after: async (user: ExtendedUser) => {
           try {
             const { sendSystemNotification } =
               await import("@repo/notifications");
             await sendSystemNotification(
               `🎉 *New User Joined*\n• *Name*: ${user.name || "N/A"}\n• *Email*: ${user.email}\n• *Role*: ${user.role || "MEMBER"}\n• *ID*: \`${user.id}\``,
             );
-          } catch (error: any) {
+          } catch (error: unknown) {
             console.error(
               "Failed to send new user signup notification:",
               error,
@@ -64,23 +97,29 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://localhost:3001",
   ],
+  rateLimit: {
+    enabled: true,
+    window: 60, // 60 seconds
+    max: 1000, // Relaxed default max requests per window
+    storage: "secondary-storage", // Store in Redis secondary-storage
+    customRules: {
+      "/get-session": false, // Disable rate limiting completely for get-session to prevent false positive logouts
+    },
+  },
   secondaryStorage: {
-    get: async (key: string) => {
+    get: async (key: string): Promise<string | null> => {
       try {
         const redis = await getRedisClient();
         const value = await redis.get(key);
-        // value could be string, object, or null
         if (value === null || value === undefined) return null;
-        // If it's already a string, return it directly
         if (typeof value === "string") return value;
-        // If it's an object, stringify it for better-auth compatibility
         return JSON.stringify(value);
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Redis get error:", e);
         return null;
       }
     },
-    set: async (key: string, value: string, ttl?: number) => {
+    set: async (key: string, value: string, ttl?: number): Promise<void> => {
       try {
         const redis = await getRedisClient();
         if (ttl) {
@@ -88,15 +127,15 @@ export const auth = betterAuth({
         } else {
           await redis.setex(key, 3600, value); // Default 1 hour TTL if not specified
         }
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Redis set error:", e);
       }
     },
-    delete: async (key: string) => {
+    delete: async (key: string): Promise<void> => {
       try {
         const redis = await getRedisClient();
         await redis.del(key);
-      } catch (e) {
+      } catch (e: unknown) {
         console.error("Redis delete error:", e);
       }
     },
@@ -106,75 +145,103 @@ export const auth = betterAuth({
     admin({
       defaultRole: UserRole.MEMBER,
     }),
-    customSession(async ({ user, session }) => {
-      const cacheKey = `session-cache:${user.id}`;
-      try {
-        const redis = await getRedisClient();
-        const cached = await redis.get(cacheKey);
-        if (cached) {
-          // cached could be a string or parsed object
-          const parsedCache =
-            typeof cached === "string" ? JSON.parse(cached) : cached;
-          return {
-            user: { ...user, ...parsedCache },
-            session,
-          };
+    customSession(
+      async ({ user, session }: { user: ExtendedUser; session: Session }) => {
+        const cacheKey = `session-cache:${user.id}`;
+        try {
+          const redis = await getRedisClient();
+          const cached = await redis.get(cacheKey);
+          if (cached) {
+            const parsedCache: CachedUserData =
+              typeof cached === "string"
+                ? (JSON.parse(cached) as CachedUserData)
+                : (cached as CachedUserData);
+
+            return {
+              user: { ...user, ...parsedCache },
+              session: {
+                ...session,
+                activeOrganizationId: parsedCache.activeOrganizationId ?? null,
+              } as ExtendedSession,
+            };
+          }
+        } catch (e: unknown) {
+          console.error("Redis error:", e);
         }
-      } catch (e) {
-        console.error("Redis error:", e);
-      }
 
-      // Fetch from Database
-      const usr = await db.user.findUnique({
-        where: { id: user.id },
-        select: { activeOrganizationId: true },
-      });
-
-      const activeOrganizationId = usr?.activeOrganizationId || null;
-
-      // Default member values
-      let memberData: {
-        memberId: string | undefined;
-        role: MemberRole | undefined;
-      } = { memberId: undefined, role: undefined };
-
-      // Fetch membership details if active org exists
-      if (activeOrganizationId) {
-        const member = await db.member.findUnique({
-          where: {
-            organizationId_userId: {
-              organizationId: activeOrganizationId,
-              userId: user.id,
-            },
-          },
-          select: { id: true, role: true },
+        // Fetch from Database
+        const usr = await db.user.findUnique({
+          where: { id: user.id },
+          select: { activeOrganizationId: true },
         });
 
-        if (member) {
-          memberData = { memberId: member.id, role: member.role };
+        let activeOrganizationId: string | null =
+          usr?.activeOrganizationId || null;
+
+        // If activeOrganizationId is not set, try to fallback to their first active membership
+        if (!activeOrganizationId) {
+          const firstMembership = await db.member.findFirst({
+            where: { userId: user.id, deletedAt: null },
+            select: { organizationId: true },
+          });
+
+          if (firstMembership) {
+            activeOrganizationId = firstMembership.organizationId;
+            // Persist the resolved activeOrganizationId in the database
+            await db.user.update({
+              where: { id: user.id },
+              data: { activeOrganizationId },
+            });
+          }
         }
-      }
 
-      const customUserData = {
-        activeOrganizationId,
-        memberId: memberData.memberId,
-        role: memberData.role,
-      };
+        // Default member values
+        let memberData: {
+          memberId: string | undefined;
+          role: MemberRole | undefined;
+        } = { memberId: undefined, role: undefined };
 
-      try {
-        const redis = await getRedisClient();
-        // Store as JSON with 1 minute TTL
-        await redis.setex(cacheKey, 60, customUserData);
-      } catch (e) {
-        console.error("Redis cache error:", e);
-      }
+        // Fetch membership details if active org exists
+        if (activeOrganizationId) {
+          const member = await db.member.findUnique({
+            where: {
+              organizationId_userId: {
+                organizationId: activeOrganizationId,
+                userId: user.id,
+              },
+            },
+            select: { id: true, role: true },
+          });
 
-      // Return the combined data
-      return {
-        user: { ...user, ...customUserData },
-        session,
-      };
-    }),
+          if (member) {
+            memberData = { memberId: member.id, role: member.role };
+          }
+        }
+
+        const customUserData: CachedUserData = {
+          activeOrganizationId,
+          memberId: memberData.memberId,
+          role: memberData.role || user.role,
+        };
+
+        try {
+          const redis = await getRedisClient();
+          // Store as JSON string with 1 minute TTL
+          await redis.setex(cacheKey, 60, JSON.stringify(customUserData));
+        } catch (e: unknown) {
+          console.error("Redis cache error:", e);
+        }
+
+        // Return combined data with activeOrganizationId included on both user and session
+        return {
+          user: { ...user, ...customUserData },
+          session: {
+            ...session,
+            activeOrganizationId,
+          } as ExtendedSession,
+        };
+      },
+    ),
     oauthProvider({
       loginPage: "/login",
       consentPage: "/oauth/authorize",
@@ -183,12 +250,19 @@ export const auth = betterAuth({
       silenceWarnings: {
         oauthAuthServerConfig: true,
       },
-      customUserInfoClaims: async ({ user, scopes }) => {
-        const claims: any = {};
+      customUserInfoClaims: async ({
+        user,
+        scopes,
+      }: {
+        user: ExtendedUser;
+        scopes: string[];
+      }) => {
+        const claims: Record<string, unknown> = {};
+
         if (scopes.includes("profile")) {
           claims.name = user.name;
           claims.image = user.image;
-          claims.username = (user as any).username;
+          claims.username = user.username;
         }
         if (scopes.includes("email")) {
           claims.email = user.email;
@@ -210,16 +284,18 @@ export const auth = betterAuth({
           });
 
           if (scopes.includes("org_info")) {
-            claims.organizations = organizations.map((org) => ({
-              id: org.id,
-              name: org.name,
-              slug: org.slug,
-              logo: org.logo,
-            }));
+            claims.organizations = organizations.map(
+              (org): OrganizationClaim => ({
+                id: org.id,
+                name: org.name,
+                slug: org.slug,
+                logo: org.logo,
+              }),
+            );
           }
 
           if (scopes.includes("membership")) {
-            claims.memberships = organizations.map((org) => ({
+            claims.memberships = organizations.map((org): MembershipClaim => ({
               organizationId: org.id,
               memberId: org.members[0]?.id,
               role: org.members[0]?.role,

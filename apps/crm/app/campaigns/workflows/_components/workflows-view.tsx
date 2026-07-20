@@ -58,10 +58,6 @@ import { useRouter } from "next/navigation";
 import { cn } from "@repo/ui/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
-interface WorkflowsViewProps {
-  organizationId: string;
-}
-
 type StatusFilter = "all" | "live" | "draft";
 
 function WorkflowStatusDot({ isActive }: { isActive: boolean }) {
@@ -104,7 +100,7 @@ function MiniStat({
     <div className="flex items-center gap-3 bg-card border border-border rounded-xl px-4 py-3">
       <div
         className={cn(
-          "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
           iconBg,
         )}
       >
@@ -120,7 +116,7 @@ function MiniStat({
   );
 }
 
-export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
+export function WorkflowsView() {
   const router = useRouter();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -134,11 +130,10 @@ export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
     error,
     isLoading,
     mutate,
-  } = useSWR(
-    ["workflows", organizationId],
-    () => getWorkflows(),
-    { revalidateOnFocus: false, dedupingInterval: 30000 },
-  );
+  } = useSWR("workflows", () => getWorkflows(), {
+    revalidateOnFocus: false,
+    dedupingInterval: 30000,
+  });
 
   const toggleStatus = async (id: string, current: boolean) => {
     setUpdatingId(id);
@@ -236,7 +231,7 @@ export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-muted/20">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-border bg-card/70 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+      <div className="shrink-0 border-b border-border bg-card/70 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[17px] font-bold text-foreground tracking-tight">
@@ -504,13 +499,11 @@ export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
 
       {/* Create dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-120">
           <DialogHeader>
             <DialogTitle>Create New Workflow</DialogTitle>
           </DialogHeader>
-          <WorkflowForm
-            onSuccess={handleCreated}
-          />
+          <WorkflowForm onSuccess={handleCreated} />
         </DialogContent>
       </Dialog>
 

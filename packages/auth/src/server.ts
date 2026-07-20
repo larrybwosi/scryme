@@ -12,9 +12,9 @@ export async function getServerAuth(permission?: string) {
     return null;
   }
 
-  const user = session.user as any;
+  const user = session.user;
   const organizationId =
-    (session.session as any).activeOrganizationId || user.activeOrganizationId;
+    session.session.activeOrganizationId || user.activeOrganizationId;
   const memberId = user.memberId;
   const role = user.role;
 

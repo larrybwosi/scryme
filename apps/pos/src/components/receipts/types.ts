@@ -53,6 +53,11 @@ export interface ReceiptConfig {
   currency: string; // e.g., 'USD', 'EUR', 'KES'
   locale: string; // e.g., 'en-US', 'en-KE'
 
+  // KRA Details
+  showKraDetails?: boolean;
+  kraPin?: string;
+  kraEtr?: string;
+
   // Header Configuration
   showHeader: boolean;
   logoPosition: 'left' | 'center' | 'right';

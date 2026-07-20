@@ -1,14 +1,15 @@
-import { LeadsView } from './_components/leads-view';
-import { OrgProvider } from '../../components/org-context';
-import { getOrganizationContext } from '../actions/auth';
+import { Metadata } from "next";
+import { LeadsView } from "./_components/leads-view";
+
+export const metadata: Metadata = {
+  title: "Leads Management",
+  description:
+    "Track incoming prospects, manage statuses, qualify opportunities, and monitor pipeline health.",
+  alternates: {
+    canonical: "/leads",
+  },
+};
 
 export default async function LeadsPage() {
-  const context = (await getOrganizationContext())!;
-  const { organizationId } = context;
-
-  return (
-    <OrgProvider organizationId={organizationId}>
-      <LeadsView />
-    </OrgProvider>
-  );
+  return <LeadsView />;
 }

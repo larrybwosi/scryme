@@ -3,7 +3,7 @@ use log::{error, info, warn};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_sql::{DbInstances, DbPool};
 
-const KEYRING_SERVICE: &str = "dealio-desktop";
+const KEYRING_SERVICE: &str = "scryme";
 
 #[tauri::command]
 pub async fn dangerously_clear_all_data(app: AppHandle) -> Result<(), String> {
@@ -95,7 +95,7 @@ pub async fn dangerously_clear_all_data(app: AppHandle) -> Result<(), String> {
         let _ = sqlx::query("DELETE FROM audit_logs").execute(pool).await;
         info!("[DangerZone] Cleared pos_main.db SQLite tables.");
     }
-    
+
     if let Some(DbPool::Sqlite(pool)) = guard.get("sqlite:kds_orders.db") {
         let _ = sqlx::query("DELETE FROM kds_orders").execute(pool).await;
         let _ = sqlx::query("DELETE FROM tables").execute(pool).await;

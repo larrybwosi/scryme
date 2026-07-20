@@ -30,7 +30,7 @@ export function ActivitiesView() {
         </p>
       </div>
 
-      <div className="px-6 py-6 max-w-4xl">
+      <div className="px-6 py-6 ">
         <Card>
           <CardHeader>
             <CardTitle className="text-sm font-semibold">

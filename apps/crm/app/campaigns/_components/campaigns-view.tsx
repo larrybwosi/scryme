@@ -57,21 +57,13 @@ import {
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
 
-interface CampaignsViewProps {
-  organizationId: string;
-  memberId: string;
-}
-
 // SWR fetcher function
 const fetcher = async () => {
   const data = await getCampaigns();
   return data;
 };
 
-export function CampaignsView({
-  organizationId,
-  memberId,
-}: CampaignsViewProps) {
+export function CampaignsView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -81,22 +73,24 @@ export function CampaignsView({
     error,
     isLoading,
     mutate,
-  } = useSWR(
-    ["campaigns", organizationId],
-    () => getCampaigns(),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 60000, // 1 minute
-    },
-  );
+  } = useSWR("campaigns", () => getCampaigns(), {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 60000, // 1 minute
+  });
 
   const filteredCampaigns = campaigns.filter((c: any) =>
     c.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const totalSent = campaigns.reduce((acc: number, c: any) => acc + (c.totalSent || 0), 0);
-  const totalOpened = campaigns.reduce((acc: number, c: any) => acc + (c.totalOpened || 0), 0);
+  const totalSent = campaigns.reduce(
+    (acc: number, c: any) => acc + (c.totalSent || 0),
+    0,
+  );
+  const totalOpened = campaigns.reduce(
+    (acc: number, c: any) => acc + (c.totalOpened || 0),
+    0,
+  );
   const avgOpenRate = totalSent > 0 ? (totalOpened / totalSent) * 100 : 0;
 
   const stats = [
@@ -206,9 +200,14 @@ export function CampaignsView({
       <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-[17px] font-bold text-foreground tracking-tight">Campaigns</h1>
+            <h1 className="text-[17px] font-bold text-foreground tracking-tight">
+              Campaigns
+            </h1>
             <p className="text-[12px] text-muted-foreground mt-0.5">
-              {campaigns.length} campaign{campaigns.length !== 1 ? 's' : ''} &bull; {campaigns.filter((c: any) => c.status === 'ACTIVE').length} active
+              {campaigns.length} campaign{campaigns.length !== 1 ? "s" : ""}{" "}
+              &bull;{" "}
+              {campaigns.filter((c: any) => c.status === "ACTIVE").length}{" "}
+              active
             </p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -222,9 +221,7 @@ export function CampaignsView({
               <DialogHeader>
                 <DialogTitle>Create New Campaign</DialogTitle>
               </DialogHeader>
-              <CampaignForm
-                onSuccess={handleCampaignCreated}
-              />
+              <CampaignForm onSuccess={handleCampaignCreated} />
             </DialogContent>
           </Dialog>
         </div>
@@ -232,13 +229,22 @@ export function CampaignsView({
         {/* Stats strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {stats.map((stat, i) => (
-            <div key={i} className="bg-card border border-border rounded-xl px-4 py-3 flex items-center gap-3">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted`}>
+            <div
+              key={i}
+              className="bg-card border border-border rounded-xl px-4 py-3 flex items-center gap-3"
+            >
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted`}
+              >
                 <stat.icon size={15} className={stat.color} />
               </div>
               <div className="min-w-0">
-                <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider truncate">{stat.label}</p>
-                <p className="text-[16px] font-bold text-foreground tabular-nums">{stat.value}</p>
+                <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider truncate">
+                  {stat.label}
+                </p>
+                <p className="text-[16px] font-bold text-foreground tabular-nums">
+                  {stat.value}
+                </p>
               </div>
             </div>
           ))}
@@ -249,7 +255,10 @@ export function CampaignsView({
       <div className="flex-1 px-6 py-5">
         <div className="flex items-center gap-3 mb-4">
           <div className="relative flex-1 max-w-sm">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search
+              size={13}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <Input
               placeholder="Search campaigns..."
               className="pl-8 h-8 text-[12.5px]"
@@ -257,19 +266,33 @@ export function CampaignsView({
               onChange={(e: any) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button variant="outline" size="sm" className="h-8 text-[12.5px]">Filters</Button>
+          <Button variant="outline" size="sm" className="h-8 text-[12.5px]">
+            Filters
+          </Button>
         </div>
 
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50 hover:bg-muted/50">
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Campaign</TableHead>
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Status</TableHead>
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Channel</TableHead>
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Recipients</TableHead>
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">Open Rate</TableHead>
-                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3 text-right">Revenue</TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">
+                  Campaign
+                </TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">
+                  Status
+                </TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">
+                  Channel
+                </TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">
+                  Recipients
+                </TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3">
+                  Open Rate
+                </TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground py-3 text-right">
+                  Revenue
+                </TableHead>
                 <TableHead className="py-3" />
               </TableRow>
             </TableHeader>
@@ -279,34 +302,58 @@ export function CampaignsView({
                   <TableCell colSpan={7} className="text-center py-12">
                     <div className="flex flex-col items-center gap-2">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
-                      <p className="text-[12.5px] text-muted-foreground">Loading campaigns...</p>
+                      <p className="text-[12.5px] text-muted-foreground">
+                        Loading campaigns...
+                      </p>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : filteredCampaigns.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-[12.5px] text-muted-foreground">
-                    {searchQuery ? "No campaigns match your search." : "No campaigns yet. Create your first campaign."}
+                  <TableCell
+                    colSpan={7}
+                    className="text-center py-12 text-[12.5px] text-muted-foreground"
+                  >
+                    {searchQuery
+                      ? "No campaigns match your search."
+                      : "No campaigns yet. Create your first campaign."}
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredCampaigns.map((campaign: any) => {
-                  const openRate = campaign.totalSent > 0
-                    ? Math.round((campaign.totalOpened / campaign.totalSent) * 100)
-                    : 0;
+                  const openRate =
+                    campaign.totalSent > 0
+                      ? Math.round(
+                          (campaign.totalOpened / campaign.totalSent) * 100,
+                        )
+                      : 0;
                   return (
-                    <TableRow key={campaign.id} className="hover:bg-muted/30 transition-colors">
+                    <TableRow
+                      key={campaign.id}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
                       <TableCell className="py-3.5">
-                        <Link href={`/campaigns/${campaign.id}`} className="flex flex-col group/link hover:opacity-80">
-                          <span className="text-[13px] font-semibold text-foreground group-hover/link:text-primary transition-colors">{campaign.name}</span>
-                          <span className="text-[11px] text-muted-foreground mt-0.5">{campaign.segment?.name || "All Customers"}</span>
+                        <Link
+                          href={`/campaigns/${campaign.id}`}
+                          className="flex flex-col group/link hover:opacity-80"
+                        >
+                          <span className="text-[13px] font-semibold text-foreground group-hover/link:text-primary transition-colors">
+                            {campaign.name}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground mt-0.5">
+                            {campaign.segment?.name || "All Customers"}
+                          </span>
                         </Link>
                       </TableCell>
-                      <TableCell className="py-3.5">{getStatusBadge(campaign.status)}</TableCell>
+                      <TableCell className="py-3.5">
+                        {getStatusBadge(campaign.status)}
+                      </TableCell>
                       <TableCell className="py-3.5">
                         <div className="flex items-center gap-2">
                           {getChannelIcon(campaign.channel)}
-                          <span className="text-[12px] capitalize text-muted-foreground">{campaign.channel.toLowerCase()}</span>
+                          <span className="text-[12px] capitalize text-muted-foreground">
+                            {campaign.channel.toLowerCase()}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5 text-[13px] text-foreground tabular-nums">
@@ -315,9 +362,14 @@ export function CampaignsView({
                       <TableCell className="py-3.5">
                         <div className="flex items-center gap-2">
                           <div className="w-16 bg-muted rounded-full h-1.5">
-                            <div className="bg-primary h-1.5 rounded-full transition-all" style={{ width: `${openRate}%` }} />
+                            <div
+                              className="bg-primary h-1.5 rounded-full transition-all"
+                              style={{ width: `${openRate}%` }}
+                            />
                           </div>
-                          <span className="text-[12px] font-medium text-foreground tabular-nums">{openRate}%</span>
+                          <span className="text-[12px] font-medium text-foreground tabular-nums">
+                            {openRate}%
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="py-3.5 text-right text-[13px] font-semibold text-foreground tabular-nums">
@@ -330,12 +382,19 @@ export function CampaignsView({
                               <MoreVertical size={13} />
                             </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="text-[12.5px]">
-                            <DropdownMenuLabel className="text-[10.5px] uppercase tracking-wider text-muted-foreground">Actions</DropdownMenuLabel>
+                          <DropdownMenuContent
+                            align="end"
+                            className="text-[12.5px]"
+                          >
+                            <DropdownMenuLabel className="text-[10.5px] uppercase tracking-wider text-muted-foreground">
+                              Actions
+                            </DropdownMenuLabel>
                             <DropdownMenuItem>View Details</DropdownMenuItem>
                             <DropdownMenuItem>Edit Campaign</DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive">Delete</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                              Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

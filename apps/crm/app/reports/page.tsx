@@ -1,14 +1,15 @@
-import { getOrganizationContext } from '../actions/auth';
-import { OrgProvider } from '../../components/org-context';
-import { ReportsView } from './_components/reports-view';
+import { Metadata } from "next";
+import { ReportsView } from "./_components/reports-view";
+
+export const metadata: Metadata = {
+  title: "Analytics & Reports",
+  description:
+    "Analyze sales performance, review historical trends, and generate custom business intelligence reports.",
+  alternates: {
+    canonical: "/reports",
+  },
+};
 
 export default async function ReportsPage() {
-  const context = await getOrganizationContext();
-  const { organizationId } = context;
-
-  return (
-    <OrgProvider organizationId={organizationId}>
-      <ReportsView />
-    </OrgProvider>
-  );
+  return <ReportsView />;
 }

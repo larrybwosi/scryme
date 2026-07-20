@@ -12,31 +12,47 @@ import { redirect } from "next/navigation";
 export async function createCompany(data: BusinessAccountFormValues) {
   try {
     const auth = await getServerAuth();
-    if (!auth) redirect("/login");
+    if (!auth?.organizationId) redirect("/login");
+    const organizationId = auth.organizationId;
     const { contacts, ...rest } = businessAccountSchema.parse(data);
+
+    const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
+    const taxId = rest.taxId === "" ? null : rest.taxId || null;
+    const customTheme =
+      rest.customTheme === "" ? null : rest.customTheme || null;
 
     const company = await db.businessAccount.create({
       data: {
-        ...rest,
-        organizationId: auth.organizationId,
-        customers:
-          contacts && contacts.length > 0
-            ? {
-                create: contacts.map((contact) => ({
-                  ...contact,
-                  organizationId: auth.organizationId,
-                  customerType: "B2B",
-                })),
-              }
-            : undefined,
+        name: rest.name,
+        taxId,
+        logoUrl,
+        customTheme,
+        isEnterprise: rest.isEnterprise,
+        discountPercentage: rest.discountPercentage,
+        paymentTermsDays: rest.paymentTermsDays,
+        organizationId,
       },
     });
+
+    if (contacts && contacts.length > 0) {
+      for (const contact of contacts) {
+        await db.companyContact.create({
+          data: {
+            name: contact.name,
+            email: contact.email === "" ? null : contact.email || null,
+            phone: contact.phone === "" ? null : contact.phone || null,
+            organizationId,
+            businessAccountId: company.id,
+          },
+        });
+      }
+    }
 
     // Proactively initialize CRM Record for business account / company
     let objectDef = await db.crmObjectDefinition.findUnique({
       where: {
         organizationId_name: {
-          organizationId: auth.organizationId,
+          organizationId,
           name: "business_account",
         },
       },
@@ -45,7 +61,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
     if (!objectDef) {
       objectDef = await db.crmObjectDefinition.create({
         data: {
-          organizationId: auth.organizationId,
+          organizationId,
           name: "business_account",
           label: "Business Account",
           labelPlural: "Business Accounts",
@@ -57,7 +73,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
     const record = await db.crmRecord.create({
       data: {
         objectId: objectDef.id,
-        organizationId: auth.organizationId,
+        organizationId,
         data: {
           name: company.name,
           taxId: company.taxId,
@@ -87,14 +103,76 @@ export async function updateCompany(
   data: BusinessAccountFormValues,
 ) {
   try {
+    const auth = await getServerAuth();
+    if (!auth?.organizationId) redirect("/login");
+    const organizationId = auth.organizationId;
+
     const { contacts, ...rest } = businessAccountSchema.parse(data);
+
+    const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
+    const taxId = rest.taxId === "" ? null : rest.taxId || null;
+    const customTheme =
+      rest.customTheme === "" ? null : rest.customTheme || null;
 
     const company = await db.businessAccount.update({
       where: { id },
-      data: rest,
+      data: {
+        ...rest,
+        logoUrl,
+        taxId,
+        customTheme,
+      },
     });
 
+    if (contacts) {
+      // Get existing contacts for this company
+      const existingContacts = await db.companyContact.findMany({
+        where: { businessAccountId: id },
+        select: { id: true },
+      });
+      const existingIds = existingContacts.map((c) => c.id);
+
+      // Extract IDs from submitted contacts
+      const submittedIds = contacts
+        .map((c: any) => c.contactId)
+        .filter(Boolean) as string[];
+
+      // Contacts to delete/unlink
+      const toDelete = existingIds.filter(
+        (extId) => !submittedIds.includes(extId),
+      );
+
+      if (toDelete.length > 0) {
+        await db.companyContact.deleteMany({
+          where: { id: { in: toDelete } },
+        });
+      }
+
+      // Contacts to update or create
+      for (const contact of contacts) {
+        const cleanContact = {
+          name: contact.name,
+          email: contact.email === "" ? null : contact.email || null,
+          phone: contact.phone === "" ? null : contact.phone || null,
+          organizationId,
+          businessAccountId: id,
+        };
+
+        if (contact.contactId) {
+          await db.companyContact.update({
+            where: { id: contact.contactId },
+            data: cleanContact,
+          });
+        } else {
+          await db.companyContact.create({
+            data: cleanContact,
+          });
+        }
+      }
+    }
+
     revalidatePath("/companies");
+    revalidatePath("/contacts");
     revalidatePath(`/companies/${id}`);
     return { success: true, data: company };
   } catch (error: any) {
@@ -126,13 +204,14 @@ export async function deleteCompany(id: string) {
 export async function getCompanies() {
   try {
     const auth = await getServerAuth();
-    if (!auth) redirect("/login");
+    if (!auth?.organizationId) redirect("/login");
 
     const companies = await db.businessAccount.findMany({
       where: { organizationId: auth.organizationId },
       include: {
+        contacts: true,
         _count: {
-          select: { customers: true },
+          select: { contacts: true },
         },
       },
       orderBy: { name: "asc" },
@@ -149,7 +228,7 @@ export async function getCompany(id: string): Promise<any> {
     let company = await db.businessAccount.findUnique({
       where: { id },
       include: {
-        customers: true,
+        contacts: true,
         transactions: {
           orderBy: { createdAt: "desc" },
           take: 10,
@@ -231,7 +310,7 @@ export async function getCompany(id: string): Promise<any> {
         where: { id },
         data: { crmRecordId: record.id },
         include: {
-          customers: true,
+          contacts: true,
           transactions: {
             orderBy: { createdAt: "desc" },
             take: 10,
