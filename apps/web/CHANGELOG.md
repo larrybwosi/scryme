@@ -1,5 +1,11 @@
 # web
 
+## 6.29.0
+
+### Minor Changes
+
+- bba46c3: update
+
 ## 6.28.0
 
 ### Minor Changes
