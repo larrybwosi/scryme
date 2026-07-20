@@ -12,7 +12,8 @@ import { redirect } from "next/navigation";
 export async function createCompany(data: BusinessAccountFormValues) {
   try {
     const auth = await getServerAuth();
-    if (!auth) redirect("/login");
+    if (!auth?.organizationId) redirect("/login");
+    const organizationId = auth.organizationId;
     const { contacts, ...rest } = businessAccountSchema.parse(data);
 
     const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
@@ -29,7 +30,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
         isEnterprise: rest.isEnterprise,
         discountPercentage: rest.discountPercentage,
         paymentTermsDays: rest.paymentTermsDays,
-        organizationId: auth.organizationId,
+        organizationId,
       },
     });
 
@@ -40,7 +41,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
             name: contact.name,
             email: contact.email === "" ? null : contact.email || null,
             phone: contact.phone === "" ? null : contact.phone || null,
-            organizationId: auth.organizationId,
+            organizationId,
             businessAccountId: company.id,
           },
         });
@@ -51,7 +52,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
     let objectDef = await db.crmObjectDefinition.findUnique({
       where: {
         organizationId_name: {
-          organizationId: auth.organizationId,
+          organizationId,
           name: "business_account",
         },
       },
@@ -60,7 +61,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
     if (!objectDef) {
       objectDef = await db.crmObjectDefinition.create({
         data: {
-          organizationId: auth.organizationId,
+          organizationId,
           name: "business_account",
           label: "Business Account",
           labelPlural: "Business Accounts",
@@ -72,7 +73,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
     const record = await db.crmRecord.create({
       data: {
         objectId: objectDef.id,
-        organizationId: auth.organizationId,
+        organizationId,
         data: {
           name: company.name,
           taxId: company.taxId,
@@ -103,7 +104,8 @@ export async function updateCompany(
 ) {
   try {
     const auth = await getServerAuth();
-    if (!auth) redirect("/login");
+    if (!auth?.organizationId) redirect("/login");
+    const organizationId = auth.organizationId;
 
     const { contacts, ...rest } = businessAccountSchema.parse(data);
 
@@ -152,7 +154,7 @@ export async function updateCompany(
           name: contact.name,
           email: contact.email === "" ? null : contact.email || null,
           phone: contact.phone === "" ? null : contact.phone || null,
-          organizationId: auth.organizationId,
+          organizationId,
           businessAccountId: id,
         };
 
@@ -202,7 +204,7 @@ export async function deleteCompany(id: string) {
 export async function getCompanies() {
   try {
     const auth = await getServerAuth();
-    if (!auth) redirect("/login");
+    if (!auth?.organizationId) redirect("/login");
 
     const companies = await db.businessAccount.findMany({
       where: { organizationId: auth.organizationId },
