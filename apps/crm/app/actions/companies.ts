@@ -35,56 +35,14 @@ export async function createCompany(data: BusinessAccountFormValues) {
 
     if (contacts && contacts.length > 0) {
       for (const contact of contacts) {
-        const cleanContact = {
-          name: contact.name,
-          email: contact.email === "" ? null : contact.email || null,
-          phone: contact.phone === "" ? null : contact.phone || null,
-          organizationId: auth.organizationId,
-          customerType: "B2B",
-          businessAccountId: company.id,
-        };
-
-        const customer = await db.customer.create({
-          data: cleanContact,
-        });
-
-        // Initialize CRM Record
-        let objectDef = await db.crmObjectDefinition.findUnique({
-          where: {
-            organizationId_name: {
-              organizationId: auth.organizationId,
-              name: "customer",
-            },
-          },
-        });
-
-        if (!objectDef) {
-          objectDef = await db.crmObjectDefinition.create({
-            data: {
-              organizationId: auth.organizationId,
-              name: "customer",
-              label: "Customer",
-              labelPlural: "Customers",
-              isSystem: true,
-            },
-          });
-        }
-
-        const record = await db.crmRecord.create({
+        await db.companyContact.create({
           data: {
-            objectId: objectDef.id,
+            name: contact.name,
+            email: contact.email === "" ? null : contact.email || null,
+            phone: contact.phone === "" ? null : contact.phone || null,
             organizationId: auth.organizationId,
-            data: {
-              name: customer.name,
-              email: customer.email,
-              phone: customer.phone,
-            },
+            businessAccountId: company.id,
           },
-        });
-
-        await db.customer.update({
-          where: { id: customer.id },
-          data: { crmRecordId: record.id },
         });
       }
     }
@@ -166,11 +124,11 @@ export async function updateCompany(
 
     if (contacts) {
       // Get existing contacts for this company
-      const existingCustomers = await db.customer.findMany({
+      const existingContacts = await db.companyContact.findMany({
         where: { businessAccountId: id },
         select: { id: true },
       });
-      const existingIds = existingCustomers.map((c) => c.id);
+      const existingIds = existingContacts.map((c) => c.id);
 
       // Extract IDs from submitted contacts
       const submittedIds = contacts
@@ -183,7 +141,7 @@ export async function updateCompany(
       );
 
       if (toDelete.length > 0) {
-        await db.customer.deleteMany({
+        await db.companyContact.deleteMany({
           where: { id: { in: toDelete } },
         });
       }
@@ -195,57 +153,17 @@ export async function updateCompany(
           email: contact.email === "" ? null : contact.email || null,
           phone: contact.phone === "" ? null : contact.phone || null,
           organizationId: auth.organizationId,
-          customerType: "B2B",
           businessAccountId: id,
         };
 
         if (contact.contactId) {
-          await db.customer.update({
+          await db.companyContact.update({
             where: { id: contact.contactId },
             data: cleanContact,
           });
         } else {
-          const newCustomer = await db.customer.create({
+          await db.companyContact.create({
             data: cleanContact,
-          });
-
-          // Proactively initialize CRM Record for customer
-          let objectDef = await db.crmObjectDefinition.findUnique({
-            where: {
-              organizationId_name: {
-                organizationId: auth.organizationId,
-                name: "customer",
-              },
-            },
-          });
-
-          if (!objectDef) {
-            objectDef = await db.crmObjectDefinition.create({
-              data: {
-                organizationId: auth.organizationId,
-                name: "customer",
-                label: "Customer",
-                labelPlural: "Customers",
-                isSystem: true,
-              },
-            });
-          }
-
-          const record = await db.crmRecord.create({
-            data: {
-              objectId: objectDef.id,
-              organizationId: auth.organizationId,
-              data: {
-                name: newCustomer.name,
-                email: newCustomer.email,
-                phone: newCustomer.phone,
-              },
-            },
-          });
-
-          await db.customer.update({
-            where: { id: newCustomer.id },
-            data: { crmRecordId: record.id },
           });
         }
       }
@@ -289,9 +207,9 @@ export async function getCompanies() {
     const companies = await db.businessAccount.findMany({
       where: { organizationId: auth.organizationId },
       include: {
-        customers: true,
+        contacts: true,
         _count: {
-          select: { customers: true },
+          select: { contacts: true },
         },
       },
       orderBy: { name: "asc" },
@@ -308,7 +226,7 @@ export async function getCompany(id: string): Promise<any> {
     let company = await db.businessAccount.findUnique({
       where: { id },
       include: {
-        customers: true,
+        contacts: true,
         transactions: {
           orderBy: { createdAt: "desc" },
           take: 10,
@@ -390,7 +308,7 @@ export async function getCompany(id: string): Promise<any> {
         where: { id },
         data: { crmRecordId: record.id },
         include: {
-          customers: true,
+          contacts: true,
           transactions: {
             orderBy: { createdAt: "desc" },
             take: 10,

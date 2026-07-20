@@ -26,6 +26,7 @@ model Organization {
   members     Member[]
   invitations Invitation[]
   customers   Customer[]   @relation("OrgCustomers")
+  companyContacts CompanyContact[] @relation("OrgCompanyContacts")
   categories  Category[]
   products    Product[]
   suppliers   Supplier[]

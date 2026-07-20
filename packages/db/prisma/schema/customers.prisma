@@ -31,9 +31,6 @@ model Customer {
   organization   Organization @relation("OrgCustomers", fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Relations
-  businessAccountId String?
-  businessAccount   BusinessAccount? @relation("BusinessAccountCustomers", fields: [businessAccountId], references: [id], onDelete: SetNull)
-
   transactions      Transaction[]
   invoices          Invoice[]
   addresses         Address[]
@@ -85,7 +82,8 @@ model BusinessAccount {
   crmRecord   CrmRecord? @relation(fields: [crmRecordId], references: [id], onDelete: SetNull)
 
   transactions Transaction[]
-  customers    Customer[]    @relation("BusinessAccountCustomers")
+  contacts     CompanyContact[]
+  invoices     Invoice[]
   addresses    Address[]
   expenses          Expense[] @relation("BusinessAccountExpenses")
   recurringExpenses RecurringExpense[] @relation("BusinessAccountRecurringExpenses")
@@ -252,4 +250,24 @@ enum CustomerCreationType {
 enum ReferralTrigger {
   SIGNUP
   FIRST_PURCHASE
+}
+
+model CompanyContact {
+  id                String          @id @default(cuid())
+  name              String
+  email             String?
+  phone             String?
+
+  businessAccountId String
+  businessAccount   BusinessAccount @relation(fields: [businessAccountId], references: [id], onDelete: Cascade)
+
+  organizationId    String
+  organization      Organization    @relation("OrgCompanyContacts", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([businessAccountId])
+  @@index([organizationId])
+  @@map("company_contacts")
 }
