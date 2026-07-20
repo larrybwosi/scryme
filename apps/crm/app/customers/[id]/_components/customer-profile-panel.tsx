@@ -83,7 +83,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const { data: locations = [] } = useSWR(
-    ["locations-for-select", organizationId],
+    ["locations-for-select", customer.organizationId],
     () => getLocations(),
   );
 

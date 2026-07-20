@@ -153,14 +153,14 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
   useEffect(() => {
     async function fetchMembers() {
       try {
-        const data = await getOrganizationMembers(customer.organizationId);
+        const data = await getOrganizationMembers();
         setMembers(data);
       } catch (error) {
         console.error('Failed to fetch members', error);
       }
     }
     fetchMembers();
-  }, [customer.organizationId]);
+  }, []);
 
   const followUps = customer.crmRecord?.followUps || [];
 
@@ -195,7 +195,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
         assignedToId: form.assignedToId || null,
         isRecurring: form.isRecurring,
         recurringInterval: form.isRecurring ? form.recurringInterval : null,
-      }, customer.organizationId);
+      });
 
       toast.success('Follow-up created');
       setForm({

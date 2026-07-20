@@ -47,7 +47,6 @@ import { Label } from "@repo/ui/components/ui/label";
 const PAGE_SIZE = 10;
 
 export function LeadsView() {
-  const { organizationId } = useOrg();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -103,7 +102,7 @@ export function LeadsView() {
     if (!selectedLead) return;
     try {
       setQualifyingId(selectedLead.id);
-      const result = await qualifyLead(selectedLead.id, organizationId, {
+      const result = await qualifyLead(selectedLead.id, {
         createDeal,
         dealName,
         dealAmount: parseFloat(dealAmount) || 0,
