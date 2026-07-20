@@ -47,7 +47,7 @@ export function ActivitiesTab({ customer }: ActivitiesTabProps) {
         type,
         description: description.trim(),
         recordId: customer.crmRecordId,
-      }, customer.organizationId);
+      });
 
       toast.success('Activity logged');
       setDescription('');

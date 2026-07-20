@@ -144,7 +144,6 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
     try {
       const result = await createInvoiceAction({
         customerId: selectedContactId,
-        organizationId: company.organizationId,
         postingDate: new Date(invoicePostingDate),
         dueDate: invoiceDueDate ? new Date(invoiceDueDate) : undefined,
         status: 'DRAFT',

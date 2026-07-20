@@ -16,6 +16,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { getLeads, qualifyLead } from "../../actions/leads";
 import { StatCard } from "../../../components/ui/stat-card";
+import { useOrg } from "../../../components/org-context";
 import {
   Sheet,
   SheetContent,
@@ -103,7 +104,7 @@ export function LeadsView() {
     if (!selectedLead) return;
     try {
       setQualifyingId(selectedLead.id);
-      const result = await qualifyLead(selectedLead.id, organizationId, {
+      const result = await qualifyLead(selectedLead.id, {
         createDeal,
         dealName,
         dealAmount: parseFloat(dealAmount) || 0,

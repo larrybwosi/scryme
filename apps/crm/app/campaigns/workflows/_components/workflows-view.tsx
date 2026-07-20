@@ -136,7 +136,7 @@ export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
     mutate,
   } = useSWR(
     ["workflows", organizationId],
-    () => getWorkflows(organizationId),
+    () => getWorkflows(),
     { revalidateOnFocus: false, dedupingInterval: 30000 },
   );
 

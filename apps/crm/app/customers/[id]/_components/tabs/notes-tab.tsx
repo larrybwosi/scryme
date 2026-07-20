@@ -62,7 +62,7 @@ export function NotesTab({ customer }: NotesTabProps) {
       await createNote({
         content: content.trim(),
         recordId: customer.crmRecordId,
-      }, customer.organizationId);
+      });
 
       toast.success('Note added successfully');
       setContent('');

@@ -32,6 +32,7 @@ import { CustomerForm } from "../../_components/customer-form";
 import useSWR from "swr";
 import { getLocations } from "../../../actions/customers";
 import { useRouter } from "next/navigation";
+import { useOrg } from "../../../../components/org-context";
 
 interface CustomerProfilePanelProps {
   customer: CustomerWithRelations;
@@ -81,6 +82,7 @@ function HealthRing({ score }: { score: number }) {
 export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const { organizationId } = useOrg();
 
   const { data: locations = [] } = useSWR(
     ["locations-for-select", organizationId],

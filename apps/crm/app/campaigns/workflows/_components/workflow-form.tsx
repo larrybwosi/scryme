@@ -44,7 +44,7 @@ export function WorkflowForm({ organizationId, onSuccess }: WorkflowFormProps) {
 
   const onSubmit = async (values: CampaignWorkflowFormValues) => {
     try {
-      const result = await createWorkflow(values, organizationId);
+      const result = await createWorkflow(values);
       if (result.success) {
         toast.success('Workflow created successfully');
         onSuccess(result.data.id);
