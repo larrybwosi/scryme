@@ -231,7 +231,7 @@ export function WorkflowsView() {
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-muted/20">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-border bg-card/70 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+      <div className="shrink-0 border-b border-border bg-card/70 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[17px] font-bold text-foreground tracking-tight">
@@ -499,7 +499,7 @@ export function WorkflowsView() {
 
       {/* Create dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[480px]">
+        <DialogContent className="sm:max-w-120">
           <DialogHeader>
             <DialogTitle>Create New Workflow</DialogTitle>
           </DialogHeader>

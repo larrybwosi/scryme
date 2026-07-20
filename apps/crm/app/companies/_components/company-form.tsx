@@ -113,7 +113,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-slate-50 to-transparent p-4 rounded-xl border border-border/50 backdrop-blur-sm">
+          <div className="flex items-center justify-between bg-linear-to-r from-slate-50 to-transparent p-4 rounded-xl border border-border/50 backdrop-blur-sm">
             <div>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
