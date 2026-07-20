@@ -167,7 +167,7 @@ export const auth = betterAuth({
       const customUserData = {
         activeOrganizationId,
         memberId: memberData.memberId,
-        role: memberData.role || user.role,
+        role: memberData.role || (user as any).role,
       };
 
       try {
