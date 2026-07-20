@@ -139,7 +139,24 @@ export const auth = betterAuth({
         select: { activeOrganizationId: true },
       });
 
-      const activeOrganizationId = usr?.activeOrganizationId || null;
+      let activeOrganizationId = usr?.activeOrganizationId || null;
+
+      // If activeOrganizationId is not set, try to fallback to their first active membership
+      if (!activeOrganizationId) {
+        const firstMembership = await db.member.findFirst({
+          where: { userId: user.id, deletedAt: null },
+          select: { organizationId: true },
+        });
+
+        if (firstMembership) {
+          activeOrganizationId = firstMembership.organizationId;
+          // Persist the resolved activeOrganizationId in the database
+          await db.user.update({
+            where: { id: user.id },
+            data: { activeOrganizationId },
+          });
+        }
+      }
 
       // Default member values
       let memberData: {
