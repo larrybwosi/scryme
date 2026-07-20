@@ -67,7 +67,7 @@ export const auth = betterAuth({
   rateLimit: {
     enabled: true,
     window: 60, // 60 seconds
-    max: 1000,  // Relaxed default max requests per window
+    max: 1000, // Relaxed default max requests per window
     storage: "secondary-storage", // Store in Redis secondary-storage
     customRules: {
       "/get-session": false, // Disable rate limiting completely for get-session to prevent false positive logouts
