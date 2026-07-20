@@ -1,39 +1,45 @@
-'use client';
+"use client";
 
-import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
-import { CustomerProfilePanel } from './customer-profile-panel';
-import { DetailTabs, type TabId } from '@/components/crm/detail-tabs';
-import { NotesTab } from '@/components/crm/notes-tab';
-import { DeliveriesTab } from './tabs/deliveries-tab';
-import { InvoicesTab } from './tabs/invoices-tab';
-import { OrdersTab } from './tabs/orders-tab';
-import { ConversationsTab } from './tabs/conversations-tab';
-import { FollowUpsTab } from '@/components/crm/followups-tab';
-import { ActivitiesTab } from '@/components/crm/activities-tab';
-import type { CustomerWithRelations } from '@/lib/types';
+import React, { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { CustomerProfilePanel } from "./customer-profile-panel";
+import { DetailTabs, type TabId } from "@/components/crm/detail-tabs";
+import { NotesTab } from "@/components/crm/notes-tab";
+import { DeliveriesTab } from "./tabs/deliveries-tab";
+import { InvoicesTab } from "./tabs/invoices-tab";
+import { OrdersTab } from "./tabs/orders-tab";
+import { ConversationsTab } from "./tabs/conversations-tab";
+import { FollowUpsTab } from "@/components/crm/followups-tab";
+import { ActivitiesTab } from "@/components/crm/activities-tab";
+import type { CustomerWithRelations } from "@/lib/types";
 
 interface CustomerDetailViewProps {
   customer: CustomerWithRelations;
 }
 
-function TabContent({ customer, tab }: { customer: CustomerWithRelations; tab: TabId }) {
+function TabContent({
+  customer,
+  tab,
+}: {
+  customer: CustomerWithRelations;
+  tab: TabId;
+}) {
   switch (tab) {
-    case 'notes':
+    case "notes":
       return <NotesTab customer={customer} />;
-    case 'activities':
+    case "activities":
       return <ActivitiesTab customer={customer} />;
-    case 'deliveries':
+    case "deliveries":
       return <DeliveriesTab customer={customer} />;
-    case 'invoices':
+    case "invoices":
       return <InvoicesTab customer={customer} />;
-    case 'orders':
+    case "orders":
       return <OrdersTab customer={customer} />;
-    case 'conversations':
+    case "conversations":
       return <ConversationsTab customer={customer} />;
-    case 'followups':
+    case "followups":
       return <FollowUpsTab customer={customer} />;
     default:
       return <NotesTab customer={customer} />;
@@ -42,12 +48,16 @@ function TabContent({ customer, tab }: { customer: CustomerWithRelations; tab: T
 
 function DetailViewInner({ customer }: CustomerDetailViewProps) {
   const searchParams = useSearchParams();
-  const tab = (searchParams.get('tab') as TabId) ?? 'notes';
+  const tab = (searchParams.get("tab") as TabId) ?? "notes";
 
   const counts: Partial<Record<TabId, number>> = {
     notes: customer.crmRecord?.notes?.length || 0,
     activities: customer.crmRecord?.activities?.length || 0,
-    deliveries: customer.transactions?.reduce((sum: number, t: any) => sum + (t.fulfillments?.length || 0), 0) || 0,
+    deliveries:
+      customer.transactions?.reduce(
+        (sum: number, t: any) => sum + (t.fulfillments?.length || 0),
+        0,
+      ) || 0,
     invoices: customer.invoices?.length || 0,
     orders: customer.transactions?.length || 0,
     conversations: customer.crmRecord?.activities?.length || 0,
@@ -66,7 +76,9 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
           Customers
         </Link>
         <span className="text-muted-foreground/40">/</span>
-        <span className="text-[12.5px] font-semibold text-foreground">{customer.name}</span>
+        <span className="text-[12.5px] font-semibold text-foreground">
+          {customer.name}
+        </span>
       </div>
 
       {/* Main content */}
@@ -82,9 +94,17 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
             activeTab={tab}
             customerId={customer.id}
             counts={counts}
-            availableTabs={['notes', 'activities', 'deliveries', 'invoices', 'orders', 'conversations', 'followups']}
+            availableTabs={[
+              "notes",
+              "activities",
+              "deliveries",
+              "invoices",
+              "orders",
+              "conversations",
+              "followups",
+            ]}
           />
-          <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
             <TabContent customer={customer} tab={tab} />
           </div>
         </div>
@@ -95,7 +115,13 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
 
 export function CustomerDetailView({ customer }: CustomerDetailViewProps) {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground text-sm">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-screen text-muted-foreground text-sm">
+          Loading...
+        </div>
+      }
+    >
       <DetailViewInner customer={customer} />
     </Suspense>
   );
