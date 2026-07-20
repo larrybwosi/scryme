@@ -145,7 +145,7 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
           direction: form.direction,
           duration: form.duration,
         }
-      }, customer.organizationId);
+      });
 
       toast.success('Conversation logged successfully');
       setForm({ type: 'PHONE', description: '', direction: 'Outbound', duration: '' });

@@ -1,9 +1,14 @@
-// proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
 
 const authRoutes = ["/login", "/sign-up", "/reset-password"];
-const publicRoutes = ["/api/auth", "/health", "/api/health", "/monitoring"];
+const publicRoutes = [
+  "/api/auth",
+  "/health",
+  "/api/health",
+  "/monitoring",
+  "/invite",
+];
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
@@ -13,12 +18,6 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Skip proxy processing for invitation routes
-  if (pathname.startsWith("/invite")) {
-    return NextResponse.next();
-  }
-
-  // Natively fetch the session using the direct auth API via incoming request headers
   const session = await auth.api.getSession({
     headers: request.headers,
   });
@@ -34,9 +33,10 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
 
   // If authenticated and on an auth route, redirect to dashboard or callbackUrl
   if (isAuthRoute) {
-    const callbackUrl = request.nextUrl.searchParams.get("callbackUrl") ||
-                        request.nextUrl.searchParams.get("redirect") ||
-                        request.nextUrl.searchParams.get("returnTo");
+    const callbackUrl =
+      request.nextUrl.searchParams.get("callbackUrl") ||
+      request.nextUrl.searchParams.get("redirect") ||
+      request.nextUrl.searchParams.get("returnTo");
 
     if (callbackUrl) {
       try {
@@ -44,7 +44,10 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
           return NextResponse.redirect(new URL(callbackUrl, request.url));
         } else {
           const parsedUrl = new URL(callbackUrl);
-          if (parsedUrl.hostname.endsWith("scryme.tech") || parsedUrl.hostname === "localhost") {
+          if (
+            parsedUrl.hostname.endsWith("scryme.tech") ||
+            parsedUrl.hostname === "localhost"
+          ) {
             return NextResponse.redirect(parsedUrl);
           }
         }
@@ -91,7 +94,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     console.log(
       `[WEB PROXY] ${request.method} ${pathname} - Status: ${status}${
         location ? ` -> Redirect to: ${location}` : ""
-      } (${duration}ms)`
+      } (${duration}ms)`,
     );
     return response;
   } catch (error) {
@@ -99,7 +102,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     console.error(
       `[WEB PROXY ERROR] ${request.method} ${pathname} - Error:`,
       error,
-      `(${duration}ms)`
+      `(${duration}ms)`,
     );
     throw error;
   }

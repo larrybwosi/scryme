@@ -17,7 +17,6 @@ import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
 import { getCustomers, deleteCustomer } from "../../actions/customers";
 import { StatCard } from "../../../components/ui/stat-card";
-import { useOrg } from "../../../components/org-context";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { StatusBadge } from "../../../components/ui/status-badge";
 import {
@@ -56,7 +55,6 @@ import { toast } from "sonner";
 const PAGE_SIZE = 10;
 
 export function ContactsView() {
-  const { organizationId } = useOrg();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -72,15 +70,11 @@ export function ContactsView() {
     error,
     isLoading,
     mutate,
-  } = useSWR(
-    organizationId ? ["contacts", organizationId] : null,
-    () => getCustomers(organizationId, { type: "CONTACT" }),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-      dedupingInterval: 60000,
-    },
-  );
+  } = useSWR(["contacts"], () => getCustomers({ type: "CONTACT" }), {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: true,
+    dedupingInterval: 60000,
+  });
 
   const filtered = useMemo(() => {
     return contacts.filter((c: any) => {

@@ -713,7 +713,7 @@ export function WorkflowEditor({ workflow, organizationId }: WorkflowEditorProps
     setIsSimOpen(true);
     setSimulationLogs([]);
     try {
-      const list = await getCustomers(organizationId);
+      const list = await getCustomers();
       setCustomersList(list);
       if (list.length > 0) {
         setSelectedCustomerId(list[0].id);

@@ -4,8 +4,14 @@ import { db } from "@repo/db";
 import { customerSchema, type CustomerFormValues } from "../../lib/validations";
 import { revalidatePath } from "next/cache";
 import { realtimeService } from "@repo/shared/realtime";
+import { getServerAuth } from "@repo/auth/server";
+import { redirect } from "next/navigation";
 
-export async function getLocations(organizationId: string): Promise<any[]> {
+export async function getLocations(): Promise<any[]> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
   try {
     return await db.inventoryLocation.findMany({
       where: {
@@ -22,9 +28,11 @@ export async function getLocations(organizationId: string): Promise<any[]> {
   }
 }
 
-export async function getCustomerIdSettings(
-  organizationId: string,
-): Promise<any> {
+export async function getCustomerIdSettings(): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: { customFields: true },
@@ -39,10 +47,11 @@ export async function getCustomerIdSettings(
   );
 }
 
-export async function saveCustomerIdSettings(
-  organizationId: string,
-  settings: any,
-): Promise<any> {
+export async function saveCustomerIdSettings(settings: any): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
   try {
     const org = await db.organization.findUnique({
       where: { id: organizationId },
@@ -68,9 +77,11 @@ export async function saveCustomerIdSettings(
   }
 }
 
-export async function generateNextCustomId(
-  organizationId: string,
-): Promise<string | null> {
+export async function generateNextCustomId(): Promise<string | null> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
   const org = await db.organization.findUnique({
     where: { id: organizationId },
     select: { customFields: true },
@@ -100,15 +111,16 @@ export async function generateNextCustomId(
   return `${prefix}${sequence}`;
 }
 
-export async function createCustomer(
-  data: CustomerFormValues,
-  organizationId: string,
-): Promise<any> {
+export async function createCustomer(data: CustomerFormValues): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
   try {
     const validatedData = customerSchema.parse(data);
     let finalCustomId = validatedData.customId;
     if (!finalCustomId) {
-      const generated = await generateNextCustomId(organizationId);
+      const generated = await generateNextCustomId();
       if (generated) {
         finalCustomId = generated;
       }
@@ -261,10 +273,14 @@ export async function deleteCustomer(id: string): Promise<any> {
   }
 }
 
-export async function getCustomers(
-  organizationId: string,
-  filter?: { type?: "B2C" | "B2B" | "CONTACT"; businessAccountId?: string },
-): Promise<any[]> {
+export async function getCustomers(filter?: {
+  type?: "B2C" | "B2B" | "CONTACT";
+  businessAccountId?: string;
+}): Promise<any[]> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
   try {
     const where: any = { organizationId };
 

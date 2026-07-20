@@ -1,14 +1,23 @@
-'use server';
+"use server";
 
-import { db } from '@repo/db';
-import { crmActivitySchema, type CrmActivityFormValues } from '../../lib/validations';
-import { revalidatePath } from 'next/cache';
-import { getCurrentMember } from './auth';
+import { db } from "@repo/db";
+import {
+  crmActivitySchema,
+  type CrmActivityFormValues,
+} from "../../lib/validations";
+import { revalidatePath } from "next/cache";
+import { getCurrentMember } from "./auth";
+import { getServerAuth } from "@repo/auth/server";
+import { redirect } from "next/navigation";
 
-export async function createActivity(data: CrmActivityFormValues, organizationId: string, memberId?: string | null) {
+export async function createActivity(data: CrmActivityFormValues) {
   const validatedData = crmActivitySchema.parse(data);
 
-  let activeMemberId = memberId;
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
+  let activeMemberId = auth.memberId;
   if (!activeMemberId) {
     const currentMember = await getCurrentMember();
     activeMemberId = currentMember?.id || null;
@@ -21,14 +30,14 @@ export async function createActivity(data: CrmActivityFormValues, organizationId
       memberId: activeMemberId,
     },
     include: {
-        record: {
-            include: {
-                customer: true,
-                businessAccount: true,
-                objectDefinition: true,
-            }
-        }
-    }
+      record: {
+        include: {
+          customer: true,
+          businessAccount: true,
+          objectDefinition: true,
+        },
+      },
+    },
   });
 
   if (activity.record.customer) {
@@ -37,10 +46,10 @@ export async function createActivity(data: CrmActivityFormValues, organizationId
   if (activity.record.businessAccount) {
     revalidatePath(`/companies/${activity.record.businessAccount.id}`);
   }
-  if (activity.record.objectDefinition.name === 'deal') {
+  if (activity.record.objectDefinition.name === "deal") {
     revalidatePath(`/pipeline/${activity.recordId}`);
   }
-  if (activity.record.objectDefinition.name === 'lead') {
+  if (activity.record.objectDefinition.name === "lead") {
     revalidatePath(`/leads/${activity.recordId}`);
   }
 

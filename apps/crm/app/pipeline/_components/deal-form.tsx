@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import useSWR from "swr"; // Imported SWR
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -25,7 +26,6 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { createDeal } from "../../actions/deals";
 import { getCustomers } from "../../actions/customers";
 import { getCompanies } from "../../actions/companies";
-import { useOrg } from "../../../components/org-context";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
@@ -34,7 +34,10 @@ const dealFormSchema = z.object({
   amount: z.string().transform((v) => Number(v) || 0),
   stage: z.string().min(1, "Stage is required"),
   expectedCloseDate: z.string().optional(),
-  probability: z.string().optional().transform((v) => Number(v) || 0),
+  probability: z
+    .string()
+    .optional()
+    .transform((v) => Number(v) || 0),
   description: z.string().optional(),
   associatedCustomerId: z.string().optional().nullable(),
   associatedCompanyId: z.string().optional().nullable(),
@@ -48,20 +51,31 @@ interface DealFormProps {
 }
 
 const STAGES = [
-  { id: 'discovery', title: 'Discovery' },
-  { id: 'qualification', title: 'Qualification' },
-  { id: 'proposal', title: 'Proposal' },
-  { id: 'negotiation', title: 'Negotiation' },
-  { id: 'closed_won', title: 'Closed Won' },
-  { id: 'closed_lost', title: 'Closed Lost' },
+  { id: "discovery", title: "Discovery" },
+  { id: "qualification", title: "Qualification" },
+  { id: "proposal", title: "Proposal" },
+  { id: "negotiation", title: "Negotiation" },
+  { id: "closed_won", title: "Closed Won" },
+  { id: "closed_lost", title: "Closed Lost" },
 ];
 
 export function DealForm({ onSuccess, initialData }: DealFormProps) {
-  const { organizationId } = useOrg();
+  // Note: ensure useOrg is imported if required by your layout
+  // const { organizationId } = useOrg();
   const [loading, setLoading] = useState(false);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [loadingOptions, setLoadingOptions] = useState(true);
+
+  // Fetching data using SWR hooks
+  const { data: customers = [], isLoading: loadingCustomers } = useSWR(
+    "fetch/customers",
+    getCustomers,
+  );
+  const { data: companies = [], isLoading: loadingCompanies } = useSWR(
+    "fetch/companies",
+    getCompanies,
+  );
+
+  // Combine loading states for the UI selects
+  const loadingOptions = loadingCustomers || loadingCompanies;
 
   const form = useForm<DealFormValues>({
     resolver: zodResolver(dealFormSchema),
@@ -77,30 +91,10 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
     },
   });
 
-  useEffect(() => {
-    async function fetchOptions() {
-      if (!organizationId) return;
-      try {
-        const [customersData, companiesData] = await Promise.all([
-          getCustomers(organizationId),
-          getCompanies(organizationId),
-        ]);
-        setCustomers(customersData);
-        setCompanies(companiesData);
-      } catch (error) {
-        console.error("Failed to fetch options", error);
-      } finally {
-        setLoadingOptions(false);
-      }
-    }
-    fetchOptions();
-  }, [organizationId]);
-
   async function onSubmit(values: DealFormValues) {
-    if (!organizationId) return;
     setLoading(true);
     try {
-      const result = await createDeal(values, organizationId);
+      const result = await createDeal(values);
       if (result.success) {
         toast.success(initialData ? "Deal updated" : "Deal created");
         onSuccess();
@@ -205,10 +199,17 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Associated Company</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || undefined}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={loadingOptions ? "Loading..." : "Select a company"} />
+                    <SelectValue
+                      placeholder={
+                        loadingOptions ? "Loading..." : "Select a company"
+                      }
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -231,10 +232,17 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Associated Contact</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
+              <Select
+                onValueChange={field.onChange}
+                defaultValue={field.value || undefined}
+              >
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder={loadingOptions ? "Loading..." : "Select a contact"} />
+                    <SelectValue
+                      placeholder={
+                        loadingOptions ? "Loading..." : "Select a contact"
+                      }
+                    />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>

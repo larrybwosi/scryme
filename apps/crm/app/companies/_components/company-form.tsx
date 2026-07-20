@@ -9,7 +9,6 @@ import {
   type BusinessAccountFormValues,
 } from "../../../lib/validations";
 import { createCompany, updateCompany } from "../../actions/companies";
-import { useOrg } from "../../../components/org-context";
 import {
   Form,
   FormControl,
@@ -61,7 +60,6 @@ interface CompanyFormProps {
 }
 
 export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
-  const { organizationId } = useOrg();
   const form = useForm<BusinessAccountFormValues>({
     resolver: zodResolver(businessAccountSchema),
     defaultValues: initialData || {
@@ -83,7 +81,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
       if (initialData) {
         await updateCompany(initialData.id, values);
       } else {
-        await createCompany(values, organizationId);
+        await createCompany(values);
       }
       onSuccess();
     } catch (error) {
