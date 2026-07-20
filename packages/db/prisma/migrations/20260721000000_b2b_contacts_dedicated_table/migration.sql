@@ -14,7 +14,7 @@ CREATE TABLE "company_contacts" (
 
 -- Add foreign key constraints to company_contacts
 ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Create indexes for company_contacts
 CREATE INDEX "company_contacts_businessAccountId_idx" ON "company_contacts"("businessAccountId");

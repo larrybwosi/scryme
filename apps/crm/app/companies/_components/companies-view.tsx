@@ -72,7 +72,11 @@ export function CompaniesView() {
 
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [addContactCompany, setAddContactCompany] = useState<any>(null);
-  const [newContact, setNewContact] = useState({ name: "", email: "", phone: "" });
+  const [newContact, setNewContact] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
   const [isSavingContact, setIsSavingContact] = useState(false);
 
   // Use SWR for data fetching
@@ -143,7 +147,15 @@ export function CompaniesView() {
   const handleDownloadExcel = () => {
     try {
       // Column Headers
-      const headers = ["Company ID", "Company Name", "Tax ID", "Customers Count", "Discount %", "Payment Terms (Days)", "Created At"];
+      const headers = [
+        "Company ID",
+        "Company Name",
+        "Tax ID",
+        "Customers Count",
+        "Discount %",
+        "Payment Terms (Days)",
+        "Created At",
+      ];
 
       // Generate Rows
       const rows = companies.map((company: any) => [
@@ -151,21 +163,34 @@ export function CompaniesView() {
         company.name,
         company.taxId || "",
         company._count?.contacts || company.contacts?.length || 0,
-        company.discountPercentage !== null ? `${company.discountPercentage}%` : "0%",
-        company.paymentTermsDays !== null ? `${company.paymentTermsDays} days` : "—",
-        new Date(company.createdAt).toLocaleDateString()
+        company.discountPercentage !== null
+          ? `${company.discountPercentage}%`
+          : "0%",
+        company.paymentTermsDays !== null
+          ? `${company.paymentTermsDays} days`
+          : "—",
+        new Date(company.createdAt).toLocaleDateString(),
       ]);
 
       // Combine Headers and Rows into CSV string with escape
       const csvContent = [
         headers.join(","),
-        ...rows.map(row => row.map(val => {
-          const str = String(val);
-          if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
-            return `"${str.replace(/"/g, '""')}"`;
-          }
-          return str;
-        }).join(","))
+        ...rows.map((row) =>
+          row
+            .map((val) => {
+              const str = String(val);
+              if (
+                str.includes(",") ||
+                str.includes('"') ||
+                str.includes("\n") ||
+                str.includes("\r")
+              ) {
+                return `"${str.replace(/"/g, '""')}"`;
+              }
+              return str;
+            })
+            .join(","),
+        ),
       ].join("\n");
 
       // Download Blob
@@ -173,7 +198,10 @@ export function CompaniesView() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.csv`);
+      link.setAttribute(
+        "download",
+        `companies-export-${new Date().toISOString().split("T")[0]}.csv`,
+      );
       link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
@@ -242,7 +270,7 @@ export function CompaniesView() {
                 Add Company
               </button>
             </SheetTrigger>
-            <SheetContent className="sm:max-w-2xl overflow-y-scroll">
+            <SheetContent className="sm:max-w-3xl overflow-y-scroll">
               <SheetHeader>
                 <SheetTitle>Add New Company</SheetTitle>
               </SheetHeader>
@@ -283,8 +311,12 @@ export function CompaniesView() {
             {/* Download Section */}
             <div className="flex items-center gap-3 border border-border rounded-lg px-3 py-1.5 bg-muted/20">
               <div className="text-left hidden sm:block">
-                <p className="text-[11px] font-semibold text-foreground">Spreadsheet Export</p>
-                <p className="text-[10px] text-muted-foreground">Download whole list of companies</p>
+                <p className="text-[11px] font-semibold text-foreground">
+                  Spreadsheet Export
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Download whole list of companies
+                </p>
               </div>
               <Button
                 variant="outline"
@@ -388,7 +420,7 @@ export function CompaniesView() {
                             >
                               Edit
                             </button>
-                            <SheetContent className="sm:max-w-2xl overflow-y-scroll">
+                            <SheetContent className="sm:max-w-3xl overflow-y-scroll">
                               <SheetHeader>
                                 <SheetTitle>Edit Company</SheetTitle>
                               </SheetHeader>
