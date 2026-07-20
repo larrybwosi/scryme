@@ -118,6 +118,23 @@ export async function createCustomer(data: CustomerFormValues): Promise<any> {
 
   try {
     const validatedData = customerSchema.parse(data);
+
+    // If it's a B2B Company Contact
+    if (validatedData.businessAccountId) {
+      const contact = await db.companyContact.create({
+        data: {
+          name: validatedData.name,
+          email: validatedData.email === "" ? null : validatedData.email || null,
+          phone: validatedData.phone === "" ? null : validatedData.phone || null,
+          businessAccountId: validatedData.businessAccountId,
+          organizationId,
+        },
+      });
+      revalidatePath("/customers");
+      revalidatePath("/contacts");
+      return { success: true, data: contact };
+    }
+
     let finalCustomId = validatedData.customId;
     if (!finalCustomId) {
       const generated = await generateNextCustomId();
@@ -129,10 +146,6 @@ export async function createCustomer(data: CustomerFormValues): Promise<any> {
     const cleanData = {
       ...validatedData,
       email: validatedData.email === "" ? null : validatedData.email || null,
-      businessAccountId:
-        validatedData.businessAccountId === ""
-          ? null
-          : validatedData.businessAccountId || null,
       phone: validatedData.phone === "" ? null : validatedData.phone || null,
       company:
         validatedData.company === "" ? null : validatedData.company || null,
@@ -150,7 +163,15 @@ export async function createCustomer(data: CustomerFormValues): Promise<any> {
 
     const customer = await db.customer.create({
       data: {
-        ...cleanData,
+        name: cleanData.name,
+        email: cleanData.email,
+        phone: cleanData.phone,
+        company: cleanData.company,
+        customerType: cleanData.customerType,
+        taxId: cleanData.taxId,
+        isActive: cleanData.isActive,
+        deliveryNotes: cleanData.deliveryNotes,
+        defaultLocationId: cleanData.defaultLocationId,
         customId: finalCustomId || null,
         organizationId,
       },
@@ -209,13 +230,26 @@ export async function updateCustomer(
   try {
     const validatedData = customerSchema.parse(data);
 
+    // If B2B Company Contact
+    if (validatedData.businessAccountId) {
+      const contact = await db.companyContact.update({
+        where: { id },
+        data: {
+          name: validatedData.name,
+          email: validatedData.email === "" ? null : validatedData.email || null,
+          phone: validatedData.phone === "" ? null : validatedData.phone || null,
+          businessAccountId: validatedData.businessAccountId,
+        },
+      });
+      revalidatePath("/customers");
+      revalidatePath("/contacts");
+      revalidatePath(`/customers/${id}`);
+      return { success: true, data: contact };
+    }
+
     const cleanData = {
       ...validatedData,
       email: validatedData.email === "" ? null : validatedData.email || null,
-      businessAccountId:
-        validatedData.businessAccountId === ""
-          ? null
-          : validatedData.businessAccountId || null,
       phone: validatedData.phone === "" ? null : validatedData.phone || null,
       company:
         validatedData.company === "" ? null : validatedData.company || null,
@@ -234,7 +268,15 @@ export async function updateCustomer(
     const customer = await db.customer.update({
       where: { id },
       data: {
-        ...cleanData,
+        name: cleanData.name,
+        email: cleanData.email,
+        phone: cleanData.phone,
+        company: cleanData.company,
+        customerType: cleanData.customerType,
+        taxId: cleanData.taxId,
+        isActive: cleanData.isActive,
+        deliveryNotes: cleanData.deliveryNotes,
+        defaultLocationId: cleanData.defaultLocationId,
         customId: validatedData.customId || null,
       },
     });
@@ -254,6 +296,21 @@ export async function updateCustomer(
 
 export async function deleteCustomer(id: string): Promise<any> {
   try {
+    // Check if it's a company contact first
+    const companyContact = await db.companyContact.findUnique({
+      where: { id },
+      select: { organizationId: true },
+    });
+
+    if (companyContact) {
+      await db.companyContact.delete({
+        where: { id },
+      });
+      revalidatePath("/customers");
+      revalidatePath("/contacts");
+      return { success: true };
+    }
+
     const customer = await db.customer.findUnique({
       where: { id },
       select: { organizationId: true },
@@ -292,27 +349,32 @@ export async function getCustomers(filter?: {
   const organizationId = auth.organizationId;
 
   try {
+    if (filter?.type === "CONTACT" || filter?.businessAccountId) {
+      const where: any = { organizationId };
+      if (filter.businessAccountId) {
+        where.businessAccountId = filter.businessAccountId;
+      }
+      const contacts = await db.companyContact.findMany({
+        where,
+        include: {
+          businessAccount: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+      return contacts.map(c => ({ ...c, customerType: "B2B" }));
+    }
+
     const where: any = { organizationId };
 
     if (filter?.type === "B2C") {
       where.customerType = "B2C";
-      where.businessAccountId = null;
-    } else if (filter?.type === "CONTACT") {
-      where.businessAccountId = { not: null };
-    }
-
-    if (filter?.businessAccountId) {
-      where.businessAccountId = filter.businessAccountId;
     }
 
     const customers = await db.customer.findMany({
       where,
-      include: {
-        businessAccount: true,
-      },
       orderBy: { createdAt: "desc" },
     });
-    return customers;
+    return customers.map(c => ({ ...c, businessAccount: null }));
   } catch (error) {
     console.error("Error fetching customers:", error);
     throw new Error("Failed to fetch customers");
@@ -321,10 +383,29 @@ export async function getCustomers(filter?: {
 
 export async function getCustomer(id: string): Promise<any> {
   try {
-    let customer = await db.customer.findUnique({
+    // Check if it's a company contact first
+    const companyContact = await db.companyContact.findUnique({
       where: { id },
       include: {
         businessAccount: true,
+      },
+    });
+
+    if (companyContact) {
+      return {
+        ...companyContact,
+        customerType: "B2B",
+        isActive: true,
+        addresses: [],
+        invoices: [],
+        transactions: [],
+        crmRecord: null,
+      };
+    }
+
+    let customer = await db.customer.findUnique({
+      where: { id },
+      include: {
         addresses: true,
         invoices: {
           include: {
@@ -420,10 +501,9 @@ export async function getCustomer(id: string): Promise<any> {
       });
 
       customer = await db.customer.update({
-        where: { id },
+        where: { id: customer.id },
         data: { crmRecordId: record.id },
         include: {
-          businessAccount: true,
           addresses: true,
           invoices: {
             include: {
@@ -485,7 +565,7 @@ export async function getCustomer(id: string): Promise<any> {
       });
     }
 
-    return customer;
+    return { ...customer, businessAccount: null };
   } catch (error) {
     console.error("Error fetching customer:", error);
     throw new Error("Failed to fetch customer");

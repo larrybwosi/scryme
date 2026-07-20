@@ -58,7 +58,7 @@ function TabContent({ company, tab }: { company: any; tab: TabId }) {
 }
 
 function ContactsTab({ company }: { company: any }) {
-    const contacts = company.customers || [];
+    const contacts = company.contacts || [];
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-bold">Contacts</h3>
@@ -114,7 +114,7 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
     notes: company.crmRecord?.notes?.length || 0,
     activities: company.crmRecord?.activities?.length || 0,
     followups: company.crmRecord?.followUps?.length || 0,
-    contacts: company.customers?.length || 0,
+    contacts: company.contacts?.length || 0,
     orders: company.transactions?.length || 0,
   };
 
@@ -131,7 +131,7 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
   const [invoiceDueDate, setInvoiceDueDate] = useState('');
   const [isInvoiceSubmitting, setIsInvoiceSubmitting] = useState(false);
 
-  const contacts = company.customers || [];
+  const contacts = company.contacts || [];
 
   const handleInvoiceCreate = async () => {
     const amount = parseFloat(invoiceAmount) || 0;

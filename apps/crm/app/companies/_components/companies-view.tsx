@@ -150,7 +150,7 @@ export function CompaniesView() {
         company.id,
         company.name,
         company.taxId || "",
-        company._count?.customers || company.customers?.length || 0,
+        company._count?.contacts || company.contacts?.length || 0,
         company.discountPercentage !== null ? `${company.discountPercentage}%` : "0%",
         company.paymentTermsDays !== null ? `${company.paymentTermsDays} days` : "—",
         new Date(company.createdAt).toLocaleDateString()
@@ -311,7 +311,7 @@ export function CompaniesView() {
                     Tax ID
                   </th>
                   <th className="text-right px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Customers
+                    Contacts
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Created At
@@ -369,7 +369,7 @@ export function CompaniesView() {
                         {company.taxId || "—"}
                       </td>
                       <td className="px-4 py-3.5 text-right text-[13px] text-foreground">
-                        {company._count?.customers || 0}
+                        {company._count?.contacts || 0}
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-muted-foreground">
                         {new Date(company.createdAt).toLocaleDateString()}
