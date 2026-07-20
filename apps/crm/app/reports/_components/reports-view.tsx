@@ -8,7 +8,7 @@ import { Button } from "@repo/ui/components/ui/button";
 export function ReportsView() {
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
-      <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
+      <div className="shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <h1 className="text-[17px] font-bold text-foreground tracking-tight">CRM Reports</h1>
         <p className="text-[12px] text-muted-foreground mt-0.5">
           Analyze your sales performance and customer growth.

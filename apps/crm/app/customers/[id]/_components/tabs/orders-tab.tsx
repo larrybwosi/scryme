@@ -38,7 +38,7 @@ function OrderRow({ order }: { order: any }) {
           </p>
         </div>
 
-        <div className="text-right flex-shrink-0">
+        <div className="text-right shrink-0">
           <p className="text-[13.5px] font-bold text-foreground">
             {formatCurrency(Number(order.finalTotal))}
           </p>

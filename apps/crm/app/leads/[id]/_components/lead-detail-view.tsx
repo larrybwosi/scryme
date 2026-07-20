@@ -49,7 +49,7 @@ function DetailViewInner({ lead }: LeadDetailViewProps) {
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-card flex-shrink-0">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-card shrink-0">
         <Link
           href="/leads"
           className="flex items-center gap-1.5 text-[12.5px] font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -63,7 +63,7 @@ function DetailViewInner({ lead }: LeadDetailViewProps) {
 
       <div className="flex flex-1 overflow-hidden">
         {/* Simple Lead Info */}
-        <div className="w-[320px] flex-shrink-0 border-r border-border overflow-y-auto p-6 custom-scrollbar">
+        <div className="w-[320px] shrink-0 border-r border-border overflow-y-auto p-6 custom-scrollbar">
            <div className="space-y-6">
               <div>
                 <h2 className="text-lg font-bold">{lead.data.name}</h2>

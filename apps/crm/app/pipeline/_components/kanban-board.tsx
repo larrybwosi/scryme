@@ -108,7 +108,7 @@ export function KanbanBoard({ deals, onDealUpdate, onAddDeal }: KanbanBoardProps
         {STAGE_CONFIGS.map((stageConfig) => (
           <div
             key={stageConfig.id}
-            className="snap-start flex-shrink-0"
+            className="snap-start shrink-0"
           >
             <KanbanColumn
               id={stageConfig.id}
