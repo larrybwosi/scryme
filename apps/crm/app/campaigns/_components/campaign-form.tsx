@@ -26,12 +26,10 @@ import { Button } from '@repo/ui/components/ui/button';
 import { toast } from 'sonner';
 
 interface CampaignFormProps {
-  organizationId: string;
-  memberId: string;
   onSuccess: () => void;
 }
 
-export function CampaignForm({ organizationId, memberId, onSuccess }: CampaignFormProps) {
+export function CampaignForm({ onSuccess }: CampaignFormProps) {
   const form = useForm<CampaignFormValues>({
     resolver: zodResolver(campaignSchema),
     defaultValues: {
@@ -44,7 +42,7 @@ export function CampaignForm({ organizationId, memberId, onSuccess }: CampaignFo
 
   const onSubmit = async (values: CampaignFormValues) => {
     try {
-      const result = await createCampaign(values, organizationId, memberId);
+      const result = await createCampaign(values);
       if (result.success) {
         toast.success('Campaign created successfully');
         onSuccess();

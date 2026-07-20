@@ -136,7 +136,7 @@ export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
     mutate,
   } = useSWR(
     ["workflows", organizationId],
-    () => getWorkflows(organizationId),
+    () => getWorkflows(),
     { revalidateOnFocus: false, dedupingInterval: 30000 },
   );
 
@@ -509,7 +509,6 @@ export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
             <DialogTitle>Create New Workflow</DialogTitle>
           </DialogHeader>
           <WorkflowForm
-            organizationId={organizationId}
             onSuccess={handleCreated}
           />
         </DialogContent>

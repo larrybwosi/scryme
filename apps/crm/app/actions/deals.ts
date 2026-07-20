@@ -1,12 +1,17 @@
-'use server';
+"use server";
 
-import { db } from '@repo/db';
-import { revalidatePath } from 'next/cache';
+import { getServerAuth } from "@repo/auth/server";
+import { db } from "@repo/db";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
-export async function getDeals(organizationId: string) {
+export async function getDeals() {
   try {
+    const auth = await getServerAuth();
+    if (!auth?.organizationId) redirect("/login");
+    const organizationId = auth.organizationId;
     const dealDef = await db.crmObjectDefinition.findUnique({
-      where: { organizationId_name: { organizationId, name: 'deal' } }
+      where: { organizationId_name: { organizationId, name: "deal" } },
     });
 
     if (!dealDef) return [];
@@ -23,15 +28,15 @@ export async function getDeals(organizationId: string) {
               include: {
                 customer: true,
                 businessAccount: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
   } catch (error) {
-    console.error('Error fetching deals:', error);
+    console.error("Error fetching deals:", error);
     return [];
   }
 }
@@ -42,7 +47,7 @@ export async function updateDealStage(dealId: string, stage: string) {
       where: { id: dealId },
     });
 
-    if (!deal) throw new Error('Deal not found');
+    if (!deal) throw new Error("Deal not found");
 
     const data = (deal.data as any) || {};
 
@@ -52,71 +57,86 @@ export async function updateDealStage(dealId: string, stage: string) {
         data: {
           ...data,
           stage,
-        }
-      }
+        },
+      },
     });
 
-    revalidatePath('/pipeline');
+    revalidatePath("/pipeline");
     return { success: true };
   } catch (error) {
-    console.error('Error updating deal stage:', error);
+    console.error("Error updating deal stage:", error);
     return { success: false };
   }
 }
 
-export async function createDeal(input: any, organizationId: string) {
-    try {
-        const { associatedCustomerId, associatedCompanyId, ...data } = input;
+export async function createDeal(input: any) {
+  try {
+    const auth = await getServerAuth();
+    if (!auth?.organizationId) redirect("/login");
+    const organizationId = auth.organizationId;
+    const { associatedCustomerId, associatedCompanyId, ...data } = input;
 
-        const dealDef = await db.crmObjectDefinition.findUnique({
-            where: { organizationId_name: { organizationId, name: 'deal' } }
-        });
+    const dealDef = await db.crmObjectDefinition.findUnique({
+      where: { organizationId_name: { organizationId, name: "deal" } },
+    });
 
-        if (!dealDef) throw new Error('Deal definition not found');
+    if (!dealDef) throw new Error("Deal definition not found");
 
-        const deal = await db.crmRecord.create({
-            data: {
-                objectId: dealDef.id,
-                organizationId,
-                data,
-            }
-        });
+    const deal = await db.crmRecord.create({
+      data: {
+        objectId: dealDef.id,
+        organizationId,
+        data,
+      },
+    });
 
-        // Handle associations
-        if (associatedCustomerId && associatedCustomerId !== 'none') {
-            const customer = await db.customer.findUnique({ where: { id: associatedCustomerId } });
-            if (customer?.crmRecordId) {
-                await createAssociation(customer.crmRecordId, deal.id, 'contact_deals', organizationId);
-            }
-        }
-
-        if (associatedCompanyId && associatedCompanyId !== 'none') {
-            const company = await db.businessAccount.findUnique({ where: { id: associatedCompanyId } });
-            if (company?.crmRecordId) {
-                await createAssociation(company.crmRecordId, deal.id, 'company_deals', organizationId);
-            }
-        }
-
-        revalidatePath('/pipeline');
-        return { success: true, data: deal };
-    } catch (error) {
-        console.error('Error creating deal:', error);
-        return { success: false, error: (error as any).message };
+    // Handle associations
+    if (associatedCustomerId && associatedCustomerId !== "none") {
+      const customer = await db.customer.findUnique({
+        where: { id: associatedCustomerId },
+      });
+      if (customer?.crmRecordId) {
+        await createAssociation(customer.crmRecordId, deal.id, "contact_deals");
+      }
     }
+
+    if (associatedCompanyId && associatedCompanyId !== "none") {
+      const company = await db.businessAccount.findUnique({
+        where: { id: associatedCompanyId },
+      });
+      if (company?.crmRecordId) {
+        await createAssociation(company.crmRecordId, deal.id, "company_deals");
+      }
+    }
+
+    revalidatePath("/pipeline");
+    return { success: true, data: deal };
+  } catch (error) {
+    console.error("Error creating deal:", error);
+    return { success: false, error: (error as any).message };
+  }
 }
 
-async function createAssociation(sourceId: string, targetId: string, relationshipName: string, organizationId: string) {
-    const rel = await db.crmRelationshipDefinition.findUnique({
-        where: { organizationId_name: { organizationId, name: relationshipName } }
-    });
+async function createAssociation(
+  sourceId: string,
+  targetId: string,
+  relationshipName: string,
+) {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) return;
+  const organizationId = auth.organizationId;
 
-    if (!rel) return;
+  const rel = await db.crmRelationshipDefinition.findUnique({
+    where: { organizationId_name: { organizationId, name: relationshipName } },
+  });
 
-    await db.crmAssociation.create({
-        data: {
-            relationshipId: rel.id,
-            sourceRecordId: sourceId,
-            targetRecordId: targetId,
-        }
-    });
+  if (!rel) return;
+
+  await db.crmAssociation.create({
+    data: {
+      relationshipId: rel.id,
+      sourceRecordId: sourceId,
+      targetRecordId: targetId,
+    },
+  });
 }

@@ -92,3 +92,7 @@
 ## 2026-07-17 - [Targeted Select Blocks in Unified Timeline List Queries]
 **Learning:** When retrieving unified timelines that merge records from different models (e.g., `CrmNote` and `CrmActivity`), loading all database columns is highly inefficient because notes often contain large markdown text and activities contain heavy JSON metadata blocks. Utilizing targeted `select` statements tailored to the specific fields used in the final mapping reduces database I/O and NestJS/Prisma serialization overhead by up to 60-80%.
 **Action:** Always inspect the final array mapping or response object for merged list structures, and use exact `select` blocks to only fetch fields required by the UI/mapper.
+
+## 2026-07-20 - [In-Memory Caching for Global Reference Data]
+**Learning:** Fetching static system-wide configurations or standard reference data (such as `SystemUnit`) from the database on every sync or list operation is a redundant overhead. Since NestJS providers are singletons, storing static values in a class property allows subsequent queries (including delta synchronization requests via `lastSync` filtering) to be served completely in-memory, bypassing database queries and serialization entirely.
+**Action:** For static, non-tenant-specific reference data, implement a lazy-loaded class-level in-memory cache to handle list and delta-sync filters without touching the database.

@@ -1,19 +1,30 @@
-'use server';
+"use server";
 
-import { addDays, addWeeks, addMonths } from 'date-fns';
-import { db, type CrmFollowUp } from '@repo/db';
-import { crmFollowUpSchema, type CrmFollowUpFormValues } from '../../lib/validations';
-import { revalidatePath } from 'next/cache';
+import { addDays, addWeeks, addMonths } from "date-fns";
+import { db, type CrmFollowUp } from "@repo/db";
+import {
+  crmFollowUpSchema,
+  type CrmFollowUpFormValues,
+} from "../../lib/validations";
+import { revalidatePath } from "next/cache";
+import { getServerAuth } from "@repo/auth/server";
+import { redirect } from "next/navigation";
 
-export async function createFollowUp(data: CrmFollowUpFormValues, organizationId: string): Promise<CrmFollowUp> {
+export async function createFollowUp(
+  data: CrmFollowUpFormValues,
+): Promise<CrmFollowUp> {
   const validatedData = crmFollowUpSchema.parse(data);
+
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
 
   // Automatically tie to customer's default location if not provided
   let locationId = validatedData.locationId;
   if (!locationId) {
     const record = await db.crmRecord.findUnique({
       where: { id: validatedData.recordId },
-      include: { customer: true }
+      include: { customer: true },
     });
     if (record?.customer?.defaultLocationId) {
       locationId = record.customer.defaultLocationId;
@@ -31,9 +42,9 @@ export async function createFollowUp(data: CrmFollowUpFormValues, organizationId
         include: {
           customer: true,
           businessAccount: true,
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   if (followUp.record.customer) {
@@ -45,35 +56,42 @@ export async function createFollowUp(data: CrmFollowUpFormValues, organizationId
   return followUp;
 }
 
-export async function updateFollowUp(id: string, data: Partial<CrmFollowUpFormValues>): Promise<CrmFollowUp> {
+export async function updateFollowUp(
+  id: string,
+  data: Partial<CrmFollowUpFormValues>,
+): Promise<CrmFollowUp> {
   const followUp = await db.crmFollowUp.update({
     where: { id },
     data: {
       ...data,
-      completedAt: data.status === 'COMPLETED' ? new Date() : undefined,
+      completedAt: data.status === "COMPLETED" ? new Date() : undefined,
     },
     include: {
       record: {
         include: {
           customer: true,
           businessAccount: true,
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   // Handle recurring follow-ups
-  if (data.status === 'COMPLETED' && followUp.isRecurring && followUp.recurringInterval) {
+  if (
+    data.status === "COMPLETED" &&
+    followUp.isRecurring &&
+    followUp.recurringInterval
+  ) {
     let nextDueDate = new Date(followUp.dueDate);
 
     switch (followUp.recurringInterval) {
-      case 'DAILY':
+      case "DAILY":
         nextDueDate = addDays(nextDueDate, 1);
         break;
-      case 'WEEKLY':
+      case "WEEKLY":
         nextDueDate = addWeeks(nextDueDate, 1);
         break;
-      case 'MONTHLY':
+      case "MONTHLY":
         nextDueDate = addMonths(nextDueDate, 1);
         break;
     }
@@ -84,7 +102,7 @@ export async function updateFollowUp(id: string, data: Partial<CrmFollowUpFormVa
         description: followUp.description,
         dueDate: nextDueDate,
         priority: followUp.priority,
-        status: 'PENDING',
+        status: "PENDING",
         type: followUp.type,
         recordId: followUp.recordId,
         organizationId: followUp.organizationId,
@@ -92,7 +110,7 @@ export async function updateFollowUp(id: string, data: Partial<CrmFollowUpFormVa
         locationId: followUp.locationId,
         isRecurring: true,
         recurringInterval: followUp.recurringInterval,
-      }
+      },
     });
   }
 
@@ -108,7 +126,7 @@ export async function updateFollowUp(id: string, data: Partial<CrmFollowUpFormVa
 export async function getFollowUps(recordId: string): Promise<any[]> {
   return await db.crmFollowUp.findMany({
     where: { recordId },
-    orderBy: { dueDate: 'asc' },
+    orderBy: { dueDate: "asc" },
     include: {
       assignedTo: {
         include: {
@@ -127,9 +145,9 @@ export async function deleteFollowUp(id: string) {
         include: {
           customer: true,
           businessAccount: true,
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   if (followUp.record.customer) {

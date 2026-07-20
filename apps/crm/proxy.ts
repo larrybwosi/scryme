@@ -12,7 +12,6 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Next.js 16 Proxy natively supports the Node.js runtime, allowing direct session evaluation
   const session = await auth.api.getSession({
     headers: request.headers,
   });
@@ -28,9 +27,10 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
 
   // If authenticated and on an auth route, redirect to home or callbackUrl
   if (isAuthRoute) {
-    const callbackUrl = request.nextUrl.searchParams.get("callbackUrl") ||
-                        request.nextUrl.searchParams.get("redirect") ||
-                        request.nextUrl.searchParams.get("returnTo");
+    const callbackUrl =
+      request.nextUrl.searchParams.get("callbackUrl") ||
+      request.nextUrl.searchParams.get("redirect") ||
+      request.nextUrl.searchParams.get("returnTo");
 
     if (callbackUrl) {
       try {
@@ -38,7 +38,10 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
           return NextResponse.redirect(new URL(callbackUrl, request.url));
         } else {
           const parsedUrl = new URL(callbackUrl);
-          if (parsedUrl.hostname.endsWith("scryme.tech") || parsedUrl.hostname === "localhost") {
+          if (
+            parsedUrl.hostname.endsWith("scryme.tech") ||
+            parsedUrl.hostname === "localhost"
+          ) {
             return NextResponse.redirect(parsedUrl);
           }
         }
@@ -88,7 +91,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     console.log(
       `[CRM PROXY] ${request.method} ${pathname} - Status: ${status}${
         location ? ` -> Redirect to: ${location}` : ""
-      } (${duration}ms)`
+      } (${duration}ms)`,
     );
     return response;
   } catch (error) {
@@ -96,7 +99,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     console.error(
       `[CRM PROXY ERROR] ${request.method} ${pathname} - Error:`,
       error,
-      `(${duration}ms)`
+      `(${duration}ms)`,
     );
     throw error;
   }

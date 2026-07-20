@@ -1,7 +1,4 @@
 import { createAuthClient } from "better-auth/react";
-import { adminClient } from "better-auth/client/plugins";
-import { oauthProviderClient } from "@better-auth/oauth-provider/client";
-import { ac, ADMIN, CASHIER, DEVELOPER } from "./permissions";
 
 const isDev = process.env.NODE_ENV === "development";
 const defaultAppUrl = isDev
@@ -13,17 +10,6 @@ export const authClient: any = createAuthClient({
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_WEB_URL ||
     defaultAppUrl,
-  plugins: [
-    oauthProviderClient(),
-    adminClient({
-      ac,
-      roles: {
-        ADMIN,
-        CASHIER,
-        DEVELOPER,
-      },
-    }),
-  ],
 });
 
 export const signIn: typeof authClient.signIn = authClient.signIn;

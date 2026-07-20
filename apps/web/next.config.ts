@@ -16,11 +16,6 @@ const nextConfig: NextConfig = {
         source: "/.well-known/:path*",
         destination: `${apiUrl}/.well-known/:path*`,
       },
-      {
-        source: "/api/auth/ably",
-        // Do not forward /api/auth/ably to API backend, instead run locally
-        destination: "/api/auth/ably",
-      },
     ];
   },
   images: {

@@ -1,13 +1,15 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { customerSchema, type CustomerFormValues } from '../../../lib/validations';
-import { createCustomer, updateCustomer } from '../../actions/customers';
-import { getCompanies } from '../../actions/companies';
-import { useOrg } from '../../../components/org-context';
-import useSWR from 'swr';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  customerSchema,
+  type CustomerFormValues,
+} from "../../../lib/validations";
+import { createCustomer, updateCustomer } from "../../actions/customers";
+import { getCompanies } from "../../actions/companies";
+import useSWR from "swr";
 import {
   Form,
   FormControl,
@@ -15,17 +17,17 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@repo/ui/components/ui/form';
-import { Input } from '@repo/ui/components/ui/input';
-import { Button } from '@repo/ui/components/ui/button';
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@repo/ui/components/ui/select';
-import { Loader2 } from 'lucide-react';
+} from "@repo/ui/components/ui/select";
+import { Loader2 } from "lucide-react";
 
 interface ContactFormProps {
   initialData?: CustomerFormValues & { id: string };
@@ -33,23 +35,22 @@ interface ContactFormProps {
   businessAccountId?: string;
 }
 
-export function ContactForm({ initialData, onSuccess, businessAccountId }: ContactFormProps) {
-  const { organizationId } = useOrg();
-
-  const { data: companies = [] } = useSWR(
-    organizationId ? ['companies-list', organizationId] : null,
-    () => getCompanies(organizationId)
-  );
+export function ContactForm({
+  initialData,
+  onSuccess,
+  businessAccountId,
+}: ContactFormProps) {
+  const { data: companies = [] } = useSWR(["companies"], () => getCompanies());
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
     defaultValues: initialData || {
-      name: '',
-      email: '',
-      phone: '',
-      company: '',
-      businessAccountId: businessAccountId || '',
-      customerType: 'B2B',
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      businessAccountId: businessAccountId || "",
+      customerType: "B2B",
       isActive: true,
     },
   });
@@ -59,11 +60,11 @@ export function ContactForm({ initialData, onSuccess, businessAccountId }: Conta
       if (initialData) {
         await updateCustomer(initialData.id, values);
       } else {
-        await createCustomer(values, organizationId);
+        await createCustomer(values);
       }
       onSuccess();
     } catch (error) {
-      console.error('Failed to save contact', error);
+      console.error("Failed to save contact", error);
     }
   };
 
@@ -75,7 +76,9 @@ export function ContactForm({ initialData, onSuccess, businessAccountId }: Conta
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
+              <FormLabel>
+                Full Name <span className="text-red-500">*</span>
+              </FormLabel>
               <FormControl>
                 <Input placeholder="Jane Smith" {...field} />
               </FormControl>
@@ -142,10 +145,10 @@ export function ContactForm({ initialData, onSuccess, businessAccountId }: Conta
             {form.formState.isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {initialData ? 'Updating...' : 'Creating...'}
+                {initialData ? "Updating..." : "Creating..."}
               </>
             ) : (
-              <>{initialData ? 'Update' : 'Create'} Contact</>
+              <>{initialData ? "Update" : "Create"} Contact</>
             )}
           </Button>
         </div>
