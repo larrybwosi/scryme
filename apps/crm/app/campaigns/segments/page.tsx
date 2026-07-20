@@ -1,14 +1,5 @@
-import { SegmentsView } from './_components/segments-view';
-import { OrgProvider } from '@/components/org-context';
-import { getOrganizationContext } from '@/app/actions/auth';
+import { SegmentsView } from "./_components/segments-view";
 
 export default async function SegmentsPage() {
-  const context = (await getOrganizationContext())!;
-  const { organizationId } = context;
-
-  return (
-    <OrgProvider organizationId={organizationId}>
-      <SegmentsView organizationId={organizationId} />
-    </OrgProvider>
-  );
+  return <SegmentsView />;
 }
