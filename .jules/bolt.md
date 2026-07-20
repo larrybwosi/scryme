@@ -96,3 +96,7 @@
 ## 2026-07-20 - [In-Memory Caching for Global Reference Data]
 **Learning:** Fetching static system-wide configurations or standard reference data (such as `SystemUnit`) from the database on every sync or list operation is a redundant overhead. Since NestJS providers are singletons, storing static values in a class property allows subsequent queries (including delta synchronization requests via `lastSync` filtering) to be served completely in-memory, bypassing database queries and serialization entirely.
 **Action:** For static, non-tenant-specific reference data, implement a lazy-loaded class-level in-memory cache to handle list and delta-sync filters without touching the database.
+
+## 2026-07-21 - [Select Optimization in Services List Query]
+**Learning:** Over-fetching massive related models (like Member and User) in service lists/indexes is a critical bottleneck. In list endpoints (e.g. `getServices`), using Prisma's default `include` fetches all scalar columns, settings, emergency contacts, and metadata of related entities. Replacing this with a precise `select` statement that filters down category, staff, and resource relations reduces serialization overhead and network transfer without breaking NestJS serialization.
+**Action:** Use nested `select` queries on list operations to prune massive unused columns of relational models, while ensuring all identifiers and basic required fields are explicitly queried.

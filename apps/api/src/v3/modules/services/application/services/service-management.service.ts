@@ -245,15 +245,84 @@ export class ServiceManagementService {
   }
 
   async getServices(orgId: string, options?: { isActive?: boolean }) {
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced broad Prisma 'include' with a targeted nested 'select' block.
+     * This avoids over-fetching massive related tables from Member (e.g. settings, tags, emergency contact info, etc.)
+     * and User (e.g. password, notification preferences) which are not used in list views.
+     * This reduces database I/O, network payloads, and NestJS serialization overhead.
+     */
     return this.prisma.client.service.findMany({
       where: {
           organizationId: orgId,
           ...(options?.isActive !== undefined ? { isActive: options.isActive } : {}),
       },
-      include: {
-        category: true,
-        staff: { include: { member: { include: { user: true } } } },
-        resources: { include: { resource: true } }
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        sku: true,
+        organizationId: true,
+        categoryId: true,
+        pricingModel: true,
+        price: true,
+        minPrice: true,
+        requiresDeposit: true,
+        depositAmount: true,
+        depositType: true,
+        estimatedDuration: true,
+        bufferTimeBefore: true,
+        bufferTimeAfter: true,
+        isActive: true,
+        customFields: true,
+        createdAt: true,
+        updatedAt: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+        staff: {
+          select: {
+            id: true,
+            serviceId: true,
+            memberId: true,
+            member: {
+              select: {
+                id: true,
+                organizationId: true,
+                userId: true,
+                role: true,
+                membershipStatus: true,
+                isActive: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    isActive: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        resources: {
+          select: {
+            id: true,
+            serviceId: true,
+            resourceId: true,
+            resource: {
+              select: {
+                id: true,
+                name: true,
+                type: true,
+                isActive: true,
+              },
+            },
+          },
+        },
       },
     });
   }
