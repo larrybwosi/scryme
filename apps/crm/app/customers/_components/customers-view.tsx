@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Loader2,
   Settings,
+  Download,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -184,6 +185,53 @@ export function CustomersView() {
     }
   };
 
+  const handleDownloadExcel = () => {
+    try {
+      // Column Headers
+      const headers = ["Customer ID", "Custom ID", "Customer Name", "Email", "Phone", "Company", "Type", "Status", "Created At"];
+
+      // Generate Rows
+      const rows = customers.map((customer: any) => [
+        customer.id,
+        customer.customId || "",
+        customer.name,
+        customer.email || "",
+        customer.phone || "",
+        customer.company || "—",
+        customer.customerType || "—",
+        customer.isActive ? "Active" : "Inactive",
+        new Date(customer.createdAt).toLocaleDateString()
+      ]);
+
+      // Combine Headers and Rows into CSV string with escape
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(val => {
+          const str = String(val);
+          if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        }).join(","))
+      ].join("\n");
+
+      // Download Blob
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `customers-export-${new Date().toISOString().split("T")[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Excel spreadsheet downloaded successfully");
+    } catch (err) {
+      console.error("Export failed:", err);
+      toast.error("Export failed. Please try again.");
+    }
+  };
+
   const handleCustomerSuccess = () => {
     setIsCreateOpen(false);
     setEditingCustomer(null);
@@ -283,38 +331,57 @@ export function CustomersView() {
 
       <div className="flex-1 px-8 pb-8">
         <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-            <div className="relative flex-1 max-w-sm">
-              <Search
-                size={15}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-              />
-              <input
-                type="text"
-                placeholder="Search by name, email or company..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-              />
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="relative flex-1 max-w-sm">
+                <Search
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                />
+                <input
+                  type="text"
+                  placeholder="Search by name, email or company..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                {(["All", "Active", "Inactive"] as const).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => {
+                      setStatusFilter(s);
+                      setPage(1); // Reset to first page when filter changes
+                    }}
+                    className={cn(
+                      "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
+                      statusFilter === s
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-background border border-border text-muted-foreground hover:bg-accent",
+                    )}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              {(["All", "Active", "Inactive"] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => {
-                    setStatusFilter(s);
-                    setPage(1); // Reset to first page when filter changes
-                  }}
-                  className={cn(
-                    "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
-                    statusFilter === s
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-background border border-border text-muted-foreground hover:bg-accent",
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
+
+            {/* Download Section */}
+            <div className="flex items-center gap-3 border border-border rounded-lg px-3 py-1.5 bg-muted/20">
+              <div className="text-left hidden sm:block">
+                <p className="text-[11px] font-semibold text-foreground">Spreadsheet Export</p>
+                <p className="text-[10px] text-muted-foreground">Download whole list of customers</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadExcel}
+                className="h-8 px-3 text-[12px] font-medium flex items-center gap-1 bg-background hover:bg-accent text-foreground border-border"
+              >
+                <Download size={13} className="mr-1" />
+                Download Excel
+              </Button>
             </div>
           </div>
 

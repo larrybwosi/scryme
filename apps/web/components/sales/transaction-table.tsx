@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Inbox,
+  ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
 import { AddPaymentModal } from "./add-payment-modal";
@@ -75,6 +76,31 @@ function formatCurrency(value: number, currencyCode = "KES") {
     currency: currencyCode,
     maximumFractionDigits: 0,
   }).format(value);
+}
+
+function getCleanUrl(url: string | null | undefined): string {
+  if (!url) return "";
+
+  const isDev = process.env.NODE_ENV === "development";
+  const defaultApiUrl = isDev
+    ? "http://localhost:3002"
+    : "https://api.scryme.tech";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+
+  try {
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      const parsed = new URL(url);
+      if (!isDev && (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")) {
+        const targetUrl = new URL(apiUrl);
+        parsed.protocol = targetUrl.protocol;
+        parsed.host = targetUrl.host;
+        return parsed.toString();
+      }
+    }
+  } catch (e) {
+    console.error("Failed to parse URL:", url, e);
+  }
+  return url;
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -180,8 +206,37 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const handleGenerateDocument = async (trxId: string, type: "invoice" | "receipt") => {
     setIsGeneratingDoc(`${trxId}-${type}`);
     try {
-      await generateDocumentAction(trxId, type);
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`);
+      const result = await generateDocumentAction(trxId, type);
+      const downloadUrl = result?.shortUrl || result?.fileUrl;
+      const cleanDownloadUrl = getCleanUrl(downloadUrl);
+
+      if (cleanDownloadUrl) {
+        toast.success(
+          <div className="flex flex-col gap-1 text-xs">
+            <span className="font-semibold text-zinc-900">
+              {type.charAt(0).toUpperCase() + type.slice(1)} generated successfully
+            </span>
+            <a
+              href={cleanDownloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-zinc-600 underline font-medium hover:text-zinc-900 flex items-center gap-1 mt-0.5"
+            >
+              Click here to download/view <ExternalLink className="w-3 h-3 inline" />
+            </a>
+          </div>,
+          {
+            duration: 15000,
+          }
+        );
+      } else {
+        toast.success(
+          `${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`,
+          {
+            duration: 15000,
+          }
+        );
+      }
     } catch (error) {
       toast.error(`Failed to generate ${type}`);
     } finally {
@@ -406,7 +461,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                               return invoice ? (
                                 <DropdownMenuItem asChild>
                                   <a
-                                    href={invoice.shortUrl || invoice.fileUrl}
+                                    href={getCleanUrl(invoice.shortUrl || invoice.fileUrl)}
                                     target="_blank"
                                     rel="noopener noreferrer">
                                     <FileText className="mr-2 h-4 w-4" />{" "}
@@ -442,7 +497,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                               return receipt ? (
                                 <DropdownMenuItem asChild>
                                   <a
-                                    href={receipt.shortUrl || receipt.fileUrl}
+                                    href={getCleanUrl(receipt.shortUrl || receipt.fileUrl)}
                                     target="_blank"
                                     rel="noopener noreferrer">
                                     <Download className="mr-2 h-4 w-4" />{" "}

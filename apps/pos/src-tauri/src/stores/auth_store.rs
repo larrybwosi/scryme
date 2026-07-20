@@ -8,12 +8,12 @@ use tauri::{AppHandle, State};
 // --- Data Types ---
 
 #[derive(Clone, Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")] 
+#[serde(rename_all = "camelCase")]
 pub struct MemberProfile {
     pub id: String,
     #[serde(default)] // Allows parsing to succeed with an empty string if "name" is missing
     pub name: String,
-    
+
     pub role: Option<String>,
     // Add other non-sensitive fields from your Member model
 }
@@ -52,7 +52,7 @@ pub struct AuthState {
     pub client: reqwest::Client,
 }
 
-const KEYRING_SERVICE: &str = "dealio-desktop";
+const KEYRING_SERVICE: &str = "scryme";
 const KEYRING_USER: &str = "device-config";
 
 impl Default for AuthState {

@@ -26,6 +26,7 @@ export const businessAccountSchema = z.object({
   discountPercentage: z.coerce.number().min(0).max(100).optional().nullable(),
   paymentTermsDays: z.coerce.number().int().min(0).optional().nullable(),
   contacts: z.array(z.object({
+    contactId: z.string().optional(),
     name: z.string().min(1, 'Name is required'),
     email: z.string().email().optional().or(z.literal('')),
     phone: z.string().optional(),

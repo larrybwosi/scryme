@@ -1,5 +1,5 @@
 [package]
-name = "dealio-desktop"
+name = "scryme"
 version = "0.1.0"
 description = "A Tauri App"
 authors = ["you"]
@@ -48,7 +48,7 @@ sha2 = "0.10" # To derive a key from a passphrase/ID
 
 tauri-plugin-shell = "2.3.5"
 escpos-rs = "0.3.0"
-uuid = { version = "1.9", features = ["v7", "serde"] } 
+uuid = { version = "1.9", features = ["v7", "serde"] }
 urlencoding = "2.1"
 tempfile = "3"       # For safe file handling (Security)
 thiserror = "1"      # For typed errors

@@ -39,11 +39,7 @@ import {
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
 
-interface SegmentsViewProps {
-  organizationId: string;
-}
-
-export function SegmentsView({ organizationId }: SegmentsViewProps) {
+export function SegmentsView() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -53,7 +49,7 @@ export function SegmentsView({ organizationId }: SegmentsViewProps) {
     error,
     isLoading,
     mutate,
-  } = useSWR(["segments", organizationId], () => getSegments(), {
+  } = useSWR(["segments"], () => getSegments(), {
     revalidateOnFocus: false,
     revalidateOnReconnect: true,
     dedupingInterval: 60000, // 1 minute
@@ -117,9 +113,7 @@ export function SegmentsView({ organizationId }: SegmentsViewProps) {
             <DialogHeader>
               <DialogTitle>Create New Segment</DialogTitle>
             </DialogHeader>
-            <SegmentForm
-              onSuccess={handleSegmentCreated}
-            />
+            <SegmentForm onSuccess={handleSegmentCreated} />
           </DialogContent>
         </Dialog>
       </div>

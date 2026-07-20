@@ -16,7 +16,6 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { getLeads, qualifyLead } from "../../actions/leads";
 import { StatCard } from "../../../components/ui/stat-card";
-import { useOrg } from "../../../components/org-context";
 import {
   Sheet,
   SheetContent,
@@ -33,7 +32,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "sonner";
-import { StatusBadge } from "../../../components/ui/status-badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import {
   Dialog,
   DialogContent,

@@ -4,6 +4,8 @@ model Invoice {
   id             String   @id @default(cuid())
   customerId     String?
   customer       Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  businessAccountId String?
+  businessAccount   BusinessAccount? @relation(fields: [businessAccountId], references: [id], onDelete: SetNull)
   customerName   String? // Fallback or name at time of invoice
   postingDate    DateTime
   dueDate        DateTime?

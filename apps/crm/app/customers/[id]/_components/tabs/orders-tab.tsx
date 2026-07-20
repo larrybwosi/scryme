@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { ShoppingBag, TrendingUp, ChevronDown, ChevronUp } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { EmptyState } from '@/components/ui/empty-state';
-import { formatCurrency } from '@/lib/utils';
-import type { CustomerWithRelations } from '@/lib/types';
+import React, { useState } from "react";
+import { ShoppingBag, TrendingUp, ChevronDown, ChevronUp } from "lucide-react";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { formatCurrency } from "@/lib/utils";
+import type { CustomerWithRelations } from "@/lib/types";
 
 interface OrdersTabProps {
   customer: CustomerWithRelations;
@@ -19,7 +19,7 @@ function OrderRow({ order }: { order: any }) {
         onClick={() => setExpanded((v) => !v)}
         className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-accent/50 transition-colors"
       >
-        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <ShoppingBag size={15} className="text-primary" />
         </div>
 
@@ -32,17 +32,21 @@ function OrderRow({ order }: { order: any }) {
             <StatusBadge status={order.type} size="sm" />
           </div>
           <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
-            {order.items.map((i: any) => `${i.quantity}x ${i.productName}`).join(', ')}
+            {order.items
+              .map((i: any) => `${i.quantity}x ${i.productName}`)
+              .join(", ")}
           </p>
         </div>
 
         <div className="text-right flex-shrink-0">
-          <p className="text-[13.5px] font-bold text-foreground">{formatCurrency(Number(order.finalTotal))}</p>
+          <p className="text-[13.5px] font-bold text-foreground">
+            {formatCurrency(Number(order.finalTotal))}
+          </p>
           <p className="text-[11px] text-muted-foreground">
-            {new Date(order.createdAt).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
+            {new Date(order.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
             })}
           </p>
         </div>
@@ -56,25 +60,43 @@ function OrderRow({ order }: { order: any }) {
         <div className="border-t border-border bg-muted/30 px-5 py-4">
           <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
             <div>
-              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Items Count</p>
-              <p className="text-[12.5px] text-foreground">{order.items.length}</p>
-            </div>
-            <div>
-              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Subtotal</p>
-              <p className="text-[12.5px] text-foreground">{formatCurrency(Number(order.subtotal))}</p>
-            </div>
-            <div>
-              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Discount</p>
-              <p className="text-[12.5px] text-status-success">
-                {Number(order.discountTotal) > 0 ? `-${formatCurrency(Number(order.discountTotal))}` : '—'}
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Items Count
+              </p>
+              <p className="text-[12.5px] text-foreground">
+                {order.items.length}
               </p>
             </div>
             <div>
-              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tax</p>
-              <p className="text-[12.5px] text-foreground">{formatCurrency(Number(order.taxTotal))}</p>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Subtotal
+              </p>
+              <p className="text-[12.5px] text-foreground">
+                {formatCurrency(Number(order.subtotal))}
+              </p>
             </div>
             <div>
-              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Channel</p>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Discount
+              </p>
+              <p className="text-[12.5px] text-status-success">
+                {Number(order.discountTotal) > 0
+                  ? `-${formatCurrency(Number(order.discountTotal))}`
+                  : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Tax
+              </p>
+              <p className="text-[12.5px] text-foreground">
+                {formatCurrency(Number(order.taxTotal))}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Channel
+              </p>
               <p className="text-[12.5px] text-foreground">{order.channel}</p>
             </div>
           </div>
@@ -84,28 +106,49 @@ function OrderRow({ order }: { order: any }) {
   );
 }
 
-const ORDER_STATUSES = ['DRAFT', 'PENDING_CONFIRMATION', 'CONFIRMED', 'PROCESSING', 'READY', 'DISPATCHED', 'COMPLETED', 'CANCELLED', 'FAILED'];
+const ORDER_STATUSES = [
+  "DRAFT",
+  "PENDING_CONFIRMATION",
+  "CONFIRMED",
+  "PROCESSING",
+  "READY",
+  "DISPATCHED",
+  "COMPLETED",
+  "CANCELLED",
+  "FAILED",
+];
 
 export function OrdersTab({ customer }: OrdersTabProps) {
-  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [filterStatus, setFilterStatus] = useState<string>("All");
 
   const orders = customer.transactions || [];
 
   const filtered =
-    filterStatus === 'All' ? orders : orders.filter((o: any) => o.status === filterStatus);
+    filterStatus === "All"
+      ? orders
+      : orders.filter((o: any) => o.status === filterStatus);
 
-  const totalRevenue = orders.reduce((s: number, o: any) => s + Number(o.finalTotal), 0);
-  const completedCount = orders.filter((o: any) => o.status === 'COMPLETED').length;
+  const totalRevenue = orders.reduce(
+    (s: number, o: any) => s + Number(o.finalTotal),
+    0,
+  );
+  const completedCount = orders.filter(
+    (o: any) => o.status === "COMPLETED",
+  ).length;
 
   return (
     <div className="max-w-3xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-[15px] font-bold text-foreground">Orders &amp; Sales</h3>
+          <h3 className="text-[15px] font-bold text-foreground">
+            Orders &amp; Sales
+          </h3>
           <p className="text-[12px] text-muted-foreground mt-0.5">
-            {orders.length} orders &middot; {completedCount} completed &middot;{' '}
-            <span className="font-medium">{formatCurrency(totalRevenue)} total</span>
+            {orders.length} orders &middot; {completedCount} completed &middot;{" "}
+            <span className="font-medium">
+              {formatCurrency(totalRevenue)} total
+            </span>
           </p>
         </div>
       </div>
@@ -113,11 +156,31 @@ export function OrdersTab({ customer }: OrdersTabProps) {
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[
-          { label: 'Total Revenue', value: formatCurrency(totalRevenue), icon: TrendingUp, color: 'text-primary' },
-          { label: 'Completed', value: completedCount.toString(), icon: ShoppingBag, color: 'text-status-success' },
-          { label: 'Avg. Order', value: orders.length ? formatCurrency(totalRevenue / orders.length) : '—', icon: TrendingUp, color: 'text-status-info' },
+          {
+            label: "Total Revenue",
+            value: formatCurrency(totalRevenue),
+            icon: TrendingUp,
+            color: "text-primary",
+          },
+          {
+            label: "Completed",
+            value: completedCount.toString(),
+            icon: ShoppingBag,
+            color: "text-status-success",
+          },
+          {
+            label: "Avg. Order",
+            value: orders.length
+              ? formatCurrency(totalRevenue / orders.length)
+              : "—",
+            icon: TrendingUp,
+            color: "text-status-info",
+          },
         ].map((s) => (
-          <div key={s.label} className="bg-card border border-border rounded-xl px-4 py-3">
+          <div
+            key={s.label}
+            className="bg-card border border-border rounded-xl px-4 py-3"
+          >
             <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
               {s.label}
             </p>
@@ -128,7 +191,7 @@ export function OrdersTab({ customer }: OrdersTabProps) {
 
       {/* Filter */}
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        {['All', ...ORDER_STATUSES].map((s) => {
+        {["All", ...ORDER_STATUSES].map((s) => {
           const isActive = filterStatus === s;
           return (
             <button
@@ -136,8 +199,8 @@ export function OrdersTab({ customer }: OrdersTabProps) {
               onClick={() => setFilterStatus(s)}
               className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
                 isActive
-                  ? 'bg-primary text-white border-primary'
-                  : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground'
+                  ? "bg-primary text-white border-primary"
+                  : "bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground"
               }`}
             >
               {s}
@@ -148,10 +211,20 @@ export function OrdersTab({ customer }: OrdersTabProps) {
 
       {/* List */}
       {filtered.length === 0 ? (
-        <EmptyState icon={ShoppingBag} title="No orders found" description={filterStatus === 'All' ? 'No orders placed by this customer yet.' : `No orders with status "${filterStatus}".`} />
+        <EmptyState
+          icon={ShoppingBag}
+          title="No orders found"
+          description={
+            filterStatus === "All"
+              ? "No orders placed by this customer yet."
+              : `No orders with status "${filterStatus}".`
+          }
+        />
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map((o: any) => <OrderRow key={o.id} order={o} />)}
+          {filtered.map((o: any) => (
+            <OrderRow key={o.id} order={o} />
+          ))}
         </div>
       )}
     </div>

@@ -211,6 +211,9 @@ export interface ReceiptConfig {
   dividerStyle: 'solid' | 'dashed' | 'dotted';
 
   // Compliance & Legal (High-Traffic/Enterprise)
+  showKraDetails?: boolean;
+  kraPin?: string;
+  kraEtr?: string;
   showVatNumber: boolean;
   vatNumber: string;
   showCompanyRegNumber: boolean;
@@ -747,6 +750,9 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
   dividerStyle: 'dashed',
 
   // Compliance & Legal
+  showKraDetails: false,
+  kraPin: '',
+  kraEtr: '',
   showVatNumber: false,
   vatNumber: '',
   showCompanyRegNumber: false,

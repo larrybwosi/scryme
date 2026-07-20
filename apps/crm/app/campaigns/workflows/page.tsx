@@ -1,14 +1,5 @@
-import { WorkflowsView } from './_components/workflows-view';
-import { OrgProvider } from '@/components/org-context';
-import { getOrganizationContext } from '@/app/actions/auth';
+import { WorkflowsView } from "./_components/workflows-view";
 
 export default async function WorkflowsPage() {
-  const context = (await getOrganizationContext())!;
-  const { organizationId } = context;
-
-  return (
-    <OrgProvider organizationId={organizationId}>
-      <WorkflowsView organizationId={organizationId} />
-    </OrgProvider>
-  );
+  return <WorkflowsView />;
 }

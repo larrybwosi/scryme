@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import useSWR from "swr"; // Imported SWR
+import useSWR from "swr";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -60,8 +60,6 @@ const STAGES = [
 ];
 
 export function DealForm({ onSuccess, initialData }: DealFormProps) {
-  // Note: ensure useOrg is imported if required by your layout
-  // const { organizationId } = useOrg();
   const [loading, setLoading] = useState(false);
 
   // Fetching data using SWR hooks

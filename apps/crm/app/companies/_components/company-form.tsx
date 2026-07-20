@@ -34,7 +34,6 @@ import {
   FileText,
   Globe,
   Shield,
-  MapPin,
   Calendar,
 } from "lucide-react";
 import {
@@ -52,7 +51,6 @@ import {
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Switch } from "@repo/ui/components/ui/switch";
-import { cn } from "@repo/ui/lib/utils";
 
 interface CompanyFormProps {
   initialData?: BusinessAccountFormValues & { id: string };
@@ -62,10 +60,23 @@ interface CompanyFormProps {
 export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
   const form = useForm<BusinessAccountFormValues>({
     resolver: zodResolver(businessAccountSchema),
-    defaultValues: initialData || {
-      name: "",
-      taxId: "",
-      contacts: [],
+    defaultValues: {
+      name: initialData?.name || "",
+      taxId: initialData?.taxId || "",
+      logoUrl: initialData?.logoUrl || "",
+      customTheme: initialData?.customTheme || "",
+      isEnterprise: initialData?.isEnterprise || false,
+      discountPercentage: initialData?.discountPercentage || null,
+      paymentTermsDays: initialData?.paymentTermsDays || null,
+      contacts:
+        initialData?.contacts ||
+        (initialData as any)?.customers?.map((c: any) => ({
+          contactId: c.id,
+          name: c.name || "",
+          email: c.email || "",
+          phone: c.phone || "",
+        })) ||
+        [],
     },
   });
 
@@ -81,7 +92,15 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
       if (initialData) {
         await updateCompany(initialData.id, values);
       } else {
-        await createCompany(values);
+        // Send email as undefined if empty/blank when creating a company
+        const formattedValues = {
+          ...values,
+          contacts: values.contacts?.map((contact) => ({
+            ...contact,
+            email: contact.email?.trim() ? contact.email : undefined,
+          })),
+        };
+        await createCompany(formattedValues);
       }
       onSuccess();
     } catch (error) {
@@ -90,11 +109,11 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 py-8">
+    <div className="w-full max-w-screen-2xl mx-auto px-6 lg:px-8 py-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Header */}
-          <div className="flex items-center justify-between bg-gradient-to-r from-slate-50 to-transparent p-4 rounded-xl border border-border/50 backdrop-blur-sm">
+          <div className="flex items-center justify-between bg-linear-to-r from-slate-50 to-transparent p-4 rounded-xl border border-border/50 backdrop-blur-sm">
             <div>
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
@@ -121,7 +140,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
 
           <Separator className="bg-gradient-to-r from-border via-border to-transparent" />
 
-          {/* Profile Card - Wider layout */}
+          {/* Profile Card - Expanded layout */}
           <Card className="shadow-sm border-border/50">
             <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
               <div className="flex items-center gap-2">
@@ -136,12 +155,12 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2 lg:col-span-3 xl:col-span-2">
+                    <FormItem className="md:col-span-2">
                       <FormLabel className="flex items-center gap-1.5">
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                         Company Name <span className="text-destructive">*</span>
@@ -165,7 +184,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                   control={form.control}
                   name="logoUrl"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2 lg:col-span-3 xl:col-span-2">
+                    <FormItem className="md:col-span-2">
                       <FormLabel className="flex items-center gap-1.5">
                         <Globe className="h-4 w-4 text-muted-foreground" />
                         Logo URL
@@ -190,7 +209,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                   control={form.control}
                   name="taxId"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="md:col-span-1 lg:col-span-2">
                       <FormLabel className="flex items-center gap-1.5">
                         <FileText className="h-4 w-4 text-muted-foreground" />
                         Tax ID / Registration
@@ -215,7 +234,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                   control={form.control}
                   name="customTheme"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="md:col-span-1 lg:col-span-2">
                       <FormLabel className="flex items-center gap-1.5">
                         <Palette className="h-4 w-4 text-muted-foreground" />
                         Theme Color (Hex)
@@ -247,7 +266,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
             </CardContent>
           </Card>
 
-          {/* Commercial Terms Card - Wider layout */}
+          {/* Commercial Terms Card */}
           <Card className="shadow-sm border-border/50">
             <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
               <div className="flex items-center gap-2">
@@ -262,12 +281,12 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
             </CardHeader>
             <CardContent className="pt-6">
               <div className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                   <FormField
                     control={form.control}
                     name="discountPercentage"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="lg:col-span-2">
                         <FormLabel className="flex items-center gap-1.5">
                           <CreditCard className="h-4 w-4 text-muted-foreground" />
                           B2B Discount (%)
@@ -296,7 +315,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                     control={form.control}
                     name="paymentTermsDays"
                     render={({ field }) => (
-                      <FormItem>
+                      <FormItem className="lg:col-span-2">
                         <FormLabel className="flex items-center gap-1.5">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           Payment Terms (Days)
@@ -322,12 +341,12 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
 
                 <Separator className="my-4" />
 
-                <div className="grid gap-6 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                   <FormField
                     control={form.control}
                     name="isEnterprise"
                     render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-xl border border-border/50 p-4 bg-gradient-to-r from-slate-50/30 to-transparent hover:bg-slate-50/50 transition-colors">
+                      <FormItem className="md:col-span-2 flex items-center justify-between rounded-xl border border-border/50 p-4 bg-gradient-to-r from-slate-50/30 to-transparent hover:bg-slate-50/50 transition-colors">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Shield className="h-4 w-4 text-primary" />
@@ -352,7 +371,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                   />
 
                   {isEnterprise && (
-                    <div className="flex items-center justify-between rounded-xl border border-border/50 p-4 bg-gradient-to-r from-blue-50/30 to-transparent">
+                    <div className="md:col-span-2 flex items-center justify-between rounded-xl border border-border/50 p-4 bg-gradient-to-r from-blue-50/30 to-transparent">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-blue-500" />
@@ -378,70 +397,70 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
             </CardContent>
           </Card>
 
-          {/* Contacts Card - Wider layout */}
-          {!initialData && (
-            <Card className="shadow-sm border-border/50">
-              <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-5 w-5 text-primary" />
-                      <CardTitle className="text-lg font-semibold">
-                        Contacts
-                      </CardTitle>
-                    </div>
-                    <CardDescription className="text-sm mt-1">
-                      People associated with this business account.
-                    </CardDescription>
+          {/* Contacts Card - Expanded column support */}
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg font-semibold">
+                      Contacts
+                    </CardTitle>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => append({ name: "", email: "", phone: "" })}
-                    className="h-9 px-4 text-[13px] font-medium hover:bg-primary/5 hover:text-primary transition-colors"
-                  >
-                    <Plus size={16} className="mr-1.5" /> Add Contact
-                  </Button>
+                  <CardDescription className="text-sm mt-1">
+                    People associated with this business account.
+                  </CardDescription>
                 </div>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {fields.length === 0 ? (
-                  <div className="rounded-xl border-2 border-dashed border-border/50 py-12 text-center bg-muted/10">
-                    <Contact
-                      size={32}
-                      className="mx-auto mb-3 opacity-40 text-muted-foreground"
-                    />
-                    <p className="text-sm font-medium text-muted-foreground">
-                      No contacts added yet
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Add team members or key stakeholders for this account.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {fields.map((field, index) => (
-                      <div
-                        key={field.id}
-                        className="group relative rounded-xl border border-border/50 bg-gradient-to-r from-slate-50/30 to-transparent p-5 hover:shadow-md transition-all duration-200"
-                      >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              onClick={() => remove(index)}
-                              className="absolute top-3 right-3 p-1.5 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100 hover:bg-destructive/10 rounded-full"
-                              aria-label="Remove contact"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent>Remove contact</TooltipContent>
-                        </Tooltip>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => append({ name: "", email: "", phone: "" })}
+                  className="h-9 px-4 text-[13px] font-medium hover:bg-primary/5 hover:text-primary transition-colors"
+                >
+                  <Plus size={16} className="mr-1.5" /> Add Contact
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {fields.length === 0 ? (
+                <div className="rounded-xl border-2 border-dashed border-border/50 py-12 text-center bg-muted/10">
+                  <Contact
+                    size={32}
+                    className="mx-auto mb-3 opacity-40 text-muted-foreground"
+                  />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    No contacts added yet
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add team members or key stakeholders for this account.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  {fields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="group relative rounded-xl border border-border/50 bg-linear-to-r from-slate-50/30 to-transparent p-5 hover:shadow-md transition-all duration-200"
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => remove(index)}
+                            className="absolute top-3 right-3 p-1.5 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100 hover:bg-destructive/10 rounded-full"
+                            aria-label="Remove contact"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove contact</TooltipContent>
+                      </Tooltip>
 
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 mb-1">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2">
                             <div className="p-1.5 rounded-full bg-primary/10">
                               <Contact size={14} className="text-primary" />
                             </div>
@@ -449,18 +468,55 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                               Contact #{index + 1}
                             </span>
                           </div>
+                          {(field as any).contactId ? (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] h-5 bg-green-50 text-green-700 border-green-200 px-2 font-medium"
+                            >
+                              Existing
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] h-5 bg-blue-50 text-blue-700 border-blue-200 px-2 font-medium"
+                            >
+                              New
+                            </Badge>
+                          )}
+                        </div>
 
+                        <FormField
+                          control={form.control}
+                          name={`contacts.${index}.name`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">
+                                Full Name
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="John Doe"
+                                  {...field}
+                                  className="h-9 text-[13px] transition-colors focus:ring-2 focus:ring-primary/20"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <FormField
                             control={form.control}
-                            name={`contacts.${index}.name`}
+                            name={`contacts.${index}.email`}
                             render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-xs text-muted-foreground">
-                                  Full Name
+                                  Email
                                 </FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="John Doe"
+                                    placeholder="john@company.com"
                                     {...field}
                                     className="h-9 text-[13px] transition-colors focus:ring-2 focus:ring-primary/20"
                                   />
@@ -469,59 +525,37 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                               </FormItem>
                             )}
                           />
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <FormField
-                              control={form.control}
-                              name={`contacts.${index}.email`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-xs text-muted-foreground">
-                                    Email
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="john@company.com"
-                                      {...field}
-                                      className="h-9 text-[13px] transition-colors focus:ring-2 focus:ring-primary/20"
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name={`contacts.${index}.phone`}
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-xs text-muted-foreground">
-                                    Phone
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="+1 234 567 890"
-                                      {...field}
-                                      className="h-9 text-[13px] transition-colors focus:ring-2 focus:ring-primary/20"
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
+                          <FormField
+                            control={form.control}
+                            name={`contacts.${index}.phone`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs text-muted-foreground">
+                                  Phone
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="+1 234 567 890"
+                                    {...field}
+                                    className="h-9 text-[13px] transition-colors focus:ring-2 focus:ring-primary/20"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           <Separator className="bg-gradient-to-r from-border via-border to-transparent" />
 
-          {/* Actions - Wider and more professional */}
+          {/* Actions */}
           <div className="flex items-center justify-end gap-4 pt-2 pb-4">
             <Button
               type="button"

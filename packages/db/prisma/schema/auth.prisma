@@ -129,7 +129,6 @@ enum UserRole {
   DEVELOPER
   CLIENT
   MEMBER
-  CUSTOMER
 }
 
 enum RateLimitTier {

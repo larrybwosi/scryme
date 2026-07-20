@@ -5,7 +5,7 @@ import { getServerAuth } from "@repo/auth/server";
 export async function GET(request: Request) {
   const auth = await getServerAuth();
 
-  if (!auth) {
+  if (!auth?.organizationId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

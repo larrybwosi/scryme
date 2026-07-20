@@ -1107,9 +1107,46 @@ function ReceiptSettings({
                 </div>
               )}
             </Section>
-            <Section title="Tax Registration" icon={Building2} description="Tax & VAT identification numbers">
+            <Section title="KRA Details & Tax Registration" icon={Building2} description="KRA details, Tax & VAT identification numbers">
               <ToggleRow
-                label="Tax Number"
+                label="KRA Details"
+                checked={config.showKraDetails}
+                onChange={v => updateConfig('showKraDetails', v)}
+              />
+              {config.showKraDetails && (
+                <div className="pl-4 border-l-2 border-zinc-800 space-y-3 mt-2 mb-4">
+                  <div>
+                    <Label className="text-[11px] text-zinc-400">KRA PIN / Tax ID</Label>
+                    <Input
+                      value={config.taxNumber}
+                      onChange={e => updateConfig('taxNumber', e.target.value)}
+                      placeholder="e.g. A000000000X"
+                      className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-zinc-400">KRA PIN</Label>
+                    <Input
+                      value={config.kraPin}
+                      onChange={e => updateConfig('kraPin', e.target.value)}
+                      placeholder="e.g. A000000000X"
+                      className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-[11px] text-zinc-400">KRA ETR</Label>
+                    <Input
+                      value={config.kraEtr}
+                      onChange={e => updateConfig('kraEtr', e.target.value)}
+                      placeholder="e.g. ETR-XXXXX"
+                      className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <ToggleRow
+                label="Tax Number (Legacy)"
                 checked={config.showTaxNumber}
                 onChange={v => updateConfig('showTaxNumber', v)}
               />

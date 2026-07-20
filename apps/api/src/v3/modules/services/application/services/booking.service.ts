@@ -496,7 +496,6 @@ export class BookingService {
             creationType: true,
             defaultLocationId: true,
             organizationId: true,
-            businessAccountId: true,
             crmRecordId: true,
           },
         },
