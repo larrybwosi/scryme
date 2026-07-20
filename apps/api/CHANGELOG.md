@@ -1,5 +1,11 @@
 # api
 
+## 6.27.0
+
+### Minor Changes
+
+- e2f5828: update
+
 ## 6.26.0
 
 ### Minor Changes
