@@ -13,6 +13,7 @@ import {
   FileText,
   AlertCircle,
   Loader2,
+  Download,
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@repo/ui/lib/utils";
@@ -32,6 +33,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
+import { createCustomer } from "../../actions/customers";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "sonner";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
@@ -61,6 +69,11 @@ export function CompaniesView() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
+
+  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
+  const [addContactCompany, setAddContactCompany] = useState<any>(null);
+  const [newContact, setNewContact] = useState({ name: "", email: "", phone: "" });
+  const [isSavingContact, setIsSavingContact] = useState(false);
 
   // Use SWR for data fetching
   const {
@@ -124,6 +137,51 @@ export function CompaniesView() {
       setDeletingId(null);
       setIsDeleteDialogOpen(false);
       setCompanyToDelete(null);
+    }
+  };
+
+  const handleDownloadExcel = () => {
+    try {
+      // Column Headers
+      const headers = ["Company ID", "Company Name", "Tax ID", "Customers Count", "Discount %", "Payment Terms (Days)", "Created At"];
+
+      // Generate Rows
+      const rows = companies.map((company: any) => [
+        company.id,
+        company.name,
+        company.taxId || "",
+        company._count?.customers || company.customers?.length || 0,
+        company.discountPercentage !== null ? `${company.discountPercentage}%` : "0%",
+        company.paymentTermsDays !== null ? `${company.paymentTermsDays} days` : "—",
+        new Date(company.createdAt).toLocaleDateString()
+      ]);
+
+      // Combine Headers and Rows into CSV string with escape
+      const csvContent = [
+        headers.join(","),
+        ...rows.map(row => row.map(val => {
+          const str = String(val);
+          if (str.includes(",") || str.includes('"') || str.includes("\n") || str.includes("\r")) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        }).join(","))
+      ].join("\n");
+
+      // Download Blob
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `companies-export-${new Date().toISOString().split("T")[0]}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("Excel spreadsheet downloaded successfully");
+    } catch (err) {
+      console.error("Export failed:", err);
+      toast.error("Export failed. Please try again.");
     }
   };
 
@@ -207,7 +265,7 @@ export function CompaniesView() {
 
       <div className="flex-1 px-8 pb-8">
         <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-border">
             <div className="relative flex-1 max-w-sm">
               <Search
                 size={15}
@@ -220,6 +278,23 @@ export function CompaniesView() {
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
+            </div>
+
+            {/* Download Section */}
+            <div className="flex items-center gap-3 border border-border rounded-lg px-3 py-1.5 bg-muted/20">
+              <div className="text-left hidden sm:block">
+                <p className="text-[11px] font-semibold text-foreground">Spreadsheet Export</p>
+                <p className="text-[10px] text-muted-foreground">Download whole list of companies</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadExcel}
+                className="h-8 px-3 text-[12px] font-medium flex items-center gap-1 bg-background hover:bg-accent text-foreground border-border"
+              >
+                <Download size={13} className="mr-1" />
+                Download Excel
+              </Button>
             </div>
           </div>
 
@@ -340,6 +415,14 @@ export function CompaniesView() {
                             </Tooltip>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem
+                                onClick={() => {
+                                  setAddContactCompany(company);
+                                  setIsAddContactOpen(true);
+                                }}
+                              >
+                                Add Contact
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
                                 className="text-destructive focus:text-destructive"
                                 onClick={() => {
                                   setCompanyToDelete(company.id);
@@ -401,6 +484,107 @@ export function CompaniesView() {
           </div>
         </div>
       </div>
+
+      <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add Contact to {addContactCompany?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                Full Name <span className="text-destructive">*</span>
+              </label>
+              <input
+                type="text"
+                value={newContact.name}
+                onChange={(e) =>
+                  setNewContact({ ...newContact, name: e.target.value })
+                }
+                className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="e.g. John Doe"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                Email
+              </label>
+              <input
+                type="email"
+                value={newContact.email}
+                onChange={(e) =>
+                  setNewContact({ ...newContact, email: e.target.value })
+                }
+                className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="e.g. john@company.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                Phone
+              </label>
+              <input
+                type="text"
+                value={newContact.phone}
+                onChange={(e) =>
+                  setNewContact({ ...newContact, phone: e.target.value })
+                }
+                className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+                placeholder="e.g. +1 234 567 890"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsAddContactOpen(false);
+                  setNewContact({ name: "", email: "", phone: "" });
+                }}
+                disabled={isSavingContact}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (!newContact.name.trim()) {
+                    toast.error("Name is required");
+                    return;
+                  }
+                  setIsSavingContact(true);
+                  try {
+                    const res = await createCustomer({
+                      name: newContact.name,
+                      email: newContact.email || undefined,
+                      phone: newContact.phone || undefined,
+                      customerType: "B2B",
+                      businessAccountId: addContactCompany?.id,
+                      isActive: true,
+                    });
+
+                    if (res.success) {
+                      toast.success("Contact added successfully");
+                      setIsAddContactOpen(false);
+                      setNewContact({ name: "", email: "", phone: "" });
+                      mutate(); // Refresh the companies table data
+                    } else {
+                      toast.error(res.error || "Failed to add contact");
+                    }
+                  } catch (err: any) {
+                    console.error("Error adding contact:", err);
+                    toast.error("An error occurred while adding contact");
+                  } finally {
+                    setIsSavingContact(false);
+                  }
+                }}
+                disabled={isSavingContact}
+              >
+                {isSavingContact ? "Saving..." : "Add Contact"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={isDeleteDialogOpen}
