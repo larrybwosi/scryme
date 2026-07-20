@@ -118,7 +118,6 @@ export function SegmentsView({ organizationId }: SegmentsViewProps) {
               <DialogTitle>Create New Segment</DialogTitle>
             </DialogHeader>
             <SegmentForm
-              organizationId={organizationId}
               onSuccess={handleSegmentCreated}
             />
           </DialogContent>

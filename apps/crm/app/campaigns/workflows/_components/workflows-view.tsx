@@ -509,7 +509,6 @@ export function WorkflowsView({ organizationId }: WorkflowsViewProps) {
             <DialogTitle>Create New Workflow</DialogTitle>
           </DialogHeader>
           <WorkflowForm
-            organizationId={organizationId}
             onSuccess={handleCreated}
           />
         </DialogContent>

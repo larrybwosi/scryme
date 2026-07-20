@@ -160,7 +160,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
       }
     }
     fetchMembers();
-  }, [customer.organizationId]);
+  }, []);
 
   const followUps = customer.crmRecord?.followUps || [];
 

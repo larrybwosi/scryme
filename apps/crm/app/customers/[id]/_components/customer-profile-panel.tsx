@@ -85,7 +85,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
   const { organizationId } = useOrg();
 
   const { data: locations = [] } = useSWR(
-    ["locations-for-select", organizationId],
+    ["locations-for-select", customer.organizationId],
     () => getLocations(),
   );
 

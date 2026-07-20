@@ -48,7 +48,6 @@ import { Label } from "@repo/ui/components/ui/label";
 const PAGE_SIZE = 10;
 
 export function LeadsView() {
-  const { organizationId } = useOrg();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);

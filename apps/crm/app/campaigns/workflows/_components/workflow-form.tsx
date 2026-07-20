@@ -19,11 +19,10 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
 interface WorkflowFormProps {
-  organizationId: string;
   onSuccess: (id: string) => void;
 }
 
-export function WorkflowForm({ organizationId, onSuccess }: WorkflowFormProps) {
+export function WorkflowForm({ onSuccess }: WorkflowFormProps) {
   const router = useRouter();
   const form = useForm<CampaignWorkflowFormValues>({
     resolver: zodResolver(campaignWorkflowSchema),

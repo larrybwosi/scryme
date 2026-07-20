@@ -223,8 +223,6 @@ export function CampaignsView({
                 <DialogTitle>Create New Campaign</DialogTitle>
               </DialogHeader>
               <CampaignForm
-                organizationId={organizationId}
-                memberId={memberId}
                 onSuccess={handleCampaignCreated}
               />
             </DialogContent>

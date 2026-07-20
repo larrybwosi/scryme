@@ -19,11 +19,10 @@ import { Button } from '@repo/ui/components/ui/button';
 import { toast } from 'sonner';
 
 interface SegmentFormProps {
-  organizationId: string;
   onSuccess: () => void;
 }
 
-export function SegmentForm({ organizationId, onSuccess }: SegmentFormProps) {
+export function SegmentForm({ onSuccess }: SegmentFormProps) {
   const form = useForm<CampaignSegmentFormValues>({
     resolver: zodResolver(campaignSegmentSchema),
     defaultValues: {
