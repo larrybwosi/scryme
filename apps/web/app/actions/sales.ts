@@ -464,7 +464,12 @@ export async function generateDocumentAction(
   );
 
   if (existingDoc) {
-    return { success: true, alreadyExists: true };
+    return {
+      success: true,
+      alreadyExists: true,
+      shortUrl: existingDoc.shortUrl,
+      fileUrl: existingDoc.fileUrl,
+    };
   }
 
   try {
@@ -491,9 +496,26 @@ export async function generateDocumentAction(
     throw err;
   }
 
+  // After generating, fetch the newly created attachment
+  const updatedTransaction = await db.transaction.findUnique({
+    where: { id: transactionId, organizationId: auth.organizationId },
+    include: { attachments: true },
+  });
+
+  const newDoc = updatedTransaction?.attachments?.find(
+    a =>
+      a.description === (type === "invoice" ? "Invoice" : "Receipt") &&
+      new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+  );
+
   revalidatePath("/sales/transactions");
   revalidatePath(`/sales/transactions/${transactionId}`);
-  return { success: true };
+
+  return {
+    success: true,
+    shortUrl: newDoc?.shortUrl || null,
+    fileUrl: newDoc?.fileUrl || null,
+  };
 }
 
 export async function generatePublicLinkAction(
