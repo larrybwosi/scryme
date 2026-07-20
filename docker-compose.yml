@@ -175,6 +175,7 @@ services:
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - PORT=${API_PORT:-4000}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
       - REALTIME_PROVIDER=${REALTIME_PROVIDER:-socketio}
       - SOCKET_URL=${SOCKET_URL:-https://api.scryme.tech}
       - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
