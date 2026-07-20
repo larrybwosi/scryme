@@ -159,7 +159,7 @@ services:
 
   # --- APPLICATIONS ---
   api:
-    image: ghcr.io/larrybwosi/scryme/api:9.28.0
+    image: ghcr.io/larrybwosi/scryme/api:9.30.0
     restart: always
     deploy:
       resources:
@@ -211,8 +211,9 @@ services:
       retries: 3
       start_period: 20s
 
+  # --- APPLICATIONS ---
   web:
-    image: ghcr.io/larrybwosi/scryme/web:9.28.0
+    image: ghcr.io/larrybwosi/scryme/web:9.30.0
     restart: always
     deploy:
       resources:
@@ -225,9 +226,11 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-https://scryme.tech}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-https://scryme.tech}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
       - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
       - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://api.scryme.tech}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
       - PORT=${WEB_PORT:-3000}
     depends_on:
       db:
@@ -254,7 +257,7 @@ services:
       start_period: 20s
 
   crm:
-    image: ghcr.io/larrybwosi/scryme/crm:9.28.0
+    image: ghcr.io/larrybwosi/scryme/crm:9.30.0
     restart: always
     deploy:
       resources:
@@ -296,7 +299,7 @@ services:
       start_period: 20s
 
   bakery:
-    image: ghcr.io/larrybwosi/scryme/bakery:9.28.0
+    image: ghcr.io/larrybwosi/scryme/bakery:9.30.0
     restart: always
     deploy:
       resources:
