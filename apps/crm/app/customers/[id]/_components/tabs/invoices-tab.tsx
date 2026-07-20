@@ -188,7 +188,6 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
     setLoading(true);
     const result = await createInvoiceAction({
       customerId: customer.id,
-      organizationId: customer.organizationId,
       postingDate: new Date(form.postingDate),
       dueDate: form.dueDate ? new Date(form.dueDate) : undefined,
       status: form.status,

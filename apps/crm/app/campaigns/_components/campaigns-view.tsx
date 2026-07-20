@@ -63,8 +63,8 @@ interface CampaignsViewProps {
 }
 
 // SWR fetcher function
-const fetcher = async (url: string, organizationId: string) => {
-  const data = await getCampaigns(organizationId);
+const fetcher = async () => {
+  const data = await getCampaigns();
   return data;
 };
 
@@ -83,7 +83,7 @@ export function CampaignsView({
     mutate,
   } = useSWR(
     ["campaigns", organizationId],
-    () => getCampaigns(organizationId),
+    () => getCampaigns(),
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,

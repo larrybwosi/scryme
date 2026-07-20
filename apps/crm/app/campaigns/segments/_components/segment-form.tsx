@@ -35,7 +35,7 @@ export function SegmentForm({ organizationId, onSuccess }: SegmentFormProps) {
 
   const onSubmit = async (values: CampaignSegmentFormValues) => {
     try {
-      const result = await createSegment(values, organizationId);
+      const result = await createSegment(values);
       if (result.success) {
         toast.success('Segment created successfully');
         onSuccess();

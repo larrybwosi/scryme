@@ -53,7 +53,7 @@ export function SegmentsView({ organizationId }: SegmentsViewProps) {
     error,
     isLoading,
     mutate,
-  } = useSWR(["segments", organizationId], () => getSegments(organizationId), {
+  } = useSWR(["segments", organizationId], () => getSegments(), {
     revalidateOnFocus: false,
     revalidateOnReconnect: true,
     dedupingInterval: 60000, // 1 minute
