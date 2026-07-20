@@ -62,10 +62,20 @@ interface CompanyFormProps {
 export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
   const form = useForm<BusinessAccountFormValues>({
     resolver: zodResolver(businessAccountSchema),
-    defaultValues: initialData || {
-      name: "",
-      taxId: "",
-      contacts: [],
+    defaultValues: {
+      name: initialData?.name || "",
+      taxId: initialData?.taxId || "",
+      logoUrl: initialData?.logoUrl || "",
+      customTheme: initialData?.customTheme || "",
+      isEnterprise: initialData?.isEnterprise || false,
+      discountPercentage: initialData?.discountPercentage || null,
+      paymentTermsDays: initialData?.paymentTermsDays || null,
+      contacts: initialData?.contacts || (initialData as any)?.customers?.map((c: any) => ({
+        contactId: c.id,
+        name: c.name || "",
+        email: c.email || "",
+        phone: c.phone || "",
+      })) || [],
     },
   });
 
@@ -379,9 +389,8 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
           </Card>
 
           {/* Contacts Card - Wider layout */}
-          {!initialData && (
-            <Card className="shadow-sm border-border/50">
-              <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
@@ -441,13 +450,24 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                         </Tooltip>
 
                         <div className="space-y-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <div className="p-1.5 rounded-full bg-primary/10">
-                              <Contact size={14} className="text-primary" />
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-2">
+                              <div className="p-1.5 rounded-full bg-primary/10">
+                                <Contact size={14} className="text-primary" />
+                              </div>
+                              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                                Contact #{index + 1}
+                              </span>
                             </div>
-                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                              Contact #{index + 1}
-                            </span>
+                            {(field as any).contactId ? (
+                              <Badge variant="outline" className="text-[10px] h-5 bg-green-50 text-green-700 border-green-200 px-2 font-medium">
+                                Existing
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-[10px] h-5 bg-blue-50 text-blue-700 border-blue-200 px-2 font-medium">
+                                New
+                              </Badge>
+                            )}
                           </div>
 
                           <FormField
@@ -517,7 +537,6 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                 )}
               </CardContent>
             </Card>
-          )}
 
           <Separator className="bg-gradient-to-r from-border via-border to-transparent" />
 
