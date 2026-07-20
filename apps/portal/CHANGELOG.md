@@ -1,5 +1,11 @@
 # portal
 
+## 1.4.0
+
+### Minor Changes
+
+- bba46c3: update
+
 ## 1.3.0
 
 ### Minor Changes
