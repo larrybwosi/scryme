@@ -215,7 +215,7 @@ export function DeliveriesTab({ customer }: DeliveriesTabProps) {
   };
 
   return (
-    <div className="max-w-3xl">
+    <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
