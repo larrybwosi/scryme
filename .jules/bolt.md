@@ -100,3 +100,7 @@
 ## 2026-07-21 - [Pruning Unused Relational Includes in Analytical Queries]
 **Learning:** Including heavy nested relations in complex analytical queries when their fields are never actually read or used by the subsequent mapping logic is a major performance anti-pattern. Identifying these unused relational includes (like `service: true` in `getResourceUtilization` and `getStaffPerformance`) and pruning them completely avoids redundant database joins, reducing both query execution latency and memory overhead.
 **Action:** When auditing or designing analytical database queries, always verify that every included relation in the Prisma query is actually accessed by the processing loop. If a relation is unused, remove it to eliminate redundant SQL JOIN operations.
+
+## 2026-07-21 - [O(N*M) to O(N+M) Map-Based Indexing in Stocking Workflows]
+**Learning:** Performing nested array `.find()` lookups inside processing loops (e.g., matching received items or shipped items in stock transactions) introduces an $O(N \times M)$ performance bottleneck. Pre-indexing parent arrays into a `Map` structure prior to loop execution reduces item lookup to constant-time $O(1)$, resulting in an overall $O(N + M)$ performance characteristics.
+**Action:** Always pre-index related collections into standard JavaScript `Map` objects before processing them in loop structures, particularly in inventory, order, and stocking transactional domains.
