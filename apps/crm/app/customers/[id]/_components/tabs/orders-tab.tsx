@@ -9,9 +9,10 @@ import type { CustomerWithRelations } from "@/lib/types";
 
 interface OrdersTabProps {
   customer: CustomerWithRelations;
+  currency?: string;
 }
 
-function OrderRow({ order }: { order: any }) {
+function OrderRow({ order, currency = "USD" }: { order: any; currency?: string }) {
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -40,7 +41,7 @@ function OrderRow({ order }: { order: any }) {
 
         <div className="text-right flex-shrink-0">
           <p className="text-[13.5px] font-bold text-foreground">
-            {formatCurrency(Number(order.finalTotal))}
+            {formatCurrency(Number(order.finalTotal), currency)}
           </p>
           <p className="text-[11px] text-muted-foreground">
             {new Date(order.createdAt).toLocaleDateString("en-US", {
@@ -72,7 +73,7 @@ function OrderRow({ order }: { order: any }) {
                 Subtotal
               </p>
               <p className="text-[12.5px] text-foreground">
-                {formatCurrency(Number(order.subtotal))}
+                {formatCurrency(Number(order.subtotal), currency)}
               </p>
             </div>
             <div>
@@ -81,7 +82,7 @@ function OrderRow({ order }: { order: any }) {
               </p>
               <p className="text-[12.5px] text-status-success">
                 {Number(order.discountTotal) > 0
-                  ? `-${formatCurrency(Number(order.discountTotal))}`
+                  ? `-${formatCurrency(Number(order.discountTotal), currency)}`
                   : "—"}
               </p>
             </div>
@@ -90,7 +91,7 @@ function OrderRow({ order }: { order: any }) {
                 Tax
               </p>
               <p className="text-[12.5px] text-foreground">
-                {formatCurrency(Number(order.taxTotal))}
+                {formatCurrency(Number(order.taxTotal), currency)}
               </p>
             </div>
             <div>
@@ -118,7 +119,7 @@ const ORDER_STATUSES = [
   "FAILED",
 ];
 
-export function OrdersTab({ customer }: OrdersTabProps) {
+export function OrdersTab({ customer, currency = "USD" }: OrdersTabProps) {
   const [filterStatus, setFilterStatus] = useState<string>("All");
 
   const orders = customer.transactions || [];
@@ -147,7 +148,7 @@ export function OrdersTab({ customer }: OrdersTabProps) {
           <p className="text-[12px] text-muted-foreground mt-0.5">
             {orders.length} orders &middot; {completedCount} completed &middot;{" "}
             <span className="font-medium">
-              {formatCurrency(totalRevenue)} total
+              {formatCurrency(totalRevenue, currency)} total
             </span>
           </p>
         </div>
@@ -158,7 +159,7 @@ export function OrdersTab({ customer }: OrdersTabProps) {
         {[
           {
             label: "Total Revenue",
-            value: formatCurrency(totalRevenue),
+            value: formatCurrency(totalRevenue, currency),
             icon: TrendingUp,
             color: "text-primary",
           },
@@ -171,7 +172,7 @@ export function OrdersTab({ customer }: OrdersTabProps) {
           {
             label: "Avg. Order",
             value: orders.length
-              ? formatCurrency(totalRevenue / orders.length)
+              ? formatCurrency(totalRevenue / orders.length, currency)
               : "—",
             icon: TrendingUp,
             color: "text-status-info",
@@ -223,7 +224,7 @@ export function OrdersTab({ customer }: OrdersTabProps) {
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((o: any) => (
-            <OrderRow key={o.id} order={o} />
+            <OrderRow key={o.id} order={o} currency={currency} />
           ))}
         </div>
       )}

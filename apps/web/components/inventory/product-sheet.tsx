@@ -51,6 +51,7 @@ interface ProductSheetProps {
   categories: { id: string; name: string }[];
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  currency?: string;
 }
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
@@ -128,13 +129,17 @@ function FieldError({ message }: { message: string }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
+import { getCurrencySymbol } from "../../lib/utils";
+
 export function ProductSheet({
   children,
   productId,
   categories,
   isOpen: controlledOpen,
   onOpenChange,
+  currency = "USD",
 }: ProductSheetProps) {
+  const symbol = getCurrencySymbol(currency);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -460,7 +465,7 @@ export function ProductSheet({
                       <FieldLabel htmlFor="buying-price">Cost Price</FieldLabel>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[13px] font-medium pointer-events-none">
-                          $
+                          {symbol}
                         </span>
                         <Input
                           id="buying-price"
@@ -487,7 +492,7 @@ export function ProductSheet({
                       </FieldLabel>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[13px] font-medium pointer-events-none">
-                          $
+                          {symbol}
                         </span>
                         <Input
                           id="retail-price"

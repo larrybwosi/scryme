@@ -35,6 +35,7 @@ import { useRouter } from "next/navigation";
 
 interface CustomerProfilePanelProps {
   customer: CustomerWithRelations;
+  currency?: string;
 }
 
 function HealthRing({ score }: { score: number }) {
@@ -78,7 +79,7 @@ function HealthRing({ score }: { score: number }) {
   );
 }
 
-export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
+export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerProfilePanelProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -322,7 +323,7 @@ export function CustomerProfilePanel({ customer }: CustomerProfilePanelProps) {
               </span>
             </div>
             <span className="text-[13px] font-bold text-foreground flex-shrink-0">
-              {formatCurrency(totalRevenue)}
+              {formatCurrency(totalRevenue, currency)}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
