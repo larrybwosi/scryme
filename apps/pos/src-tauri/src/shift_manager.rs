@@ -1,4 +1,4 @@
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, State, Manager};
 // use tauri_plugin_aptabase::EventTracker;
 
 use crate::models::Shift;
