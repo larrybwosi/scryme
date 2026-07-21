@@ -96,3 +96,7 @@
 ## 2026-07-20 - [In-Memory Caching for Global Reference Data]
 **Learning:** Fetching static system-wide configurations or standard reference data (such as `SystemUnit`) from the database on every sync or list operation is a redundant overhead. Since NestJS providers are singletons, storing static values in a class property allows subsequent queries (including delta synchronization requests via `lastSync` filtering) to be served completely in-memory, bypassing database queries and serialization entirely.
 **Action:** For static, non-tenant-specific reference data, implement a lazy-loaded class-level in-memory cache to handle list and delta-sync filters without touching the database.
+
+## 2026-07-21 - [Map-Based Lookup in Stock Transfer Shipping and Receiving Loops]
+**Learning:** Performing nested array search (`.find()`) inside a loop over client-submitted list items (e.g., verifying shipped or received items inside `StockTransferUseCase.ship` and `StockTransferUseCase.receive`) creates an $O(N \times M)$ performance bottleneck. Pre-indexing the retrieved entity items into a `Map` structure prior to the loop allows constant-time $O(1)$ lookups, reducing the overall time complexity to $O(N + M)$ and significantly speeding up processing under load.
+**Action:** Always pre-index arrays into Maps when performing lookups inside loops on large datasets to achieve constant-time lookup efficiency.
