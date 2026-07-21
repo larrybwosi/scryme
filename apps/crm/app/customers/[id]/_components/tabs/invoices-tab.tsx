@@ -19,7 +19,7 @@ import {
   getInvoiceDownloadUrl,
 } from "@/app/actions/invoices";
 import { toast } from "sonner";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, getCurrencySymbol } from "@/lib/utils";
 import type { CustomerWithRelations } from "@/lib/types";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -39,9 +39,10 @@ import { format } from "date-fns";
 
 interface InvoicesTabProps {
   customer: CustomerWithRelations;
+  currency?: string;
 }
 
-function InvoiceRow({ invoice }: { invoice: any }) {
+function InvoiceRow({ invoice, currency = "USD" }: { invoice: any; currency?: string }) {
   const [expanded, setExpanded] = useState(false);
   const balance = invoice.balanceDue;
   const isOverdue = invoice.status === "OVERDUE";
@@ -100,11 +101,11 @@ function InvoiceRow({ invoice }: { invoice: any }) {
         {/* Amount */}
         <div className="text-right shrink-0">
           <p className="text-[13.5px] font-bold text-foreground">
-            {formatCurrency(invoice.grandTotal)}
+            {formatCurrency(invoice.grandTotal, currency)}
           </p>
           {balance > 0 && invoice.status !== "VOID" && (
             <p className="text-[11px] text-destructive font-medium">
-              {formatCurrency(balance)} due
+              {formatCurrency(balance, currency)} due
             </p>
           )}
         </div>
@@ -146,7 +147,7 @@ function InvoiceRow({ invoice }: { invoice: any }) {
                 Net Total
               </p>
               <p className="text-[12.5px] text-foreground">
-                {formatCurrency(invoice.netTotal)}
+                {formatCurrency(invoice.netTotal, currency)}
               </p>
             </div>
             <div>
@@ -154,7 +155,7 @@ function InvoiceRow({ invoice }: { invoice: any }) {
                 Tax
               </p>
               <p className="text-[12.5px] text-foreground">
-                {formatCurrency(invoice.totalTaxes)}
+                {formatCurrency(invoice.totalTaxes, currency)}
               </p>
             </div>
             <div>
@@ -162,7 +163,7 @@ function InvoiceRow({ invoice }: { invoice: any }) {
                 Amount Paid
               </p>
               <p className="text-[12.5px] text-status-success font-semibold">
-                {formatCurrency(invoice.amountPaid)}
+                {formatCurrency(invoice.amountPaid, currency)}
               </p>
             </div>
             <div>
@@ -175,7 +176,7 @@ function InvoiceRow({ invoice }: { invoice: any }) {
                   balance > 0 ? "text-destructive" : "text-status-success",
                 )}
               >
-                {formatCurrency(balance)}
+                {formatCurrency(balance, currency)}
               </p>
             </div>
           </div>
@@ -196,7 +197,8 @@ function InvoiceRow({ invoice }: { invoice: any }) {
 
 const INVOICE_STATUSES = ["DRAFT", "SENT", "PAID", "OVERDUE", "VOID"];
 
-export function InvoicesTab({ customer }: InvoicesTabProps) {
+export function InvoicesTab({ customer, currency = "USD" }: InvoicesTabProps) {
+  const symbol = getCurrencySymbol(currency);
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("All");
   const [form, setForm] = useState({
@@ -275,7 +277,7 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
                 {" "}
                 &middot;{" "}
                 <span className="font-medium">
-                  {formatCurrency(totalOpen)} outstanding
+                  {formatCurrency(totalOpen, currency)} outstanding
                 </span>
               </>
             )}
@@ -311,7 +313,7 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
             </div>
             <div>
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                Total Amount ($) *
+                Total Amount ({symbol}) *
               </label>
               <input
                 type="number"
@@ -481,7 +483,7 @@ export function InvoicesTab({ customer }: InvoicesTabProps) {
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((inv: any) => (
-            <InvoiceRow key={inv.id} invoice={inv} />
+            <InvoiceRow key={inv.id} invoice={inv} currency={currency} />
           ))}
         </div>
       )}

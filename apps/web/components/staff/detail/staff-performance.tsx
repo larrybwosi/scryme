@@ -29,19 +29,21 @@ import {
   Target,
 } from "lucide-react";
 
+import { formatCurrency as formatCurrencyUtil, getCurrencySymbol } from "../../../lib/utils";
+
 export function StaffPerformance({
   stats,
   transactions,
+  currency = "USD",
 }: {
   stats: any;
   transactions: any[];
+  currency?: string;
 }) {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
+    return formatCurrencyUtil(amount, currency);
   };
+  const symbol = getCurrencySymbol(currency);
 
   // Prepare chart data from recent transactions
   // This is a simplified version, ideally we'd have daily aggregates from the server
@@ -135,7 +137,7 @@ export function StaffPerformance({
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: "#6b7280" }}
-                    tickFormatter={val => `$${val}`}
+                    tickFormatter={val => `${symbol}${val}`}
                   />
                   <Tooltip
                     cursor={{ fill: "#f9fafb" }}

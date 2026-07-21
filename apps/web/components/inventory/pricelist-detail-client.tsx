@@ -112,6 +112,7 @@ export function PriceListDetailClient({
         isOpen={isAddItemOpen}
         onOpenChange={setIsAddItemOpen}
         products={products}
+        currency={priceList?.currency}
       />
 
       <PricingRuleDialog
@@ -120,6 +121,7 @@ export function PriceListDetailClient({
         onOpenChange={setIsAddRuleOpen}
         products={products}
         categories={categories}
+        currency={priceList?.currency}
       />
 
       <PriceListDialog
