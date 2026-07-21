@@ -125,6 +125,20 @@ export function ThermalReceiptPreview({
 
             {/* Compliance details in header */}
             <div className="mt-2 flex flex-wrap justify-center gap-x-2 gap-y-0.5 opacity-70" style={{ fontSize: `${headerSize - 3}px` }}>
+              {config.showKraDetails && (
+                <>
+                  {config.kraPin && (
+                    <span>
+                      KRA PIN: {config.kraPin}
+                    </span>
+                  )}
+                  {config.kraEtr && (
+                    <span>
+                      KRA ETR: {config.kraEtr}
+                    </span>
+                  )}
+                </>
+              )}
               {config.showTaxNumber && config.taxNumber && (
                 <span>
                   {labels.tin}: {config.taxNumber}
