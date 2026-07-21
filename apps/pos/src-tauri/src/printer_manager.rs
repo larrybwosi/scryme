@@ -431,6 +431,61 @@ pub async fn print_test_page(printer_name: String) -> Result<String, String> {
     Ok("Test page sent to printer".into())
 }
 
+async fn resolve_logo_path<R: Runtime>(app: &AppHandle<R>, logo_path: &str) -> Result<PathBuf, String> {
+    use std::io::Write as _;
+    // 1. If it's a web URL, download it to a temp file
+    if logo_path.starts_with("http://") || logo_path.starts_with("https://") {
+        let bytes = reqwest::get(logo_path).await
+            .map_err(|e| format!("Failed to download logo: {}", e))?
+            .bytes().await
+            .map_err(|e| format!("Failed to read logo bytes: {}", e))?;
+
+        let mut temp_file = tempfile::Builder::new()
+            .suffix(".jpg")
+            .tempfile()
+            .map_err(|e| format!("Failed to create temp logo file: {}", e))?;
+
+        temp_file.write_all(&bytes)
+            .map_err(|e| format!("Failed to write logo to temp file: {}", e))?;
+
+        let (_, path) = temp_file.keep()
+            .map_err(|e| format!("Failed to persist temp logo: {}", e))?;
+
+        return Ok(path);
+    }
+
+    // 2. If it's a relative path starting with '/' (e.g. /logo.jpg)
+    if logo_path.starts_with('/') {
+        if let Ok(resource_path) = app.path().resolve(logo_path.trim_start_matches('/'), tauri::path::BaseDirectory::Resource) {
+            if resource_path.exists() {
+                return Ok(resource_path);
+            }
+        }
+
+        // Try relative to current working directory (in dev mode)
+        let cwd_path = std::env::current_dir().unwrap_or_default()
+            .join("apps/pos/public")
+            .join(logo_path.trim_start_matches('/'));
+        if cwd_path.exists() {
+            return Ok(cwd_path);
+        }
+
+        let cwd_path_direct = std::env::current_dir().unwrap_or_default()
+            .join(logo_path.trim_start_matches('/'));
+        if cwd_path_direct.exists() {
+            return Ok(cwd_path_direct);
+        }
+    }
+
+    // 3. Otherwise treat it as a direct path
+    let path = PathBuf::from(logo_path);
+    if path.exists() {
+        Ok(path)
+    } else {
+        Err(format!("Logo path not found: {}", logo_path))
+    }
+}
+
 // 2. Command to Open the Drawer
 #[tauri::command]
 pub fn open_cash_drawer(port_name: String) -> Result<String, String> {
@@ -482,10 +537,14 @@ pub async fn print_receipt_native(
     if config.get("showLogo").and_then(|v| v.as_bool()).unwrap_or(true) {
         if let Some(logo_path) = config.get("logoUrl").and_then(|v| v.as_str()) {
             if !logo_path.is_empty() {
-                let logo_pos_str = config.get("logoPosition").and_then(|v| v.as_str()).unwrap_or("center");
-                let logo_pos = if logo_pos_str == "center" { 1 } else if logo_pos_str == "right" { 2 } else { 0 };
-                let logo_width = config.get("logoWidth").and_then(|v| v.as_u64()).unwrap_or(50) as u8;
-                let _ = esc.logo_enhanced(logo_path, is_58mm, logo_pos, logo_width);
+                if let Ok(resolved_path) = resolve_logo_path(&app, logo_path).await {
+                    if let Some(resolved_str) = resolved_path.to_str() {
+                        let logo_pos_str = config.get("logoPosition").and_then(|v| v.as_str()).unwrap_or("center");
+                        let logo_pos = if logo_pos_str == "center" { 1 } else if logo_pos_str == "right" { 2 } else { 0 };
+                        let logo_width = config.get("logoWidth").and_then(|v| v.as_u64()).unwrap_or(50) as u8;
+                        let _ = esc.logo_enhanced(resolved_str, is_58mm, logo_pos, logo_width);
+                    }
+                }
             }
         }
     }
@@ -522,17 +581,22 @@ pub async fn print_receipt_native(
     }
 
     if config.get("showAddress").and_then(|v| v.as_bool()).unwrap_or(true) {
-        if let Some(address) = settings.get("address").and_then(|v| v.as_str()) {
-            if !address.is_empty() { esc.text_line(address); }
-        }
+        let address = config.get("address").and_then(|v| v.as_str())
+            .or_else(|| settings.get("address").and_then(|v| v.as_str()))
+            .unwrap_or("");
+        if !address.is_empty() { esc.text_line(address); }
     }
 
     let show_phone = config.get("showPhone").and_then(|v| v.as_bool()).unwrap_or(true);
     let show_email = config.get("showEmail").and_then(|v| v.as_bool()).unwrap_or(true);
 
     if show_phone || show_email {
-        let phone = settings.get("phone").and_then(|v| v.as_str()).unwrap_or("");
-        let email = settings.get("email").and_then(|v| v.as_str()).unwrap_or("");
+        let phone = config.get("phone").and_then(|v| v.as_str())
+            .or_else(|| settings.get("phone").and_then(|v| v.as_str()))
+            .unwrap_or("");
+        let email = config.get("email").and_then(|v| v.as_str())
+            .or_else(|| settings.get("email").and_then(|v| v.as_str()))
+            .unwrap_or("");
 
         if show_phone && show_email && !phone.is_empty() && !email.is_empty() {
             esc.text_line(&format!("{} | {}", phone, email));
@@ -544,18 +608,28 @@ pub async fn print_receipt_native(
     }
 
     if config.get("showWebsite").and_then(|v| v.as_bool()).unwrap_or(true) {
-        if let Some(website) = settings.get("website").and_then(|v| v.as_str()) {
-            if !website.is_empty() { esc.text_line(website); }
-        }
+        let website = config.get("website").and_then(|v| v.as_str())
+            .or_else(|| settings.get("website").and_then(|v| v.as_str()))
+            .unwrap_or("");
+        if !website.is_empty() { esc.text_line(website); }
     }
 
     // Reg numbers
+    let show_kra = config.get("showKraDetails").and_then(|v| v.as_bool()).unwrap_or(false);
     let show_tax = config.get("showTaxNumber").and_then(|v| v.as_bool()).unwrap_or(false);
     let show_vat = config.get("showVatNumber").and_then(|v| v.as_bool()).unwrap_or(false);
     let show_reg = config.get("showCompanyRegNumber").and_then(|v| v.as_bool()).unwrap_or(false);
 
-    if show_tax || show_vat || show_reg {
+    if show_kra || show_tax || show_vat || show_reg {
         let mut reg_parts = Vec::new();
+        if show_kra {
+            if let Some(val) = config.get("kraPin").and_then(|v| v.as_str()) {
+                if !val.is_empty() { reg_parts.push(format!("KRA PIN:{}", val)); }
+            }
+            if let Some(val) = config.get("kraEtr").and_then(|v| v.as_str()) {
+                if !val.is_empty() { reg_parts.push(format!("KRA ETR:{}", val)); }
+            }
+        }
         if show_tax {
             if let Some(val) = config.get("taxNumber").and_then(|v| v.as_str()) {
                 if !val.is_empty() { reg_parts.push(format!("TIN:{}", val)); }

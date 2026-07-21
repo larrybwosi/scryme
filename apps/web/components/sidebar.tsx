@@ -381,7 +381,7 @@ export function Sidebar() {
           ) : (
             <div
               className={cn(
-                "w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold flex-shrink-0",
+                "w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold shrink-0",
                 isCollapsed && "mx-auto",
               )}>
               {session?.user?.name?.charAt(0).toUpperCase() || "U"}

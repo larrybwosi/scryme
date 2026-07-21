@@ -92,7 +92,7 @@ export function KanbanCard({ deal, isOverlay, stageConfig }: KanbanCardProps) {
         <div className="flex items-start gap-2 px-3 pt-3 pb-2">
           <button
             {...listeners}
-            className="mt-0.5 p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground/60 cursor-grab active:cursor-grabbing transition-colors flex-shrink-0 focus:outline-none"
+            className="mt-0.5 p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground/60 cursor-grab active:cursor-grabbing transition-colors shrink-0 focus:outline-none"
             aria-label="Drag to reorder"
           >
             <GripVertical size={13} />
@@ -115,7 +115,7 @@ export function KanbanCard({ deal, isOverlay, stageConfig }: KanbanCardProps) {
           {/* Amount */}
           {amount && (
             <div className="flex items-center gap-1.5">
-              <DollarSign size={11} className="text-muted-foreground/60 flex-shrink-0" />
+              <DollarSign size={11} className="text-muted-foreground/60 shrink-0" />
               <span className="text-[12px] font-semibold text-foreground/90">{amount}</span>
               {deal.data.probability > 0 && (
                 <span className="ml-auto text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
@@ -128,7 +128,7 @@ export function KanbanCard({ deal, isOverlay, stageConfig }: KanbanCardProps) {
           {/* Association */}
           {associationName && (
             <div className="flex items-center gap-1.5">
-              <AssociationIcon size={11} className="text-muted-foreground/60 flex-shrink-0" />
+              <AssociationIcon size={11} className="text-muted-foreground/60 shrink-0" />
               <span className="text-[11px] text-muted-foreground/80 truncate">{associationName}</span>
             </div>
           )}
@@ -153,7 +153,7 @@ export function KanbanCard({ deal, isOverlay, stageConfig }: KanbanCardProps) {
                 <span />
               )}
               <div
-                className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white flex-shrink-0"
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
                 style={{ backgroundColor: stageConfig.color }}
               >
                 {initials}

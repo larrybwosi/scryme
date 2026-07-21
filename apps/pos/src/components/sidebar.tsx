@@ -133,11 +133,11 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             to="/"
             className="flex items-center gap-3 no-underline hover:opacity-80 transition-opacity overflow-hidden"
           >
-            <div className="w-8 h-8 rounded-lg bg-[#34A853] flex items-center justify-center shrink-0 shadow-sm">
-              <span className="text-white font-black text-lg">
-                {(businessName || 'SC').substring(0, 1).toUpperCase()}
-              </span>
-            </div>
+            <img
+              src="/logo.jpg"
+              alt="Scryme Logo"
+              className="w-8 h-8 rounded-lg shrink-0 object-contain shadow-sm"
+            />
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="font-semibold text-lg truncate text-foreground leading-tight">{businessName}</span>

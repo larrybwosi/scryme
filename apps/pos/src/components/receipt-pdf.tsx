@@ -407,27 +407,44 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
             {!config.tagline && settings.businessSlogan && <Text style={styles.slogan}>{settings.businessSlogan}</Text>}
 
             {/* Contact — inline where possible */}
-            {config.showAddress && settings.address && <Text style={styles.contactLine}>{settings.address}</Text>}
-            {(config.showPhone || settings.phone) && settings.email ? (
+            {config.showAddress && (config.address || settings.address) && (
+              <Text style={styles.contactLine}>{config.address || settings.address}</Text>
+            )}
+            {(config.showPhone || config.phone || settings.phone) && (config.email || settings.email) ? (
               <Text style={styles.contactLine}>
-                {config.phone || settings.phone} · {settings.email}
+                {config.phone || settings.phone} · {config.email || settings.email}
               </Text>
             ) : (
               <>
-                {(config.showPhone || settings.phone) && (
+                {(config.showPhone || config.phone || settings.phone) && (
                   <Text style={styles.contactLine}>{config.phone || settings.phone}</Text>
                 )}
-                {settings.email && <Text style={styles.contactLine}>{settings.email}</Text>}
+                {(config.email || settings.email) && (
+                  <Text style={styles.contactLine}>{config.email || settings.email}</Text>
+                )}
               </>
             )}
-            {settings.website && <Text style={styles.contactLine}>{settings.website}</Text>}
+            {(config.website || settings.website) && (
+              <Text style={styles.contactLine}>{config.website || settings.website}</Text>
+            )}
 
             {/* Reg numbers inline */}
             {(config.showTaxNumber && config.taxNumber) ||
             (config.showVatNumber && config.vatNumber) ||
             (config.showCompanyRegNumber && config.companyRegNumber) ||
+            (config.showKraDetails && (config.kraPin || config.kraEtr)) ||
             config.customFields?.some(f => f.enabled) ? (
               <View style={styles.regRow}>
+                {config.showKraDetails && config.kraPin && (
+                  <Text style={styles.regItem}>
+                    KRA PIN: {config.kraPin}
+                  </Text>
+                )}
+                {config.showKraDetails && config.kraEtr && (
+                  <Text style={styles.regItem}>
+                    KRA ETR: {config.kraEtr}
+                  </Text>
+                )}
                 {config.showTaxNumber && config.taxNumber && (
                   <Text style={styles.regItem}>
                     {labels.tin}: {config.taxNumber}

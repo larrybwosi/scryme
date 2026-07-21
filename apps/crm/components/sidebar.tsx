@@ -106,7 +106,7 @@ function NavItemLink({
       <item.icon
         size={15}
         className={cn(
-          'flex-shrink-0 transition-colors',
+          'shrink-0 transition-colors',
           isActive ? 'text-sidebar-primary' : 'text-sidebar-foreground/50 group-hover/item:text-sidebar-foreground/80'
         )}
       />
@@ -246,18 +246,18 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        'flex flex-col h-screen border-r border-sidebar-border bg-sidebar transition-[width] duration-250 ease-in-out relative flex-shrink-0 select-none',
+        'flex flex-col h-screen border-r border-sidebar-border bg-sidebar transition-[width] duration-250 ease-in-out relative shrink-0 select-none',
         isCollapsed ? 'w-[56px]' : 'w-[228px]'
       )}
     >
       {/* Brand Header */}
       <div
         className={cn(
-          'flex items-center h-[52px] border-b border-sidebar-border px-3 flex-shrink-0',
+          'flex items-center h-[52px] border-b border-sidebar-border px-3 shrink-0',
           isCollapsed ? 'justify-center' : 'gap-2.5'
         )}
       >
-        <div className="w-7 h-7 bg-primary rounded-[6px] flex items-center justify-center flex-shrink-0 shadow-sm">
+        <div className="w-7 h-7 bg-primary rounded-[6px] flex items-center justify-center shrink-0 shadow-sm">
           <Zap size={14} className="text-primary-foreground" fill="currentColor" />
         </div>
         {!isCollapsed && (
@@ -265,7 +265,7 @@ export function Sidebar() {
             <span className="font-bold text-[14px] text-sidebar-foreground tracking-tight truncate">
               Scryme
             </span>
-            <span className="text-[9px] font-bold text-primary bg-primary/15 px-1.5 py-0.5 rounded uppercase tracking-wide flex-shrink-0">
+            <span className="text-[9px] font-bold text-primary bg-primary/15 px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0">
               CRM
             </span>
           </div>
@@ -294,9 +294,9 @@ export function Sidebar() {
 
       {/* Search shortcut */}
       {!isCollapsed && (
-        <div className="px-3 py-2 flex-shrink-0">
+        <div className="px-3 py-2 shrink-0">
           <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/8 border border-sidebar-border/50 transition-colors text-left">
-            <Search size={12} className="text-sidebar-foreground/35 flex-shrink-0" />
+            <Search size={12} className="text-sidebar-foreground/35 shrink-0" />
             <span className="text-[11.5px] text-sidebar-foreground/35 flex-1">Search...</span>
             <kbd className="text-[9px] text-sidebar-foreground/25 bg-white/5 px-1 py-0.5 rounded border border-sidebar-border/30 leading-none">
               ⌘K
@@ -321,7 +321,7 @@ export function Sidebar() {
       </nav>
 
       {/* Bottom Utilities */}
-      <div className="border-t border-sidebar-border px-3 py-2 space-y-px flex-shrink-0">
+      <div className="border-t border-sidebar-border px-3 py-2 space-y-px shrink-0">
         {[
           { icon: Bell, label: 'Notifications', dot: true },
           { icon: Settings, label: 'Settings' },
@@ -335,7 +335,7 @@ export function Sidebar() {
               isCollapsed && 'justify-center'
             )}
           >
-            <div className="relative flex-shrink-0">
+            <div className="relative shrink-0">
               <Icon size={15} />
               {dot && (
                 <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-destructive rounded-full" />
@@ -349,11 +349,11 @@ export function Sidebar() {
       {/* User Profile */}
       <div
         className={cn(
-          'border-t border-sidebar-border p-3 flex items-center gap-2.5 flex-shrink-0',
+          'border-t border-sidebar-border p-3 flex items-center gap-2.5 shrink-0',
           isCollapsed && 'justify-center p-2.5'
         )}
       >
-        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-[11px] flex-shrink-0 ring-2 ring-primary/20">
+        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-[11px] shrink-0 ring-2 ring-primary/20">
           {userInitials}
         </div>
         {!isCollapsed && (

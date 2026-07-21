@@ -15,7 +15,13 @@ export async function getServerAuth(permission?: string) {
   const user = session.user;
   const organizationId =
     session.session.activeOrganizationId || user.activeOrganizationId;
+
   const memberId = user.memberId;
+  // Ensure organizationId is present before proceeding
+  if (!organizationId || !memberId) {
+    redirect("/create-org");
+  }
+
   const role = user.role;
 
   if (permission) {
@@ -32,5 +38,6 @@ export async function getServerAuth(permission?: string) {
     role,
   };
 }
+
 export * from "./index";
 export { auth };

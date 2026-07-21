@@ -54,7 +54,7 @@ export function StockingListFilters({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 border-b w-fit pb-1">
-          <button className="px-4 py-2 text-sm font-medium border-b-2 border-black -mb-[6px]">
+          <button className="px-4 py-2 text-sm font-medium border-b-2 border-black mb-[-6px]">
             All products
           </button>
         </div>

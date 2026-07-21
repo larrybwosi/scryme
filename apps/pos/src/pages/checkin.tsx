@@ -310,9 +310,9 @@ export default function CheckinPage() {
 
   return (
     <>
-    <div className="min-h-screen w-full flex bg-slate-950 text-white overflow-hidden">
+    <div className="min-h-screen w-full flex bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white overflow-hidden">
       {/* --- LEFT SIDE: Visuals & Typewriter --- */}
-      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 bg-slate-900 border-r border-slate-800">
+      <div className="hidden lg:flex w-1/2 relative flex-col justify-between p-12 bg-slate-900 border-r border-slate-800 text-white">
         <div className="absolute inset-0 z-0 opacity-40">
           <img
             src="/some.png"
@@ -323,10 +323,11 @@ export default function CheckinPage() {
         </div>
 
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-[#34A853] flex items-center justify-center shadow-lg shadow-[#34A853]/20">
-            <span className="text-white font-bold text-2xl font-sans">S</span>
-          </div>
-          <span className="text-xl font-bold tracking-tight text-white">Scryme</span>
+          <img
+            src="/logo.jpg"
+            alt="Scryme Logo"
+            className="h-10 w-auto rounded-lg shadow-lg"
+          />
         </div>
 
         <div className="relative z-10 max-w-md space-y-6">
@@ -354,18 +355,18 @@ export default function CheckinPage() {
       </div>
 
       {/* --- RIGHT SIDE: Login Form --- */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 relative">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 relative bg-slate-50 dark:bg-slate-950">
         <div className="absolute inset-0 lg:hidden">
-          <div className="absolute inset-0 bg-linear-to-br from-slate-950 via-blue-950 to-slate-950"></div>
+          <div className="absolute inset-0 bg-linear-to-br from-slate-100 to-slate-200 dark:from-slate-950 dark:via-blue-950 dark:to-slate-950"></div>
         </div>
 
-        <Card className="w-full max-w-md bg-transparent border-none shadow-none lg:bg-slate-900/50 lg:border lg:border-slate-800 lg:shadow-2xl relative z-20 backdrop-blur-sm">
+        <Card className="w-full max-w-md bg-white/70 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-2xl relative z-20 backdrop-blur-sm">
           
           <Button
             variant="ghost"
             size="icon"
             onClick={handleResetRequest}
-            className="absolute right-4 top-4 text-slate-600 hover:text-red-400 hover:bg-slate-800 transition-colors rounded-full"
+            className="absolute right-4 top-4 text-slate-400 dark:text-slate-600 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors rounded-full"
             title="Reset Device Configuration"
           >
             <Settings className="w-4 h-4" />
@@ -373,8 +374,8 @@ export default function CheckinPage() {
           </Button>
 
           <CardHeader className="space-y-1 pb-8 text-center lg:text-left">
-            <CardTitle className="text-3xl font-bold text-white">Check In</CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardTitle className="text-3xl font-bold text-slate-900 dark:text-white">Check In</CardTitle>
+            <CardDescription className="text-slate-500 dark:text-slate-400">
               Enter your details below to access the terminal
             </CardDescription>
           </CardHeader>
@@ -391,7 +392,7 @@ export default function CheckinPage() {
                   ? 'border-blue-500 bg-blue-500/10'
                   : scanSuccess
                   ? 'border-green-500 bg-green-500/10'
-                  : 'border-slate-700 bg-slate-800/50 hover:bg-slate-800 hover:border-blue-500/50'
+                  : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-blue-500/50 text-slate-700 dark:text-slate-200'
               }`}
             >
               {isScanning && (
@@ -403,13 +404,13 @@ export default function CheckinPage() {
 
               <div className="flex flex-row items-center gap-4 relative z-10">
                 {isScanning ? (
-                  <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
+                  <Loader2 className="w-6 h-6 text-blue-500 dark:text-blue-400 animate-spin" />
                 ) : scanSuccess ? (
                   <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5 text-green-400" />
+                    <ShieldCheck className="w-5 h-5 text-green-500 dark:text-green-400" />
                   </div>
                 ) : (
-                  <div className="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-700 group-hover:border-blue-500/50 group-hover:text-blue-400 transition-colors text-slate-400">
+                  <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-slate-700 group-hover:border-blue-500/50 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors text-slate-500 dark:text-slate-400">
                     <Scan className="w-5 h-5" />
                   </div>
                 )}
@@ -417,7 +418,7 @@ export default function CheckinPage() {
                 <div className="flex flex-col items-start">
                   <span
                     className={`font-medium ${
-                      scanSuccess ? 'text-green-400' : isScanning ? 'text-blue-400' : 'text-slate-200'
+                      scanSuccess ? 'text-green-500 dark:text-green-400' : isScanning ? 'text-blue-500 dark:text-blue-400' : 'text-slate-700 dark:text-slate-200'
                     }`}
                   >
                     {isScanning ? 'Scanning...' : scanSuccess ? 'Card Verified' : 'Tap to Scan Badge'}
@@ -433,10 +434,10 @@ export default function CheckinPage() {
             {import.meta.env.MODE !== 'standalone' && (
             <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-800"></div>
+                <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-slate-950 lg:bg-slate-900 px-2 text-slate-500">Or continue with ID</span>
+                <span className="bg-slate-50 lg:bg-white dark:bg-slate-950 lg:dark:bg-slate-900 px-2 text-slate-500">Or continue with ID</span>
               </div>
             </div>
             )}
@@ -445,11 +446,11 @@ export default function CheckinPage() {
             <div className="space-y-4">
                 {import.meta.env.MODE !== 'standalone' && (
                   <div className="space-y-2">
-                    <Label htmlFor="cardId" className="text-slate-300">
+                    <Label htmlFor="cardId" className="text-slate-700 dark:text-slate-300">
                       Card ID
                     </Label>
                     <div className="relative group">
-                      <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                      <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 dark:group-focus-within:text-blue-400 transition-colors" />
                       <Input
                         ref={cardInputRef}
                         id="cardId"
@@ -458,11 +459,11 @@ export default function CheckinPage() {
                         onKeyDown={handleKeyPress}
                         placeholder="Enter ID or Scan..."
                         autoFocus
-                        className="pl-10 bg-slate-950/50 border-slate-800 focus:border-blue-500 focus:ring-blue-500/20 h-11 transition-all"
+                        className="pl-10 bg-white dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:ring-blue-500/20 h-11 transition-all text-slate-950 dark:text-white"
                         disabled={isCheckingIn}
                       />
                       {/* Visual indicator for Keyboard/Scanner support */}
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600" title="Scanner Ready">
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-600" title="Scanner Ready">
                         <Keyboard className="h-4 w-4 opacity-50" />
                       </div>
                   </div>
@@ -470,11 +471,11 @@ export default function CheckinPage() {
                 )}
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-slate-300">
+                <Label htmlFor="password" className="text-slate-700 dark:text-slate-300">
                     {import.meta.env.MODE === 'standalone' ? 'Access PIN' : 'Password'}
                 </Label>
                 <div className="relative group">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 dark:group-focus-within:text-blue-400 transition-colors" />
                   <Input
                     ref={passwordInputRef}
                     id="password"
@@ -483,13 +484,13 @@ export default function CheckinPage() {
                     onChange={handlePasswordChange}
                     onKeyDown={handleKeyPress}
                     placeholder="Enter password"
-                    className="pl-10 pr-10 bg-slate-950/50 border-slate-800 focus:border-blue-500 focus:ring-blue-500/20 h-11 transition-all"
+                    className="pl-10 pr-10 bg-white dark:bg-slate-950/50 border-slate-200 dark:border-slate-800 focus:border-blue-500 focus:ring-blue-500/20 h-11 transition-all text-slate-950 dark:text-white"
                     disabled={isCheckingIn}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>

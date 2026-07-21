@@ -17,7 +17,7 @@ export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({
   return (
     <div className={cn("min-h-screen bg-background font-sans antialiased", className)}>
       {header && (
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
           {header}
         </header>
       )}

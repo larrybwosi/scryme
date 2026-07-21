@@ -48,7 +48,7 @@ export default async function DepartmentDetailPage({ params }: Props) {
             className="object-cover opacity-50"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1D1D1F] to-[#34A853]/20" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#1D1D1F] to-[#34A853]/20" />
         )}
         <div className="absolute bottom-6 left-8 right-0 flex items-end gap-6">
           <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-xl flex items-center justify-center overflow-hidden shrink-0 relative">

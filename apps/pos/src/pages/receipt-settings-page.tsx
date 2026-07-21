@@ -73,8 +73,8 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-3 mb-5 pb-4 border-b border-border/30">
-      <div className="w-7 h-7 rounded-md bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shrink-0 mt-0.5">
-        <Icon className="w-3.5 h-3.5 text-zinc-300" />
+      <div className="w-7 h-7 rounded-md bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-center shrink-0 mt-0.5">
+        <Icon className="w-3.5 h-3.5 text-zinc-700 dark:text-zinc-300" />
       </div>
       <div>
         <p className="text-[13px] font-semibold text-foreground tracking-tight leading-none">{title}</p>
@@ -84,6 +84,7 @@ function SectionHeader({
   );
 }
 
+// --- FieldRow ---
 function FieldRow({
   label,
   description,
@@ -96,7 +97,7 @@ function FieldRow({
   return (
     <div className="flex items-center justify-between gap-6 py-3 border-b border-border/20 last:border-0 group">
       <div className="flex-1 min-w-0">
-        <p className="text-[12.5px] font-medium text-zinc-200 leading-none">{label}</p>
+        <p className="text-[12.5px] font-medium text-zinc-800 dark:text-zinc-200 leading-none">{label}</p>
         {description && <p className="text-[11px] text-zinc-500 mt-1 leading-snug">{description}</p>}
       </div>
       <div className="shrink-0">{children}</div>
@@ -134,7 +135,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 backdrop-blur-sm p-4">
+    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/60 backdrop-blur-sm p-4">
       <SectionHeader icon={icon} title={title} description={description} />
       <div>{children}</div>
     </div>
@@ -161,8 +162,8 @@ function NavPill({
           className={cn(
             'flex items-center gap-1.5 px-3 py-2 rounded-md text-[11.5px] font-medium transition-all duration-150 whitespace-nowrap shrink-0',
             active === value
-              ? 'bg-zinc-800 text-white border border-zinc-700/80 shadow-sm'
-              : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50'
+              ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-900 dark:text-white border border-zinc-300 dark:border-zinc-700/80 shadow-sm'
+              : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800/50'
           )}
         >
           <Icon className="w-3 h-3" />
@@ -366,7 +367,7 @@ function ReceiptSettings({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur border-b border-zinc-800/80 px-4 py-3">
+      <div className="sticky top-0 z-10 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border-b border-zinc-200 dark:border-zinc-800/80 px-4 py-3">
         <NavPill tabs={RECEIPT_TABS} active={tab} onChange={setTab} />
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -381,8 +382,8 @@ function ReceiptSettings({
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-lg border transition-all text-left',
                       config.template === t.id
-                        ? 'bg-blue-500/10 border-blue-500/50 text-blue-400'
-                        : 'bg-zinc-900/50 border-zinc-800 text-zinc-500 hover:border-zinc-700'
+                        ? 'bg-blue-500/10 border-blue-500/50 text-blue-500 dark:text-blue-400'
+                        : 'bg-white dark:bg-zinc-900/50 border-zinc-200 dark:border-zinc-800 text-zinc-500 dark:text-zinc-400 hover:border-zinc-300 dark:hover:border-zinc-700'
                     )}
                   >
                     <t.icon className="w-4 h-4 shrink-0" />
@@ -404,7 +405,7 @@ function ReceiptSettings({
                       value={config.logoUrl}
                       onChange={e => updateConfig('logoUrl', e.target.value)}
                       placeholder="https://..."
-                      className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                      className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
@@ -413,7 +414,7 @@ function ReceiptSettings({
                         Position
                       </Label>
                       <Select value={config.logoPosition} onValueChange={v => updateConfig('logoPosition', v)}>
-                        <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                        <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -449,7 +450,7 @@ function ReceiptSettings({
                   value={config.tagline}
                   onChange={e => updateConfig('tagline', e.target.value)}
                   placeholder="Your tagline..."
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
             </Section>
@@ -460,7 +461,7 @@ function ReceiptSettings({
                 <Input
                   value={config.address}
                   onChange={e => updateConfig('address', e.target.value)}
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
               <ToggleRow label="Phone" checked={config.showPhone} onChange={v => updateConfig('showPhone', v)} />
@@ -468,7 +469,7 @@ function ReceiptSettings({
                 <Input
                   value={config.phone}
                   onChange={e => updateConfig('phone', e.target.value)}
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
               <ToggleRow label="Email" checked={config.showEmail} onChange={v => updateConfig('showEmail', v)} />
@@ -476,7 +477,7 @@ function ReceiptSettings({
                 <Input
                   value={config.email}
                   onChange={e => updateConfig('email', e.target.value)}
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
               <ToggleRow label="Website" checked={config.showWebsite} onChange={v => updateConfig('showWebsite', v)} />
@@ -484,7 +485,7 @@ function ReceiptSettings({
                 <Input
                   value={config.website}
                   onChange={e => updateConfig('website', e.target.value)}
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
             </Section>
@@ -500,7 +501,7 @@ function ReceiptSettings({
                     Paper Size
                   </Label>
                   <Select value={config.paperSize} onValueChange={v => updateConfig('paperSize', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                    <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -515,7 +516,7 @@ function ReceiptSettings({
                     Alignment
                   </Label>
                   <Select value={config.textAlignment} onValueChange={v => updateConfig('textAlignment', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                    <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -557,7 +558,7 @@ function ReceiptSettings({
                   Font Family
                 </Label>
                 <Select value={config.fontFamily} onValueChange={v => updateConfig('fontFamily', v)}>
-                  <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                  <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -628,7 +629,7 @@ function ReceiptSettings({
                     <Input
                       value={config.borderColor}
                       onChange={e => updateConfig('borderColor', e.target.value)}
-                      className="h-8 text-[11px] flex-1 bg-zinc-900 border-zinc-800 text-zinc-200 font-mono"
+                      className="h-8 text-[11px] flex-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 font-mono"
                     />
                   </div>
                 </div>
@@ -648,7 +649,7 @@ function ReceiptSettings({
                     <Input
                       value={config.primaryColor}
                       onChange={e => updateConfig('primaryColor', e.target.value)}
-                      className="h-8 text-[11px] flex-1 bg-zinc-900 border-zinc-800 text-zinc-200 font-mono"
+                      className="h-8 text-[11px] flex-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 font-mono"
                     />
                   </div>
                 </div>
@@ -666,7 +667,7 @@ function ReceiptSettings({
                     <Input
                       value={config.secondaryColor}
                       onChange={e => updateConfig('secondaryColor', e.target.value)}
-                      className="h-8 text-[11px] flex-1 bg-zinc-900 border-zinc-800 text-zinc-200 font-mono"
+                      className="h-8 text-[11px] flex-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 font-mono"
                     />
                   </div>
                 </div>
@@ -676,7 +677,7 @@ function ReceiptSettings({
                   Divider Style
                 </Label>
                 <Select value={config.dividerStyle} onValueChange={v => updateConfig('dividerStyle', v)}>
-                  <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                  <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -707,7 +708,7 @@ function ReceiptSettings({
                     value={config.orderNumberPrefix}
                     onChange={e => updateConfig('orderNumberPrefix', e.target.value)}
                     placeholder="ORD-"
-                    className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 rounded-md"
+                    className="h-8 text-[12px] mt-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-md"
                   />
                 </div>
               )}
@@ -786,7 +787,7 @@ function ReceiptSettings({
                   <Textarea
                     value={config.headerText}
                     onChange={e => updateConfig('headerText', e.target.value)}
-                    className="text-[12px] resize-none bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    className="text-[12px] resize-none bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     rows={2}
                   />
                 </div>
@@ -797,7 +798,7 @@ function ReceiptSettings({
                   <Textarea
                     value={config.footerText}
                     onChange={e => updateConfig('footerText', e.target.value)}
-                    className="text-[12px] resize-none bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    className="text-[12px] resize-none bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     rows={2}
                   />
                 </div>
@@ -810,7 +811,7 @@ function ReceiptSettings({
                   <Input
                     value={config.thankYouMessage}
                     onChange={e => updateConfig('thankYouMessage', e.target.value)}
-                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                   />
                 )}
               </div>
@@ -829,7 +830,7 @@ function ReceiptSettings({
                       QR Destination
                     </Label>
                     <Select value={config.qrCodeTarget} onValueChange={v => updateConfig('qrCodeTarget', v)}>
-                      <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                      <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -845,7 +846,7 @@ function ReceiptSettings({
                       value={config.qrCodeCustomUrl || ''}
                       onChange={e => updateConfig('qrCodeCustomUrl', e.target.value)}
                       placeholder="https://..."
-                      className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                      className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     />
                   )}
                 </div>
@@ -865,7 +866,7 @@ function ReceiptSettings({
                   value={config.socialMediaHandle}
                   onChange={e => updateConfig('socialMediaHandle', e.target.value)}
                   placeholder="@yourhandle"
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
             </Section>
@@ -890,7 +891,7 @@ function ReceiptSettings({
                     value={config.locationNameOverride || ''}
                     onChange={e => updateConfig('locationNameOverride', e.target.value)}
                     placeholder="Main Branch, Downtown..."
-                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                   />
                 </div>
               )}
@@ -899,7 +900,7 @@ function ReceiptSettings({
             <Section title="Custom Enterprise Fields" icon={Building2} description="Regional tax and legal fields">
               <div className="space-y-4">
                 {(config.customFields || []).map((field, idx) => (
-                  <div key={idx} className="p-3 rounded-lg border border-zinc-800 bg-zinc-950/50 space-y-3">
+                  <div key={idx} className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <GripVertical className="w-3.5 h-3.5 text-zinc-600" />
@@ -926,7 +927,7 @@ function ReceiptSettings({
                             newFields[idx].label = e.target.value;
                             updateConfig('customFields', newFields);
                           }}
-                          className="h-8 text-[11px] bg-zinc-900 border-zinc-800 text-zinc-200"
+                          className="h-8 text-[11px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
                         />
                       </div>
                       <div className="space-y-1.5">
@@ -940,7 +941,7 @@ function ReceiptSettings({
                             newFields[idx].value = e.target.value;
                             updateConfig('customFields', newFields);
                           }}
-                          className="h-8 text-[11px] bg-zinc-900 border-zinc-800 text-zinc-200"
+                          className="h-8 text-[11px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
                         />
                       </div>
                     </div>
@@ -977,7 +978,7 @@ function ReceiptSettings({
                 <Input
                   value={config.nextVisitPromoText}
                   onChange={e => updateConfig('nextVisitPromoText', e.target.value)}
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
               <ToggleRow
@@ -990,7 +991,7 @@ function ReceiptSettings({
                   value={config.surveyUrl}
                   onChange={e => updateConfig('surveyUrl', e.target.value)}
                   placeholder="https://survey..."
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
             </Section>
@@ -1011,7 +1012,7 @@ function ReceiptSettings({
                       const newLabels = { ...config.labels, [key]: e.target.value };
                       updateConfig('labels', newLabels);
                     }}
-                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                   />
                 </div>
               ))}
@@ -1025,7 +1026,7 @@ function ReceiptSettings({
                 <Input
                   value={config.currency}
                   onChange={e => updateConfig('currency', e.target.value)}
-                  className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200"
+                  className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
                 />
               </div>
               <div className="space-y-1.5">
@@ -1035,7 +1036,7 @@ function ReceiptSettings({
                 <Input
                   value={config.locale}
                   onChange={e => updateConfig('locale', e.target.value)}
-                  className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200"
+                  className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200"
                 />
               </div>
             </div>
@@ -1048,10 +1049,10 @@ function ReceiptSettings({
               {(config.sectionOrder || ['header', 'meta', 'items', 'totals', 'footer', 'codes']).map((section, idx) => (
                 <div
                   key={section}
-                  className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-900/50 group"
+                  className="flex items-center justify-between p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 group"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded bg-zinc-800 flex items-center justify-center text-[10px] font-mono text-zinc-500">
+                    <div className="w-6 h-6 rounded bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[10px] font-mono text-zinc-500 dark:text-zinc-400">
                       {idx + 1}
                     </div>
                     <span className="text-[12px] font-medium text-zinc-200 capitalize">{section}</span>
@@ -1102,7 +1103,7 @@ function ReceiptSettings({
                     value={config.signatureLineText}
                     onChange={e => updateConfig('signatureLineText', e.target.value)}
                     placeholder="Customer Signature"
-                    className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 rounded-md"
+                    className="h-8 text-[12px] mt-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-md"
                   />
                 </div>
               )}
@@ -1110,7 +1111,7 @@ function ReceiptSettings({
             <Section title="KRA Details & Tax Registration" icon={Building2} description="KRA details, Tax & VAT identification numbers">
               <ToggleRow
                 label="KRA Details"
-                checked={config.showKraDetails}
+                checked={!!config.showKraDetails}
                 onChange={v => updateConfig('showKraDetails', v)}
               />
               {config.showKraDetails && (
@@ -1121,7 +1122,7 @@ function ReceiptSettings({
                       value={config.taxNumber}
                       onChange={e => updateConfig('taxNumber', e.target.value)}
                       placeholder="e.g. A000000000X"
-                      className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                      className="h-8 text-[12px] mt-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     />
                   </div>
                   <div>
@@ -1130,7 +1131,7 @@ function ReceiptSettings({
                       value={config.kraPin}
                       onChange={e => updateConfig('kraPin', e.target.value)}
                       placeholder="e.g. A000000000X"
-                      className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                      className="h-8 text-[12px] mt-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     />
                   </div>
                   <div>
@@ -1139,7 +1140,7 @@ function ReceiptSettings({
                       value={config.kraEtr}
                       onChange={e => updateConfig('kraEtr', e.target.value)}
                       placeholder="e.g. ETR-XXXXX"
-                      className="h-8 text-[12px] mt-1 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                      className="h-8 text-[12px] mt-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     />
                   </div>
                 </div>
@@ -1155,7 +1156,7 @@ function ReceiptSettings({
                   value={config.taxNumber}
                   onChange={e => updateConfig('taxNumber', e.target.value)}
                   placeholder="TAX-XXXXX"
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
               <ToggleRow
@@ -1168,7 +1169,7 @@ function ReceiptSettings({
                   value={config.vatNumber}
                   onChange={e => updateConfig('vatNumber', e.target.value)}
                   placeholder="VAT-XXXXX"
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
               <ToggleRow
@@ -1180,7 +1181,7 @@ function ReceiptSettings({
                 <Input
                   value={config.companyRegNumber}
                   onChange={e => updateConfig('companyRegNumber', e.target.value)}
-                  className="h-8 text-[12px] mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="h-8 text-[12px] mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                 />
               )}
             </Section>
@@ -1195,7 +1196,7 @@ function ReceiptSettings({
                 <Textarea
                   value={config.returnPolicyText}
                   onChange={e => updateConfig('returnPolicyText', e.target.value)}
-                  className="text-[12px] resize-none mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="text-[12px] resize-none mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                   rows={2}
                 />
               )}
@@ -1208,7 +1209,7 @@ function ReceiptSettings({
                 <Textarea
                   value={config.legalDisclaimerText}
                   onChange={e => updateConfig('legalDisclaimerText', e.target.value)}
-                  className="text-[12px] resize-none mt-2 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                  className="text-[12px] resize-none mt-2 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                   rows={2}
                 />
               )}
@@ -1242,7 +1243,7 @@ function ReceiptSettings({
                 value={config.printCopies.toString()}
                 onValueChange={v => updateConfig('printCopies', parseInt(v))}
               >
-                <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1282,7 +1283,7 @@ function KitchenSettings({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur border-b border-zinc-800/80 px-4 py-3">
+      <div className="sticky top-0 z-10 bg-white/95 dark:bg-zinc-950/95 backdrop-blur border-b border-zinc-200 dark:border-zinc-800/80 px-4 py-3">
         <NavPill tabs={KITCHEN_TABS} active={tab} onChange={setTab} />
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -1295,7 +1296,7 @@ function KitchenSettings({
                     Paper Size
                   </Label>
                   <Select value={config.paperSize} onValueChange={v => updateConfig('paperSize', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                    <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1310,7 +1311,7 @@ function KitchenSettings({
                     Font Size
                   </Label>
                   <Select value={config.fontSize} onValueChange={v => updateConfig('fontSize', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                    <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1356,7 +1357,7 @@ function KitchenSettings({
                     value={config.headerText}
                     onChange={e => updateConfig('headerText', e.target.value)}
                     placeholder="KITCHEN ORDER"
-                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1367,7 +1368,7 @@ function KitchenSettings({
                     value={config.footerText}
                     onChange={e => updateConfig('footerText', e.target.value)}
                     placeholder="Optional footer..."
-                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                   />
                 </div>
               </div>
@@ -1451,7 +1452,7 @@ function KitchenSettings({
                       <Badge
                         key={i}
                         variant="outline"
-                        className="text-[10px] bg-zinc-800 border-zinc-700 text-zinc-300 font-mono"
+                        className="text-[10px] bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 font-mono"
                       >
                         {station}
                       </Badge>
@@ -1459,7 +1460,7 @@ function KitchenSettings({
                   </div>
                   <Input
                     placeholder="Add station name, press Enter"
-                    className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                    className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     onKeyDown={e => {
                       if (e.key === 'Enter' && e.currentTarget.value) {
                         updateConfig('stations', [...config.stations, e.currentTarget.value]);
@@ -1473,7 +1474,7 @@ function KitchenSettings({
                     Default Station
                   </Label>
                   <Select value={config.defaultStation} onValueChange={v => updateConfig('defaultStation', v)}>
-                    <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                    <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1520,7 +1521,7 @@ function KitchenSettings({
                       value={config.rushOrderThresholdMinutes.toString()}
                       onValueChange={v => updateConfig('rushOrderThresholdMinutes', parseInt(v))}
                     >
-                      <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                      <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1546,7 +1547,7 @@ function KitchenSettings({
                       <Input
                         value={config.rushOrderColor}
                         onChange={e => updateConfig('rushOrderColor', e.target.value)}
-                        className="h-8 text-[12px] flex-1 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                        className="h-8 text-[12px] flex-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                       />
                     </div>
                   </div>
@@ -1581,7 +1582,7 @@ function KitchenSettings({
                     <Input
                       value={config.allergenHighlightColor}
                       onChange={e => updateConfig('allergenHighlightColor', e.target.value)}
-                      className="h-8 text-[12px] flex-1 bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md"
+                      className="h-8 text-[12px] flex-1 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md"
                     />
                   </div>
                 </div>
@@ -1613,7 +1614,7 @@ function KitchenSettings({
                   value={config.printDelaySeconds.toString()}
                   onValueChange={v => updateConfig('printDelaySeconds', parseInt(v))}
                 >
-                  <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                  <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1633,7 +1634,7 @@ function KitchenSettings({
                   value={config.printCopies.toString()}
                   onValueChange={v => updateConfig('printCopies', parseInt(v))}
                 >
-                  <SelectTrigger className="h-8 text-[12px] bg-zinc-900 border-zinc-800 text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-600 rounded-md">
+                  <SelectTrigger className="h-8 text-[12px] bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 focus:border-zinc-300 dark:focus:border-zinc-600 rounded-md">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1768,17 +1769,17 @@ export default function ReceiptSettingsPage() {
   }, [config.showBarcode, sampleOrder.orderNumber]);
 
   return (
-    <div className="flex h-full w-full bg-zinc-950 overflow-hidden font-sans">
+    <div className="flex h-full w-full bg-white dark:bg-zinc-950 overflow-hidden font-sans text-zinc-900 dark:text-zinc-100">
       {/* ── Left Panel: Controls ─────────────────────────────────────────── */}
-      <div className="w-full lg:w-[440px] xl:w-[500px] flex flex-col border-r border-zinc-800 h-full bg-zinc-950">
+      <div className="w-full lg:w-[440px] xl:w-[500px] flex flex-col border-r border-zinc-200 dark:border-zinc-800 h-full bg-zinc-50 dark:bg-zinc-950">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 bg-zinc-950/80 shrink-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700/60 flex items-center justify-center shadow-inner">
-              <Settings2 className="w-4 h-4 text-zinc-300" />
+            <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700/60 flex items-center justify-center shadow-inner">
+              <Settings2 className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
             </div>
             <div>
-              <h2 className="font-semibold text-[14px] leading-none text-white tracking-tight">Print Configuration</h2>
+              <h2 className="font-semibold text-[14px] leading-none text-zinc-950 dark:text-white tracking-tight">Print Configuration</h2>
               <p className="text-[11px] text-zinc-500 mt-1 font-mono">
                 {hasKitchenDisplay ? 'receipt · kitchen ticket' : 'customer receipt'}
               </p>
@@ -1793,27 +1794,27 @@ export default function ReceiptSettingsPage() {
                 : (setKConfig(getDefaultKitchenTicketConfig()),
                   updateKitchenTicketConfig(getDefaultKitchenTicketConfig()))
             }
-            className="h-7 text-[11px] text-zinc-500 hover:text-red-400 hover:bg-red-400/10 gap-1.5 rounded-md border border-transparent hover:border-red-400/20 transition-all"
+            className="h-7 text-[11px] text-zinc-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-400/10 gap-1.5 rounded-md border border-zinc-200 dark:border-transparent hover:border-red-500/20 dark:hover:border-red-400/20 transition-all"
           >
             <RotateCcw className="w-3 h-3" /> Reset
           </Button>
         </div>
 
         {/* Mode Switcher */}
-        <div className="px-5 py-3 border-b border-zinc-800/70 shrink-0 bg-zinc-900/40">
-          <div className="flex gap-1 p-1 bg-zinc-900 rounded-lg border border-zinc-800">
+        <div className="px-5 py-3 border-b border-zinc-200 dark:border-zinc-800/70 shrink-0 bg-zinc-100/40 dark:bg-zinc-900/40">
+          <div className="flex gap-1 p-1 bg-zinc-100 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
             <button
               onClick={() => setMode('receipt')}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 h-8 rounded-md text-[12px] font-medium transition-all duration-150',
                 mode === 'receipt'
-                  ? 'bg-zinc-800 text-white border border-zinc-700/60 shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-300'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white border border-zinc-200 dark:border-zinc-700/60 shadow-sm'
+                  : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
               )}
             >
               <FileText className="w-3.5 h-3.5" />
               Customer Receipt
-              {mode === 'receipt' && <Check className="w-3 h-3 text-blue-400 ml-auto mr-1" />}
+              {mode === 'receipt' && <Check className="w-3 h-3 text-blue-500 dark:text-blue-400 ml-auto mr-1" />}
             </button>
             {hasKitchenDisplay && (
               <button
@@ -1821,20 +1822,20 @@ export default function ReceiptSettingsPage() {
                 className={cn(
                   'flex-1 flex items-center justify-center gap-2 h-8 rounded-md text-[12px] font-medium transition-all duration-150',
                   mode === 'kitchen'
-                    ? 'bg-zinc-800 text-white border border-zinc-700/60 shadow-sm'
-                    : 'text-zinc-500 hover:text-zinc-300'
+                    ? 'bg-white dark:bg-zinc-800 text-zinc-950 dark:text-white border border-zinc-200 dark:border-zinc-700/60 shadow-sm'
+                    : 'text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-300'
                 )}
               >
                 <ChefHat className="w-3.5 h-3.5" />
                 Kitchen Ticket
-                {mode === 'kitchen' && <Check className="w-3 h-3 text-blue-400 ml-auto mr-1" />}
+                {mode === 'kitchen' && <Check className="w-3 h-3 text-blue-500 dark:text-blue-400 ml-auto mr-1" />}
               </button>
             )}
           </div>
         </div>
 
         {/* Scrollable settings panel */}
-        <div className="flex-1 overflow-hidden bg-zinc-950">
+        <div className="flex-1 overflow-hidden bg-white dark:bg-zinc-950">
           {mode === 'receipt' ? (
             <ReceiptSettings config={config} updateConfig={updateConfig} />
           ) : (

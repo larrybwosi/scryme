@@ -139,6 +139,30 @@ export const auth = betterAuth({
         console.error("Redis delete error:", e);
       }
     },
+
+    consume: async (
+      key: string,
+      limit?: number,
+      window?: number,
+    ): Promise<number> => {
+      try {
+        const redis = await getRedisClient();
+
+        // Atomic increment in Redis
+        const current = await redis.incr(key);
+
+        // If this is the first hit, set expiration based on the window (default 60s)
+        if (current === 1) {
+          const ttl = window && window > 0 ? window : 60;
+          await redis.expire(key, ttl);
+        }
+
+        return current;
+      } catch (e: unknown) {
+        console.error("Redis consume error:", e);
+        return 0;
+      }
+    },
   },
   plugins: [
     jwt(),

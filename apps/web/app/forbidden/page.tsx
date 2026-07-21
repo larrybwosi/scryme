@@ -92,7 +92,7 @@ const ForbiddenPage = () => {
 
           {/* Trace ID Copy Section */}
           <div className="flex items-center space-x-2">
-            <code className="relative rounded bg-muted px-[0.5rem] py-[0.3rem] font-mono text-xs font-medium w-full text-center border">
+            <code className="relative rounded bg-muted px-2 py-[0.3rem] font-mono text-xs font-medium w-full text-center border">
               Trace ID: {requestID}
             </code>
             <Button

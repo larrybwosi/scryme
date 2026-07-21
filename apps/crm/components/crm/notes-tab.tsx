@@ -102,7 +102,7 @@ export function NotesTab({ customer }: NotesTabProps) {
       {showForm && (
         <div className="mb-5 bg-card border border-primary/30 rounded-xl p-4">
           <div className="flex items-start gap-3">
-            <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <div className="w-7 h-7 rounded-full bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
               <User size={13} className="text-primary" />
             </div>
             <div className="flex-1">

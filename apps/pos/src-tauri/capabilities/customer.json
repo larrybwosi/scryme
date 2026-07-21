@@ -9,7 +9,7 @@
     "http:default",
     {
       "identifier": "http:default",
-      "allow": [{ "url": "https://dealioerp.vercel.app" }]
+      "allow": [{ "url": "https://api.scryme.tech" }]
     }
   ]
 }

@@ -220,7 +220,7 @@ function PolicyRow({
           {description}
         </p>
       </div>
-      <div className="flex-shrink-0 pt-0.5">{children}</div>
+      <div className="shrink-0 pt-0.5">{children}</div>
     </div>
   );
 }
@@ -662,7 +662,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                         location.
                       </p>
                     </div>
-                    <div className="flex-shrink-0 w-32">
+                    <div className="shrink-0 w-32">
                       <div className="relative">
                         <Input
                           type="number"
