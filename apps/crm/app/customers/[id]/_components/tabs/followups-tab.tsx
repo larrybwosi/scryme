@@ -77,7 +77,7 @@ function FollowUpCard({
         {/* Complete toggle */}
         <button
           onClick={() => !isCompleted && onComplete(followUp.id)}
-          className="mt-0.5 flex-shrink-0"
+          className="mt-0.5 shrink-0"
           aria-label={isCompleted ? "Completed" : "Mark as complete"}
           disabled={isCompleted}
         >
@@ -426,7 +426,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
                     setForm((f) => ({ ...f, recurringInterval: val }))
                   }
                 >
-                  <SelectTrigger className="w-[120px] h-8 bg-background">
+                  <SelectTrigger className="w-30 h-8 bg-background">
                     <SelectValue placeholder="Select interval" />
                   </SelectTrigger>
                   <SelectContent>

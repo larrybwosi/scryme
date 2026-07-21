@@ -190,7 +190,7 @@ impl AuthState {
                 let dev_url = if cfg!(debug_assertions) {
                     "http://localhost:3002"
                 } else {
-                    "https://dealioerp.vercel.app"
+                    "https://api.scryme.tech"
                 };
                 dev_url.to_string()
             };

@@ -236,10 +236,17 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
       },
 
       initializeFromBackend: async () => {
-        const { isInitialized } = get();
+        const { isInitialized, apiUrl } = get();
         if (isInitialized) return;
 
         try {
+          // Synchronize standard/default api url to backend on startup
+          try {
+            await invoke('update_base_url', { baseUrl: apiUrl });
+          } catch (err) {
+            console.error('Failed to sync API URL to backend on initialize:', err);
+          }
+
           // rust struct: SanitizedDeviceConfig { location_id, org_slug, allow_negative_stock }
           const config = await invoke<{ location_id: string; org_slug: string; allow_negative_stock: boolean } | null>(
             'get_device_config'
@@ -290,6 +297,13 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
       provisionDevice: async (setupToken: string) => {
         const { apiUrl } = get();
+        // Always make sure backend has the latest api URL before making authenticated API request
+        try {
+          await invoke('update_base_url', { baseUrl: apiUrl });
+        } catch (err) {
+          console.error('Failed to update base URL in backend during provision:', err);
+        }
+
         const response = await invoke<any>('authenticated_api_request', {
           method: 'POST',
           path: 'api/v2/devices/provision',

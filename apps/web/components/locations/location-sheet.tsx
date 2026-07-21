@@ -203,7 +203,15 @@ export function LocationSheet({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild {...props}>
-        {children}
+        {children ? (
+          React.isValidElement(children) ? (
+            children
+          ) : (
+            <span>{children}</span>
+          )
+        ) : (
+          <Button variant="outline">Open Sheet</Button>
+        )}
       </SheetTrigger>
       <SheetContent
         className="sm:max-w-xl flex flex-col h-dvh p-0"
@@ -735,7 +743,7 @@ export function LocationSheet({
                 onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" className="min-w-[150px]">
+              <Button type="submit" className="min-w-37.5">
                 {isEdit ? "Update Location" : "Create Location"}
               </Button>
             </div>

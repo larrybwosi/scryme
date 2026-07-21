@@ -53,7 +53,7 @@ function FollowUpCard({
         {/* Complete toggle */}
         <button
           onClick={() => !isCompleted && onComplete(followUp.id)}
-          className="mt-0.5 flex-shrink-0"
+          className="mt-0.5 shrink-0"
           aria-label={isCompleted ? 'Completed' : 'Mark as complete'}
           disabled={isCompleted}
         >

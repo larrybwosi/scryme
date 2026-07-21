@@ -548,7 +548,6 @@ export const getDefaultSidebarItems = (businessType: BusinessType): SidebarItem[
   items.push({ id: 'petty-cash', label: 'Petty Cash', icon: 'Banknote', enabled: true });
   items.push({ id: 'pricing', label: 'Pricing', icon: 'Banknote', enabled: false });
   items.push({ id: 'barcodes', label: 'Barcodes', icon: 'Barcode', enabled: true });
-  items.push({ id: 'barcode-registration', label: 'Register Barcodes', icon: 'QrCode', enabled: true });
   items.push({ id: 'stock-acceptance', label: 'Stock Acceptance', icon: 'Package', enabled: false });
   items.push({ id: 'stock-transfer', label: 'Stock Transfer', icon: 'Package', enabled: false });
   items.push({ id: 'stock-request', label: 'Stock Request', icon: 'ClipboardList', enabled: false });

@@ -79,7 +79,7 @@ export function KanbanBoardView() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Page Header */}
-      <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
+      <div className="shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-[17px] font-bold text-foreground tracking-tight">
