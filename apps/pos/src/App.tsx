@@ -18,9 +18,7 @@ const CustomersPage = lazy(() => import('@/pages/customers-page'));
 const ManageTablesPage = import.meta.env.VITE_BUSINESS_MODE === 'restaurant' || !import.meta.env.VITE_BUSINESS_MODE
   ? lazy(() => import('@/pages/manage-tables-page'))
   : () => null;
-const CashDrawerPage = lazy(() => import('@/pages/cash-drawer-page'));
 const PettyCashPage = lazy(() => import('@/pages/petty-cash-page'));
-const TillManagementPage = lazy(() => import('@/pages/till-management-page'));
 const ReceiptSettingsPage = lazy(() => import('@/pages/receipt-settings-page'));
 const PendingTransactionsPage = lazy(() => import('@/pages/pending-transactions'));
 const CreateOrderPage = lazy(() => import('@/pages/create-order'));
@@ -139,9 +137,9 @@ const AppRoutes = () => {
         {import.meta.env.MODE !== 'standalone' && (
           <>
             <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/cash-drawer" element={<CashDrawerPage />} />
+            <Route path="/cash-drawer" element={<ShiftManager />} />
             <Route path="/petty-cash" element={<PettyCashPage />} />
-            <Route path="/till-management" element={<TillManagementPage />} />
+            <Route path="/till-management" element={<ShiftManager />} />
             <Route path="/pending-transactions" element={<PendingTransactionsPage />} />
             <Route path="/create-order" element={<CreateOrderPage />} />
           </>
