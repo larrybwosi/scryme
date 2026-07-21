@@ -155,7 +155,7 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
   });
 
   return (
-    <aside className="w-[300px] flex-shrink-0 flex flex-col gap-4">
+    <aside className="w-[300px] shrink-0 flex flex-col gap-4">
       {/* Identity Card */}
       <div className="bg-card rounded-xl border border-border p-5">
         <div className="flex items-start justify-between mb-4">
@@ -222,7 +222,7 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
 
         <div className="space-y-2.5">
           <div className="flex items-center gap-2.5 text-[12.5px]">
-            <Mail size={13} className="text-muted-foreground flex-shrink-0" />
+            <Mail size={13} className="text-muted-foreground shrink-0" />
             <a
               href={`mailto:${customer.email || ""}`}
               className="text-primary hover:underline truncate"
@@ -231,13 +231,13 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
             </a>
           </div>
           <div className="flex items-center gap-2.5 text-[12.5px]">
-            <Phone size={13} className="text-muted-foreground flex-shrink-0" />
+            <Phone size={13} className="text-muted-foreground shrink-0" />
             <span className="text-foreground">{customer.phone || "N/A"}</span>
           </div>
           <div className="flex items-start gap-2.5 text-[12.5px]">
             <MapPin
               size={13}
-              className="text-muted-foreground flex-shrink-0 mt-0.5"
+              className="text-muted-foreground shrink-0 mt-0.5"
             />
             <span className="text-muted-foreground">{addressString}</span>
           </div>
@@ -245,7 +245,7 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
             <div className="flex items-center gap-2.5 text-[12.5px]">
               <ExternalLink
                 size={13}
-                className="text-muted-foreground flex-shrink-0"
+                className="text-muted-foreground shrink-0"
               />
               <span className="text-muted-foreground">
                 Default Branch:{" "}
@@ -258,7 +258,7 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
           <div className="flex items-start gap-2.5 text-[12.5px] border-t border-border/60 pt-2.5 mt-2">
             <Clock
               size={13}
-              className="text-muted-foreground flex-shrink-0 mt-0.5"
+              className="text-muted-foreground shrink-0 mt-0.5"
             />
             <div className="text-[12px]">
               <div className="text-muted-foreground">
@@ -315,7 +315,7 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
         <div className="space-y-3.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                 <DollarSign size={13} className="text-primary" />
               </div>
               <span className="text-[12.5px] text-muted-foreground truncate">
@@ -328,20 +328,20 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-status-info/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-status-info/10 flex items-center justify-center shrink-0">
                 <ShoppingCart size={13} className="text-status-info" />
               </div>
               <span className="text-[12.5px] text-muted-foreground truncate">
                 Total Orders
               </span>
             </div>
-            <span className="text-[13px] font-bold text-foreground flex-shrink-0">
+            <span className="text-[13px] font-bold text-foreground shrink-0">
               {totalOrders}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-status-warning/10 flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-status-warning/10 flex items-center justify-center shrink-0">
                 <FileText size={13} className="text-status-warning" />
               </div>
               <span className="text-[12.5px] text-muted-foreground truncate">
@@ -350,7 +350,7 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
             </div>
             <span
               className={cn(
-                "text-[13px] font-bold flex-shrink-0",
+                "text-[13px] font-bold shrink-0",
                 openInvoices > 0 ? "text-destructive" : "text-foreground",
               )}
             >
@@ -359,14 +359,14 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+              <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0">
                 <Star size={13} className="text-amber-500" />
               </div>
               <span className="text-[12.5px] text-muted-foreground truncate">
                 Loyalty Points
               </span>
             </div>
-            <span className="text-[13px] font-bold text-foreground flex-shrink-0">
+            <span className="text-[13px] font-bold text-foreground shrink-0">
               {customer.loyaltyPoints.toLocaleString()}
             </span>
           </div>

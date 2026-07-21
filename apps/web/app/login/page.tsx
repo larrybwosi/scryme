@@ -147,7 +147,7 @@ const ComplianceBadge = ({
 }) => (
   <div
     className={cn(
-      "absolute px-3 py-1.5 bg-white/[0.06] backdrop-blur-sm border border-white/15 rounded-md shadow-lg hidden lg:block",
+      "absolute px-3 py-1.5 bg-white/6 backdrop-blur-sm border border-white/15 rounded-md shadow-lg hidden lg:block",
       mono.className,
       className,
     )}>
@@ -645,9 +645,9 @@ const LoginPageContent = () => {
         <ComplianceBadge label="ISO 27001" className="top-40 right-32" />
         <ComplianceBadge
           label="GDPR Ready"
-          className="bottom-[19rem] left-12"
+          className="bottom-76 left-12"
         />
-        <ComplianceBadge label="KYB Verified" className="top-[15rem] left-16" />
+        <ComplianceBadge label="KYB Verified" className="top-60 left-16" />
 
         {/* Session micro-label */}
         <div

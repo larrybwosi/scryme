@@ -169,7 +169,7 @@ export function DashboardView() {
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar bg-muted/20">
       {/* Page Header */}
-      <div className="flex-shrink-0 border-b border-border bg-card/70 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
+      <div className="shrink-0 border-b border-border bg-card/70 backdrop-blur-sm px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-[17px] font-bold text-foreground tracking-tight">
@@ -366,7 +366,7 @@ export function DashboardView() {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <span
-                        className="w-2 h-2 rounded-full flex-shrink-0"
+                        className="w-2 h-2 rounded-full shrink-0"
                         style={{
                           backgroundColor:
                             SOURCE_COLORS[i % SOURCE_COLORS.length],
@@ -376,7 +376,7 @@ export function DashboardView() {
                         {entry.name}
                       </span>
                     </div>
-                    <span className="font-medium text-foreground flex-shrink-0">
+                    <span className="font-medium text-foreground shrink-0">
                       {pct}%
                     </span>
                   </div>
@@ -478,7 +478,7 @@ export function DashboardView() {
                     <div key={i} className="flex items-center gap-3">
                       <div
                         className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center font-semibold text-[11px] flex-shrink-0",
+                          "w-8 h-8 rounded-full flex items-center justify-center font-semibold text-[11px] shrink-0",
                           act.type === "customer"
                             ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40"
                             : "bg-blue-100 text-blue-600 dark:bg-blue-950/40",
@@ -494,7 +494,7 @@ export function DashboardView() {
                           {act.action}
                         </p>
                       </div>
-                      <div className="text-[10.5px] text-muted-foreground whitespace-nowrap flex-shrink-0">
+                      <div className="text-[10.5px] text-muted-foreground whitespace-nowrap shrink-0">
                         {formatDistanceToNow(new Date(act.createdAt), {
                           addSuffix: true,
                         })}

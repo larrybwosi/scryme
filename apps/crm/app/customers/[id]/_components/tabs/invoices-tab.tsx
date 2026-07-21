@@ -74,7 +74,7 @@ function InvoiceRow({ invoice, currency = "USD" }: { invoice: any; currency?: st
         {/* Icon */}
         <div
           className={cn(
-            "w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
+            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
             isOverdue ? "bg-destructive/10" : "bg-primary/10",
           )}
         >
@@ -99,7 +99,7 @@ function InvoiceRow({ invoice, currency = "USD" }: { invoice: any; currency?: st
         </div>
 
         {/* Amount */}
-        <div className="text-right flex-shrink-0">
+        <div className="text-right shrink-0">
           <p className="text-[13.5px] font-bold text-foreground">
             {formatCurrency(invoice.grandTotal, currency)}
           </p>

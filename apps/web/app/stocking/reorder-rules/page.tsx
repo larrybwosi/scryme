@@ -148,7 +148,7 @@ export default async function ReorderRulesPage() {
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3">
-        <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
+        <AlertCircle className="text-amber-600 shrink-0" size={20} />
         <div>
           <h4 className="text-sm font-bold text-amber-900">
             How Reorder Rules Work

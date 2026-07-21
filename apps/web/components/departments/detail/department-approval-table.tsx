@@ -104,7 +104,7 @@ export function DepartmentApprovalTable({ departmentId, chains, members }: Depar
                         >
                           {idx + 1}
                         </div>
-                        {idx < chain.steps.length - 1 && <div className="w-2 h-[1px] bg-gray-300" />}
+                        {idx < chain.steps.length - 1 && <div className="w-2 h-px bg-gray-300" />}
                       </React.Fragment>
                     ))}
                   </div>

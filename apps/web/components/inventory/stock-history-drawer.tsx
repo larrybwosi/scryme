@@ -57,7 +57,7 @@ export function StockHistoryDrawer({
           {isLoading ? (
             <div className="text-center py-10">Loading history...</div>
           ) : history.length > 0 ? (
-            <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-200">
+            <div className="space-y-6 relative before:absolute before:left-2 before:top-2 before:bottom-2 before:w-px before:bg-gray-200">
               {history.map(item => (
                 <div key={item.id} className="relative pl-8">
                   <div className="absolute left-0 top-1 w-4 h-4 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center">

@@ -187,7 +187,7 @@ function DetailViewInner({ company, currency = "USD" }: CompanyDetailViewProps) 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Top bar */}
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-card flex-shrink-0">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-border bg-card shrink-0">
         <Link
           href="/companies"
           className="flex items-center gap-1.5 text-[12.5px] font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -201,7 +201,7 @@ function DetailViewInner({ company, currency = "USD" }: CompanyDetailViewProps) 
 
       <div className="flex flex-1 overflow-hidden">
         {/* Company Info Panel */}
-        <div className="w-[320px] flex-shrink-0 border-r border-border overflow-y-auto p-6 custom-scrollbar">
+        <div className="w-[320px] shrink-0 border-r border-border overflow-y-auto p-6 custom-scrollbar">
            <div className="space-y-6">
               <div className="flex flex-col items-center text-center">
                  {company.logoUrl ? (

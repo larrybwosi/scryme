@@ -123,7 +123,7 @@ export function MultiMemberSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[--radix-popover-trigger-width] p-0"
+        className="w-(--radix-popover-trigger-width) p-0"
         align="start">
         <Command>
           <CommandInput placeholder="Search member by name or email..." />

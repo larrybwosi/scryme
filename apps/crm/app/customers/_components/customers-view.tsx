@@ -273,7 +273,7 @@ export function CustomersView() {
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
       {/* Page Header */}
-      <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
+      <div className="shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-[17px] font-bold text-foreground tracking-tight">
@@ -445,7 +445,7 @@ export function CustomersView() {
                           href={`/customers/${customer.id}`}
                           className="flex items-center gap-3"
                         >
-                          <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] flex-shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] shrink-0">
                             {customer.name.charAt(0).toUpperCase()}
                           </div>
                           <div>

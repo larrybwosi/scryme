@@ -3,6 +3,7 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   MemberRole,
   PettyCashFund,
@@ -10,9 +11,12 @@ import {
   PettyCashTransactionType,
 } from "@repo/db/client";
 
-async function checkPermission(allowedRoles: MemberRole[]) {
+async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId || !auth.memberId) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=unauthenticated");
+    }
     throw new Error("Unauthorized");
   }
 
@@ -21,6 +25,9 @@ async function checkPermission(allowedRoles: MemberRole[]) {
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=insufficient_permissions");
+    }
     throw new Error("Forbidden: Insufficient permissions");
   }
 
@@ -33,7 +40,7 @@ export async function getPettyCashFunds() {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   return await db.pettyCashFund.findMany({
     where: { organizationId: auth.organizationId },
@@ -126,7 +133,7 @@ export async function getPettyCashTransactions(fundId: string) {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   return await db.pettyCashTransaction.findMany({
     where: { fundId },
