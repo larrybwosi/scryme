@@ -24,9 +24,10 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
   });
 
   const isAuthRoute = authRoutes.includes(pathname);
+  const isBypassedFromLoginCheck = ["/unauthorized"].includes(pathname);
 
   if (!session) {
-    if (isAuthRoute) {
+    if (isAuthRoute || isBypassedFromLoginCheck) {
       return NextResponse.next();
     }
     return NextResponse.redirect(new URL("/login", request.url));
