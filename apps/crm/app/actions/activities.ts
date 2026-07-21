@@ -6,7 +6,6 @@ import {
   type CrmActivityFormValues,
 } from "../../lib/validations";
 import { revalidatePath } from "next/cache";
-import { getCurrentMember } from "./auth";
 import { getServerAuth } from "@repo/auth/server";
 import { redirect } from "next/navigation";
 
@@ -18,10 +17,6 @@ export async function createActivity(data: CrmActivityFormValues) {
   const organizationId = auth.organizationId;
 
   let activeMemberId = auth.memberId;
-  if (!activeMemberId) {
-    const currentMember = await getCurrentMember();
-    activeMemberId = currentMember?.id || undefined;
-  }
 
   const activity = await db.crmActivity.create({
     data: {
