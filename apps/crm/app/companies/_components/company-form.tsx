@@ -109,7 +109,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
   };
 
   return (
-    <div className="w-full max-w-screen-2xl mx-auto px-6 lg:px-8 py-8">
+    <div className="w-full max-w-(--breakpoint-2xl) mx-auto px-6 lg:px-8 py-8">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           {/* Header */}
@@ -132,17 +132,17 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
               </div>
             </div>
             {isEnterprise && (
-              <Badge className="shrink-0 bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-1.5 rounded-full font-medium shadow-sm hover:shadow-md transition-shadow">
+              <Badge className="shrink-0 bg-linear-to-r from-blue-500 to-purple-500 text-white px-4 py-1.5 rounded-full font-medium shadow-sm hover:shadow-md transition-shadow">
                 <Shield className="h-3.5 w-3.5 mr-1.5" /> Enterprise
               </Badge>
             )}
           </div>
 
-          <Separator className="bg-gradient-to-r from-border via-border to-transparent" />
+          <Separator className="bg-linear-to-r from-border via-border to-transparent" />
 
           {/* Profile Card - Expanded layout */}
           <Card className="shadow-sm border-border/50">
-            <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
+            <CardHeader className="bg-linear-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
               <div className="flex items-center gap-2">
                 <Building2 className="h-5 w-5 text-primary" />
                 <CardTitle className="text-lg font-semibold">
@@ -268,7 +268,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
 
           {/* Commercial Terms Card */}
           <Card className="shadow-sm border-border/50">
-            <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
+            <CardHeader className="bg-linear-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
               <div className="flex items-center gap-2">
                 <Percent className="h-5 w-5 text-primary" />
                 <CardTitle className="text-lg font-semibold">
@@ -346,7 +346,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                     control={form.control}
                     name="isEnterprise"
                     render={({ field }) => (
-                      <FormItem className="md:col-span-2 flex items-center justify-between rounded-xl border border-border/50 p-4 bg-gradient-to-r from-slate-50/30 to-transparent hover:bg-slate-50/50 transition-colors">
+                      <FormItem className="md:col-span-2 flex items-center justify-between rounded-xl border border-border/50 p-4 bg-linear-to-r from-slate-50/30 to-transparent hover:bg-slate-50/50 transition-colors">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <Shield className="h-4 w-4 text-primary" />
@@ -371,7 +371,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                   />
 
                   {isEnterprise && (
-                    <div className="md:col-span-2 flex items-center justify-between rounded-xl border border-border/50 p-4 bg-gradient-to-r from-blue-50/30 to-transparent">
+                    <div className="md:col-span-2 flex items-center justify-between rounded-xl border border-border/50 p-4 bg-linear-to-r from-blue-50/30 to-transparent">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-blue-500" />
@@ -399,7 +399,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
 
           {/* Contacts Card - Expanded column support */}
           <Card className="shadow-sm border-border/50">
-            <CardHeader className="bg-gradient-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
+            <CardHeader className="bg-linear-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
@@ -553,7 +553,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
             </CardContent>
           </Card>
 
-          <Separator className="bg-gradient-to-r from-border via-border to-transparent" />
+          <Separator className="bg-linear-to-r from-border via-border to-transparent" />
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-4 pt-2 pb-4">
@@ -568,7 +568,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
             <Button
               type="submit"
               disabled={form.formState.isSubmitting}
-              className="h-11 px-8 text-[14px] font-medium min-w-[180px] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/60 transition-all shadow-sm hover:shadow-md"
+              className="h-11 px-8 text-[14px] font-medium min-w-[180px] bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/60 transition-all shadow-sm hover:shadow-md"
             >
               {form.formState.isSubmitting ? (
                 <>

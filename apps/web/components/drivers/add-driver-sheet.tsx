@@ -92,7 +92,7 @@ export function AddDriverSheet({ children }: { children: React.ReactNode }) {
       <SheetContent className="sm:max-w-[500px] p-0 overflow-hidden">
         <div className="h-full flex flex-col">
           {/* Header */}
-          <div className="px-6 pt-6 pb-4 border-b border-border/50 bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="px-6 pt-6 pb-4 border-b border-border/50 bg-linear-to-r from-primary/5 to-transparent">
             <SheetHeader className="space-y-1">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-primary/10">

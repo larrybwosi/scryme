@@ -25,7 +25,6 @@ import {
   Briefcase,
   Calendar,
   Heart,
-  Users,
   Loader2,
   Mail,
 } from "lucide-react";
@@ -143,456 +142,507 @@ export function StaffSettings({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <form onSubmit={handleUpdate} className="space-y-6">
-          <Card className="border-none shadow-sm bg-white">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <User size={20} className="text-[#34A853]" />
-                Personal Information
-              </CardTitle>
-              <CardDescription>
-                Manage staff personal details and contact information.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Profile Image</Label>
-                <ImageUpload
-                  value={form.image ? [form.image] : []}
-                  onChange={urls => setForm({ ...form, image: urls[0] || "" })}
-                  maxImages={1}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
-                  <div className="relative">
-                    <User
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                    <Input
-                      id="name"
-                      className="pl-10"
-                      placeholder="e.g. John Doe"
-                      value={form.name}
-                      onChange={e =>
-                        setForm({ ...form, name: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <div className="relative">
-                    <Mail
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                    <Input
-                      id="email"
-                      type="email"
-                      className="pl-10"
-                      placeholder="e.g. john@example.com"
-                      value={form.email}
-                      onChange={e =>
-                        setForm({ ...form, email: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <div className="relative">
-                    <Phone
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                    <Input
-                      id="phone"
-                      className="pl-10"
-                      placeholder="+254..."
-                      value={form.phone}
-                      onChange={e =>
-                        setForm({ ...form, phone: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
-                  <Select
-                    value={form.gender || undefined}
-                    onValueChange={val => setForm({ ...form, gender: val })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="MALE">Male</SelectItem>
-                      <SelectItem value="FEMALE">Female</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
-                      <SelectItem value="PREFER_NOT_TO_SAY">
-                        Prefer not to say
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="age">Age / Date of Birth</Label>
-                  <div className="relative">
-                    <Hash
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                    <Input
-                      id="age"
-                      className="pl-10"
-                      placeholder="e.g. 25"
-                      value={form.age}
-                      onChange={e => setForm({ ...form, age: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tags">Tags (Comma separated)</Label>
-                  <div className="relative">
-                    <Tag
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                    <Input
-                      id="tags"
-                      className="pl-10"
-                      placeholder="Shift A, Morning, Delivery"
-                      value={form.tags}
-                      onChange={e => setForm({ ...form, tags: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <div className="relative">
-                  <Home
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={16}
-                  />
-                  <Input
-                    id="address"
-                    className="pl-10"
-                    placeholder="Full residential address"
-                    value={form.address}
-                    onChange={e =>
-                      setForm({ ...form, address: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm bg-white">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Briefcase size={20} className="text-blue-500" />
-                Employment Details
-              </CardTitle>
-              <CardDescription>
-                Corporate position and employment contract information.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="jobTitle">Job Title</Label>
-                  <div className="relative">
-                    <Briefcase
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                    <Input
-                      id="jobTitle"
-                      className="pl-10"
-                      placeholder="e.g. Senior Accountant"
-                      value={form.jobTitle}
-                      onChange={e =>
-                        setForm({ ...form, jobTitle: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="employmentType">Employment Type</Label>
-                  <Select
-                    value={form.employmentType || undefined}
-                    onValueChange={val =>
-                      setForm({ ...form, employmentType: val })
-                    }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="FULL_TIME">Full-time</SelectItem>
-                      <SelectItem value="PART_TIME">Part-time</SelectItem>
-                      <SelectItem value="CONTRACT">Contract</SelectItem>
-                      <SelectItem value="INTERN">Intern</SelectItem>
-                      <SelectItem value="TEMPORARY">Temporary</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="joiningDate">Joining Date</Label>
-                  <div className="relative">
-                    <Calendar
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                      size={16}
-                    />
-                    <Input
-                      id="joiningDate"
-                      type="date"
-                      className="pl-10"
-                      value={form.joiningDate}
-                      onChange={e =>
-                        setForm({ ...form, joiningDate: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="manager">Reporting Manager</Label>
-                  <Select
-                    value={form.managerId || "none"}
-                    onValueChange={val => setForm({ ...form, managerId: val === "none" ? "" : val })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select manager" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No Manager</SelectItem>
-                      {allMembers
-                        .filter(m => m.id !== member.id)
-                        .map(m => (
-                          <SelectItem key={m.id} value={m.id}>
-                            {m.user?.name || m.user?.email}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none shadow-sm bg-white">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold flex items-center gap-2">
-                <Heart size={20} className="text-rose-500" />
-                Emergency Contact
-              </CardTitle>
-              <CardDescription>
-                Primary contact in case of an emergency.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="emergencyName">Contact Name</Label>
-                  <Input
-                    id="emergencyName"
-                    placeholder="Full Name"
-                    value={form.emergencyContactName}
-                    onChange={e =>
-                      setForm({ ...form, emergencyContactName: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="emergencyPhone">Contact Phone</Label>
-                  <Input
-                    id="emergencyPhone"
-                    placeholder="+254..."
-                    value={form.emergencyContactPhone}
-                    onChange={e =>
-                      setForm({
-                        ...form,
-                        emergencyContactPhone: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="emergencyRelation">Relationship</Label>
-                <Input
-                  id="emergencyRelation"
-                  placeholder="e.g. Spouse, Parent, Sibling"
-                  value={form.emergencyContactRelation}
-                  onChange={e =>
-                    setForm({
-                      ...form,
-                      emergencyContactRelation: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              disabled={loading}
-              className="gap-2 bg-[#1D1D1F]">
-              <Save size={16} />
-              {loading ? "Saving..." : "Save Changes"}
-            </Button>
+    <div className="">
+      <form onSubmit={handleUpdate} className="">
+        {/* Sticky header with Save button */}
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 bg-[#F8F9FB]/95 backdrop-blur-sm border-b border-gray-100 px-1 py-3 mb-6">
+          <div>
+            <h2 className="text-base font-bold text-gray-900">
+              Staff Settings
+            </h2>
+            <p className="text-xs text-gray-500">
+              {form.name || member.user?.email || "Manage staff details"}
+            </p>
           </div>
-        </form>
+          <Button
+            type="submit"
+            disabled={loading}
+            className="gap-2 bg-[#1D1D1F]">
+            {loading ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
 
-        <Card className="border-none shadow-sm bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <Lock size={20} className="text-red-500" />
-              Security
-            </CardTitle>
-            <CardDescription>
-              Advanced account security settings.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between p-4 rounded-xl border border-red-100 bg-red-50/30">
-              <div className="space-y-1">
-                <p className="font-semibold text-sm">Reset Account Password</p>
-                <p className="text-xs text-gray-500">
-                  This will generate a new random password for the user.
-                </p>
-              </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setShowResetConfirm(true)}
-                disabled={resettingPassword}
-                className="gap-2">
-                <RefreshCcw size={14} />
-                Reset Password
-              </Button>
+        {/* Scrollable content */}
+        <div className="flex-1 min-h-0 overflow-y-auto pb-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="lg:col-span-2 space-y-6">
+              <Card className="border-none shadow-sm bg-white">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <User size={20} className="text-[#34A853]" />
+                    Personal Information
+                  </CardTitle>
+                  <CardDescription>
+                    Manage staff personal details and contact information.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Profile Image</Label>
+                    <ImageUpload
+                      value={form.image ? [form.image] : []}
+                      onChange={urls =>
+                        setForm({ ...form, image: urls[0] || "" })
+                      }
+                      maxImages={1}
+                    />
+                  </div>
 
-              <AlertDialog
-                open={showResetConfirm}
-                onOpenChange={setShowResetConfirm}>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will reset the member&apos;s password and generate a
-                      new random one. The current password will no longer work.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel disabled={resettingPassword}>
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={e => {
-                        e.preventDefault();
-                        handleResetPassword();
-                      }}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Full Name</Label>
+                      <div className="relative">
+                        <User
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={16}
+                        />
+                        <Input
+                          id="name"
+                          className="pl-10"
+                          placeholder="e.g. John Doe"
+                          value={form.name}
+                          onChange={e =>
+                            setForm({ ...form, name: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email Address</Label>
+                      <div className="relative">
+                        <Mail
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={16}
+                        />
+                        <Input
+                          id="email"
+                          type="email"
+                          className="pl-10"
+                          placeholder="e.g. john@example.com"
+                          value={form.email}
+                          onChange={e =>
+                            setForm({ ...form, email: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone Number</Label>
+                      <div className="relative">
+                        <Phone
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={16}
+                        />
+                        <Input
+                          id="phone"
+                          className="pl-10"
+                          placeholder="+254..."
+                          value={form.phone}
+                          onChange={e =>
+                            setForm({ ...form, phone: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="gender">Gender</Label>
+                      <Select
+                        value={form.gender || undefined}
+                        onValueChange={val =>
+                          setForm({ ...form, gender: val })
+                        }>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MALE">Male</SelectItem>
+                          <SelectItem value="FEMALE">Female</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
+                          <SelectItem value="PREFER_NOT_TO_SAY">
+                            Prefer not to say
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="age">Age / Date of Birth</Label>
+                      <div className="relative">
+                        <Hash
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={16}
+                        />
+                        <Input
+                          id="age"
+                          className="pl-10"
+                          placeholder="e.g. 25"
+                          value={form.age}
+                          onChange={e =>
+                            setForm({ ...form, age: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="tags">Tags (Comma separated)</Label>
+                      <div className="relative">
+                        <Tag
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={16}
+                        />
+                        <Input
+                          id="tags"
+                          className="pl-10"
+                          placeholder="Shift A, Morning, Delivery"
+                          value={form.tags}
+                          onChange={e =>
+                            setForm({ ...form, tags: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <div className="relative">
+                      <Home
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        size={16}
+                      />
+                      <Input
+                        id="address"
+                        className="pl-10"
+                        placeholder="Full residential address"
+                        value={form.address}
+                        onChange={e =>
+                          setForm({ ...form, address: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-none shadow-sm bg-white">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Briefcase size={20} className="text-blue-500" />
+                    Employment Details
+                  </CardTitle>
+                  <CardDescription>
+                    Corporate position and employment contract information.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="jobTitle">Job Title</Label>
+                      <div className="relative">
+                        <Briefcase
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={16}
+                        />
+                        <Input
+                          id="jobTitle"
+                          className="pl-10"
+                          placeholder="e.g. Senior Accountant"
+                          value={form.jobTitle}
+                          onChange={e =>
+                            setForm({ ...form, jobTitle: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="employmentType">Employment Type</Label>
+                      <Select
+                        value={form.employmentType || undefined}
+                        onValueChange={val =>
+                          setForm({ ...form, employmentType: val })
+                        }>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="FULL_TIME">Full-time</SelectItem>
+                          <SelectItem value="PART_TIME">Part-time</SelectItem>
+                          <SelectItem value="CONTRACT">Contract</SelectItem>
+                          <SelectItem value="INTERN">Intern</SelectItem>
+                          <SelectItem value="TEMPORARY">Temporary</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="joiningDate">Joining Date</Label>
+                      <div className="relative">
+                        <Calendar
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          size={16}
+                        />
+                        <Input
+                          id="joiningDate"
+                          type="date"
+                          className="pl-10"
+                          value={form.joiningDate}
+                          onChange={e =>
+                            setForm({ ...form, joiningDate: e.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="manager">Reporting Manager</Label>
+                      <Select
+                        value={form.managerId || "none"}
+                        onValueChange={val =>
+                          setForm({
+                            ...form,
+                            managerId: val === "none" ? "" : val,
+                          })
+                        }>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select manager" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Manager</SelectItem>
+                          {allMembers
+                            .filter(m => m.id !== member.id)
+                            .map(m => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.user?.name || m.user?.email}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-none shadow-sm bg-white">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Heart size={20} className="text-rose-500" />
+                    Emergency Contact
+                  </CardTitle>
+                  <CardDescription>
+                    Primary contact in case of an emergency.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyName">Contact Name</Label>
+                      <Input
+                        id="emergencyName"
+                        placeholder="Full Name"
+                        value={form.emergencyContactName}
+                        onChange={e =>
+                          setForm({
+                            ...form,
+                            emergencyContactName: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="emergencyPhone">Contact Phone</Label>
+                      <Input
+                        id="emergencyPhone"
+                        placeholder="+254..."
+                        value={form.emergencyContactPhone}
+                        onChange={e =>
+                          setForm({
+                            ...form,
+                            emergencyContactPhone: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="emergencyRelation">Relationship</Label>
+                    <Input
+                      id="emergencyRelation"
+                      placeholder="e.g. Spouse, Parent, Sibling"
+                      value={form.emergencyContactRelation}
+                      onChange={e =>
+                        setForm({
+                          ...form,
+                          emergencyContactRelation: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-none shadow-sm bg-white">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <Lock size={20} className="text-red-500" />
+                    Security
+                  </CardTitle>
+                  <CardDescription>
+                    Advanced account security settings.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-red-100 bg-red-50/30">
+                    <div className="space-y-1">
+                      <p className="font-semibold text-sm">
+                        Reset Account Password
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        This will generate a new random password for the user.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setShowResetConfirm(true)}
                       disabled={resettingPassword}
-                      className="bg-red-600 hover:bg-red-700">
-                      {resettingPassword ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Resetting...
-                        </>
-                      ) : (
-                        "Reset Password"
-                      )}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                      className="gap-2">
+                      <RefreshCcw size={14} />
+                      Reset Password
+                    </Button>
 
-      <div className="space-y-6">
-        <Card className="border-none shadow-sm bg-white">
-          <CardHeader>
-            <CardTitle className="text-lg font-bold flex items-center gap-2">
-              <CreditCard size={20} className="text-orange-500" />
-              Identification
-            </CardTitle>
-            <CardDescription>
-              Configure POS and access credentials.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Card ID</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Scan or enter card ID"
-                  value={form.cardId}
-                  onChange={e => setForm({ ...form, cardId: e.target.value })}
-                />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleGenerateCard}
-                      type="button"
-                      aria-label="Generate random Card ID">
-                      <RefreshCcw size={16} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Generate random Card ID</TooltipContent>
-                </Tooltip>
-              </div>
+                    <AlertDialog
+                      open={showResetConfirm}
+                      onOpenChange={setShowResetConfirm}>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Are you absolutely sure?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will reset the member&apos;s password and
+                            generate a new random one. The current password will
+                            no longer work.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={resettingPassword}>
+                            Cancel
+                          </AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={e => {
+                              e.preventDefault();
+                              handleResetPassword();
+                            }}
+                            disabled={resettingPassword}
+                            className="bg-red-600 hover:bg-red-700">
+                            {resettingPassword ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Resetting...
+                              </>
+                            ) : (
+                              "Reset Password"
+                            )}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <div className="space-y-2">
-              <Label>PIN Code (6 digits)</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="password"
-                  maxLength={6}
-                  placeholder="Set new PIN"
-                  value={form.pin}
-                  onChange={e => setForm({ ...form, pin: e.target.value })}
-                />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={handleGeneratePin}
-                      type="button"
-                      aria-label="Generate random 6-digit PIN">
-                      <Key size={16} />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Generate random 6-digit PIN</TooltipContent>
-                </Tooltip>
-              </div>
-              <p className="text-[10px] text-gray-500">
-                Staff will use this PIN to log in to the POS and perform
-                sensitive actions.
-              </p>
+
+            <div className="space-y-6 lg:sticky lg:top-[72px] self-start">
+              <Card className="border-none shadow-sm bg-white">
+                <CardHeader>
+                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                    <CreditCard size={20} className="text-orange-500" />
+                    Identification
+                  </CardTitle>
+                  <CardDescription>
+                    Configure POS and access credentials.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Card ID</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Scan or enter card ID"
+                        value={form.cardId}
+                        onChange={e =>
+                          setForm({ ...form, cardId: e.target.value })
+                        }
+                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleGenerateCard}
+                            type="button"
+                            aria-label="Generate random Card ID">
+                            <RefreshCcw size={16} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Generate random Card ID</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>PIN Code (6 digits)</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        type="password"
+                        maxLength={6}
+                        placeholder="Set new PIN"
+                        value={form.pin}
+                        onChange={e =>
+                          setForm({ ...form, pin: e.target.value })
+                        }
+                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={handleGeneratePin}
+                            type="button"
+                            aria-label="Generate random 6-digit PIN">
+                            <Key size={16} />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          Generate random 6-digit PIN
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className="text-[10px] text-gray-500">
+                      Staff will use this PIN to log in to the POS and perform
+                      sensitive actions.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }

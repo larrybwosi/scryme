@@ -133,7 +133,7 @@ export function ActivitiesTab({ customer }: ActivitiesTabProps) {
           description="Activity will appear here as you interact with this customer."
         />
       ) : (
-        <div className="relative space-y-6 before:absolute before:inset-0 before:ml-4 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-border before:via-border before:to-transparent">
+        <div className="relative space-y-6 before:absolute before:inset-0 before:ml-4 before:-translate-x-px before:h-full before:w-0.5 before:bg-linear-to-b before:from-border before:via-border before:to-transparent">
           {activities.map((activity: any, idx: number) => {
             const Icon = ACTIVITY_ICONS[activity.type] || Activity;
             const colorClass = ACTIVITY_COLORS[activity.type] || 'text-muted-foreground bg-muted';
@@ -141,7 +141,7 @@ export function ActivitiesTab({ customer }: ActivitiesTabProps) {
             return (
               <div key={activity.id} className="relative flex items-start gap-4">
                 <div className={cn(
-                  "relative z-10 w-8 h-8 rounded-full border-4 border-background flex items-center justify-center flex-shrink-0 shadow-sm",
+                  "relative z-10 w-8 h-8 rounded-full border-4 border-background flex items-center justify-center shrink-0 shadow-sm",
                   colorClass
                 )}>
                   <Icon size={14} />

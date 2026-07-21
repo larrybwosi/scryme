@@ -69,7 +69,7 @@ function ConversationCard({ convo }: { convo: any }) {
         className="w-full flex items-start gap-4 px-5 py-4 text-left hover:bg-accent/50 transition-colors"
       >
         {/* Channel icon */}
-        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
+        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0 mt-0.5">
           <Icon size={14} className="text-muted-foreground" />
         </div>
 
@@ -95,7 +95,7 @@ function ConversationCard({ convo }: { convo: any }) {
         </div>
 
         {/* Meta */}
-        <div className="text-right flex-shrink-0 ml-2">
+        <div className="text-right shrink-0 ml-2">
           <p className="text-[12px] font-medium text-foreground">
             {formatDate(convo.createdAt)}
           </p>

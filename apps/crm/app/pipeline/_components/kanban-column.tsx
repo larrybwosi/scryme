@@ -105,20 +105,20 @@ export function KanbanColumn({
       )}
     >
       {/* Column Header */}
-      <div className="px-3.5 pt-3.5 pb-3 flex items-center justify-between flex-shrink-0">
+      <div className="px-3.5 pt-3.5 pb-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <span
-            className="w-2 h-2 rounded-full flex-shrink-0"
+            className="w-2 h-2 rounded-full shrink-0"
             style={{ backgroundColor: stageConfig.color }}
           />
           <h3 className="text-[12.5px] font-semibold text-foreground truncate">
             {title}
           </h3>
-          <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full flex-shrink-0">
+          <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full shrink-0">
             {count}
           </span>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           {formattedValue && (
             <span className="text-[11px] font-medium text-muted-foreground/70 mr-1">
               {formattedValue}

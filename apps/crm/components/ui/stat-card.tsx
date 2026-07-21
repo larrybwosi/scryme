@@ -64,7 +64,7 @@ export function StatCard({
       </div>
       <div
         className={cn(
-          'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
+          'w-9 h-9 rounded-lg flex items-center justify-center shrink-0',
           iconBg
         )}
       >
