@@ -118,7 +118,7 @@ pub async fn close_shift_command(
 
     // Automatically sync shifts upon closing
     let auth_state = app.state::<AuthStateStore>();
-    let _ = shift_store::sync_pending_shifts(app, &state, &auth_state).await;
+    let _ = shift_store::sync_pending_shifts(app.clone(), &state, &auth_state).await;
 
     Ok(closed_shift)
 }
