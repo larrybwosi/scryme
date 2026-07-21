@@ -11,12 +11,12 @@ export async function getCurrentUserContext() {
   return {
     user: {
       id: auth.user.id,
-      name: auth.user.name,
+      name: auth.user.name || null,
       email: auth.user.email,
-      image: auth.user.image,
+      image: auth.user.image || null,
     },
-    role: auth.role,
-    organizationId: auth.organizationId,
+    role: auth.role || "GUEST",
+    organizationId: auth.organizationId || null,
   };
 }
 
@@ -62,7 +62,7 @@ export async function requestPermissionsAction(data: {
       await db.scrymeMessage.create({
         data: {
           organizationId: auth.organizationId,
-          workspaceSlug: config.workspaceSlug,
+          workspaceSlug: config.workspaceSlug || "",
           channelSlug: "admins",
           messageId: mockMessageId,
           content,
@@ -111,7 +111,7 @@ export async function requestPermissionsAction(data: {
         // Fallback to sending to 'alerts' if 'admins' fails
         console.warn("Failed to send message to admins channel, trying alerts channel:", err);
         return await scrymeClient.sendMessage(
-          config.workspaceSlug,
+          config.workspaceSlug || "",
           "alerts",
           {
             content,
@@ -131,7 +131,7 @@ export async function requestPermissionsAction(data: {
       await db.scrymeMessage.create({
         data: {
           organizationId: auth.organizationId,
-          workspaceSlug: config.workspaceSlug,
+          workspaceSlug: config.workspaceSlug || "",
           channelSlug: response?.channelSlug || "admins",
           messageId: response?.id || `scryme_perm_${Date.now()}`,
           content,

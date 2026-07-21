@@ -43,11 +43,7 @@ const UnauthorizedContent = () => {
   const reasonParam = searchParams.get("reason");
 
   const [isLoading, setIsLoading] = useState(true);
-  const [userContext, setUserContext] = useState<{
-    user: { id: string; name: string | null; email: string; image: string | null };
-    role: string;
-    organizationId: string | null;
-  } | null>(null);
+  const [userContext, setUserContext] = useState<any>(null);
 
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
