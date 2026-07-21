@@ -276,7 +276,7 @@ function AppsApiContent() {
                   New client
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[440px] rounded-xl">
+              <DialogContent className="sm:max-w-110 rounded-xl">
                 <DialogHeader>
                   <DialogTitle className="text-base font-bold tracking-tight">
                     Create API client
@@ -360,7 +360,7 @@ function AppsApiContent() {
                         setV3Result(null);
                       }}
                       className="bg-slate-900 hover:bg-slate-800 text-xs rounded-lg">
-                      I've saved the secret
+                      I&#39ve saved the secret
                     </Button>
                   )}
                 </DialogFooter>
@@ -544,7 +544,7 @@ function AppsApiContent() {
                   Provision device
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[520px] rounded-xl">
+              <DialogContent className="sm:max-w-130 rounded-xl">
                 <DialogHeader>
                   <DialogTitle className="text-base font-bold tracking-tight">
                     Provision device
@@ -913,7 +913,7 @@ function AppsApiContent() {
                   Add webhook
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] rounded-xl">
+              <DialogContent className="sm:max-w-125 rounded-xl">
                 <DialogHeader>
                   <DialogTitle className="text-base font-bold tracking-tight">
                     Add webhook subscription
@@ -1180,7 +1180,7 @@ function AppsApiContent() {
 
 export default function AppsApiPage() {
   return (
-    <div className="p-6 max-w-[1400px] mx-auto min-h-screen bg-[#F8F9FB]">
+    <div className="p-6 max-w-350 mx-auto min-h-screen bg-[#F8F9FB]">
       <Suspense
         fallback={
           <div className="flex items-center justify-center h-[50vh]">
