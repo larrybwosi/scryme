@@ -262,11 +262,11 @@ export default function IntegrationsPage() {
             </div>
 
             <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-gray-200"></div>
-              <span className="flex-shrink mx-4 text-gray-400 text-xs uppercase font-medium">
+              <div className="grow border-t border-gray-200"></div>
+              <span className="shrink mx-4 text-gray-400 text-xs uppercase font-medium">
                 Or Configure Manually
               </span>
-              <div className="flex-grow border-t border-gray-200"></div>
+              <div className="grow border-t border-gray-200"></div>
             </div>
 
             <div className="space-y-2">
@@ -398,11 +398,11 @@ export default function IntegrationsPage() {
             </div>
 
             <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-gray-100"></div>
-              <span className="flex-shrink mx-4 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+              <div className="grow border-t border-gray-100"></div>
+              <span className="shrink mx-4 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
                 or configure manually
               </span>
-              <div className="flex-grow border-t border-gray-100"></div>
+              <div className="grow border-t border-gray-100"></div>
             </div>
 
             <div className="space-y-4">
@@ -527,11 +527,11 @@ export default function IntegrationsPage() {
             </div>
 
             <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-gray-200"></div>
-              <span className="flex-shrink mx-4 text-gray-400 text-xs uppercase font-medium">
+              <div className="grow border-t border-gray-200"></div>
+              <span className="shrink mx-4 text-gray-400 text-xs uppercase font-medium">
                 Or Configure Manually
               </span>
-              <div className="flex-grow border-t border-gray-200"></div>
+              <div className="grow border-t border-gray-200"></div>
             </div>
 
             <div className="space-y-2">
@@ -566,7 +566,7 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="p-8 max-w-[1400px] mx-auto min-h-screen bg-[#F9FAFB]">
+    <div className="p-8 max-w-350 mx-auto min-h-screen bg-[#F9FAFB]">
       <Breadcrumbs
         items={[
           { label: "Settings", href: "/settings" },

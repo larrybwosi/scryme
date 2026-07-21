@@ -197,7 +197,7 @@ export function CampaignsView() {
   return (
     <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
       {/* Page Header */}
-      <div className="flex-shrink-0 border-b border-border bg-card/50 px-6 py-4">
+      <div className="shrink-0 border-b border-border bg-card/50 px-6 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-[17px] font-bold text-foreground tracking-tight">
@@ -234,7 +234,7 @@ export function CampaignsView() {
               className="bg-card border border-border rounded-xl px-4 py-3 flex items-center gap-3"
             >
               <div
-                className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 bg-muted`}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-muted`}
               >
                 <stat.icon size={15} className={stat.color} />
               </div>

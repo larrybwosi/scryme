@@ -1,5 +1,11 @@
 # portal
 
+## 1.6.0
+
+### Minor Changes
+
+- 057b282: update
+
 ## 1.5.0
 
 ### Minor Changes

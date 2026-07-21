@@ -108,7 +108,7 @@ export function StatusBadge({ status, size = 'md', dot = false }: StatusBadgePro
       {dot && (
         <span
           className={cn(
-            'rounded-full flex-shrink-0',
+            'rounded-full shrink-0',
             size === 'sm' ? 'w-1.5 h-1.5' : 'w-2 h-2',
             'bg-current'
           )}

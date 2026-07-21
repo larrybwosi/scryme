@@ -3,6 +3,7 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   ExpenseStatus,
   PaymentMethod,
@@ -18,9 +19,12 @@ import {
 } from "@repo/db/client";
 import { submitForApproval } from "./approvals";
 
-async function checkPermission(allowedRoles: MemberRole[]) {
+async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId || !auth.memberId) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=unauthenticated");
+    }
     throw new Error("Unauthorized");
   }
 
@@ -29,6 +33,9 @@ async function checkPermission(allowedRoles: MemberRole[]) {
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=insufficient_permissions");
+    }
     throw new Error("Forbidden: Insufficient permissions");
   }
 
@@ -57,7 +64,7 @@ export async function getExpenses(params: {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   const where: any = {
     organizationId: auth.organizationId,
@@ -113,7 +120,7 @@ export async function getInventoryLocations() {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   return await db.inventoryLocation.findMany({
     where: { organizationId: auth.organizationId, isActive: true },
@@ -391,7 +398,7 @@ export async function getExpenseCategories(): Promise<ExpenseCategory[]> {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   return await db.expenseCategory.findMany({
     where: { organizationId: auth.organizationId },
@@ -426,7 +433,7 @@ export async function getUtilityAccounts(): Promise<any[]> {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   return await db.utilityAccount.findMany({
     where: { organizationId: auth.organizationId },
@@ -467,7 +474,7 @@ export async function getFinanceOverview() {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   const currentMonthStart = new Date();
   currentMonthStart.setDate(1);

@@ -3,11 +3,15 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { MemberRole, AccountType, AccountSubType } from "@repo/db/client";
 
-async function checkPermission(allowedRoles: MemberRole[]) {
+async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId || !auth.memberId) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=unauthenticated");
+    }
     throw new Error("Unauthorized");
   }
 
@@ -16,6 +20,9 @@ async function checkPermission(allowedRoles: MemberRole[]) {
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=insufficient_permissions");
+    }
     throw new Error("Forbidden: Insufficient permissions");
   }
 
@@ -25,7 +32,7 @@ async function checkPermission(allowedRoles: MemberRole[]) {
 // --- Chart of Accounts Actions ---
 
 export async function getLedgerAccounts() {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"], true);
   return await db.ledgerAccount.findMany({
     where: { organizationId: auth.organizationId },
     orderBy: [{ type: "asc" }, { code: "asc" }],
@@ -95,7 +102,7 @@ export async function initializeCOA() {
 // --- Journal Entry Actions ---
 
 export async function getJournalEntries(params: { startDate?: string, endDate?: string }) {
-    const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+    const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"], true);
     return await db.journalEntry.findMany({
         where: {
             organizationId: auth.organizationId,
@@ -125,7 +132,7 @@ export async function getJournalEntries(params: { startDate?: string, endDate?: 
 // --- Bank Reconciliation Actions ---
 
 export async function getBankStatements() {
-    const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+    const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"], true);
     return await db.bankStatement.findMany({
         where: { organizationId: auth.organizationId },
         orderBy: { statementDate: "desc" }
@@ -135,7 +142,7 @@ export async function getBankStatements() {
 // --- Reporting Actions ---
 
 export async function getProfitLoss(startDate: string, endDate: string) {
-    const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"]);
+    const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"], true);
 
     const accounts = await db.ledgerAccount.findMany({
         where: {

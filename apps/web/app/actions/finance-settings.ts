@@ -3,6 +3,7 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   MemberRole,
   ApprovalActionType,
@@ -12,9 +13,12 @@ import {
 import { testWorkflow } from "@repo/windmill";
 import { ScrymeChatApiClient } from "@repo/scryme";
 
-async function checkPermission(allowedRoles: MemberRole[]) {
+async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId || !auth.memberId) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=unauthenticated");
+    }
     throw new Error("Unauthorized");
   }
 
@@ -23,6 +27,9 @@ async function checkPermission(allowedRoles: MemberRole[]) {
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=insufficient_permissions");
+    }
     throw new Error("Forbidden: Insufficient permissions");
   }
 
@@ -67,7 +74,7 @@ export async function updateFinanceSettings(data: {
 }
 
 export async function getApprovalWorkflows() {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth } = await checkPermission(["OWNER", "ADMIN"], true);
 
   return await db.approvalWorkflow.findMany({
     where: { organizationId: auth.organizationId },
@@ -217,7 +224,7 @@ export async function getCostCenters() {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   return await db.costCenter.findMany({
     where: { organizationId: auth.organizationId },
@@ -258,7 +265,7 @@ export async function upsertCostCenter(data: {
 }
 
 export async function getBudgetAlerts() {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth } = await checkPermission(["OWNER", "ADMIN"], true);
 
   return await db.budgetAlert.findMany({
     where: { organizationId: auth.organizationId },
@@ -301,7 +308,7 @@ export async function upsertBudgetAlert(data: {
 }
 
 export async function getWindmillScripts() {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth } = await checkPermission(["OWNER", "ADMIN"], true);
 
   // This is a placeholder for retrieving windmill scripts
   // In a real implementation, you'd fetch this from the Windmill service or db

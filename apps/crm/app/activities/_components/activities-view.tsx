@@ -50,7 +50,7 @@ export function ActivitiesView() {
               ) : (
                 activities.map((act: any) => (
                   <div key={act.id} className="flex gap-4">
-                    <div className="mt-1 w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                    <div className="mt-1 w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
                       <Activity size={14} className="text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">

@@ -370,7 +370,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                         <span className="font-mono text-[12.5px] font-medium text-zinc-900 hover:underline">
                           {trx.number}
                         </span>
-                        <span className="ml-2 rounded bg-zinc-100 px-1 py-[1px] text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                        <span className="ml-2 rounded bg-zinc-100 px-1 py-px text-[10px] font-medium uppercase tracking-wide text-zinc-500">
                           {trx.type.replace(/_/g, " ")}
                         </span>
                       </td>

@@ -66,7 +66,7 @@ export default async function SupplierDetailsPage({
           <div className="flex items-start justify-between gap-6 mb-6">
             <div className="flex items-center gap-4">
               {/* Avatar */}
-              <div className="w-12 h-12 rounded-lg bg-blue-50 border border-gray-200 flex items-center justify-center text-blue-700 font-semibold text-lg flex-shrink-0 select-none">
+              <div className="w-12 h-12 rounded-lg bg-blue-50 border border-gray-200 flex items-center justify-center text-blue-700 font-semibold text-lg shrink-0 select-none">
                 {supplier.name
                   .split(" ")
                   .slice(0, 2)
@@ -103,7 +103,7 @@ export default async function SupplierDetailsPage({
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition-colors">
                 Edit
               </button>

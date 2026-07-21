@@ -96,3 +96,7 @@
 ## 2026-07-20 - [In-Memory Caching for Global Reference Data]
 **Learning:** Fetching static system-wide configurations or standard reference data (such as `SystemUnit`) from the database on every sync or list operation is a redundant overhead. Since NestJS providers are singletons, storing static values in a class property allows subsequent queries (including delta synchronization requests via `lastSync` filtering) to be served completely in-memory, bypassing database queries and serialization entirely.
 **Action:** For static, non-tenant-specific reference data, implement a lazy-loaded class-level in-memory cache to handle list and delta-sync filters without touching the database.
+
+## 2026-07-21 - [Pruning Unused Relational Includes in Analytical Queries]
+**Learning:** Including heavy nested relations in complex analytical queries when their fields are never actually read or used by the subsequent mapping logic is a major performance anti-pattern. Identifying these unused relational includes (like `service: true` in `getResourceUtilization` and `getStaffPerformance`) and pruning them completely avoids redundant database joins, reducing both query execution latency and memory overhead.
+**Action:** When auditing or designing analytical database queries, always verify that every included relation in the Prisma query is actually accessed by the processing loop. If a relation is unused, remove it to eliminate redundant SQL JOIN operations.

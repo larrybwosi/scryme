@@ -275,7 +275,7 @@ function TriggerNode({ data, selected }: any) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-3 !h-3 !rounded-full !border-2 !border-white"
+        className="w-3! h-3! rounded-full! border-2! border-white!"
         style={{ backgroundColor: config?.color }}
       />
     </div>
@@ -298,7 +298,7 @@ function ActionNode({ data, selected }: any) {
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-3 !h-3 !rounded-full !border-2 !border-white"
+        className="w-3! h-3! rounded-full! border-2! border-white!"
         style={{ backgroundColor: config?.color || "#3b82f6" }}
       />
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
@@ -336,7 +336,7 @@ function ActionNode({ data, selected }: any) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-3 !h-3 !rounded-full !border-2 !border-white"
+        className="w-3! h-3! rounded-full! border-2! border-white!"
         style={{ backgroundColor: config?.color || "#3b82f6" }}
       />
     </div>
@@ -357,7 +357,7 @@ function DelayNode({ data, selected }: any) {
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-3 !h-3 !rounded-full !border-2 !border-white !bg-amber-500"
+        className="w-3! h-3! rounded-full! border-2! border-white! bg-amber-500!"
       />
       <div className="flex items-center gap-2 px-3 py-2 border-b border-amber-200 dark:border-amber-800/50">
         <div className="w-6 h-6 rounded-md bg-amber-200/50 dark:bg-amber-800/30 flex items-center justify-center">
@@ -375,7 +375,7 @@ function DelayNode({ data, selected }: any) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!w-3 !h-3 !rounded-full !border-2 !border-white !bg-amber-500"
+        className="w-3! h-3! rounded-full! border-2! border-white! bg-amber-500!"
       />
     </div>
   );
@@ -395,7 +395,7 @@ function ConditionNode({ data, selected }: any) {
       <Handle
         type="target"
         position={Position.Top}
-        className="!w-3 !h-3 !rounded-full !border-2 !border-white !bg-red-500"
+        className="w-3! h-3! rounded-full! border-2! border-white! bg-red-500!"
       />
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
         <div className="w-6 h-6 rounded-md bg-red-50 dark:bg-red-950/30 flex items-center justify-center">
@@ -423,14 +423,14 @@ function ConditionNode({ data, selected }: any) {
         position={Position.Bottom}
         id="yes"
         style={{ left: "30%", backgroundColor: "#22c55e" }}
-        className="!w-3 !h-3 !rounded-full !border-2 !border-white"
+        className="w-3! h-3! rounded-full! border-2! border-white!"
       />
       <Handle
         type="source"
         position={Position.Bottom}
         id="no"
         style={{ left: "70%", backgroundColor: "#ef4444" }}
-        className="!w-3 !h-3 !rounded-full !border-2 !border-white"
+        className="w-3! h-3! rounded-full! border-2! border-white!"
       />
     </div>
   );
@@ -481,7 +481,7 @@ function PalettePanel({
               className="flex items-center justify-between w-full mb-1.5 group"
               onClick={() => toggleGroup(group)}
             >
-              <span className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
+              <span className="text-[9.5px] font-bold uppercase tracking-widest text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
                 {group}
               </span>
               <ChevronDown
@@ -514,7 +514,7 @@ function PalettePanel({
                       )}
                     >
                       <div
-                        className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
                         style={{ backgroundColor: item.color + "20" }}
                       >
                         <Icon size={14} style={{ color: item.color }} />
@@ -908,7 +908,7 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Top Toolbar */}
-      <header className="flex items-center justify-between h-12 px-4 border-b border-border bg-card flex-shrink-0 z-20">
+      <header className="flex items-center justify-between h-12 px-4 border-b border-border bg-card shrink-0 z-20">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
@@ -1024,7 +1024,7 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
       {/* Main Canvas Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Palette */}
-        <aside className="w-[220px] flex-shrink-0 border-r border-border bg-card overflow-hidden flex flex-col">
+        <aside className="w-[220px] shrink-0 border-r border-border bg-card overflow-hidden flex flex-col">
           <PalettePanel onAdd={addNode} />
         </aside>
 
@@ -1049,9 +1049,9 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
               size={1}
               color="var(--border)"
             />
-            <Controls className="!bottom-4 !left-4" showInteractive={false} />
+            <Controls className="bottom-4! left-4!" showInteractive={false} />
             <MiniMap
-              className="!bottom-4 !right-4"
+              className="bottom-4! right-4!"
               nodeStrokeWidth={2}
               zoomable
               pannable
@@ -1083,7 +1083,7 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
 
         {/* Right Inspector */}
         {showInspector && (
-          <aside className="w-[260px] flex-shrink-0 border-l border-border bg-card overflow-hidden flex flex-col">
+          <aside className="w-[260px] shrink-0 border-l border-border bg-card overflow-hidden flex flex-col">
             {selectedNode ? (
               <NodeInspector
                 node={selectedNode}
@@ -1164,7 +1164,7 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
                 <div className="p-4 space-y-3.5 max-h-[250px] overflow-y-auto custom-scrollbar">
                   {simulationLogs.map((log, idx) => (
                     <div key={idx} className="flex gap-3 text-left items-start">
-                      <div className="w-5 h-5 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center flex-shrink-0 text-xs mt-0.5">
+                      <div className="w-5 h-5 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center shrink-0 text-xs mt-0.5">
                         ✓
                       </div>
                       <div className="flex-1">

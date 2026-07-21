@@ -7,13 +7,19 @@ export class ServiceAnalyticsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getResourceUtilization(orgId: string, startDate: Date, endDate: Date) {
+    /**
+     * OPTIMIZATION (Bolt ⚡): Removed the redundant 'service' relation inclusion.
+     * The business logic only computes resource utilization using scheduled times and
+     * resources; the full 'Service' entity is never accessed. Removing this saves
+     * a completely redundant database JOIN and reduces query overhead and payload size.
+     */
     const bookings = await this.prisma.client.serviceBooking.findMany({
       where: {
         organizationId: orgId,
         scheduledStartTime: { gte: startDate, lte: endDate },
         status: { not: BookingStatus.CANCELLED }
       },
-      include: { resources: true, service: true }
+      include: { resources: true }
     });
 
     const totalMinutes = (endDate.getTime() - startDate.getTime()) / 60000;
@@ -39,13 +45,19 @@ export class ServiceAnalyticsService {
   }
 
   async getStaffPerformance(orgId: string, startDate: Date, endDate: Date) {
+      /**
+       * OPTIMIZATION (Bolt ⚡): Removed the redundant 'service' relation inclusion.
+       * Staff performance computes booking count and revenue directly from the snapshots
+       * stored on the 'ServiceBooking' entity itself (e.g., booking.price); the 'Service'
+       * entity is never accessed. Bypassing this JOIN drastically reduces latency and DB load.
+       */
       const bookings = await this.prisma.client.serviceBooking.findMany({
           where: {
               organizationId: orgId,
               actualEndTime: { gte: startDate, lte: endDate },
               status: BookingStatus.COMPLETED
           },
-          include: { staff: true, service: true }
+          include: { staff: true }
       });
 
       const performance: Record<string, { bookingCount: number, totalRevenue: number }> = {};
