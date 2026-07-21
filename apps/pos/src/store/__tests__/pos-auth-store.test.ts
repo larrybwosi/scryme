@@ -29,15 +29,21 @@ describe('PosAuthStore', () => {
   });
 
   it('should initialize from backend successfully', async () => {
-    mockInvoke
-      .mockResolvedValueOnce({
-        location_id: 'loc-1',
-        org_slug: 'test-org',
-        allow_negative_stock: false,
-      })
-      .mockResolvedValueOnce({
-        locations: [{ id: 'loc-1', name: 'Test Location' }],
-      });
+    mockInvoke.mockImplementation(async (cmd) => {
+      if (cmd === 'get_device_config') {
+        return {
+          location_id: 'loc-1',
+          org_slug: 'test-org',
+          allow_negative_stock: false,
+        };
+      }
+      if (cmd === 'get_locations_command') {
+        return {
+          locations: [{ id: 'loc-1', name: 'Test Location' }],
+        };
+      }
+      return {};
+    });
 
     await useAuthStore.getState().initializeFromBackend();
 
@@ -48,7 +54,12 @@ describe('PosAuthStore', () => {
   });
 
   it('should handle backend initialization failure gracefully', async () => {
-    mockInvoke.mockRejectedValueOnce(new Error('Failed'));
+    mockInvoke.mockImplementation(async (cmd) => {
+      if (cmd === 'get_device_config') {
+        throw new Error('Failed');
+      }
+      return {};
+    });
 
     await useAuthStore.getState().initializeFromBackend();
 
@@ -57,7 +68,7 @@ describe('PosAuthStore', () => {
   });
 
   it('should register device and set configured state', async () => {
-    mockInvoke.mockResolvedValueOnce({});
+    mockInvoke.mockResolvedValue({});
 
     const location = { id: 'loc-1', name: 'Test' } as any;
     await useAuthStore.getState().registerDevice('test-key', location, 'test-org');
@@ -73,23 +84,26 @@ describe('PosAuthStore', () => {
   });
 
   it('should provision device with wrapped API response and matching location', async () => {
-    mockInvoke
-      .mockResolvedValueOnce({
-        success: true,
-        data: {
-          apiKey: 'test-api-key',
-          device: {
-            deviceName: 'Test Terminal',
-            deviceType: 'MAIN_HUB',
-            locationId: 'loc-1',
-            location: { id: 'loc-1', name: 'Test Location matching' },
+    mockInvoke.mockImplementation(async (cmd) => {
+      if (cmd === 'authenticated_api_request') {
+        return {
+          success: true,
+          data: {
+            apiKey: 'test-api-key',
+            device: {
+              deviceName: 'Test Terminal',
+              deviceType: 'MAIN_HUB',
+              locationId: 'loc-1',
+              location: { id: 'loc-1', name: 'Test Location matching' },
+            },
+            organization: {
+              slug: 'test-org-slug',
+            },
           },
-          organization: {
-            slug: 'test-org-slug',
-          },
-        },
-      })
-      .mockResolvedValueOnce({});
+        };
+      }
+      return {};
+    });
 
     await useAuthStore.getState().provisionDevice('valid-setup-token');
 
@@ -107,19 +121,22 @@ describe('PosAuthStore', () => {
   });
 
   it('should provision device with unwrapped API response and fallback location', async () => {
-    mockInvoke
-      .mockResolvedValueOnce({
-        apiKey: 'test-api-key-unwrapped',
-        device: {
-          deviceName: 'Unwrapped Terminal',
-          deviceType: 'KDS',
-          locationId: 'loc-2',
-        },
-        organization: {
-          slug: 'unwrapped-org-slug',
-        },
-      })
-      .mockResolvedValueOnce({});
+    mockInvoke.mockImplementation(async (cmd) => {
+      if (cmd === 'authenticated_api_request') {
+        return {
+          apiKey: 'test-api-key-unwrapped',
+          device: {
+            deviceName: 'Unwrapped Terminal',
+            deviceType: 'KDS',
+            locationId: 'loc-2',
+          },
+          organization: {
+            slug: 'unwrapped-org-slug',
+          },
+        };
+      }
+      return {};
+    });
 
     await useAuthStore.getState().provisionDevice('unwrapped-setup-token');
 

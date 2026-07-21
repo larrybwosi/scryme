@@ -84,7 +84,7 @@
       "allow": [
         { "url": "https://*.tauri.app" },
         { "url": "https://*:*" },
-        { "url": "https://dealioerp.vercel.app" },
+        { "url": "https://api.scryme.tech" },
         { "url": "http://localhost:3000" }
       ]
     },
