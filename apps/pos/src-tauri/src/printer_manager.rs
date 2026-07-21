@@ -456,7 +456,7 @@ async fn resolve_logo_path<R: Runtime>(app: &AppHandle<R>, logo_path: &str) -> R
 
     // 2. If it's a relative path starting with '/' (e.g. /logo.jpg)
     if logo_path.starts_with('/') {
-        if let Ok(resource_path) = app.path().resolve_path(logo_path.trim_start_matches('/'), Some(tauri::path::BaseDirectory::Resource)) {
+        if let Ok(resource_path) = app.path().resolve(logo_path.trim_start_matches('/'), Some(tauri::path::BaseDirectory::Resource)) {
             if resource_path.exists() {
                 return Ok(resource_path);
             }
