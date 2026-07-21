@@ -10,15 +10,11 @@ import {
   Trash2,
   RefreshCw,
   Copy,
-  Shield,
-  Zap,
   Globe,
   Lock,
   MoreVertical,
   Check,
-  QrCode,
   Terminal,
-  Download,
   Code2,
   Cpu,
   History,
@@ -31,14 +27,11 @@ import { cn } from "@repo/ui/lib/utils";
 import {
   getDeviceRegistryAction,
   getDeviceSetupTokensAction,
-  getV2ApiKeysAction,
   getV3ApiClientsAction,
   getWebhookSubscriptionsAction,
   createDeviceSetupTokenAction,
-  createV2ApiKeyAction,
   createV3ApiClientAction,
   createWebhookSubscriptionAction,
-  deleteV2ApiKeyAction,
   deleteV3ApiClientAction,
   deleteWebhookSubscriptionAction,
   regenerateV3ClientSecretAction,
@@ -86,7 +79,10 @@ import {
 
 function AppsApiContent() {
   const searchParams = useSearchParams();
-  const initialTab = searchParams.get("tab") || "v3";
+  const initialTab =
+    searchParams.get("tab") === "v2"
+      ? "devices"
+      : searchParams.get("tab") || "v3";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // V3 Clients State
@@ -95,12 +91,6 @@ function AppsApiContent() {
   const [showV3Dialog, setShowV3Dialog] = useState(false);
   const [v3Result, setV3Result] = useState<any>(null);
   const [editingV3Client, setEditingV3Client] = useState<any>(null);
-
-  // V2 Keys State
-  const [v2Keys, setV2Keys] = useState<any[]>([]);
-  const [newKeyName, setNewKeyName] = useState("");
-  const [showV2Dialog, setShowV2Dialog] = useState(false);
-  const [v2Result, setV2Result] = useState<any>(null);
 
   // Webhooks State
   const [webhooks, setWebhooks] = useState<any[]>([]);
@@ -130,16 +120,14 @@ function AppsApiContent() {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const [v3, v2, wh, tokens, regs, locs] = await Promise.all([
+      const [v3, wh, tokens, regs, locs] = await Promise.all([
         getV3ApiClientsAction(),
-        getV2ApiKeysAction(),
         getWebhookSubscriptionsAction(),
         getDeviceSetupTokensAction(),
         getDeviceRegistryAction(),
         getLocations(),
       ]);
       setV3Clients(v3);
-      setV2Keys(v2);
       setWebhooks(wh);
       setDeviceTokens(tokens);
       setRegistries(regs);
@@ -168,7 +156,7 @@ function AppsApiContent() {
       setV3Result(res);
       setNewClientName("");
       loadData();
-      toast.success("V3 Client created successfully");
+      toast.success("V3 client created");
     } catch (error) {
       toast.error("Failed to create V3 client");
     }
@@ -207,21 +195,9 @@ function AppsApiContent() {
       const res = await createDeviceSetupTokenAction(newDevice);
       setDeviceTokenResult(res);
       loadData();
-      toast.success("Device provisioned successfully");
+      toast.success("Device provisioned");
     } catch (error) {
       toast.error("Failed to provision device");
-    }
-  };
-
-  const handleCreateV2 = async () => {
-    try {
-      const res = await createV2ApiKeyAction({ name: newKeyName });
-      setV2Result(res);
-      setNewKeyName("");
-      loadData();
-      toast.success("V2 API Key created");
-    } catch (error) {
-      toast.error("Failed to create V2 API key");
     }
   };
 
@@ -231,9 +207,9 @@ function AppsApiContent() {
   };
 
   const tabs = [
-    { id: "v3", label: "V3 API Clients", icon: Key },
+    { id: "v3", label: "API Clients", icon: Key },
     { id: "webhooks", label: "Webhooks", icon: Webhook },
-    { id: "v2", label: "V2 & Devices", icon: Monitor },
+    { id: "devices", label: "Devices", icon: Monitor },
   ];
 
   const availableEvents = [
@@ -244,7 +220,7 @@ function AppsApiContent() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <Breadcrumbs
         items={[
           { label: "Integrations", href: "/integrations" },
@@ -252,22 +228,22 @@ function AppsApiContent() {
         ]}
       />
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100 pb-5">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 border-b border-slate-200/70 pb-6">
         <PageHeader
           title="Developer Tools"
-          subtitle="Manage your API credentials, webhooks, and device provisioning."
-          icon={<Terminal className="w-6 h-6 text-indigo-600" />}
+          subtitle="Manage API credentials, webhooks, and hardware provisioning for your organization."
+          icon={<Terminal className="w-6 h-6 text-slate-700" />}
         />
-        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-1 shadow-sm">
+        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-all",
+                "flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all",
                 activeTab === tab.id
-                  ? "bg-indigo-50 text-indigo-600 font-bold"
-                  : "text-gray-500 hover:text-gray-900 hover:bg-gray-50",
+                  ? "bg-slate-900 text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50",
               )}>
               <tab.icon size={14} />
               {tab.label}
@@ -279,12 +255,13 @@ function AppsApiContent() {
       {activeTab === "v3" && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <div className="space-y-0.5">
-              <h2 className="text-lg font-bold text-gray-900">
-                V3 API Clients
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                API Clients
               </h2>
-              <p className="text-xs text-gray-500">
-                Modern OAuth2 clients for building robust integrations.
+              <p className="text-[13px] text-slate-500">
+                OAuth2 clients for building integrations against the platform
+                API.
               </p>
             </div>
             <Dialog
@@ -294,70 +271,71 @@ function AppsApiContent() {
                 if (!open) setV3Result(null);
               }}>
               <DialogTrigger asChild>
-                <Button className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 h-9 px-4 text-xs font-semibold rounded-md shadow-sm">
+                <Button className="bg-slate-900 hover:bg-slate-800 gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
                   <Plus size={16} />
-                  Create Client
+                  New client
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] rounded-lg">
+              <DialogContent className="sm:max-w-[440px] rounded-xl">
                 <DialogHeader>
-                  <DialogTitle className="text-base font-bold">
-                    Create V3 Client
+                  <DialogTitle className="text-base font-bold tracking-tight">
+                    Create API client
                   </DialogTitle>
-                  <DialogDescription className="text-xs">
-                    Create a new OAuth2 client for accessing our V3 API.
+                  <DialogDescription className="text-xs text-slate-500">
+                    Create a new OAuth2 client for accessing the platform API.
                   </DialogDescription>
                 </DialogHeader>
                 {!v3Result ? (
                   <div className="grid gap-4 py-3">
                     <div className="grid gap-1.5">
-                      <Label htmlFor="client-name" className="text-xs">
-                        Client Name
+                      <Label
+                        htmlFor="client-name"
+                        className="text-xs font-semibold text-slate-600">
+                        Client name
                       </Label>
                       <Input
                         id="client-name"
                         value={newClientName}
                         onChange={e => setNewClientName(e.target.value)}
                         placeholder="e.g., My Mobile App"
-                        className="h-10 text-sm rounded-md"
+                        className="h-10 text-sm rounded-lg"
                       />
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-3 py-3">
-                    <div className="p-2.5 bg-amber-50 text-amber-700 rounded-md text-xs border border-amber-200 font-medium">
-                      Important: Copy your Client Secret now. It will never be
-                      shown again.
+                    <div className="p-3 bg-amber-50 text-amber-800 rounded-lg text-xs border border-amber-200/80 font-medium">
+                      Copy the client secret now — it will not be shown again.
                     </div>
                     <div className="grid gap-1.5">
-                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">
+                      <Label className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
                         Client ID
                       </Label>
                       <div className="flex gap-2">
-                        <code className="flex-1 bg-gray-50 p-2.5 rounded-md text-xs break-all border font-mono">
+                        <code className="flex-1 bg-slate-50 p-2.5 rounded-lg text-xs break-all border border-slate-200 font-mono text-slate-700">
                           {v3Result.clientId}
                         </code>
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-10 w-10 rounded-md"
+                          className="h-10 w-10 rounded-lg"
                           onClick={() => copyToClipboard(v3Result.clientId)}>
                           <Copy size={13} />
                         </Button>
                       </div>
                     </div>
                     <div className="grid gap-1.5">
-                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">
-                        Client Secret
+                      <Label className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                        Client secret
                       </Label>
                       <div className="flex gap-2">
-                        <code className="flex-1 bg-gray-50 p-2.5 rounded-md text-xs break-all border font-mono">
+                        <code className="flex-1 bg-slate-50 p-2.5 rounded-lg text-xs break-all border border-slate-200 font-mono text-slate-700">
                           {v3Result.clientSecret}
                         </code>
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-10 w-10 rounded-md"
+                          className="h-10 w-10 rounded-lg"
                           onClick={() =>
                             copyToClipboard(v3Result.clientSecret)
                           }>
@@ -372,8 +350,8 @@ function AppsApiContent() {
                     <Button
                       onClick={handleCreateV3}
                       disabled={!newClientName}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-xs rounded-md">
-                      Create Client
+                      className="bg-slate-900 hover:bg-slate-800 text-xs rounded-lg">
+                      Create client
                     </Button>
                   ) : (
                     <Button
@@ -381,8 +359,8 @@ function AppsApiContent() {
                         setShowV3Dialog(false);
                         setV3Result(null);
                       }}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-xs rounded-md">
-                      I have saved the secret
+                      className="bg-slate-900 hover:bg-slate-800 text-xs rounded-lg">
+                      I've saved the secret
                     </Button>
                   )}
                 </DialogFooter>
@@ -392,44 +370,44 @@ function AppsApiContent() {
 
           <div className="grid gap-4">
             {v3Clients.length === 0 ? (
-              <div className="bg-white p-12 rounded-lg border border-dashed flex flex-col items-center text-center shadow-sm">
-                <div className="p-3 bg-indigo-50 rounded-md mb-3">
-                  <Key className="w-8 h-8 text-indigo-600" />
+              <div className="bg-white p-14 rounded-xl border border-dashed border-slate-200 flex flex-col items-center text-center">
+                <div className="p-3 bg-slate-50 rounded-lg mb-3 border border-slate-100">
+                  <Key className="w-7 h-7 text-slate-400" />
                 </div>
-                <h3 className="text-base font-bold text-gray-900 mb-1">
-                  No API Clients
+                <h3 className="text-base font-bold text-slate-900 mb-1 tracking-tight">
+                  No API clients yet
                 </h3>
-                <p className="text-xs text-gray-500 max-w-sm mb-6">
+                <p className="text-[13px] text-slate-500 max-w-sm">
                   Create your first OAuth2 client to start building custom
-                  integrations with our V3 API.
+                  integrations with the platform API.
                 </p>
               </div>
             ) : (
               v3Clients.map(client => (
                 <div
                   key={client.id}
-                  className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all group">
+                  className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all group">
                   <div className="flex justify-between items-start">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-indigo-50 rounded-md text-indigo-600">
-                          <Code2 size={16} />
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 bg-slate-900 rounded-lg text-white">
+                          <Code2 size={15} />
                         </div>
-                        <h3 className="font-bold text-sm text-gray-900">
+                        <h3 className="font-bold text-sm text-slate-900 tracking-tight">
                           {client.name}
                         </h3>
                       </div>
                       <div className="flex flex-wrap items-center gap-4 text-xs">
-                        <span className="flex items-center gap-1.5 text-gray-500">
-                          <span className="font-semibold text-gray-400 text-[10px] uppercase">
+                        <span className="flex items-center gap-1.5 text-slate-500">
+                          <span className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">
                             Client ID
                           </span>
-                          <code className="bg-gray-50 px-1.5 py-0.5 rounded text-xs border font-mono">
+                          <code className="bg-slate-50 px-1.5 py-0.5 rounded text-xs border border-slate-200 font-mono text-slate-600">
                             {client.clientId}
                           </code>
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <span className="font-semibold text-gray-400 text-[10px] uppercase">
+                          <span className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">
                             Status
                           </span>
                           <Badge
@@ -437,10 +415,10 @@ function AppsApiContent() {
                               client.isActive ? "default" : "destructive"
                             }
                             className={cn(
-                              "cursor-pointer px-2 py-0.5 border-none text-[10px]",
+                              "cursor-pointer px-2 py-0.5 border-none text-[10px] font-bold",
                               client.isActive
                                 ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                                : "",
+                                : "bg-rose-50 text-rose-700 hover:bg-rose-100",
                             )}
                             onClick={() =>
                               updateV3ApiClientAction(client.id, {
@@ -456,7 +434,7 @@ function AppsApiContent() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md"
+                        className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
                         onClick={() => setEditingV3Client(client)}
                         title="Settings">
                         <Settings2 size={16} />
@@ -466,13 +444,13 @@ function AppsApiContent() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 rounded-md">
+                            className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100">
                             <MoreVertical size={16} />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-md">
+                        <DropdownMenuContent align="end" className="rounded-lg">
                           <DropdownMenuItem
-                            className="py-1.5 text-xs rounded-sm"
+                            className="py-1.5 text-xs rounded-md"
                             onClick={async () => {
                               const secret =
                                 await regenerateV3ClientSecretAction(client.id);
@@ -482,40 +460,40 @@ function AppsApiContent() {
                               );
                             }}>
                             <RefreshCw size={12} className="mr-2" />
-                            Regenerate Secret
+                            Regenerate secret
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className="text-destructive focus:text-destructive py-1.5 text-xs rounded-sm"
+                            className="text-destructive focus:text-destructive py-1.5 text-xs rounded-md"
                             onClick={() =>
                               deleteV3ApiClientAction(client.id).then(loadData)
                             }>
                             <Trash2 size={12} className="mr-2" />
-                            Delete Client
+                            Delete client
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
-                        Scopes & Permissions
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                        Scopes & permissions
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {client.scopes.map((s: string) => (
                           <Badge
                             key={s}
                             variant="secondary"
-                            className="bg-gray-100 text-gray-600 border-none font-medium px-2 py-0.5 text-[10px] rounded-md">
+                            className="bg-slate-100 text-slate-600 border-none font-semibold px-2 py-0.5 text-[10px] rounded-md">
                             {s}
                           </Badge>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1.5">
-                        CORS Allowed Origins
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                        CORS allowed origins
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {client.corsOrigins.length > 0 ? (
@@ -523,12 +501,12 @@ function AppsApiContent() {
                             <Badge
                               key={o}
                               variant="outline"
-                              className="font-mono text-[10px] bg-gray-50/50 rounded-md">
+                              className="font-mono text-[10px] bg-slate-50/50 border-slate-200 text-slate-600 rounded-md">
                               {o}
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-xs text-gray-400 italic">
+                          <span className="text-xs text-slate-400 italic">
                             No origins configured
                           </span>
                         )}
@@ -542,516 +520,386 @@ function AppsApiContent() {
         </div>
       )}
 
-      {activeTab === "v2" && (
-        <div className="space-y-8">
-          <section className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="space-y-0.5">
-                <h2 className="text-lg font-bold text-gray-900">V2 API Keys</h2>
-                <p className="text-xs text-gray-500">
-                  Legacy API keys for specialized integrations and POS access.
-                </p>
-              </div>
-              <Dialog
-                open={showV2Dialog}
-                onOpenChange={open => {
-                  setShowV2Dialog(open);
-                  if (!open) setV2Result(null);
-                }}>
-                <DialogTrigger asChild>
-                  <Button className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 h-9 px-4 text-xs font-semibold rounded-md">
-                    <Plus size={16} />
-                    Create Key
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="rounded-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-base font-bold">
-                      Create V2 API Key
-                    </DialogTitle>
-                    <DialogDescription className="text-xs">
-                      Generate a legacy V2 API key for specialized integrations.
-                    </DialogDescription>
-                  </DialogHeader>
-                  {!v2Result ? (
-                    <div className="grid gap-4 py-3">
+      {activeTab === "devices" && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                Hardware & devices
+              </h2>
+              <p className="text-[13px] text-slate-500">
+                Provision and manage POS terminals, kiosks, and tablets across
+                your locations.
+              </p>
+            </div>
+            <Dialog
+              open={showDeviceDialog}
+              onOpenChange={open => {
+                setShowDeviceDialog(open);
+                if (!open) setDeviceTokenResult(null);
+              }}>
+              <DialogTrigger asChild>
+                <Button className="bg-slate-900 hover:bg-slate-800 gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
+                  <Plus size={16} />
+                  Provision device
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[520px] rounded-xl">
+                <DialogHeader>
+                  <DialogTitle className="text-base font-bold tracking-tight">
+                    Provision device
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-slate-500">
+                    Generate a setup token to provision a new POS device.
+                  </DialogDescription>
+                </DialogHeader>
+                {!deviceTokenResult ? (
+                  <div className="grid gap-4 py-3">
+                    <div className="grid gap-1.5">
+                      <Label
+                        htmlFor="device-name"
+                        className="text-xs font-semibold text-slate-600">
+                        Device name
+                      </Label>
+                      <Input
+                        id="device-name"
+                        value={newDevice.deviceName}
+                        onChange={e =>
+                          setNewDevice({
+                            ...newDevice,
+                            deviceName: e.target.value,
+                          })
+                        }
+                        placeholder="Front Desk Terminal"
+                        className="h-10 text-sm rounded-lg"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="grid gap-1.5">
-                        <Label htmlFor="key-name" className="text-xs">
-                          Key Name
+                        <Label
+                          htmlFor="device-type"
+                          className="text-xs font-semibold text-slate-600">
+                          Device type
                         </Label>
-                        <Input
-                          id="key-name"
-                          value={newKeyName}
-                          onChange={e => setNewKeyName(e.target.value)}
-                          placeholder="e.g., Development Key"
-                          className="h-10 text-sm rounded-md"
-                        />
+                        <Select
+                          value={newDevice.deviceType}
+                          onValueChange={val => {
+                            const deviceType = val as any;
+                            const permissions =
+                              deviceType === "BAKERY_TERMINAL"
+                                ? [
+                                    "bakery:batch:view",
+                                    "bakery:batch:manage",
+                                    "bakery:recipe:view",
+                                    "bakery:recipe:manage",
+                                    "bakery:template:view",
+                                    "bakery:template:manage",
+                                  ]
+                                : [
+                                    "pos:auth",
+                                    "pos:location:read",
+                                    "pos:product:read",
+                                    "pos:product:update",
+                                    "pos:sale:read",
+                                    "pos:sale:create",
+                                    "pos:sale:update",
+                                    "pos:stock:manage",
+                                    "pos:sync",
+                                  ];
+
+                            setNewDevice({
+                              ...newDevice,
+                              deviceType,
+                              permissions,
+                            });
+                          }}>
+                          <SelectTrigger
+                            id="device-type"
+                            className="h-10 text-sm rounded-lg">
+                            <SelectValue placeholder="Select type" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-lg">
+                            <SelectItem value="POS_TERMINAL">
+                              POS Terminal
+                            </SelectItem>
+                            <SelectItem value="MOBILE_POS">
+                              Mobile POS
+                            </SelectItem>
+                            <SelectItem value="KIOSK">Kiosk</SelectItem>
+                            <SelectItem value="TABLET">Tablet</SelectItem>
+                            <SelectItem value="BAKERY_TERMINAL">
+                              Bakery Terminal
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label
+                          htmlFor="location-id"
+                          className="text-xs font-semibold text-slate-600">
+                          Location
+                        </Label>
+                        <Select
+                          value={newDevice.locationId}
+                          onValueChange={val =>
+                            setNewDevice({ ...newDevice, locationId: val })
+                          }>
+                          <SelectTrigger
+                            id="location-id"
+                            className="h-10 text-sm rounded-lg">
+                            <SelectValue placeholder="Select location" />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-lg">
+                            {locations.map(loc => (
+                              <SelectItem key={loc.id} value={loc.id}>
+                                {loc.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-3 py-3">
-                      <div className="p-2.5 bg-emerald-50 text-emerald-700 rounded-md text-xs border border-emerald-200 font-medium">
-                        Key created successfully.
+
+                    <div className="grid gap-1.5">
+                      <Label className="text-xs font-semibold text-slate-600">
+                        Environment
+                      </Label>
+                      <Select
+                        value={newDevice.environment}
+                        onValueChange={val =>
+                          setNewDevice({
+                            ...newDevice,
+                            environment: val as any,
+                          })
+                        }>
+                        <SelectTrigger className="h-10 text-sm rounded-lg">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-lg">
+                          <SelectItem value="LIVE">
+                            Production (Live)
+                          </SelectItem>
+                          <SelectItem value="TEST">Sandbox (Test)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        Permissions
+                      </Label>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100 max-h-48 overflow-y-auto">
+                        {[
+                          "pos:auth",
+                          "pos:location:read",
+                          "pos:product:read",
+                          "pos:product:update",
+                          "pos:sale:read",
+                          "pos:sale:create",
+                          "pos:sale:update",
+                          "pos:stock:manage",
+                          "pos:petty-cash:create",
+                          "pos:petty-cash:read",
+                          "pos:sync",
+                          "bakery:batch:view",
+                          "bakery:batch:manage",
+                          "bakery:recipe:view",
+                          "bakery:recipe:manage",
+                          "bakery:template:view",
+                          "bakery:template:manage",
+                          "bakery:settings:manage",
+                        ].map(perm => (
+                          <div
+                            key={perm}
+                            className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`perm-${perm}`}
+                              checked={newDevice.permissions.includes(perm)}
+                              onCheckedChange={checked => {
+                                const permissions = checked
+                                  ? [...newDevice.permissions, perm]
+                                  : newDevice.permissions.filter(
+                                      p => p !== perm,
+                                    );
+                                setNewDevice({ ...newDevice, permissions });
+                              }}
+                            />
+                            <label
+                              htmlFor={`perm-${perm}`}
+                              className="text-[9px] font-bold uppercase tracking-tight text-slate-600 cursor-pointer">
+                              {perm.replace(":", " ")}
+                            </label>
+                          </div>
+                        ))}
                       </div>
-                      <div className="grid gap-1.5">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">
-                          Full API Key
-                        </Label>
-                        <div className="flex gap-2">
-                          <code className="flex-1 bg-gray-50 p-2.5 rounded-md text-xs break-all border font-mono">
-                            {v2Result.fullKey}
-                          </code>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 py-3">
+                    <div className="p-3 bg-emerald-50 text-emerald-700 rounded-lg text-xs border border-emerald-200/80 font-semibold text-center">
+                      Setup token generated
+                    </div>
+
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <QRCodeSVG
+                          value={deviceTokenResult.rawToken}
+                          size={160}
+                          level="H"
+                          includeMargin={false}
+                        />
+                      </div>
+
+                      <div className="w-full space-y-2">
+                        <div className="text-center p-4 bg-slate-50 rounded-xl border border-slate-100 relative group">
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                            Provisioning token
+                          </div>
+                          <div className="text-xl font-mono font-bold tracking-[0.15em] text-slate-900 break-all px-2">
+                            {deviceTokenResult.rawToken}
+                          </div>
                           <Button
-                            variant="outline"
-                            size="icon"
-                            className="h-10 w-10 rounded-md"
-                            onClick={() => copyToClipboard(v2Result.fullKey)}>
-                            <Copy size={13} />
+                            variant="secondary"
+                            size="sm"
+                            className="mt-3 w-full gap-1.5 h-8 font-bold text-xs rounded-lg"
+                            onClick={() =>
+                              copyToClipboard(deviceTokenResult.rawToken)
+                            }>
+                            <Copy size={12} /> Copy token
                           </Button>
                         </div>
                       </div>
                     </div>
+
+                    <p className="text-[10px] text-center text-slate-400 italic">
+                      Scan the QR code on your device or enter the token
+                      manually to provision. Valid for 24 hours.
+                    </p>
+                  </div>
+                )}
+                <DialogFooter>
+                  {!deviceTokenResult ? (
+                    <Button
+                      onClick={handleProvisionDevice}
+                      disabled={!newDevice.deviceName}
+                      className="bg-slate-900 hover:bg-slate-800 w-full text-xs rounded-lg">
+                      Generate token
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        setShowDeviceDialog(false);
+                        setDeviceTokenResult(null);
+                      }}
+                      className="bg-slate-900 hover:bg-slate-800 w-full text-xs rounded-lg">
+                      Done
+                    </Button>
                   )}
-                  <DialogFooter className="gap-2 sm:gap-0">
-                    {!v2Result ? (
-                      <Button
-                        onClick={handleCreateV2}
-                        disabled={!newKeyName}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-xs rounded-md">
-                        Create Key
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => {
-                          setShowV2Dialog(false);
-                          setV2Result(null);
-                        }}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-xs rounded-md">
-                        Done
-                      </Button>
-                    )}
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {v2Keys.length === 0 && (
-                <div className="col-span-full bg-white p-8 rounded-lg border border-dashed flex flex-col items-center text-center shadow-sm">
-                  <p className="text-gray-400 text-xs font-medium">
-                    No V2 API keys found.
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="space-y-4">
+            {registries.length === 0 &&
+              deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length ===
+                0 && (
+                <div className="bg-white h-[200px] rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center p-6">
+                  <div className="p-3 bg-slate-50 rounded-lg mb-2 border border-slate-100">
+                    <Cpu className="w-7 h-7 text-slate-300" />
+                  </div>
+                  <p className="text-[13px] text-slate-500 font-medium max-w-xs">
+                    No hardware devices connected to this organization yet.
                   </p>
                 </div>
               )}
-              {v2Keys.map(key => (
+
+            {deviceTokens
+              .filter(t => !t.usedAt && !t.revokedAt)
+              .map(token => (
                 <div
-                  key={key.id}
-                  className="bg-white p-4 rounded-lg border border-gray-200 flex justify-between items-center shadow-sm hover:shadow-md transition-all group">
+                  key={token.id}
+                  className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/70 flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-md bg-indigo-50 flex items-center justify-center text-indigo-600">
-                      <Key size={18} />
+                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
+                      <Lock size={18} />
                     </div>
                     <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-xs text-gray-900">
-                          {key.name}
-                        </span>
-                        <Badge
-                          variant="outline"
-                          className="text-[9px] px-1.5 h-4.5 font-bold uppercase tracking-tight bg-gray-50 border-gray-200 text-gray-600">
-                          {key.environment}
-                        </Badge>
+                      <div className="font-bold text-xs text-slate-900">
+                        Pending setup: {token.deviceName}
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5">
-                        Prefix:{" "}
-                        <code className="bg-gray-50 px-1 py-0.2 rounded border text-[10px] font-mono">
-                          {key.keyPrefix}
-                        </code>
+                      <div className="text-[10px] text-amber-700/80 mt-0.5 font-semibold">
+                        EXPIRES: {new Date(token.expiresAt).toLocaleString()}
                       </div>
                     </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-gray-400 hover:text-destructive hover:bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-md"
-                    onClick={() => deleteV2ApiKeyAction(key.id).then(loadData)}>
-                    <Trash2 size={15} />
+                    className="text-amber-700 hover:bg-amber-100 h-8 w-8 rounded-lg"
+                    onClick={() => copyToClipboard(token.rawToken)}>
+                    <Copy size={14} />
                   </Button>
                 </div>
               ))}
-            </div>
-          </section>
 
-          <section className="space-y-4">
-            <div className="flex justify-between items-center">
-              <div className="space-y-0.5">
-                <h2 className="text-lg font-bold text-gray-900">
-                  Hardware & Devices
-                </h2>
-                <p className="text-xs text-gray-500">
-                  Provision and manage POS terminals and kiosks.
-                </p>
-              </div>
-              <Dialog
-                open={showDeviceDialog}
-                onOpenChange={open => {
-                  setShowDeviceDialog(open);
-                  if (!open) setDeviceTokenResult(null);
-                }}>
-                <DialogTrigger asChild>
-                  <Button className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 h-9 px-4 text-xs font-semibold rounded-md shadow-sm">
-                    <Plus size={16} />
-                    Provision Device
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[500px] rounded-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-base font-bold">
-                      Provision Device
-                    </DialogTitle>
-                    <DialogDescription className="text-xs">
-                      Generate a setup token to provision a new POS device.
-                    </DialogDescription>
-                  </DialogHeader>
-                  {!deviceTokenResult ? (
-                    <div className="grid gap-4 py-3">
-                      <div className="grid gap-1.5">
-                        <Label htmlFor="device-name" className="text-xs">
-                          Device Name
-                        </Label>
-                        <Input
-                          id="device-name"
-                          value={newDevice.deviceName}
-                          onChange={e =>
-                            setNewDevice({
-                              ...newDevice,
-                              deviceName: e.target.value,
-                            })
-                          }
-                          placeholder="Front Desk Terminal"
-                          className="h-10 text-sm rounded-md"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="grid gap-1.5">
-                          <Label htmlFor="device-type" className="text-xs">
-                            Device Type
-                          </Label>
-                          <Select
-                            value={newDevice.deviceType}
-                            onValueChange={val => {
-                              const deviceType = val as any;
-                              const permissions =
-                                deviceType === "BAKERY_TERMINAL"
-                                  ? [
-                                      "bakery:batch:view",
-                                      "bakery:batch:manage",
-                                      "bakery:recipe:view",
-                                      "bakery:recipe:manage",
-                                      "bakery:template:view",
-                                      "bakery:template:manage",
-                                    ]
-                                  : [
-                                      "pos:auth",
-                                      "pos:location:read",
-                                      "pos:product:read",
-                                      "pos:product:update",
-                                      "pos:sale:read",
-                                      "pos:sale:create",
-                                      "pos:sale:update",
-                                      "pos:stock:manage",
-                                      "pos:sync",
-                                    ];
-
-                              setNewDevice({
-                                ...newDevice,
-                                deviceType,
-                                permissions,
-                              });
-                            }}>
-                            <SelectTrigger
-                              id="device-type"
-                              className="h-10 text-sm rounded-md">
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-md">
-                              <SelectItem value="POS_TERMINAL">
-                                POS Terminal
-                              </SelectItem>
-                              <SelectItem value="MOBILE_POS">
-                                Mobile POS
-                              </SelectItem>
-                              <SelectItem value="KIOSK">Kiosk</SelectItem>
-                              <SelectItem value="TABLET">Tablet</SelectItem>
-                              <SelectItem value="BAKERY_TERMINAL">
-                                Bakery Terminal
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-1.5">
-                          <Label htmlFor="location-id" className="text-xs">
-                            Location
-                          </Label>
-                          <Select
-                            value={newDevice.locationId}
-                            onValueChange={val =>
-                              setNewDevice({ ...newDevice, locationId: val })
-                            }>
-                            <SelectTrigger
-                              id="location-id"
-                              className="h-10 text-sm rounded-md">
-                              <SelectValue placeholder="Select location" />
-                            </SelectTrigger>
-                            <SelectContent className="rounded-md">
-                              {locations.map(loc => (
-                                <SelectItem key={loc.id} value={loc.id}>
-                                  {loc.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="grid gap-1.5">
-                        <Label className="text-xs">Environment</Label>
-                        <Select
-                          value={newDevice.environment}
-                          onValueChange={val =>
-                            setNewDevice({
-                              ...newDevice,
-                              environment: val as any,
-                            })
-                          }>
-                          <SelectTrigger className="h-10 text-sm rounded-md">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-md">
-                            <SelectItem value="LIVE">
-                              Production (Live)
-                            </SelectItem>
-                            <SelectItem value="TEST">Sandbox (Test)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-3">
-                        <Label className="text-xs font-bold uppercase text-gray-400">
-                          Permissions
-                        </Label>
-                        <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100 max-h-48 overflow-y-auto">
-                          {[
-                            "pos:auth",
-                            "pos:location:read",
-                            "pos:product:read",
-                            "pos:product:update",
-                            "pos:sale:read",
-                            "pos:sale:create",
-                            "pos:sale:update",
-                            "pos:stock:manage",
-                            "pos:petty-cash:create",
-                            "pos:petty-cash:read",
-                            "pos:sync",
-                            "bakery:batch:view",
-                            "bakery:batch:manage",
-                            "bakery:recipe:view",
-                            "bakery:recipe:manage",
-                            "bakery:template:view",
-                            "bakery:template:manage",
-                            "bakery:settings:manage",
-                          ].map(perm => (
-                            <div
-                              key={perm}
-                              className="flex items-center space-x-2">
-                              <Checkbox
-                                id={`perm-${perm}`}
-                                checked={newDevice.permissions.includes(perm)}
-                                onCheckedChange={checked => {
-                                  const permissions = checked
-                                    ? [...newDevice.permissions, perm]
-                                    : newDevice.permissions.filter(
-                                        p => p !== perm,
-                                      );
-                                  setNewDevice({ ...newDevice, permissions });
-                                }}
-                              />
-                              <label
-                                htmlFor={`perm-${perm}`}
-                                className="text-[9px] font-bold uppercase text-gray-600 cursor-pointer">
-                                {perm.replace(":", " ")}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {registries.map(reg => (
+                <div
+                  key={reg.id}
+                  className="bg-white p-4 rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all flex justify-between items-center group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                      <Monitor size={18} />
                     </div>
-                  ) : (
-                    <div className="space-y-4 py-3">
-                      <div className="p-3 bg-emerald-50 text-emerald-700 rounded-md text-xs border border-emerald-100 font-semibold text-center">
-                        Setup token generated successfully.
+                    <div>
+                      <div className="font-bold text-xs text-slate-900">
+                        {reg.deviceName}
                       </div>
-
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="bg-white p-4 rounded-lg border-2 border-indigo-50 shadow-md">
-                          <QRCodeSVG
-                            value={deviceTokenResult.rawToken}
-                            size={160}
-                            level="H"
-                            includeMargin={false}
-                          />
-                        </div>
-
-                        <div className="w-full space-y-2">
-                          <div className="text-center p-4 bg-gray-50 rounded-lg border border-gray-100 relative group">
-                            <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                              Provisioning Token
-                            </div>
-                            <div className="text-xl font-mono font-bold tracking-[0.15em] text-indigo-600 break-all px-2">
-                              {deviceTokenResult.rawToken}
-                            </div>
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="mt-3 w-full gap-1.5 h-8 font-bold text-xs rounded-md"
-                              onClick={() =>
-                                copyToClipboard(deviceTokenResult.rawToken)
-                              }>
-                              <Copy size={12} /> Copy Token
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-[10px] text-center text-gray-400 italic">
-                        Scan the QR code on your mobile device or enter the
-                        token manually to provision. Valid for 24 hours.
-                      </p>
-                    </div>
-                  )}
-                  <DialogFooter>
-                    {!deviceTokenResult ? (
-                      <Button
-                        onClick={handleProvisionDevice}
-                        disabled={!newDevice.deviceName}
-                        className="bg-indigo-600 hover:bg-indigo-700 w-full text-xs rounded-md">
-                        Generate Token
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => {
-                          setShowDeviceDialog(false);
-                          setDeviceTokenResult(null);
-                        }}
-                        className="bg-indigo-600 hover:bg-indigo-700 w-full text-xs rounded-md">
-                        Done
-                      </Button>
-                    )}
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            <div className="space-y-4">
-              {registries.length === 0 &&
-                deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length ===
-                  0 && (
-                  <div className="bg-white h-[200px] rounded-lg border border-dashed flex flex-col items-center justify-center text-center p-6 shadow-sm">
-                    <div className="p-3 bg-gray-50 rounded-md mb-2">
-                      <Cpu className="w-8 h-8 text-gray-300" />
-                    </div>
-                    <p className="text-xs text-gray-500 font-medium max-w-xs">
-                      No hardware devices connected to this organization yet.
-                    </p>
-                  </div>
-                )}
-
-              {deviceTokens
-                .filter(t => !t.usedAt && !t.revokedAt)
-                .map(token => (
-                  <div
-                    key={token.id}
-                    className="bg-amber-50/50 p-4 rounded-lg border border-amber-100 flex justify-between items-center shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-md bg-amber-100 flex items-center justify-center text-amber-600">
-                        <Lock size={18} />
-                      </div>
-                      <div>
-                        <div className="font-bold text-xs text-gray-900">
-                          Pending Setup: {token.deviceName}
-                        </div>
-                        <div className="text-[10px] text-amber-600/70 mt-0.5 font-semibold">
-                          EXPIRES: {new Date(token.expiresAt).toLocaleString()}
-                        </div>
-                      </div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-amber-600 hover:bg-amber-100 h-8 w-8 rounded-md"
-                      onClick={() => copyToClipboard(token.rawToken)}>
-                      <Copy size={14} />
-                    </Button>
-                  </div>
-                ))}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {registries.map(reg => (
-                  <div
-                    key={reg.id}
-                    className="bg-white p-4 rounded-lg border border-gray-150 flex justify-between items-center shadow-sm group">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-md bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                        <Monitor size={18} />
-                      </div>
-                      <div>
-                        <div className="font-bold text-xs text-gray-900">
-                          {reg.deviceName}
-                        </div>
-                        <div className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5">
-                          <span className="font-semibold text-[9px] uppercase tracking-wider">
-                            {reg.deviceType}
-                          </span>
-                          <span className="w-1 h-1 rounded-full bg-gray-300" />
-                          <span>{reg.location?.name || "Main Location"}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge
-                        variant={
-                          reg.status === "ACTIVE" ? "default" : "secondary"
-                        }
-                        className={cn(
-                          "px-2 py-0.2 border-none text-[9px]",
-                          reg.status === "ACTIVE"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-gray-50 text-gray-500",
-                        )}>
-                        {reg.status}
-                      </Badge>
-                      <div className="text-[9px] text-gray-400 mt-1 font-bold uppercase tracking-tighter flex items-center justify-end gap-1">
-                        <History size={10} />
-                        {reg.lastSeenAt
-                          ? new Date(reg.lastSeenAt).toLocaleString()
-                          : "Never Seen"}
+                      <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5">
+                        <span className="font-semibold text-[9px] uppercase tracking-wider">
+                          {reg.deviceType}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                        <span>{reg.location?.name || "Main Location"}</span>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                  <div className="text-right">
+                    <Badge
+                      variant={
+                        reg.status === "ACTIVE" ? "default" : "secondary"
+                      }
+                      className={cn(
+                        "px-2 py-0.2 border-none text-[9px] font-bold",
+                        reg.status === "ACTIVE"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-slate-100 text-slate-500",
+                      )}>
+                      {reg.status}
+                    </Badge>
+                    <div className="text-[9px] text-slate-400 mt-1 font-bold uppercase tracking-tighter flex items-center justify-end gap-1">
+                      <History size={10} />
+                      {reg.lastSeenAt
+                        ? new Date(reg.lastSeenAt).toLocaleString()
+                        : "Never seen"}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </section>
+          </div>
         </div>
       )}
 
       {activeTab === "webhooks" && (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <div className="space-y-0.5">
-              <h2 className="text-lg font-bold text-gray-900">
-                Webhook Subscriptions
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                Webhook subscriptions
               </h2>
-              <p className="text-xs text-gray-500">
+              <p className="text-[13px] text-slate-500">
                 Receive real-time notifications when events happen in your
                 organization.
               </p>
@@ -1060,24 +908,26 @@ function AppsApiContent() {
               open={showWebhookDialog}
               onOpenChange={setShowWebhookDialog}>
               <DialogTrigger asChild>
-                <Button className="bg-indigo-600 hover:bg-indigo-700 gap-1.5 h-9 px-4 text-xs font-semibold rounded-md shadow-sm">
+                <Button className="bg-slate-900 hover:bg-slate-800 gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
                   <Plus size={16} />
-                  Add Webhook
+                  Add webhook
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px] rounded-lg">
+              <DialogContent className="sm:max-w-[500px] rounded-xl">
                 <DialogHeader>
-                  <DialogTitle className="text-base font-bold">
-                    Add Webhook Subscription
+                  <DialogTitle className="text-base font-bold tracking-tight">
+                    Add webhook subscription
                   </DialogTitle>
-                  <DialogDescription className="text-xs">
+                  <DialogDescription className="text-xs text-slate-500">
                     Configure a new endpoint to receive real-time notifications.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-3">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="webhook-name" className="text-xs">
-                      Friendly Name
+                    <Label
+                      htmlFor="webhook-name"
+                      className="text-xs font-semibold text-slate-600">
+                      Friendly name
                     </Label>
                     <Input
                       id="webhook-name"
@@ -1086,11 +936,13 @@ function AppsApiContent() {
                         setNewWebhook({ ...newWebhook, name: e.target.value })
                       }
                       placeholder="My Production Webhook"
-                      className="h-10 text-sm rounded-md"
+                      className="h-10 text-sm rounded-lg"
                     />
                   </div>
                   <div className="grid gap-1.5">
-                    <Label htmlFor="webhook-url" className="text-xs">
+                    <Label
+                      htmlFor="webhook-url"
+                      className="text-xs font-semibold text-slate-600">
                       Payload URL
                     </Label>
                     <Input
@@ -1100,14 +952,14 @@ function AppsApiContent() {
                         setNewWebhook({ ...newWebhook, url: e.target.value })
                       }
                       placeholder="https://api.myapp.com/webhooks"
-                      className="h-10 text-sm rounded-md"
+                      className="h-10 text-sm rounded-lg"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase text-gray-400">
-                      Events to Subscribe
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      Events to subscribe
                     </Label>
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-gray-50 rounded-md border border-gray-100">
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
                       {availableEvents.map(ev => (
                         <div key={ev} className="flex items-center space-x-2">
                           <Checkbox
@@ -1122,7 +974,7 @@ function AppsApiContent() {
                           />
                           <label
                             htmlFor={`event-${ev}`}
-                            className="text-xs font-semibold text-gray-600 uppercase cursor-pointer">
+                            className="text-xs font-semibold text-slate-600 uppercase cursor-pointer">
                             {ev.replace(".", " ")}
                           </label>
                         </div>
@@ -1133,15 +985,15 @@ function AppsApiContent() {
                 <DialogFooter className="gap-2 sm:gap-0">
                   <Button
                     variant="outline"
-                    className="h-9 text-xs rounded-md"
+                    className="h-9 text-xs rounded-lg"
                     onClick={() => setShowWebhookDialog(false)}>
                     Cancel
                   </Button>
                   <Button
                     onClick={handleCreateWebhook}
                     disabled={!newWebhook.url || newWebhook.events.length === 0}
-                    className="bg-indigo-600 hover:bg-indigo-700 h-9 text-xs rounded-md">
-                    Create Subscription
+                    className="bg-slate-900 hover:bg-slate-800 h-9 text-xs rounded-lg">
+                    Create subscription
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -1149,15 +1001,15 @@ function AppsApiContent() {
           </div>
 
           {webhooks.length === 0 ? (
-            <div className="bg-white p-12 rounded-lg border border-dashed flex flex-col items-center text-center shadow-sm">
-              <div className="p-3 bg-indigo-50 rounded-md mb-3">
-                <Webhook className="w-8 h-8 text-indigo-600" />
+            <div className="bg-white p-14 rounded-xl border border-dashed border-slate-200 flex flex-col items-center text-center">
+              <div className="p-3 bg-slate-50 rounded-lg mb-3 border border-slate-100">
+                <Webhook className="w-7 h-7 text-slate-400" />
               </div>
-              <h3 className="text-base font-bold text-gray-900 mb-1">
-                No Webhooks
+              <h3 className="text-base font-bold text-slate-900 mb-1 tracking-tight">
+                No webhooks configured
               </h3>
-              <p className="text-xs text-gray-500 max-w-sm">
-                Listen to real-time events from our API and trigger external
+              <p className="text-[13px] text-slate-500 max-w-sm">
+                Listen to real-time events from the API and trigger external
                 workflows in your own stack.
               </p>
             </div>
@@ -1166,15 +1018,15 @@ function AppsApiContent() {
               {webhooks.map(wh => (
                 <div
                   key={wh.id}
-                  className="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex justify-between items-center group hover:border-indigo-100 transition-all">
+                  className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] flex justify-between items-center group hover:border-slate-300 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] transition-all">
                   <div className="space-y-3">
                     <div>
-                      <div className="font-bold text-sm text-gray-900">
-                        {wh.name || "Untitled Webhook"}
+                      <div className="font-bold text-sm text-slate-900 tracking-tight">
+                        {wh.name || "Untitled webhook"}
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
-                        <Globe size={12} className="text-indigo-400" />
-                        <code className="bg-gray-50 px-1 py-0.2 rounded border font-mono text-xs text-gray-700">
+                      <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
+                        <Globe size={12} className="text-slate-400" />
+                        <code className="bg-slate-50 px-1 py-0.2 rounded border border-slate-200 font-mono text-xs text-slate-600">
                           {wh.url}
                         </code>
                       </div>
@@ -1184,7 +1036,7 @@ function AppsApiContent() {
                         <Badge
                           key={e}
                           variant="secondary"
-                          className="bg-indigo-50 text-indigo-600 border-none font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
+                          className="bg-slate-100 text-slate-600 border-none font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
                           {e}
                         </Badge>
                       ))}
@@ -1193,7 +1045,7 @@ function AppsApiContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-gray-400 hover:text-destructive hover:bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-md"
+                    className="text-slate-400 hover:text-destructive hover:bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-lg"
                     onClick={() =>
                       deleteWebhookSubscriptionAction(wh.id).then(loadData)
                     }>
@@ -1210,21 +1062,24 @@ function AppsApiContent() {
       <Sheet
         open={!!editingV3Client}
         onOpenChange={open => !open && setEditingV3Client(null)}>
-        <SheetContent className="sm:max-w-md rounded-l-lg">
+        <SheetContent className="sm:max-w-md">
           <SheetHeader className="pb-6">
-            <SheetTitle className="text-lg font-bold">
-              Client Advanced Settings
+            <SheetTitle className="text-lg font-bold tracking-tight">
+              Client advanced settings
             </SheetTitle>
-            <SheetDescription className="text-xs">
+            <SheetDescription className="text-xs text-slate-500">
               Modify security settings and permissions for{" "}
-              <strong>{editingV3Client?.name}</strong>.
+              <strong className="text-slate-700">
+                {editingV3Client?.name}
+              </strong>
+              .
             </SheetDescription>
           </SheetHeader>
           {editingV3Client && (
             <div className="py-4 space-y-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                  Scopes & Permissions
+                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Scopes & permissions
                 </Label>
                 <div className="flex flex-wrap gap-1.5">
                   {["read", "write", "admin", "inventory", "orders"].map(
@@ -1235,10 +1090,10 @@ function AppsApiContent() {
                           key={scope}
                           variant={isSelected ? "default" : "outline"}
                           className={cn(
-                            "cursor-pointer py-1.5 px-3 h-auto text-[10px] font-bold transition-all border-none rounded-md",
+                            "cursor-pointer py-1.5 px-3 h-auto text-[10px] font-bold transition-all border-none rounded-lg",
                             isSelected
-                              ? "bg-indigo-600 text-white shadow-sm"
-                              : "bg-gray-50 text-gray-500 hover:bg-gray-100",
+                              ? "bg-slate-900 text-white shadow-sm"
+                              : "bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200",
                           )}
                           onClick={() => {
                             const scopes = isSelected
@@ -1258,14 +1113,14 @@ function AppsApiContent() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                  CORS Origins
+                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  CORS origins
                 </Label>
                 <div className="space-y-2">
                   <Input
                     placeholder="e.g. https://myapp.com, http://localhost:3000"
                     value={editingV3Client.corsOrigins.join(", ")}
-                    className="h-10 text-sm rounded-md"
+                    className="h-10 text-sm rounded-lg"
                     onChange={e =>
                       setEditingV3Client({
                         ...editingV3Client,
@@ -1276,19 +1131,19 @@ function AppsApiContent() {
                       })
                     }
                   />
-                  <p className="text-[10px] text-gray-400 leading-relaxed">
+                  <p className="text-[10px] text-slate-400 leading-relaxed">
                     Comma-separated list of browser origins allowed to make
                     authenticated requests.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
                 <div className="space-y-0.5">
-                  <div className="font-bold text-xs text-gray-900">
-                    Active Status
+                  <div className="font-bold text-xs text-slate-900">
+                    Active status
                   </div>
-                  <div className="text-[9px] text-gray-400 uppercase font-bold tracking-tight">
+                  <div className="text-[9px] text-slate-400 uppercase font-bold tracking-tight">
                     Access control toggle
                   </div>
                 </div>
@@ -1307,14 +1162,14 @@ function AppsApiContent() {
           <SheetFooter className="mt-8 gap-2 sm:gap-0">
             <Button
               variant="outline"
-              className="flex-1 h-10 text-xs rounded-md"
+              className="flex-1 h-10 text-xs rounded-lg"
               onClick={() => setEditingV3Client(null)}>
               Cancel
             </Button>
             <Button
-              className="flex-1 h-10 text-xs bg-indigo-600 hover:bg-indigo-700 rounded-md"
+              className="flex-1 h-10 text-xs bg-slate-900 hover:bg-slate-800 rounded-lg"
               onClick={handleUpdateV3}>
-              Save Changes
+              Save changes
             </Button>
           </SheetFooter>
         </SheetContent>
@@ -1325,11 +1180,11 @@ function AppsApiContent() {
 
 export default function AppsApiPage() {
   return (
-    <div className="p-6 max-w-[1400px] mx-auto min-h-screen bg-[#F9FAFB]">
+    <div className="p-6 max-w-[1400px] mx-auto min-h-screen bg-[#F8F9FB]">
       <Suspense
         fallback={
           <div className="flex items-center justify-center h-[50vh]">
-            <RefreshCw className="w-6 h-6 animate-spin text-indigo-600" />
+            <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
           </div>
         }>
         <AppsApiContent />

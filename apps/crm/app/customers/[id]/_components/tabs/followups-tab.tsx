@@ -426,7 +426,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
                     setForm((f) => ({ ...f, recurringInterval: val }))
                   }
                 >
-                  <SelectTrigger className="w-[120px] h-8 bg-background">
+                  <SelectTrigger className="w-30 h-8 bg-background">
                     <SelectValue placeholder="Select interval" />
                   </SelectTrigger>
                   <SelectContent>

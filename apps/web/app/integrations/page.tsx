@@ -566,7 +566,7 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="p-8 max-w-[1400px] mx-auto min-h-screen bg-[#F9FAFB]">
+    <div className="p-8 max-w-350 mx-auto min-h-screen bg-[#F9FAFB]">
       <Breadcrumbs
         items={[
           { label: "Settings", href: "/settings" },
