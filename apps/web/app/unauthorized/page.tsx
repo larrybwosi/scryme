@@ -36,7 +36,10 @@ import {
 } from "@repo/ui/components/ui/alert";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { toast } from "sonner";
-import { getCurrentUserContext, requestPermissionsAction } from "../actions/permissions";
+import {
+  getCurrentUserContext,
+  requestPermissionsAction,
+} from "../actions/permissions";
 
 const UnauthorizedContent = () => {
   const searchParams = useSearchParams();
@@ -51,11 +54,11 @@ const UnauthorizedContent = () => {
 
   useEffect(() => {
     getCurrentUserContext()
-      .then((context) => {
+      .then(context => {
         setUserContext(context);
         setIsLoading(false);
       })
-      .catch((err) => {
+      .catch(err => {
         console.error("Failed to load user context:", err);
         setIsLoading(false);
       });
@@ -114,14 +117,14 @@ const UnauthorizedContent = () => {
     const initials = userContext.user.name
       ? userContext.user.name
           .split(" ")
-          .map((n) => n[0])
+          .map((n: any) => n[0])
           .join("")
           .toUpperCase()
       : userContext.user.email[0].toUpperCase();
 
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-        <Card className="max-w-[420px] w-full shadow-xl border-muted ring-1 ring-slate-900/5">
+        <Card className="max-w-105 w-full shadow-xl border-muted ring-1 ring-slate-900/5">
           {/* Header Section */}
           <CardHeader className="text-center pb-2">
             <div className="mx-auto bg-destructive/10 p-3 rounded-full w-fit mb-4 border border-destructive/20">
@@ -167,15 +170,14 @@ const UnauthorizedContent = () => {
                 <Textarea
                   placeholder="Explain why you need access (e.g. 'I need to check yesterday's transaction logs for reconciliation')"
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  className="min-h-[80px]"
+                  onChange={e => setReason(e.target.value)}
+                  className="min-h-20"
                 />
                 <Button
                   className="w-full gap-2 font-medium"
                   size="default"
                   onClick={handleRequestPermission}
-                  disabled={isSubmitting}
-                >
+                  disabled={isSubmitting}>
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
@@ -191,7 +193,8 @@ const UnauthorizedContent = () => {
                   Request Dispatched!
                 </AlertTitle>
                 <AlertDescription className="text-emerald-700/80 dark:text-emerald-400/80 text-xs mt-1 text-left">
-                  Your request has been successfully broadcast to administrators (Owners & Admins) via Scryme Chat.
+                  Your request has been successfully broadcast to administrators
+                  (Owners & Admins) via Scryme Chat.
                 </AlertDescription>
               </Alert>
             )}
@@ -210,8 +213,7 @@ const UnauthorizedContent = () => {
                 } else {
                   window.location.href = "/dashboard";
                 }
-              }}
-            >
+              }}>
               <ArrowLeft className="w-4 h-4" />
               Return to Safety
             </Button>
@@ -219,8 +221,9 @@ const UnauthorizedContent = () => {
             <div className="flex items-center justify-between w-full text-xs text-muted-foreground mt-2 px-1">
               <button
                 className="flex items-center gap-1 hover:text-foreground transition-colors"
-                onClick={() => { window.location.href = "/dashboard"; }}
-              >
+                onClick={() => {
+                  window.location.href = "/dashboard";
+                }}>
                 <History className="w-3 h-3" />
                 Dashboard Home
               </button>
@@ -245,7 +248,7 @@ const UnauthorizedContent = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <Card className="max-w-[400px] w-full shadow-xl border-muted ring-1 ring-slate-900/5">
+      <Card className="max-w-100 w-full shadow-xl border-muted ring-1 ring-slate-900/5">
         {/* Header Section */}
         <CardHeader className="text-center pb-2">
           <div className="mx-auto bg-amber-100 dark:bg-amber-900/20 p-3 rounded-full w-fit mb-4 border border-amber-200 dark:border-amber-900">
@@ -324,11 +327,12 @@ const UnauthorizedContent = () => {
 
 export default function UnauthorizedPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      }>
       <UnauthorizedContent />
     </Suspense>
   );
