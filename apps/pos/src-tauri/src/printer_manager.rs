@@ -621,32 +621,43 @@ pub async fn print_receipt_native(
     let show_reg = config.get("showCompanyRegNumber").and_then(|v| v.as_bool()).unwrap_or(false);
 
     if show_kra || show_tax || show_vat || show_reg {
-        let mut reg_parts = Vec::new();
         if show_kra {
+            if let Some(val) = config.get("taxNumber").and_then(|v| v.as_str()) {
+                if !val.is_empty() {
+                    esc.text_line(&format!("KRA PIN / Tax ID: {}", val));
+                }
+            }
             if let Some(val) = config.get("kraPin").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("KRA PIN:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("KRA PIN: {}", val));
+                }
             }
             if let Some(val) = config.get("kraEtr").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("KRA ETR:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("KRA ETR: {}", val));
+                }
             }
         }
-        if show_tax {
+        if show_tax && !show_kra {
             if let Some(val) = config.get("taxNumber").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("TIN:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("TIN: {}", val));
+                }
             }
         }
         if show_vat {
             if let Some(val) = config.get("vatNumber").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("VAT:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("VAT: {}", val));
+                }
             }
         }
         if show_reg {
             if let Some(val) = config.get("companyRegNumber").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("REG:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("REG: {}", val));
+                }
             }
-        }
-        if !reg_parts.is_empty() {
-            esc.text_line(&reg_parts.join(" "));
         }
     }
     

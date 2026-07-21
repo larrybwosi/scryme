@@ -127,6 +127,11 @@ export function ThermalReceiptPreview({
             <div className="mt-2 flex flex-wrap justify-center gap-x-2 gap-y-0.5 opacity-70" style={{ fontSize: `${headerSize - 3}px` }}>
               {config.showKraDetails && (
                 <>
+                  {config.taxNumber && (
+                    <span>
+                      KRA PIN / Tax ID: {config.taxNumber}
+                    </span>
+                  )}
                   {config.kraPin && (
                     <span>
                       KRA PIN: {config.kraPin}
@@ -139,7 +144,7 @@ export function ThermalReceiptPreview({
                   )}
                 </>
               )}
-              {config.showTaxNumber && config.taxNumber && (
+              {config.showTaxNumber && !config.showKraDetails && config.taxNumber && (
                 <span>
                   {labels.tin}: {config.taxNumber}
                 </span>
