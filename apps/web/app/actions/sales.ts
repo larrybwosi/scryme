@@ -3,6 +3,7 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import {
   Transaction,
   TransactionType,
@@ -16,9 +17,12 @@ import {
 } from "@repo/db/client";
 import { Decimal } from "decimal.js";
 
-async function checkPermission(allowedRoles: MemberRole[]) {
+async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId || !auth.memberId) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=unauthenticated");
+    }
     throw new Error("Unauthorized");
   }
 
@@ -27,6 +31,9 @@ async function checkPermission(allowedRoles: MemberRole[]) {
   });
 
   if (!member || !allowedRoles.includes(member.role)) {
+    if (isPageLoad) {
+      redirect("/unauthorized?reason=insufficient_permissions");
+    }
     throw new Error("Forbidden: Insufficient permissions");
   }
 
@@ -47,7 +54,7 @@ export async function getTransactions(params: {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   const where: Prisma.TransactionWhereInput = {
     organizationId: auth.organizationId,
@@ -143,7 +150,7 @@ export async function getTransactionById(id: string) {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   return await db.transaction.findUnique({
     where: {
@@ -573,7 +580,7 @@ export async function getFulfillments(params: {
     "ADMIN",
     "MANAGER",
     "REPORTER",
-  ]);
+  ], true);
 
   const where: Prisma.FulfillmentWhereInput = {
     transaction: {
