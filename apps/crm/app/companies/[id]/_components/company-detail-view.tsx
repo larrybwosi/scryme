@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { DetailTabs, type TabId } from '@/components/crm/detail-tabs';
 import { NotesTab } from '@/components/crm/notes-tab';
 import { FollowUpsTab } from '@/components/crm/followups-tab';
+import { getDisplayTime } from '@/lib/utils';
 import { ActivitiesTab } from '@/components/crm/activities-tab';
 import { cn } from '@repo/ui/lib/utils';
 import { toast } from 'sonner';
@@ -58,7 +59,11 @@ function TabContent({ company, tab }: { company: any; tab: TabId }) {
 }
 
 function ContactsTab({ company }: { company: any }) {
+    const router = useRouter();
+    const [selectedContact, setSelectedContact] = useState<any>(null);
+    const [isEditOpen, setIsEditOpen] = useState(false);
     const contacts = company.contacts || [];
+
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-bold">Contacts</h3>
@@ -67,14 +72,63 @@ function ContactsTab({ company }: { company: any }) {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {contacts.map((contact: any) => (
-                        <Link key={contact.id} href={`/customers/${contact.id}`} className="block p-4 border border-border rounded-xl hover:border-primary transition-colors">
-                            <div className="font-semibold">{contact.name}</div>
-                            <div className="text-sm text-muted-foreground">{contact.email || 'No email'}</div>
-                            <div className="text-sm text-muted-foreground">{contact.phone || 'No phone'}</div>
-                        </Link>
+                        <div key={contact.id} className="block p-4 border border-border rounded-xl hover:border-primary transition-colors bg-card group relative">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <div className="font-semibold text-[14px] text-foreground">{contact.name}</div>
+                                    <div className="text-sm text-muted-foreground mt-1">{contact.email || 'No email'}</div>
+                                    <div className="text-sm text-muted-foreground">{contact.phone || 'No phone'}</div>
+                                </div>
+                                <Link href={`/customers/${contact.id}`} className="text-xs text-primary hover:underline font-medium shrink-0">
+                                    View Profile
+                                </Link>
+                            </div>
+                            <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[11px] text-muted-foreground">
+                                <span>{getDisplayTime(contact.createdAt, contact.updatedAt)}</span>
+                                <button
+                                    onClick={() => {
+                                        setSelectedContact(contact);
+                                        setIsEditOpen(true);
+                                    }}
+                                    className="text-primary hover:underline font-semibold"
+                                >
+                                    Edit
+                                </button>
+                            </div>
+                        </div>
                     ))}
                 </div>
             )}
+
+            {/* Edit Contact Sheet */}
+            <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
+                 <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+                    <SheetHeader>
+                       <SheetTitle>Edit Contact</SheetTitle>
+                    </SheetHeader>
+                    {selectedContact && (
+                        <CustomerForm
+                           initialData={{
+                              id: selectedContact.id,
+                              name: selectedContact.name,
+                              email: selectedContact.email || '',
+                              phone: selectedContact.phone || '',
+                              company: company.name,
+                              businessAccountId: company.id,
+                              customerType: 'B2B',
+                              isActive: true,
+                           } as any}
+                           onSuccess={() => {
+                              setIsEditOpen(false);
+                              setSelectedContact(null);
+                              toast.success('Contact updated successfully');
+                              router.refresh();
+                           }}
+                           type="CONTACT"
+                        />
+                    )}
+                 </SheetContent>
+            </Sheet>
         </div>
     );
 }
