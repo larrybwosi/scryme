@@ -52,38 +52,40 @@ export async function getDocumentStream(
   let isStockTransfer = false;
 
   if (!transaction) {
-    transfer = await db.stockTransfer.findFirst({
-      where: {
-        id,
-        organizationId: orgId,
-      },
-      include: {
-        organization: {
-          include: {
-            settings: true,
-          },
+    if (type === "packing-list" && (db as any).stockTransfer) {
+      transfer = await (db as any).stockTransfer.findFirst({
+        where: {
+          id,
+          organizationId: orgId,
         },
-        fromLocation: true,
-        toLocation: true,
-        items: {
-          include: {
-            variant: {
-              include: {
-                product: true,
+        include: {
+          organization: {
+            include: {
+              settings: true,
+            },
+          },
+          fromLocation: true,
+          toLocation: true,
+          items: {
+            include: {
+              variant: {
+                include: {
+                  product: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    if (transfer) {
-      isStockTransfer = true;
+      if (transfer) {
+        isStockTransfer = true;
+      }
     }
-  }
 
-  if (!transaction && !transfer) {
-    throw new Error("Document not found");
+    if (!isStockTransfer) {
+      throw new Error("Transaction not found");
+    }
   }
 
   let DocumentComponent: any;
