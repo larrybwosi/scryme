@@ -771,8 +771,8 @@ export async function getStockLevels(params: {
             reservedStock: stock.reservedStock.toNumber(),
             availableStock: stock.availableStock.toNumber(),
             incomingStock: incomingT.add(incomingP).toNumber(),
-            buyingPrice: variant.buyingPrice.toNumber(),
-            retailPrice: variant.retailPrice.toNumber(),
+            buyingPrice: variant.buyingPrice?.toNumber() ?? 0,
+            retailPrice: variant.retailPrice?.toNumber() ?? 0,
           };
         });
       } else {
@@ -805,8 +805,8 @@ export async function getStockLevels(params: {
             reservedStock: reserved.toNumber(),
             availableStock: available.toNumber(),
             incomingStock: incomingT.add(incomingP).toNumber(),
-            buyingPrice: variant.buyingPrice.toNumber(),
-            retailPrice: variant.retailPrice.toNumber(),
+            buyingPrice: variant.buyingPrice?.toNumber() ?? 0,
+            retailPrice: variant.retailPrice?.toNumber() ?? 0,
           },
         ];
       }

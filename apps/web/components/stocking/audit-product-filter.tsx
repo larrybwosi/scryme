@@ -7,6 +7,8 @@ interface ProductVariant {
   variantId: string;
   name: string;
   sku?: string;
+  variantName?: string;
+  currentStock?: number;
 }
 
 export function AuditProductFilter({

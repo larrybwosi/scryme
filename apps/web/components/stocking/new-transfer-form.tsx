@@ -37,6 +37,7 @@ interface Product {
   name: string;
   sku: string;
   currentStock: number;
+  variantName?: string;
 }
 
 interface Location {
