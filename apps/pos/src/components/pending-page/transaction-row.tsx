@@ -38,6 +38,7 @@ interface TransactionRowProps {
   onCopyId: (id: string) => void;
   onDownloadInvoice: (tx: Transaction) => void;
   onDownloadWaybill: (tx: Transaction) => void;
+  onDownloadPackingList: (tx: Transaction) => void;
   onPrintInvoice: (tx: Transaction) => void;
   onPrintWaybill: (tx: Transaction) => void;
   onOpenReconcile: (id: string) => void;
@@ -54,6 +55,7 @@ export function TransactionRow({
   onCopyId,
   onDownloadInvoice,
   onDownloadWaybill,
+  onDownloadPackingList,
   onPrintInvoice,
   onPrintWaybill,
   onOpenReconcile,
@@ -195,6 +197,18 @@ export function TransactionRow({
                       <FileText className="mr-2 h-4 w-4" />
                     )}
                     Download Waybill
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => onDownloadPackingList(tx)}
+                    disabled={isDownloading}
+                    className="cursor-pointer text-indigo-600 focus:text-indigo-600"
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileText className="mr-2 h-4 w-4" />
+                    )}
+                    Download Packing List
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => onPrintWaybill(tx)}

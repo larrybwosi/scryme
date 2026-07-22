@@ -1154,6 +1154,18 @@ export class PosService {
     };
   }
 
+  async getPackingList(ctx: V2ApiContext, id: string) {
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id, organizationId: ctx.organizationId },
+    });
+
+    if (!transaction) throw new NotFoundException("Transaction not found");
+
+    return {
+      url: getDocumentUrl("packing-list", id, ctx.organizationId),
+    };
+  }
+
   async receivePurchase(ctx: V2ApiContext, id: string, body: any) {
     // This would typically involve updating purchase order status and inventory
     this.logger.log(`Receiving purchase ${id} for location ${ctx.locationId}`);
@@ -1161,8 +1173,93 @@ export class PosService {
   }
 
   async receiveTransfer(ctx: V2ApiContext, id: string, body: any) {
-    // This would typically involve updating stock transfer status and inventory
     this.logger.log(`Receiving transfer ${id} for location ${ctx.locationId}`);
+
+    const transfer = await this.prisma.client.stockTransfer.findFirst({
+      where: { id, organizationId: ctx.organizationId },
+      include: { items: true },
+    });
+
+    if (!transfer) throw new NotFoundException("Transfer not found");
+
+    if (transfer.status === "COMPLETED") {
+      return { success: true, message: "Transfer already completed" };
+    }
+
+    await this.prisma.client.$transaction(async tx => {
+      // 1. Update transfer status to COMPLETED
+      await tx.stockTransfer.update({
+        where: { id },
+        data: {
+          status: "COMPLETED",
+          receivedById: ctx.memberId || undefined,
+          receivedDate: new Date(),
+          completedDate: new Date(),
+          notes: body.notes || transfer.notes,
+        },
+      });
+
+      // 2. Adjust inventory for each item
+      for (const item of transfer.items) {
+        const receivedItem = body.items?.find((i: any) => i.variantId === item.variantId);
+        const qtyToReceive = receivedItem ? new Decimal(receivedItem.acceptedQuantity ?? receivedItem.receivedQuantity) : item.requestedQuantity;
+
+        if (qtyToReceive.lte(0)) continue;
+
+        const stock = await tx.productVariantStock.findUnique({
+          where: {
+            variantId_locationId: {
+              variantId: item.variantId,
+              locationId: transfer.toLocationId,
+            },
+          },
+        });
+
+        if (stock) {
+          await tx.productVariantStock.update({
+            where: { id: stock.id },
+            data: {
+              currentStock: { increment: qtyToReceive },
+              availableStock: { increment: qtyToReceive },
+            },
+          });
+        } else {
+          const variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+          });
+
+          if (!variant) throw new NotFoundException(`Variant ${item.variantId} not found`);
+
+          await tx.productVariantStock.create({
+            data: {
+              organizationId: ctx.organizationId,
+              productId: variant.productId,
+              variantId: item.variantId,
+              locationId: transfer.toLocationId,
+              currentStock: qtyToReceive,
+              availableStock: qtyToReceive,
+            },
+          });
+        }
+
+        // 3. Record stock movement
+        await tx.stockMovement.create({
+          data: {
+            organizationId: ctx.organizationId,
+            variantId: item.variantId,
+            quantity: qtyToReceive,
+            fromLocationId: transfer.fromLocationId,
+            toLocationId: transfer.toLocationId,
+            movementType: "TRANSFER",
+            referenceId: transfer.id,
+            referenceType: "StockTransfer",
+            memberId: ctx.memberId || undefined,
+            notes: `Transfer ${transfer.transferNumber} Completed via POS`,
+          },
+        });
+      }
+    });
+
     return { success: true };
   }
 
@@ -1195,6 +1292,10 @@ export class PosService {
   async createStockTransfer(ctx: V2ApiContext, body: any) {
     if (!ctx.memberId) throw new UnauthorizedException("Member required");
     const validated = this.validate<any>(CreateStockTransferSchema, body);
+
+    if (validated.fromLocationId === validated.toLocationId) {
+      throw new BadRequestException("Source and destination locations cannot be the same");
+    }
 
     // Concurrency-safe transfer number generation
     let transfer: any;

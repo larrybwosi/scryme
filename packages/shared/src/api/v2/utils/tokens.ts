@@ -71,7 +71,7 @@ function getDocumentJwtSecret(): string {
 }
 
 export function generateDocumentToken(
-  type: 'invoice' | 'waybill' | 'receipt' | 'quote',
+  type: 'invoice' | 'waybill' | 'receipt' | 'quote' | 'packing-list' | 'delivery-note',
   id: string,
   organizationId: string,
   expiresIn: string | number = '24h'
@@ -109,7 +109,7 @@ export function verifyDocumentToken(token: string): DocumentTokenPayload | null 
 }
 
 export function getDocumentUrl(
-  type: 'invoice' | 'waybill' | 'receipt' | 'quote',
+  type: 'invoice' | 'waybill' | 'receipt' | 'quote' | 'packing-list' | 'delivery-note',
   id: string,
   organizationId: string,
   baseUrl?: string
