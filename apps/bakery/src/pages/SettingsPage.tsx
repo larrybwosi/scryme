@@ -149,7 +149,7 @@ export default function SettingsPage() {
     try {
       const tempSdk = getSDK({
         apiKey: formData.apiKey,
-        baseURL: isTauri() ? (sanitizeApiUrl(formData.apiEndpointUrl) || "") : "/api/v2"
+        baseURL: sanitizeApiUrl(formData.apiEndpointUrl) || import.meta.env.VITE_API_URL || "https://api.scryme.tech/api/v2"
       });
       await tempSdk.client.get('/bakery');
       setKeyTested(true);
