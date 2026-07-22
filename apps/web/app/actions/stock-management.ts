@@ -8,7 +8,6 @@ import {
   StockRequestStatus,
   StockRequestPriority,
 } from "@repo/db";
-import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
 import {
   startOfMonth,
@@ -152,7 +151,7 @@ export async function bulkUpdateLocationStock(
 }
 
 export async function getStockDashboardStats(): Promise<any> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return null;
 
   const [totalProducts, totalStockValue, pendingTransfers, lowStockAlerts] =
@@ -189,7 +188,7 @@ export async function getStockDashboardStats(): Promise<any> {
 }
 
 export async function getStockMovementsChartData(): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   const last6Months = Array.from({ length: 6 }, (_, i) => {
@@ -251,7 +250,7 @@ export async function getStockMovementsChartData(): Promise<any[]> {
 }
 
 export async function getStockDistributionByLocation(): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   const distribution = await db.productVariantStock.groupBy({
@@ -277,7 +276,7 @@ export async function getStockTransferList(params?: {
   search?: string;
   status?: string;
 }): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   const where: any = { organizationId: context.organizationId };
@@ -317,8 +316,8 @@ export async function createStockTransfer(data: {
   items: { variantId: string; quantity: number }[];
   notes?: string;
 }): Promise<any> {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id)
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
   const transferNumber = `TRF-${Date.now()}`;
@@ -331,7 +330,7 @@ export async function createStockTransfer(data: {
         fromLocationId: data.fromLocationId,
         toLocationId: data.toLocationId,
         notes: data.notes,
-        requestedById: context.user.id,
+        requestedById: context.memberId,
         status: "PENDING_APPROVAL",
         items: {
           create: await Promise.all(
@@ -359,7 +358,7 @@ export async function createStockTransfer(data: {
 }
 
 export async function getStockTransferDetails(id: string): Promise<any> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return null;
 
   return db.stockTransfer.findUnique({
@@ -389,8 +388,8 @@ export async function updateStockTransferStatus(
   status: StockTransferStatus,
   notes?: string,
 ): Promise<any> {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id)
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
   const transfer = await db.stockTransfer.findUnique({
@@ -404,9 +403,9 @@ export async function updateStockTransferStatus(
     const updateData: any = { status };
 
     if (status === "APPROVED") {
-      updateData.approvedById = context.user.id;
+      updateData.approvedById = context.memberId;
     } else if (status === "SHIPPED") {
-      updateData.shippedById = context.user.id;
+      updateData.shippedById = context.memberId;
       updateData.shippedDate = new Date();
 
       // Deduct stock from source location
@@ -435,13 +434,13 @@ export async function updateStockTransferStatus(
             movementType: "TRANSFER",
             referenceId: transfer.id,
             referenceType: "StockTransfer",
-            memberId: context.user.id,
+            memberId: context.memberId,
             notes: `Transfer ${transfer.transferNumber} Shipped`,
           },
         });
       }
     } else if (status === "COMPLETED") {
-      updateData.receivedById = context.user.id;
+      updateData.receivedById = context.memberId;
       updateData.receivedDate = new Date();
       updateData.completedDate = new Date();
 
@@ -491,7 +490,7 @@ export async function updateStockTransferStatus(
             movementType: "TRANSFER",
             referenceId: transfer.id,
             referenceType: "StockTransfer",
-            memberId: context.user.id,
+            memberId: context.memberId,
             notes: `Transfer ${transfer.transferNumber} Completed`,
           },
         });
@@ -512,7 +511,7 @@ export async function updateStockTransferStatus(
 export async function getProductStockDistribution(
   productId: string,
 ): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.productVariantStock.findMany({
@@ -534,7 +533,7 @@ export async function getStockMovementHistory(params: {
   endDate?: Date;
   limit?: number;
 }): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.stockMovement.findMany({
@@ -564,7 +563,7 @@ export async function getStockMovementHistory(params: {
 }
 
 export async function getReorderRules(): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.reorderRule.findMany({
@@ -585,7 +584,7 @@ export async function upsertReorderRule(data: {
   maxQuantity: number;
   reorderQuantity: number;
 }): Promise<any> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   const rule = await db.reorderRule.upsert({
@@ -626,7 +625,7 @@ export async function getStockLevels(params: {
   sortOrder?: "asc" | "desc";
   groupBy?: string;
 }): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   const {
@@ -838,7 +837,7 @@ export async function getStockRequestList(params?: {
   status?: string;
   locationId?: string;
 }): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   const where: any = { organizationId: context.organizationId };
@@ -882,8 +881,8 @@ export async function createStockRequest(data: {
   items: { variantId: string; quantity: number }[];
   justification?: string;
 }): Promise<any> {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id)
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
   const requestNumber = `REQ-${Date.now()}`;
@@ -917,7 +916,7 @@ export async function createStockRequest(data: {
         toLocationId: data.toLocationId,
         priority: data.priority,
         justification: data.justification,
-        requestedById: context.user.id,
+        requestedById: context.memberId,
         status: "PENDING",
         totalEstimatedCost,
         items: {
@@ -936,13 +935,16 @@ export async function createStockRequest(data: {
 export async function getExpiryReportData(params: {
   locationId?: string;
 }): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   const batches = await db.stockBatch.findMany({
     where: {
       organizationId: context.organizationId,
-      locationId: params.locationId && params.locationId !== "all" ? params.locationId : undefined,
+      locationId:
+        params.locationId && params.locationId !== "all"
+          ? params.locationId
+          : undefined,
       currentQuantity: { gt: 0 },
       expiryDate: { not: null },
     },
@@ -971,7 +973,7 @@ export async function getExpiryReportData(params: {
 }
 
 export async function getStockRequestDetails(id: string): Promise<any> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return null;
 
   return db.stockRequest.findUnique({
@@ -1008,7 +1010,7 @@ export async function getAggregatedStockRequests(params?: {
   search?: string;
   locationId?: string;
 }): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   const stockRequestFilter: any = {
@@ -1114,7 +1116,7 @@ export async function getAggregatedStockRequests(params?: {
 }
 
 export async function getStockRequestLocations(): Promise<any[]> {
-  const context = await getOrganizationContext();
+  const context = await getServerAuth();
   if (!context?.organizationId) return [];
 
   return db.inventoryLocation.findMany({
@@ -1131,8 +1133,8 @@ export async function fulfillStockRequestItems(data: {
   items: { requestId: string; quantity: number }[];
   notes?: string;
 }): Promise<any> {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId || !context.user.id)
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
   const result = await db.$transaction(async tx => {
@@ -1167,7 +1169,7 @@ export async function fulfillStockRequestItems(data: {
             fromLocationId: data.fromLocationId,
             toLocationId,
             notes: data.notes || "Fulfillment from aggregated request",
-            requestedById: context.user.id,
+            requestedById: context.memberId,
             status: "PENDING_APPROVAL",
             items: {
               create: await Promise.all(
@@ -1220,7 +1222,7 @@ export async function fulfillStockRequestItems(data: {
           organizationId: context.organizationId,
           purchaseNumber,
           supplierId: data.supplierId,
-          memberId: context.user.id,
+          memberId: context.memberId,
           orderDate: new Date(),
           status: "ORDERED",
           subTotal: totalAmount,
