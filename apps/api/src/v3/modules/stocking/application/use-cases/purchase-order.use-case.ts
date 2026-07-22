@@ -95,7 +95,9 @@ export class PurchaseOrderUseCase {
     dto: ReceivePurchaseDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      const purchase = await tx.purchase.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // Purchase lacks a composite unique index on [id, organizationId].
+      const purchase = await tx.purchase.findFirst({
         where: { id: purchaseId, organizationId },
         include: { items: { include: { variant: true } } },
       });
@@ -300,7 +302,9 @@ export class PurchaseOrderUseCase {
   }
 
   async approve(organizationId: string, memberId: string, purchaseId: string) {
-    const purchase = await this.prisma.client.purchase.findUnique({
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Purchase lacks a composite unique index on [id, organizationId].
+    const purchase = await this.prisma.client.purchase.findFirst({
       where: { id: purchaseId, organizationId },
     });
 
