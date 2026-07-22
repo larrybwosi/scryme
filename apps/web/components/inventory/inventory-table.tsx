@@ -51,11 +51,13 @@ import {
 
 interface InventoryTableProps {
   data: InventoryProduct[];
+  currency?: string;
 }
 
 import { cn } from "@repo/ui/lib/utils";
+import { formatCurrency } from "../../lib/utils";
 
-export function InventoryTable({ data }: InventoryTableProps) {
+export function InventoryTable({ data, currency = "USD" }: InventoryTableProps) {
   const [selectedItem, setSelectedItem] = useState<InventoryProduct | null>(
     null,
   );
@@ -206,8 +208,8 @@ export function InventoryTable({ data }: InventoryTableProps) {
                   {item.minPrice !== undefined &&
                   item.maxPrice !== undefined &&
                   item.minPrice !== item.maxPrice
-                    ? `$${item.minPrice.toFixed(2)} - $${item.maxPrice.toFixed(2)}`
-                    : `$${item.unitPrice.toFixed(2)}`}
+                    ? `${formatCurrency(item.minPrice, currency)} - ${formatCurrency(item.maxPrice, currency)}`
+                    : formatCurrency(item.unitPrice, currency)}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -299,6 +301,7 @@ export function InventoryTable({ data }: InventoryTableProps) {
             isOpen={isAuditModalOpen}
             onClose={() => setIsAuditModalOpen(false)}
             product={selectedItem}
+            currency={currency}
           />
           <StockAlertModal
             isOpen={isAlertModalOpen}
@@ -315,6 +318,7 @@ export function InventoryTable({ data }: InventoryTableProps) {
             categories={categories}
             isOpen={isProductSheetOpen}
             onOpenChange={setIsProductSheetOpen}
+            currency={currency}
           />
         </>
       )}

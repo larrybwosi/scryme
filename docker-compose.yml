@@ -159,7 +159,7 @@ services:
 
   # --- APPLICATIONS ---
   api:
-    image: ghcr.io/larrybwosi/scryme/api:9.32.0
+    image: ghcr.io/larrybwosi/scryme/api:9.33.0
     restart: always
     deploy:
       resources:
@@ -211,9 +211,8 @@ services:
       retries: 3
       start_period: 20s
 
-  # --- APPLICATIONS ---
   web:
-    image: ghcr.io/larrybwosi/scryme/web:9.32.0
+    image: ghcr.io/larrybwosi/scryme/web:9.33.0
     restart: always
     deploy:
       resources:
@@ -257,7 +256,7 @@ services:
       start_period: 20s
 
   crm:
-    image: ghcr.io/larrybwosi/scryme/crm:9.32.0
+    image: ghcr.io/larrybwosi/scryme/crm:9.33.0
     restart: always
     deploy:
       resources:
@@ -299,7 +298,7 @@ services:
       start_period: 20s
 
   bakery:
-    image: ghcr.io/larrybwosi/scryme/bakery:9.32.0
+    image: ghcr.io/larrybwosi/scryme/bakery:9.33.0
     restart: always
     deploy:
       resources:
@@ -331,46 +330,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
-
-  # portal:
-  #   image: ghcr.io/larrybwosi/scryme/portal:9.19.0
-  #   restart: always
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 512M
-  #   env_file:
-  #     - .env.example
-  #     - path: .env
-  #       required: false
-  #   environment:
-  #     - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-  #     - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
-  #     - PORT=${PORTAL_PORT:-3006}
-  #     - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
-  #     - ZITADEL_DOMAIN=${ZITADEL_DOMAIN:-auth.scryme.local}
-  #     - ZITADEL_CLIENT_ID=${ZITADEL_CLIENT_ID}
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #     api:
-  #       condition: service_healthy
-  #   networks:
-  #     - scryme-network
-  #     - proxy-network
-  #   healthcheck:
-  #     test:
-  #       [
-  #         "CMD",
-  #         "wget",
-  #         "--no-verbose",
-  #         "--tries=1",
-  #         "--spider",
-  #         "http://localhost:${PORTAL_PORT:-3006}/health",
-  #       ]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
 
 volumes:
   postgres_data:

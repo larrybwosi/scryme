@@ -33,6 +33,7 @@ interface RevenueChartProps {
   totalValue: string;
   change: number;
   periodLabel: string;
+  currency?: string;
 }
 
 const chartConfig = {
@@ -46,13 +47,17 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+import { getCurrencySymbol } from "../../lib/utils";
+
 export function RevenueChart({
   data,
   totalValue,
   change,
   periodLabel,
+  currency = "USD",
 }: RevenueChartProps) {
   const isPositive = change >= 0;
+  const symbol = getCurrencySymbol(currency);
 
   return (
     <Card className="p-6 bg-white border-none shadow-sm h-full">
@@ -155,7 +160,7 @@ export function RevenueChart({
               tickLine={false}
               tick={{ fontSize: 10, fill: "#9ca3af" }}
               tickFormatter={value =>
-                `$${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`
+                `${symbol}${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`
               }
             />
             <ChartTooltip content={<ChartTooltipContent />} />

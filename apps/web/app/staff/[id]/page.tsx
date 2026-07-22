@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { getStaffMemberDetail, getStaffMembers } from "../../actions/staff";
 import { getMemberDepartments } from "../../actions/department";
+import { getOrganizationSettings } from "../../actions/organization";
 import { notFound } from "next/navigation";
 import { StaffDetailHeader } from "@/components/staff/detail/staff-detail-header";
 import { StaffOverview } from "@/components/staff/detail/staff-overview";
@@ -28,11 +29,13 @@ export default async function StaffMemberPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [result, membersResult, departmentsResult] = await Promise.all([
+  const [result, membersResult, departmentsResult, organization] = await Promise.all([
     getStaffMemberDetail(id),
     getStaffMembers(),
     getMemberDepartments(id),
+    getOrganizationSettings(),
   ]);
+  const currency = organization?.settings?.defaultCurrency || "USD";
 
   if (!result.success || !result.data) {
     if (result.error === "Member not found") {
@@ -89,12 +92,8 @@ export default async function StaffMemberPage({
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 outline-none">
-            <StaffOverview stats={stats} />
-            <StaffDepartments
-              memberships={
-                (departmentsResult.success ? departmentsResult.data : []) ?? []
-              }
-            />
+            <StaffOverview stats={stats} currency={currency} />
+            <StaffDepartments memberships={(departmentsResult.success ? departmentsResult.data : []) ?? []} />
             <StaffActivity
               transactions={member.transactions}
               attendanceLogs={member.attendanceLogs}
@@ -105,6 +104,7 @@ export default async function StaffMemberPage({
             <StaffPerformance
               stats={stats}
               transactions={member.transactions}
+              currency={currency}
             />
           </TabsContent>
 

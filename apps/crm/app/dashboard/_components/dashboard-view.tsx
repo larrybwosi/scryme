@@ -125,11 +125,16 @@ const tooltipStyle = {
 
 const axisTick = { fontSize: 11, fill: "var(--color-muted-foreground)" };
 
+import { getCurrencySymbol } from "../../../lib/utils";
+
 export function DashboardView() {
   const { data: stats, isLoading: statsLoading } = useSWR(
     "dashboard-stats",
     () => getDashboardStats(),
   );
+
+  const chartCurrency = stats?.currency || "USD";
+  const chartSymbol = getCurrencySymbol(chartCurrency);
 
   const { data: activity, isLoading: activityLoading } = useSWR(
     "dashboard-activity",
@@ -411,7 +416,7 @@ export function DashboardView() {
                     tickLine={false}
                     tick={axisTick}
                     tickFormatter={(v: number) =>
-                      v >= 1000 ? `$${v / 1000}k` : `$${v}`
+                      v >= 1000 ? `${chartSymbol}${v / 1000}k` : `${chartSymbol}${v}`
                     }
                   />
                   <YAxis

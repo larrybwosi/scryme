@@ -28,14 +28,18 @@ import { Badge } from "@repo/ui/components/ui/badge";
 interface PricingRuleTableProps {
   priceListId: string;
   rules: any[];
+  currency?: string;
 }
 
-export function PricingRuleTable({ priceListId, rules }: PricingRuleTableProps) {
+import { getCurrencySymbol } from "../../lib/utils";
+
+export function PricingRuleTable({ priceListId, rules, currency = "USD" }: PricingRuleTableProps) {
+  const symbol = getCurrencySymbol(currency);
 
   const getDiscountDisplay = (rule: any) => {
     if (rule.discountType === DiscountType.PERCENTAGE) return `${rule.discountValue}% Off`;
-    if (rule.discountType === DiscountType.FIXED_AMOUNT) return `$${rule.discountValue} Off`;
-    return `Fixed $${rule.discountValue}`;
+    if (rule.discountType === DiscountType.FIXED_AMOUNT) return `${symbol}${rule.discountValue} Off`;
+    return `Fixed ${symbol}${rule.discountValue}`;
   };
 
   return (

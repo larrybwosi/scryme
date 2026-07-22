@@ -29,13 +29,17 @@ interface AddItemDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   products: any[];
+  currency?: string;
 }
+
+import { formatCurrency } from "../../lib/utils";
 
 export function AddPriceListItemDialog({
   priceListId,
   isOpen,
   onOpenChange,
   products,
+  currency = "USD",
 }: AddItemDialogProps) {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -140,7 +144,7 @@ export function AddPriceListItemDialog({
                         <Checkbox checked={selectedVariants.has(variant.id)} onCheckedChange={() => toggleVariant(variant.id)} />
                         <div className="flex flex-col">
                           <span className="text-sm font-medium">{variant.name === "Default" ? product.name : variant.name}</span>
-                          <span className="text-[10px] text-gray-500">{variant.sku} • Cost: ${variant.buyingPrice.toString()}</span>
+                          <span className="text-[10px] text-gray-500">{variant.sku} • Cost: {formatCurrency(Number(variant.buyingPrice), currency)}</span>
                         </div>
                       </div>
                     </div>
