@@ -1,0 +1,11 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> site@1.6.0 start /app/apps/site
+> next start --port 3005
+
+▲ Next.js 16.2.10
+- Local:         http://localhost:3005
+- Network:       http://192.168.0.2:3005
+✓ Ready in 312ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+Invalid Sentry Dsn: https://placeholder-dsn@sentry.io/placeholder

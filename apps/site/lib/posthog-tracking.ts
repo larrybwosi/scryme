@@ -10,6 +10,8 @@ type CTAContext = {
   module?: string;
   plan_name?: string;
   platform?: string;
+  selected_variant?: string;
+  variant?: string;
 };
 
 export function captureCtaClicked(event: string, context: CTAContext) {
