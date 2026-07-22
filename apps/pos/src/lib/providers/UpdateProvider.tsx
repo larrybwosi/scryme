@@ -4,6 +4,7 @@ import { createContext, useState, useEffect, useCallback, useContext, ReactNode 
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { UpdateDialog } from '@/components/update.dialog';
+import { usePosStore } from '@/store/store';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -153,6 +154,11 @@ export const UpdaterProvider = ({
 
   // ── Install ─────────────────────────────────────────────────────────────────
 
+  const triggerRelaunch = useCallback(async () => {
+    clearSnooze();
+    await relaunch();
+  }, []);
+
   const processUpdate = useCallback(
     async (updateObj: Update) => {
       setStatus('DOWNLOADING');
@@ -162,6 +168,8 @@ export const UpdaterProvider = ({
       try {
         let downloadedBytes = 0;
         let totalBytes = 0;
+
+        const enableAutoUpdate = usePosStore.getState().settings?.enableAutoUpdate ?? true;
 
         await updateObj.downloadAndInstall(progress => {
           switch (progress.event) {
@@ -182,7 +190,12 @@ export const UpdaterProvider = ({
 
         // Clear any snooze/skip state now that we've installed
         clearSnooze();
-        await relaunch();
+        if (enableAutoUpdate) {
+          setStatus('DONE');
+          setIsModalOpen(true);
+        } else {
+          await relaunch();
+        }
       } catch (e: any) {
         setError(e.message ?? 'Failed to update');
         setStatus('ERROR');
@@ -263,6 +276,13 @@ export const UpdaterProvider = ({
       setReleaseNotes(notes ?? '');
       setReleaseDate(updateResult.date ?? null);
       setIsCritical(critical);
+
+      const enableAutoUpdate = usePosStore.getState().settings?.enableAutoUpdate ?? true;
+      if (enableAutoUpdate) {
+        await processUpdate(updateResult);
+        return;
+      }
+
       setStatus('PENDING');
 
       // 3. Critical updates bypass snooze entirely
@@ -324,9 +344,10 @@ export const UpdaterProvider = ({
         }}
         onClose={snoozeUpdate}
         onSkip={skipVersion}
-        onConfirm={startInstall}
+        onConfirm={status === 'DONE' ? triggerRelaunch : startInstall}
         releaseNotes={releaseNotes}
         isCritical={isCritical}
+        status={status}
       />
 
       {status === 'DOWNLOADING' && <ProgressToast progress={downloadProgress} />}

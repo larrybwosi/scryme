@@ -435,6 +435,7 @@ export interface BusinessSettings {
   cashDrawerPort?: string; // Serial port for cash drawer hardware (e.g., "COM3")
   enableAutoStart: boolean;
   enableBarcodeScanner: boolean;
+  enableAutoUpdate: boolean;
 
   // KDS System
   enableKdsSystem: boolean;
@@ -1030,6 +1031,7 @@ export const usePosStore = create<PosStore>()(
         cashDrawerPort: '', // No port configured by default
         enableAutoStart: false,
         enableBarcodeScanner: true,
+        enableAutoUpdate: true,
         enableKdsSystem: false,
         // Multi-user / Shift Settings
         shareCartBetweenUsers: true,
@@ -1316,6 +1318,7 @@ export const usePosStore = create<PosStore>()(
             cashDrawerPort: '',
             enableAutoStart: false,
             enableBarcodeScanner: true,
+            enableAutoUpdate: true,
             enableKdsSystem: false,
             enableHoldSale: true,
             maxHeldOrders: 20,

@@ -5,6 +5,7 @@ import { Shift, shiftService } from '@/lib/shift-service';
 import { useCashDrawer } from '@/hooks/use-cash-drawer';
 import { toast } from 'sonner';
 import { usePrinterStore } from '@/store/printer-store';
+import { useAuth } from '@/hooks/use-auth';
 import {
   CashDenominationCounter,
   DEFAULT_DENOMINATIONS,
@@ -30,6 +31,7 @@ const ShiftManager: React.FC = () => {
   const [currentShift, setCurrentShift] = useState<Shift | null>(null);
   const { openPhysicalDrawer } = useCashDrawer();
   const { assignments } = usePrinterStore();
+  const { isAuthenticated, currentMember } = useAuth();
   const [loading, setLoading] = useState(false);
 
   // Auth State
@@ -76,7 +78,7 @@ const ShiftManager: React.FC = () => {
   // --- ACTIONS ---
 
   const handleOpenShift = async () => {
-    if (!cardId || !pin) return toast.error('Please scan card and enter PIN');
+    if (!isAuthenticated && (!cardId || !pin)) return toast.error('Please scan card and enter PIN');
 
     const openingAmount = useDetails ? denomTotal : Number(amount);
     if (isNaN(openingAmount) || openingAmount < 0) {
@@ -86,8 +88,8 @@ const ShiftManager: React.FC = () => {
     setLoading(true);
     try {
       const shift = await shiftService.openShift(
-        cardId,
-        pin,
+        isAuthenticated ? null : cardId,
+        isAuthenticated ? null : pin,
         openingAmount,
         useDetails ? denominations : null
       );
@@ -106,7 +108,7 @@ const ShiftManager: React.FC = () => {
   };
 
   const handleCloseShift = async () => {
-    if (!cardId || !pin) return toast.error('Please scan card and enter PIN');
+    if (!isAuthenticated && (!cardId || !pin)) return toast.error('Please scan card and enter PIN');
 
     const closingAmount = useDetails ? denomTotal : Number(amount);
     if (isNaN(closingAmount) || closingAmount < 0) {
@@ -117,8 +119,8 @@ const ShiftManager: React.FC = () => {
     try {
       const receiptPrinter = assignments.receipt || undefined;
       const shift = await shiftService.closeShift(
-        cardId,
-        pin,
+        isAuthenticated ? null : cardId,
+        isAuthenticated ? null : pin,
         closingAmount,
         useDetails ? denominations : null,
         receiptPrinter
@@ -149,46 +151,68 @@ const ShiftManager: React.FC = () => {
 
   // --- RENDER HELPERS ---
 
-  const AuthForm = () => (
-    <div className="p-4 bg-muted/50 rounded-lg mb-6 border border-border space-y-4">
-      <div className="flex items-center space-x-2 text-primary">
-        <Lock className="w-4 h-4" />
-        <h3 className="font-semibold text-sm">Operator Authorization</h3>
-      </div>
-
-      <div className="space-y-1.5">
-        <Label htmlFor="card-id" className="text-xs uppercase text-muted-foreground">NFC Card ID</Label>
-        <div className="relative">
-            <Input
-              id="card-id"
-              type="text"
-              value={cardId}
-              readOnly
-              placeholder="Scan Card..."
-              className="bg-background italic"
-            />
-            {!cardId && (
-                <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                </div>
-            )}
+  const AuthForm = () => {
+    if (isAuthenticated) {
+      return (
+        <div className="p-3 bg-muted/50 rounded-lg mb-6 border border-border flex items-center justify-between">
+           <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <LayoutGrid className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                  <div className="text-[10px] uppercase font-bold text-muted-foreground">Operator</div>
+                  <div className="text-sm font-medium">{currentMember?.name || 'Unknown'}</div>
+              </div>
+           </div>
+           <div className="text-right">
+              <div className="text-[10px] uppercase font-bold text-muted-foreground">Card ID</div>
+              <div className="text-xs font-mono">{currentMember?.cardId || 'None'}</div>
+           </div>
         </div>
-        {!cardId && <small className="text-blue-500 text-[10px]">Waiting for NFC Scan...</small>}
-      </div>
+      );
+    }
 
-      <div className="space-y-1.5">
-        <Label htmlFor="pin-input" className="text-xs uppercase text-muted-foreground">Employee PIN</Label>
-        <Input
-          id="pin-input"
-          type="password"
-          value={pin}
-          onChange={e => setPin(e.target.value)}
-          placeholder="Enter PIN"
-          className="bg-background"
-        />
+    return (
+      <div className="p-4 bg-muted/50 rounded-lg mb-6 border border-border space-y-4">
+        <div className="flex items-center space-x-2 text-primary">
+          <Lock className="w-4 h-4" />
+          <h3 className="font-semibold text-sm">Operator Authorization</h3>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="card-id" className="text-xs uppercase text-muted-foreground">NFC Card ID</Label>
+          <div className="relative">
+              <Input
+                id="card-id"
+                type="text"
+                value={cardId}
+                readOnly
+                placeholder="Scan Card..."
+                className="bg-background italic"
+              />
+              {!cardId && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                  </div>
+              )}
+          </div>
+          {!cardId && <small className="text-blue-500 text-[10px]">Waiting for NFC Scan...</small>}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="pin-input" className="text-xs uppercase text-muted-foreground">Employee PIN</Label>
+          <Input
+            id="pin-input"
+            type="password"
+            value={pin}
+            onChange={e => setPin(e.target.value)}
+            placeholder="Enter PIN"
+            className="bg-background"
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // --- MAIN VIEWS ---
 
@@ -242,7 +266,7 @@ const ShiftManager: React.FC = () => {
 
             <Button
               onClick={handleOpenShift}
-              disabled={loading || !cardId || !pin}
+              disabled={loading || (!isAuthenticated && (!cardId || !pin))}
               className="w-full h-12 text-lg font-bold bg-green-600 hover:bg-green-700"
             >
               {loading ? 'Opening...' : 'Open Shift'}
@@ -313,7 +337,7 @@ const ShiftManager: React.FC = () => {
                 <Button
                     variant="destructive"
                     onClick={handleCloseShift}
-                    disabled={loading || !cardId || !pin}
+                    disabled={loading || (!isAuthenticated && (!cardId || !pin))}
                     className="h-12 font-bold"
                 >
                     {loading ? 'Closing...' : 'Close & Print Report'}

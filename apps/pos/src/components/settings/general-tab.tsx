@@ -158,7 +158,13 @@ function ConnectionTestCard() {
 
 // ─── Software Updates Card ────────────────────────────────────────────────────
 
-function SoftwareUpdatesCard() {
+function SoftwareUpdatesCard({
+  enableAutoUpdate,
+  setEnableAutoUpdate,
+}: {
+  enableAutoUpdate: boolean;
+  setEnableAutoUpdate: (enable: boolean) => void;
+}) {
   const {
     status,
     isUpdateAvailable,
@@ -224,6 +230,17 @@ function SoftwareUpdatesCard() {
             {isChecking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             {isChecking ? 'Checking…' : 'Check Now'}
           </Button>
+        </div>
+
+        {/* Auto Update Toggle */}
+        <div className="flex items-center justify-between py-4 border-t border-muted">
+          <div className="space-y-1">
+            <Label className="text-sm font-medium">Automatic Updates</Label>
+            <p className="text-xs text-muted-foreground">
+              Automatically download and prepare updates. You will be prompted to restart when ready.
+            </p>
+          </div>
+          <Switch checked={enableAutoUpdate} onCheckedChange={setEnableAutoUpdate} />
         </div>
 
         {/* Download progress */}
@@ -330,6 +347,8 @@ export default function GeneralSettings({
   setEnableAutoStart,
   autoPrintEnabled,
   setAutoPrintEnabled,
+  enableAutoUpdate,
+  setEnableAutoUpdate,
 }: {
   businessName: string;
   setBusinessName: (name: string) => void;
@@ -619,7 +638,12 @@ export default function GeneralSettings({
         <ConnectionTestCard />
 
         {/* Software Updates */}
-        {import.meta.env.MODE !== 'standalone' && <SoftwareUpdatesCard />}
+        {import.meta.env.MODE !== 'standalone' && (
+          <SoftwareUpdatesCard
+            enableAutoUpdate={enableAutoUpdate}
+            setEnableAutoUpdate={setEnableAutoUpdate}
+          />
+        )}
       </div>
     </TabsContent>
   );
