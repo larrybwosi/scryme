@@ -9,6 +9,7 @@ import { DetailTabs, type TabId } from '@/components/crm/detail-tabs';
 import { NotesTab } from '@/components/crm/notes-tab';
 import { FollowUpsTab } from '@/components/crm/followups-tab';
 import { ActivitiesTab } from '@/components/crm/activities-tab';
+import { CompanyInvoicesTab } from './tabs/invoices-tab';
 import { cn } from '@repo/ui/lib/utils';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
@@ -53,6 +54,8 @@ function TabContent({ company, tab, currency = "USD" }: { company: any; tab: Tab
       return <ContactsTab company={company} />;
     case 'orders':
       return <OrdersTab company={company} currency={currency} />;
+    case 'invoices':
+      return <CompanyInvoicesTab company={company} currency={currency} />;
     default:
       return <NotesTab customer={adaptedCompany as any} />;
   }
@@ -122,9 +125,10 @@ function DetailViewInner({ company, currency = "USD" }: CompanyDetailViewProps) 
     followups: company.crmRecord?.followUps?.length || 0,
     contacts: company.contacts?.length || 0,
     orders: company.transactions?.length || 0,
+    invoices: company.invoices?.length || 0,
   };
 
-  const availableTabs: TabId[] = ['notes', 'activities', 'contacts', 'orders', 'followups'];
+  const availableTabs: TabId[] = ['notes', 'activities', 'contacts', 'orders', 'followups', 'invoices'];
 
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
