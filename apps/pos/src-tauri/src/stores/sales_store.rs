@@ -289,20 +289,33 @@ pub async fn process_sale(
     let threshold = payload.get("forcedImmediateSyncThreshold").and_then(|v| v.as_f64()).unwrap_or(f64::MAX);
     let exceeds_threshold = total_amount > threshold;
 
-    if payment_method == "CASH" {
-        let total = payload.get("amountReceived").and_then(|v| v.as_f64())
-            .or_else(|| payload.get("total").and_then(|v| v.as_f64()));
-
-        if let Some(t) = total {
-            if !cfg!(feature = "standalone") {
-                if let Err(e) = crate::shift_store::record_cash_sale(&app, shift_state, t).await {
-                    error!("[SalesStore] Failed to record cash sale in shift: {}", e);
-                } else {
-                    info!("[SalesStore] Recorded cash sale of {:.2}", t);
+    let mut cash_amount = 0.0;
+    if let Some(payments) = payload.get("payments").and_then(|v| v.as_array()) {
+        for p in payments {
+            let method = p.get("method").and_then(|v| v.as_str()).unwrap_or("").to_uppercase();
+            if method == "CASH" {
+                if let Some(amt) = p.get("amount").and_then(|v| v.as_f64()) {
+                    cash_amount += amt;
                 }
-            } else {
-                info!("[SalesStore] Standalone Mode: Bypassing shift cash recording for amount {:.2}", t);
             }
+        }
+    }
+
+    if cash_amount == 0.0 && payment_method == "CASH" {
+        cash_amount = payload.get("amountReceived").and_then(|v| v.as_f64())
+            .or_else(|| payload.get("total").and_then(|v| v.as_f64()))
+            .unwrap_or(0.0);
+    }
+
+    if cash_amount > 0.0 {
+        if !cfg!(feature = "standalone") {
+            if let Err(e) = crate::shift_store::record_cash_sale(&app, shift_state, cash_amount).await {
+                error!("[SalesStore] Failed to record cash sale in shift: {}", e);
+            } else {
+                info!("[SalesStore] Recorded cash sale of {:.2}", cash_amount);
+            }
+        } else {
+            info!("[SalesStore] Standalone Mode: Bypassing shift cash recording for amount {:.2}", cash_amount);
         }
     }
 

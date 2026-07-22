@@ -69,25 +69,37 @@ const STATUS_ACCENT: Record<string, string> = {
 function getCleanUrl(url: string | null | undefined): string {
   if (!url) return "";
 
-  const isDev = process.env.NODE_ENV === "development";
-  const defaultApiUrl = isDev
-    ? "http://localhost:3002"
-    : "https://api.scryme.tech";
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
-
   try {
     if (url.startsWith("http://") || url.startsWith("https://")) {
       const parsed = new URL(url);
-      if (!isDev && (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")) {
+
+      // Remove port if we are on scryme.tech or in production environment
+      if (
+        parsed.hostname.endsWith("scryme.tech") ||
+        process.env.NODE_ENV === "production"
+      ) {
+        parsed.port = "";
+      }
+
+      // If it's localhost or 127.0.0.1 in production, rewrite to public api url
+      if (
+        process.env.NODE_ENV === "production" &&
+        (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")
+      ) {
+        const defaultApiUrl = "https://api.scryme.tech";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
         const targetUrl = new URL(apiUrl);
         parsed.protocol = targetUrl.protocol;
-        parsed.host = targetUrl.host;
-        return parsed.toString();
+        parsed.hostname = targetUrl.hostname;
+        parsed.port = "";
       }
+
+      return parsed.toString();
     }
   } catch (e) {
     console.error("Failed to parse URL:", url, e);
   }
+
   return url;
 }
 
@@ -146,29 +158,31 @@ export function TransactionDetailsSheet({
 
       if (cleanDownloadUrl) {
         toast.success(
-          <div className="flex flex-col gap-1 text-xs text-left">
+          <div className="flex flex-col gap-1 text-xs text-left pointer-events-auto">
             <span className="font-semibold text-zinc-900">
-              {type.charAt(0).toUpperCase() + type.slice(1)} generated successfully
+              {type.charAt(0).toUpperCase() + type.slice(1)} generated
+              successfully
             </span>
             <a
               href={cleanDownloadUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-zinc-600 underline font-medium hover:text-zinc-900 flex items-center gap-1 mt-0.5"
-            >
-              Click here to download/view <ExternalLink className="w-3 h-3 inline" />
+              onClick={e => e.stopPropagation()}
+              className="text-zinc-600 underline font-medium hover:text-zinc-900 flex items-center gap-1 mt-0.5 cursor-pointer z-10">
+              Click here to download/view{" "}
+              <ExternalLink className="w-3 h-3 inline" />
             </a>
           </div>,
           {
             duration: 15000,
-          }
+          },
         );
       } else {
         toast.success(
           `${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`,
           {
             duration: 15000,
-          }
+          },
         );
       }
       fetchTransaction();
@@ -228,7 +242,7 @@ export function TransactionDetailsSheet({
   if (!transaction && isLoading) {
     return (
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="sm:max-w-[650px]">
+        <SheetContent className="sm:max-w-162.5">
           <div className="flex h-full items-center justify-center">
             <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
           </div>
@@ -241,7 +255,7 @@ export function TransactionDetailsSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-[740px] p-0 flex flex-col h-full bg-zinc-50 border-l border-zinc-200">
+      <SheetContent className="sm:max-w-185 p-0 flex flex-col h-full bg-zinc-50 border-l border-zinc-200">
         {/* Status Accent Bar */}
         <div
           className={cn(
@@ -671,7 +685,9 @@ export function TransactionDetailsSheet({
                                         <div className="flex items-center gap-2 mt-0.5">
                                           <span className="text-[10px] text-zinc-400 font-medium font-mono truncate max-w-[280px]">
                                             {isPublicLink
-                                              ? getCleanUrl(att.shortUrl || att.fileUrl)
+                                              ? getCleanUrl(
+                                                  att.shortUrl || att.fileUrl,
+                                                )
                                               : att.description ||
                                                 "No description"}
                                           </span>
@@ -697,7 +713,9 @@ export function TransactionDetailsSheet({
                                           className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
                                           onClick={() =>
                                             handleCopyLink(
-                                              getCleanUrl(att.shortUrl || att.fileUrl!),
+                                              getCleanUrl(
+                                                att.shortUrl || att.fileUrl!,
+                                              ),
                                             )
                                           }>
                                           <Copy className="w-4 h-4" />
@@ -709,7 +727,9 @@ export function TransactionDetailsSheet({
                                         className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
                                         asChild>
                                         <a
-                                          href={getCleanUrl(att.shortUrl || att.fileUrl!)}
+                                          href={getCleanUrl(
+                                            att.shortUrl || att.fileUrl!,
+                                          )}
                                           target="_blank"
                                           rel="noopener noreferrer">
                                           <ExternalLink className="w-4 h-4" />
@@ -722,7 +742,9 @@ export function TransactionDetailsSheet({
                                           className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
                                           asChild>
                                           <a
-                                            href={getCleanUrl(att.shortUrl || att.fileUrl!)}
+                                            href={getCleanUrl(
+                                              att.shortUrl || att.fileUrl!,
+                                            )}
                                             download={att.fileName!}>
                                             <Download className="w-4 h-4" />
                                           </a>
@@ -860,7 +882,9 @@ export function TransactionDetailsSheet({
                               {payment.attachments.map((att: any) => (
                                 <a
                                   key={att.id}
-                                    href={getCleanUrl(att.shortUrl || att.fileUrl)}
+                                  href={getCleanUrl(
+                                    att.shortUrl || att.fileUrl,
+                                  )}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-200 rounded-md text-[10px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors">

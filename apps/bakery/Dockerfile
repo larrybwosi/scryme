@@ -67,9 +67,6 @@ RUN --mount=type=cache,id=turbo,target=/app/.turbo \
 # ---------------------------------------------------------
 FROM nginx:alpine AS runner
 
-# FIXED: Install wget in Alpine so the HEALTHCHECK actually works
-RUN apk add --no-cache wget
-
 # Copy the built static files from the installer stage
 COPY --from=installer /app/apps/bakery/dist /usr/share/nginx/html
 

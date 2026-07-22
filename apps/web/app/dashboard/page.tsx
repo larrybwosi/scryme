@@ -83,6 +83,7 @@ export default async function DashboardPage(props: {
               totalValue={formatCurrency(data.totalRevenue.value)}
               change={data.totalRevenue.change}
               periodLabel={data.periodLabel}
+              currency={currency}
             />
           </div>
           <div>
@@ -97,6 +98,7 @@ export default async function DashboardPage(props: {
             value={formatCurrency(data.averageOrderValue.value)}
             change={data.averageOrderValue.change}
             periodLabel={data.periodLabel}
+            currency={currency}
           />
           <AverageSalesChart
             data={data.averageSales.chartData}

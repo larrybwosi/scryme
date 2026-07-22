@@ -5,9 +5,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getCurrencySymbol(currencyCode: string): string {
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currencyCode,
+    }).formatToParts(0).find(part => part.type === 'currency')?.value || '$';
+  } catch (e) {
+    return '$';
+  }
+}
+
 export function formatCurrency(amount: number | string | any, currency = 'USD'): string {
   const value = typeof amount === 'number' ? amount : Number(amount);
-  return new Intl.NumberFormat('en-US', {
+  const locale = currency === 'USD' ? 'en-US' : currency === 'KES' ? 'en-KE' : undefined;
+  return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
     minimumFractionDigits: 0,

@@ -14,7 +14,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
     const auth = await getServerAuth();
     if (!auth?.organizationId) redirect("/login");
     const organizationId = auth.organizationId;
-    const { contacts, ...rest } = businessAccountSchema.parse(data);
+    const { contacts, addresses, ...rest } = businessAccountSchema.parse(data);
 
     const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
     const taxId = rest.taxId === "" ? null : rest.taxId || null;
@@ -43,6 +43,25 @@ export async function createCompany(data: BusinessAccountFormValues) {
             phone: contact.phone === "" ? null : contact.phone || null,
             organizationId,
             businessAccountId: company.id,
+          },
+        });
+      }
+    }
+
+    if (addresses && addresses.length > 0) {
+      for (const addr of addresses) {
+        await db.address.create({
+          data: {
+            businessAccountId: company.id,
+            label: addr.label || null,
+            street1: addr.street1,
+            street2: addr.street2 || null,
+            city: addr.city,
+            state: addr.state || null,
+            postalCode: addr.postalCode || null,
+            country: addr.country,
+            isDefault: addr.isDefault,
+            type: addr.type,
           },
         });
       }
@@ -107,7 +126,7 @@ export async function updateCompany(
     if (!auth?.organizationId) redirect("/login");
     const organizationId = auth.organizationId;
 
-    const { contacts, ...rest } = businessAccountSchema.parse(data);
+    const { contacts, addresses, ...rest } = businessAccountSchema.parse(data);
 
     const logoUrl = rest.logoUrl === "" ? null : rest.logoUrl || null;
     const taxId = rest.taxId === "" ? null : rest.taxId || null;
@@ -171,6 +190,58 @@ export async function updateCompany(
       }
     }
 
+    if (addresses) {
+      // Get existing addresses for this company
+      const existingAddresses = await db.address.findMany({
+        where: { businessAccountId: id },
+        select: { id: true },
+      });
+      const existingIds = existingAddresses.map((a) => a.id);
+
+      // Extract IDs from submitted addresses
+      const submittedIds = addresses
+        .map((a: any) => a.id)
+        .filter(Boolean) as string[];
+
+      // Addresses to delete/unlink
+      const toDelete = existingIds.filter(
+        (extId) => !submittedIds.includes(extId),
+      );
+
+      if (toDelete.length > 0) {
+        await db.address.deleteMany({
+          where: { id: { in: toDelete } },
+        });
+      }
+
+      // Addresses to update or create
+      for (const addr of addresses) {
+        const cleanAddr = {
+          label: addr.label || null,
+          street1: addr.street1,
+          street2: addr.street2 || null,
+          city: addr.city,
+          state: addr.state || null,
+          postalCode: addr.postalCode || null,
+          country: addr.country,
+          isDefault: addr.isDefault,
+          type: addr.type,
+          businessAccountId: id,
+        };
+
+        if (addr.id) {
+          await db.address.update({
+            where: { id: addr.id },
+            data: cleanAddr,
+          });
+        } else {
+          await db.address.create({
+            data: cleanAddr,
+          });
+        }
+      }
+    }
+
     revalidatePath("/companies");
     revalidatePath("/contacts");
     revalidatePath(`/companies/${id}`);
@@ -229,6 +300,11 @@ export async function getCompany(id: string): Promise<any> {
       where: { id },
       include: {
         contacts: true,
+        addresses: true,
+        invoices: {
+          include: { items: true },
+          orderBy: { createdAt: "desc" },
+        },
         transactions: {
           orderBy: { createdAt: "desc" },
           take: 10,
@@ -311,6 +387,11 @@ export async function getCompany(id: string): Promise<any> {
         data: { crmRecordId: record.id },
         include: {
           contacts: true,
+          addresses: true,
+          invoices: {
+            include: { items: true },
+            orderBy: { createdAt: "desc" },
+          },
           transactions: {
             orderBy: { createdAt: "desc" },
             take: 10,

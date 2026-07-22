@@ -8,7 +8,9 @@ import { getServerAuth } from "@repo/auth/server";
 import { redirect } from "next/navigation";
 
 const invoiceSchema = z.object({
-  customerId: z.string(),
+  customerId: z.string().optional().nullable(),
+  businessAccountId: z.string().optional().nullable(),
+  customerName: z.string().optional().nullable(),
   postingDate: z.coerce.date(),
   dueDate: z.coerce.date().optional(),
   items: z.array(
@@ -41,7 +43,9 @@ export async function createInvoiceAction(
 
     const invoice = await db.invoice.create({
       data: {
-        customerId: validatedData.customerId,
+        customerId: validatedData.customerId || null,
+        businessAccountId: validatedData.businessAccountId || null,
+        customerName: validatedData.customerName || null,
         organizationId: organizationId,
         postingDate: validatedData.postingDate,
         dueDate: validatedData.dueDate,
@@ -55,7 +59,12 @@ export async function createInvoiceAction(
       },
     });
 
-    revalidatePath(`/customers/${validatedData.customerId}`);
+    if (validatedData.customerId) {
+      revalidatePath(`/customers/${validatedData.customerId}`);
+    }
+    if (validatedData.businessAccountId) {
+      revalidatePath(`/companies/${validatedData.businessAccountId}`);
+    }
     return { success: true, data: invoice };
   } catch (error: any) {
     console.error("Error creating invoice:", error);
@@ -72,7 +81,21 @@ export async function getInvoiceDownloadUrl(
 ): Promise<string> {
   try {
     const token = generateDocumentToken("invoice", invoiceId, organizationId);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
+    let apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
+
+    try {
+      const parsed = new URL(apiUrl);
+      if (
+        parsed.hostname.endsWith("scryme.tech") ||
+        process.env.NODE_ENV === "production"
+      ) {
+        parsed.port = "";
+      }
+      apiUrl = parsed.toString().replace(/\/$/, "");
+    } catch (e) {
+      console.error("Failed to parse API URL in getInvoiceDownloadUrl:", e);
+    }
+
     return `${apiUrl}/public-invoices/${invoiceId}/download?token=${token}`;
   } catch (error) {
     console.error("Error generating invoice download token:", error);

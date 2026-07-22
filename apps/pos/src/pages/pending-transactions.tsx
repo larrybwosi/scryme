@@ -64,6 +64,8 @@ export default function PendingTransactionsPage() {
   // State for download tracking
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const locationId = useAuthStore(state => state.currentLocation?.id);
+
   // --- Query: Get Transactions ---
   const {
     data: transactions = [],
@@ -71,8 +73,8 @@ export default function PendingTransactionsPage() {
     isRefetching,
     refetch,
   } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: () => fetchTransactions(),
+    queryKey: ['transactions', locationId],
+    queryFn: () => fetchTransactions(locationId),
   });
 
   // --- Query: Get Drivers ---

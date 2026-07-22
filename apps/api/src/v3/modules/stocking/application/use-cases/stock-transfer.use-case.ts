@@ -224,10 +224,11 @@ export class StockTransferUseCase {
         batchesByVariant.set(batch.variantId, variantBatches);
       }
 
+      // ⚡ Bolt Optimization: Pre-index transfer items into a Map to avoid O(N*M) nested loop search
+      const transferItemsMap = new Map(transfer.items.map((i) => [i.id, i]));
+
       for (const itemDto of dto.items) {
-        const item = transfer.items.find(
-          (i) => i.id === itemDto.transferItemId,
-        );
+        const item = transferItemsMap.get(itemDto.transferItemId);
         if (!item)
           throw new NotFoundException(
             `Item ${itemDto.transferItemId} not found`,
@@ -346,10 +347,11 @@ export class StockTransferUseCase {
         throw new BadRequestException("Transfer is not in a shippable state");
       }
 
+      // ⚡ Bolt Optimization: Pre-index transfer items into a Map to avoid O(N*M) nested loop search
+      const transferItemsMap = new Map(transfer.items.map((i) => [i.id, i]));
+
       for (const itemDto of dto.items) {
-        const item = transfer.items.find(
-          (i) => i.id === itemDto.transferItemId,
-        );
+        const item = transferItemsMap.get(itemDto.transferItemId);
         if (!item)
           throw new NotFoundException(
             `Item ${itemDto.transferItemId} not found`,

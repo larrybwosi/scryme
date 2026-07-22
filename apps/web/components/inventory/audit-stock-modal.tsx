@@ -56,13 +56,18 @@ interface AuditStockModalProps {
   isOpen: boolean;
   onClose: () => void;
   product: InventoryProduct;
+  currency?: string;
 }
+
+import { getCurrencySymbol } from "../../lib/utils";
 
 export function AuditStockModal({
   isOpen,
   onClose,
   product,
+  currency = "USD",
 }: AuditStockModalProps) {
+  const symbol = getCurrencySymbol(currency);
   const [activeTab, setActiveTab] = useState("quantity");
   const [physicalCount, setPhysicalCount] = useState<string>(
     product.currentStock.toString(),
@@ -338,7 +343,7 @@ export function AuditStockModal({
                       className="pl-8"
                     />
                     <span className="absolute left-3 top-2.5 text-sm text-gray-400">
-                      $
+                      {symbol}
                     </span>
                   </div>
                 </div>

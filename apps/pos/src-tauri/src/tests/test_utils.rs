@@ -100,6 +100,9 @@ pub fn create_mock_customer(id: &str, name: &str) -> PosCustomer {
         chronic_conditions: None,
         insurance_provider: None,
         policy_number: None,
+        business_account_id: None,
+        date_of_birth: None,
+        gender: None,
     }
 }
 
