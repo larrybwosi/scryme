@@ -771,6 +771,8 @@ export async function getStockLevels(params: {
             reservedStock: stock.reservedStock.toNumber(),
             availableStock: stock.availableStock.toNumber(),
             incomingStock: incomingT.add(incomingP).toNumber(),
+            buyingPrice: variant.buyingPrice?.toNumber() ?? 0,
+            retailPrice: variant.retailPrice?.toNumber() ?? 0,
           };
         });
       } else {
@@ -803,6 +805,8 @@ export async function getStockLevels(params: {
             reservedStock: reserved.toNumber(),
             availableStock: available.toNumber(),
             incomingStock: incomingT.add(incomingP).toNumber(),
+            buyingPrice: variant.buyingPrice?.toNumber() ?? 0,
+            retailPrice: variant.retailPrice?.toNumber() ?? 0,
           },
         ];
       }
@@ -927,6 +931,43 @@ export async function createStockRequest(data: {
 
   revalidatePath("/stocking/requests");
   return result;
+}
+
+export async function getExpiryReportData(params: {
+  locationId?: string;
+}): Promise<any[]> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  const batches = await db.stockBatch.findMany({
+    where: {
+      organizationId: context.organizationId,
+      locationId: params.locationId && params.locationId !== "all" ? params.locationId : undefined,
+      currentQuantity: { gt: 0 },
+      expiryDate: { not: null },
+    },
+    include: {
+      variant: {
+        include: {
+          product: true,
+        },
+      },
+      location: true,
+    },
+    orderBy: { expiryDate: "asc" },
+  });
+
+  return batches.map(b => ({
+    id: b.id,
+    batchNumber: b.batchNumber,
+    variantId: b.variantId,
+    productName: b.variant.product.name,
+    variantName: b.variant.name,
+    sku: b.variant.sku,
+    locationName: b.location.name,
+    currentQuantity: b.currentQuantity.toNumber(),
+    expiryDate: b.expiryDate ? b.expiryDate.toISOString() : null,
+  }));
 }
 
 export async function getStockRequestDetails(id: string): Promise<any> {

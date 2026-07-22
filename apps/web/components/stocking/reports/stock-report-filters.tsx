@@ -18,6 +18,7 @@ interface StockReportFiltersProps {
   initialLocationId?: string;
   initialStartDate: Date;
   initialEndDate: Date;
+  initialReportType?: string;
 }
 
 export function StockReportFilters({
@@ -25,13 +26,14 @@ export function StockReportFilters({
   initialLocationId = "",
   initialStartDate,
   initialEndDate,
+  initialReportType = "Stock Movement Report",
 }: StockReportFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [locationId, setLocationId] = useState(initialLocationId);
-  const [reportType, setReportType] = useState("Stock Movement Report");
+  const [reportType, setReportType] = useState(initialReportType);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: initialStartDate,
     to: initialEndDate,
@@ -45,6 +47,12 @@ export function StockReportFilters({
       params.set("locationId", locationId);
     } else {
       params.delete("locationId");
+    }
+
+    if (reportType) {
+      params.set("reportType", reportType);
+    } else {
+      params.delete("reportType");
     }
 
     if (dateRange?.from) {

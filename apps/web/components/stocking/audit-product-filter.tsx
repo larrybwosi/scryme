@@ -7,6 +7,8 @@ interface ProductVariant {
   variantId: string;
   name: string;
   sku?: string;
+  variantName?: string;
+  currentStock?: number;
 }
 
 export function AuditProductFilter({
@@ -22,9 +24,10 @@ export function AuditProductFilter({
 
   const variants = products.map(p => ({
     id: p.variantId,
-    name: "Default",
+    name: p.variantName || "Default",
     productName: p.name,
     sku: p.sku,
+    stock: p.currentStock,
   }));
 
   return (
@@ -41,6 +44,7 @@ export function AuditProductFilter({
         router.push(`${pathname}?${params.toString()}`);
       }}
       placeholder="All Products"
+      allowZeroStock={true}
     />
   );
 }

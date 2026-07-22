@@ -123,12 +123,14 @@ export function StockRequestForm({
                 <ProductVariantSelect
                   variants={variants.map(v => ({
                     id: v.variantId,
-                    name: v.variantName,
+                    name: v.variantName || "Default",
                     productName: v.name,
                     sku: v.sku,
+                    stock: v.currentStock,
                   }))}
                   value={currentVariantId}
                   onValueChange={setCurrentVariantId}
+                  allowZeroStock={true}
                 />
               </div>
               <div className="w-24">
