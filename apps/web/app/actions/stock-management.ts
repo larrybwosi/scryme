@@ -357,6 +357,74 @@ export async function createStockTransfer(data: {
   return result;
 }
 
+export async function updateStockTransfer(
+  id: string,
+  data: {
+    fromLocationId: string;
+    toLocationId: string;
+    items: { variantId: string; quantity: number }[];
+    notes?: string;
+    priority?: string;
+  },
+): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
+
+  const transfer = await db.stockTransfer.findUnique({
+    where: { id, organizationId: context.organizationId },
+    include: { items: true },
+  });
+
+  if (!transfer) throw new Error("Transfer not found");
+
+  if (["COMPLETED", "CANCELLED", "REJECTED"].includes(transfer.status)) {
+    throw new Error(`Cannot edit a stock transfer that is already ${transfer.status}`);
+  }
+
+  const result = await db.$transaction(async tx => {
+    // 1. Delete all existing items
+    await tx.stockTransferItem.deleteMany({
+      where: { stockTransferId: id },
+    });
+
+    // 2. Create new items
+    const newItems = await Promise.all(
+      data.items.map(async item => {
+        const variant = await tx.productVariant.findUnique({
+          where: { id: item.variantId },
+          select: { buyingPrice: true },
+        });
+        return {
+          variantId: item.variantId,
+          requestedQuantity: new Decimal(item.quantity),
+          unitCost: variant?.buyingPrice || new Decimal(0),
+        };
+      }),
+    );
+
+    // 3. Update stock transfer details and create new items
+    const updatedTransfer = await tx.stockTransfer.update({
+      where: { id },
+      data: {
+        fromLocationId: data.fromLocationId,
+        toLocationId: data.toLocationId,
+        notes: data.notes,
+        priority: (data.priority?.toUpperCase() as any) || transfer.priority,
+        items: {
+          create: newItems,
+        },
+      },
+    });
+
+    return updatedTransfer;
+  });
+
+  revalidatePath(`/stocking/transfers/${id}`);
+  revalidatePath("/stocking/transfers");
+  return result;
+}
+
 export async function getStockTransferDetails(id: string): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId) return null;
