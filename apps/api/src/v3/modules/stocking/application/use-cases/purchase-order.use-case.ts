@@ -118,10 +118,11 @@ export class PurchaseOrderUseCase {
         },
       });
 
+      // ⚡ Bolt Optimization: Pre-index purchase items into a Map to avoid O(N*M) nested loop search
+      const purchaseItemsMap = new Map(purchase.items.map((i) => [i.id, i]));
+
       for (const itemDto of dto.items) {
-        const purchaseItem = purchase.items.find(
-          (i) => i.id === itemDto.purchaseItemId,
-        );
+        const purchaseItem = purchaseItemsMap.get(itemDto.purchaseItemId);
         if (!purchaseItem)
           throw new NotFoundException(
             `Purchase item ${itemDto.purchaseItemId} not found`,
@@ -278,9 +279,7 @@ export class PurchaseOrderUseCase {
 
       // Trigger price recalculation for all items received in this PO
       for (const itemDto of dto.items) {
-        const purchaseItem = purchase.items.find(
-          (i) => i.id === itemDto.purchaseItemId,
-        );
+        const purchaseItem = purchaseItemsMap.get(itemDto.purchaseItemId);
         if (purchaseItem) {
           await this.pricingManagementService.handleCostChange(
             {
