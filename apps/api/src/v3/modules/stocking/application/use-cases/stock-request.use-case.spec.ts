@@ -40,6 +40,7 @@ describe("StockRequestUseCase", () => {
     mockTx = {
       stockRequest: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
       },
       stockTransfer: {
@@ -64,7 +65,7 @@ describe("StockRequestUseCase", () => {
   });
 
   it("should approve a stock request", async () => {
-    mockTx.stockRequest.findUnique.mockResolvedValue({
+    mockTx.stockRequest.findFirst.mockResolvedValue({
       id: mockRequestId,
       organizationId: mockOrgId,
       status: StockRequestStatus.PENDING,
@@ -82,7 +83,7 @@ describe("StockRequestUseCase", () => {
   });
 
   it("should fulfill from transfer", async () => {
-    mockTx.stockRequest.findUnique.mockResolvedValue({
+    mockTx.stockRequest.findFirst.mockResolvedValue({
       id: mockRequestId,
       requestNumber: "REQ-001",
       organizationId: mockOrgId,
@@ -122,7 +123,7 @@ describe("StockRequestUseCase", () => {
   });
 
   it("should fulfill from purchase", async () => {
-    mockTx.stockRequest.findUnique.mockResolvedValue({
+    mockTx.stockRequest.findFirst.mockResolvedValue({
       id: mockRequestId,
       requestNumber: "REQ-001",
       organizationId: mockOrgId,

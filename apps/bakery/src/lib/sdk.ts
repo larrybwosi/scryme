@@ -18,13 +18,11 @@ export const isOfflineMode = () => {
 
 // Initialize SDK with proper baseURL and global error handler
 const sdk = getSDK({
-  baseURL: isTauri()
-    ? sanitizeApiUrl(
-        (typeof window !== 'undefined' ? localStorage.getItem('bakery_api_url') : null) ||
-          import.meta.env.VITE_API_URL ||
-          'https://api.scryme.tech/api/v2'
-      )
-    : '/api/v2',
+  baseURL: sanitizeApiUrl(
+    (typeof window !== 'undefined' ? localStorage.getItem('bakery_api_url') : null) ||
+      import.meta.env.VITE_API_URL ||
+      'https://api.scryme.tech/api/v2'
+  ),
   onUnauthorized: () => {
     // Trigger a window event that the AuthGuard can listen to
     if (typeof window !== 'undefined') {

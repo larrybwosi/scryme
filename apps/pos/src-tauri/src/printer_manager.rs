@@ -510,6 +510,30 @@ pub fn open_cash_drawer(port_name: String) -> Result<String, String> {
 }
 
 
+fn format_order_date(date_str: &str) -> String {
+    if date_str.is_empty() {
+        return String::new();
+    }
+    // Attempt standard ISO8601 / RFC3339 parsing
+    if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(date_str) {
+        let dt: chrono::DateTime<chrono::FixedOffset> = dt;
+        return dt.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M:%S").to_string();
+    }
+    // Fallback parsing for other possible ISO-like formats
+    if let Ok(dt) = chrono::DateTime::parse_from_rfc3339(&format!("{}Z", date_str.trim_end_matches('Z'))) {
+        let dt: chrono::DateTime<chrono::FixedOffset> = dt;
+        return dt.with_timezone(&chrono::Local).format("%Y-%m-%d %H:%M:%S").to_string();
+    }
+    // Simple custom string formatting if standard parse fails: convert T and Z and remove fractional seconds if present
+    // e.g. "2025-02-17T12:34:56.789Z" -> "2025-02-17 12:34:56"
+    let cleaned = date_str.replace('T', " ").replace('Z', "");
+    if let Some(dot_idx) = cleaned.find('.') {
+        cleaned[..dot_idx].to_string()
+    } else {
+        cleaned
+    }
+}
+
 #[tauri::command] 
 pub async fn print_receipt_native(
     app: tauri::AppHandle, 
@@ -621,32 +645,43 @@ pub async fn print_receipt_native(
     let show_reg = config.get("showCompanyRegNumber").and_then(|v| v.as_bool()).unwrap_or(false);
 
     if show_kra || show_tax || show_vat || show_reg {
-        let mut reg_parts = Vec::new();
         if show_kra {
+            if let Some(val) = config.get("taxNumber").and_then(|v| v.as_str()) {
+                if !val.is_empty() {
+                    esc.text_line(&format!("KRA PIN / Tax ID: {}", val));
+                }
+            }
             if let Some(val) = config.get("kraPin").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("KRA PIN:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("KRA PIN: {}", val));
+                }
             }
             if let Some(val) = config.get("kraEtr").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("KRA ETR:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("KRA ETR: {}", val));
+                }
             }
         }
-        if show_tax {
+        if show_tax && !show_kra {
             if let Some(val) = config.get("taxNumber").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("TIN:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("TIN: {}", val));
+                }
             }
         }
         if show_vat {
             if let Some(val) = config.get("vatNumber").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("VAT:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("VAT: {}", val));
+                }
             }
         }
         if show_reg {
             if let Some(val) = config.get("companyRegNumber").and_then(|v| v.as_str()) {
-                if !val.is_empty() { reg_parts.push(format!("REG:{}", val)); }
+                if !val.is_empty() {
+                    esc.text_line(&format!("REG: {}", val));
+                }
             }
-        }
-        if !reg_parts.is_empty() {
-            esc.text_line(&reg_parts.join(" "));
         }
     }
     
@@ -670,7 +705,8 @@ pub async fn print_receipt_native(
 
     let created_at = order.get("createdAt").and_then(|v| v.as_str()).unwrap_or("");
     if !created_at.is_empty() {
-        esc.text_line(&format!("Date: {}", created_at));
+        let formatted = format_order_date(created_at);
+        esc.text_line(&format!("Date: {}", formatted));
     }
 
     if config.get("showOrderType").and_then(|v| v.as_bool()).unwrap_or(true) {
@@ -1176,7 +1212,8 @@ pub async fn print_kitchen_native(
     if show_time {
         let created_at = order.get("createdAt").and_then(|v| v.as_str()).unwrap_or("");
         if !created_at.is_empty() {
-            esc.text_line(&format!("TIME: {}", created_at));
+            let formatted = format_order_date(created_at);
+            esc.text_line(&format!("TIME: {}", formatted));
         }
     }
     if show_server {

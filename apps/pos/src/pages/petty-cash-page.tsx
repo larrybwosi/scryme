@@ -74,8 +74,7 @@ export default function PettyCashPage() {
       setIsLoadingTransactions(true);
       const response = await invoke<any>('authenticated_api_request', {
         method: 'GET',
-        path: `api/v2/pos/petty-cash/transactions`,
-        query: { limit: 10 },
+        path: `api/v2/pos/petty-cash/transactions?limit=10`,
       });
       setTransactions(response.data || []);
     } catch (error) {
@@ -149,7 +148,7 @@ export default function PettyCashPage() {
     } catch (error: any) {
       console.error('Failed to register petty cash:', error);
       toast.error('Failed to register petty cash', {
-        description: error.message || 'An unexpected error occurred',
+        description: typeof error === 'string' ? error : (error.message || 'An unexpected error occurred'),
       });
     } finally {
       setIsSubmitting(false);

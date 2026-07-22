@@ -1605,87 +1605,17 @@ export const usePosStore = create<PosStore>()(
 
       logoutEmployee: () => set({ currentEmployeeId: null }),
 
-      openCashDrawer: openingBalance =>
-        set(state => {
-          const employee = state.employees.find(e => e.id === state.currentEmployeeId);
-          const newDrawer: CashDrawer = {
-            id: `drawer_${Date.now()}`,
-            employeeId: state.currentEmployeeId || 'unknown',
-            employeeName: employee?.name || 'Unknown',
-            openedAt: new Date(),
-            openingBalance,
-            status: 'open',
-            transactions: [],
-          };
+      openCashDrawer: _openingBalance => {
+        // Removed react cashdrawer management in favor of Rust backend shift system
+      },
 
-          return {
-            cashDrawers: [...state.cashDrawers, newDrawer],
-            activeCashDrawerId: newDrawer.id,
-          };
-        }),
+      closeCashDrawer: _closingBalance => {
+        // Removed react cashdrawer management in favor of Rust backend shift system
+      },
 
-      closeCashDrawer: closingBalance =>
-        set(state => {
-          if (!state.activeCashDrawerId) return state;
-
-          const drawer = state.cashDrawers.find(d => d.id === state.activeCashDrawerId);
-          if (!drawer) return state;
-
-          const totalSales = drawer.transactions.filter(t => t.type === 'sale').reduce((sum, t) => sum + t.amount, 0);
-          const totalCashIn = drawer.transactions
-            .filter(t => t.type === 'cash-in')
-            .reduce((sum, t) => sum + t.amount, 0);
-          const totalCashOut = drawer.transactions
-            .filter(t => t.type === 'cash-out')
-            .reduce((sum, t) => sum + t.amount, 0);
-          const totalRefunds = drawer.transactions
-            .filter(t => t.type === 'refund')
-            .reduce((sum, t) => sum + t.amount, 0);
-
-          const expectedBalance = drawer.openingBalance + totalSales + totalCashIn - totalCashOut - totalRefunds;
-
-          const updatedDrawers = state.cashDrawers.map(d =>
-            d.id === state.activeCashDrawerId
-              ? {
-                  ...d,
-                  closedAt: new Date(),
-                  closingBalance,
-                  expectedBalance,
-                  difference: closingBalance - expectedBalance,
-                  status: 'closed' as const,
-                }
-              : d
-          );
-
-          return {
-            cashDrawers: updatedDrawers,
-            activeCashDrawerId: null,
-          };
-        }),
-
-      addCashTransaction: (type, amount, notes) =>
-        set(state => {
-          if (!state.activeCashDrawerId) return state;
-
-          const updatedDrawers = state.cashDrawers.map(drawer =>
-            drawer.id === state.activeCashDrawerId
-              ? {
-                  ...drawer,
-                  transactions: [
-                    ...drawer.transactions,
-                    {
-                      type,
-                      amount,
-                      timestamp: new Date(),
-                      notes,
-                    },
-                  ],
-                }
-              : drawer
-          );
-
-          return { cashDrawers: updatedDrawers };
-        }),
+      addCashTransaction: (_type, _amount, _notes) => {
+        // Removed react cashdrawer management in favor of Rust backend shift system
+      },
 
       updateProductStock: (productId, newStock) =>
         set(state => ({

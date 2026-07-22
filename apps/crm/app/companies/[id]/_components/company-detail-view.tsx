@@ -9,6 +9,7 @@ import { DetailTabs, type TabId } from '@/components/crm/detail-tabs';
 import { NotesTab } from '@/components/crm/notes-tab';
 import { FollowUpsTab } from '@/components/crm/followups-tab';
 import { ActivitiesTab } from '@/components/crm/activities-tab';
+import { CompanyInvoicesTab } from './tabs/invoices-tab';
 import { cn } from '@repo/ui/lib/utils';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
@@ -30,9 +31,10 @@ import { format } from 'date-fns';
 
 interface CompanyDetailViewProps {
   company: any;
+  currency?: string;
 }
 
-function TabContent({ company, tab }: { company: any; tab: TabId }) {
+function TabContent({ company, tab, currency = "USD" }: { company: any; tab: TabId; currency?: string }) {
   // Adaptation to match what components expect
   const adaptedCompany = {
     ...company,
@@ -51,7 +53,9 @@ function TabContent({ company, tab }: { company: any; tab: TabId }) {
     case 'contacts':
       return <ContactsTab company={company} />;
     case 'orders':
-      return <OrdersTab company={company} />;
+      return <OrdersTab company={company} currency={currency} />;
+    case 'invoices':
+      return <CompanyInvoicesTab company={company} currency={currency} />;
     default:
       return <NotesTab customer={adaptedCompany as any} />;
   }
@@ -79,8 +83,9 @@ function ContactsTab({ company }: { company: any }) {
     );
 }
 
-function OrdersTab({ company }: { company: any }) {
+function OrdersTab({ company, currency = "USD" }: { company: any; currency?: string }) {
     const transactions = company.transactions || [];
+    const locale = currency === "KES" ? "en-KE" : currency === "USD" ? "en-US" : undefined;
     return (
         <div className="space-y-4">
             <h3 className="text-lg font-bold">Transactions</h3>
@@ -95,7 +100,7 @@ function OrdersTab({ company }: { company: any }) {
                                 <div className="text-sm text-muted-foreground">{new Date(t.createdAt).toLocaleDateString()}</div>
                             </div>
                             <div className="font-bold text-lg">
-                                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(t.total)}
+                                {new Intl.NumberFormat(locale, { style: 'currency', currency }).format(t.total)}
                             </div>
                         </div>
                     ))}
@@ -105,8 +110,12 @@ function OrdersTab({ company }: { company: any }) {
     );
 }
 
-function DetailViewInner({ company }: CompanyDetailViewProps) {
+import { getCurrencySymbol } from '@/lib/utils';
+
+function DetailViewInner({ company, currency = "USD" }: CompanyDetailViewProps) {
   const router = useRouter();
+  const symbol = getCurrencySymbol(currency);
+  const locale = currency === "KES" ? "en-KE" : currency === "USD" ? "en-US" : undefined;
   const searchParams = useSearchParams();
   const tab = (searchParams.get('tab') as TabId) ?? 'notes';
 
@@ -116,9 +125,10 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
     followups: company.crmRecord?.followUps?.length || 0,
     contacts: company.contacts?.length || 0,
     orders: company.transactions?.length || 0,
+    invoices: company.invoices?.length || 0,
   };
 
-  const availableTabs: TabId[] = ['notes', 'activities', 'contacts', 'orders', 'followups'];
+  const availableTabs: TabId[] = ['notes', 'activities', 'contacts', 'orders', 'followups', 'invoices'];
 
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
@@ -253,7 +263,7 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
                  <div className="text-sm">
                     <div className="text-muted-foreground font-medium mb-1">Total Spent</div>
                     <div className="text-lg font-bold text-foreground">
-                       {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+                       {new Intl.NumberFormat(locale, { style: 'currency', currency }).format(
                           company.transactions?.reduce((sum: number, t: any) => sum + (t.total || 0), 0) || 0
                        )}
                     </div>
@@ -286,7 +296,7 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
         <div className="flex flex-col flex-1 overflow-hidden">
           <DetailTabs activeTab={tab} customerId={company.id} counts={counts} availableTabs={availableTabs} />
           <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
-            <TabContent company={company} tab={tab} />
+            <TabContent company={company} tab={tab} currency={currency} />
           </div>
         </div>
       </div>
@@ -374,7 +384,7 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
                   <div className="grid grid-cols-2 gap-3">
                      <div>
                         <label className="text-[11px] font-semibold text-muted-foreground uppercase block mb-1.5">
-                           Amount ($) *
+                           Amount ({symbol}) *
                         </label>
                         <input
                            type="number"
@@ -472,10 +482,10 @@ function DetailViewInner({ company }: CompanyDetailViewProps) {
   );
 }
 
-export function CompanyDetailView({ company }: CompanyDetailViewProps) {
+export function CompanyDetailView({ company, currency = "USD" }: CompanyDetailViewProps) {
   return (
     <Suspense fallback={<div className="flex items-center justify-center h-screen text-muted-foreground text-sm">Loading...</div>}>
-      <DetailViewInner company={company} />
+      <DetailViewInner company={company} currency={currency} />
     </Suspense>
   );
 }

@@ -1,4 +1,4 @@
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, State, Manager};
 // use tauri_plugin_aptabase::EventTracker;
 
 use crate::models::Shift;
@@ -113,8 +113,12 @@ pub async fn close_shift_command(
     let report_text = shift_store::generate_z_report_text(&closed_shift);
 
     if let Some(p_name) = printer_name {
-        let _ = crate::printer_manager::print_system_receipt(app, p_name, report_text, false).await;
+        let _ = crate::printer_manager::print_system_receipt(app.clone(), p_name, report_text, false).await;
     }
+
+    // Automatically sync shifts upon closing
+    let auth_state = app.state::<AuthStateStore>();
+    let _ = shift_store::sync_pending_shifts(app.clone(), &state, &auth_state).await;
 
     Ok(closed_shift)
 }

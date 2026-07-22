@@ -77,12 +77,18 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
           phone: c.phone || "",
         })) ||
         [],
+      addresses: initialData?.addresses || [],
     },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "contacts",
+  });
+
+  const { fields: addressFields, append: appendAddress, remove: removeAddress } = useFieldArray({
+    control: form.control,
+    name: "addresses",
   });
 
   const isEnterprise = form.watch("isEnterprise");
@@ -394,6 +400,247 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                   )}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Addresses Card */}
+          <Card className="shadow-sm border-border/50">
+            <CardHeader className="bg-linear-to-r from-slate-50/50 to-transparent pb-6 border-b border-border/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg font-semibold">
+                      Company Addresses
+                    </CardTitle>
+                  </div>
+                  <CardDescription className="text-sm mt-1">
+                    Locations and billing/shipping addresses for this company.
+                  </CardDescription>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendAddress({
+                    label: "Main Office",
+                    street1: "",
+                    street2: "",
+                    city: "",
+                    state: "",
+                    postalCode: "",
+                    country: "Kenya",
+                    isDefault: addressFields.length === 0,
+                    type: "BOTH"
+                  })}
+                  className="h-9 px-4 text-[13px] font-medium hover:bg-primary/5 hover:text-primary transition-colors"
+                >
+                  <Plus size={16} className="mr-1.5" /> Add Address
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {addressFields.length === 0 ? (
+                <div className="rounded-xl border-2 border-dashed border-border/50 py-12 text-center bg-muted/10">
+                  <Building2
+                    size={32}
+                    className="mx-auto mb-3 opacity-40 text-muted-foreground"
+                  />
+                  <p className="text-sm font-medium text-muted-foreground">
+                    No addresses added yet
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add billing, shipping, or main office locations.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {addressFields.map((field, index) => (
+                    <div
+                      key={field.id}
+                      className="group relative rounded-xl border border-border/50 bg-linear-to-r from-slate-50/30 to-transparent p-5 hover:shadow-md transition-all duration-200 space-y-4"
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => removeAddress(index)}
+                            className="absolute top-3 right-3 p-1.5 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100 hover:bg-destructive/10 rounded-full"
+                            aria-label="Remove address"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Remove address</TooltipContent>
+                      </Tooltip>
+
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                            Address #{index + 1}
+                          </span>
+                        </div>
+                        {field.id ? (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-5 bg-green-50 text-green-700 border-green-200 px-2 font-medium"
+                          >
+                            Existing
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] h-5 bg-blue-50 text-blue-700 border-blue-200 px-2 font-medium"
+                          >
+                            New
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.label`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Address Label</FormLabel>
+                              <FormControl>
+                                <Input placeholder="e.g. Headquarters, Warehouse" {...field} value={field.value || ""} className="h-9 text-[13px]" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.type`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Address Type</FormLabel>
+                              <FormControl>
+                                <select
+                                  {...field}
+                                  className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                  <option value="BOTH">Billing & Shipping</option>
+                                  <option value="BILLING">Billing Only</option>
+                                  <option value="SHIPPING">Shipping Only</option>
+                                </select>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.isDefault`}
+                          render={({ field }) => (
+                            <FormItem className="flex items-center justify-between rounded-md border border-border/50 p-2 h-9 mt-5">
+                              <FormLabel className="text-xs text-muted-foreground">Default Address</FormLabel>
+                              <FormControl>
+                                <Switch
+                                  checked={!!field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.street1`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Street Line 1 *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="123 Business Rd" {...field} className="h-9 text-[13px]" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.street2`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Street Line 2</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Suite 400 (Optional)" {...field} value={field.value || ""} className="h-9 text-[13px]" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.city`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">City *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nairobi" {...field} className="h-9 text-[13px]" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.state`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">State/Region</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Nairobi County" {...field} value={field.value || ""} className="h-9 text-[13px]" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.postalCode`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Postal/Zip Code</FormLabel>
+                              <FormControl>
+                                <Input placeholder="00100" {...field} value={field.value || ""} className="h-9 text-[13px]" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`addresses.${index}.country`}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs text-muted-foreground">Country *</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Kenya" {...field} className="h-9 text-[13px]" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 

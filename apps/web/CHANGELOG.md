@@ -1,5 +1,11 @@
 # web
 
+## 6.32.0
+
+### Minor Changes
+
+- 794d539: update
+
 ## 6.31.0
 
 ### Minor Changes

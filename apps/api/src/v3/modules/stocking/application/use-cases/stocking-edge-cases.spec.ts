@@ -43,6 +43,7 @@ describe("Stocking Edge Cases", () => {
     mockTx = {
       purchase: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
         create: vi.fn(),
       },
@@ -80,6 +81,7 @@ describe("Stocking Edge Cases", () => {
       },
       stockRequest: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
       },
       stockRequestItem: {
@@ -202,6 +204,19 @@ describe("Stocking Edge Cases", () => {
 
   it("should handle QC failure during PO receipt (Quarantine)", async () => {
     const purchaseId = "po-qc-fail";
+    mockTx.purchase.findFirst.mockResolvedValue({
+      id: purchaseId,
+      organizationId: mockOrgId,
+      status: PurchaseStatus.ORDERED,
+      items: [
+        {
+          id: "poi-1",
+          variantId: "v1",
+          unitCost: 100,
+          variant: { productId: "p1" },
+        },
+      ],
+    });
     mockTx.purchase.findUnique.mockResolvedValue({
       id: purchaseId,
       organizationId: mockOrgId,
@@ -309,7 +324,7 @@ describe("Stocking Edge Cases", () => {
 
   it("should handle stock request fulfillment via transfer", async () => {
     const requestId = "req-1";
-    mockTx.stockRequest.findUnique.mockResolvedValue({
+    mockTx.stockRequest.findFirst.mockResolvedValue({
       id: requestId,
       organizationId: mockOrgId,
       status: StockRequestStatus.APPROVED,
