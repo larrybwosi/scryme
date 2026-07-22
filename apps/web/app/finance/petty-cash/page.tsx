@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { Wallet } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { getServerAuth } from "@repo/auth/server";
-import { getPettyCashFunds } from "@/app/actions/petty-cash";
+import { getPettyCashFunds, getAllPettyCashTransactions } from "@/app/actions/petty-cash";
 import { getStaffMembers } from "@/app/actions/staff";
 import { getInventoryLocations } from "@/app/actions/inventory";
 import { PettyCashClient } from "./petty-cash-client";
@@ -18,8 +18,9 @@ export default async function PettyCashPage() {
     return null;
   }
 
-  const [funds, staffResponse, locations] = await Promise.all([
+  const [funds, allTransactions, staffResponse, locations] = await Promise.all([
     getPettyCashFunds(),
+    getAllPettyCashTransactions(),
     getStaffMembers(),
     getInventoryLocations(),
   ]);
@@ -37,6 +38,7 @@ export default async function PettyCashPage() {
 
       <PettyCashClient
         initialFunds={funds}
+        initialTransactions={allTransactions}
         staff={staff}
         locations={locations}
       />

@@ -56,6 +56,36 @@ export async function getPettyCashFunds() {
   });
 }
 
+export async function getAllPettyCashTransactions() {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ], true);
+
+  return await db.pettyCashTransaction.findMany({
+    where: {
+      fund: {
+        organizationId: auth.organizationId,
+      },
+    },
+    include: {
+      fund: {
+        include: {
+          location: true,
+        },
+      },
+      member: {
+        include: {
+          user: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function createPettyCashFund(data: {
   name: string;
   floatAmount: number;

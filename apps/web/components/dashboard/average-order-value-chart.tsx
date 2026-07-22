@@ -33,6 +33,7 @@ interface AverageOrderValueChartProps {
   value: string;
   change: number;
   periodLabel: string;
+  currency?: string;
 }
 
 const chartConfig = {
@@ -42,12 +43,16 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+import { getCurrencySymbol } from "../../lib/utils";
+
 export function AverageOrderValueChart({
   data,
   value,
   change,
   periodLabel,
+  currency = "USD",
 }: AverageOrderValueChartProps) {
+  const symbol = getCurrencySymbol(currency);
   const averageValue =
     data.length > 0
       ? data.reduce((acc, curr) => acc + curr.current, 0) / data.length
@@ -137,7 +142,7 @@ export function AverageOrderValueChart({
               tick={{ fontSize: 10, fill: "#9ca3af" }}
               orientation="right"
               tickFormatter={val =>
-                `$${val >= 1000 ? (val / 1000).toFixed(1) + "k" : val}`
+                `${symbol}${val >= 1000 ? (val / 1000).toFixed(1) + "k" : val}`
               }
             />
             <ChartTooltip content={<ChartTooltipContent />} />

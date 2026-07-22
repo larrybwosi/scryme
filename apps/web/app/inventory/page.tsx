@@ -13,6 +13,7 @@ import { Plus, Filter, RotateCw, LayoutGrid, Download, Tag } from "lucide-react"
 import { ProductSheet } from "../../components/inventory/product-sheet";
 import { ProductImport } from "../../components/inventory/product-import";
 import Link from "next/link";
+import { getOrganizationSettings } from "../actions/organization";
 
 export default async function InventoryPage({
   searchParams,
@@ -29,7 +30,7 @@ export default async function InventoryPage({
 }) {
   const params = await searchParams;
 
-  const [products, locations, categories, suppliers] = await Promise.all([
+  const [products, locations, categories, suppliers, organization] = await Promise.all([
     getInventoryProducts({
       search: params.search,
       locationId: params.locationId,
@@ -43,7 +44,9 @@ export default async function InventoryPage({
     getInventoryLocations(),
     getCategories(),
     getSuppliers(),
+    getOrganizationSettings(),
   ]);
+  const currency = organization?.settings?.defaultCurrency || "USD";
 
   return (
     <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
@@ -74,7 +77,7 @@ export default async function InventoryPage({
               <span>Import</span>
             </Button>
           </ProductImport>
-          <ProductSheet categories={categories}>
+          <ProductSheet categories={categories} currency={currency}>
             <Button className="gap-2">
               <Plus size={16} />
               <span>Add Product</span>
@@ -113,7 +116,7 @@ export default async function InventoryPage({
           </Button>
         </div>
 
-        <InventoryTable data={products} />
+        <InventoryTable data={products} currency={currency} />
       </div>
     </div>
   );

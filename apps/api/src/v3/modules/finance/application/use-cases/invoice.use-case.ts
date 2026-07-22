@@ -383,11 +383,13 @@ export class InvoiceUseCase {
     const invoice = await this.prisma.client.invoice.findFirst({
       where: { id: invoiceId, organizationId },
       include: {
+        businessAccount: { include: { addresses: true } },
         transaction: {
           include: {
             attachments: true,
             items: true,
             customer: { include: { addresses: true } },
+            businessAccount: { include: { addresses: true } },
             organization: {
               include: {
                 settings: true,
@@ -480,6 +482,7 @@ export class InvoiceUseCase {
         member: { include: { user: { select: { name: true } } } },
         location: true,
         customer: { include: { addresses: true } },
+        businessAccount: { include: { addresses: true } },
         payments: true,
         organization: {
           include: {
@@ -549,6 +552,7 @@ export class InvoiceUseCase {
         member: { include: { user: { select: { name: true } } } },
         location: true,
         customer: { include: { addresses: true } },
+        businessAccount: { include: { addresses: true } },
         payments: true,
         organization: {
           include: {

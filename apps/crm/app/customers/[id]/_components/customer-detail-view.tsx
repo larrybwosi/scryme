@@ -17,14 +17,17 @@ import type { CustomerWithRelations } from "@/lib/types";
 
 interface CustomerDetailViewProps {
   customer: CustomerWithRelations;
+  currency?: string;
 }
 
 function TabContent({
   customer,
   tab,
+  currency,
 }: {
   customer: CustomerWithRelations;
   tab: TabId;
+  currency: string;
 }) {
   switch (tab) {
     case "notes":
@@ -34,9 +37,9 @@ function TabContent({
     case "deliveries":
       return <DeliveriesTab customer={customer} />;
     case "invoices":
-      return <InvoicesTab customer={customer} />;
+      return <InvoicesTab customer={customer} currency={currency} />;
     case "orders":
-      return <OrdersTab customer={customer} />;
+      return <OrdersTab customer={customer} currency={currency} />;
     case "conversations":
       return <ConversationsTab customer={customer} />;
     case "followups":
@@ -46,7 +49,7 @@ function TabContent({
   }
 }
 
-function DetailViewInner({ customer }: CustomerDetailViewProps) {
+function DetailViewInner({ customer, currency = "USD" }: CustomerDetailViewProps) {
   const searchParams = useSearchParams();
   const tab = (searchParams.get("tab") as TabId) ?? "notes";
 
@@ -85,7 +88,7 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
       <div className="flex flex-1 overflow-hidden">
         {/* Left profile panel — sticky, scrollable independently */}
         <div className="w-[320px] shrink-0 border-r border-border overflow-y-auto p-4 custom-scrollbar">
-          <CustomerProfilePanel customer={customer} />
+          <CustomerProfilePanel customer={customer} currency={currency} />
         </div>
 
         {/* Right content — tabs + panel */}
@@ -105,7 +108,7 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
             ]}
           />
           <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-            <TabContent customer={customer} tab={tab} />
+            <TabContent customer={customer} tab={tab} currency={currency} />
           </div>
         </div>
       </div>
@@ -113,7 +116,7 @@ function DetailViewInner({ customer }: CustomerDetailViewProps) {
   );
 }
 
-export function CustomerDetailView({ customer }: CustomerDetailViewProps) {
+export function CustomerDetailView({ customer, currency = "USD" }: CustomerDetailViewProps) {
   return (
     <Suspense
       fallback={
@@ -122,7 +125,7 @@ export function CustomerDetailView({ customer }: CustomerDetailViewProps) {
         </div>
       }
     >
-      <DetailViewInner customer={customer} />
+      <DetailViewInner customer={customer} currency={currency} />
     </Suspense>
   );
 }

@@ -146,7 +146,7 @@ export default async function PriceListDetailPage({
           <PriceListItemTable priceListId={priceList.id} items={priceList.items} />
         </TabsContent>
         <TabsContent value="rules" className="mt-0">
-          <PricingRuleTable priceListId={priceList.id} rules={priceList.rules} />
+          <PricingRuleTable priceListId={priceList.id} rules={priceList.rules} currency={priceList.currency} />
         </TabsContent>
         <TabsContent value="customers" className="mt-0">
           <PriceListCustomerTable priceListId={priceList.id} customers={priceList.customers} />

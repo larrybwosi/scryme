@@ -31,6 +31,18 @@ export const businessAccountSchema = z.object({
     email: z.string().email().optional().or(z.literal('')),
     phone: z.string().optional(),
   })).optional(),
+  addresses: z.array(z.object({
+    id: z.string().optional(),
+    label: z.string().optional().nullable(),
+    street1: z.string().min(1, 'Street 1 is required'),
+    street2: z.string().optional().nullable(),
+    city: z.string().min(1, 'City is required'),
+    state: z.string().optional().nullable(),
+    postalCode: z.string().optional().nullable(),
+    country: z.string().min(1, 'Country is required'),
+    isDefault: z.boolean().default(false),
+    type: z.enum(['BILLING', 'SHIPPING', 'BOTH']).default('BOTH'),
+  })).optional(),
 });
 
 export type BusinessAccountFormValues = z.infer<typeof businessAccountSchema>;

@@ -30,7 +30,10 @@ interface PricingRuleDialogProps {
   onOpenChange: (open: boolean) => void;
   products: any[];
   categories: any[];
+  currency?: string;
 }
+
+import { getCurrencySymbol } from "../../lib/utils";
 
 export function PricingRuleDialog({
   priceListId,
@@ -38,7 +41,9 @@ export function PricingRuleDialog({
   onOpenChange,
   products,
   categories,
+  currency = "USD",
 }: PricingRuleDialogProps) {
+  const symbol = getCurrencySymbol(currency);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -189,8 +194,8 @@ export function PricingRuleDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={DiscountType.PERCENTAGE}>Percentage (%)</SelectItem>
-                  <SelectItem value={DiscountType.FIXED_AMOUNT}>Fixed Amount ($)</SelectItem>
-                  <SelectItem value={DiscountType.FIXED_PRICE}>Fixed Price Override ($)</SelectItem>
+                  <SelectItem value={DiscountType.FIXED_AMOUNT}>Fixed Amount ({symbol})</SelectItem>
+                  <SelectItem value={DiscountType.FIXED_PRICE}>Fixed Price Override ({symbol})</SelectItem>
                 </SelectContent>
               </Select>
             </div>

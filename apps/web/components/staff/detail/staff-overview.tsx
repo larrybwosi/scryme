@@ -16,12 +16,11 @@ import {
   UserCheck,
 } from "lucide-react";
 
-export function StaffOverview({ stats }: { stats: any }) {
+import { formatCurrency as formatCurrencyUtil } from "../../../lib/utils";
+
+export function StaffOverview({ stats, currency = "USD" }: { stats: any; currency?: string }) {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
+    return formatCurrencyUtil(amount, currency);
   };
 
   const statCards = [

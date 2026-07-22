@@ -432,9 +432,14 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
             {(config.showTaxNumber && config.taxNumber) ||
             (config.showVatNumber && config.vatNumber) ||
             (config.showCompanyRegNumber && config.companyRegNumber) ||
-            (config.showKraDetails && (config.kraPin || config.kraEtr)) ||
+            (config.showKraDetails && (config.taxNumber || config.kraPin || config.kraEtr)) ||
             config.customFields?.some(f => f.enabled) ? (
               <View style={styles.regRow}>
+                {config.showKraDetails && config.taxNumber && (
+                  <Text style={styles.regItem}>
+                    KRA PIN / Tax ID: {config.taxNumber}
+                  </Text>
+                )}
                 {config.showKraDetails && config.kraPin && (
                   <Text style={styles.regItem}>
                     KRA PIN: {config.kraPin}
@@ -445,7 +450,7 @@ export const ReceiptPdfDocument = ({ order, settings, qrCodeUrl, barcodeUrl, bra
                     KRA ETR: {config.kraEtr}
                   </Text>
                 )}
-                {config.showTaxNumber && config.taxNumber && (
+                {config.showTaxNumber && !config.showKraDetails && config.taxNumber && (
                   <Text style={styles.regItem}>
                     {labels.tin}: {config.taxNumber}
                   </Text>
