@@ -22,6 +22,7 @@ import {
   User,
   MapPin,
   FileText,
+  Edit,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -123,6 +124,22 @@ export default async function TransferDetailsPage({
         </div>
 
         <div className="flex items-center gap-2">
+          <Link href={`/api/stocking/transfers/${transfer.id}/packing-list`}>
+            <Button variant="outline" className="gap-2">
+              <FileText size={16} />
+              Download Packing List
+            </Button>
+          </Link>
+
+          {!["COMPLETED", "CANCELLED", "REJECTED"].includes(transfer.status) && (
+            <Link href={`/stocking/transfers/${transfer.id}/edit`}>
+              <Button variant="outline" className="gap-2">
+                <Edit size={16} />
+                Edit
+              </Button>
+            </Link>
+          )}
+
           {transfer.status === "PENDING_APPROVAL" && (
             <form action={handleAction}>
               <input type="hidden" name="transferId" value={transfer.id} />
