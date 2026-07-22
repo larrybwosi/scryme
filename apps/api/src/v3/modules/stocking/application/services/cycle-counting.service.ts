@@ -45,12 +45,15 @@ export class CycleCountingService {
       filter.variant.tags = { hasSome: config.includeABC };
     }
 
+    // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
+    // since the business logic only accesses variantId and currentStock.
+    // This avoids joining with the ProductVariant and Product tables entirely,
+    // significantly reducing database CPU, memory, and network payload size.
     const stock = await this.prisma.client.productVariantStock.findMany({
       where: filter,
-      include: {
-        variant: {
-          include: { product: true },
-        },
+      select: {
+        variantId: true,
+        currentStock: true,
       },
     });
 

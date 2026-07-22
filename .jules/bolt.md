@@ -100,3 +100,7 @@
 ## 2026-07-21 - [Pruning Unused Relational Includes in Analytical Queries]
 **Learning:** Including heavy nested relations in complex analytical queries when their fields are never actually read or used by the subsequent mapping logic is a major performance anti-pattern. Identifying these unused relational includes (like `service: true` in `getResourceUtilization` and `getStaffPerformance`) and pruning them completely avoids redundant database joins, reducing both query execution latency and memory overhead.
 **Action:** When auditing or designing analytical database queries, always verify that every included relation in the Prisma query is actually accessed by the processing loop. If a relation is unused, remove it to eliminate redundant SQL JOIN operations.
+
+## 2026-07-22 - [Redundant Relational Joins in Automated Stock Counting]
+**Learning:** Queries that fetch stock counts during background routines often specify full relation chains (e.g., loading deep tables like `variant` and nested `product`) that are never accessed by the final mapping logic. Switching these to targeted flat `select` blocks bypasses complex multi-table JOINs, dramatically reducing database CPU, RAM, and object-serialization overhead.
+**Action:** Always inspect bulk queries in cron routines or schedulers and replace any broad relation inclusions with targeted `select` statements if only basic scalar properties are required.
