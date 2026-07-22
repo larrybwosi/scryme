@@ -8,6 +8,8 @@ import { AboutValues } from "@/components/about/about-values";
 import { AboutTeam } from "@/components/about/about-team";
 import { PricingCTA } from "@/components/home/pricing-cta";
 import { getAboutPageContent } from "../../lib/sanity";
+import Image from "next/image";
+import { urlFor } from "@/sanity/lib/image";
 
 export const revalidate = 60;
 
@@ -73,26 +75,51 @@ export default async function AboutPage() {
 
       {/* Mission */}
       <section className="py-24">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-16 px-6 lg:flex-row">
-          <div className="flex-1">
-            <Eyebrow>Our mission</Eyebrow>
-            <h2
-              className="mb-6 mt-4 text-[1.9rem] leading-[1.16] sm:text-4xl"
-              style={{ fontFamily: fonts.display, color: colors.paper }}
-            >
-              {content.missionTitle}
-            </h2>
-            {content.missionText.map((p, i) => (
-              <p
-                key={i}
-                className={i === 0 ? "mb-5 text-[15.5px] leading-relaxed" : "text-[15.5px] leading-relaxed"}
-                style={{ color: colors.textMuted }}
+        <div className="mx-auto flex max-w-6xl flex-col gap-16 px-6">
+          <div className="flex flex-col items-center gap-16 lg:flex-row">
+            <div className="flex-1">
+              <Eyebrow>Our mission</Eyebrow>
+              <h2
+                className="mb-6 mt-4 text-[1.9rem] leading-[1.16] sm:text-4xl"
+                style={{ fontFamily: fonts.display, color: colors.paper }}
               >
-                {p}
-              </p>
-            ))}
+                {content.missionTitle}
+              </h2>
+              {content.missionText.map((p, i) => (
+                <p
+                  key={i}
+                  className={i === 0 ? "mb-5 text-[15.5px] leading-relaxed" : "text-[15.5px] leading-relaxed"}
+                  style={{ color: colors.textMuted }}
+                >
+                  {p}
+                </p>
+              ))}
+            </div>
+            {content.missionImage && (
+              <div className="w-full flex-1 relative h-[320px] sm:h-[400px] overflow-hidden rounded-xl border"
+                style={{ borderColor: colors.brassLine, background: colors.inkPanel }}
+              >
+                <Image
+                  src={content.missionImage.url || urlFor(content.missionImage).width(800).height(500).url()}
+                  alt={content.missionImage.alt || "Scryme Mission and Corporate Team Strategy Planning"}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover transition-transform duration-500 hover:scale-[1.03]"
+                  priority
+                />
+              </div>
+            )}
           </div>
-          <div className="w-full flex-1">
+          <div className="w-full border-t pt-16" style={{ borderColor: colors.inkLine }}>
+            <div className="max-w-2xl">
+              <Eyebrow>Milestones</Eyebrow>
+              <h3
+                className="mb-8 mt-4 text-2xl sm:text-3xl"
+                style={{ fontFamily: fonts.display, color: colors.paper }}
+              >
+                Our Journey So Far
+              </h3>
+            </div>
             <AboutTimeline entries={content.timeline} />
           </div>
         </div>

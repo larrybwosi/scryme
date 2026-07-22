@@ -16,6 +16,22 @@ export const homePageType = defineType({
       type: 'text',
     }),
     defineField({
+      name: 'heroImage',
+      title: 'Hero Visual Image',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+          description: 'Alternative text for SEO and accessibility.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'reconciledToday',
       title: 'Reconciled Today Target Value',
       type: 'number',
@@ -38,6 +54,22 @@ export const homePageType = defineType({
             defineField({ name: 'code', title: 'Code', type: 'string' }),
             defineField({ name: 'name', title: 'Name', type: 'string' }),
             defineField({ name: 'description', title: 'Description', type: 'text' }),
+            defineField({
+              name: 'image',
+              title: 'Module Image',
+              type: 'image',
+              options: {
+                hotspot: true,
+              },
+              fields: [
+                defineField({
+                  name: 'alt',
+                  type: 'string',
+                  title: 'Alternative text',
+                  description: 'Alternative text for SEO and accessibility.',
+                }),
+              ],
+            }),
             defineField({
               name: 'connectsTo',
               title: 'Connects To',
