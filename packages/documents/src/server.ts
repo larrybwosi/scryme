@@ -641,6 +641,7 @@ export const Mappers = {
       },
       shippingAddress: recipientAddress || 'Main Office',
       items: (transaction.items || []).map((item: TransactionItem) => ({
+        id: item.id,
         sku: item.sku || undefined,
         description: `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`,
         quantity: Number(item.quantity || 0),

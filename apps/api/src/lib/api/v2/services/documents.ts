@@ -98,7 +98,6 @@ export async function getDocumentStream(
       break;
     case "packing-list":
       DocumentComponent = PackingListDocument;
-      // @ts-ignore
       data = Mappers.toPackingListData(transaction as any, transaction.fulfillments?.[0]);
       filename = `PackingList_${transaction.number}.pdf`;
       break;
