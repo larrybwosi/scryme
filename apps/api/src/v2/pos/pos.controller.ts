@@ -269,6 +269,13 @@ export class PosController {
     return this.posService.getWaybill(ctx, id);
   }
 
+  @Get("packing-list/:id")
+  @Permissions("pos:sale:read")
+  @ApiOperation({ summary: "Get transaction packing list" })
+  async getPackingList(@v2Context() ctx: V2ApiContext, @Param("id") id: string) {
+    return this.posService.getPackingList(ctx, id);
+  }
+
   @Get("inventory/requests")
   @Permissions("pos:stock:manage")
   @ApiOperation({ summary: "List inventory requests" })

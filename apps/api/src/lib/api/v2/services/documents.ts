@@ -6,7 +6,7 @@ export async function generateDocument(type: string, data: any): Promise<any> {
 }
 
 export async function getDocumentStream(
-  type: "invoice" | "waybill" | "receipt" | "quote",
+  type: "invoice" | "waybill" | "receipt" | "quote" | "packing-list" | "delivery-note",
   id: string,
   orgId?: string,
   format: "A4" | "80MM" | "58MM" = "A4",
@@ -35,6 +35,16 @@ export async function getDocumentStream(
       items: true,
       payments: true,
       location: true,
+      fulfillments: {
+        include: {
+          shippingAddress: true,
+          driver: {
+            include: {
+              member: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -47,15 +57,20 @@ export async function getDocumentStream(
   let filename: string;
   let qrCode: string = "";
 
-  const { getInvoiceTemplate, ReceiptTemplateV2 } =
-    await import("@repo/documents");
+  const {
+    getInvoiceTemplate,
+    ReceiptTemplateV2,
+    WaybillV3Document,
+    DeliveryNoteV3Document,
+    PackingListDocument,
+  } = await import("@repo/documents");
 
   switch (type) {
     case "invoice": {
       const selectedTemplate =
         template || transaction.organization?.settings?.defaultInvoiceTemplate;
       DocumentComponent = getInvoiceTemplate(selectedTemplate);
-      data = Mappers.toInvoiceData(transaction);
+      data = Mappers.toInvoiceData(transaction as any);
       filename = `Invoice_${transaction.number}.pdf`;
 
       try {
@@ -68,8 +83,24 @@ export async function getDocumentStream(
     }
     case "receipt":
       DocumentComponent = ReceiptTemplateV2;
-      data = Mappers.toReceiptData(transaction);
+      data = Mappers.toReceiptData(transaction as any);
       filename = `Receipt_${transaction.number}.pdf`;
+      break;
+    case "waybill":
+      DocumentComponent = WaybillV3Document;
+      data = Mappers.toWaybillData(transaction as any, transaction.fulfillments?.[0]);
+      filename = `Waybill_${transaction.number}.pdf`;
+      break;
+    case "delivery-note":
+      DocumentComponent = DeliveryNoteV3Document;
+      data = Mappers.toDeliveryNoteData(transaction as any, transaction.fulfillments?.[0]);
+      filename = `DeliveryNote_${transaction.number}.pdf`;
+      break;
+    case "packing-list":
+      DocumentComponent = PackingListDocument;
+      // @ts-ignore
+      data = Mappers.toPackingListData(transaction as any, transaction.fulfillments?.[0]);
+      filename = `PackingList_${transaction.number}.pdf`;
       break;
     default:
       throw new Error(`Document type ${type} not supported yet`);

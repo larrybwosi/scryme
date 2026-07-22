@@ -23,14 +23,24 @@ export default async function NewTransferPage() {
     const toLocationId = formData.get("toLocationId") as string;
     const notes = formData.get("notes") as string;
 
-    // In a real app, you'd handle multiple items dynamically.
-    // For this prototype, we'll pick them from the form.
-    const items: { variantId: string; quantity: number }[] = [];
-    const variantId = formData.get("variantId") as string;
-    const quantity = Number(formData.get("quantity"));
+    if (fromLocationId === toLocationId) {
+      throw new Error("Source and destination locations must be different");
+    }
 
-    if (variantId && quantity) {
-      items.push({ variantId, quantity });
+    const itemsRaw = formData.get("items") as string;
+    let items: { variantId: string; quantity: number }[] = [];
+    if (itemsRaw) {
+      try {
+        const parsed = JSON.parse(itemsRaw);
+        if (Array.isArray(parsed)) {
+          items = parsed.map((item: any) => ({
+            variantId: item.variantId,
+            quantity: Number(item.quantity),
+          }));
+        }
+      } catch (e) {
+        console.error("Failed to parse stock transfer items:", e);
+      }
     }
 
     if (items.length > 0) {

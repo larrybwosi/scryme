@@ -5,6 +5,7 @@ import {
   TransactionAnalyticsExportData,
   StockReportData,
   DeliveryNoteData,
+  PackingListData,
   BrandingOptions,
   CurrencySettings
 } from './types';
@@ -616,6 +617,34 @@ export const Mappers = {
         description: `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`,
         quantity: item.quantity,
         sku: item.sku,
+      })),
+      notes: (fulfillment?.deliveryNotes || transaction.notes) || undefined,
+    };
+  },
+
+  toPackingListData(transaction: TransactionWithDetails, fulfillment?: (Fulfillment & { shippingAddress?: Address | null }) | null): PackingListData {
+    const shippingAddressObj = fulfillment?.shippingAddress || transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
+    const recipientAddress = formatAddress(shippingAddressObj);
+
+    const branding = resolveBranding(transaction.organization, transaction.organization?.waybillConfig);
+
+    return {
+      id: fulfillment?.id || transaction.id,
+      number: `PL-${transaction.number}`,
+      orderNumber: transaction.number,
+      date: fulfillment?.createdAt || transaction.createdAt || new Date(),
+      branding,
+      customer: {
+        name: transaction.customer?.name || 'Walk-in Customer',
+        email: transaction.customer?.email || undefined,
+        phone: transaction.customer?.phone || undefined,
+      },
+      shippingAddress: recipientAddress || 'Main Office',
+      items: (transaction.items || []).map((item: TransactionItem) => ({
+        sku: item.sku || undefined,
+        description: `${item.productName}${item.variantName ? ` - ${item.variantName}` : ''}`,
+        quantity: Number(item.quantity || 0),
+        quantityPacked: Number(item.quantity || 0),
       })),
       notes: (fulfillment?.deliveryNotes || transaction.notes) || undefined,
     };
