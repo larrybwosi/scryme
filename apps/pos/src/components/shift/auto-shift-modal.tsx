@@ -59,8 +59,10 @@ export const AutoShiftModal: React.FC = () => {
   }, [isAuthenticated, settings.enableAutoShiftPrompt]);
 
   const handleOpenShift = async () => {
-    if (!currentMember?.cardId) return toast.error('No card ID associated with current user');
-    if (!pin) return toast.error('Please enter your PIN');
+    if (!isAuthenticated) {
+      if (!currentMember?.cardId) return toast.error('No card ID associated with current user');
+      if (!pin) return toast.error('Please enter your PIN');
+    }
 
     const openingAmount = useDetails ? denomTotal : Number(amount);
     if (isNaN(openingAmount) || openingAmount < 0) {
@@ -70,8 +72,8 @@ export const AutoShiftModal: React.FC = () => {
     setLoading(true);
     try {
       await shiftService.openShift(
-        currentMember.cardId,
-        pin,
+        isAuthenticated ? null : currentMember?.cardId,
+        isAuthenticated ? null : pin,
         openingAmount,
         useDetails ? denominations : null
       );
@@ -126,20 +128,22 @@ export const AutoShiftModal: React.FC = () => {
              </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="auto-pin-input" className="text-xs uppercase text-muted-foreground">Confirm Your PIN</Label>
-            <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                id="auto-pin-input"
-                type="password"
-                value={pin}
-                onChange={e => setPin(e.target.value)}
-                placeholder="Enter PIN"
-                className="pl-10 bg-background"
-                />
+          {!isAuthenticated && (
+            <div className="space-y-1.5">
+              <Label htmlFor="auto-pin-input" className="text-xs uppercase text-muted-foreground">Confirm Your PIN</Label>
+              <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                  id="auto-pin-input"
+                  type="password"
+                  value={pin}
+                  onChange={e => setPin(e.target.value)}
+                  placeholder="Enter PIN"
+                  className="pl-10 bg-background"
+                  />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -178,7 +182,7 @@ export const AutoShiftModal: React.FC = () => {
 
           <Button
             onClick={handleOpenShift}
-            disabled={loading || !pin}
+            disabled={loading || (!isAuthenticated && !pin)}
             className="w-full h-12 text-lg font-bold bg-green-600 hover:bg-green-700"
           >
             {loading ? 'Opening...' : 'Open Shift & Drawer'}

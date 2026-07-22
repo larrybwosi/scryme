@@ -22,22 +22,22 @@ export const shiftService = {
     return await invoke("get_shift_command");
   },
 
-  openShift: async (cardId: string, pin: string, floatAmount: number, openingCashDetails?: any): Promise<Shift> => {
+  openShift: async (cardId?: string | null, pin?: string | null, floatAmount?: number, openingCashDetails?: any): Promise<Shift> => {
     const deviceId = localStorage.getItem('DEVICE_ID');
     return await invoke("open_shift_command", {
-      cardId,
-      pin,
-      floatAmount: Number(floatAmount), // Ensure number type
+      cardId: cardId || undefined,
+      pin: pin || undefined,
+      floatAmount: Number(floatAmount || 0), // Ensure number type
       openingCashDetails,
       deviceId
     });
   },
 
-  closeShift: async (cardId: string, pin: string, actualCount: number, closingCashDetails?: any, printerName?: string): Promise<Shift> => {
+  closeShift: async (cardId?: string | null, pin?: string | null, actualCount?: number, closingCashDetails?: any, printerName?: string): Promise<Shift> => {
     return await invoke("close_shift_command", {
-      cardId,
-      pin,
-      actualCount: Number(actualCount),
+      cardId: cardId || undefined,
+      pin: pin || undefined,
+      actualCount: Number(actualCount || 0),
       closingCashDetails,
       printerName
     });

@@ -168,6 +168,7 @@ export default function SettingsPage() {
   const [enableAutoStart, setEnableAutoStart] = useState(settings?.enableAutoStart ?? false);
   const [autoPrintEnabled, setAutoPrintEnabled] = useState(settings?.autoPrintConfig?.enabled ?? false);
   const [enableBarcodeScanner, setEnableBarcodeScanner] = useState(settings?.enableBarcodeScanner ?? true);
+  const [enableAutoUpdate, setEnableAutoUpdate] = useState(settings?.enableAutoUpdate ?? true);
 
   // Multi-user / Shift Settings
   const [shareCartBetweenUsers, setShareCartBetweenUsers] = useState(settings?.shareCartBetweenUsers ?? true);
@@ -233,6 +234,7 @@ export default function SettingsPage() {
       enableCustomerDisplay: settings.customerDisplayConfig?.enabled ?? true,
       cashDrawerPort,
       enableAutoStart,
+      enableAutoUpdate,
       autoPrintConfig: {
         ...settings.autoPrintConfig,
         enabled: autoPrintEnabled,
@@ -384,6 +386,8 @@ export default function SettingsPage() {
               setEnableAutoStart={setEnableAutoStart}
               autoPrintEnabled={autoPrintEnabled}
               setAutoPrintEnabled={setAutoPrintEnabled}
+              enableAutoUpdate={enableAutoUpdate}
+              setEnableAutoUpdate={setEnableAutoUpdate}
             />
 
             {import.meta.env.MODE === 'standalone' && (

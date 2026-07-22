@@ -109,6 +109,7 @@ interface UpdateDialogProps {
   onConfirm: () => Promise<void>;
   releaseNotes: string | null;
   isCritical: boolean;
+  status?: string;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -121,6 +122,7 @@ export function UpdateDialog({
   onConfirm,
   releaseNotes,
   isCritical,
+  status,
 }: UpdateDialogProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -260,172 +262,224 @@ export function UpdateDialog({
             ${open ? 'ud-panel-enter' : 'ud-panel-exit'}
           `}
         >
-          {/* Critical shimmer accent */}
-          {isCritical && (
-            <div
-              className="absolute inset-x-0 top-0 h-[2px] z-10"
-              style={{
-                background: 'linear-gradient(90deg, #ef4444, #f97316, #ef4444)',
-                backgroundSize: '200% 100%',
-                animation: 'ud-shimmer 2.5s linear infinite',
-              }}
-            />
-          )}
-
-          {!isCritical && (
-            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-200/80 to-transparent dark:via-zinc-700/60" />
-          )}
-
-          {/* ── HEADER ── */}
-          <div className="relative px-6 pt-6 pb-5">
-            <div className="flex items-start gap-4">
-              {/* Icon */}
-              <div className="relative mt-0.5 shrink-0">
-                {isCritical && (
-                  <div className="ud-icon-pulse absolute inset-0 rounded-xl bg-red-400/20 dark:bg-red-500/15" />
-                )}
-                <div
-                  className={`
-                    relative flex h-11 w-11 items-center justify-center rounded-xl
-                    ${
-                      isCritical
-                        ? 'ud-critical-badge text-red-600 dark:text-red-400'
-                        : 'bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900'
-                    }
-                  `}
-                >
-                  {isCritical ? <ShieldAlert className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
-                </div>
-              </div>
-
-              {/* Title */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-[15px] font-semibold leading-tight tracking-[-0.01em] text-zinc-900 dark:text-zinc-50">
-                    {isCritical ? 'Critical Update Required' : 'Update Available'}
-                  </h2>
-                  {isCritical && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-600 dark:bg-red-950/60 dark:text-red-400">
-                      <Zap className="h-2.5 w-2.5" /> Required
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  {isCritical
-                    ? 'This release contains essential security patches and critical stability fixes. Installation is required to continue.'
-                    : 'A new version is ready with improvements and bug fixes. Review the changes below.'}
-                </p>
-              </div>
-
-              {/* X button — snoozes (remind later) */}
-              {!isCritical && (
-                <button
-                  onClick={onClose}
-                  title="Remind me later"
-                  className="ud-btn-ghost -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 dark:focus-visible:ring-zinc-700"
-                  aria-label="Remind me later"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div className="h-px bg-zinc-100 dark:bg-zinc-800/80" />
-
-          {/* ── RELEASE NOTES ── */}
-          <div className="px-6 py-4">
-            <div className="mb-3 flex items-center gap-2">
-              <ScrollText className="h-3.5 w-3.5 text-zinc-400" />
-              <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500">
-                Release Notes
-              </span>
-            </div>
-
-            <div className="relative overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-800/80 dark:bg-zinc-900/60">
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-zinc-50 dark:from-zinc-900/60" />
-              <div className="ud-scroll h-[240px] overflow-y-auto p-4 pb-6">
-                {releaseNotes ? (
-                  <Markdown options={markdownOptions}>{releaseNotes}</Markdown>
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center gap-2.5 text-zinc-300 dark:text-zinc-700">
-                    <AlertTriangle className="h-7 w-7" />
-                    <p className="text-[13px] text-zinc-400 dark:text-zinc-500">No release notes for this version.</p>
+          {status === 'DONE' ? (
+            /* ── RESTART PROMPT VIEW ── */
+            <div className="p-6 space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="relative shrink-0">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <Sparkles className="h-5 w-5" />
                   </div>
-                )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-[15px] font-semibold leading-tight tracking-[-0.01em] text-zinc-900 dark:text-zinc-50">
+                    Restart Required
+                  </h2>
+                  <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+                    A new version of Scryme has been successfully downloaded and prepared. Please restart the application now to complete the installation and apply the updates.
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Divider */}
-          <div className="h-px bg-zinc-100 dark:bg-zinc-800/80" />
+              <div className="h-px bg-zinc-100 dark:bg-zinc-800/80" />
 
-          {/* ── FOOTER ── */}
-          <div className="flex items-center justify-between gap-3 px-6 py-4">
-            {/* Left side: skip option for non-critical */}
-            <div className="flex items-center gap-1">
-              {!isCritical ? (
-                <>
-                  <button
-                    onClick={onSkip}
-                    title="Don't remind me about this version"
-                    className="ud-btn-ghost inline-flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-medium text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200 dark:focus-visible:ring-zinc-700"
-                  >
-                    <BellOff className="h-3.5 w-3.5" />
-                    Skip this version
-                  </button>
-                </>
-              ) : (
-                <p className="text-[11px] text-zinc-400 dark:text-zinc-600 font-mono">⚠ mandatory</p>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              {/* "Later" snoozes for 24 h */}
-              {!isCritical && (
+              <div className="flex items-center justify-end gap-3">
                 <button
                   onClick={onClose}
                   className="ud-btn-ghost h-9 rounded-lg px-4 text-[13px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200 dark:focus-visible:ring-zinc-700"
                 >
                   Later
                 </button>
+                <button
+                  onClick={handleConfirm}
+                  disabled={isLoading}
+                  className="ud-btn-primary h-9 rounded-lg px-5 text-[13px] font-semibold inline-flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+                >
+                  {isLoading ? (
+                    <>
+                      <span className="ud-spinner" />
+                      Restarting…
+                    </>
+                  ) : (
+                    <>
+                      Restart Now
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* ── STANDARD UPDATE VIEW ── */
+            <>
+              {/* Critical shimmer accent */}
+              {isCritical && (
+                <div
+                  className="absolute inset-x-0 top-0 h-[2px] z-10"
+                  style={{
+                    background: 'linear-gradient(90deg, #ef4444, #f97316, #ef4444)',
+                    backgroundSize: '200% 100%',
+                    animation: 'ud-shimmer 2.5s linear infinite',
+                  }}
+                />
               )}
 
-              <button
-                onClick={handleConfirm}
-                disabled={isLoading}
-                className={`
-                  ud-btn-primary h-9 rounded-lg px-5 text-[13px] font-semibold
-                  inline-flex items-center gap-2
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
-                  disabled:cursor-not-allowed disabled:opacity-60
-                  ${
-                    isCritical
-                      ? 'bg-red-500 text-white hover:bg-red-500/90 focus-visible:ring-red-400 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950'
-                      : 'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 focus-visible:ring-zinc-400 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950'
-                  }
-                `}
-              >
-                {isLoading ? (
-                  <>
-                    <span className={`ud-spinner ${!isCritical ? 'dark:ud-spinner-dark' : ''}`} />
-                    {isCritical ? 'Installing…' : 'Downloading…'}
-                  </>
-                ) : isCritical ? (
-                  <>
-                    Install Now
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </>
-                ) : (
-                  <>
-                    <Download className="h-3.5 w-3.5" />
-                    Download Update
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+              {!isCritical && (
+                <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-200/80 to-transparent dark:via-zinc-700/60" />
+              )}
+
+              {/* ── HEADER ── */}
+              <div className="relative px-6 pt-6 pb-5">
+                <div className="flex items-start gap-4">
+                  {/* Icon */}
+                  <div className="relative mt-0.5 shrink-0">
+                    {isCritical && (
+                      <div className="ud-icon-pulse absolute inset-0 rounded-xl bg-red-400/20 dark:bg-red-500/15" />
+                    )}
+                    <div
+                      className={`
+                        relative flex h-11 w-11 items-center justify-center rounded-xl
+                        ${
+                          isCritical
+                            ? 'ud-critical-badge text-red-600 dark:text-red-400'
+                            : 'bg-zinc-900 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-900'
+                        }
+                      `}
+                    >
+                      {isCritical ? <ShieldAlert className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-[15px] font-semibold leading-tight tracking-[-0.01em] text-zinc-900 dark:text-zinc-50">
+                        {isCritical ? 'Critical Update Required' : 'Update Available'}
+                      </h2>
+                      {isCritical && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-red-600 dark:bg-red-950/60 dark:text-red-400">
+                          <Zap className="h-2.5 w-2.5" /> Required
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1.5 text-[13px] leading-relaxed text-zinc-500 dark:text-zinc-400">
+                      {isCritical
+                        ? 'This release contains essential security patches and critical stability fixes. Installation is required to continue.'
+                        : 'A new version is ready with improvements and bug fixes. Review the changes below.'}
+                    </p>
+                  </div>
+
+                  {/* X button — snoozes (remind later) */}
+                  {!isCritical && (
+                    <button
+                      onClick={onClose}
+                      title="Remind me later"
+                      className="ud-btn-ghost -mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300 dark:focus-visible:ring-zinc-700"
+                      aria-label="Remind me later"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-zinc-100 dark:bg-zinc-800/80" />
+
+              {/* ── RELEASE NOTES ── */}
+              <div className="px-6 py-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <ScrollText className="h-3.5 w-3.5 text-zinc-400" />
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-zinc-400 dark:text-zinc-500">
+                    Release Notes
+                  </span>
+                </div>
+
+                <div className="relative overflow-hidden rounded-xl border border-zinc-100 bg-zinc-50 dark:border-zinc-800/80 dark:bg-zinc-900/60">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-8 bg-gradient-to-t from-zinc-50 dark:from-zinc-900/60" />
+                  <div className="ud-scroll h-[240px] overflow-y-auto p-4 pb-6">
+                    {releaseNotes ? (
+                      <Markdown options={markdownOptions}>{releaseNotes}</Markdown>
+                    ) : (
+                      <div className="flex h-full flex-col items-center justify-center gap-2.5 text-zinc-300 dark:text-zinc-700">
+                        <AlertTriangle className="h-7 w-7" />
+                        <p className="text-[13px] text-zinc-400 dark:text-zinc-500">No release notes for this version.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-zinc-100 dark:bg-zinc-800/80" />
+
+              {/* ── FOOTER ── */}
+              <div className="flex items-center justify-between gap-3 px-6 py-4">
+                {/* Left side: skip option for non-critical */}
+                <div className="flex items-center gap-1">
+                  {!isCritical ? (
+                    <>
+                      <button
+                        onClick={onSkip}
+                        title="Don't remind me about this version"
+                        className="ud-btn-ghost inline-flex items-center gap-1.5 h-9 rounded-lg px-3 text-[12px] font-medium text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200 dark:focus-visible:ring-zinc-700"
+                      >
+                        <BellOff className="h-3.5 w-3.5" />
+                        Skip this version
+                      </button>
+                    </>
+                  ) : (
+                    <p className="text-[11px] text-zinc-400 dark:text-zinc-600 font-mono">⚠ mandatory</p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* "Later" snoozes for 24 h */}
+                  {!isCritical && (
+                    <button
+                      onClick={onClose}
+                      className="ud-btn-ghost h-9 rounded-lg px-4 text-[13px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200 dark:focus-visible:ring-zinc-700"
+                    >
+                      Later
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleConfirm}
+                    disabled={isLoading}
+                    className={`
+                      ud-btn-primary h-9 rounded-lg px-5 text-[13px] font-semibold
+                      inline-flex items-center gap-2
+                      focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+                      disabled:cursor-not-allowed disabled:opacity-60
+                      ${
+                        isCritical
+                          ? 'bg-red-500 text-white hover:bg-red-500/90 focus-visible:ring-red-400 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950'
+                          : 'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 focus-visible:ring-zinc-400 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950'
+                      }
+                    `}
+                  >
+                    {isLoading ? (
+                      <>
+                        <span className={`ud-spinner ${!isCritical ? 'dark:ud-spinner-dark' : ''}`} />
+                        {isCritical ? 'Installing…' : 'Downloading…'}
+                      </>
+                    ) : isCritical ? (
+                      <>
+                        Install Now
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-3.5 w-3.5" />
+                        Download Update
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </>
