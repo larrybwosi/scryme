@@ -33,6 +33,7 @@ export interface ProductVariantSelectProps {
   placeholder?: string;
   className?: string;
   error?: boolean;
+  allowZeroStock?: boolean;
 }
 
 export function ProductVariantSelect({
@@ -42,6 +43,7 @@ export function ProductVariantSelect({
   placeholder = "Select variant...",
   className,
   error,
+  allowZeroStock = false,
 }: ProductVariantSelectProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -93,14 +95,14 @@ export function ProductVariantSelect({
                     variant.id
                   }
                   onSelect={() => {
-                    if ((variant.stock ?? 0) > 0) {
+                    if (allowZeroStock || (variant.stock ?? 0) > 0) {
                       onValueChange(variant.id === value ? "" : variant.id);
                       setOpen(false);
                     }
                   }}
-                  disabled={(variant.stock ?? 0) <= 0}
+                  disabled={!allowZeroStock && (variant.stock ?? 0) <= 0}
                   className={cn(
-                    (variant.stock ?? 0) <= 0 &&
+                    !allowZeroStock && (variant.stock ?? 0) <= 0 &&
                       "opacity-50 cursor-not-allowed",
                   )}>
                   <Check
