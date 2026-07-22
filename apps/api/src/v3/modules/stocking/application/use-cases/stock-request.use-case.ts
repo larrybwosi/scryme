@@ -48,7 +48,9 @@ export class StockRequestUseCase {
   }
 
   async findOne(organizationId: string, requestId: string) {
-    const request = await this.prisma.client.stockRequest.findUnique({
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // StockRequest lacks a composite unique index on [id, organizationId].
+    const request = await this.prisma.client.stockRequest.findFirst({
       where: { id: requestId, organizationId },
       include: {
         fromLocation: true,
@@ -76,7 +78,9 @@ export class StockRequestUseCase {
 
   async approve(organizationId: string, memberId: string, requestId: string) {
     return this.prisma.client.$transaction(async (tx) => {
-      const request = await tx.stockRequest.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockRequest lacks a composite unique index on [id, organizationId].
+      const request = await tx.stockRequest.findFirst({
         where: { id: requestId, organizationId },
       });
 
@@ -103,7 +107,9 @@ export class StockRequestUseCase {
     dto: FulfillFromTransferDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      const request = await tx.stockRequest.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockRequest lacks a composite unique index on [id, organizationId].
+      const request = await tx.stockRequest.findFirst({
         where: { id: requestId, organizationId },
         include: { items: true },
       });
@@ -173,7 +179,9 @@ export class StockRequestUseCase {
     dto: FulfillFromPurchaseDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      const request = await tx.stockRequest.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockRequest lacks a composite unique index on [id, organizationId].
+      const request = await tx.stockRequest.findFirst({
         where: { id: requestId, organizationId },
         include: { items: true },
       });
