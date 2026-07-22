@@ -361,12 +361,28 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 export interface HomePageContent {
   heroTitle: string;
   heroSubtitle: string;
+  heroImage?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+    };
+    url?: string;
+    alt?: string;
+  };
   reconciledToday: number;
   brands: string[];
   modules: Array<{
     code: string;
     name: string;
     description: string;
+    image?: {
+      asset?: {
+        _ref: string;
+        _type: "reference";
+      };
+      url?: string;
+      alt?: string;
+    };
     connectsTo: string[];
     href: string;
     accent: string;
@@ -395,6 +411,14 @@ export interface AboutPageContent {
   }>;
   missionTitle: string;
   missionText: string[];
+  missionImage?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+    };
+    url?: string;
+    alt?: string;
+  };
   timeline: Array<{
     year: string;
     milestone: string;
@@ -408,6 +432,14 @@ export interface AboutPageContent {
     name: string;
     role: string;
     initials: string;
+    avatar?: {
+      asset?: {
+        _ref: string;
+        _type: "reference";
+      };
+      url?: string;
+      alt?: string;
+    };
   }>;
 }
 
@@ -441,6 +473,10 @@ export interface PricingPageContent {
 export const DEFAULT_HOME_CONTENT: HomePageContent = {
   heroTitle: 'Every sale, deal, and shipment. One reconciled record.',
   heroSubtitle: 'Scryme merges CRM, Point of Sale, Inventory, and Finance into a single ledger — so nothing you run your business on ever needs reconciling by hand again.',
+  heroImage: {
+    url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80",
+    alt: "Scryme Unified Business Ledger and Analytics Dashboard"
+  },
   reconciledToday: 284900,
   brands: [
     'Westfield Retail',
@@ -456,6 +492,10 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       code: 'CRM',
       name: 'Customer Relationship Management',
       description: 'Track every interaction, run the pipeline, and automate follow-ups — each closed deal posts straight to Finance and unlocks fulfillment in Inventory.',
+      image: {
+        url: "https://images.unsplash.com/photo-1552581234-2612b75dc679?auto=format&fit=crop&w=600&q=80",
+        alt: "Client Relationship Management and Pipeline Pipeline Collaboration"
+      },
       connectsTo: ['FIN', 'INV'],
       href: '/products/crm',
       accent: '#C89A4B',
@@ -464,6 +504,10 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       code: 'POS',
       name: 'Point of Sale',
       description: 'Ring up retail and wholesale sales, offline-capable, with stock and revenue reconciled to the second the register closes.',
+      image: {
+        url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=600&q=80",
+        alt: "Offline-capable Modern Retail Point of Sale Checkout System"
+      },
       connectsTo: ['INV', 'FIN'],
       href: '/products/pos',
       accent: '#4B9073',
@@ -472,6 +516,10 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       code: 'INV',
       name: 'Inventory Management',
       description: 'Monitor stock across warehouses and storefronts, with automatic reorders that draw straight from committed Finance budgets.',
+      image: {
+        url: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=600&q=80",
+        alt: "Organized Multi-location Retail and Wholesale Warehouse Inventory Management"
+      },
       connectsTo: ['POS', 'FIN'],
       href: '/products/inventory',
       accent: '#7C93B0',
@@ -480,6 +528,10 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       code: 'FIN',
       name: 'Financial Management',
       description: 'Invoicing, expense tracking, and reconciliation — every entry from CRM, POS, and Inventory lands here as one ledger line.',
+      image: {
+        url: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80",
+        alt: "Corporate Ledger Bookkeeping and Financial Reconciliation Dashboard"
+      },
       connectsTo: ['CRM', 'POS', 'INV'],
       href: '/products/finance',
       accent: '#B4553A',
@@ -488,6 +540,10 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       code: 'HR',
       name: 'HR & Workforce',
       description: 'Manage people, attendance, and payroll, with labor cost flowing directly into the same Finance ledger as everything else.',
+      image: {
+        url: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=600&q=80",
+        alt: "Human Resource Workforce Management and Enterprise Hiring Onboarding"
+      },
       connectsTo: ['FIN'],
       href: '/products/hr',
       accent: '#9A7FB0',
@@ -496,6 +552,10 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       code: 'BI',
       name: 'Business Analytics',
       description: "Every module writes to one record, so reporting is never a reconciliation project — it's a query against a single source of truth.",
+      image: {
+        url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=600&q=80",
+        alt: "Enterprise Big Data Business Analytics and Real-time Metric Querying"
+      },
       connectsTo: ['CRM', 'POS', 'INV', 'FIN', 'HR'],
       href: '/products/analytics',
       accent: '#4E7FB5',
@@ -565,6 +625,10 @@ export const DEFAULT_ABOUT_CONTENT: AboutPageContent = {
     'Enterprise ERP platforms have long been out of reach for independent retailers and mid-market wholesalers — priced in six-figure implementation fees and requiring dedicated IT departments to maintain.',
     'Scryme changes that. We ship a unified platform — CRM, POS, Inventory, and Finance — that a 10-person team can run as confidently as a 10,000-person organisation. Our pricing is transparent, our onboarding is measured in days not months, and our support is staffed by people who understand retail and wholesale.',
   ],
+  missionImage: {
+    url: "https://images.unsplash.com/photo-1542744094-3a31f103e35f?auto=format&fit=crop&w=800&q=80",
+    alt: "Corporate Enterprise Strategy Planning and Team Collaboration"
+  },
   timeline: [
     {
       year: '2019',
@@ -610,12 +674,60 @@ export const DEFAULT_ABOUT_CONTENT: AboutPageContent = {
     },
   ],
   team: [
-    { name: 'Adeola Mensah', role: 'Chief Executive Officer', initials: 'AM' },
-    { name: 'Yuki Tanaka', role: 'Chief Product Officer', initials: 'YT' },
-    { name: 'Samuel Osei', role: 'Chief Technology Officer', initials: 'SO' },
-    { name: 'Lena Hoffmann', role: 'VP of Customer Success', initials: 'LH' },
-    { name: 'Priya Rajan', role: 'Head of Engineering', initials: 'PR' },
-    { name: 'Marcus Webb', role: 'Head of Sales', initials: 'MW' },
+    {
+      name: 'Adeola Mensah',
+      role: 'Chief Executive Officer',
+      initials: 'AM',
+      avatar: {
+        url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&h=200&q=80",
+        alt: "Adeola Mensah, CEO"
+      }
+    },
+    {
+      name: 'Yuki Tanaka',
+      role: 'Chief Product Officer',
+      initials: 'YT',
+      avatar: {
+        url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&h=200&q=80",
+        alt: "Yuki Tanaka, CPO"
+      }
+    },
+    {
+      name: 'Samuel Osei',
+      role: 'Chief Technology Officer',
+      initials: 'SO',
+      avatar: {
+        url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&h=200&q=80",
+        alt: "Samuel Osei, CTO"
+      }
+    },
+    {
+      name: 'Lena Hoffmann',
+      role: 'VP of Customer Success',
+      initials: 'LH',
+      avatar: {
+        url: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&h=200&q=80",
+        alt: "Lena Hoffmann, VP Customer Success"
+      }
+    },
+    {
+      name: 'Priya Rajan',
+      role: 'Head of Engineering',
+      initials: 'PR',
+      avatar: {
+        url: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&h=200&q=80",
+        alt: "Priya Rajan, Head of Engineering"
+      }
+    },
+    {
+      name: 'Marcus Webb',
+      role: 'Head of Sales',
+      initials: 'MW',
+      avatar: {
+        url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&h=200&q=80",
+        alt: "Marcus Webb, Head of Sales"
+      }
+    },
   ],
 };
 
@@ -766,6 +878,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     const data = await client.fetch<HomePageContent | null>(`*[_type == "homePage"][0] {
       heroTitle,
       heroSubtitle,
+      heroImage,
       reconciledToday,
       brands,
       modules,
@@ -776,6 +889,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     return {
       heroTitle: data.heroTitle || DEFAULT_HOME_CONTENT.heroTitle,
       heroSubtitle: data.heroSubtitle || DEFAULT_HOME_CONTENT.heroSubtitle,
+      heroImage: data.heroImage || DEFAULT_HOME_CONTENT.heroImage,
       reconciledToday: data.reconciledToday ?? DEFAULT_HOME_CONTENT.reconciledToday,
       brands: data.brands && data.brands.length > 0 ? data.brands : DEFAULT_HOME_CONTENT.brands,
       modules: data.modules && data.modules.length > 0 ? data.modules : DEFAULT_HOME_CONTENT.modules,
@@ -799,6 +913,7 @@ export async function getAboutPageContent(): Promise<AboutPageContent> {
       stats,
       missionTitle,
       missionText,
+      missionImage,
       timeline,
       values,
       team
@@ -810,6 +925,7 @@ export async function getAboutPageContent(): Promise<AboutPageContent> {
       stats: data.stats && data.stats.length > 0 ? data.stats : DEFAULT_ABOUT_CONTENT.stats,
       missionTitle: data.missionTitle || DEFAULT_ABOUT_CONTENT.missionTitle,
       missionText: data.missionText && data.missionText.length > 0 ? data.missionText : DEFAULT_ABOUT_CONTENT.missionText,
+      missionImage: data.missionImage || DEFAULT_ABOUT_CONTENT.missionImage,
       timeline: data.timeline && data.timeline.length > 0 ? data.timeline : DEFAULT_ABOUT_CONTENT.timeline,
       values: data.values && data.values.length > 0 ? data.values : DEFAULT_ABOUT_CONTENT.values,
       team: data.team && data.team.length > 0 ? data.team : DEFAULT_ABOUT_CONTENT.team,
