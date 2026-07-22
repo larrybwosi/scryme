@@ -69,28 +69,29 @@ const STATUS_ACCENT: Record<string, string> = {
 function getCleanUrl(url: string | null | undefined): string {
   if (!url) return "";
 
-  const isDev = process.env.NODE_ENV === "development";
-  const defaultApiUrl = isDev
-    ? "http://localhost:3002"
-    : "https://api.scryme.tech";
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
-
   try {
     if (url.startsWith("http://") || url.startsWith("https://")) {
       const parsed = new URL(url);
 
-      if (!isDev) {
-        // Strip port in production
+      // Remove port if we are on scryme.tech or in production environment
+      if (
+        parsed.hostname.endsWith("scryme.tech") ||
+        process.env.NODE_ENV === "production"
+      ) {
         parsed.port = "";
+      }
 
-        if (
-          parsed.hostname === "localhost" ||
-          parsed.hostname === "127.0.0.1"
-        ) {
-          const targetUrl = new URL(apiUrl);
-          parsed.protocol = targetUrl.protocol;
-          parsed.hostname = targetUrl.hostname;
-        }
+      // If it's localhost or 127.0.0.1 in production, rewrite to public api url
+      if (
+        process.env.NODE_ENV === "production" &&
+        (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")
+      ) {
+        const defaultApiUrl = "https://api.scryme.tech";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+        const targetUrl = new URL(apiUrl);
+        parsed.protocol = targetUrl.protocol;
+        parsed.hostname = targetUrl.hostname;
+        parsed.port = "";
       }
 
       return parsed.toString();
