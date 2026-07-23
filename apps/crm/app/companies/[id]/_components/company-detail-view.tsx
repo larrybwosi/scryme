@@ -65,6 +65,7 @@ function TabContent({ company, tab, currency = "USD" }: { company: any; tab: Tab
 function ContactsTab({ company }: { company: any }) {
     const router = useRouter();
     const [selectedContact, setSelectedContact] = useState<any>(null);
+    const [viewingContact, setViewingContact] = useState<any>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const contacts = company.contacts || [];
 
@@ -83,9 +84,12 @@ function ContactsTab({ company }: { company: any }) {
                                     <div className="text-sm text-muted-foreground mt-1">{contact.email || 'No email'}</div>
                                     <div className="text-sm text-muted-foreground">{contact.phone || 'No phone'}</div>
                                 </div>
-                                <Link href={`/customers/${contact.id}`} className="text-xs text-primary hover:underline font-medium shrink-0">
+                                <button
+                                    onClick={() => setViewingContact(contact)}
+                                    className="text-xs text-primary hover:underline font-medium shrink-0"
+                                >
                                     View Profile
-                                </Link>
+                                </button>
                             </div>
                             <div className="flex items-center justify-between mt-3 pt-3 border-t border-border text-[11px] text-muted-foreground">
                                 <span>{getDisplayTime(contact.createdAt, contact.updatedAt)}</span>
@@ -103,6 +107,65 @@ function ContactsTab({ company }: { company: any }) {
                     ))}
                 </div>
             )}
+
+            {/* Viewing Contact Sheet */}
+            <Sheet open={!!viewingContact} onOpenChange={(open) => !open && setViewingContact(null)}>
+              <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+                <SheetHeader className="border-b border-border pb-4 mb-4">
+                  <SheetTitle className="text-lg font-bold flex items-center gap-2">
+                    <Users size={18} className="text-primary" />
+                    Contact Details
+                  </SheetTitle>
+                </SheetHeader>
+                {viewingContact && (
+                  <div className="space-y-6">
+                    <div className="flex flex-col items-center text-center p-4 bg-muted/20 rounded-xl border border-border/50">
+                      <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xl mb-3">
+                        {viewingContact.name.charAt(0).toUpperCase()}
+                      </div>
+                      <h3 className="text-base font-bold text-foreground">{viewingContact.name}</h3>
+                      <span className="text-xs text-muted-foreground mt-1">
+                        Registered on {new Date(viewingContact.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Information</h4>
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center py-2 border-b border-border/40 text-sm">
+                          <span className="text-muted-foreground">Email</span>
+                          <span className="font-medium text-foreground">{viewingContact.email || "—"}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-border/40 text-sm">
+                          <span className="text-muted-foreground">Phone</span>
+                          <span className="font-medium text-foreground">{viewingContact.phone || "—"}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b border-border/40 text-sm">
+                          <span className="text-muted-foreground">Company</span>
+                          <span className="font-medium text-foreground">{company.name}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-border flex items-center gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedContact(viewingContact);
+                          setIsEditOpen(true);
+                          setViewingContact(null);
+                        }}
+                        className="h-8 text-xs"
+                      >
+                        Edit Contact
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </SheetContent>
+            </Sheet>
 
             {/* Edit Contact Sheet */}
             <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
