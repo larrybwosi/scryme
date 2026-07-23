@@ -16,7 +16,7 @@ export async function getDocumentStream(
   filename: string;
   contentType: string;
 }> {
-  let transaction = await db.transaction.findFirst({
+  const transaction = await db.transaction.findFirst({
     where: {
       id,
       organizationId: orgId,

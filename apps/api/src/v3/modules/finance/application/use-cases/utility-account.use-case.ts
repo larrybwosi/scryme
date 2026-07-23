@@ -22,12 +22,44 @@ export class UtilityAccountUseCase {
   }
 
   async getAccount(organizationId: string, id: string) {
+    // ⚡ Bolt Optimization: Replace broad include with targeted nested select block
+    // to bypass over-fetching heavy relational, text, and JSON attributes (such as
+    // notes, receiptUrl, tags, etc.) which reduces database I/O and payload size.
     const account = await this.prisma.client.utilityAccount.findFirst({
       where: { id, organizationId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        provider: true,
+        accountNumber: true,
+        meterNumber: true,
+        type: true,
+        organizationId: true,
+        createdAt: true,
+        updatedAt: true,
         expenses: {
           take: 10,
           orderBy: { expenseDate: "desc" },
+          select: {
+            id: true,
+            expenseNumber: true,
+            description: true,
+            expenseDate: true,
+            amount: true,
+            currencyCode: true,
+            exchangeRate: true,
+            baseAmount: true,
+            taxAmount: true,
+            taxRate: true,
+            paymentMethod: true,
+            status: true,
+            isReimbursable: true,
+            isBillable: true,
+            createdAt: true,
+            updatedAt: true,
+            categoryId: true,
+            memberId: true,
+          },
         },
       },
     });

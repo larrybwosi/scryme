@@ -107,3 +107,7 @@
 ## 2026-07-21 - [O(N*M) to O(N+M) Map-Based Indexing in Stocking Workflows]
 **Learning:** Performing nested array `.find()` lookups inside processing loops (e.g., matching received items or shipped items in stock transactions) introduces an $O(N \times M)$ performance bottleneck. Pre-indexing parent arrays into a `Map` structure prior to loop execution reduces item lookup to constant-time $O(1)$, resulting in an overall $O(N + M)$ performance characteristics.
 **Action:** Always pre-index related collections into standard JavaScript `Map` objects before processing them in loop structures, particularly in inventory, order, and stocking transactional domains.
+
+## 2026-07-23 - [Nested Select in Utility Account Details]
+**Learning:** Fetching complex relations (such as related `expenses` inside a `utilityAccount`) using Prisma's default `include` query over-fetches heavy text/JSON fields (like `receiptUrl`, `notes`, and `tags`) which are irrelevant for summary details and list-views. Shifting to targeted nested `select` statements dramatically reduces database retrieval times, network latency, and NestJS serialization overhead.
+**Action:** Always replace broad `include` blocks on related collections inside entity detail queries with highly-targeted, explicitly-selected scalar fields, ensuring that heavy fields like logs, descriptions, or URLs are skipped.
