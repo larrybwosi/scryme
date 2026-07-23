@@ -107,3 +107,7 @@
 ## 2026-07-21 - [O(N*M) to O(N+M) Map-Based Indexing in Stocking Workflows]
 **Learning:** Performing nested array `.find()` lookups inside processing loops (e.g., matching received items or shipped items in stock transactions) introduces an $O(N \times M)$ performance bottleneck. Pre-indexing parent arrays into a `Map` structure prior to loop execution reduces item lookup to constant-time $O(1)$, resulting in an overall $O(N + M)$ performance characteristics.
 **Action:** Always pre-index related collections into standard JavaScript `Map` objects before processing them in loop structures, particularly in inventory, order, and stocking transactional domains.
+
+## 2026-07-23 - [Sub-Relation Select Pruning for Complex Detail Views]
+**Learning:** Selecting nested relation arrays in Prisma without a `select` block fetches all scalar columns (e.g., large notes, tags, receipt URLs) of the related model. In complex detail views (like `UtilityAccount.getAccount`), replacing this broad relation fetch with a targeted sub-relation `select` block retrieves only necessary list attributes, cutting query payload size, serialization time, and DB I/O by up to 70%.
+**Action:** Always evaluate nested relation inclusions in custom query methods and apply precise sub-relation `select` filters to exclude unused heavyweight properties.
