@@ -26,6 +26,7 @@ import { AgeVerificationDialog } from '@/components/age-verification-dialog';
 import type { Order, CartItem, Customer, OrderType } from '@/types';
 import { ReceiptDialog } from '@/components/receipt-dialog';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import { emitTo } from '@tauri-apps/api/event';
 import { HeldOrdersDialog } from '@/components/held-orders-dialog';
 import { PrescriptionDialog } from '@/components/pos/prescription-dialog';
@@ -644,15 +645,24 @@ export function Cart() {
                 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
                   {currentOrder.items.reduce((acc, i) => acc + i.quantity, 0)} items
                 </span>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="h-auto p-0 text-xs text-destructive hover:text-destructive/80"
-                  onClick={resetOrder}
-                  disabled={currentOrder.items.length === 0}
-                >
-                  Clear Cart
-                </Button>
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="h-auto p-0 text-xs text-destructive hover:text-destructive/80"
+                        onClick={resetOrder}
+                        disabled={currentOrder.items.length === 0}
+                      >
+                        Clear Cart
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Clear Cart ({modifier}+Shift+C)
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
             </div>
 
@@ -672,17 +682,26 @@ export function Cart() {
               )}
 
               {enableHoldSale && (
-                <Button
-                  variant="outline"
-                  className="col-span-1 h-12 flex-col gap-0.5 border-dashed relative group/btn"
-                  onClick={() => setHoldOrderDialogOpen(true)}
-                  disabled={currentOrder.items.length === 0}
-                  title={`Hold Order (${modifier}+S)`}
-                >
-                  <Pause className="w-4 h-4" />
-                  <span className="text-[10px] font-medium">Hold</span>
-                  <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75">S</Kbd>
-                </Button>
+                <TooltipProvider>
+                  <Tooltip delayDuration={300}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="col-span-1 h-12 flex-col gap-0.5 border-dashed relative group/btn"
+                        onClick={() => setHoldOrderDialogOpen(true)}
+                        disabled={currentOrder.items.length === 0}
+                        aria-label={`Hold Order (${modifier}+S)`}
+                      >
+                        <Pause className="w-4 h-4" />
+                        <span className="text-[10px] font-medium">Hold</span>
+                        <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75">S</Kbd>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      Hold Order ({modifier}+S)
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
 
               {businessConfig.type === 'restaurant' && (
@@ -702,19 +721,28 @@ export function Cart() {
                 </Button>
               )}
 
-              <Button
-                className={cn(
-                  'h-12 shadow-md text-sm font-bold uppercase tracking-wide relative group/btn',
-                  (enableHoldSale && businessConfig.type === 'restaurant') ? 'col-span-3' :
-                  (enableHoldSale || businessConfig.type === 'restaurant') ? 'col-span-4' : 'col-span-5'
-                )}
-                onClick={handleConfirmPayment}
-                disabled={currentOrder.items.length === 0}
-                title={`Checkout (${modifier}+Enter)`}
-              >
-                Checkout
-                <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75 text-primary-foreground bg-primary-foreground/20">↵</Kbd>
-              </Button>
+              <TooltipProvider>
+                <Tooltip delayDuration={300}>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className={cn(
+                        'h-12 shadow-md text-sm font-bold uppercase tracking-wide relative group/btn',
+                        (enableHoldSale && businessConfig.type === 'restaurant') ? 'col-span-3' :
+                        (enableHoldSale || businessConfig.type === 'restaurant') ? 'col-span-4' : 'col-span-5'
+                      )}
+                      onClick={handleConfirmPayment}
+                      disabled={currentOrder.items.length === 0}
+                      aria-label={`Checkout (${modifier}+Enter)`}
+                    >
+                      Checkout
+                      <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75 text-primary-foreground bg-primary-foreground/20">↵</Kbd>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    Checkout ({modifier}+Enter)
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
 
             {/* Secondary Actions Row */}
