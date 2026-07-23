@@ -126,6 +126,11 @@ export class StockRequestUseCase {
 
       const transferNumber = `TR-REQ-${request.requestNumber}-${Date.now()}`;
 
+      // ⚡ Bolt Optimization: Pre-index request.items by variantId to eliminate O(N * M) nested lookup inside the loop.
+      const requestItemsMap = new Map(
+        request.items.map((ri) => [ri.variantId, ri]),
+      );
+
       // Create Stock Transfer
       const transfer = await tx.stockTransfer.create({
         data: {
@@ -140,9 +145,7 @@ export class StockRequestUseCase {
           requestedById: memberId,
           items: {
             create: dto.items.map((item) => {
-              const reqItem = request.items.find(
-                (ri) => ri.variantId === item.variantId,
-              );
+              const reqItem = requestItemsMap.get(item.variantId);
               if (!reqItem)
                 throw new BadRequestException(
                   `Variant ${item.variantId} not in original request`,
