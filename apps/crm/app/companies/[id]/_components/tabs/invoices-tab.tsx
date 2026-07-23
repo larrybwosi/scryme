@@ -1,0 +1,527 @@
+"use client";
+
+import React, { useState } from "react";
+import {
+  Receipt,
+  Download,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  X,
+  AlertCircle,
+  CalendarIcon,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import {
+  createInvoiceAction,
+  getInvoiceDownloadUrl,
+} from "@/app/actions/invoices";
+import { toast } from "sonner";
+import { formatCurrency, formatDate, getCurrencySymbol } from "@/lib/utils";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Calendar as CalendarComponent } from "@repo/ui/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/ui/popover";
+import { format } from "date-fns";
+import { useRouter } from "next/navigation";
+
+interface InvoiceRowProps {
+  invoice: any;
+  currency?: string;
+}
+
+function InvoiceRow({ invoice, currency = "USD" }: InvoiceRowProps) {
+  const [expanded, setExpanded] = useState(false);
+  const balance = invoice.balanceDue;
+  const isOverdue = invoice.status === "OVERDUE";
+
+  const downloadInvoice = async () => {
+    try {
+      const url = await getInvoiceDownloadUrl(
+        invoice.id,
+        invoice.organizationId,
+      );
+      window.open(url, "_blank");
+    } catch (error) {
+      console.error("Failed to get download URL:", error);
+      toast.error("Failed to download invoice PDF");
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "bg-card border rounded-xl overflow-hidden",
+        isOverdue ? "border-destructive/30" : "border-border",
+      )}
+    >
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-accent/50 transition-colors"
+      >
+        {/* Icon */}
+        <div
+          className={cn(
+            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0",
+            isOverdue ? "bg-destructive/10" : "bg-primary/10",
+          )}
+        >
+          {isOverdue ? (
+            <AlertCircle size={15} className="text-destructive" />
+          ) : (
+            <Receipt size={15} className="text-primary" />
+          )}
+        </div>
+
+        {/* Core info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[13.5px] font-semibold text-foreground font-mono">
+              INV-{invoice.id.slice(-6).toUpperCase()}
+            </span>
+            <StatusBadge status={invoice.status} size="sm" />
+          </div>
+          <p className="text-[12px] text-muted-foreground mt-0.5 truncate">
+            {invoice.customerName && (
+              <span className="font-semibold text-foreground/80 mr-1.5">
+                {invoice.customerName} &middot;
+              </span>
+            )}
+            {invoice.items ? invoice.items.map((i: any) => i.itemName).join(", ") : "No description"}
+          </p>
+        </div>
+
+        {/* Amount */}
+        <div className="text-right shrink-0">
+          <p className="text-[13.5px] font-bold text-foreground">
+            {formatCurrency(invoice.grandTotal, currency)}
+          </p>
+          {balance > 0 && invoice.status !== "VOID" && (
+            <p className="text-[11px] text-destructive font-medium">
+              {formatCurrency(balance, currency)} due
+            </p>
+          )}
+        </div>
+
+        <div className="ml-2 text-muted-foreground">
+          {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        </div>
+      </button>
+
+      {/* Expanded */}
+      {expanded && (
+        <div className="border-t border-border bg-muted/30 px-5 py-4">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-4">
+            <div>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Issue Date
+              </p>
+              <p className="text-[12.5px] text-foreground">
+                {formatDate(invoice.postingDate)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Due Date
+              </p>
+              <p
+                className={cn(
+                  "text-[12.5px]",
+                  isOverdue
+                    ? "text-destructive font-semibold"
+                    : "text-foreground",
+                )}
+              >
+                {formatDate(invoice.dueDate)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Net Total
+              </p>
+              <p className="text-[12.5px] text-foreground">
+                {formatCurrency(invoice.netTotal, currency)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Tax
+              </p>
+              <p className="text-[12.5px] text-foreground">
+                {formatCurrency(invoice.totalTaxes, currency)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Amount Paid
+              </p>
+              <p className="text-[12.5px] text-status-success font-semibold">
+                {formatCurrency(invoice.amountPaid, currency)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10.5px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                Balance Due
+              </p>
+              <p
+                className={cn(
+                  "text-[12.5px] font-bold",
+                  balance > 0 ? "text-destructive" : "text-status-success",
+                )}
+              >
+                {formatCurrency(balance, currency)}
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end mt-4">
+            <button
+              onClick={downloadInvoice}
+              className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground hover:text-foreground border border-border rounded-lg px-3 py-1.5 hover:bg-accent transition-colors"
+            >
+              <Download size={12} />
+              Download PDF
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const INVOICE_STATUSES = ["DRAFT", "SENT", "PAID", "OVERDUE", "VOID"];
+
+interface CompanyInvoicesTabProps {
+  company: any;
+  currency?: string;
+}
+
+export function CompanyInvoicesTab({ company, currency = "USD" }: CompanyInvoicesTabProps) {
+  const router = useRouter();
+  const symbol = getCurrencySymbol(currency);
+  const [filterStatus, setFilterStatus] = useState<string>("All");
+  const [form, setForm] = useState({
+    contactId: "",
+    itemName: "",
+    amount: "",
+    postingDate: new Date().toISOString().split("T")[0],
+    dueDate: "",
+    status: "DRAFT",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const invoices = company.invoices || [];
+  const contacts = company.contacts || [];
+
+  const filtered =
+    filterStatus === "All"
+      ? invoices
+      : invoices.filter((inv: any) => inv.status === filterStatus);
+
+  const overdueCount = invoices.filter(
+    (inv: any) => inv.status === "OVERDUE",
+  ).length;
+  const totalOpen = invoices
+    .filter((inv: any) => inv.status !== "PAID" && inv.status !== "VOID")
+    .reduce((sum: number, inv: any) => sum + (inv.balanceDue || 0), 0);
+
+  const handleAdd = async () => {
+    const amount = parseFloat(form.amount) || 0;
+    if (!form.itemName.trim() || !form.postingDate || amount <= 0) {
+      toast.error("Please fill in Description, Issue Date, and Amount");
+      return;
+    }
+
+    setLoading(true);
+
+    const selectedContact = contacts.find((c: any) => c.id === form.contactId);
+    const customerName = selectedContact ? selectedContact.name : null;
+
+    const result = await createInvoiceAction({
+      businessAccountId: company.id,
+      customerName: customerName,
+      postingDate: new Date(form.postingDate),
+      dueDate: form.dueDate ? new Date(form.dueDate) : undefined,
+      status: form.status,
+      items: [
+        {
+          itemCode: "GENERIC",
+          itemName: form.itemName.trim(),
+          quantity: 1,
+          rate: amount,
+          amount: amount,
+        },
+      ],
+    });
+    setLoading(false);
+
+    if (result.success) {
+      toast.success("B2B Invoice created successfully");
+      setForm({
+        contactId: "",
+        itemName: "",
+        amount: "",
+        postingDate: new Date().toISOString().split("T")[0],
+        dueDate: "",
+        status: "DRAFT",
+      });
+      router.refresh();
+    } else {
+      toast.error(result.error || "Failed to create invoice");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header & New Invoice Form directly displayed */}
+      <div className="bg-card border border-border rounded-xl p-5 shadow-sm space-y-4">
+        <h4 className="text-[14px] font-bold text-foreground">New B2B Invoice</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="col-span-1 md:col-span-2 lg:col-span-3">
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+              Line Items / Description *
+            </label>
+            <input
+              value={form.itemName}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, itemName: e.target.value }))
+              }
+              placeholder="e.g. Monthly Consulting Fee, Bulk Order Settlement"
+              className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+              Select Contact (Optional)
+            </label>
+            <Select
+              value={form.contactId}
+              onValueChange={(val) => setForm((f) => ({ ...f, contactId: val }))}
+            >
+              <SelectTrigger className="w-full h-9 bg-background">
+                <SelectValue placeholder="Select contact" />
+              </SelectTrigger>
+              <SelectContent>
+                {contacts.map((c: any) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+              Total Amount ({symbol}) *
+            </label>
+            <input
+              type="number"
+              value={form.amount}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, amount: e.target.value }))
+              }
+              placeholder="0.00"
+              className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+              Status
+            </label>
+            <Select
+              value={form.status}
+              onValueChange={(val) => setForm((f) => ({ ...f, status: val }))}
+            >
+              <SelectTrigger className="w-full h-9 bg-background">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {INVOICE_STATUSES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {s}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+              Issue Date *
+            </label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal text-sm h-9 px-3",
+                    !form.postingDate && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                  {form.postingDate ? (
+                    format(new Date(form.postingDate), "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={
+                    form.postingDate ? new Date(form.postingDate) : undefined
+                  }
+                  onSelect={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, "0");
+                      const dd = String(date.getDate()).padStart(2, "0");
+                      setForm((f) => ({
+                        ...f,
+                        postingDate: `${yyyy}-${mm}-${dd}`,
+                      }));
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
+              Due Date
+            </label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal text-sm h-9 px-3",
+                    !form.dueDate && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                  {form.dueDate ? (
+                    format(new Date(form.dueDate), "PPP")
+                  ) : (
+                    <span>Pick a date</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={form.dueDate ? new Date(form.dueDate) : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, "0");
+                      const dd = String(date.getDate()).padStart(2, "0");
+                      setForm((f) => ({
+                        ...f,
+                        dueDate: `${yyyy}-${mm}-${dd}`,
+                      }));
+                    } else {
+                      setForm((f) => ({ ...f, dueDate: "" }));
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="flex items-end">
+            <Button
+              onClick={handleAdd}
+              disabled={
+                loading ||
+                !form.itemName.trim() ||
+                !form.postingDate ||
+                !form.amount
+              }
+              className="w-full text-[12.5px] font-semibold h-9"
+            >
+              {loading ? "Creating..." : "Create Invoice"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <hr className="border-border" />
+
+      {/* Invoices List Section */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-[15px] font-bold text-foreground">Invoices List</h3>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              {invoices.length} B2B invoices &middot;{" "}
+              <span className="text-destructive font-medium">
+                {overdueCount} overdue
+              </span>
+              {totalOpen > 0 && (
+                <>
+                  {" "}
+                  &middot;{" "}
+                  <span className="font-medium">
+                    {formatCurrency(totalOpen, currency)} outstanding
+                  </span>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Filter */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          {["All", ...INVOICE_STATUSES].map((s) => {
+            const isActive = filterStatus === s;
+            return (
+              <button
+                key={s}
+                onClick={() => setFilterStatus(s)}
+                className={`text-[11.5px] font-medium px-3 py-1 rounded-full border transition-colors ${
+                  isActive
+                    ? "bg-primary text-white border-primary"
+                    : "bg-background text-muted-foreground border-border hover:border-primary hover:text-foreground"
+                }`}
+              >
+                {s}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* List */}
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={Receipt}
+            title="No B2B invoices found"
+            description={
+              filterStatus === "All"
+                ? "No B2B invoices have been created for this company."
+                : `No B2B invoices with status "${filterStatus}".`
+            }
+          />
+        ) : (
+          <div className="flex flex-col gap-3">
+            {filtered.map((inv: any) => (
+              <InvoiceRow key={inv.id} invoice={inv} currency={currency} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

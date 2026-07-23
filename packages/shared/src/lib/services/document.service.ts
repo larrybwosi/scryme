@@ -32,6 +32,7 @@ export class DocumentService {
       include: {
         items: true,
         customer: { include: { addresses: true } },
+        businessAccount: { include: { addresses: true } },
         organization: {
           include: {
             settings: true,
@@ -182,6 +183,7 @@ export class DocumentService {
       include: {
         items: true,
         customer: { include: { addresses: true } },
+        businessAccount: { include: { addresses: true } },
         organization: {
           include: {
             settings: true,

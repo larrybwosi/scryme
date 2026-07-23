@@ -102,6 +102,7 @@ describe("Stocking Flow Verification", () => {
       purchase: {
         create: vi.fn(),
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
       },
       stockReceipt: {
@@ -269,6 +270,7 @@ describe("Stocking Flow Verification", () => {
       ],
     };
 
+    mockTx.purchase.findFirst.mockResolvedValue(mockPoWithItems);
     mockTx.purchase.findUnique.mockResolvedValue(mockPoWithItems);
     mockTx.stockReceipt.create.mockResolvedValue({ id: "rec-1" });
     mockTx.stockBatch.create.mockImplementation(({ data }: any) => ({

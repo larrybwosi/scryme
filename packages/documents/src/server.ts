@@ -312,12 +312,13 @@ export const Mappers = {
       }));
       number = tx.number;
       createdAt = tx.createdAt;
-      dueDate = null; // Transactions might not have a direct due date
+      dueDate = null; // Transactions might not have a type of direct due date
       status = tx.status;
-      customerName = tx.customer?.name || 'Walk-in Customer';
+      const bizAcc = (tx as any).businessAccount;
+      customerName = tx.customer?.name || bizAcc?.name || 'Walk-in Customer';
       customerEmail = tx.customer?.email || undefined;
       customerPhone = tx.customer?.phone || undefined;
-      customerAddress = formatAddress(tx.customer?.addresses?.[0]);
+      customerAddress = formatAddress(tx.customer?.addresses?.find((a: any) => a.isDefault) || tx.customer?.addresses?.[0]) || formatAddress(bizAcc?.addresses?.find((a: any) => a.isDefault) || bizAcc?.addresses?.[0]);
       notes = tx.notes;
     } else {
       const inv = transaction as (Invoice & {
@@ -325,6 +326,7 @@ export const Mappers = {
         organization: Organization & { settings: any; invoiceConfig: InvoiceConfig | null };
         template: InvoiceTemplate | null;
         transaction: Transaction | null;
+        businessAccount?: any;
       });
       currencySettings = resolveCurrencySettings(inv.transaction || {}, inv.organization);
       branding = resolveBranding(inv.organization, inv.organization.invoiceConfig);
@@ -351,10 +353,12 @@ export const Mappers = {
       createdAt = inv.postingDate;
       dueDate = inv.dueDate;
       status = inv.status;
-      customerName = inv.customerName || 'Walk-in Customer';
-      customerEmail = undefined;
-      customerPhone = inv.kraPin || undefined;
-      customerAddress = '';
+      const tx = inv.transaction as any;
+      const bizAcc = inv.businessAccount || tx?.businessAccount;
+      customerName = inv.customerName || tx?.customer?.name || bizAcc?.name || 'Walk-in Customer';
+      customerEmail = tx?.customer?.email || undefined;
+      customerPhone = tx?.customer?.phone || inv.kraPin || undefined;
+      customerAddress = formatAddress(tx?.customer?.addresses?.find((a: any) => a.isDefault) || tx?.customer?.addresses?.[0]) || formatAddress(bizAcc?.addresses?.find((a: any) => a.isDefault) || bizAcc?.addresses?.[0]);
       notes = null;
     }
 
@@ -468,11 +472,12 @@ export const Mappers = {
         ref: item.sku
       }));
 
+      const bizAcc = (tx as any).businessAccount;
       customer = {
-        name: tx.customer?.name || 'Walk-in Customer',
+        name: tx.customer?.name || bizAcc?.name || 'Walk-in Customer',
         email: tx.customer?.email,
         phone: tx.customer?.phone,
-        address: formatAddress(tx.customer?.addresses?.[0])
+        address: formatAddress(tx.customer?.addresses?.find((a: any) => a.isDefault) || tx.customer?.addresses?.[0]) || formatAddress(bizAcc?.addresses?.find((a: any) => a.isDefault) || bizAcc?.addresses?.[0]) || ''
       };
 
       totals = {
@@ -493,6 +498,7 @@ export const Mappers = {
         organization: Organization & { settings: any; invoiceConfig: InvoiceConfig | null; receiptConfig: ReceiptConfig | null };
         template: InvoiceTemplate | null;
         transaction: (Transaction & { payments: Payment[]; customer?: Customer & { addresses?: Address[] } }) | null;
+        businessAccount?: any;
       });
       org = inv.organization;
       config = type === 'invoice' ? org?.invoiceConfig : org?.receiptConfig;
@@ -506,12 +512,13 @@ export const Mappers = {
         ref: item.itemCode
       }));
 
-      const tx = inv.transaction;
+      const tx = inv.transaction as any;
+      const bizAcc = inv.businessAccount || tx?.businessAccount;
       customer = {
-        name: inv.customerName || tx?.customer?.name || 'Walk-in Customer',
+        name: inv.customerName || tx?.customer?.name || bizAcc?.name || 'Walk-in Customer',
         email: tx?.customer?.email,
         phone: tx?.customer?.phone || inv.kraPin,
-        address: formatAddress(tx?.customer?.addresses?.[0]) || ''
+        address: formatAddress(tx?.customer?.addresses?.find((a: any) => a.isDefault) || tx?.customer?.addresses?.[0]) || formatAddress(bizAcc?.addresses?.find((a: any) => a.isDefault) || bizAcc?.addresses?.[0]) || ''
       };
 
       totals = {

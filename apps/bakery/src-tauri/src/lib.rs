@@ -117,8 +117,13 @@ pub fn run() {
 
             // Set up tray icon
             let icon = app.default_window_icon().cloned().unwrap_or_else(|| {
-                tauri::image::Image::from_bytes(include_bytes!("../icons/128x128.png"))
-                    .expect("failed to load default icon")
+                match tauri::image::Image::from_bytes(include_bytes!("../icons/128x128.png")) {
+                    Ok(img) => img,
+                    Err(e) => {
+                        log::error!("Failed to load default icon: {}", e);
+                        tauri::image::Image::new(&[], 0, 0)
+                    }
+                }
             });
             let tray_builder = TrayIconBuilder::new().icon(icon);
 
