@@ -104,10 +104,14 @@
 ## 2026-07-22 - [Redundant Relational Joins in Automated Stock Counting]
 **Learning:** Queries that fetch stock counts during background routines often specify full relation chains (e.g., loading deep tables like `variant` and nested `product`) that are never accessed by the final mapping logic. Switching these to targeted flat `select` blocks bypasses complex multi-table JOINs, dramatically reducing database CPU, RAM, and object-serialization overhead.
 **Action:** Always inspect bulk queries in cron routines or schedulers and replace any broad relation inclusions with targeted `select` statements if only basic scalar properties are required.
+
 ## 2026-07-21 - [O(N*M) to O(N+M) Map-Based Indexing in Stocking Workflows]
 **Learning:** Performing nested array `.find()` lookups inside processing loops (e.g., matching received items or shipped items in stock transactions) introduces an $O(N \times M)$ performance bottleneck. Pre-indexing parent arrays into a `Map` structure prior to loop execution reduces item lookup to constant-time $O(1)$, resulting in an overall $O(N + M)$ performance characteristics.
 **Action:** Always pre-index related collections into standard JavaScript `Map` objects before processing them in loop structures, particularly in inventory, order, and stocking transactional domains.
 
+## 2026-07-23 - [O(N*M) to O(N+M) Map-Based Indexing in Stock Request Fulfillment]
+**Learning:** Performing nested array `.find()` lookups inside processing loops (e.g., matching requested items during stock request fulfillment to create transfers) introduces an $O(N \times M)$ performance bottleneck. Pre-indexing parent arrays into a `Map` structure prior to loop execution reduces item lookup to constant-time $O(1)$, resulting in an overall $O(N + M)$ performance characteristics.
+**Action:** Always pre-index related collections into standard JavaScript `Map` objects before processing them in loop structures, particularly in inventory, order, and stocking transactional domains.
 ## 2026-07-23 - [Sub-Relation Select Pruning for Complex Detail Views]
 **Learning:** Selecting nested relation arrays in Prisma without a `select` block fetches all scalar columns (e.g., large notes, tags, receipt URLs) of the related model. In complex detail views (like `UtilityAccount.getAccount`), replacing this broad relation fetch with a targeted sub-relation `select` block retrieves only necessary list attributes, cutting query payload size, serialization time, and DB I/O by up to 70%.
 **Action:** Always evaluate nested relation inclusions in custom query methods and apply precise sub-relation `select` filters to exclude unused heavyweight properties.
