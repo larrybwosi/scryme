@@ -9,16 +9,16 @@ import { getPricingPageContent } from "../../lib/sanity";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Pricing — Simple, Transparent Plans for Every Business",
+  title: "Pricing — Simple, Transparent Plans to Scale Your Business",
   description:
-    "Explore Scryme pricing plans. Start with a 30-day free trial. Scale from independent retail to enterprise wholesale with our flexible CRM, POS, and Inventory modules.",
+    "Explore Scryme pricing plans. Scale from independent retail to enterprise multi-branch operations with our integrated POS, custom storefront websites, and advanced stock tracking.",
   alternates: {
     canonical: "/pricing",
   },
   openGraph: {
     title: "Pricing — Scryme",
     description:
-      "Simple, transparent pricing for every stage of your business. Start free, scale as you grow.",
+      "Simple, transparent pricing designed to enhance your performance and scale your business.",
     url: "https://scryme.tech/pricing",
   },
 };

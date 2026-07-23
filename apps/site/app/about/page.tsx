@@ -14,15 +14,15 @@ import { urlFor } from "@/sanity/lib/image";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "About Us — Our Mission to Empower Global Commerce",
+  title: "About Us — Our Mission to Empower High-Performance Commerce",
   description:
-    "Scryme was founded to give independent and growing businesses the same ERP capabilities that enterprise conglomerates take for granted. Learn about our story and leadership.",
+    "Scryme is built to empower growing businesses to scale securely and enhance their performance with integrated POS, multi-branch syncing, advanced stock control, and automated storefront websites.",
   alternates: {
     canonical: "/about",
   },
   openGraph: {
     title: "About Scryme",
-    description: "Learn about the mission and team behind the enterprise platform built for businesses that can't afford to stop.",
+    description: "Learn about the mission and team behind the high-performance commerce platform built to scale operations.",
     url: "https://scryme.tech/about",
   },
 };

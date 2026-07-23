@@ -117,5 +117,80 @@ export const homePageType = defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'storefrontTitle',
+      title: 'Storefront Solution Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'storefrontSubtitle',
+      title: 'Storefront Solution Subtitle',
+      type: 'text',
+    }),
+    defineField({
+      name: 'storefrontImage',
+      title: 'Storefront Solution Image',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'multiBranchTitle',
+      title: 'Multi-Branch Orchestration Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'multiBranchSubtitle',
+      title: 'Multi-Branch Orchestration Subtitle',
+      type: 'text',
+    }),
+    defineField({
+      name: 'multiBranchImage',
+      title: 'Multi-Branch Orchestration Image',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'stockManagementTitle',
+      title: 'Stock Management Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'stockManagementSubtitle',
+      title: 'Stock Management Subtitle',
+      type: 'text',
+    }),
+    defineField({
+      name: 'stockManagementImage',
+      title: 'Stock Management Image',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+        }),
+      ],
+    }),
   ],
 })
