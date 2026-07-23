@@ -154,8 +154,23 @@ function isSafeIp(ip: string): boolean {
       return false;
     }
 
+    // fec0::/10 (Site-local, deprecated but still used internally in some private setups)
+    if (
+      normalizedIp.startsWith("fec") ||
+      normalizedIp.startsWith("fed") ||
+      normalizedIp.startsWith("fee") ||
+      normalizedIp.startsWith("fef")
+    ) {
+      return false;
+    }
+
     // fc00::/7 (Unique Local Address)
     if (normalizedIp.startsWith("fc") || normalizedIp.startsWith("fd")) {
+      return false;
+    }
+
+    // ff00::/8 (Multicast)
+    if (normalizedIp.startsWith("ff")) {
       return false;
     }
 
