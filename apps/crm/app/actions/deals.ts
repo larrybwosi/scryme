@@ -140,3 +140,58 @@ async function createAssociation(
     },
   });
 }
+
+export async function updateDeal(dealId: string, input: any) {
+  try {
+    const auth = await getServerAuth();
+    if (!auth?.organizationId) redirect("/login");
+    const organizationId = auth.organizationId;
+    const { associatedCustomerId, associatedCompanyId, ...data } = input;
+
+    const deal = await db.crmRecord.findUnique({
+      where: { id: dealId },
+    });
+
+    if (!deal) throw new Error("Deal not found");
+
+    await db.crmRecord.update({
+      where: { id: dealId },
+      data: {
+        data,
+      },
+    });
+
+    // Clean up old associations
+    await db.crmAssociation.deleteMany({
+      where: {
+        targetRecordId: dealId,
+      },
+    });
+
+    // Handle associations
+    if (associatedCustomerId && associatedCustomerId !== "none") {
+      const customer = await db.customer.findUnique({
+        where: { id: associatedCustomerId },
+      });
+      if (customer?.crmRecordId) {
+        await createAssociation(customer.crmRecordId, dealId, "contact_deals");
+      }
+    }
+
+    if (associatedCompanyId && associatedCompanyId !== "none") {
+      const company = await db.businessAccount.findUnique({
+        where: { id: associatedCompanyId },
+      });
+      if (company?.crmRecordId) {
+        await createAssociation(company.crmRecordId, dealId, "company_deals");
+      }
+    }
+
+    revalidatePath("/pipeline");
+    revalidatePath(`/pipeline/${dealId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating deal:", error);
+    return { success: false, error: (error as any).message };
+  }
+}
