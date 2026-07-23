@@ -28,8 +28,10 @@ import {
   ChevronLeft,
   ChevronRight,
   PackageSearch,
+  FileSpreadsheet,
 } from "lucide-react";
 import { bulkUpdateLocationStock } from "../../app/actions/stock-management";
+import { StockImportModal } from "./stock-import-modal";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -45,6 +47,7 @@ interface StockItem {
 
 interface LocationStockTableProps {
   locationId: string;
+  locationName?: string;
   initialData: StockItem[];
   totalCount: number;
 }
@@ -152,6 +155,7 @@ const StockTableRow = React.memo(function StockTableRow({
 
 export function LocationStockTable({
   locationId,
+  locationName,
   initialData,
   totalCount,
 }: LocationStockTableProps) {
@@ -360,6 +364,22 @@ export function LocationStockTable({
             )}
             Save all changes
           </Button>
+          <StockImportModal
+            locationId={locationId}
+            locationName={locationName || "this location"}
+            onImportSuccess={() => {
+              router.refresh();
+            }}
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-gray-200 h-9 rounded-sm"
+            >
+              <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
+              Import Stock
+            </Button>
+          </StockImportModal>
         </div>
       </div>
 
