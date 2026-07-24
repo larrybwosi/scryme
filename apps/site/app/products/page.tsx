@@ -9,16 +9,16 @@ import { getHomePageContent } from "../../lib/sanity";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "The Operating Ledger — Integrated Enterprise Modules",
+  title: "The Scale Suite — High-Performance Business Modules",
   description:
-    "Explore Scryme's suite of integrated operational modules: CRM, Point of Sale, Inventory, Finance, HR, and Business Analytics — all reconciled into a single ledger.",
+    "Explore Scryme's suite of integrated operational modules: Custom Storefronts, Point of Sale, Stock & Inventory, Central Management, Multi-Branch Workforce, and Performance Analytics.",
   alternates: {
     canonical: "/products",
   },
   openGraph: {
-    title: "Scryme Modules — Unified ERP Suite",
+    title: "Scryme Modules — High-Performance Suite",
     description:
-      "CRM, POS, Inventory, and Finance reconciled onto a single ledger.",
+      "Integrated POS, multi-branch syncing, advanced stock control, and automated client storefront websites.",
     url: "https://scryme.tech/products",
   },
 };
@@ -51,18 +51,15 @@ export default async function ProductsPage() {
               letterSpacing: "-0.01em",
             }}
           >
-            One platform.{" "}
-            <em className="not-italic text-[#C89A4B]">Six core modules.</em>{" "}
-            Zero reconciliation.
+            One engine.{" "}
+            <em className="not-italic text-[#C89A4B]">Six core channels.</em>{" "}
+            Infinite scale.
           </h1>
           <p
             className="mx-auto max-w-2xl text-xl leading-relaxed"
             style={{ color: colors.textMuted }}
           >
-            Most ERPs are a patchwork of acquisitions and poorly stitched
-            together APIs. Scryme was built from the ground up to write to a
-            single ledger, meaning every operational stream is natively
-            integrated and synchronized in real time.
+            Scryme is built to deliver massive operational performance. We integrate e-commerce client storefronts, offline point-of-sale registers, and advanced multi-branch stock control into a single real-time synchronization system.
           </p>
         </div>
       </section>

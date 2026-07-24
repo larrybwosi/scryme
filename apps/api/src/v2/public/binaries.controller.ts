@@ -2,12 +2,13 @@ import {
   Controller,
   Get,
   Param,
+  Query,
   Res,
   NotFoundException,
   InternalServerErrorException,
   Logger,
 } from "@nestjs/common";
-import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiQuery } from "@nestjs/swagger";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
 import axios from "axios";
 import { env } from "@repo/env";
@@ -21,17 +22,22 @@ export class BinariesController {
   private readonly CACHE_TTL = 1000 * 60 * 10; // 10 minutes
 
   @AllowPublic()
-  @Get("download/:platform")
+  @Get(["download/:platform", "download/:platform/:variant"])
   @ApiOperation({
     summary: "Proxy download for the latest POS binary",
   })
+  @ApiQuery({ name: "variant", required: false, type: String })
   async downloadBinary(
     @Param("platform") platform: string,
     @Res() res: any,
+    @Param("variant") variantParam?: string,
+    @Query("variant") variantQuery?: string,
   ) {
     const owner = env.GITHUB_OWNER;
     const repo = env.GITHUB_REPO;
     const token = env.GITHUB_TOKEN;
+
+    const variant = (variantParam || variantQuery || "retail").toLowerCase();
 
     try {
       let release;
@@ -59,30 +65,41 @@ export class BinariesController {
       let asset = null;
       for (const a of release.assets) {
         const name = a.name.toLowerCase();
-        if (
-          platform === "windows" &&
-          (name.endsWith(".msi") || name.endsWith(".exe"))
-        ) {
-          asset = a;
-          break;
-        } else if (
-          platform === "macos" &&
-          (name.endsWith(".dmg") || name.endsWith(".zip"))
-        ) {
-          asset = a;
-          break;
-        } else if (
-          platform === "linux" &&
-          (name.endsWith(".appimage") || name.endsWith(".deb"))
-        ) {
-          asset = a;
-          break;
+
+        // Standard extension filtering
+        const isTargetPlatform =
+          (platform === "windows" && (name.endsWith(".msi") || name.endsWith(".exe"))) ||
+          (platform === "macos" && (name.endsWith(".dmg") || name.endsWith(".zip"))) ||
+          (platform === "linux" && (name.endsWith(".appimage") || name.endsWith(".deb")));
+
+        if (!isTargetPlatform) {
+          continue;
+        }
+
+        // Handle variant matching
+        // The binaries are built with different configs, e.g. "scryme-pos-pharmacy", "scryme-pos-restaurant", "scryme-pos-supermarket", etc.
+        // For 'retail', it maps to the default/retail build (no variant name in filename, i.e. just "scryme" or "scryme-pos" without "pharmacy", "restaurant", "supermarket", "standalone").
+        if (variant === "retail") {
+          const hasOtherVariant =
+            name.includes("pharmacy") ||
+            name.includes("restaurant") ||
+            name.includes("supermarket") ||
+            name.includes("standalone");
+          if (!hasOtherVariant) {
+            asset = a;
+            break;
+          }
+        } else {
+          if (name.includes(variant)) {
+            asset = a;
+            break;
+          }
         }
       }
 
       if (!asset) {
         throw new NotFoundException(
-          `No binary found for platform: ${platform}`,
+          `No binary found for platform: ${platform} and variant: ${variant}`,
         );
       }
 
