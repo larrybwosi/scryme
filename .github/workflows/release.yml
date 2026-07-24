@@ -340,3 +340,49 @@ jobs:
           set: |
             *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
             *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+
+  publish-android:
+    name: Publish Android App
+    runs-on: ubuntu-latest
+    needs: [release-management, set-version]
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Android Release APK
+        run: |
+          cd apps/android
+          gradle assembleRelease --no-daemon
+
+      - name: Prepare APK Asset
+        id: prepare-apk
+        run: |
+          APK_PATH=$(find apps/android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "Error: APK not found!"
+            exit 1
+          fi
+          echo "Found APK at: $APK_PATH"
+          cp "$APK_PATH" scryme-admin-release.apk
+          echo "apk_path=scryme-admin-release.apk" >> $GITHUB_OUTPUT
+
+      - name: Upload Android APK to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.set-version.outputs.version }}
+          name: "v${{ needs.set-version.outputs.version }}"
+          draft: false
+          prerelease: false
+          files: |
+            scryme-admin-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
