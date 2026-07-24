@@ -538,6 +538,100 @@ fun LoginScreen(viewModel: AuthViewModel) {
     }
 }
 
+enum class DashboardScreen {
+    Home,
+    Presence,
+    Scan,
+    Approvals,
+    Analytics,
+    Broadcast,
+    Settings
+}
+
+@Composable
+fun ShortcutCard(
+    title: String,
+    description: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(110.dp)
+            .border(1.dp, ScrymeColors.Brass.copy(alpha = 0.15f), RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = ScrymeColors.Brass,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = title,
+                    color = ScrymeColors.Paper,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    maxLines = 1
+                )
+            }
+            Text(
+                text = description,
+                color = ScrymeColors.SoftGray,
+                fontSize = 10.sp,
+                lineHeight = 13.sp,
+                maxLines = 3
+            )
+        }
+    }
+}
+
+@Composable
+fun SubScreenHeader(
+    title: String,
+    onBack: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 16.dp, bottom = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onBack,
+            modifier = Modifier.size(40.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                tint = ScrymeColors.Brass
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = title,
+            color = ScrymeColors.Paper,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.5.sp
+        )
+    }
+}
+
 @Composable
 fun AdminDashboard(
     userName: String,
@@ -546,169 +640,756 @@ fun AdminDashboard(
     sessionToken: String,
     onSignOut: () -> Unit
 ) {
+    var currentScreen by remember { mutableStateOf(DashboardScreen.Home) }
+    val context = LocalContext.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(ScrymeColors.InkBg)
-            .padding(24.dp)
+            .padding(horizontal = 24.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            // Header
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "SCRYME ADMIN",
-                        color = ScrymeColors.Brass,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        text = "The Operating Ledger Portal",
-                        color = ScrymeColors.SoftGray,
-                        fontSize = 12.sp
-                    )
-                }
-                Box(
+        when (currentScreen) {
+            DashboardScreen.Home -> {
+                Column(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(ScrymeColors.GreenLogo),
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    Text("S", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                }
-            }
-
-            // Success Welcome Banner
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-                border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "Welcome back, $userName",
-                        color = ScrymeColors.Paper,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
-                    Text(
-                        text = userEmail,
-                        color = ScrymeColors.SoftGray,
-                        fontSize = 13.sp
-                    )
-                }
-            }
-
-            // Session Security Inspector
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-                border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                    // Header
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = null,
-                            tint = ScrymeColors.Brass,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "ACTIVE TENANT",
-                            color = ScrymeColors.Brass,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                    }
-                    Text(
-                        text = activeOrg,
-                        color = ScrymeColors.Paper,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-
-                    HorizontalDivider(color = ScrymeColors.SoftGray.copy(alpha = 0.1f), modifier = Modifier.padding(bottom = 16.dp))
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = ScrymeColors.Brass,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "SECURE SESSION TOKEN",
-                            color = ScrymeColors.Brass,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                    }
-
-                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(ScrymeColors.InkBg)
-                            .padding(12.dp)
+                            .padding(top = 32.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "SCRYME ADMIN",
+                                color = ScrymeColors.Brass,
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp
+                            )
+                            Text(
+                                text = "The Operating Ledger Portal",
+                                color = ScrymeColors.SoftGray,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(ScrymeColors.GreenLogo),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("S", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                        }
+                    }
+
+                    // Success Dynamic Welcome Banner
+                    val greetingText = remember {
+                        val calendar = java.util.Calendar.getInstance()
+                        when (calendar.get(java.util.Calendar.HOUR_OF_DAY)) {
+                            in 0..11 -> "Good Morning"
+                            in 12..16 -> "Good Afternoon"
+                            else -> "Good Evening"
+                        }
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+                        border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "$greetingText, $userName",
+                                color = ScrymeColors.Paper,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(bottom = 6.dp)
+                            )
+                            Text(
+                                text = "You are currently signed in as $userEmail",
+                                color = ScrymeColors.SoftGray,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+
+                    // Shortcuts Section Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Start
                     ) {
                         Text(
-                            text = if (sessionToken.length > 30) {
-                                "${sessionToken.take(15)}...${sessionToken.takeLast(15)}"
-                            } else {
-                                sessionToken
-                            },
-                            color = ScrymeColors.Paper,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp
+                            text = "QUICK SHORTCUTS",
+                            color = ScrymeColors.Brass,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
                         )
+                    }
+
+                    // Shortcuts Grid (Row-Column layout)
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            ShortcutCard(
+                                title = "Presence & Attendance",
+                                description = "Manage active staff check-ins and check-outs",
+                                icon = Icons.Default.AccountBox,
+                                onClick = { currentScreen = DashboardScreen.Presence },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ShortcutCard(
+                                title = "Secure Card Scan",
+                                description = "Validate and scan secure staff cards",
+                                icon = Icons.Default.Refresh,
+                                onClick = { currentScreen = DashboardScreen.Scan },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            ShortcutCard(
+                                title = "Ledger Approvals",
+                                description = "Approve price and inventory adjustments",
+                                icon = Icons.Default.List,
+                                onClick = { currentScreen = DashboardScreen.Approvals },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ShortcutCard(
+                                title = "Real-time Analytics",
+                                description = "View store traffic, peak hours, and sales metrics",
+                                icon = Icons.Default.Star,
+                                onClick = { currentScreen = DashboardScreen.Analytics },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            ShortcutCard(
+                                title = "Broadcast Alert",
+                                description = "Send announcements to branch nodes",
+                                icon = Icons.Default.Warning,
+                                onClick = { currentScreen = DashboardScreen.Broadcast },
+                                modifier = Modifier.weight(1f)
+                            )
+                            ShortcutCard(
+                                title = "Security & Session",
+                                description = "Inspect session token and tenant settings",
+                                icon = Icons.Default.Settings,
+                                onClick = { currentScreen = DashboardScreen.Settings },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Sign Out Button
+                    Button(
+                        onClick = onSignOut,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 24.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Crimson, contentColor = Color.White),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.ExitToApp, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("SECURELY CLOSE SESSION", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Sign Out Button
-            Button(
-                onClick = onSignOut,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Crimson, contentColor = Color.White),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+            DashboardScreen.Presence -> {
+                var searchPattern by remember { mutableStateOf("") }
+                val mockMembers = remember {
+                    listOf(
+                        "Alice Johnson" to "Active (Check-in: 08:32 AM)",
+                        "Bob Smith" to "Active (Check-in: 09:15 AM)",
+                        "Charlie Davis" to "Offline",
+                        "David Miller" to "Active (Check-in: 07:45 AM)",
+                        "Emily Wilson" to "Offline"
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Icon(Icons.Default.ExitToApp, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("SECURELY CLOSE SESSION", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    SubScreenHeader(title = "Presence & Attendance") {
+                        currentScreen = DashboardScreen.Home
+                    }
+
+                    // Search input
+                    OutlinedTextField(
+                        value = searchPattern,
+                        onValueChange = { searchPattern = it },
+                        label = { Text("Search Team Members", color = ScrymeColors.SoftGray) },
+                        leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = ScrymeColors.Brass) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ScrymeColors.Brass,
+                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                            focusedLabelColor = ScrymeColors.Brass,
+                            cursorColor = ScrymeColors.Brass
+                        ),
+                        singleLine = true
+                    )
+
+                    mockMembers.filter { it.first.contains(searchPattern, ignoreCase = true) }.forEach { member ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+                            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.15f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = member.first,
+                                        color = ScrymeColors.Paper,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp
+                                    )
+                                    Text(
+                                        text = member.second,
+                                        color = if (member.second.startsWith("Active")) ScrymeColors.GreenLogo else ScrymeColors.SoftGray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                                if (member.second.startsWith("Active")) {
+                                    Button(
+                                        onClick = {
+                                            Toast.makeText(context, "Forcefully checked out ${member.first}", Toast.LENGTH_SHORT).show()
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Crimson),
+                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text("Checkout", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            DashboardScreen.Scan -> {
+                var isScanning by remember { mutableStateOf(false) }
+                var scanResult by remember { mutableStateOf<String?>(null) }
+                val scope = rememberCoroutineScope()
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    SubScreenHeader(title = "Secure Card Scan") {
+                        currentScreen = DashboardScreen.Home
+                    }
+
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+                        border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clip(CircleShape)
+                                    .background(ScrymeColors.InkBg)
+                                    .border(2.dp, ScrymeColors.Brass, CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Scan Icon",
+                                    tint = ScrymeColors.Brass,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                            }
+
+                            Text(
+                                text = if (isScanning) "Reading Card... Hold Steady" else "Ready to Scan Secure NFC Card",
+                                color = ScrymeColors.Paper,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                textAlign = TextAlign.Center
+                            )
+
+                            Text(
+                                text = "Place a staff ID card near the back of this terminal device to securely validate attendance or credentials.",
+                                color = ScrymeColors.SoftGray,
+                                fontSize = 12.sp,
+                                textAlign = TextAlign.Center
+                            )
+
+                            if (isScanning) {
+                                LinearProgressIndicator(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = ScrymeColors.Brass,
+                                    trackColor = ScrymeColors.InkBg
+                                )
+                            }
+                        }
+                    }
+
+                    if (scanResult != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = ScrymeColors.GreenLogo.copy(alpha = 0.15f)),
+                            border = BorderStroke(1.dp, ScrymeColors.GreenLogo)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "SCAN SUCCESSFUL",
+                                    color = ScrymeColors.GreenLogo,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    letterSpacing = 1.sp
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = scanResult!!,
+                                    color = ScrymeColors.Paper,
+                                    fontSize = 14.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            isScanning = true
+                            scanResult = null
+                            scope.launch {
+                                kotlinx.coroutines.delay(2000)
+                                isScanning = false
+                                scanResult = "Member Verified: Johnathan Doe (ID: SCR-8930). Registered Check-in success."
+                                Toast.makeText(context, "Card Verification Successful!", Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = !isScanning
+                    ) {
+                        Text("SIMULATE NFC SCAN", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    }
+                }
+            }
+
+            DashboardScreen.Approvals -> {
+                val mockRequests = remember {
+                    mutableStateListOf(
+                        Triple("Organic Whole Milk 1L", "Price Adjustment: $2.50 -> $2.80", "Requested by Mary Smith (Manager)"),
+                        Triple("Wheat Bakery Loaf 400g", "Price Adjustment: $1.80 -> $1.60", "Requested by Alice Johnson (Staff)"),
+                        Triple("Ground Espresso Coffee 250g", "Stock Override: +50 units", "Requested by Charlie Davis (Admin)")
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SubScreenHeader(title = "Ledger Approvals") {
+                        currentScreen = DashboardScreen.Home
+                    }
+
+                    if (mockRequests.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "No pending approval requests.",
+                                color = ScrymeColors.SoftGray,
+                                fontSize = 14.sp
+                            )
+                        }
+                    } else {
+                        mockRequests.forEach { req ->
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+                                border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.15f))
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Text(
+                                        text = req.first,
+                                        color = ScrymeColors.Paper,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                    Text(
+                                        text = req.second,
+                                        color = ScrymeColors.Brass,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp,
+                                        modifier = Modifier.padding(vertical = 4.dp)
+                                    )
+                                    Text(
+                                        text = req.third,
+                                        color = ScrymeColors.SoftGray,
+                                        fontSize = 12.sp
+                                    )
+
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 12.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Button(
+                                            onClick = {
+                                                mockRequests.remove(req)
+                                                Toast.makeText(context, "Request Approved", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.GreenLogo),
+                                            shape = RoundedCornerShape(4.dp)
+                                        ) {
+                                            Text("Approve", color = Color.White, fontWeight = FontWeight.Bold)
+                                        }
+                                        OutlinedButton(
+                                            onClick = {
+                                                mockRequests.remove(req)
+                                                Toast.makeText(context, "Request Rejected", Toast.LENGTH_SHORT).show()
+                                            },
+                                            modifier = Modifier.weight(1f),
+                                            border = BorderStroke(1.dp, ScrymeColors.Crimson),
+                                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ScrymeColors.Crimson),
+                                            shape = RoundedCornerShape(4.dp)
+                                        ) {
+                                            Text("Reject")
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            DashboardScreen.Analytics -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    SubScreenHeader(title = "Ledger Analytics") {
+                        currentScreen = DashboardScreen.Home
+                    }
+
+                    // KPI cards
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("TODAY SALES", color = ScrymeColors.SoftGray, fontSize = 10.sp)
+                                Text("$14,250", color = ScrymeColors.Brass, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text("ACTIVE STAFF", color = ScrymeColors.SoftGray, fontSize = 10.sp)
+                                Text("12 Online", color = ScrymeColors.GreenLogo, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    // Simulated Peak Hours Chart
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+                        border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Text(
+                                text = "STORE TRAFFIC BY HOUR",
+                                color = ScrymeColors.Brass,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.sp,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+
+                            // 5 hour columns
+                            val traffic = listOf(35, 65, 95, 45, 80)
+                            val labels = listOf("08:00", "10:00", "12:00", "14:00", "16:00")
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(140.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.Bottom
+                            ) {
+                                traffic.forEachIndexed { idx, value ->
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxHeight(value / 100f)
+                                                .width(18.dp)
+                                                .clip(RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp))
+                                                .background(ScrymeColors.Brass)
+                                        )
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = labels[idx],
+                                            color = ScrymeColors.SoftGray,
+                                            fontSize = 9.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            DashboardScreen.Broadcast -> {
+                var title by remember { mutableStateOf("") }
+                var message by remember { mutableStateOf("") }
+                var severity by remember { mutableStateOf("INFO") }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SubScreenHeader(title = "Broadcast Alert") {
+                        currentScreen = DashboardScreen.Home
+                    }
+
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Announcement Title", color = ScrymeColors.SoftGray) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ScrymeColors.Brass,
+                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                            focusedLabelColor = ScrymeColors.Brass,
+                            cursorColor = ScrymeColors.Brass
+                        ),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = message,
+                        onValueChange = { message = it },
+                        label = { Text("Message Body", color = ScrymeColors.SoftGray) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ScrymeColors.Brass,
+                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                            focusedLabelColor = ScrymeColors.Brass,
+                            cursorColor = ScrymeColors.Brass
+                        )
+                    )
+
+                    // Severity Picker
+                    Text(
+                        text = "Severity Level",
+                        color = ScrymeColors.Brass,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("INFO", "WARNING", "SEVERE").forEach { level ->
+                            val isSelected = severity == level
+                            Button(
+                                onClick = { severity = level },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSelected) ScrymeColors.Brass else ScrymeColors.SteelDark,
+                                    contentColor = if (isSelected) ScrymeColors.InkBg else ScrymeColors.Paper
+                                ),
+                                shape = RoundedCornerShape(4.dp),
+                                contentPadding = PaddingValues(vertical = 8.dp)
+                            ) {
+                                Text(level, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            if (title.isBlank() || message.isBlank()) {
+                                Toast.makeText(context, "Please enter both Title and Message", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Successfully broadcasted '$title' to branch nodes", Toast.LENGTH_SHORT).show()
+                                title = ""
+                                message = ""
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("BROADCAST ALERT NOW", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                        }
+                    }
+                }
+            }
+
+            DashboardScreen.Settings -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    SubScreenHeader(title = "Security & Settings") {
+                        currentScreen = DashboardScreen.Home
+                    }
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+                        border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+                    ) {
+                        Column(modifier = Modifier.padding(20.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Home,
+                                    contentDescription = null,
+                                    tint = ScrymeColors.Brass,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "ACTIVE TENANT",
+                                    color = ScrymeColors.Brass,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+                            Text(
+                                text = activeOrg,
+                                color = ScrymeColors.Paper,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+
+                            HorizontalDivider(color = ScrymeColors.SoftGray.copy(alpha = 0.1f), modifier = Modifier.padding(bottom = 16.dp))
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(bottom = 8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Lock,
+                                    contentDescription = null,
+                                    tint = ScrymeColors.Brass,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "SECURE SESSION TOKEN",
+                                    color = ScrymeColors.Brass,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(ScrymeColors.InkBg)
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = if (sessionToken.length > 30) {
+                                        "${sessionToken.take(15)}...${sessionToken.takeLast(15)}"
+                                    } else {
+                                        sessionToken
+                                    },
+                                    color = ScrymeColors.Paper,
+                                    fontFamily = FontFamily.Monospace,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
