@@ -155,11 +155,32 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun `checkSession failure transitions state to Error`() = runTest(testDispatcher) {
+    fun `checkSession with expired session clears token and transitions to Idle`() = runTest(testDispatcher) {
         every { sessionManager.token } returns MutableStateFlow("invalid_token")
         coEvery { repository.getSession() } coAnswers {
             delay(100)
             Result.failure(Exception("Session expired"))
+        }
+        coEvery { repository.signOut() } returns Result.success(Unit)
+
+        // Re-init ViewModel
+        val testViewModel = AuthViewModel(repository, sessionManager)
+
+        runCurrent()
+        assertEquals(UiState.Loading, testViewModel.loginState.value)
+
+        advanceTimeBy(150)
+
+        assertTrue(testViewModel.loginState.value is UiState.Idle)
+        coVerify { repository.signOut() }
+    }
+
+    @Test
+    fun `checkSession failure with network error transitions state to Error without clearing token`() = runTest(testDispatcher) {
+        every { sessionManager.token } returns MutableStateFlow("valid_token_but_offline")
+        coEvery { repository.getSession() } coAnswers {
+            delay(100)
+            Result.failure(Exception("Network Connect Timeout"))
         }
 
         // Re-init ViewModel
@@ -171,6 +192,7 @@ class AuthViewModelTest {
         advanceTimeBy(150)
 
         assertTrue(testViewModel.loginState.value is UiState.Error)
-        assertEquals("Session expired", (testViewModel.loginState.value as UiState.Error).message)
+        assertEquals("Network Connect Timeout", (testViewModel.loginState.value as UiState.Error).message)
+        coVerify(exactly = 0) { repository.signOut() }
     }
 }
