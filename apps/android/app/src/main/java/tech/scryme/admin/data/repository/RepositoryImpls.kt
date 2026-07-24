@@ -53,6 +53,18 @@ class AuthRepositoryImpl(
         sessionManager.clearSession()
         return Result.success(Unit)
     }
+
+    override suspend fun signInWithGoogle(idToken: String): Result<BetterAuthSessionResponse> {
+        return safeApiCall {
+            api.signInWithGoogle(mapOf("idToken" to idToken))
+        }.onSuccess { response ->
+            sessionManager.saveSession(
+                token = response.session.token,
+                orgSlug = response.user.activeOrganizationId,
+                orgId = response.user.activeOrganizationId
+            )
+        }
+    }
 }
 
 class PresenceRepositoryImpl(

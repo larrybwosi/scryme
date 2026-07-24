@@ -45,6 +45,19 @@ class AuthViewModel(
         }
     }
 
+    fun loginWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _loginState.value = UiState.Loading
+            repository.signInWithGoogle(idToken)
+                .onSuccess { response ->
+                    _loginState.value = UiState.Success(response)
+                }
+                .onFailure { error ->
+                    _loginState.value = UiState.Error(error.message ?: "Google login failed")
+                }
+        }
+    }
+
     fun loginWithCard(cardId: String, pin: String) {
         viewModelScope.launch {
             _loginState.value = UiState.Loading
