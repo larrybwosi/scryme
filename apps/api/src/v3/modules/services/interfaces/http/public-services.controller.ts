@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
   NotFoundException,
+  Query,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -19,8 +20,10 @@ import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { ServiceManagementService } from "../../application/services/service-management.service";
 import { BookingService } from "../../application/services/booking.service";
+import { StaffSchedulingService } from "../../application/services/staff-scheduling.service";
 import { OtpService } from "../../application/services/otp.service";
 import { PrismaService } from "@/prisma/prisma.service";
+import { BookingStatus } from "@repo/db";
 import {
   RequestOtpDto,
   VerifyOtpDto,
@@ -35,6 +38,7 @@ export class PublicServicesController {
   constructor(
     private readonly serviceManagement: ServiceManagementService,
     private readonly bookingService: BookingService,
+    private readonly staffScheduling: StaffSchedulingService,
     private readonly otpService: OtpService,
     private readonly prisma: PrismaService,
   ) {}
@@ -85,6 +89,70 @@ export class PublicServicesController {
             id: s.memberId,
             name: s.member?.user?.name || "Staff"
         }))
+    };
+  }
+
+  @Get(":id/availability")
+  @ApiOperation({ summary: "Get available time slots for a service" })
+  async getServiceAvailability(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Query("date") dateString?: string
+  ) {
+    const orgId = req.organization.id;
+    const service = await this.serviceManagement.getServiceById(orgId, id);
+    if (!service.isActive) throw new NotFoundException("Service is not available");
+
+    const targetDate = dateString ? new Date(dateString) : new Date();
+    const slots: string[] = [];
+    const baseYear = targetDate.getFullYear();
+    const baseMonth = targetDate.getMonth();
+    const baseDay = targetDate.getDate();
+
+    const duration = service.estimatedDuration || 30;
+
+    for (let hour = 8; hour < 18; hour++) {
+      for (const min of [0, 30]) {
+        const slotStart = new Date(baseYear, baseMonth, baseDay, hour, min, 0);
+        const slotEnd = new Date(slotStart.getTime() + duration * 60 * 1000);
+
+        let staffAvailable = false;
+        if (service.staff && service.staff.length > 0) {
+          for (const s of service.staff) {
+            const isWorking = await this.staffScheduling.isStaffAvailable(s.memberId, slotStart, slotEnd);
+            if (isWorking) {
+              const overlap = await this.prisma.client.serviceBooking.findFirst({
+                where: {
+                  staff: { some: { memberId: s.memberId } },
+                  status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+                  OR: [
+                    {
+                      scheduledStartTime: { lt: slotEnd },
+                      scheduledEndTime: { gt: slotStart },
+                    }
+                  ],
+                }
+              });
+              if (!overlap) {
+                staffAvailable = true;
+                break;
+              }
+            }
+          }
+        } else {
+          staffAvailable = true;
+        }
+
+        if (staffAvailable) {
+          slots.push(slotStart.toISOString());
+        }
+      }
+    }
+
+    return {
+      serviceId: id,
+      date: targetDate.toISOString().split("T")[0],
+      availableSlots: slots,
     };
   }
 
