@@ -17,6 +17,11 @@ interface AuthApiService {
     suspend fun terminalLogin(
         @Body request: TerminalLoginDto
     ): Response<ApiEnvelope<TerminalLoginResponseDto>>
+
+    @POST("/api/auth/login/social/google")
+    suspend fun signInWithGoogle(
+        @Body request: Map<String, String> // e.g., idToken or token
+    ): Response<BetterAuthSessionResponse>
 }
 
 interface PresenceApiService {
