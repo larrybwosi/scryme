@@ -5,42 +5,42 @@ import { colors, fonts, modules } from "@/lib/scryme-tokens";
 const accent = modules.find((m) => m.code === "CRM")!.accent;
 
 const highlights = [
-  "Visual sales pipeline with drag-and-drop staging",
-  "Automated lead scoring and follow-up sequences",
-  "360° customer profiles with full interaction history",
-  "Email campaigns, segments, and A/B testing",
-  "Every closed deal posts straight to the finance ledger",
+  "Stunning consumer-facing storefront websites built instantly",
+  "Real-time catalog, pricing, and stock sync with your central database",
+  "Integrated CRM to capture customer emails and purchase histories",
+  "Flexible e-commerce layouts optimized for conversion and speed",
+  "Every order posts directly to central inventory and billing ledgers",
 ];
 
 function CRMKanban() {
   const columns = [
     {
-      title: "Leads",
+      title: "Store Drafts",
       intensity: 0.25,
       cards: [
-        { name: "Arjun Mehta", company: "Vantage Corp", value: "$24K" },
-        { name: "Sarah Okonkwo", company: "TerraLogix", value: "$18K" },
+        { name: "Westfield Storefront", company: "Premium Theme", value: "Active" },
+        { name: "TerraLogix B2B Portal", company: "Wholesale Layout", value: "Review" },
       ],
     },
     {
-      title: "Qualified",
+      title: "Syncing Catalog",
       intensity: 0.48,
       cards: [
-        { name: "Elena Vasquez", company: "Meridian Grp.", value: "$47K" },
+        { name: "Meridian Storefront", company: "Modern Dark", value: "Syncing" },
       ],
     },
     {
-      title: "Proposal",
+      title: "Live Storefronts",
       intensity: 0.72,
       cards: [
-        { name: "Nkechi Adeyemi", company: "Argent Ind.", value: "$95K" },
-        { name: "Jake Thornton", company: "Kestrel LLC", value: "$63K" },
+        { name: "Argent Direct", company: "Clean Light", value: "Live" },
+        { name: "Kestrel Outlet", company: "Sleek Mono", value: "Live" },
       ],
     },
     {
-      title: "Won",
+      title: "Orders Flowing",
       intensity: 1,
-      cards: [{ name: "Priya Sharma", company: "Solis Dist.", value: "$112K" }],
+      cards: [{ name: "Solis Shop", company: "Classic Theme", value: "1.4k Orders" }],
     },
   ];
 
@@ -68,14 +68,14 @@ function CRMKanban() {
             className="text-xs font-semibold"
             style={{ color: colors.textPrimary, fontFamily: fonts.body }}
           >
-            Sales Pipeline
+            Storefront & Website Management
           </span>
         </div>
         <span
           className="text-xs"
           style={{ color: colors.textFaint, fontFamily: fonts.mono }}
         >
-          Q4 2026
+          Centralized
         </span>
       </div>
 
@@ -163,13 +163,13 @@ function CRMKanban() {
           className="text-xs"
           style={{ color: colors.textFaint, fontFamily: fonts.mono }}
         >
-          Pipeline total
+          Total Live Storefronts
         </span>
         <span
           className="text-sm font-bold"
           style={{ color: colors.ledgerGreen, fontFamily: fonts.mono }}
         >
-          $359,000
+          2,548 Stores
         </span>
       </div>
     </div>
@@ -198,7 +198,7 @@ export function CRMTeaser() {
                 className="text-xs font-semibold uppercase tracking-widest"
                 style={{ color: accent, fontFamily: fonts.mono }}
               >
-                CRM
+                Storefronts & CRM
               </span>
             </div>
             <h2
@@ -206,15 +206,13 @@ export function CRMTeaser() {
               className="text-3xl sm:text-4xl font-medium text-balance"
               style={{ color: colors.textPrimary, fontFamily: fonts.display }}
             >
-              Close more deals with an intelligent sales pipeline
+              Launch beautiful, high-converting customer storefronts
             </h2>
             <p
               className="mt-4 text-base leading-relaxed"
               style={{ color: colors.textMuted, fontFamily: fonts.body }}
             >
-              Scryme CRM gives your sales team complete visibility into every
-              deal — from first contact to closed contract, with every won deal
-              reconciled against the same ledger Finance reads from.
+              Scryme enables you to create and manage stunning customer-facing storefront websites instantly. Build robust digital layouts for your clients, fully synchronized in real-time with your central stock levels, integrated POS registers, and consolidated customer data.
             </p>
 
             <ul className="mt-7 space-y-3">
@@ -247,7 +245,7 @@ export function CRMTeaser() {
                 fontFamily: fonts.body,
               }}
             >
-              Explore CRM
+              Explore Storefronts & CRM
               <ArrowRight size={14} />
             </Link>
           </div>

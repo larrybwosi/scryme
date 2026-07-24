@@ -8,6 +8,7 @@ import { getPostBySlug, getPosts } from "../../../lib/sanity";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { urlFor } from "@/sanity/lib/image";
 import { BookText, ArrowRight } from "lucide-react";
+import Image from "next/image";
 
 export const revalidate = 60;
 
@@ -210,12 +211,15 @@ const portableTextComponents = {
           className="my-6 sm:my-8 rounded-xl overflow-hidden border"
           style={{ borderColor: colors.inkLine }}
         >
-          <img
-            src={imgUrl}
-            alt={value.alt || "Article illustration"}
-            className="w-full h-auto max-h-[450px] object-cover"
-            loading="lazy"
-          />
+          <div className="relative w-full h-[250px] sm:h-[350px] md:h-[450px]">
+            <Image
+              src={imgUrl}
+              alt={value.alt || "Article illustration"}
+              fill
+              className="object-cover"
+              loading="lazy"
+            />
+          </div>
           {(value.caption || value.attribution) && (
             <figcaption
               className="px-4 py-2 text-xs sm:text-sm text-center border-t font-medium flex flex-col gap-0.5"
@@ -356,12 +360,15 @@ export default async function BlogPost({ params }: Props) {
             className="mt-8 sm:mt-10 rounded-2xl overflow-hidden border"
             style={{ borderColor: colors.inkLine }}
           >
-            <img
-              src={post.mainImage.url || urlFor(post.mainImage).width(1000).height(550).url()}
-              alt={post.mainImage.alt || post.title}
-              className="w-full h-auto max-h-[480px] object-cover"
-              loading="eager"
-            />
+            <div className="relative w-full h-[220px] sm:h-[350px] md:h-[480px]">
+              <Image
+                src={post.mainImage.url || urlFor(post.mainImage).width(1000).height(550).url()}
+                alt={post.mainImage.alt || post.title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
             {(post.mainImage.caption || post.mainImage.attribution) && (
               <figcaption
                 className="px-4 py-2.5 text-xs sm:text-sm text-center border-t font-medium flex flex-col gap-0.5"
@@ -482,10 +489,12 @@ export default async function BlogPost({ params }: Props) {
                 {/* Image */}
                 {simPost.mainImage ? (
                   <div className="relative h-32 w-full overflow-hidden border-b" style={{ borderColor: colors.inkLine }}>
-                    <img
-                      src={urlFor(simPost.mainImage).width(400).height(250).url()}
+                    <Image
+                      src={simPost.mainImage.url || urlFor(simPost.mainImage).width(400).height(250).url()}
                       alt={simPost.mainImage.alt || simPost.title}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      fill
+                      sizes="250px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       loading="lazy"
                     />
                   </div>
