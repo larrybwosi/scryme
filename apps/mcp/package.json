@@ -1,0 +1,29 @@
+{
+  "name": "mcp",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts",
+    "dev": "tsup src/index.ts --format esm --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.4.1",
+    "@repo/v3-sdk": "workspace:*",
+    "axios": "^1.18.1",
+    "express": "^4.21.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.20.0",
+    "@repo/typescript-config": "workspace:*",
+    "tsup": "^8.5.1",
+    "typescript": "5.7.3",
+    "vitest": "^4.1.9"
+  }
+}
