@@ -1,11 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
 export class AddToCartDto {
-  @ApiProperty()
-  productId: string;
+  @ApiPropertyOptional()
+  productId?: string;
 
   @ApiPropertyOptional()
   variantId?: string;
+
+  @ApiPropertyOptional()
+  serviceId?: string;
+
+  @ApiPropertyOptional()
+  bookingDetails?: any; // Holds { scheduledStartTime, staffIds, resourceIds, notes }
 
   @ApiProperty({ default: 1 })
   quantity: number;
@@ -18,11 +24,14 @@ export class AddToCartDto {
 }
 
 export class RemoveFromCartDto {
-  @ApiProperty()
-  productId: string;
+  @ApiPropertyOptional()
+  productId?: string;
 
   @ApiPropertyOptional()
   variantId?: string;
+
+  @ApiPropertyOptional()
+  serviceId?: string;
 
   @ApiPropertyOptional()
   sessionId?: string;
@@ -32,11 +41,17 @@ export class RemoveFromCartDto {
 }
 
 export class CartItemDto {
-  @ApiProperty()
-  productId: string;
+  @ApiPropertyOptional()
+  productId?: string;
 
   @ApiPropertyOptional()
   variantId?: string;
+
+  @ApiPropertyOptional()
+  serviceId?: string;
+
+  @ApiPropertyOptional()
+  bookingDetails?: any;
 
   @ApiProperty()
   quantity: number;

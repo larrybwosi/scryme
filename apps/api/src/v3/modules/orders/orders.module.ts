@@ -15,6 +15,7 @@ import { LoyaltyModule } from "../loyalty/loyalty.module";
 import { CatalogModule } from "../catalog/catalog.module";
 import { FinanceModule } from "../finance/finance.module";
 import { ScrymeModule } from "../../../v2/scryme/scryme.module";
+import { ServicesModule } from "../services/services.module";
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ScrymeModule } from "../../../v2/scryme/scryme.module";
     CatalogModule,
     ScrymeModule,
     forwardRef(() => FinanceModule),
+    forwardRef(() => ServicesModule),
   ],
   controllers: [OrderController],
   providers: [

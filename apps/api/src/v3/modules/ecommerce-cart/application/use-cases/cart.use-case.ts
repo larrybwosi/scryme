@@ -46,31 +46,55 @@ export class CartUseCase {
       false,
     );
 
-    const item = await this.prisma.client.cartItem.upsert({
-      where: {
-        cartId_productId_variantId: {
+    let existingItem = null;
+
+    if (dto.productId) {
+      existingItem = await this.prisma.client.cartItem.findFirst({
+        where: {
           cartId: cart.id,
           productId: dto.productId,
-          variantId: dto.variantId || "base",
+          variantId: dto.variantId || null,
         },
-      },
-      update: {
-        quantity: { increment: dto.quantity },
-      },
-      create: {
+      });
+    } else if (dto.serviceId) {
+      existingItem = await this.prisma.client.cartItem.findFirst({
+        where: {
+          cartId: cart.id,
+          serviceId: dto.serviceId,
+        },
+      });
+    }
+
+    let item;
+    if (existingItem) {
+      item = await this.prisma.client.cartItem.update({
+        where: { id: existingItem.id },
+        data: {
+          quantity: dto.serviceId ? 1 : existingItem.quantity + dto.quantity,
+          bookingDetails: dto.bookingDetails ? (dto.bookingDetails as any) : existingItem.bookingDetails,
+        },
+      });
+    } else {
+      item = await this.prisma.client.cartItem.create({
+        data: {
+          cartId: cart.id,
+          productId: dto.productId || null,
+          variantId: dto.variantId || null,
+          serviceId: dto.serviceId || null,
+          bookingDetails: dto.bookingDetails ? (dto.bookingDetails as any) : undefined,
+          quantity: dto.quantity,
+        },
+      });
+    }
+
+    // Queue background job for inventory check if product variant is added
+    if (dto.productId) {
+      await this.cartQueue.add("check-cart-inventory", {
         cartId: cart.id,
         productId: dto.productId,
-        variantId: dto.variantId,
-        quantity: dto.quantity,
-      },
-    });
-
-    // Queue background job for inventory check or other tasks
-    await this.cartQueue.add("check-cart-inventory", {
-      cartId: cart.id,
-      productId: dto.productId,
-      organizationId,
-    });
+        organizationId,
+      }).catch(err => console.error("Failed to add to cart queue:", err));
+    }
 
     return item;
   }
@@ -84,14 +108,31 @@ export class CartUseCase {
       false,
     );
 
-    return this.prisma.client.cartItem.delete({
-      where: {
-        cartId_productId_variantId: {
+    let existingItem = null;
+
+    if (dto.productId) {
+      existingItem = await this.prisma.client.cartItem.findFirst({
+        where: {
           cartId: cart.id,
           productId: dto.productId,
-          variantId: dto.variantId || "base",
+          variantId: dto.variantId || null,
         },
-      },
+      });
+    } else if (dto.serviceId) {
+      existingItem = await this.prisma.client.cartItem.findFirst({
+        where: {
+          cartId: cart.id,
+          serviceId: dto.serviceId,
+        },
+      });
+    }
+
+    if (!existingItem) {
+      throw new NotFoundException("Cart item not found");
+    }
+
+    return this.prisma.client.cartItem.delete({
+      where: { id: existingItem.id },
     });
   }
 }

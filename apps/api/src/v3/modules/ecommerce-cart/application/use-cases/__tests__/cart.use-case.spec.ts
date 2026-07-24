@@ -16,7 +16,9 @@ describe("CartUseCase", () => {
           update: vi.fn(),
         },
         cartItem: {
-          upsert: vi.fn(),
+          findFirst: vi.fn(),
+          create: vi.fn(),
+          update: vi.fn(),
           delete: vi.fn(),
         },
       },
@@ -29,7 +31,7 @@ describe("CartUseCase", () => {
     useCase = new CartUseCase(prisma, cartQueue);
   });
 
-  it("should add an item to the cart", async () => {
+  it("should add a physical product item to the cart", async () => {
     const orgId = "org-1";
     const dto = {
       productId: "prod-1",
@@ -44,27 +46,73 @@ describe("CartUseCase", () => {
     };
 
     vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
-    vi.mocked(prisma.client.cartItem.upsert).mockResolvedValue({
+    vi.mocked(prisma.client.cartItem.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.client.cartItem.create).mockResolvedValue({
       id: "item-1",
+      cartId: "cart-1",
+      productId: "prod-1",
+      variantId: "var-1",
+      quantity: 2,
     } as any);
 
     const result = await useCase.addToCart(orgId, dto);
 
     expect(result).toBeDefined();
-    expect(prisma.client.cartItem.upsert).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          cartId_productId_variantId: {
-            cartId: "cart-1",
-            productId: "prod-1",
-            variantId: "var-1",
-          },
-        }),
-      }),
-    );
+    expect(prisma.client.cartItem.create).toHaveBeenCalledWith({
+      data: {
+        cartId: "cart-1",
+        productId: "prod-1",
+        variantId: "var-1",
+        serviceId: null,
+        bookingDetails: undefined,
+        quantity: 2,
+      }
+    });
     expect(cartQueue.add).toHaveBeenCalledWith(
       "check-cart-inventory",
       expect.any(Object),
     );
+  });
+
+  it("should add a service booking item to the cart", async () => {
+    const orgId = "org-1";
+    const dto = {
+      serviceId: "srv-1",
+      bookingDetails: {
+        scheduledStartTime: "2026-10-15T10:00:00Z",
+        staffIds: ["staff-1"],
+      },
+      quantity: 1,
+      sessionId: "sess-1",
+    };
+    const mockCart = {
+      id: "cart-1",
+      organizationId: orgId,
+      sessionId: "sess-1",
+    };
+
+    vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
+    vi.mocked(prisma.client.cartItem.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.client.cartItem.create).mockResolvedValue({
+      id: "item-2",
+      cartId: "cart-1",
+      serviceId: "srv-1",
+      bookingDetails: dto.bookingDetails,
+      quantity: 1,
+    } as any);
+
+    const result = await useCase.addToCart(orgId, dto);
+
+    expect(result).toBeDefined();
+    expect(prisma.client.cartItem.create).toHaveBeenCalledWith({
+      data: {
+        cartId: "cart-1",
+        productId: null,
+        variantId: null,
+        serviceId: "srv-1",
+        bookingDetails: dto.bookingDetails,
+        quantity: 1,
+      }
+    });
   });
 });
