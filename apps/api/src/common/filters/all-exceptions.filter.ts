@@ -26,6 +26,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const res = exception.getResponse() as any;
       message = res.message || exception.message;
       code = res.error || "HTTP_EXCEPTION";
+      if (res && typeof res === "object") {
+        if ("details" in res) {
+          details = res.details;
+        } else if ("errors" in res) {
+          details = res.errors;
+        }
+      }
     } else if (exception instanceof ApiError) {
       status = (exception as any).statusCode;
       message = (exception as any).message;

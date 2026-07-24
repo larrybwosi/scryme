@@ -7,6 +7,7 @@ import {
   Req,
   Res,
   All,
+  UsePipes,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { AllowPublic } from "../../../../../common/decorators/auth.decorator";
@@ -15,6 +16,8 @@ import {
   TokenRequestDto,
   TokenResponseDto,
 } from "../../application/dto/token.dto";
+import { V3ZodValidationPipe } from "../../../../common/pipes/v3-zod-validation.pipe";
+import { TokenRequestSchema } from "../../application/dto/token.schema";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { AuthService } from "@/auth/auth.service";
 import {
@@ -33,6 +36,7 @@ export class AuthController {
 
   @AllowPublic()
   @Post("token")
+  @UsePipes(new V3ZodValidationPipe(TokenRequestSchema))
   @ApiOperation({
     summary: "Exchange client credentials for an access token",
     operationId: "Auth_ExchangeToken",
