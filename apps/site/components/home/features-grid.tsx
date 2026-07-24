@@ -4,6 +4,8 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { colors, fonts, modules as defaultModules, type ModuleCode } from "@/lib/scryme-tokens";
+import Image from "next/image";
+import { urlFor } from "@/sanity/lib/image";
 
 function ConnectsTo({ codes }: { codes: ModuleCode[] }) {
   return (
@@ -36,6 +38,8 @@ function ManifestRow({
   module: any;
   index: number;
 }) {
+  const imageUrl = module.image ? (module.image.url || urlFor(module.image).width(400).height(250).url()) : null;
+
   return (
     <motion.article
       initial={{ opacity: 0, y: 16 }}
@@ -46,7 +50,7 @@ function ManifestRow({
         duration: 0.5,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="group grid grid-cols-1 sm:grid-cols-[88px_minmax(0,1.4fr)_minmax(0,2fr)_140px] items-start sm:items-center gap-3 sm:gap-6 px-5 py-5 sm:py-4 border-b transition-colors hover:bg-[var(--hover-bg)]"
+      className="group grid grid-cols-1 sm:grid-cols-[88px_minmax(0,1.2fr)_minmax(0,2fr)_minmax(0,1.4fr)_140px] items-start sm:items-center gap-3 sm:gap-6 px-5 py-5 sm:py-4 border-b transition-colors hover:bg-[var(--hover-bg)]"
       style={{ borderColor: colors.inkLine }}
     >
       {/* Ticker code */}
@@ -78,6 +82,26 @@ function ManifestRow({
       >
         {module.description}
       </p>
+
+      {/* Image Preview Block */}
+      <div className="relative hidden md:block h-14 w-24 overflow-hidden rounded border"
+        style={{ borderColor: colors.inkLine, background: colors.inkPanel }}
+      >
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={module.image?.alt || module.name}
+            fill
+            sizes="96px"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full w-full bg-slate-900/40 text-[10px] uppercase font-bold tracking-widest text-slate-500">
+            Preview
+          </div>
+        )}
+      </div>
 
       {/* Connects to + link */}
       <div className="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-2">
@@ -149,10 +173,10 @@ export function FeaturesGrid({ modules }: { modules?: any[] }) {
         >
           {/* header row — desktop only */}
           <div
-            className="hidden sm:grid grid-cols-[88px_minmax(0,1.4fr)_minmax(0,2fr)_140px] gap-6 px-5 py-3 border-b"
+            className="hidden sm:grid grid-cols-[88px_minmax(0,1.2fr)_minmax(0,2fr)_minmax(0,1.4fr)_140px] gap-6 px-5 py-3 border-b"
             style={{ borderColor: colors.inkLine }}
           >
-            {["Code", "Module", "What it does", "Connects to"].map((h) => (
+            {["Code", "Module", "What it does", "Preview", "Connects to"].map((h) => (
               <span
                 key={h}
                 className="text-[10px] uppercase tracking-widest"

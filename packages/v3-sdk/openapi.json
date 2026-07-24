@@ -1573,7 +1573,7 @@
     "/v3/auth/oauth2/{path}": {
       "get": {
         "description": "Proxies OAuth2 requests (authorize, token, userinfo, etc.) to the auth provider",
-        "operationId": "AuthController_handleOAuth2_get",
+        "operationId": "AuthController_handleOAuth2",
         "parameters": [
           {
             "name": "path",
@@ -1592,37 +1592,68 @@
         "summary": "Handle OAuth2 provider requests",
         "tags": [
           "V3 Auth"
+        ]
+      }
+    },
+    "/v3/admin/stats": {
+      "get": {
+        "operationId": "AdminController_getStats",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get system-wide metrics and stats",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/organizations": {
+      "get": {
+        "operationId": "AdminController_listOrganizations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List all organizations system-wide",
+        "tags": [
+          "V3 Admin"
         ]
       },
       "post": {
-        "description": "Proxies OAuth2 requests (authorize, token, userinfo, etc.) to the auth provider",
-        "operationId": "AuthController_handleOAuth2_post",
-        "parameters": [
-          {
-            "name": "path",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
+        "operationId": "AdminController_createOrganization",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrganizationDto"
+              }
             }
           }
-        ],
+        },
         "responses": {
-          "200": {
+          "201": {
             "description": ""
           }
         },
-        "summary": "Handle OAuth2 provider requests",
+        "summary": "Create a new organization system-wide",
         "tags": [
-          "V3 Auth"
+          "V3 Admin"
         ]
-      },
-      "put": {
-        "description": "Proxies OAuth2 requests (authorize, token, userinfo, etc.) to the auth provider",
-        "operationId": "AuthController_handleOAuth2_put",
+      }
+    },
+    "/v3/admin/organizations/{id}": {
+      "get": {
+        "operationId": "AdminController_getOrganizationDetails",
         "parameters": [
           {
-            "name": "path",
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
@@ -1635,40 +1666,16 @@
             "description": ""
           }
         },
-        "summary": "Handle OAuth2 provider requests",
+        "summary": "Get single organization details",
         "tags": [
-          "V3 Auth"
-        ]
-      },
-      "delete": {
-        "description": "Proxies OAuth2 requests (authorize, token, userinfo, etc.) to the auth provider",
-        "operationId": "AuthController_handleOAuth2_delete",
-        "parameters": [
-          {
-            "name": "path",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Handle OAuth2 provider requests",
-        "tags": [
-          "V3 Auth"
+          "V3 Admin"
         ]
       },
       "patch": {
-        "description": "Proxies OAuth2 requests (authorize, token, userinfo, etc.) to the auth provider",
-        "operationId": "AuthController_handleOAuth2_patch",
+        "operationId": "AdminController_updateOrganization",
         "parameters": [
           {
-            "name": "path",
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
@@ -1676,22 +1683,31 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrganizationDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": ""
           }
         },
-        "summary": "Handle OAuth2 provider requests",
+        "summary": "Update organization details system-wide",
         "tags": [
-          "V3 Auth"
+          "V3 Admin"
         ]
       },
-      "options": {
-        "description": "Proxies OAuth2 requests (authorize, token, userinfo, etc.) to the auth provider",
-        "operationId": "AuthController_handleOAuth2_options",
+      "delete": {
+        "operationId": "AdminController_deleteOrganization",
         "parameters": [
           {
-            "name": "path",
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
@@ -1704,19 +1720,36 @@
             "description": ""
           }
         },
-        "summary": "Handle OAuth2 provider requests",
+        "summary": "Soft-delete an organization system-wide",
         "tags": [
-          "V3 Auth"
+          "V3 Admin"
         ]
-      },
-      "head": {
-        "description": "Proxies OAuth2 requests (authorize, token, userinfo, etc.) to the auth provider",
-        "operationId": "AuthController_handleOAuth2_head",
+      }
+    },
+    "/v3/admin/members": {
+      "get": {
+        "operationId": "AdminController_listMembers",
         "parameters": [
           {
-            "name": "path",
+            "name": "isActive",
             "required": true,
-            "in": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "query",
             "schema": {
               "type": "string"
             }
@@ -1727,17 +1760,67 @@
             "description": ""
           }
         },
-        "summary": "Handle OAuth2 provider requests",
+        "summary": "List all members system-wide with filters",
         "tags": [
-          "V3 Auth"
+          "V3 Admin"
         ]
-      },
-      "search": {
-        "description": "Proxies OAuth2 requests (authorize, token, userinfo, etc.) to the auth provider",
-        "operationId": "AuthController_handleOAuth2_search",
+      }
+    },
+    "/v3/admin/users": {
+      "get": {
+        "operationId": "AdminController_listUsers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List all users system-wide",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/users/{id}/ban": {
+      "post": {
+        "operationId": "AdminController_banUser",
         "parameters": [
           {
-            "name": "path",
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BanUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Globally ban a user and suspend associated members",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/users/{id}/unban": {
+      "post": {
+        "operationId": "AdminController_unbanUser",
+        "parameters": [
+          {
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
@@ -1746,13 +1829,43 @@
           }
         ],
         "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Globally unban a user and reactivate associated members",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/connected-apps": {
+      "get": {
+        "operationId": "AdminController_listConnectedApps",
+        "parameters": [],
+        "responses": {
           "200": {
             "description": ""
           }
         },
-        "summary": "Handle OAuth2 provider requests",
+        "summary": "List connected oauth application clients",
         "tags": [
-          "V3 Auth"
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/system-logs": {
+      "get": {
+        "operationId": "AdminController_listSystemLogs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get system action audit logs",
+        "tags": [
+          "V3 Admin"
         ]
       }
     },
@@ -9257,6 +9370,65 @@
           "tokenType",
           "expiresIn"
         ]
+      },
+      "CreateOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the organization"
+          },
+          "slug": {
+            "type": "string",
+            "description": "The unique slug of the organization"
+          },
+          "logo": {
+            "type": "string",
+            "description": "Logo URL"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          }
+        },
+        "required": [
+          "name",
+          "slug"
+        ]
+      },
+      "UpdateOrganizationDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the organization"
+          },
+          "slug": {
+            "type": "string",
+            "description": "The unique slug of the organization"
+          },
+          "logo": {
+            "type": "string",
+            "description": "Logo URL"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          }
+        }
+      },
+      "BanUserDto": {
+        "type": "object",
+        "properties": {
+          "banReason": {
+            "type": "string",
+            "description": "The reason for banning the user"
+          },
+          "banExpires": {
+            "type": "string",
+            "description": "The expiration date of the ban"
+          }
+        }
       },
       "CreateWebhookDto": {
         "type": "object",

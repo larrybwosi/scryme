@@ -5,6 +5,7 @@ import { ArrowRight, BookText } from "lucide-react";
 import { getPosts } from "../../lib/sanity";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { urlFor } from "@/sanity/lib/image";
+import Image from "next/image";
 
 export const revalidate = 60;
 
@@ -123,11 +124,13 @@ export default async function BlogPage() {
               {/* Image Section */}
               {featured.mainImage && (
                 <div className="w-full lg:w-1/2 relative min-h-[220px] sm:min-h-[300px] lg:min-h-[400px] overflow-hidden">
-                  <img
+                  <Image
                     src={featured.mainImage.url || urlFor(featured.mainImage).width(800).height(500).url()}
                     alt={featured.mainImage.alt || featured.title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    loading="eager"
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    priority
                   />
                   <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-slate-950/40 via-transparent to-transparent opacity-60 pointer-events-none" />
                 </div>
@@ -222,10 +225,12 @@ export default async function BlogPage() {
                     className="relative h-44 sm:h-48 w-full overflow-hidden border-b"
                     style={{ borderColor: colors.inkLine }}
                   >
-                    <img
+                    <Image
                       src={post.mainImage.url || urlFor(post.mainImage).width(600).height(400).url()}
                       alt={post.mainImage.alt || post.title}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                       loading="lazy"
                     />
                   </div>

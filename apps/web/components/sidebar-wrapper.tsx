@@ -11,8 +11,11 @@ export function SidebarWrapper() {
     "/sign-up",
     "/create-org",
     "/reset-password",
+    "/banned",
+    "/unauthorized",
   ];
-  const showSidebar = !noSidebarRoutes.includes(pathname);
+  const showSidebar =
+    !noSidebarRoutes.includes(pathname) && !pathname.startsWith("/invite");
 
   if (!showSidebar) return null;
 

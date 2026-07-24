@@ -1,8 +1,10 @@
 "use client";
 
-import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, DollarSign, Calendar, TrendingUp, Building2, User as UserIcon } from 'lucide-react';
+import React, { Suspense, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { ArrowLeft, DollarSign, Calendar, TrendingUp, Building2, User as UserIcon, Edit2 } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
+import { DealForm } from '../../_components/deal-form';
 import Link from 'next/link';
 import { DetailTabs, type TabId } from '@/components/crm/detail-tabs';
 import { NotesTab } from '@/components/crm/notes-tab';
@@ -35,6 +37,8 @@ function TabContent({ deal, tab }: { deal: any; tab: TabId }) {
 }
 
 function DetailViewInner({ deal }: DealDetailViewProps) {
+  const router = useRouter();
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const searchParams = useSearchParams();
   const tab = (searchParams.get('tab') as TabId) ?? 'notes';
 
@@ -82,13 +86,23 @@ function DetailViewInner({ deal }: DealDetailViewProps) {
         {/* Deal Info Panel */}
         <div className="w-[320px] shrink-0 border-r border-border overflow-y-auto p-6 custom-scrollbar">
            <div className="space-y-6">
-              <div>
-                <h2 className="text-lg font-bold">{deal.data.name}</h2>
-                <div className="flex items-center gap-2 mt-1">
-                   <span className="px-2 py-0.5 bg-primary/10 text-primary text-[11px] font-bold rounded uppercase">
-                      {deal.data.stage?.replace('_', ' ')}
-                   </span>
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-lg font-bold">{deal.data.name}</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                     <span className="px-2 py-0.5 bg-primary/10 text-primary text-[11px] font-bold rounded uppercase">
+                        {deal.data.stage?.replace('_', ' ')}
+                     </span>
+                  </div>
                 </div>
+                <button
+                  onClick={() => setIsEditOpen(true)}
+                  className="p-2 rounded-lg border border-border hover:bg-accent transition-colors shrink-0"
+                  title="Edit Deal"
+                  aria-label="Edit Deal"
+                >
+                  <Edit2 size={13} className="text-muted-foreground" />
+                </button>
               </div>
 
               <div className="space-y-4">
@@ -168,6 +182,22 @@ function DetailViewInner({ deal }: DealDetailViewProps) {
           </div>
         </div>
       </div>
+
+      {/* Edit Deal Sheet */}
+      <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <SheetContent className="sm:max-w-[460px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Edit Deal</SheetTitle>
+          </SheetHeader>
+          <DealForm
+            onSuccess={() => {
+              setIsEditOpen(false);
+              router.refresh();
+            }}
+            initialData={deal}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

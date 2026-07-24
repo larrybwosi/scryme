@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { cn } from '@repo/ui/lib/utils';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { formatDate } from "@/lib/utils";
+import { formatDate, getDisplayTime } from "@/lib/utils";
 import type { CustomerWithRelations } from '@/lib/types';
 import { createFollowUp, updateFollowUp } from '@/app/actions/follow-ups';
 import { getOrganizationMembers } from '@/app/actions/members';
@@ -29,10 +29,27 @@ interface FollowUpsTabProps {
 function FollowUpCard({
   followUp,
   onComplete,
+  onEdit,
+  members,
 }: {
   followUp: any;
   onComplete: (id: string) => void;
+  onEdit: (id: string, data: any) => Promise<void>;
+  members: any[];
 }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: followUp.title,
+    description: followUp.description || '',
+    dueDate: new Date(followUp.dueDate).toISOString().split('T')[0],
+    priority: followUp.priority,
+    type: followUp.type,
+    assignedToId: followUp.assignedToId || '',
+    isRecurring: followUp.isRecurring,
+    recurringInterval: followUp.recurringInterval || 'WEEKLY',
+  });
+
   const isCompleted = followUp.status === 'COMPLETED';
   const isOverdue = followUp.status === 'OVERDUE' || (!isCompleted && new Date(followUp.dueDate) < new Date());
   const daysUntilDue = Math.ceil(
@@ -42,13 +59,225 @@ function FollowUpCard({
   const assignedToName = followUp.assignedTo?.user?.name || 'Unassigned';
   const assignedToInitials = assignedToName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
+  const handleUpdate = async () => {
+    if (!editForm.title.trim()) return;
+    setLoading(true);
+    try {
+      await onEdit(followUp.id, {
+        title: editForm.title.trim(),
+        description: editForm.description.trim(),
+        dueDate: new Date(editForm.dueDate),
+        priority: editForm.priority,
+        type: editForm.type,
+        assignedToId: editForm.assignedToId || null,
+        isRecurring: editForm.isRecurring,
+        recurringInterval: editForm.isRecurring ? editForm.recurringInterval : null,
+      });
+      setIsEditing(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update follow-up');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div className="bg-card rounded-xl border p-5 border-primary/30 shadow-sm space-y-4">
+        <h4 className="text-[13px] font-bold text-foreground">Edit Follow-up</h4>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="col-span-2">
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Title *</label>
+            <input
+              value={editForm.title}
+              onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+              placeholder="e.g. Send renewal proposal"
+              className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Due Date *</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-start text-left font-normal text-sm h-9 px-3",
+                    !editForm.dueDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                  {editForm.dueDate ? format(new Date(editForm.dueDate), "PPP") : <span>Pick a date</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={editForm.dueDate ? new Date(editForm.dueDate) : undefined}
+                  onSelect={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, '0');
+                      const dd = String(date.getDate()).padStart(2, '0');
+                      setEditForm((f) => ({ ...f, dueDate: `${yyyy}-${mm}-${dd}` }));
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Priority</label>
+            <Select
+              value={editForm.priority}
+              onValueChange={(val) => setEditForm((f) => ({ ...f, priority: val as any }))}
+            >
+              <SelectTrigger className="w-full h-9 bg-background">
+                <SelectValue placeholder="Select priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="HIGH">High</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="LOW">Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Type</label>
+            <Select
+              value={editForm.type}
+              onValueChange={(val) => setEditForm((f) => ({ ...f, type: val as any }))}
+            >
+              <SelectTrigger className="w-full h-9 bg-background">
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CALL">Call</SelectItem>
+                <SelectItem value="MEETING">Meeting</SelectItem>
+                <SelectItem value="EMAIL">Email</SelectItem>
+                <SelectItem value="PREPARATION">Preparation</SelectItem>
+                <SelectItem value="OTHER">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2 flex items-center justify-between py-1 bg-muted/10 px-3 rounded-lg border border-border">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative flex items-center">
+                <input
+                  type="checkbox"
+                  checked={editForm.isRecurring}
+                  onChange={(e) => setEditForm((f) => ({ ...f, isRecurring: e.target.checked }))}
+                  className="sr-only"
+                />
+                <div className={cn(
+                  "w-8 h-4 rounded-full transition-colors",
+                  editForm.isRecurring ? "bg-primary" : "bg-muted"
+                )} />
+                <div className={cn(
+                  "absolute left-0.5 w-3 h-3 rounded-full bg-white transition-transform",
+                  editForm.isRecurring ? "translate-x-4" : "translate-x-0"
+                )} />
+              </div>
+              <span className="text-[12.5px] font-medium text-foreground group-hover:text-primary transition-colors">Recurring Follow-up</span>
+            </label>
+
+            {editForm.isRecurring && (
+              <Select
+                value={editForm.recurringInterval}
+                onValueChange={(val) => setEditForm((f) => ({ ...f, recurringInterval: val }))}
+              >
+                <SelectTrigger className="w-[120px] h-8 bg-background">
+                  <SelectValue placeholder="Select interval" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DAILY">Daily</SelectItem>
+                  <SelectItem value="WEEKLY">Weekly</SelectItem>
+                  <SelectItem value="MONTHLY">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div className="col-span-2">
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Assigned To</label>
+            <Select
+              value={editForm.assignedToId || "unassigned"}
+              onValueChange={(val) => setEditForm((f) => ({ ...f, assignedToId: val === "unassigned" ? "" : val }))}
+            >
+              <SelectTrigger className="w-full h-9 bg-background">
+                <SelectValue placeholder="Select member" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {members.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.user.name || m.user.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2">
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Description</label>
+            <textarea
+              value={editForm.description}
+              onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="What needs to happen?"
+              rows={2}
+              className="w-full text-[13px] bg-background border border-border rounded-lg px-3 py-2 outline-none focus:border-primary transition-colors resize-none"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setIsEditing(false);
+              setEditForm({
+                title: followUp.title,
+                description: followUp.description || '',
+                dueDate: new Date(followUp.dueDate).toISOString().split('T')[0],
+                priority: followUp.priority,
+                type: followUp.type,
+                assignedToId: followUp.assignedToId || '',
+                isRecurring: followUp.isRecurring,
+                recurringInterval: followUp.recurringInterval || 'WEEKLY',
+              });
+            }}
+            className="h-9 px-4 text-[12.5px]"
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpdate}
+            disabled={loading || !editForm.title.trim()}
+            className="text-[12.5px] font-semibold h-9 px-5"
+          >
+            {loading ? 'Saving...' : 'Save'}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
-        'bg-card rounded-xl border p-4 transition-opacity',
+        'bg-card rounded-xl border p-4 transition-opacity group relative',
         isCompleted ? 'border-border opacity-60' : isOverdue ? 'border-destructive/30' : 'border-border'
       )}
     >
+      {/* Actions */}
+      <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button
+          onClick={() => setIsEditing(true)}
+          className="text-[11px] text-primary hover:underline font-medium"
+        >
+          Edit
+        </button>
+      </div>
+
       <div className="flex items-start gap-3">
         {/* Complete toggle */}
         <button
@@ -66,7 +295,7 @@ function FollowUpCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap pr-8">
             <span
               className={cn(
                 'text-[13.5px] font-semibold',
@@ -91,7 +320,7 @@ function FollowUpCard({
             </p>
           )}
 
-          <div className="flex items-center gap-4 mt-3">
+          <div className="flex items-center gap-4 mt-3 flex-wrap">
             {/* Due date */}
             <div className="flex items-center gap-1.5">
               {isOverdue ? (
@@ -124,6 +353,11 @@ function FollowUpCard({
                 {assignedToInitials}
               </div>
               <span className="text-[11.5px] text-muted-foreground">{assignedToName}</span>
+            </div>
+
+            {/* Created / Updated info */}
+            <div className="text-[11px] text-muted-foreground ml-auto shrink-0">
+              {getDisplayTime(followUp.createdAt, followUp.updatedAt)}
             </div>
           </div>
         </div>
@@ -176,6 +410,16 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
       toast.success('Follow-up completed');
     } catch (error: any) {
       toast.error(error.message || 'Failed to complete follow-up');
+    }
+  };
+
+  const handleEdit = async (id: string, updatedData: any) => {
+    try {
+      await updateFollowUp(id, updatedData);
+      toast.success('Follow-up updated successfully');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to update follow-up');
+      throw error;
     }
   };
 
@@ -420,7 +664,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
         <EmptyState icon={CalendarClock} title="No follow-ups found" description={filterStatus === 'All' ? 'No follow-ups recorded for this customer.' : `No follow-ups with status "${filterStatus}".`} />
       ) : (
         <div className="flex flex-col gap-3">
-          {filtered.map((f) => <FollowUpCard key={f.id} followUp={f} onComplete={handleComplete} />)}
+          {filtered.map((f) => <FollowUpCard key={f.id} followUp={f} onComplete={handleComplete} onEdit={handleEdit} members={members} />)}
         </div>
       )}
     </div>

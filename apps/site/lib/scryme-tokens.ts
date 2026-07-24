@@ -1,7 +1,7 @@
 // Scryme design tokens — "The Operating Ledger"
 //
 // Grounding idea: Scryme's job is to take four separate operational streams
-// (CRM, POS, Inventory, Finance) and reconcile them into one continuous
+// (CRM/Storefronts, POS, Inventory, Finance) and reconcile them into one continuous
 // record. The visual system is built around a ledger/manifest, not a
 // generic SaaS dashboard.
 //
@@ -52,54 +52,54 @@ export const modules: {
 }[] = [
   {
     code: "CRM",
-    name: "Customer Relationship Management",
+    name: "Storefronts & CRM",
     description:
-      "Track every interaction, run the pipeline, and automate follow-ups — each closed deal posts straight to Finance and unlocks fulfillment in Inventory.",
+      "Create and manage customer-facing storefront websites for your clients, beautifully synced with inventory and central operations.",
     connectsTo: ["FIN", "INV"],
     href: "/products/crm",
     accent: "#C89A4B",
   },
   {
     code: "POS",
-    name: "Point of Sale",
+    name: "Integrated Point of Sale",
     description:
-      "Ring up retail and wholesale sales, offline-capable, with stock and revenue reconciled to the second the register closes.",
+      "Ring up transactions offline-first, with stock and revenue reconciled across multiple branches the split second a shift closes.",
     connectsTo: ["INV", "FIN"],
     href: "/products/pos",
     accent: "#4B9073",
   },
   {
     code: "INV",
-    name: "Inventory Management",
+    name: "Stock & Inventory Management",
     description:
-      "Monitor stock across warehouses and storefronts, with automatic reorders that draw straight from committed Finance budgets.",
+      "Advanced stock management across warehouses and branches, with automated reorders and instant digital storefront stock syncing.",
     connectsTo: ["POS", "FIN"],
     href: "/products/inventory",
     accent: "#7C93B0",
   },
   {
     code: "FIN",
-    name: "Financial Management",
+    name: "Central Management & ERP",
     description:
-      "Invoicing, expense tracking, and reconciliation — every entry from CRM, POS, and Inventory lands here as one ledger line.",
+      "Manage several branches, global accounting, consolidated reporting, and multi-store configurations from one master dashboard.",
     connectsTo: ["CRM", "POS", "INV"],
     href: "/products/finance",
     accent: "#B4553A",
   },
   {
     code: "HR",
-    name: "HR & Workforce",
+    name: "Multi-Branch Workforce",
     description:
-      "Manage people, attendance, and payroll, with labor cost flowing directly into the same Finance ledger as everything else.",
+      "Orchestrate staffing, shifts, and registers across several branches with centralized corporate policy and permission controls.",
     connectsTo: ["FIN"],
     href: "/products/hr",
     accent: "#9A7FB0",
   },
   {
     code: "BI",
-    name: "Business Analytics",
+    name: "Performance Analytics",
     description:
-      "Every module writes to one record, so reporting is never a reconciliation project — it's a query against a single source of truth.",
+      "Analyze branch growth, inventory turnover, and conversion metrics in real-time to scale business performance with precision.",
     connectsTo: ["CRM", "POS", "INV", "FIN", "HR"],
     href: "/products/analytics",
     accent: "#4E7FB5",

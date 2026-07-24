@@ -14,18 +14,21 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://scryme.tech"),
   title: {
-    default: "Scryme — Enterprise Business Platform",
+    default: "Scryme — High-Performance Commerce & Scale Platform",
     template: "%s | Scryme",
   },
   description:
-    "Scryme is the all-in-one enterprise platform for CRM, Point of Sale, Inventory, and Finance — built for retailers, wholesalers, and multi-branch businesses.",
+    "Scryme is the high-performance commerce and scale platform built to empower modern businesses. We combine integrated offline-first POS, multi-branch syncing, advanced stock management, and centralized corporate control with automated e-commerce storefront websites.",
   keywords: [
     "ERP",
     "CRM",
     "Point of Sale",
     "POS",
+    "Multi-Branch Retail",
+    "Storefront Websites",
+    "Stock Management",
     "Inventory Management",
-    "Business Software",
+    "Business Scale Software",
     "Enterprise Platform",
     "Retail Software",
     "SaaS",
@@ -47,24 +50,24 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://scryme.tech",
-    title: "Scryme — Enterprise Business Platform",
+    title: "Scryme — High-Performance Commerce & Scale Platform",
     description:
-      "All-in-one enterprise platform for CRM, POS, Inventory, and Finance.",
+      "Integrated POS, multi-branch operations, central management, stock tracking, and automated client storefront websites.",
     siteName: "Scryme",
     images: [
       {
         url: "https://scryme.tech/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Scryme — Enterprise Business Platform",
+        alt: "Scryme — High-Performance Commerce & Scale Platform",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Scryme — Enterprise Business Platform",
+    title: "Scryme — High-Performance Commerce & Scale Platform",
     description:
-      "All-in-one enterprise platform for CRM, POS, Inventory, and Finance.",
+      "Integrated POS, multi-branch operations, central management, stock tracking, and automated client storefront websites.",
     creator: "@scryme",
     images: ["https://scryme.tech/og-image.png"],
   },
@@ -104,7 +107,7 @@ export default function RootLayout({
       "https://twitter.com/scryme",
       "https://linkedin.com/company/scryme",
     ],
-    description: "Scryme is the all-in-one enterprise platform for CRM, Point of Sale, Inventory, and Finance.",
+    description: "Scryme is the high-performance commerce and scale platform built to empower modern businesses. We combine integrated offline-first POS, multi-branch syncing, advanced stock management, and centralized corporate control with automated e-commerce storefront websites.",
     contactPoint: {
       "@type": "ContactPoint",
       telephone: "+1-800-SCRYME",
