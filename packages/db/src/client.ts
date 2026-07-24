@@ -21,41 +21,46 @@ const originalQuery = Client.prototype.query;
 };
 
 const globalForPrisma = global as unknown as {
-  prisma: PrismaClient;
+  prisma?: PrismaClient;
+  pgPool?: Pool;
 };
 
-// 1. Create the Pool specifically for the adapter with high resilience
 const connectionString = env.DATABASE_URL;
 
-const pool = new Pool({
-  connectionString,
-  max: parseInt(env.DATABASE_POOL_SIZE || "50", 10), // Scalable pool size
-  connectionTimeoutMillis: 5000, // wait up to 5 seconds to connect
-  idleTimeoutMillis: 30000, // close idle connections after 30 seconds
-  maxUses: 7500, // recycle connections to prevent memory leaks in pg
-});
-
-pool.on("error", (err) => {
-  console.error("Unexpected error on idle PG connection pool client:", err);
-});
-
-// 2. Pass the pool to the adapter with custom callbacks for error logging
-const adapter = new PrismaPg(pool, {
-  onPoolError: (err) => {
-    console.error("PrismaPg Pool Error:", err);
-  },
-  onConnectionError: (err) => {
-    console.error("PrismaPg Connection Error:", err);
-  },
-});
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    adapter,
+// 1. Create or retrieve the Pool specifically for the adapter with high resilience
+if (!globalForPrisma.pgPool) {
+  globalForPrisma.pgPool = new Pool({
+    connectionString,
+    max: parseInt(env.DATABASE_POOL_SIZE || "50", 10), // Scalable pool size
+    connectionTimeoutMillis: 10000, // Wait up to 10 seconds to connect (increased from 5000 to prevent timeouts under load)
+    idleTimeoutMillis: 30000, // close idle connections after 30 seconds
+    maxUses: 7500, // recycle connections to prevent memory leaks in pg
   });
 
-if (env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+  globalForPrisma.pgPool.on("error", (err) => {
+    console.error("Unexpected error on idle PG connection pool client:", err);
+  });
+}
+
+const pool = globalForPrisma.pgPool;
+
+// 2. Pass the pool to the adapter with custom callbacks for error logging
+if (!globalForPrisma.prisma) {
+  const adapter = new PrismaPg(pool, {
+    onPoolError: (err) => {
+      console.error("PrismaPg Pool Error:", err);
+    },
+    onConnectionError: (err) => {
+      console.error("PrismaPg Connection Error:", err);
+    },
+  });
+
+  globalForPrisma.prisma = new PrismaClient({
+    adapter,
+  });
+}
+
+export const prisma = globalForPrisma.prisma!;
 export const db = prisma;
 export * from "../generated/client";
 import { Prisma } from "../generated/client";
