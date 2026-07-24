@@ -42,6 +42,49 @@ export async function getLocations(): Promise<any[]> {
   });
 }
 
+export async function getAllOrganizationVariants(locationId: string): Promise<any[]> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) return [];
+
+  const variants = await db.productVariant.findMany({
+    where: {
+      product: {
+        organizationId: context.organizationId,
+      },
+      isActive: true,
+    },
+    include: {
+      product: {
+        select: {
+          name: true,
+        },
+      },
+      variantStocks: {
+        where: {
+          locationId,
+        },
+        select: {
+          currentStock: true,
+        },
+      },
+    },
+    orderBy: {
+      product: {
+        name: "asc",
+      },
+    },
+  });
+
+  return variants.map(v => ({
+    id: v.id,
+    sku: v.sku,
+    barcode: v.barcode,
+    name: v.product.name,
+    variantName: v.name,
+    currentStock: v.variantStocks[0]?.currentStock.toNumber() || 0,
+  }));
+}
+
 export async function getLocationStock(params: {
   locationId: string;
   search?: string;
