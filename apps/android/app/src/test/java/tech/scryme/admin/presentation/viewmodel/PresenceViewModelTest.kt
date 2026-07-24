@@ -77,4 +77,35 @@ class PresenceViewModelTest {
         coVerify { repository.adminCheckOut("mem_1", any(), any()) }
         coVerify { repository.getMembers(status = "ONLINE", search = null) }
     }
+
+    @Test
+    fun `addBranch successfully appends the branch to the state-driven list`() = runTest(testDispatcher) {
+        val initialSize = viewModel.branches.value.size
+        assertEquals(3, initialSize)
+
+        viewModel.addBranch("West Counter", "WEST_01", "RETAIL_SHOP")
+
+        val updatedBranches = viewModel.branches.value
+        assertEquals(4, updatedBranches.size)
+        assertEquals("West Counter", updatedBranches.last().name)
+        assertEquals("loc_4", updatedBranches.last().id)
+        assertTrue(updatedBranches.last().isActive)
+    }
+
+    @Test
+    fun `toggleBranchStatus correctly updates its active state`() = runTest(testDispatcher) {
+        // Initially active
+        val firstBranch = viewModel.branches.value.first { it.id == "loc_1" }
+        assertTrue(firstBranch.isActive)
+
+        // Deactivate
+        viewModel.toggleBranchStatus("loc_1")
+        var updatedBranch = viewModel.branches.value.first { it.id == "loc_1" }
+        assertEquals(false, updatedBranch.isActive)
+
+        // Reactivate
+        viewModel.toggleBranchStatus("loc_1")
+        updatedBranch = viewModel.branches.value.first { it.id == "loc_1" }
+        assertEquals(true, updatedBranch.isActive)
+    }
 }

@@ -84,7 +84,8 @@ data class CheckOutDto(
 data class LocationDto(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String,
-    @SerializedName("organizationId") val organizationId: String
+    @SerializedName("organizationId") val organizationId: String,
+    @SerializedName("isActive") val isActive: Boolean = true
 )
 
 data class AttendanceLogDto(
