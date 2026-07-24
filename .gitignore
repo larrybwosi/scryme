@@ -40,3 +40,10 @@ tsconfig.tsbuildinfo
 
 # generated SDK files
 packages/v3-sdk/src/generated/
+
+# android / gradle
+.gradle/
+apps/android/.gradle/
+apps/android/app/build/
+apps/android/build/
+local.properties
