@@ -173,6 +173,7 @@ export async function createCustomer(data: CustomerFormValues): Promise<any> {
         deliveryNotes: cleanData.deliveryNotes,
         defaultLocationId: cleanData.defaultLocationId,
         customId: finalCustomId || null,
+        tags: cleanData.tags || [],
         organizationId,
       },
     });
@@ -278,6 +279,7 @@ export async function updateCustomer(
         deliveryNotes: cleanData.deliveryNotes,
         defaultLocationId: cleanData.defaultLocationId,
         customId: validatedData.customId || null,
+        tags: cleanData.tags || [],
       },
     });
 
@@ -569,5 +571,61 @@ export async function getCustomer(id: string): Promise<any> {
   } catch (error) {
     console.error("Error fetching customer:", error);
     throw new Error("Failed to fetch customer");
+  }
+}
+
+export async function bulkAddTagsToCustomers(
+  customerIds: string[],
+  tags: string[],
+): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
+  try {
+    const cleanTags = tags
+      .map((t) => t.trim())
+      .filter((t) => t !== "");
+
+    if (cleanTags.length === 0) {
+      return { success: true, message: "No tags to add" };
+    }
+
+    // Fetch the customers to get their existing tags and ensure multi-tenant isolation
+    const customersToUpdate = await db.customer.findMany({
+      where: {
+        id: { in: customerIds },
+        organizationId,
+      },
+      select: {
+        id: true,
+        tags: true,
+      },
+    });
+
+    // Update each customer's tags
+    await Promise.all(
+      customersToUpdate.map(async (customer) => {
+        const mergedTags = Array.from(
+          new Set([...customer.tags, ...cleanTags])
+        );
+
+        return db.customer.update({
+          where: { id: customer.id },
+          data: {
+            tags: mergedTags,
+          },
+        });
+      })
+    );
+
+    revalidatePath("/customers");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error bulk adding tags:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to bulk add tags",
+    };
   }
 }

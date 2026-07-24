@@ -2,6 +2,10 @@
 
 @source "../../../packages/ui/src";
 
+:root {
+  --font-sans: var(--font-roboto), sans-serif;
+}
+
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
