@@ -41,7 +41,9 @@ import { useUiStore } from '@/store/ui-store';
 import { lazy, Suspense } from 'react';
 
 const ScanOrderDialog = lazy(() => import('./scan-order-dialog').then(m => ({ default: m.ScanOrderDialog })));
-const ShortcutsHelpDialog = lazy(() => import('./shortcuts-help-dialog').then(m => ({ default: m.ShortcutsHelpDialog })));
+const ShortcutsHelpDialog = lazy(() =>
+  import('./shortcuts-help-dialog').then(m => ({ default: m.ShortcutsHelpDialog }))
+);
 
 const routeMap: Record<string, string> = {
   order: '/',
@@ -133,11 +135,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             to="/"
             className="flex items-center gap-3 no-underline hover:opacity-80 transition-opacity overflow-hidden"
           >
-            <img
-              src="/logo.jpg"
-              alt="Scryme Logo"
-              className="w-8 h-8 rounded-lg shrink-0 object-contain shadow-sm"
-            />
+            <img src="/logo.jpg" alt="Scryme Logo" className="w-8 h-8 rounded-lg shrink-0 object-contain shadow-sm" />
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="font-semibold text-lg truncate text-foreground leading-tight">{businessName}</span>
@@ -188,7 +186,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             ];
             if (isStandalone && excludedInStandalone.includes(item.id)) return null;
 
-            if (businessMode !== 'restaurant' && (item.id === 'hub-overview' || item.id === 'manage-table')) return null;
+            if (businessMode !== 'restaurant' && (item.id === 'hub-overview' || item.id === 'manage-table'))
+              return null;
             if (!['restaurant', 'bar'].includes(businessMode) && item.id === 'kitchen-display') return null;
 
             return (
@@ -198,6 +197,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                 variant={isActive ? 'secondary' : 'ghost'}
                 className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
                 title={isCollapsed ? item.label : undefined}
+                aria-label={isCollapsed ? item.label : undefined}
               >
                 <Link to={route}>
                   <Icon className={cn('w-4 h-4 shrink-0', isActive && 'text-primary')} />
@@ -207,22 +207,26 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             );
           })}
 
-          {deviceType === 'MAIN_HUB' && import.meta.env.MODE !== 'standalone' && (import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'restaurant' && (
-            <Button
-              asChild
-              variant={isRouteActive('/hub-overview') ? 'secondary' : 'ghost'}
-              className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
-            >
-              <Link to="/hub-overview">
-                <Activity className={cn('w-4 h-4 shrink-0', isRouteActive('/hub-overview') && 'text-primary')} />
-                {!isCollapsed && (
-                  <span className={cn('truncate', isRouteActive('/hub-overview') && 'font-semibold')}>
-                    Hub Overview
-                  </span>
-                )}
-              </Link>
-            </Button>
-          )}
+          {deviceType === 'MAIN_HUB' &&
+            import.meta.env.MODE !== 'standalone' &&
+            (import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'restaurant' && (
+              <Button
+                asChild
+                variant={isRouteActive('/hub-overview') ? 'secondary' : 'ghost'}
+                className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
+                title={isCollapsed ? 'Hub Overview' : undefined}
+                aria-label={isCollapsed ? 'Hub Overview' : undefined}
+              >
+                <Link to="/hub-overview">
+                  <Activity className={cn('w-4 h-4 shrink-0', isRouteActive('/hub-overview') && 'text-primary')} />
+                  {!isCollapsed && (
+                    <span className={cn('truncate', isRouteActive('/hub-overview') && 'font-semibold')}>
+                      Hub Overview
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            )}
 
           <div className="my-4 border-t pt-4">
             {/* Hardcoded Items with correct isActive check */}
@@ -231,6 +235,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                 variant={isScanOpen ? 'secondary' : 'ghost'}
                 className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
                 onClick={() => setIsScanOpen(true)}
+                title={isCollapsed ? 'Validate Order' : undefined}
+                aria-label={isCollapsed ? 'Validate Order' : undefined}
               >
                 <QrCode className="w-4 h-4 shrink-0" />
                 {!isCollapsed && <span className="truncate">Validate Order</span>}
@@ -256,6 +262,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                   asChild
                   variant={isActive ? 'secondary' : 'ghost'}
                   className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
+                  title={isCollapsed ? item.label : undefined}
+                  aria-label={isCollapsed ? item.label : undefined}
                 >
                   <Link to={item.route}>
                     <item.icon className={cn('w-4 h-4 shrink-0', isActive && 'text-primary')} />
@@ -273,6 +281,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             variant="ghost"
             className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
             onClick={() => setIsShortcutsOpen(true)}
+            title={isCollapsed ? 'Shortcuts Help' : undefined}
+            aria-label={isCollapsed ? 'Shortcuts Help' : undefined}
           >
             <Keyboard className="w-4 h-4 shrink-0" />
             {!isCollapsed && <span className="truncate">Shortcuts Help</span>}
@@ -289,6 +299,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                 asChild
                 variant={isActive ? 'secondary' : 'ghost'}
                 className={cn('w-full justify-start gap-3', isCollapsed && 'justify-center px-0')}
+                title={isCollapsed ? label : undefined}
+                aria-label={isCollapsed ? label : undefined}
               >
                 <Link to={route}>
                   <Icon className={cn('w-4 h-4 shrink-0', isActive && 'text-primary')} />
@@ -311,13 +323,17 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                       onClick={() => switchMember(member.id)}
                       className={cn(
                         'relative group transition-all',
-                        currentMember?.id === member.id && 'ring-2 ring-primary ring-offset-2 ring-offset-card rounded-full'
+                        currentMember?.id === member.id &&
+                          'ring-2 ring-primary ring-offset-2 ring-offset-card rounded-full'
                       )}
-                      title={member.name}
+                      title={`Switch user to ${member.name}`}
+                      aria-label={`Switch user to ${member.name}`}
                     >
                       <Avatar className="w-8 h-8">
                         <AvatarImage src={member.image} />
-                        <AvatarFallback className="text-[10px]">{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        <AvatarFallback className="text-[10px]">
+                          {member.name.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
                       </Avatar>
                       {currentMember?.id === member.id && (
                         <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary rounded-full border-2 border-card flex items-center justify-center">
@@ -331,6 +347,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                     size="icon"
                     className="w-8 h-8 rounded-full border border-dashed border-muted-foreground/50"
                     asChild
+                    title="Check in member"
+                    aria-label="Check in member"
                   >
                     <Link to="/checkin">
                       <Plus className="w-4 h-4" />
@@ -361,6 +379,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                   size="icon"
                   className="h-8 w-8 text-muted-foreground"
                   asChild
+                  title="Check in member"
+                  aria-label="Check in member"
                 >
                   <Link to="/checkin">
                     <Plus className="w-4 h-4" />
@@ -372,6 +392,8 @@ export function Sidebar({ onCheckout }: SidebarProps) {
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={onCheckout}
+                  title="Checkout / Log Out"
+                  aria-label="Checkout / Log Out"
                 >
                   <LogOut className="w-4 h-4" />
                 </Button>
