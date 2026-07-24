@@ -2,7 +2,7 @@ import { AdminService } from "../admin.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
-import { MembershipStatus } from "@repo/db";
+import { MembershipStatus, IntegrationCategory, AuthType } from "@repo/db";
 
 describe("AdminService", () => {
   let service: AdminService;
@@ -23,6 +23,7 @@ describe("AdminService", () => {
       },
       member: {
         findMany: vi.fn(),
+        findFirst: vi.fn(),
         updateMany: vi.fn(),
         count: vi.fn(),
       },
@@ -41,6 +42,31 @@ describe("AdminService", () => {
       },
       deviceRegistry: {
         count: vi.fn(),
+      },
+      globalSetting: {
+        findMany: vi.fn(),
+        findUnique: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      subscription: {
+        findUnique: vi.fn(),
+        upsert: vi.fn(),
+      },
+      mpesaPaymentRequest: {
+        findMany: vi.fn(),
+        create: vi.fn(),
+      },
+      integrationDefinition: {
+        findMany: vi.fn(),
+        findUnique: vi.fn(),
+        create: vi.fn(),
+        update: vi.fn(),
+        delete: vi.fn(),
+      },
+      organizationIntegration: {
+        findMany: vi.fn(),
       },
       $transaction: vi.fn((cb) => cb(mockPrisma.client)),
     },
@@ -217,8 +243,8 @@ describe("AdminService", () => {
               image: true,
               role: true,
               isActive: true,
-            },
           },
+        },
           organization: {
             select: {
               id: true,
@@ -310,6 +336,422 @@ describe("AdminService", () => {
         totalMembers: 15,
         activeDevices: 5,
         totalConnectedApps: 2,
+      });
+    });
+  });
+
+  // --- Global Settings Tests ---
+
+  describe("globalSettings", () => {
+    it("should list global settings", async () => {
+      mockPrisma.client.globalSetting.findMany.mockResolvedValue([
+        { key: "system:mode", value: "live" },
+      ]);
+
+      const result = await service.listGlobalSettings();
+      expect(result).toEqual([{ key: "system:mode", value: "live" }]);
+      expect(mockPrisma.client.globalSetting.findMany).toHaveBeenCalledWith({
+        orderBy: { key: "asc" },
+      });
+    });
+
+    it("should set global setting via upsert", async () => {
+      mockPrisma.client.globalSetting.upsert.mockResolvedValue({
+        key: "system:mode",
+        value: "test",
+      });
+
+      const result = await service.setGlobalSetting({
+        key: "system:mode",
+        value: "test",
+      });
+
+      expect(result).toEqual({ key: "system:mode", value: "test" });
+      expect(mockPrisma.client.globalSetting.upsert).toHaveBeenCalledWith({
+        where: { key: "system:mode" },
+        update: { value: "test" },
+        create: { key: "system:mode", value: "test" },
+      });
+    });
+
+    it("should delete global setting if exists", async () => {
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue({
+        key: "system:mode",
+        value: "live",
+      });
+      mockPrisma.client.globalSetting.delete.mockResolvedValue({
+        key: "system:mode",
+      });
+
+      const result = await service.deleteGlobalSetting("system:mode");
+      expect(result).toBeDefined();
+      expect(mockPrisma.client.globalSetting.delete).toHaveBeenCalledWith({
+        where: { key: "system:mode" },
+      });
+    });
+
+    it("should throw NotFoundException on delete non-existent setting", async () => {
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue(null);
+
+      await expect(service.deleteGlobalSetting("non-existent")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  // --- Global Tiers Tests ---
+
+  describe("globalTiers", () => {
+    it("should list tiers as parsed JSON or default empty array", async () => {
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue({
+        key: "system:tiers",
+        value: JSON.stringify([{ slug: "growth", name: "Growth Plan", price: 49 }]),
+      });
+
+      const result = await service.listTiers();
+      expect(result).toEqual([{ slug: "growth", name: "Growth Plan", price: 49 }]);
+    });
+
+    it("should define tier and upsert system:tiers value", async () => {
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue(null);
+      mockPrisma.client.globalSetting.upsert.mockResolvedValue({
+        key: "system:tiers",
+        value: "some-string",
+      });
+
+      const result = await service.defineTier({
+        slug: "growth",
+        name: "Growth Plan",
+        price: 49,
+        description: "Great plan",
+        limits: { members: 10 },
+        features: ["b2b"],
+      });
+
+      expect(result).toEqual({
+        slug: "growth",
+        name: "Growth Plan",
+        price: 49,
+        description: "Great plan",
+        limits: { members: 10 },
+        features: ["b2b"],
+      });
+
+      expect(mockPrisma.client.globalSetting.upsert).toHaveBeenCalledWith({
+        where: { key: "system:tiers" },
+        update: {
+          value: JSON.stringify([
+            {
+              slug: "growth",
+              name: "Growth Plan",
+              price: 49,
+              description: "Great plan",
+              limits: { members: 10 },
+              features: ["b2b"],
+            },
+          ]),
+        },
+        create: {
+          key: "system:tiers",
+          value: JSON.stringify([
+            {
+              slug: "growth",
+              name: "Growth Plan",
+              price: 49,
+              description: "Great plan",
+              limits: { members: 10 },
+              features: ["b2b"],
+            },
+          ]),
+        },
+      });
+    });
+
+    it("should delete tier if exists", async () => {
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue({
+        key: "system:tiers",
+        value: JSON.stringify([{ slug: "growth", name: "Growth" }]),
+      });
+      mockPrisma.client.globalSetting.update.mockResolvedValue({});
+
+      const result = await service.deleteTier("growth");
+      expect(result.success).toBe(true);
+      expect(mockPrisma.client.globalSetting.update).toHaveBeenCalledWith({
+        where: { key: "system:tiers" },
+        data: { value: JSON.stringify([]) },
+      });
+    });
+
+    it("should throw NotFoundException on delete non-existent tier", async () => {
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue(null);
+
+      await expect(service.deleteTier("non-existent")).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  // --- Organization Subscriptions Tests ---
+
+  describe("organizationSubscriptions", () => {
+    it("should return default free tier when subscription does not exist", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.subscription.findUnique.mockResolvedValue(null);
+
+      const result = await service.getOrganizationSubscription("org-1");
+      expect(result).toEqual({
+        organizationId: "org-1",
+        tierSlug: "free",
+        dodoCustomerId: null,
+        dodoSubscriptionId: null,
+        dodoPriceId: null,
+        dodoCurrentPeriodEnd: null,
+      });
+    });
+
+    it("should return subscription details when exists", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.subscription.findUnique.mockResolvedValue({
+        id: "sub-1",
+        organizationId: "org-1",
+        dodoPriceId: "growth",
+        dodoCustomerId: "cust-1",
+        dodoSubscriptionId: "sub-dodo-1",
+        dodoCurrentPeriodEnd: new Date("2026-12-31"),
+      });
+
+      const result = await service.getOrganizationSubscription("org-1");
+      expect(result).toEqual({
+        id: "sub-1",
+        organizationId: "org-1",
+        tierSlug: "growth",
+        dodoCustomerId: "cust-1",
+        dodoSubscriptionId: "sub-dodo-1",
+        dodoPriceId: "growth",
+        dodoCurrentPeriodEnd: new Date("2026-12-31"),
+      });
+    });
+
+    it("should update/upsert organization subscription", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.subscription.upsert.mockResolvedValue({ id: "sub-1" });
+
+      const result = await service.updateOrganizationSubscription("org-1", {
+        tierSlug: "premium",
+        dodoCustomerId: "cust-1",
+        dodoSubscriptionId: "sub-123",
+        dodoCurrentPeriodEnd: "2026-12-31T00:00:00.000Z",
+      });
+
+      expect(result).toBeDefined();
+      expect(mockPrisma.client.subscription.upsert).toHaveBeenCalledWith({
+        where: { organizationId: "org-1" },
+        update: {
+          dodoPriceId: "premium",
+          dodoCustomerId: "cust-1",
+          dodoSubscriptionId: "sub-123",
+          dodoCurrentPeriodEnd: new Date("2026-12-31T00:00:00.000Z"),
+        },
+        create: {
+          organizationId: "org-1",
+          dodoPriceId: "premium",
+          dodoCustomerId: "cust-1",
+          dodoSubscriptionId: "sub-123",
+          dodoCurrentPeriodEnd: new Date("2026-12-31T00:00:00.000Z"),
+        },
+      });
+    });
+  });
+
+  // --- Payments Tracking Tests ---
+
+  describe("paymentsTracking", () => {
+    it("should list system payments", async () => {
+      mockPrisma.client.mpesaPaymentRequest.findMany.mockResolvedValue([
+        { id: "pay-1", amount: 100 },
+      ]);
+
+      const result = await service.listSystemPayments();
+      expect(result).toEqual([{ id: "pay-1", amount: 100 }]);
+      expect(mockPrisma.client.mpesaPaymentRequest.findMany).toHaveBeenCalledWith({
+        orderBy: { createdAt: "desc" },
+        include: {
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+      });
+    });
+
+    it("should record custom payment and update subscription tier", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.member.findFirst.mockResolvedValue({ id: "mem-1" });
+      mockPrisma.client.mpesaPaymentRequest.create.mockResolvedValue({
+        id: "pay-123",
+        amount: 49,
+      });
+      mockPrisma.client.subscription.upsert.mockResolvedValue({ id: "sub-1" });
+
+      const result = await service.recordCustomPayment({
+        organizationId: "org-1",
+        amount: 49,
+        phoneNumber: "254712345678",
+        reference: "MPESAREF123",
+        tierSlug: "growth",
+        notes: "M-Pesa payment",
+      });
+
+      expect(result).toEqual({ id: "pay-123", amount: 49 });
+      expect(mockPrisma.client.mpesaPaymentRequest.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          organizationId: "org-1",
+          memberId: "mem-1",
+          amount: 49,
+          phoneNumber: "254712345678",
+          reference: "MPESAREF123",
+          status: "SUCCESS",
+        }),
+      });
+      expect(mockPrisma.client.subscription.upsert).toHaveBeenCalledWith({
+        where: { organizationId: "org-1" },
+        update: expect.objectContaining({
+          dodoPriceId: "growth",
+          dodoSubscriptionId: "custom-sub-MPESAREF123",
+        }),
+        create: expect.objectContaining({
+          organizationId: "org-1",
+          dodoPriceId: "growth",
+          dodoSubscriptionId: "custom-sub-MPESAREF123",
+        }),
+      });
+    });
+
+    it("should throw BadRequestException if organization has no member to associate payment", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.member.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.recordCustomPayment({
+          organizationId: "org-1",
+          amount: 49,
+          phoneNumber: "254700000000",
+          reference: "REF",
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  // --- Integration Definitions Tests ---
+
+  describe("integrationDefinitions", () => {
+    it("should list integration definitions", async () => {
+      mockPrisma.client.integrationDefinition.findMany.mockResolvedValue([
+        { id: "int-1", name: "Shopify" },
+      ]);
+
+      const result = await service.listIntegrationDefinitions();
+      expect(result).toEqual([{ id: "int-1", name: "Shopify" }]);
+      expect(mockPrisma.client.integrationDefinition.findMany).toHaveBeenCalledWith({
+        orderBy: { name: "asc" },
+      });
+    });
+
+    it("should create integration definition", async () => {
+      mockPrisma.client.integrationDefinition.findUnique.mockResolvedValue(null);
+      mockPrisma.client.integrationDefinition.create.mockResolvedValue({
+        id: "int-1",
+        slug: "shopify",
+      });
+
+      const result = await service.createIntegrationDefinition({
+        name: "Shopify",
+        slug: "shopify",
+        category: IntegrationCategory.E_COMMERCE,
+        authType: AuthType.API_KEY,
+      });
+
+      expect(result).toEqual({ id: "int-1", slug: "shopify" });
+    });
+
+    it("should throw BadRequestException if slug taken when creating integration", async () => {
+      mockPrisma.client.integrationDefinition.findUnique.mockResolvedValue({
+        id: "existing",
+      });
+
+      await expect(
+        service.createIntegrationDefinition({
+          name: "Shopify",
+          slug: "shopify",
+          category: IntegrationCategory.E_COMMERCE,
+          authType: AuthType.API_KEY,
+        }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("should update integration definition", async () => {
+      mockPrisma.client.integrationDefinition.findUnique.mockResolvedValue({
+        id: "int-1",
+        slug: "shopify",
+      });
+      mockPrisma.client.integrationDefinition.update.mockResolvedValue({
+        id: "int-1",
+        name: "Shopify Updated",
+      });
+
+      const result = await service.updateIntegrationDefinition("int-1", {
+        name: "Shopify Updated",
+      });
+
+      expect(result).toEqual({ id: "int-1", name: "Shopify Updated" });
+    });
+
+    it("should delete integration definition if exists", async () => {
+      mockPrisma.client.integrationDefinition.findUnique.mockResolvedValue({
+        id: "int-1",
+      });
+      mockPrisma.client.integrationDefinition.delete.mockResolvedValue({
+        id: "int-1",
+      });
+
+      const result = await service.deleteIntegrationDefinition("int-1");
+      expect(result).toBeDefined();
+    });
+  });
+
+  // --- Active Integrations List Tests ---
+
+  describe("activeOrganizationIntegrations", () => {
+    it("should list active integrations system-wide", async () => {
+      mockPrisma.client.organizationIntegration.findMany.mockResolvedValue([
+        { id: "org-int-1", isActive: true },
+      ]);
+
+      const result = await service.listActiveOrganizationIntegrations();
+      expect(result).toEqual([{ id: "org-int-1", isActive: true }]);
+      expect(mockPrisma.client.organizationIntegration.findMany).toHaveBeenCalledWith({
+        where: { isActive: true },
+        include: {
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+          integrationDefinition: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              category: true,
+            },
+          },
+        },
+        orderBy: { updatedAt: "desc" },
       });
     });
   });

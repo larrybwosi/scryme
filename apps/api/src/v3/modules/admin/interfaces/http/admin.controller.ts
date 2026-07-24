@@ -3,16 +3,26 @@ import {
   Get,
   Post,
   Patch,
+  Put,
   Delete,
   Param,
   Body,
   Query,
   UseGuards,
-  ParseBoolPipe,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { AdminService } from "../../infrastructure/services/admin.service";
-import { CreateOrganizationDto, UpdateOrganizationDto, BanUserDto } from "../../application/dto/admin.dto";
+import {
+  CreateOrganizationDto,
+  UpdateOrganizationDto,
+  BanUserDto,
+  SetGlobalSettingDto,
+  DefineTierDto,
+  UpdateSubscriptionDto,
+  RecordCustomPaymentDto,
+  CreateIntegrationDefinitionDto,
+  UpdateIntegrationDefinitionDto,
+} from "../../application/dto/admin.dto";
 import { SystemAdminGuard } from "../../../../common/guards/system-admin.guard";
 
 @ApiTags("V3 Admin")
@@ -113,5 +123,113 @@ export class AdminController {
   @ApiOperation({ summary: "Get system action audit logs" })
   async listSystemLogs() {
     return this.adminService.listSystemLogs();
+  }
+
+  // --- Global Settings ---
+
+  @Get("settings")
+  @ApiOperation({ summary: "List all global system settings" })
+  async listGlobalSettings() {
+    return this.adminService.listGlobalSettings();
+  }
+
+  @Post("settings")
+  @ApiOperation({ summary: "Set or update a global system setting" })
+  async setGlobalSetting(@Body() dto: SetGlobalSettingDto) {
+    return this.adminService.setGlobalSetting(dto);
+  }
+
+  @Delete("settings/:key")
+  @ApiOperation({ summary: "Delete a global system setting" })
+  async deleteGlobalSetting(@Param("key") key: string) {
+    return this.adminService.deleteGlobalSetting(key);
+  }
+
+  // --- Global Tiers (Plan limits/attributes) ---
+
+  @Get("tiers")
+  @ApiOperation({ summary: "List all system-wide organization plans and tiers" })
+  async listTiers() {
+    return this.adminService.listTiers();
+  }
+
+  @Post("tiers")
+  @ApiOperation({ summary: "Define or update a global plan / tier limits and attributes" })
+  async defineTier(@Body() dto: DefineTierDto) {
+    return this.adminService.defineTier(dto);
+  }
+
+  @Delete("tiers/:slug")
+  @ApiOperation({ summary: "Delete a global plan / tier definition" })
+  async deleteTier(@Param("slug") slug: string) {
+    return this.adminService.deleteTier(slug);
+  }
+
+  // --- Organization Subscriptions ---
+
+  @Get("organizations/:id/subscription")
+  @ApiOperation({ summary: "Get subscription details for a specific organization" })
+  async getOrganizationSubscription(@Param("id") id: string) {
+    return this.adminService.getOrganizationSubscription(id);
+  }
+
+  @Put("organizations/:id/subscription")
+  @ApiOperation({ summary: "Update subscription / plan details for a specific organization" })
+  async updateOrganizationSubscription(
+    @Param("id") id: string,
+    @Body() dto: UpdateSubscriptionDto,
+  ) {
+    return this.adminService.updateOrganizationSubscription(id, dto);
+  }
+
+  // --- System Payments Tracking ---
+
+  @Get("payments")
+  @ApiOperation({ summary: "List all system payments for organization plans" })
+  async listSystemPayments() {
+    return this.adminService.listSystemPayments();
+  }
+
+  @Post("payments/record")
+  @ApiOperation({ summary: "Record a custom plan payment (e.g. M-Pesa / Manual verification)" })
+  async recordCustomPayment(@Body() dto: RecordCustomPaymentDto) {
+    return this.adminService.recordCustomPayment(dto);
+  }
+
+  // --- Integration Definitions ---
+
+  @Get("integrations/definitions")
+  @ApiOperation({ summary: "List all globally available integration definitions" })
+  async listIntegrationDefinitions() {
+    return this.adminService.listIntegrationDefinitions();
+  }
+
+  @Post("integrations/definitions")
+  @ApiOperation({ summary: "Create a globally available integration definition" })
+  async createIntegrationDefinition(@Body() dto: CreateIntegrationDefinitionDto) {
+    return this.adminService.createIntegrationDefinition(dto);
+  }
+
+  @Patch("integrations/definitions/:id")
+  @ApiOperation({ summary: "Update a global integration definition" })
+  async updateIntegrationDefinition(
+    @Param("id") id: string,
+    @Body() dto: UpdateIntegrationDefinitionDto,
+  ) {
+    return this.adminService.updateIntegrationDefinition(id, dto);
+  }
+
+  @Delete("integrations/definitions/:id")
+  @ApiOperation({ summary: "Delete a global integration definition" })
+  async deleteIntegrationDefinition(@Param("id") id: string) {
+    return this.adminService.deleteIntegrationDefinition(id);
+  }
+
+  // --- Active Organization Integrations ---
+
+  @Get("integrations/active")
+  @ApiOperation({ summary: "List all active organization integrations system-wide" })
+  async listActiveOrganizationIntegrations() {
+    return this.adminService.listActiveOrganizationIntegrations();
   }
 }
