@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users2, ShoppingCart, Package, DollarSign } from "lucide-react";
+import { Layout, ShoppingCart, Package, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { colors, fonts, modules } from "@/lib/scryme-tokens";
 
-const ICONS: Record<string, typeof Users2> = {
-  CRM: Users2,
+const ICONS: Record<string, typeof Layout> = {
+  CRM: Layout,
   POS: ShoppingCart,
   INV: Package,
-  FIN: DollarSign,
+  FIN: ShieldAlert,
 };
 
 const tabs = modules.slice(0, 4).map((m) => ({
@@ -35,7 +35,7 @@ function StatusChip({
   };
   return (
     <span
-      className="text-xs px-2 py-0.5 rounded"
+      className="text-xs px-2 py-0.5 rounded animate-pulse"
       style={{
         background: `${map[tone]}22`,
         color: map[tone],
@@ -50,40 +50,40 @@ function StatusChip({
 function CRMMockUI() {
   const columns = [
     {
-      title: "Leads",
-      count: 8,
+      title: "Store Drafts",
+      count: 4,
       intensity: 0.28,
       cards: [
-        { name: "Arjun Mehta", company: "Vantage Corp", value: "$24K" },
-        { name: "Sarah Okonkwo", company: "TerraLogix", value: "$18K" },
-        { name: "Liu Wei", company: "Sunridge Ltd.", value: "$32K" },
+        { name: "Urban Threads Shop", company: "Retail Theme v2", value: "Draft" },
+        { name: "Veloce Wholesalers", company: "B2B Bulk Portal", value: "Draft" },
+        { name: "Solaris Botanicals", company: "Minimal Peach", value: "Review" },
       ],
     },
     {
-      title: "Qualified",
-      count: 5,
+      title: "Ready to Sync",
+      count: 2,
       intensity: 0.5,
       cards: [
-        { name: "Elena Vasquez", company: "Meridian Grp.", value: "$47K" },
-        { name: "Tom Hargreaves", company: "Fontaine Co.", value: "$29K" },
+        { name: "Apex Sports Hub", company: "Performance Dark", value: "Ready" },
+        { name: "Glow Cosmetics", company: "Elegance Pink", value: "Ready" },
       ],
     },
     {
-      title: "Proposal",
+      title: "Publishing Channels",
       count: 3,
       intensity: 0.74,
       cards: [
-        { name: "Nkechi Adeyemi", company: "Argent Ind.", value: "$95K" },
-        { name: "Jake Thornton", company: "Kestrel LLC", value: "$63K" },
+        { name: "Meridian Boutique", company: "Custom Subdomain", value: "Deploying" },
+        { name: "Kestrel Outlet", company: "Custom Domain", value: "Propagating" },
       ],
     },
     {
-      title: "Closed Won",
-      count: 12,
+      title: "Live Storefronts",
+      count: 42,
       intensity: 1,
       cards: [
-        { name: "Priya Sharma", company: "Solis Dist.", value: "$112K" },
-        { name: "Carlos Ruiz", company: "Westfield", value: "$84K" },
+        { name: "Fontaine Direct", company: "Custom Domain", value: "Active" },
+        { name: "Solis Distributors", company: "Wholesale Portal", value: "Active" },
       ],
     },
   ];
@@ -94,7 +94,7 @@ function CRMMockUI() {
         <div key={col.title} className="flex-1 flex flex-col gap-2 min-w-0">
           <div className="flex items-center justify-between px-1">
             <span
-              className="text-xs font-semibold"
+              className="text-xs font-semibold truncate"
               style={{ color: colors.textMuted, fontFamily: fonts.body }}
             >
               {col.title}
@@ -174,10 +174,9 @@ function CRMMockUI() {
 
 function POSMockUI() {
   const items = [
-    { name: "Premium Laptop", sku: "LAP-001", qty: 1, price: 1299.0 },
-    { name: "Wireless Mouse", sku: "MS-042", qty: 2, price: 49.99 },
-    { name: "USB-C Hub", sku: "HUB-011", qty: 1, price: 89.99 },
-    { name: "Monitor Stand", sku: "STD-007", qty: 1, price: 149.0 },
+    { name: "Premium Ergonomic Chair", sku: "CHR-109", qty: 1, price: 299.0 },
+    { name: "Wireless Mechanical Keyboard", sku: "KBD-044", qty: 2, price: 129.99 },
+    { name: "Noise-Cancelling Headphones", sku: "HDP-081", qty: 1, price: 199.99 },
   ];
   const subtotal = items.reduce((s, i) => s + i.qty * i.price, 0);
   const tax = subtotal * 0.08;
@@ -190,7 +189,7 @@ function POSMockUI() {
           className="text-xs font-semibold px-1 mb-1 uppercase tracking-wider"
           style={{ color: colors.textFaint, fontFamily: fonts.mono }}
         >
-          Cart items
+          Register Cart (Branch B)
         </div>
         {items.map((item) => (
           <div
@@ -259,7 +258,7 @@ function POSMockUI() {
               fontFamily: fonts.mono,
             }}
           >
-            <span>Total</span>
+            <span>Total Bill</span>
             <span>${total.toFixed(2)}</span>
           </div>
         </div>
@@ -271,7 +270,7 @@ function POSMockUI() {
             fontFamily: fonts.body,
           }}
         >
-          Process payment
+          Swipe / Tap Card
         </button>
         <button
           className="w-full py-2 rounded-lg text-xs font-medium"
@@ -282,7 +281,7 @@ function POSMockUI() {
             fontFamily: fonts.body,
           }}
         >
-          Split payment
+          Split Payment
         </button>
       </div>
     </div>
@@ -292,37 +291,37 @@ function POSMockUI() {
 function InventoryMockUI() {
   const rows = [
     {
-      sku: "LAP-001",
-      name: 'Premium Laptop 15"',
-      warehouse: "Main WH",
-      stock: 142,
+      sku: "CHR-109",
+      name: "Premium Ergonomic Chair",
+      branch: "Branch A (Westfield)",
+      stock: 14,
       low: false,
     },
     {
-      sku: "PHN-023",
-      name: "Smartphone Pro Max",
-      warehouse: "Branch A",
-      stock: 8,
-      low: true,
-    },
-    {
-      sku: "TAB-011",
-      name: 'Tablet 11" WiFi',
-      warehouse: "Main WH",
-      stock: 67,
-      low: false,
-    },
-    {
-      sku: "HDP-005",
-      name: "Noise-Cancel Headphones",
-      warehouse: "Branch B",
+      sku: "CHR-109",
+      name: "Premium Ergonomic Chair",
+      branch: "Branch B (Solis)",
       stock: 3,
       low: true,
     },
     {
-      sku: "CAM-034",
-      name: "4K Action Camera",
-      warehouse: "Main WH",
+      sku: "KBD-044",
+      name: "Wireless Mech Keyboard",
+      branch: "Branch A (Westfield)",
+      stock: 45,
+      low: false,
+    },
+    {
+      sku: "KBD-044",
+      name: "Wireless Mech Keyboard",
+      branch: "Branch B (Solis)",
+      stock: 0,
+      low: true,
+    },
+    {
+      sku: "HDP-081",
+      name: "Noise-Cancel Headphones",
+      branch: "Branch B (Solis)",
       stock: 29,
       low: false,
     },
@@ -333,24 +332,24 @@ function InventoryMockUI() {
       <div
         className="grid gap-2 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider"
         style={{
-          gridTemplateColumns: "80px 1fr 100px 80px 60px",
+          gridTemplateColumns: "80px 1.5fr 1.2fr 80px 60px",
           background: colors.inkPanel,
           color: colors.textFaint,
           fontFamily: fonts.mono,
         }}
       >
         <span>SKU</span>
-        <span>Product</span>
-        <span>Warehouse</span>
+        <span>Product Name</span>
+        <span>Store Branch</span>
         <span>Stock</span>
         <span>Status</span>
       </div>
       {rows.map((row) => (
         <div
-          key={row.sku}
+          key={`${row.sku}-${row.branch}`}
           className="grid gap-2 px-3 py-2.5 rounded-lg items-center"
           style={{
-            gridTemplateColumns: "80px 1fr 100px 80px 60px",
+            gridTemplateColumns: "80px 1.5fr 1.2fr 80px 60px",
             background: colors.inkPanelAlt,
             border: `1px solid ${colors.inkLine}`,
           }}
@@ -368,23 +367,23 @@ function InventoryMockUI() {
             {row.name}
           </span>
           <span
-            className="text-xs"
+            className="text-xs truncate"
             style={{ color: colors.textMuted, fontFamily: fonts.body }}
           >
-            {row.warehouse}
+            {row.branch}
           </span>
           <span
             className="text-xs font-semibold"
             style={{
-              color: row.low ? colors.ledgerRust : colors.textPrimary,
+              color: row.stock === 0 ? colors.ledgerRust : (row.low ? colors.brass : colors.textPrimary),
               fontFamily: fonts.mono,
             }}
           >
             {row.stock} units
           </span>
           <StatusChip
-            tone={row.low ? "negative" : "positive"}
-            label={row.low ? "Low" : "OK"}
+            tone={row.stock === 0 ? "negative" : (row.low ? "warn" : "positive")}
+            label={row.stock === 0 ? "Out" : (row.low ? "Low" : "OK")}
           />
         </div>
       ))}
@@ -394,37 +393,36 @@ function InventoryMockUI() {
 
 function FinanceMockUI() {
   const metrics = [
-    { label: "Revenue", value: "$284,920", change: "+12.5%", up: true },
-    { label: "Expenses", value: "$98,450", change: "+4.2%", up: false },
-    { label: "Net Profit", value: "$186,470", change: "+18.3%", up: true },
-    { label: "AR Balance", value: "$42,300", change: "-8.1%", up: true },
+    { label: "Branch A Sales", value: "$184,320", change: "+14.2%", up: true },
+    { label: "Branch B Sales", value: "$96,150", change: "+8.5%", up: true },
+    { label: "Online Sales", value: "$61,380", change: "+24.8%", up: true },
+    { label: "Total Revenue", value: "$341,850", change: "+15.3%", up: true },
   ];
 
-  const recentInvoices = [
+  const recentTransfers = [
     {
-      id: "INV-0841",
-      client: "Fontaine Group",
-      amount: "$12,800",
-      status: "paid" as const,
+      id: "TR-0921",
+      detail: "Stock: Branch A ➔ Branch B",
+      qty: "150 units",
+      status: "completed" as const,
     },
     {
-      id: "INV-0842",
-      client: "Meridian Corp",
-      amount: "$6,450",
+      id: "TR-0922",
+      detail: "Stock: Main WH ➔ Branch A",
+      qty: "400 units",
       status: "pending" as const,
     },
     {
-      id: "INV-0843",
-      client: "TerraLogix",
-      amount: "$24,000",
-      status: "overdue" as const,
+      id: "TR-0923",
+      detail: "Stock: Branch B ➔ Branch A",
+      qty: "50 units",
+      status: "completed" as const,
     },
   ];
 
   const statusTone = {
-    paid: "positive",
+    completed: "positive",
     pending: "warn",
-    overdue: "negative",
   } as const;
 
   return (
@@ -440,7 +438,7 @@ function FinanceMockUI() {
             }}
           >
             <div
-              className="text-xs mb-1"
+              className="text-xs mb-1 truncate"
               style={{ color: colors.textFaint, fontFamily: fonts.body }}
             >
               {m.label}
@@ -469,12 +467,12 @@ function FinanceMockUI() {
           className="text-xs font-semibold mb-2 uppercase tracking-wider"
           style={{ color: colors.textFaint, fontFamily: fonts.mono }}
         >
-          Recent invoices
+          Branch Stock Transfers (Central Management)
         </div>
         <div className="flex flex-col gap-1.5">
-          {recentInvoices.map((inv) => (
+          {recentTransfers.map((tr) => (
             <div
-              key={inv.id}
+              key={tr.id}
               className="flex items-center justify-between px-3 py-2.5 rounded-lg"
               style={{
                 background: colors.inkPanel,
@@ -486,13 +484,13 @@ function FinanceMockUI() {
                   className="text-xs"
                   style={{ color: colors.brass, fontFamily: fonts.mono }}
                 >
-                  {inv.id}
+                  {tr.id}
                 </span>
                 <span
                   className="text-xs"
                   style={{ color: colors.textMuted, fontFamily: fonts.body }}
                 >
-                  {inv.client}
+                  {tr.detail}
                 </span>
               </div>
               <div className="flex items-center gap-3">
@@ -500,9 +498,9 @@ function FinanceMockUI() {
                   className="text-xs font-semibold"
                   style={{ color: colors.textPrimary, fontFamily: fonts.mono }}
                 >
-                  {inv.amount}
+                  {tr.qty}
                 </span>
-                <StatusChip tone={statusTone[inv.status]} label={inv.status} />
+                <StatusChip tone={statusTone[tr.status]} label={tr.status} />
               </div>
             </div>
           ))}
@@ -543,15 +541,13 @@ export function PlatformShowcase() {
             className="mt-3 text-3xl sm:text-4xl font-medium text-balance"
             style={{ color: colors.textPrimary, fontFamily: fonts.display }}
           >
-            The same ledger, four different desks
+            Unified central data, four high-performance channels
           </h2>
           <p
             className="mt-4 text-base max-w-2xl mx-auto leading-relaxed"
             style={{ color: colors.textMuted, fontFamily: fonts.body }}
           >
-            Sales sees a pipeline. The register sees a cart. The warehouse sees
-            stock levels. Every one of them is reading the same underlying
-            record.
+            Customer websites receive orders. Registers check out guests. Central office tracks stock transfers and performance. Everything updates seamlessly at sub-second latency.
           </p>
         </div>
 
@@ -631,7 +627,7 @@ export function PlatformShowcase() {
                 fontFamily: fonts.mono,
               }}
             >
-              app.scryme.io/{activeTab.toLowerCase()}
+              app.scryme.tech/{activeTab.toLowerCase()}
             </div>
             <motion.span
               className="w-1.5 h-1.5 rounded-full"

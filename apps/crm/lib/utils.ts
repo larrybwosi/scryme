@@ -35,3 +35,29 @@ export function formatDate(date: string | Date | any): string {
     year: 'numeric',
   });
 }
+
+export function formatDateTime(date: string | Date | any): string {
+  if (!date) return 'N/A';
+  const d = new Date(date);
+  const formattedDate = d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+  const formattedTime = d.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  return `${formattedDate}, ${formattedTime}`;
+}
+
+export function getDisplayTime(createdAt: any, updatedAt: any): string {
+  if (!createdAt) return 'N/A';
+  const createdTime = new Date(createdAt).getTime();
+  const updatedTime = updatedAt ? new Date(updatedAt).getTime() : createdTime;
+  const isUpdated = Math.abs(updatedTime - createdTime) > 1000;
+  if (isUpdated) {
+    return `Updated ${formatDateTime(updatedAt)}`;
+  }
+  return formatDateTime(createdAt);
+}
