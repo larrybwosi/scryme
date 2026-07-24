@@ -52,6 +52,13 @@ const nextConfig: NextConfig = {
   experimental: {
     workerThreads: false,
     cpus: 1,
+    webpackMemoryOptimizations: true,
+    optimizePackageImports: [
+      "lucide-react",
+      "date-fns",
+      "recharts",
+      "@repo/ui",
+    ],
   },
   typescript: {
     ignoreBuildErrors: true,
@@ -73,4 +80,15 @@ export default withSentryConfig(nextConfig, {
 
   // Suppress non-CI output
   silent: !process.env.CI,
+
+  // Disable Sentry sourcemaps generation and upload during build to reduce resources
+  sourcemaps: {
+    disable: true,
+  },
+
+  // Bundle size optimizations to exclude heavy features from the build
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+  },
 });
