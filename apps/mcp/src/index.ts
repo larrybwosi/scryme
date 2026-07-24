@@ -24,8 +24,10 @@ export async function ensureAuthenticated(orgSlug?: string) {
   const clientSecret = process.env.SCRYME_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    console.error("Warning: SCRYME_CLIENT_ID and SCRYME_CLIENT_SECRET are not set. V3 API calls may fail.");
-    return;
+    throw new Error(
+      "Missing SCRYME_CLIENT_ID or SCRYME_CLIENT_SECRET environment variables. " +
+      "Please configure these credentials so that the MCP server can authenticate with the V3 API."
+    );
   }
 
   const now = Date.now();
@@ -57,7 +59,7 @@ export async function ensureAuthenticated(orgSlug?: string) {
     }
   }
 
-  // Set axios defaults for the SDK client
+  // Set axios defaults for the SDK client (safe default fallback)
   axios.defaults.baseURL = process.env.SCRYME_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
   axios.defaults.headers.common["Authorization"] = `Bearer ${cachedToken}`;
   if (orgSlug) {
@@ -68,10 +70,22 @@ export async function ensureAuthenticated(orgSlug?: string) {
 }
 
 // Enterprise SDK Call Helper with Automatic Token Verification/Refresh and Error Handling
-async function callSdk<T>(orgSlug: string, fn: () => Promise<AxiosResponse<T>>): Promise<any> {
+async function callSdk<T>(
+  orgSlug: string,
+  fn: (config?: any) => Promise<AxiosResponse<T>>,
+  additionalConfig: any = {}
+): Promise<any> {
   await ensureAuthenticated(orgSlug);
   try {
-    const response = await fn();
+    const config = {
+      ...additionalConfig,
+      headers: {
+        ...additionalConfig?.headers,
+        Authorization: `Bearer ${cachedToken}`,
+        "x-org-slug": orgSlug,
+      },
+    };
+    const response = await fn(config);
     return {
       content: [
         {
@@ -110,7 +124,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, limit, offset }) => {
-    return callSdk(orgSlug, () => v3.catalogGetProducts(orgSlug, { limit, offset } as any));
+    return callSdk(orgSlug, (config) => v3.catalogGetProducts(orgSlug, { limit, offset } as any, config));
   }
 );
 
@@ -130,7 +144,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, ...dto }) => {
-    return callSdk(orgSlug, () => v3.catalogCreateProduct(orgSlug, dto as any));
+    return callSdk(orgSlug, (config) => v3.catalogCreateProduct(orgSlug, dto as any, config));
   }
 );
 
@@ -149,7 +163,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, limit, offset }) => {
-    return callSdk(orgSlug, () => v3.customersGetCustomers(orgSlug, { limit, offset } as any));
+    return callSdk(orgSlug, (config) => v3.customersGetCustomers(orgSlug, { limit, offset } as any, config));
   }
 );
 
@@ -166,7 +180,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, ...dto }) => {
-    return callSdk(orgSlug, () => v3.customersRegister(orgSlug, dto as any));
+    return callSdk(orgSlug, (config) => v3.customersRegister(orgSlug, dto as any, config));
   }
 );
 
@@ -183,7 +197,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, id, ...dto }) => {
-    return callSdk(orgSlug, () => v3.customersUpdate(orgSlug, id, dto as any));
+    return callSdk(orgSlug, (config) => v3.customersUpdate(orgSlug, id, dto as any, config));
   }
 );
 
@@ -203,7 +217,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, locationId, limit, offset }) => {
-    return callSdk(orgSlug, () => v3.inventoryGetInventory(orgSlug, { locationId, limit, offset } as any));
+    return callSdk(orgSlug, (config) => v3.inventoryGetInventory(orgSlug, { locationId, limit, offset } as any, config));
   }
 );
 
@@ -217,7 +231,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, identifier }) => {
-    return callSdk(orgSlug, () => v3.inventoryTraceBatch(orgSlug, identifier));
+    return callSdk(orgSlug, (config) => v3.inventoryTraceBatch(orgSlug, identifier, config));
   }
 );
 
@@ -233,7 +247,11 @@ server.registerTool(
   },
   async ({ orgSlug, batchId, quantities }) => {
     const splits = quantities.map((q) => ({ quantity: q }));
-    return callSdk(orgSlug, () => v3.inventorySplitBatch(orgSlug, batchId, { data: { splits } } as any));
+    return callSdk(
+      orgSlug,
+      (config) => v3.inventorySplitBatch(orgSlug, batchId, config),
+      { data: { splits } }
+    );
   }
 );
 
@@ -247,7 +265,11 @@ server.registerTool(
     },
   },
   async ({ orgSlug, batchIds }) => {
-    return callSdk(orgSlug, () => v3.inventoryMergeBatches(orgSlug, { data: { batchIds } } as any));
+    return callSdk(
+      orgSlug,
+      (config) => v3.inventoryMergeBatches(orgSlug, config),
+      { data: { batchIds } }
+    );
   }
 );
 
@@ -266,7 +288,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, limit, offset }) => {
-    return callSdk(orgSlug, () => v3.ordersGetOrders(orgSlug, { limit, offset } as any));
+    return callSdk(orgSlug, (config) => v3.ordersGetOrders(orgSlug, { limit, offset } as any, config));
   }
 );
 
@@ -286,7 +308,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, ...dto }) => {
-    return callSdk(orgSlug, () => v3.ordersCreateOrder(orgSlug, dto as any));
+    return callSdk(orgSlug, (config) => v3.ordersCreateOrder(orgSlug, dto as any, config));
   }
 );
 
@@ -301,7 +323,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, id, status }) => {
-    return callSdk(orgSlug, () => v3.ordersUpdateStatus(orgSlug, id, { status } as any));
+    return callSdk(orgSlug, (config) => v3.ordersUpdateStatus(orgSlug, id, { status } as any, config));
   }
 );
 
@@ -319,7 +341,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, id }) => {
-    return callSdk(orgSlug, () => v3.crmControllerGetRecord(orgSlug, id));
+    return callSdk(orgSlug, (config) => v3.crmControllerGetRecord(orgSlug, id, config));
   }
 );
 
@@ -334,7 +356,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, ...dto }) => {
-    return callSdk(orgSlug, () => v3.crmControllerCreateRecord(orgSlug, dto as any));
+    return callSdk(orgSlug, (config) => v3.crmControllerCreateRecord(orgSlug, dto as any, config));
   }
 );
 
@@ -349,7 +371,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, ...dto }) => {
-    return callSdk(orgSlug, () => v3.crmControllerCreateNote(orgSlug, dto as any));
+    return callSdk(orgSlug, (config) => v3.crmControllerCreateNote(orgSlug, dto as any, config));
   }
 );
 
@@ -363,7 +385,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, id }) => {
-    return callSdk(orgSlug, () => v3.crmControllerGetTimeline(orgSlug, id));
+    return callSdk(orgSlug, (config) => v3.crmControllerGetTimeline(orgSlug, id, config));
   }
 );
 
@@ -382,7 +404,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, status, categoryId }) => {
-    return callSdk(orgSlug, () => v3.expenseControllerGetExpenses({ status, categoryId } as any));
+    return callSdk(orgSlug, (config) => v3.expenseControllerGetExpenses({ status, categoryId } as any, config));
   }
 );
 
@@ -399,7 +421,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, ...dto }) => {
-    return callSdk(orgSlug, () => v3.expenseControllerCreateExpense(dto as any));
+    return callSdk(orgSlug, (config) => v3.expenseControllerCreateExpense(dto as any, config));
   }
 );
 
@@ -412,7 +434,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug }) => {
-    return callSdk(orgSlug, () => v3.pettyCashControllerGetFunds());
+    return callSdk(orgSlug, (config) => v3.pettyCashControllerGetFunds(config));
   }
 );
 
@@ -427,7 +449,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, startDate, endDate }) => {
-    return callSdk(orgSlug, () => v3.accountingGetProfitLoss(orgSlug, { startDate, endDate } as any));
+    return callSdk(orgSlug, (config) => v3.accountingGetProfitLoss(orgSlug, { startDate, endDate } as any, config));
   }
 );
 
@@ -445,7 +467,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, role }) => {
-    return callSdk(orgSlug, () => v3.membersControllerGetMembers(orgSlug, { role } as any));
+    return callSdk(orgSlug, (config) => v3.membersControllerGetMembers(orgSlug, { role } as any, config));
   }
 );
 
@@ -461,7 +483,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, ...dto }) => {
-    return callSdk(orgSlug, () => v3.membersControllerCreateMember(orgSlug, dto as any));
+    return callSdk(orgSlug, (config) => v3.membersControllerCreateMember(orgSlug, dto as any, config));
   }
 );
 
@@ -478,7 +500,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug }) => {
-    return callSdk(orgSlug, () => v3.stockingGetTransfers(orgSlug));
+    return callSdk(orgSlug, (config) => v3.stockingGetTransfers(orgSlug, undefined, config));
   }
 );
 
@@ -498,7 +520,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, ...dto }) => {
-    return callSdk(orgSlug, () => v3.stockingCreateTransfer(orgSlug, dto as any));
+    return callSdk(orgSlug, (config) => v3.stockingCreateTransfer(orgSlug, dto as any, config));
   }
 );
 
@@ -516,7 +538,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug, id, items }) => {
-    return callSdk(orgSlug, () => v3.stockingReceiveTransfer(orgSlug, id, { items } as any));
+    return callSdk(orgSlug, (config) => v3.stockingReceiveTransfer(orgSlug, id, { items } as any, config));
   }
 );
 
@@ -533,7 +555,7 @@ server.registerTool(
     },
   },
   async ({ orgSlug }) => {
-    return callSdk(orgSlug, () => v3.unitsGetUnits(orgSlug, {}));
+    return callSdk(orgSlug, (config) => v3.unitsGetUnits(orgSlug, {}, config));
   }
 );
 
