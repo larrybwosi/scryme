@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import { randomInt } from "crypto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { BookingStatus } from "@repo/db";
 import { notificationEngine } from "@repo/notifications";
@@ -13,7 +14,8 @@ export class OtpService {
       throw new BadRequestException("Either email or phone number must be provided");
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    // Secure random integer generator instead of Math.random() to prevent predictable OTP codes
+    const code = randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + 10 * 60000); // 10 minutes
 
     const verification = await this.prisma.client.bookingVerificationCode.create({

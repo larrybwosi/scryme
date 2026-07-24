@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { randomBytes } from "crypto";
 import { PrismaService } from "@/prisma/prisma.service";
 import {
   LoyaltyTransactionType,
@@ -303,11 +304,8 @@ export class LoyaltyService {
         },
       });
 
-      // 3. Create Voucher
-      const voucherCode = Math.random()
-        .toString(36)
-        .substring(2, 10)
-        .toUpperCase();
+      // 3. Create Voucher using a secure random generator instead of Math.random()
+      const voucherCode = randomBytes(4).toString("hex").toUpperCase();
       const voucher = await tx.loyaltyVoucher.create({
         data: {
           code: voucherCode,
