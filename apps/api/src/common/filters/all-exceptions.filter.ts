@@ -95,7 +95,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
           scope.setExtra("v3Context", redactSensitiveData(request.v3Context));
           scope.setExtra("exceptionDetails", redactedException);
 
-          Sentry.captureException(exception);
+          // SECURITY: To prevent sensitive data leakage (e.g., query params, headers, secrets) to Sentry,
+          // we reconstruct a clean Error with redacted info to keep Sentry's stack tracing and type parsing.
+          let sentryException: any = redactedException;
+          if (exception instanceof Error) {
+            const redactedError = new Error(redactedException.message);
+            redactedError.name = redactedException.name;
+            redactedError.stack = redactedException.stack;
+            for (const key of Object.getOwnPropertyNames(redactedException)) {
+              if (!["name", "message", "stack"].includes(key)) {
+                (redactedError as any)[key] = redactedException[key];
+              }
+            }
+            sentryException = redactedError;
+          }
+
+          Sentry.captureException(sentryException);
         });
       } catch (sentryError) {
         console.error("Failed to capture exception in Sentry:", sentryError);
