@@ -1869,6 +1869,335 @@
         ]
       }
     },
+    "/v3/admin/settings": {
+      "get": {
+        "operationId": "AdminController_listGlobalSettings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List all global system settings",
+        "tags": [
+          "V3 Admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminController_setGlobalSetting",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGlobalSettingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Set or update a global system setting",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/settings/{key}": {
+      "delete": {
+        "operationId": "AdminController_deleteGlobalSetting",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete a global system setting",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/tiers": {
+      "get": {
+        "operationId": "AdminController_listTiers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List all system-wide organization plans and tiers",
+        "tags": [
+          "V3 Admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminController_defineTier",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DefineTierDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Define or update a global plan / tier limits and attributes",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/tiers/{slug}": {
+      "delete": {
+        "operationId": "AdminController_deleteTier",
+        "parameters": [
+          {
+            "name": "slug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete a global plan / tier definition",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/organizations/{id}/subscription": {
+      "get": {
+        "operationId": "AdminController_getOrganizationSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Get subscription details for a specific organization",
+        "tags": [
+          "V3 Admin"
+        ]
+      },
+      "put": {
+        "operationId": "AdminController_updateOrganizationSubscription",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSubscriptionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Update subscription / plan details for a specific organization",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/payments": {
+      "get": {
+        "operationId": "AdminController_listSystemPayments",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List all system payments for organization plans",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/payments/record": {
+      "post": {
+        "operationId": "AdminController_recordCustomPayment",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordCustomPaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Record a custom plan payment (e.g. M-Pesa / Manual verification)",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/integrations/definitions": {
+      "get": {
+        "operationId": "AdminController_listIntegrationDefinitions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List all globally available integration definitions",
+        "tags": [
+          "V3 Admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminController_createIntegrationDefinition",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIntegrationDefinitionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Create a globally available integration definition",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/integrations/definitions/{id}": {
+      "patch": {
+        "operationId": "AdminController_updateIntegrationDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIntegrationDefinitionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Update a global integration definition",
+        "tags": [
+          "V3 Admin"
+        ]
+      },
+      "delete": {
+        "operationId": "AdminController_deleteIntegrationDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Delete a global integration definition",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
+    "/v3/admin/integrations/active": {
+      "get": {
+        "operationId": "AdminController_listActiveOrganizationIntegrations",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List all active organization integrations system-wide",
+        "tags": [
+          "V3 Admin"
+        ]
+      }
+    },
     "/v3/{orgSlug}/webhooks": {
       "post": {
         "operationId": "Webhooks_Create",
@@ -9427,6 +9756,223 @@
           "banExpires": {
             "type": "string",
             "description": "The expiration date of the ban"
+          }
+        }
+      },
+      "SetGlobalSettingDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Setting key"
+          },
+          "value": {
+            "type": "string",
+            "description": "Setting value"
+          }
+        },
+        "required": [
+          "key",
+          "value"
+        ]
+      },
+      "DefineTierDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Unique slug/id for the tier, e.g., 'growth'"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name of the tier"
+          },
+          "price": {
+            "type": "number",
+            "description": "Monthly or annual price of the tier"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the tier"
+          },
+          "limits": {
+            "type": "object",
+            "description": "Tier limits (as a JSON/object, e.g., member limit, product limit)"
+          },
+          "features": {
+            "description": "Features enabled for this tier",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "slug",
+          "name",
+          "price"
+        ]
+      },
+      "UpdateSubscriptionDto": {
+        "type": "object",
+        "properties": {
+          "tierSlug": {
+            "type": "string",
+            "description": "Slug of the tier / plan"
+          },
+          "dodoCustomerId": {
+            "type": "string",
+            "description": "Dodo Customer ID"
+          },
+          "dodoSubscriptionId": {
+            "type": "string",
+            "description": "Dodo Subscription ID"
+          },
+          "dodoPriceId": {
+            "type": "string",
+            "description": "Dodo Price ID"
+          },
+          "dodoCurrentPeriodEnd": {
+            "type": "string",
+            "description": "Dodo Subscription end period"
+          }
+        },
+        "required": [
+          "tierSlug"
+        ]
+      },
+      "RecordCustomPaymentDto": {
+        "type": "object",
+        "properties": {
+          "organizationId": {
+            "type": "string",
+            "description": "Target Organization ID"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Paid amount"
+          },
+          "phoneNumber": {
+            "type": "string",
+            "description": "Phone number associated with payment"
+          },
+          "reference": {
+            "type": "string",
+            "description": "Payment reference / transaction code (e.g. M-Pesa Code)"
+          },
+          "tierSlug": {
+            "type": "string",
+            "description": "Upgrade organization subscription to this tier slug on successful payment"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Custom notes/metadata for the payment"
+          }
+        },
+        "required": [
+          "organizationId",
+          "amount",
+          "phoneNumber",
+          "reference"
+        ]
+      },
+      "CreateIntegrationDefinitionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of integration"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Slug of integration, e.g. shopify"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Logo URL"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "E_COMMERCE",
+              "ACCOUNTING",
+              "MARKETING",
+              "PAYMENT_GATEWAY",
+              "CRM",
+              "COMMUNICATION",
+              "OTHER"
+            ],
+            "description": "Category of integration"
+          },
+          "authType": {
+            "type": "string",
+            "enum": [
+              "API_KEY",
+              "OAUTH2",
+              "OTHER"
+            ],
+            "description": "Auth type of integration"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Is this integration active and connectable"
+          }
+        },
+        "required": [
+          "name",
+          "slug",
+          "category",
+          "authType"
+        ]
+      },
+      "UpdateIntegrationDefinitionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of integration"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Slug of integration"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description"
+          },
+          "logoUrl": {
+            "type": "string",
+            "description": "Logo URL"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "E_COMMERCE",
+              "ACCOUNTING",
+              "MARKETING",
+              "PAYMENT_GATEWAY",
+              "CRM",
+              "COMMUNICATION",
+              "OTHER"
+            ],
+            "description": "Category of integration"
+          },
+          "authType": {
+            "type": "string",
+            "enum": [
+              "API_KEY",
+              "OAUTH2",
+              "OTHER"
+            ],
+            "description": "Auth type of integration"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Is this integration active and connectable"
           }
         }
       },

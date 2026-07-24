@@ -14,6 +14,7 @@ import {
   UserPlus,
   LogIn,
   CheckCircle,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -131,15 +132,27 @@ export function InvitationCard({
         {/* Flow execution buttons */}
         {isAuthenticated ? (
           <div className="w-full space-y-4">
-            <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg py-2.5 px-3 flex items-center justify-center gap-2">
-              <CheckCircle className="w-4 h-4 shrink-0" />
-              <span>
-                Authenticated as <span className="font-semibold">{currentUserEmail}</span>
-              </span>
-            </div>
+            {currentUserEmail === invitation.email ? (
+              <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg py-2.5 px-3 flex items-center justify-center gap-2">
+                <CheckCircle className="w-4 h-4 shrink-0" />
+                <span>
+                  Authenticated as <span className="font-semibold">{currentUserEmail}</span>
+                </span>
+              </div>
+            ) : (
+              <div className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg py-2.5 px-3 flex flex-col items-center justify-center gap-2">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>Email Address Mismatch</span>
+                </div>
+                <p className="text-[11px] text-amber-700 font-medium">
+                  This invite is for <span className="underline font-bold">{invitation.email}</span>, but you are logged in as <span className="underline font-bold">{currentUserEmail}</span>. Please switch accounts.
+                </p>
+              </div>
+            )}
             <Button
-              className="w-full h-11 bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-              disabled={loading}
+              className="w-full h-11 bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+              disabled={loading || currentUserEmail !== invitation.email}
               onClick={handleAccept}
             >
               {loading ? (

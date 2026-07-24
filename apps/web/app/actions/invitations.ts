@@ -49,6 +49,13 @@ export async function acceptInvitationByToken(token: string) {
     return { success: false, error: "Invalid or expired invitation" };
   }
 
+  if (auth.user.email !== invitation.email) {
+    return {
+      success: false,
+      error: `This invitation was sent to ${invitation.email}, but you are logged in as ${auth.user.email}. Please switch accounts.`,
+    };
+  }
+
   if (new Date() > invitation.expiresAt) {
     return { success: false, error: "Invitation has expired" };
   }
