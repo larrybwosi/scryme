@@ -83,4 +83,48 @@ class AuthViewModelTest {
         assertTrue(viewModel.loginState.value is UiState.Error)
         assertEquals("Unauthorized", (viewModel.loginState.value as UiState.Error).message)
     }
+
+    @Test
+    fun `login with Google success transitions state to Success`() = runTest(testDispatcher) {
+        val idToken = "google_token_123"
+        val mockResponse = BetterAuthSessionResponse(
+            user = SessionUser("id", "google_user@scryme.tech", "Google Name", "MEMBER", "org_id_456"),
+            session = SessionDto("sess_id", "id", "token_google_xyz", "", "org_id_456")
+        )
+
+        coEvery { repository.signInWithGoogle(idToken) } coAnswers {
+            delay(100)
+            Result.success(mockResponse)
+        }
+
+        viewModel.loginWithGoogle(idToken)
+
+        runCurrent()
+        assertEquals(UiState.Loading, viewModel.loginState.value)
+
+        advanceTimeBy(150)
+
+        assertTrue(viewModel.loginState.value is UiState.Success)
+        assertEquals(mockResponse, (viewModel.loginState.value as UiState.Success).data)
+    }
+
+    @Test
+    fun `login with Google failure transitions state to Error`() = runTest(testDispatcher) {
+        val idToken = "invalid_google_token"
+
+        coEvery { repository.signInWithGoogle(idToken) } coAnswers {
+            delay(100)
+            Result.failure(Exception("Google Token Invalid"))
+        }
+
+        viewModel.loginWithGoogle(idToken)
+
+        runCurrent()
+        assertEquals(UiState.Loading, viewModel.loginState.value)
+
+        advanceTimeBy(150)
+
+        assertTrue(viewModel.loginState.value is UiState.Error)
+        assertEquals("Google Token Invalid", (viewModel.loginState.value as UiState.Error).message)
+    }
 }

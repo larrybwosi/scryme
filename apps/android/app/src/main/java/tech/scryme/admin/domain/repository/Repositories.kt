@@ -8,6 +8,7 @@ interface AuthRepository {
     suspend fun getSession(): Result<BetterAuthSessionResponse>
     suspend fun terminalLogin(cardId: String, pin: String): Result<TerminalLoginResponseDto>
     suspend fun signOut(): Result<Unit>
+    suspend fun signInWithGoogle(idToken: String): Result<BetterAuthSessionResponse>
 }
 
 interface PresenceRepository {
