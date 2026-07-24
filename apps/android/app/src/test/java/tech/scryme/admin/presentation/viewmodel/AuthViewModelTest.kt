@@ -27,7 +27,7 @@ class AuthViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        every { sessionManager.token } returns MutableStateFlow("token")
+        every { sessionManager.token } returns MutableStateFlow(null)
         viewModel = AuthViewModel(repository, sessionManager)
     }
 
@@ -126,5 +126,51 @@ class AuthViewModelTest {
 
         assertTrue(viewModel.loginState.value is UiState.Error)
         assertEquals("Google Token Invalid", (viewModel.loginState.value as UiState.Error).message)
+    }
+
+    @Test
+    fun `checkSession success transitions state to Success`() = runTest(testDispatcher) {
+        val email = "admin@scryme.tech"
+        val mockResponse = BetterAuthSessionResponse(
+            user = SessionUser("id", email, "Admin Name", "ADMIN", "org_id_123"),
+            session = SessionDto("sess_id", "id", "token_xyz", "", "org_id_123")
+        )
+
+        every { sessionManager.token } returns MutableStateFlow("valid_token")
+        coEvery { repository.getSession() } coAnswers {
+            delay(100)
+            Result.success(mockResponse)
+        }
+
+        // Re-init ViewModel so checkSession runs automatically
+        val testViewModel = AuthViewModel(repository, sessionManager)
+
+        runCurrent()
+        assertEquals(UiState.Loading, testViewModel.loginState.value)
+
+        advanceTimeBy(150)
+
+        assertTrue(testViewModel.loginState.value is UiState.Success)
+        assertEquals(mockResponse, (testViewModel.loginState.value as UiState.Success).data)
+    }
+
+    @Test
+    fun `checkSession failure transitions state to Error`() = runTest(testDispatcher) {
+        every { sessionManager.token } returns MutableStateFlow("invalid_token")
+        coEvery { repository.getSession() } coAnswers {
+            delay(100)
+            Result.failure(Exception("Session expired"))
+        }
+
+        // Re-init ViewModel
+        val testViewModel = AuthViewModel(repository, sessionManager)
+
+        runCurrent()
+        assertEquals(UiState.Loading, testViewModel.loginState.value)
+
+        advanceTimeBy(150)
+
+        assertTrue(testViewModel.loginState.value is UiState.Error)
+        assertEquals("Session expired", (testViewModel.loginState.value as UiState.Error).message)
     }
 }

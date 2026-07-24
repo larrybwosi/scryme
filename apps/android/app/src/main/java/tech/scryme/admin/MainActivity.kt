@@ -15,6 +15,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,14 +41,31 @@ import tech.scryme.admin.data.api.MultiTenancyInterceptor
 import tech.scryme.admin.data.model.BetterAuthSessionResponse
 import tech.scryme.admin.data.model.SessionDto
 import tech.scryme.admin.data.model.SessionUser
+import tech.scryme.admin.data.model.PresenceStatus
 import tech.scryme.admin.data.repository.AuthRepositoryImpl
 import tech.scryme.admin.data.session.SessionManagerImpl
 import tech.scryme.admin.presentation.viewmodel.AuthViewModel
 import tech.scryme.admin.presentation.viewmodel.UiState
+import tech.scryme.admin.data.api.PresenceApiService
+import tech.scryme.admin.data.api.ApprovalsApiService
+import tech.scryme.admin.data.api.AnalyticsApiService
+import tech.scryme.admin.data.api.AnnouncementApiService
+import tech.scryme.admin.data.repository.PresenceRepositoryImpl
+import tech.scryme.admin.data.repository.ApprovalsRepositoryImpl
+import tech.scryme.admin.data.repository.AnalyticsRepositoryImpl
+import tech.scryme.admin.data.repository.AnnouncementRepositoryImpl
+import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
+import tech.scryme.admin.presentation.viewmodel.ApprovalsViewModel
+import tech.scryme.admin.presentation.viewmodel.AnalyticsViewModel
+import tech.scryme.admin.presentation.viewmodel.AnnouncementViewModel
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var authViewModel: AuthViewModel
+    private lateinit var presenceViewModel: PresenceViewModel
+    private lateinit var approvalsViewModel: ApprovalsViewModel
+    private lateinit var analyticsViewModel: AnalyticsViewModel
+    private lateinit var announcementViewModel: AnnouncementViewModel
     private lateinit var sessionManager: SessionManagerImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,8 +87,23 @@ class MainActivity : ComponentActivity() {
 
         val authApiService = retrofit.create(AuthApiService::class.java)
         val authRepository = AuthRepositoryImpl(authApiService, sessionManager)
-
         authViewModel = AuthViewModel(authRepository, sessionManager)
+
+        val presenceApiService = retrofit.create(PresenceApiService::class.java)
+        val presenceRepository = PresenceRepositoryImpl(presenceApiService, sessionManager)
+        presenceViewModel = PresenceViewModel(presenceRepository)
+
+        val approvalsApiService = retrofit.create(ApprovalsApiService::class.java)
+        val approvalsRepository = ApprovalsRepositoryImpl(approvalsApiService, sessionManager)
+        approvalsViewModel = ApprovalsViewModel(approvalsRepository)
+
+        val analyticsApiService = retrofit.create(AnalyticsApiService::class.java)
+        val analyticsRepository = AnalyticsRepositoryImpl(analyticsApiService, sessionManager)
+        analyticsViewModel = AnalyticsViewModel(analyticsRepository)
+
+        val announcementApiService = retrofit.create(AnnouncementApiService::class.java)
+        val announcementRepository = AnnouncementRepositoryImpl(announcementApiService, sessionManager)
+        announcementViewModel = AnnouncementViewModel(announcementRepository)
 
         setContent {
             ScrymeTheme {
@@ -78,7 +111,14 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = Color(red = 0x0B, green = 0x12, blue = 0x20) // Deep Navy Background #0B1220
                 ) {
-                    AppNavigation(authViewModel, sessionManager)
+                    AppNavigation(
+                        authViewModel = authViewModel,
+                        presenceViewModel = presenceViewModel,
+                        approvalsViewModel = approvalsViewModel,
+                        analyticsViewModel = analyticsViewModel,
+                        announcementViewModel = announcementViewModel,
+                        sessionManager = sessionManager
+                    )
                 }
             }
         }
@@ -114,11 +154,15 @@ fun ScrymeTheme(content: @Composable () -> Unit) {
 
 @Composable
 fun AppNavigation(
-    viewModel: AuthViewModel,
+    authViewModel: AuthViewModel,
+    presenceViewModel: PresenceViewModel,
+    approvalsViewModel: ApprovalsViewModel,
+    analyticsViewModel: AnalyticsViewModel,
+    announcementViewModel: AnnouncementViewModel,
     sessionManager: SessionManagerImpl
 ) {
-    val isAuthenticated by viewModel.isAuthenticated.collectAsState()
-    val loginState by viewModel.loginState.collectAsState()
+    val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
+    val loginState by authViewModel.loginState.collectAsState()
 
     if (isAuthenticated) {
         var userEmail = "admin@scryme.tech"
@@ -138,10 +182,14 @@ fun AppNavigation(
             userEmail = userEmail,
             activeOrg = activeOrg,
             sessionToken = sessionManager.token.collectAsState().value ?: "",
-            onSignOut = { viewModel.logout() }
+            presenceViewModel = presenceViewModel,
+            approvalsViewModel = approvalsViewModel,
+            analyticsViewModel = analyticsViewModel,
+            announcementViewModel = announcementViewModel,
+            onSignOut = { authViewModel.logout() }
         )
     } else {
-        LoginScreen(viewModel = viewModel)
+        LoginScreen(viewModel = authViewModel)
     }
 }
 
@@ -544,55 +592,306 @@ fun AdminDashboard(
     userEmail: String,
     activeOrg: String,
     sessionToken: String,
+    presenceViewModel: PresenceViewModel,
+    approvalsViewModel: ApprovalsViewModel,
+    analyticsViewModel: AnalyticsViewModel,
+    announcementViewModel: AnnouncementViewModel,
     onSignOut: () -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(ScrymeColors.InkBg)
-            .padding(24.dp)
-    ) {
-        Column(
+    var activeTab by remember { mutableIntStateOf(0) } // 0 = Dashboard, 1 = Presence, 2 = Operations
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar(
+                containerColor = ScrymeColors.SteelDark,
+                tonalElevation = 8.dp
+            ) {
+                NavigationBarItem(
+                    selected = activeTab == 0,
+                    onClick = { activeTab = 0 },
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
+                    label = { Text("Dashboard") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = ScrymeColors.InkBg,
+                        selectedTextColor = ScrymeColors.Brass,
+                        indicatorColor = ScrymeColors.Brass,
+                        unselectedIconColor = ScrymeColors.SoftGray,
+                        unselectedTextColor = ScrymeColors.SoftGray
+                    )
+                )
+                NavigationBarItem(
+                    selected = activeTab == 1,
+                    onClick = { activeTab = 1 },
+                    icon = { Icon(Icons.Default.Person, contentDescription = "Presence") },
+                    label = { Text("Presence") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = ScrymeColors.InkBg,
+                        selectedTextColor = ScrymeColors.Brass,
+                        indicatorColor = ScrymeColors.Brass,
+                        unselectedIconColor = ScrymeColors.SoftGray,
+                        unselectedTextColor = ScrymeColors.SoftGray
+                    )
+                )
+                NavigationBarItem(
+                    selected = activeTab == 2,
+                    onClick = { activeTab = 2 },
+                    icon = { Icon(Icons.Default.Check, contentDescription = "Operations") },
+                    label = { Text("Operations") },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = ScrymeColors.InkBg,
+                        selectedTextColor = ScrymeColors.Brass,
+                        indicatorColor = ScrymeColors.Brass,
+                        unselectedIconColor = ScrymeColors.SoftGray,
+                        unselectedTextColor = ScrymeColors.SoftGray
+                    )
+                )
+            }
+        },
+        containerColor = ScrymeColors.InkBg
+    ) { paddingValues ->
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+                .padding(paddingValues)
         ) {
-            // Header
-            Row(
+            when (activeTab) {
+                0 -> DashboardView(
+                    userName = userName,
+                    userEmail = userEmail,
+                    activeOrg = activeOrg,
+                    sessionToken = sessionToken,
+                    analyticsViewModel = analyticsViewModel,
+                    presenceViewModel = presenceViewModel,
+                    onSignOut = onSignOut
+                )
+                1 -> PresenceView(
+                    presenceViewModel = presenceViewModel
+                )
+                2 -> OperationsView(
+                    approvalsViewModel = approvalsViewModel,
+                    announcementViewModel = announcementViewModel
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun DashboardView(
+    userName: String,
+    userEmail: String,
+    activeOrg: String,
+    sessionToken: String,
+    analyticsViewModel: AnalyticsViewModel,
+    presenceViewModel: PresenceViewModel,
+    onSignOut: () -> Unit
+) {
+    val liveStats by analyticsViewModel.liveStats.collectAsState()
+    val activeMembers by presenceViewModel.activeMembers.collectAsState()
+
+    LaunchedEffect(Unit) {
+        analyticsViewModel.fetchDashboardAnalytics()
+        presenceViewModel.fetchCheckedInMembers()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        // Header
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "SCRYME DASHBOARD",
+                    color = ScrymeColors.Brass,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "Real-time Administrative Control",
+                    color = ScrymeColors.SoftGray,
+                    fontSize = 12.sp
+                )
+            }
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(ScrymeColors.GreenLogo),
+                contentAlignment = Alignment.Center
             ) {
-                Column {
+                Text("S", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+            }
+        }
+
+        // Success Welcome Banner
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "Welcome back, $userName",
+                    color = ScrymeColors.Paper,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 6.dp)
+                )
+                Text(
+                    text = userEmail,
+                    color = ScrymeColors.SoftGray,
+                    fontSize = 13.sp
+                )
+            }
+        }
+
+        // Live stats overview card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = null,
+                        tint = ScrymeColors.Brass,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "SCRYME ADMIN",
+                        text = "REAL-TIME METRICS",
                         color = ScrymeColors.Brass,
-                        fontSize = 20.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp
                     )
-                    Text(
-                        text = "The Operating Ledger Portal",
-                        color = ScrymeColors.SoftGray,
-                        fontSize = 12.sp
+                }
+
+                val totalCheckedIn = liveStats?.totalCheckedInNow ?: activeMembers.size
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "$totalCheckedIn",
+                            color = ScrymeColors.Paper,
+                            fontSize = 36.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                        Text(
+                            text = "Active Check-Ins Now",
+                            color = ScrymeColors.SoftGray,
+                            fontSize = 13.sp
+                        )
+                    }
+
+                    // Pulse green circle
+                    Box(
+                        modifier = Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(Color.Green)
                     )
                 }
+            }
+        }
+
+        // Session Security Inspector
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = null,
+                        tint = ScrymeColors.Brass,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "ACTIVE TENANT",
+                        color = ScrymeColors.Brass,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+                Text(
+                    text = activeOrg,
+                    color = ScrymeColors.Paper,
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                HorizontalDivider(color = ScrymeColors.SoftGray.copy(alpha = 0.1f), modifier = Modifier.padding(bottom = 16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = null,
+                        tint = ScrymeColors.Brass,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "SECURE SESSION TOKEN",
+                        color = ScrymeColors.Brass,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                }
+
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
-                        .clip(CircleShape)
-                        .background(ScrymeColors.GreenLogo),
-                    contentAlignment = Alignment.Center
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(ScrymeColors.InkBg)
+                        .padding(12.dp)
                 ) {
-                    Text("S", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text(
+                        text = if (sessionToken.length > 30) {
+                            "${sessionToken.take(15)}...${sessionToken.takeLast(15)}"
+                        } else {
+                            sessionToken
+                        },
+                        color = ScrymeColors.Paper,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 11.sp
+                    )
                 }
             }
+        }
 
-            // Success Welcome Banner
+        // Branch Breakdown
+        val stats = liveStats
+        if (stats != null && stats.branchStats.isNotEmpty()) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
@@ -600,115 +899,572 @@ fun AdminDashboard(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "Welcome back, $userName",
-                        color = ScrymeColors.Paper,
-                        fontSize = 18.sp,
+                        text = "BRANCH STATUS",
+                        color = ScrymeColors.Brass,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 6.dp)
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(bottom = 12.dp)
                     )
+                    stats.branchStats.forEach { branch ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(text = branch.locationName, color = ScrymeColors.Paper, fontSize = 14.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "${branch.activePresenceCount} active",
+                                    color = ScrymeColors.Brass,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "(${branch.averageDurationMinutes.toInt()}m avg)",
+                                    color = ScrymeColors.SoftGray,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sign Out Button
+        Button(
+            onClick = onSignOut,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp, bottom = 16.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Crimson, contentColor = Color.White),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("SECURELY CLOSE SESSION", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun PresenceView(
+    presenceViewModel: PresenceViewModel
+) {
+    val context = LocalContext.current
+    val activeMembers by presenceViewModel.activeMembers.collectAsState()
+    val presenceState by presenceViewModel.presenceState.collectAsState()
+    val selectedLocationId by presenceViewModel.selectedLocationId.collectAsState()
+
+    var searchQuery by remember { mutableStateOf("") }
+    var showBranchDropdown by remember { mutableStateOf(false) }
+
+    LaunchedEffect(searchQuery, selectedLocationId) {
+        presenceViewModel.fetchCheckedInMembers(search = searchQuery.ifBlank { null })
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Title block
+        Column {
+            Text(
+                text = "PRESENCE MONITOR",
+                color = ScrymeColors.Brass,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Text(
+                text = "Real-time Checked-in Staff & Active Members",
+                color = ScrymeColors.SoftGray,
+                fontSize = 12.sp
+            )
+        }
+
+        // Search Bar & Filter Action Row
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Search staff name / Card ID", color = ScrymeColors.SoftGray, fontSize = 13.sp) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = ScrymeColors.Brass) },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = ScrymeColors.Brass,
+                    unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                    cursorColor = ScrymeColors.Brass
+                )
+            )
+
+            // Branch filter Button
+            Box {
+                Button(
+                    onClick = { showBranchDropdown = !showBranchDropdown },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (selectedLocationId != null) ScrymeColors.Brass else ScrymeColors.SteelDark
+                    ),
+                    shape = RoundedCornerShape(8.dp),
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Home,
+                        contentDescription = "Filter",
+                        tint = if (selectedLocationId != null) ScrymeColors.InkBg else ScrymeColors.Brass,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = userEmail,
+                        text = if (selectedLocationId != null) "Filtered" else "Branch",
+                        color = if (selectedLocationId != null) ScrymeColors.InkBg else ScrymeColors.Paper,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = showBranchDropdown,
+                    onDismissRequest = { showBranchDropdown = false },
+                    modifier = Modifier.background(ScrymeColors.SteelDark)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("All Branches", color = ScrymeColors.Paper) },
+                        onClick = {
+                            presenceViewModel.filterByBranch(null)
+                            showBranchDropdown = false
+                        }
+                    )
+                    listOf(
+                        "loc_1" to "North Branch",
+                        "loc_2" to "Downtown Bakery",
+                        "loc_3" to "Express Counter"
+                    ).forEach { (locId, locName) ->
+                        DropdownMenuItem(
+                            text = { Text(locName, color = ScrymeColors.Paper) },
+                            onClick = {
+                                presenceViewModel.filterByBranch(locId)
+                                showBranchDropdown = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Active Members list title
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "ACTIVE STAFF MEMBERS",
+                color = ScrymeColors.Brass,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(ScrymeColors.Brass.copy(alpha = 0.15f))
+                    .padding(horizontal = 8.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = "REALTIME",
+                    color = ScrymeColors.Brass,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+            }
+        }
+
+        // Members List Container
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            val membersList = when (val state = presenceState) {
+                is UiState.Success -> state.data
+                else -> activeMembers
+            }
+
+            if (membersList.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = null,
+                        tint = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "No active staff found",
+                        color = ScrymeColors.SoftGray,
+                        fontSize = 14.sp
+                    )
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    membersList.forEach { member ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+                            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.15f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    // S Logo or initial circle
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .clip(CircleShape)
+                                            .background(ScrymeColors.Brass.copy(alpha = 0.2f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = member.user.name.take(1).uppercase(),
+                                            color = ScrymeColors.Brass,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.width(12.dp))
+
+                                    Column {
+                                        Text(
+                                            text = member.user.name,
+                                            color = ScrymeColors.Paper,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp
+                                        )
+                                        Text(
+                                            text = "${member.role} • ${member.user.email}",
+                                            color = ScrymeColors.SoftGray,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
+
+                                // Status indicator & Checkout action
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(bottom = 6.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(8.dp)
+                                                .clip(CircleShape)
+                                                .background(if (member.status == PresenceStatus.ONLINE) Color.Green else Color.Gray)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = member.status.name,
+                                            color = if (member.status == PresenceStatus.ONLINE) Color.Green else ScrymeColors.SoftGray,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    if (member.status == PresenceStatus.ONLINE) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                presenceViewModel.forceCheckoutMember(member.id)
+                                                Toast.makeText(context, "Force check-out sent for ${member.user.name}", Toast.LENGTH_SHORT).show()
+                                            },
+                                            border = BorderStroke(1.dp, ScrymeColors.Crimson.copy(alpha = 0.5f)),
+                                            shape = RoundedCornerShape(4.dp),
+                                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                            modifier = Modifier.height(28.dp)
+                                        ) {
+                                            Text("CHECK-OUT", color = ScrymeColors.Crimson, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OperationsView(
+    approvalsViewModel: ApprovalsViewModel,
+    announcementViewModel: AnnouncementViewModel
+) {
+    val context = LocalContext.current
+    val priceChanges by approvalsViewModel.priceChanges.collectAsState()
+    val actionState by approvalsViewModel.actionState.collectAsState()
+    val broadcastState by announcementViewModel.broadcastState.collectAsState()
+
+    var broadcastTitle by remember { mutableStateOf("") }
+    var broadcastMsg by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        approvalsViewModel.loadPriceChangeRequests()
+    }
+
+    LaunchedEffect(actionState) {
+        if (actionState is UiState.Success) {
+            Toast.makeText(context, "Price change request successfully reviewed!", Toast.LENGTH_SHORT).show()
+        } else if (actionState is UiState.Error) {
+            Toast.makeText(context, (actionState as UiState.Error).message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    LaunchedEffect(broadcastState) {
+        if (broadcastState is UiState.Success) {
+            Toast.makeText(context, "Announcement broadcast successfully!", Toast.LENGTH_SHORT).show()
+            broadcastTitle = ""
+            broadcastMsg = ""
+            announcementViewModel.resetBroadcastState()
+        } else if (broadcastState is UiState.Error) {
+            Toast.makeText(context, (broadcastState as UiState.Error).message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        // Title Block
+        Column {
+            Text(
+                text = "LEDGER OPERATIONS",
+                color = ScrymeColors.Brass,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp
+            )
+            Text(
+                text = "Pending Price approvals & Branch Broadcasts",
+                color = ScrymeColors.SoftGray,
+                fontSize = 12.sp
+            )
+        }
+
+        // 1. Price Change Approvals Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "PRICE CHANGE APPROVALS",
+                    color = ScrymeColors.Brass,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                val requestsList = (priceChanges as? UiState.Success)?.data ?: emptyList()
+
+                if (requestsList.isEmpty()) {
+                    Text(
+                        text = "No pending price change requests",
                         color = ScrymeColors.SoftGray,
                         fontSize = 13.sp
                     )
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        requestsList.forEach { req ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(ScrymeColors.InkBg)
+                                    .padding(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Variant: ${req.variantId.take(8)}...",
+                                        color = ScrymeColors.Paper,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(4.dp))
+                                            .background(ScrymeColors.Brass.copy(alpha = 0.15f))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = req.status,
+                                            color = ScrymeColors.Brass,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(4.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "$${req.oldPrice} -> $${req.newPrice}",
+                                        color = ScrymeColors.Paper,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 15.sp
+                                    )
+                                    Text(
+                                        text = "By: ${req.requestedBy.take(8)}...",
+                                        color = ScrymeColors.SoftGray,
+                                        fontSize = 11.sp
+                                    )
+                                }
+
+                                if (req.status == "PENDING") {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Button(
+                                            onClick = { approvalsViewModel.reviewPriceChange(req.id, approve = true) },
+                                            modifier = Modifier.weight(1f),
+                                            colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
+                                            shape = RoundedCornerShape(4.dp),
+                                            contentPadding = PaddingValues(vertical = 4.dp)
+                                        ) {
+                                            Text("Approve", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+
+                                        OutlinedButton(
+                                            onClick = { approvalsViewModel.reviewPriceChange(req.id, approve = false, "Rejected by Admin") },
+                                            modifier = Modifier.weight(1f),
+                                            border = BorderStroke(1.dp, ScrymeColors.Crimson.copy(alpha = 0.5f)),
+                                            shape = RoundedCornerShape(4.dp),
+                                            contentPadding = PaddingValues(vertical = 4.dp)
+                                        ) {
+                                            Text("Reject", color = ScrymeColors.Crimson, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
+        }
 
-            // Session Security Inspector
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-                border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Home,
-                            contentDescription = null,
-                            tint = ScrymeColors.Brass,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "ACTIVE TENANT",
-                            color = ScrymeColors.Brass,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                    }
-                    Text(
-                        text = activeOrg,
-                        color = ScrymeColors.Paper,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 16.dp)
+        // 2. Broadcast Announcements Section
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.2f))
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "BROADCAST TO BRANCHES",
+                    color = ScrymeColors.Brass,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                OutlinedTextField(
+                    value = broadcastTitle,
+                    onValueChange = { broadcastTitle = it },
+                    label = { Text("Announcement Title", color = ScrymeColors.SoftGray) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ScrymeColors.Brass,
+                        unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                        cursorColor = ScrymeColors.Brass
                     )
+                )
 
-                    HorizontalDivider(color = ScrymeColors.SoftGray.copy(alpha = 0.1f), modifier = Modifier.padding(bottom = 16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = null,
-                            tint = ScrymeColors.Brass,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "SECURE SESSION TOKEN",
-                            color = ScrymeColors.Brass,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        )
-                    }
+                OutlinedTextField(
+                    value = broadcastMsg,
+                    onValueChange = { broadcastMsg = it },
+                    label = { Text("Broadcast Message", color = ScrymeColors.SoftGray) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = ScrymeColors.Brass,
+                        unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                        cursorColor = ScrymeColors.Brass
+                    )
+                )
 
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(ScrymeColors.InkBg)
-                            .padding(12.dp)
-                    ) {
-                        Text(
-                            text = if (sessionToken.length > 30) {
-                                "${sessionToken.take(15)}...${sessionToken.takeLast(15)}"
-                            } else {
-                                sessionToken
-                            },
-                            color = ScrymeColors.Paper,
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp
-                        )
-                    }
-                }
-            }
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Sign Out Button
-            Button(
-                onClick = onSignOut,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Crimson, contentColor = Color.White),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                Button(
+                    onClick = {
+                        if (broadcastTitle.isNotBlank() && broadcastMsg.isNotBlank()) {
+                            announcementViewModel.broadcast(broadcastTitle, broadcastMsg)
+                        } else {
+                            Toast.makeText(context, "Title and Message are required", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
+                    shape = RoundedCornerShape(6.dp),
+                    enabled = broadcastState !is UiState.Loading
                 ) {
-                    Icon(Icons.Default.ExitToApp, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("SECURELY CLOSE SESSION", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    if (broadcastState is UiState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = ScrymeColors.InkBg)
+                    } else {
+                        Text("SEND BROADCAST", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    }
                 }
             }
         }

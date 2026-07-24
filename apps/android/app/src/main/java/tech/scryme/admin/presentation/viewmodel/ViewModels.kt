@@ -32,6 +32,26 @@ class AuthViewModel(
 
     val activeOrganizationId: StateFlow<String?> = sessionManager.activeOrgId
 
+    init {
+        checkSession()
+    }
+
+    fun checkSession() {
+        val currentToken = sessionManager.token.value
+        if (!currentToken.isNullOrBlank()) {
+            viewModelScope.launch {
+                _loginState.value = UiState.Loading
+                repository.getSession()
+                    .onSuccess { response ->
+                        _loginState.value = UiState.Success(response)
+                    }
+                    .onFailure { error ->
+                        _loginState.value = UiState.Error(error.message ?: "Session invalid")
+                    }
+            }
+        }
+    }
+
     fun login(email: String, password: String) {
         viewModelScope.launch {
             _loginState.value = UiState.Loading
