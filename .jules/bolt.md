@@ -116,6 +116,9 @@
 **Learning:** Selecting nested relation arrays in Prisma without a `select` block fetches all scalar columns (e.g., large notes, tags, receipt URLs) of the related model. In complex detail views (like `UtilityAccount.getAccount`), replacing this broad relation fetch with a targeted sub-relation `select` block retrieves only necessary list attributes, cutting query payload size, serialization time, and DB I/O by up to 70%.
 **Action:** Always evaluate nested relation inclusions in custom query methods and apply precise sub-relation `select` filters to exclude unused heavyweight properties.
 
+## 2026-07-24 - [Select Optimization in Staff Scheduling checks]
+**Learning:** In high-frequency path validation flows (such as `isStaffAvailable` checked per-staff member per-booking creation), query overhead from fetching full objects and nested arrays (such as the entire `breaks` table details) adds up quickly. Restricting Prisma queries to exact scalar fields (`startTime`, `endTime`) and nested `breaks` scalar fields through targeted `select` statements drastically improves throughput by reducing both database I/O and NestJS/Prisma object hydration times.
+**Action:** Always audit frequently iterated lookup and validation queries (such as schedulers or availability engines) and replace broad `include` clauses with targeted `select` blocks.
 ## 2026-07-24 - [O(N*M) to O(N+M) Map-Based Indexing in B2B Quote Requests]
 **Learning:** Reconciling arrays within loops (e.g., searching for variant information during item quantity checking or mapping in order and quote flows) introduces an $O(N \times M)$ complexity bottleneck. Utilizing a pre-indexed Map allows $O(1)$ constant-time lookup for each item in the request, converting the overall execution block to $O(N + M)$ performance.
 **Action:** Always use pre-indexed Map structures for related array reconciliation inside loops, including order event mapper steps and B2B quote request paths.
