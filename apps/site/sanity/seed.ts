@@ -5,9 +5,9 @@ import { apiVersion, dataset, projectId } from './env'
 const DEFAULT_HOME_PAGE = {
   _id: 'homePage',
   _type: 'homePage',
-  heroTitle: 'Every sale, deal, and shipment. One reconciled record.',
-  heroSubtitle: 'Scryme merges CRM, Point of Sale, Inventory, and Finance into a single ledger — so nothing you run your business on ever needs reconciling by hand again.',
-  reconciledToday: 284900,
+  heroTitle: 'The commerce engine built for scaling and performance',
+  heroSubtitle: 'Scryme integrates retail POS, multi-branch syncing, advanced stock control, and centralized management with automated customer-facing storefront websites. Built for high-performance operations.',
+  reconciledToday: 341850,
   brands: [
     'Westfield Retail',
     'Meridian Corp',
@@ -20,48 +20,48 @@ const DEFAULT_HOME_PAGE = {
   modules: [
     {
       code: 'CRM',
-      name: 'Customer Relationship Management',
-      description: 'Track every interaction, run the pipeline, and automate follow-ups — each closed deal posts straight to Finance and unlocks fulfillment in Inventory.',
+      name: 'Storefronts & CRM',
+      description: 'Create and manage customer-facing storefront websites for your clients, beautifully synced with inventory and central operations.',
       connectsTo: ['FIN', 'INV'],
       href: '/products/crm',
       accent: '#C89A4B',
     },
     {
       code: 'POS',
-      name: 'Point of Sale',
-      description: 'Ring up retail and wholesale sales, offline-capable, with stock and revenue reconciled to the second the register closes.',
+      name: 'Integrated Point of Sale',
+      description: 'Ring up transactions offline-first, with stock and revenue reconciled across multiple branches the split second a shift closes.',
       connectsTo: ['INV', 'FIN'],
       href: '/products/pos',
       accent: '#4B9073',
     },
     {
       code: 'INV',
-      name: 'Inventory Management',
-      description: 'Monitor stock across warehouses and storefronts, with automatic reorders that draw straight from committed Finance budgets.',
+      name: 'Stock & Inventory Management',
+      description: 'Advanced stock management across warehouses and branches, with automated reorders and instant digital storefront stock syncing.',
       connectsTo: ['POS', 'FIN'],
       href: '/products/inventory',
       accent: '#7C93B0',
     },
     {
       code: 'FIN',
-      name: 'Financial Management',
-      description: 'Invoicing, expense tracking, and reconciliation — every entry from CRM, POS, and Inventory lands here as one ledger line.',
+      name: 'Central Management & ERP',
+      description: 'Manage several branches, global accounting, consolidated reporting, and multi-store configurations from one master dashboard.',
       connectsTo: ['CRM', 'POS', 'INV'],
       href: '/products/finance',
       accent: '#B4553A',
     },
     {
       code: 'HR',
-      name: 'HR & Workforce',
-      description: 'Manage people, attendance, and payroll, with labor cost flowing directly into the same Finance ledger as everything else.',
+      name: 'Multi-Branch Workforce',
+      description: 'Orchestrate staffing, shifts, and registers across several branches with centralized corporate policy and permission controls.',
       connectsTo: ['FIN'],
       href: '/products/hr',
       accent: '#9A7FB0',
     },
     {
       code: 'BI',
-      name: 'Business Analytics',
-      description: "Every module writes to one record, so reporting is never a reconciliation project — it's a query against a single source of truth.",
+      name: 'Performance Analytics',
+      description: "Analyze branch growth, inventory turnover, and conversion metrics in real-time to scale business performance with precision.",
       connectsTo: ['CRM', 'POS', 'INV', 'FIN', 'HR'],
       href: '/products/analytics',
       accent: '#4E7FB5',
@@ -69,29 +69,29 @@ const DEFAULT_HOME_PAGE = {
   ],
   stats: [
     {
-      value: '500+',
-      label: 'Enterprise businesses',
-      sublabel: 'across 12 countries',
+      value: '2,500+',
+      label: 'Active storefronts',
+      sublabel: 'generated and fully managed',
     },
     {
-      value: '$2B+',
-      label: 'Transactions processed',
-      sublabel: 'annually on the platform',
+      value: '45ms',
+      label: 'Barcode scan sync',
+      sublabel: 'under extreme load',
     },
     {
-      value: '99.9%',
-      label: 'Platform uptime SLA',
-      sublabel: 'guaranteed & monitored',
+      value: '100%',
+      label: 'Offline POS uptime',
+      sublabel: 'local SQLite sync technology',
     },
     {
       value: '24/7',
-      label: 'Expert support',
-      sublabel: 'dedicated account teams',
+      label: 'Performance monitoring',
+      sublabel: 'built to scale business ops',
     },
   ],
   testimonials: [
     {
-      quote: 'Scryme replaced four separate systems we were running. Our operations team now has a single dashboard for everything — inventory, POS, CRM, and finance. The ROI in the first quarter alone paid for the full-year subscription.',
+      quote: 'Scryme allowed us to scale from 2 to 14 branches in under a year. We manage central pricing, stock replenishments, and 14 local POS terminals from one dashboard. Plus, the automated storefront websites generated for our clients have increased our wholesale demand by 60%.',
       name: 'Amara Diallo',
       title: 'Chief Operating Officer',
       company: 'Fontaine Group',
@@ -99,7 +99,7 @@ const DEFAULT_HOME_PAGE = {
       initials: 'AD',
     },
     {
-      quote: 'We run 23 retail branches across three regions. Before Scryme, reconciling end-of-day sales was a half-day job. Now it takes minutes. The multi-branch inventory visibility alone is a game changer.',
+      quote: 'We run 23 retail branches. Before Scryme, managing physical stock transfers and syncing them with our digital customer storefront was a nightmare. Now it takes seconds. Performance and accuracy have skyrocketed.',
       name: 'Marcus Chen',
       title: 'Head of Retail Operations',
       company: 'Westfield Retail Holdings',
@@ -107,7 +107,7 @@ const DEFAULT_HOME_PAGE = {
       initials: 'MC',
     },
     {
-      quote: 'The CRM pipeline gave our sales team a new level of accountability. We went from guessing what was in the pipeline to having real-time data on every deal. Deal velocity improved 40% in our first six months.',
+      quote: 'The managed storefront websites are a game changer. We generated branded stores for our main buyers, syncing our central stock levels directly to their shopping carts. Wholesale orders are fully automated now.',
       name: 'Sophia Hargreaves',
       title: 'VP of Sales',
       company: 'Meridian Corp',
@@ -115,66 +115,72 @@ const DEFAULT_HOME_PAGE = {
       initials: 'SH',
     },
   ],
+  storefrontTitle: 'Customer-Facing Storefront Websites',
+  storefrontSubtitle: 'Instantly build, customize, and manage customer-facing storefront websites for your brand. Beautiful e-commerce templates synchronized natively with your central stock database and retail POS registers.',
+  multiBranchTitle: 'Unified Multi-Branch Orchestration',
+  multiBranchSubtitle: 'Scale across several branches with ease. Oversee location-specific pricing, staff shift rosters, live drawer reconciliations, and inter-branch inventory transfers from a unified cloud console.',
+  stockManagementTitle: 'Advanced Stock & Inventory Control',
+  stockManagementSubtitle: 'Optimize cash flow with intelligent stock level monitoring. Prevent stockouts using multi-warehouse replenishment workflows and automated trigger thresholds synchronized with online and offline channels.',
 }
 
 const DEFAULT_ABOUT_PAGE = {
   _id: 'aboutPage',
   _type: 'aboutPage',
-  heroTitle: 'The ERP built for businesses that can\'t afford to stop',
-  heroSubtitle: 'We built Scryme after watching too many retailers lose hours every week reconciling spreadsheets, battling unreliable POS systems, and missing growth because their tools were designed for someone else. Scryme is different — purpose-built for the businesses that keep the economy moving.',
+  heroTitle: 'The high-performance platform built to scale operations',
+  heroSubtitle: 'We built Scryme to empower businesses to scale securely and enhance their performance. By unifying offline-first POS registers, multi-branch syncing, advanced stock tracking, and automated customer storefronts into a single system, we eliminate friction and drive growth.',
   stats: [
-    { value: '4,200+', label: 'Businesses on Scryme' },
-    { value: '18', label: 'Countries' },
-    { value: '$3.8M+', label: 'Transactions daily' },
-    { value: '4.9 / 5', label: 'Customer satisfaction' },
+    { value: '4,200+', label: 'Stores scaled on Scryme' },
+    { value: '18', label: 'Countries active' },
+    { value: '$12M+', label: 'Daily volume' },
+    { value: '4.9 / 5', label: 'Performance rating' },
   ],
-  missionTitle: 'Give every business the tools that used to require a Fortune 500 budget',
+  missionTitle: 'Equip every growing merchant with absolute control and scale',
   missionText: [
-    'Enterprise ERP platforms have long been out of reach for independent retailers and mid-market wholesalers — priced in six-figure implementation fees and requiring dedicated IT departments to maintain.',
-    'Scryme changes that. We ship a unified platform — CRM, POS, Inventory, and Finance — that a 10-person team can run as confidently as a 10,000-person organisation. Our pricing is transparent, our onboarding is measured in days not months, and our support is staffed by people who understand retail and wholesale.',
+    'Managing several branches, tracking massive stock, and maintaining an online storefront has historically required a patchwork of bloated systems and an expensive IT staff to reconcile data.',
+    'Scryme changes that. We provide an integrated, enterprise-ready engine. Beautiful, high-converting customer-facing storefronts, lightning-fast POS terminals, robust multi-branch inventory transfers, and complete central management — all engineered to run at maximum performance.',
   ],
   timeline: [
     {
       year: '2019',
-      milestone: 'Founded in Accra, Ghana. First POS beta shipped to 12 local retailers.',
+      milestone: 'Founded in Accra, Ghana. First integrated POS and multi-branch engine shipped to 12 retail teams.',
     },
     {
       year: '2021',
-      milestone: 'Launched CRM and Inventory modules. Reached 500 businesses across West Africa.',
+      milestone: 'Launched automated Customer Storefront builders. Reached 500 businesses syncing stock in real-time.',
     },
     {
       year: '2022',
-      milestone: 'Series A funding. Expanded to UK and Southeast Asia markets.',
+      milestone: 'Series A funding. Expanded central management ERP to UK and European wholesale markets.',
     },
     {
       year: '2023',
-      milestone: 'Launched Finance module and Tauri desktop POS. Crossed 2,000 customers.',
+      milestone: 'Released advanced offline-first POS engine and SQLite sync plugins. Crossed 2,000 customers.',
     },
     {
       year: '2025',
-      milestone: '4,200+ businesses in 18 countries. $3.8M+ daily transactions processed.',
+      milestone: '4,200+ brands scaling across several branches. Real-time operations running at peak performance.',
     },
   ],
   values: [
     {
-      tag: 'RF',
-      title: 'Reliability first',
-      desc: 'Our offline-first POS and 99.9% uptime commitment mean your business keeps running — no matter what the network does.',
+      tag: 'PS',
+      title: 'Performance & Scale',
+      desc: 'Our engine is designed to handle rapid barcode scanning, complex stock allocations, and sudden storefront traffic spikes without slowing down.',
     },
     {
-      tag: 'RO',
-      title: 'Built for real operations',
-      desc: 'Every feature in Scryme was informed by actual conversations with retailers and wholesalers, not theoretical user stories.',
+      tag: 'MB',
+      title: 'Multi-Branch Integrity',
+      desc: 'Never worry about inventory drifting. Transfers, branch sales, and online orders sync with transaction-level precision.',
     },
     {
-      tag: 'TP',
-      title: 'Transparent pricing',
-      desc: 'No hidden modules, no per-feature add-ons. The price you see is what you pay — features included as your business scales.',
+      tag: 'SE',
+      title: 'Storefront Excellence',
+      desc: 'We enable you to offer your clients stunning, fast, SEO-optimized shopping storefronts that run perfectly across all devices.',
     },
     {
-      tag: 'LP',
-      title: 'Long-term partnership',
-      desc: "We measure success by our customers' revenue growth, not activation rates. Our team is reachable, accountable, and invested.",
+      tag: 'CM',
+      title: 'Centralized Control',
+      desc: "One central platform to rule them all. Manage catalogs, pricing, users, and performance analytics across all physical and online stores.",
     },
   ],
   team: [
@@ -190,8 +196,8 @@ const DEFAULT_ABOUT_PAGE = {
 const DEFAULT_PRICING_PAGE = {
   _id: 'pricingPage',
   _type: 'pricingPage',
-  heroTitle: 'Simple pricing. No surprises.',
-  heroSubtitle: 'Every plan includes a 30-day free trial with full feature access. No credit card required.',
+  heroTitle: 'Simple, transparent pricing to scale your brand',
+  heroSubtitle: 'Choose the right plan to expand across branches, manage stock, and launch stunning storefront websites.',
   plans: [
     {
       name: 'Starter',
@@ -202,11 +208,11 @@ const DEFAULT_PRICING_PAGE = {
       href: 'https://app.scryme.tech/sign-up',
       highlight: false,
       features: [
-        '1 POS terminal',
-        '1 store location',
-        'Up to 500 SKUs',
-        'Basic inventory tracking',
-        'Daily sales reports',
+        '1 Integrated POS terminal',
+        '1 store location / branch',
+        'Up to 1,000 SKUs & stock tracking',
+        '1 Customer storefront website',
+        'Real-time central management',
         'Email support',
       ],
     },
@@ -214,19 +220,19 @@ const DEFAULT_PRICING_PAGE = {
       name: 'Growth',
       price: '$149',
       period: '/mo',
-      tagline: 'For growing businesses with multiple staff',
+      tagline: 'For growing brands scaling several branches',
       cta: 'Start free trial',
       href: 'https://app.scryme.tech/sign-up',
       highlight: true,
       badge: 'Most popular',
       features: [
         'Up to 5 POS terminals',
-        'Up to 3 locations',
-        'Unlimited SKUs',
-        'Full inventory + transfers',
-        'CRM — up to 2,500 contacts',
-        'Finance module',
-        'Demand forecasting',
+        'Up to 3 branches',
+        'Unlimited SKUs & advanced stock control',
+        'Up to 5 Customer storefront websites',
+        'Central management ERP & CRM tools',
+        'Inter-branch inventory transfers',
+        'Performance forecasting',
         'Priority support',
       ],
     },
@@ -234,21 +240,20 @@ const DEFAULT_PRICING_PAGE = {
       name: 'Enterprise',
       price: 'Custom',
       period: '',
-      tagline: 'For large retailers and wholesale operations',
+      tagline: 'For large retailers, franchises, and wholesale setups',
       cta: 'Talk to sales',
       href: 'https://app.scryme.tech/sign-up',
       highlight: false,
       badge: '',
       features: [
         'Unlimited POS terminals',
-        'Unlimited locations',
-        'Unlimited SKUs',
-        'Full inventory + transfers',
-        'CRM — unlimited contacts',
-        'Finance module',
-        'Demand forecasting',
+        'Unlimited branches & warehouses',
+        'Unlimited SKUs & stock configurations',
+        'Unlimited Customer storefront websites',
+        'Consolidated corporate central management',
+        'High-performance analytics BI suite',
         'Dedicated success manager',
-        'Custom SLA & onboarding',
+        'Custom SLA & guided branch onboarding',
       ],
     },
   ],
@@ -260,26 +265,26 @@ const DEFAULT_PRICING_PAGE = {
       enterprise: 'Unlimited',
     },
     {
-      feature: 'Store locations',
+      feature: 'Store locations & branches',
       starter: '1',
       growth: 'Up to 3',
       enterprise: 'Unlimited',
     },
     {
-      feature: 'SKU limit',
-      starter: '500',
+      feature: 'Customer storefront websites',
+      starter: '1',
+      growth: 'Up to 5',
+      enterprise: 'Unlimited',
+    },
+    {
+      feature: 'Stock limits (SKUs)',
+      starter: '1,000',
       growth: 'Unlimited',
       enterprise: 'Unlimited',
     },
+    { feature: 'Central Management ERP', starter: 'Included', growth: 'Included', enterprise: 'Included' },
     {
-      feature: 'CRM contacts',
-      starter: '—',
-      growth: '2,500',
-      enterprise: 'Unlimited',
-    },
-    { feature: 'Finance module', starter: '—', growth: 'Included', enterprise: 'Included' },
-    {
-      feature: 'Demand forecasting',
+      feature: 'Inter-branch transfers',
       starter: '—',
       growth: 'Included',
       enterprise: 'Included',
@@ -315,7 +320,7 @@ const DEFAULT_PRICING_PAGE = {
     },
     {
       q: 'Can I run Scryme POS without an internet connection?',
-      a: 'Yes. The POS desktop app stores a full local copy of your data and syncs automatically when connectivity returns. There is no minimum uptime requirement.',
+      a: 'Yes. The POS desktop app stores a full local copy of your data and syncs automatically with central management when connectivity returns.',
     },
     {
       q: 'Do you offer discounts for annual billing?',
@@ -356,15 +361,15 @@ export async function seedSanity() {
     console.log('[Sanity Seed] Initiating seeding of singleton pages...')
 
     // Seed Home Page
-    const seededHome = await writeClient.createIfNotExists(DEFAULT_HOME_PAGE)
+    const seededHome = await writeClient.createOrReplace(DEFAULT_HOME_PAGE)
     console.log('[Sanity Seed] Home page seed status:', seededHome ? 'success/exists' : 'failed')
 
     // Seed About Page
-    const seededAbout = await writeClient.createIfNotExists(DEFAULT_ABOUT_PAGE)
+    const seededAbout = await writeClient.createOrReplace(DEFAULT_ABOUT_PAGE)
     console.log('[Sanity Seed] About page seed status:', seededAbout ? 'success/exists' : 'failed')
 
     // Seed Pricing Page
-    const seededPricing = await writeClient.createIfNotExists(DEFAULT_PRICING_PAGE)
+    const seededPricing = await writeClient.createOrReplace(DEFAULT_PRICING_PAGE)
     console.log('[Sanity Seed] Pricing page seed status:', seededPricing ? 'success/exists' : 'failed')
 
     console.log('[Sanity Seed] Seeding completed.')

@@ -6,7 +6,11 @@ import {
   Get,
   Req,
   Res,
-  All,
+  Put,
+  Delete,
+  Patch,
+  Head,
+  Options,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { AllowPublic } from "../../../../../common/decorators/auth.decorator";
@@ -52,7 +56,13 @@ export class AuthController {
   }
 
   @AllowPublic()
-  @All("oauth2/*")
+  @Get("oauth2/*")
+  @Post("oauth2/*")
+  @Put("oauth2/*")
+  @Delete("oauth2/*")
+  @Patch("oauth2/*")
+  @Head("oauth2/*")
+  @Options("oauth2/*")
   @ApiParam({ name: "path", type: "string" })
   @ApiOperation({
     summary: "Handle OAuth2 provider requests",

@@ -45,9 +45,10 @@ describe("BinariesController", () => {
     await expect(controller.downloadBinary("windows", res)).rejects.toThrow(NotFoundException);
   });
 
-  it("should proxy the binary download for windows using pipe", async () => {
+  it("should proxy the binary download for windows using pipe (default: retail)", async () => {
     const mockRelease = {
       assets: [
+        { name: "app-pharmacy.msi", browser_download_url: "http://download/app-pharmacy.msi", size: 1200 },
         { name: "app.msi", browser_download_url: "http://download/app.msi", size: 1000 },
       ],
     };
@@ -69,6 +70,34 @@ describe("BinariesController", () => {
     expect(res.header).toHaveBeenCalledWith("Content-Type", "application/octet-stream");
     expect(res.header).toHaveBeenCalledWith("Content-Disposition", 'attachment; filename="app.msi"');
     expect(res.header).toHaveBeenCalledWith("Content-Length", 1000);
+    expect(mockStream.pipe).toHaveBeenCalledWith(res);
+  });
+
+  it("should proxy the binary download for specific variant (e.g. pharmacy)", async () => {
+    const mockRelease = {
+      assets: [
+        { name: "app.msi", browser_download_url: "http://download/app.msi", size: 1000 },
+        { name: "app-pharmacy.msi", browser_download_url: "http://download/app-pharmacy.msi", size: 1200 },
+      ],
+    };
+
+    const mockStream = { pipe: vi.fn() };
+
+    (axios.get as any).mockResolvedValueOnce({ data: mockRelease });
+    (axios as any).mockResolvedValueOnce({
+      headers: { "content-type": "application/octet-stream" },
+      data: mockStream,
+    });
+
+    const res = {
+      header: vi.fn().mockReturnThis(),
+    } as unknown as FastifyReply;
+
+    await controller.downloadBinary("windows", res, "pharmacy");
+
+    expect(res.header).toHaveBeenCalledWith("Content-Type", "application/octet-stream");
+    expect(res.header).toHaveBeenCalledWith("Content-Disposition", 'attachment; filename="app-pharmacy.msi"');
+    expect(res.header).toHaveBeenCalledWith("Content-Length", 1200);
     expect(mockStream.pipe).toHaveBeenCalledWith(res);
   });
 

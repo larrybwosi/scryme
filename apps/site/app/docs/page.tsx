@@ -4,9 +4,9 @@ import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
 
 export const metadata: Metadata = {
-  title: "Documentation — Scryme Operating System",
+  title: "Documentation — Scryme Scale System",
   description:
-    "Read our comprehensive documentation covering workspace configuration, offline database sync, Zitadel OIDC configurations, and terminal hardware setups.",
+    "Read our comprehensive documentation covering workspace configuration, offline database sync, storefront website generation, multi-branch operations, and stock setups.",
   alternates: {
     canonical: "/docs",
   },
@@ -14,15 +14,15 @@ export const metadata: Metadata = {
 
 const docSections = [
   {
-    title: "1. Workspace Onboarding",
+    title: "1. Workspace Onboarding & Storefronts",
     items: [
       {
         name: "Getting Started with the Hub",
-        desc: "Initialize your workspace, declare warehouse locations, and map active business branches.",
+        desc: "Initialize your central workspace, declare stock locations, and map active business branches.",
       },
       {
-        name: "Zitadel SSO Configuration",
-        desc: "Integrate corporate identity providers and set up customized role-based access control.",
+        name: "Generating Customer Storefronts",
+        desc: "Launch, map custom domains, and configure responsive e-commerce web templates for your client storefronts.",
       },
     ],
   },

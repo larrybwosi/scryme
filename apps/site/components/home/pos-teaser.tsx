@@ -5,18 +5,18 @@ import { colors, fonts, modules } from "@/lib/scryme-tokens";
 const accent = modules.find((m) => m.code === "POS")!.accent;
 
 const highlights = [
-  "Works offline — never lose a sale to a dropped connection",
-  "Real-time inventory deduction on every transaction",
-  "Multi-tender: cash, card, M-Pesa, split payments",
-  "Customer loyalty points and discount management",
-  "Multi-branch, multi-currency, multi-tax support",
+  "True offline-first architecture — never stop ringing up sales",
+  "Real-time multi-branch stock levels update globally with every checkout",
+  "Integrated barcode scanning and rapid payment-handling workflows",
+  "Accept cash, cards, mobile payments, and split multi-tender tickets",
+  "Automatic synchronization to Central Management ERP the second cash drawers reconcile",
 ];
 
 function POSCheckout() {
   const cartItems = [
-    { name: "Laptop Stand Adjustable", sku: "LSA-014", qty: 1, price: 149.0 },
-    { name: "Wireless Keyboard", sku: "KBD-092", qty: 2, price: 89.99 },
-    { name: "USB-C Hub 7-in-1", sku: "HUB-077", qty: 1, price: 69.99 },
+    { name: "Premium Ergonomic Chair", sku: "CHR-109", qty: 1, price: 299.0 },
+    { name: "Wireless Mechanical Keyboard", sku: "KBD-044", qty: 2, price: 129.99 },
+    { name: "Active Noise-Cancelling Headphones", sku: "HDP-081", qty: 1, price: 199.99 },
   ];
   const subtotal = cartItems.reduce((s, i) => s + i.qty * i.price, 0);
   const tax = subtotal * 0.08;
@@ -46,7 +46,7 @@ function POSCheckout() {
             className="text-xs font-semibold"
             style={{ color: colors.textPrimary, fontFamily: fonts.body }}
           >
-            POS Terminal — Branch A
+            POS Terminal — Branch B (Solis Hub)
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -70,7 +70,7 @@ function POSCheckout() {
             className="text-xs font-semibold uppercase tracking-widest mb-1"
             style={{ color: colors.textFaint, fontFamily: fonts.mono }}
           >
-            Cart
+            Branch Stock: 42 Units Left
           </div>
           {cartItems.map((item) => (
             <div
@@ -118,7 +118,7 @@ function POSCheckout() {
             className="text-xs font-semibold uppercase tracking-widest mb-1"
             style={{ color: colors.textFaint, fontFamily: fonts.mono }}
           >
-            Summary
+            Bill Summary
           </div>
           <div className="flex flex-col gap-1.5">
             <div
@@ -132,7 +132,7 @@ function POSCheckout() {
               className="flex justify-between text-xs"
               style={{ color: colors.textMuted, fontFamily: fonts.mono }}
             >
-              <span>Tax</span>
+              <span>Tax (8%)</span>
               <span>${tax.toFixed(2)}</span>
             </div>
             <div
@@ -143,7 +143,7 @@ function POSCheckout() {
                 fontFamily: fonts.mono,
               }}
             >
-              <span>Total</span>
+              <span>Total Bill</span>
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
@@ -157,7 +157,7 @@ function POSCheckout() {
                 fontFamily: fonts.body,
               }}
             >
-              Card / Tap
+              Card / Tap Terminal
             </button>
             <button
               className="w-full py-2 rounded-lg text-xs font-medium transition-colors"
@@ -168,7 +168,7 @@ function POSCheckout() {
                 fontFamily: fonts.body,
               }}
             >
-              Cash
+              Cash Drawer
             </button>
             <button
               className="w-full py-2 rounded-lg text-xs font-medium transition-colors"
@@ -179,7 +179,7 @@ function POSCheckout() {
                 fontFamily: fonts.body,
               }}
             >
-              M-Pesa
+              Mobile Money
             </button>
           </div>
         </div>
@@ -218,15 +218,13 @@ export function POSTeaser() {
               className="text-3xl sm:text-4xl font-medium text-balance"
               style={{ color: colors.textPrimary, fontFamily: fonts.display }}
             >
-              A POS system built for the pace of modern retail
+              An integrated POS system built for high-performance retail
             </h2>
             <p
               className="mt-4 text-base leading-relaxed"
               style={{ color: colors.textMuted, fontFamily: fonts.body }}
             >
-              Whether you run a single store or a chain of 50 branches, every
-              sale posts straight to the ledger the moment it&apos;s rung up — no
-              end-of-day reconciliation required.
+              Whether you manage a single warehouse store, or scale several branches across various regions, every purchase made offline or online updates your stock levels instantly. Zero lag, zero human error, maximum operational speed.
             </p>
 
             <ul className="mt-7 space-y-3">
@@ -259,7 +257,7 @@ export function POSTeaser() {
                 fontFamily: fonts.body,
               }}
             >
-              Explore POS
+              Explore Integrated POS
               <ArrowRight size={14} />
             </Link>
           </div>

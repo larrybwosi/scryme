@@ -26,6 +26,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@repo/ui/components/ui/sheet";
 import { ContactForm } from "./contact-form";
 import {
   DropdownMenu,
@@ -60,6 +66,7 @@ export function ContactsView() {
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<any>(null);
+  const [viewingContact, setViewingContact] = useState<any>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
@@ -278,22 +285,22 @@ export function ContactsView() {
                       )}
                     >
                       <td className="px-5 py-3.5">
-                        <Link
-                          href={`/customers/${contact.id}`}
-                          className="flex items-center gap-3"
+                        <button
+                          onClick={() => setViewingContact(contact)}
+                          className="flex items-center gap-3 text-left focus:outline-none group/btn"
                         >
                           <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] shrink-0">
                             {contact.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors">
+                            <div className="text-[13px] font-semibold text-foreground group-hover/btn:text-primary transition-colors">
                               {contact.name}
                             </div>
                             <div className="text-[11.5px] text-muted-foreground">
                               {contact.email || "No email"}
                             </div>
                           </div>
-                        </Link>
+                        </button>
                       </td>
                       <td className="px-4 py-3.5">
                         <StatusBadge
@@ -425,6 +432,90 @@ export function ContactsView() {
           </div>
         </div>
       </div>
+
+      {/* Contact Detail Sheet */}
+      <Sheet open={!!viewingContact} onOpenChange={(open) => !open && setViewingContact(null)}>
+        <SheetContent className="sm:max-w-[440px] overflow-y-auto">
+          <SheetHeader className="border-b border-border pb-4 mb-4">
+            <SheetTitle className="text-lg font-bold flex items-center gap-2">
+              <Contact size={18} className="text-primary" />
+              Contact Details
+            </SheetTitle>
+          </SheetHeader>
+          {viewingContact && (
+            <div className="space-y-6">
+              <div className="flex flex-col items-center text-center p-4 bg-muted/20 rounded-xl border border-border/50">
+                <div className="w-16 h-16 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-xl mb-3">
+                  {viewingContact.name.charAt(0).toUpperCase()}
+                </div>
+                <h3 className="text-base font-bold text-foreground">{viewingContact.name}</h3>
+                <span className="text-xs text-muted-foreground mt-1">
+                  Registered on {new Date(viewingContact.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Information</h4>
+
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center py-2 border-b border-border/40 text-sm">
+                    <span className="text-muted-foreground">Email</span>
+                    <span className="font-medium text-foreground">{viewingContact.email || "—"}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-border/40 text-sm">
+                    <span className="text-muted-foreground">Phone</span>
+                    <span className="font-medium text-foreground">{viewingContact.phone || "—"}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-border/40 text-sm">
+                    <span className="text-muted-foreground">Type</span>
+                    <span className="font-semibold text-primary capitalize">{viewingContact.customerType === "B2B" ? "B2B Customer Contact" : "Lead"}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-border/40 text-sm">
+                    <span className="text-muted-foreground">Company</span>
+                    {viewingContact.businessAccount ? (
+                      <Link
+                        href={`/companies/${viewingContact.businessAccountId}`}
+                        className="font-medium text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Building2 size={13} />
+                        {viewingContact.businessAccount.name}
+                      </Link>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-border flex items-center gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditingContact(viewingContact);
+                    setViewingContact(null);
+                  }}
+                  className="h-8 text-xs"
+                >
+                  Edit Contact
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    setContactToDelete(viewingContact.id);
+                    setIsDeleteDialogOpen(true);
+                    setViewingContact(null);
+                  }}
+                  className="h-8 text-xs"
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <AlertDialog
         open={isDeleteDialogOpen}

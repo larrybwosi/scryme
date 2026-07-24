@@ -118,39 +118,60 @@ export async function getDashboardData(
       break;
   }
 
-  // Fetch transactions for current period
-  const currentTransactions = await db.transaction.findMany({
-    where: {
-      organizationId: orgId,
-      createdAt: {
-        gte: currentStart,
-        lte: currentEnd,
+  // Fetch transactions for both current and previous periods concurrently in parallel using Promise.all
+  // and select only required fields for extreme optimization
+  const [currentTransactions, previousTransactions] = await Promise.all([
+    db.transaction.findMany({
+      where: {
+        organizationId: orgId,
+        createdAt: {
+          gte: currentStart,
+          lte: currentEnd,
+        },
+        status: {
+          in: ["COMPLETED", "CONFIRMED"],
+        },
       },
-      status: {
-        in: ["COMPLETED", "CONFIRMED"],
+      select: {
+        id: true,
+        finalTotal: true,
+        createdAt: true,
+        items: {
+          select: {
+            quantity: true,
+            variantId: true,
+            productName: true,
+            variantName: true,
+          },
+        },
       },
-    },
-    include: {
-      items: true,
-    },
-  });
-
-  // Fetch transactions for previous period
-  const previousTransactions = await db.transaction.findMany({
-    where: {
-      organizationId: orgId,
-      createdAt: {
-        gte: previousStart,
-        lte: previousEnd,
+    }),
+    db.transaction.findMany({
+      where: {
+        organizationId: orgId,
+        createdAt: {
+          gte: previousStart,
+          lte: previousEnd,
+        },
+        status: {
+          in: ["COMPLETED", "CONFIRMED"],
+        },
       },
-      status: {
-        in: ["COMPLETED", "CONFIRMED"],
+      select: {
+        id: true,
+        finalTotal: true,
+        createdAt: true,
+        items: {
+          select: {
+            quantity: true,
+            variantId: true,
+            productName: true,
+            variantName: true,
+          },
+        },
       },
-    },
-    include: {
-      items: true,
-    },
-  });
+    }),
+  ]);
 
   // Basic Stats Calculation
   const currentRevenue = currentTransactions.reduce(
@@ -221,72 +242,55 @@ export async function getDashboardData(
     end: currentEnd < now ? currentEnd : now,
   });
 
-  const chartData: ChartDataPoint[] = intervalDays.map(day => {
+  // Optimize performance from O(N * D) to O(N + D) using Map-based date groupings
+  const getDayKey = (date: Date) => {
+    return format(date, "yyyy-MM-dd");
+  };
+
+  const currentByDay = new Map<string, typeof currentTransactions>();
+  currentTransactions.forEach(t => {
+    const key = getDayKey(new Date(t.createdAt));
+    let list = currentByDay.get(key);
+    if (!list) {
+      list = [];
+      currentByDay.set(key, list);
+    }
+    list.push(t);
+  });
+
+  const previousByDay = new Map<string, typeof previousTransactions>();
+  previousTransactions.forEach(t => {
+    const key = getDayKey(new Date(t.createdAt));
+    let list = previousByDay.get(key);
+    if (!list) {
+      list = [];
+      previousByDay.set(key, list);
+    }
+    list.push(t);
+  });
+
+  const chartData: ChartDataPoint[] = [];
+  const averageSalesChartData: ChartDataPoint[] = [];
+  const avgOrderValueChartData: ChartDataPoint[] = [];
+  const totalSessionsChartData: ChartDataPoint[] = [];
+
+  intervalDays.forEach(day => {
     const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter(t =>
-      isSameDay(t.createdAt, day),
-    );
+    const dayKey = getDayKey(day);
+    const dayTransactions = currentByDay.get(dayKey) || [];
 
     // For comparison in charts
     let prevDay: Date;
-    if (timeframe === "week")
+    if (timeframe === "week") {
       prevDay = subMonths(day, 1); // Mocked match for simplicity
-    else if (timeframe === "year") prevDay = subMonths(day, 12);
-    else prevDay = subMonths(day, 1);
+    } else if (timeframe === "year") {
+      prevDay = subMonths(day, 12);
+    } else {
+      prevDay = subMonths(day, 1);
+    }
 
-    const prevDayTransactions = previousTransactions.filter(t =>
-      isSameDay(t.createdAt, prevDay),
-    );
-
-    return {
-      date: dayStr,
-      current: dayTransactions.reduce(
-        (acc, t) => acc + Number(t.finalTotal),
-        0,
-      ),
-      previous: prevDayTransactions.reduce(
-        (acc, t) => acc + Number(t.finalTotal),
-        0,
-      ),
-    };
-  });
-
-  const averageSalesChartData: ChartDataPoint[] = intervalDays.map(day => {
-    const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter(t =>
-      isSameDay(t.createdAt, day),
-    );
-
-    let prevDay: Date;
-    if (timeframe === "week") prevDay = subMonths(day, 1);
-    else if (timeframe === "year") prevDay = subMonths(day, 12);
-    else prevDay = subMonths(day, 1);
-
-    const prevDayTransactions = previousTransactions.filter(t =>
-      isSameDay(t.createdAt, prevDay),
-    );
-
-    return {
-      date: dayStr,
-      current: dayTransactions.length,
-      previous: prevDayTransactions.length,
-    };
-  });
-
-  const avgOrderValueChartData: ChartDataPoint[] = intervalDays.map(day => {
-    const dayStr = format(day, "MMM dd");
-    const dayTransactions = currentTransactions.filter(t =>
-      isSameDay(t.createdAt, day),
-    );
-
-    let prevDay: Date;
-    if (timeframe === "week") prevDay = subMonths(day, 1);
-    else if (timeframe === "year") prevDay = subMonths(day, 12);
-    else prevDay = subMonths(day, 1);
-
-    const prevDayTransactions = previousTransactions.filter(t =>
-      isSameDay(t.createdAt, prevDay),
-    );
+    const prevDayKey = getDayKey(prevDay);
+    const prevDayTransactions = previousByDay.get(prevDayKey) || [];
 
     const currentDayRev = dayTransactions.reduce(
       (acc, t) => acc + Number(t.finalTotal),
@@ -297,24 +301,30 @@ export async function getDashboardData(
       0,
     );
 
-    return {
+    chartData.push({
       date: dayStr,
-      current:
-        dayTransactions.length > 0 ? currentDayRev / dayTransactions.length : 0,
-      previous:
-        prevDayTransactions.length > 0
-          ? prevDayRev / prevDayTransactions.length
-          : 0,
-    };
-  });
+      current: currentDayRev,
+      previous: prevDayRev,
+    });
 
-  // Real session data or zero if not tracked
-  // For now we don't have a sessions table, so we use 0 instead of random mocks
-  const totalSessionsChartData: ChartDataPoint[] = intervalDays.map(day => ({
-    date: format(day, "MMM dd"),
-    current: 0,
-    previous: 0,
-  }));
+    averageSalesChartData.push({
+      date: dayStr,
+      current: dayTransactions.length,
+      previous: prevDayTransactions.length,
+    });
+
+    avgOrderValueChartData.push({
+      date: dayStr,
+      current: dayTransactions.length > 0 ? currentDayRev / dayTransactions.length : 0,
+      previous: prevDayTransactions.length > 0 ? prevDayRev / prevDayTransactions.length : 0,
+    });
+
+    totalSessionsChartData.push({
+      date: dayStr,
+      current: 0,
+      previous: 0,
+    });
+  });
 
   return {
     stats: {

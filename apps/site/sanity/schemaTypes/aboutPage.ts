@@ -42,6 +42,22 @@ export const aboutPageType = defineType({
       of: [defineArrayMember({ type: 'text' })],
     }),
     defineField({
+      name: 'missionImage',
+      title: 'Mission Image',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+          description: 'Alternative text for SEO and accessibility.',
+        }),
+      ],
+    }),
+    defineField({
       name: 'timeline',
       title: 'Timeline Milestones',
       type: 'array',
@@ -84,6 +100,22 @@ export const aboutPageType = defineType({
             defineField({ name: 'name', title: 'Name', type: 'string' }),
             defineField({ name: 'role', title: 'Role', type: 'string' }),
             defineField({ name: 'initials', title: 'Initials', type: 'string' }),
+            defineField({
+              name: 'avatar',
+              title: 'Avatar Image',
+              type: 'image',
+              options: {
+                hotspot: true,
+              },
+              fields: [
+                defineField({
+                  name: 'alt',
+                  type: 'string',
+                  title: 'Alternative Text',
+                  description: 'Alternative text for accessibility.',
+                }),
+              ],
+            }),
           ],
         }),
       ],
