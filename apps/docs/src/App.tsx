@@ -136,60 +136,83 @@ export default function App() {
     return endpoints.find((ep) => ep.operationId === activeEndpointId) || endpoints[0];
   }, [endpoints, activeEndpointId]);
 
-  // JSON Schema Ref Resolver Helper
-  const resolveSchema = (schema: any): any => {
-    if (!schema) return null;
+  // JSON Schema Ref Resolver Helper with cycle detection and depth limit
+  const resolveSchema = (schema: any, visited = new Set<string>(), depth = 0): any => {
+    if (!schema || depth > 8) return null;
     if (schema.$ref) {
       const refName = schema.$ref.split("/").pop();
-      const resolved = (openapiSpec.components as any)?.schemas?.[refName];
-      if (resolved) {
-        return resolveSchema(resolved);
+      if (refName) {
+        if (visited.has(refName)) {
+          // Prevent circular reference infinite loops
+          return { type: "object", description: `Circular reference to ${refName}` };
+        }
+        const resolved = (openapiSpec.components as any)?.schemas?.[refName];
+        if (resolved) {
+          const nextVisited = new Set(visited);
+          nextVisited.add(refName);
+          return resolveSchema(resolved, nextVisited, depth + 1);
+        }
       }
     }
     if (schema.type === "object" && schema.properties) {
       const resolvedProperties: any = {};
       for (const [key, value] of Object.entries(schema.properties)) {
-        resolvedProperties[key] = resolveSchema(value);
+        resolvedProperties[key] = resolveSchema(value, visited, depth + 1);
       }
       return { ...schema, properties: resolvedProperties };
     }
     if (schema.type === "array" && schema.items) {
-      return { ...schema, items: resolveSchema(schema.items) };
+      return { ...schema, items: resolveSchema(schema.items, visited, depth + 1) };
     }
     return schema;
   };
 
-  // Mock JSON payload builder from resolved schema
-  const generateMockFromSchema = (schema: any): any => {
-    const resolved = resolveSchema(schema);
-    if (!resolved) return null;
+  // Mock JSON payload builder with recursion limit and cycle detection
+  const generateMockFromSchema = (schema: any, depth = 0, visitedRefs = new Set<string>()): any => {
+    if (!schema || depth > 8) return null;
 
-    if (resolved.example !== undefined) return resolved.example;
-    if (resolved.default !== undefined) return resolved.default;
+    // If it has a $ref, resolve it first to generate appropriate sub-structure
+    if (schema.$ref) {
+      const refName = schema.$ref.split("/").pop();
+      if (refName) {
+        if (visitedRefs.has(refName)) {
+          return {}; // stop cyclic expansion
+        }
+        const resolved = (openapiSpec.components as any)?.schemas?.[refName];
+        if (resolved) {
+          const nextVisited = new Set(visitedRefs);
+          nextVisited.add(refName);
+          return generateMockFromSchema(resolved, depth + 1, nextVisited);
+        }
+      }
+    }
 
-    if (resolved.type === "object") {
+    if (schema.example !== undefined) return schema.example;
+    if (schema.default !== undefined) return schema.default;
+
+    if (schema.type === "object") {
       const obj: any = {};
-      if (resolved.properties) {
-        for (const [key, prop] of Object.entries(resolved.properties)) {
-          obj[key] = generateMockFromSchema(prop);
+      if (schema.properties) {
+        for (const [key, prop] of Object.entries(schema.properties)) {
+          obj[key] = generateMockFromSchema(prop, depth + 1, visitedRefs);
         }
       }
       return obj;
     }
-    if (resolved.type === "array") {
-      const childMock = generateMockFromSchema(resolved.items);
+    if (schema.type === "array") {
+      const childMock = generateMockFromSchema(schema.items, depth + 1, visitedRefs);
       return childMock ? [childMock] : [];
     }
-    if (resolved.type === "string") {
-      if (resolved.format === "date-time") return new Date().toISOString();
-      if (resolved.format === "email") return "developer@scryme.tech";
-      if (resolved.enum) return resolved.enum[0];
+    if (schema.type === "string") {
+      if (schema.format === "date-time") return new Date().toISOString();
+      if (schema.format === "email") return "developer@scryme.tech";
+      if (schema.enum && schema.enum.length > 0) return schema.enum[0];
       return "string_value";
     }
-    if (resolved.type === "number" || resolved.type === "integer") {
+    if (schema.type === "number" || schema.type === "integer") {
       return 100;
     }
-    if (resolved.type === "boolean") {
+    if (schema.type === "boolean") {
       return true;
     }
     return {};
