@@ -43,7 +43,8 @@ export class PublicServicesController {
   @ApiOperation({ summary: "List available services for public booking" })
   async getServices(@Req() req: any) {
     // Only return active services and specific fields for public view
-    const services = await this.serviceManagement.getServices(req.organization.id, { isActive: true });
+    // ⚡ Bolt Optimization: Use the optimized 'getServicesRaw' method to bypass heavy and unused database joins (staff, resources, categories)
+    const services = await this.serviceManagement.getServicesRaw(req.organization.id, { isActive: true });
     return services.map(s => ({
         id: s.id,
         name: s.name,
