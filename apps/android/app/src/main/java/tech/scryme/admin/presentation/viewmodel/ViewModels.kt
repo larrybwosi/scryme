@@ -142,6 +142,15 @@ class PresenceViewModel(
     private val _selectedLocationId = MutableStateFlow<String?>(null)
     val selectedLocationId: StateFlow<String?> = _selectedLocationId.asStateFlow()
 
+    private val _branches = MutableStateFlow<List<LocationDto>>(
+        listOf(
+            LocationDto("loc_1", "North Branch", "org_1", true),
+            LocationDto("loc_2", "Downtown Bakery", "org_1", true),
+            LocationDto("loc_3", "Express Counter", "org_1", true)
+        )
+    )
+    val branches: StateFlow<List<LocationDto>> = _branches.asStateFlow()
+
     // Real-time presence updates, automatically filtered by branch if selected
     val activeMembers: StateFlow<List<MemberResponseDto>> = repository.monitorActivePresence(pollIntervalMs = 5000L)
         .combine(selectedLocationId) { members, locationId ->
@@ -182,6 +191,18 @@ class PresenceViewModel(
                 .onFailure { error ->
                     _presenceState.value = UiState.Error(error.message ?: "Admin checkout failed")
                 }
+        }
+    }
+
+    fun addBranch(name: String, code: String? = null, type: String = "RETAIL_SHOP") {
+        val newId = "loc_" + (branches.value.size + 1)
+        val newBranch = LocationDto(id = newId, name = name, organizationId = "org_1", isActive = true)
+        _branches.value = _branches.value + newBranch
+    }
+
+    fun toggleBranchStatus(id: String) {
+        _branches.value = _branches.value.map {
+            if (it.id == id) it.copy(isActive = !it.isActive) else it
         }
     }
 }

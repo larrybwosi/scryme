@@ -1,19 +1,25 @@
 package tech.scryme.admin.presentation.components
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
 import tech.scryme.admin.presentation.viewmodel.ApprovalsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnalyticsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnnouncementViewModel
+import tech.scryme.admin.presentation.viewmodel.ScanViewModel
 import tech.scryme.admin.presentation.theme.ScrymeColors
+
+enum class DashboardScreen {
+    HOME,
+    PRESENCE,
+    SCAN,
+    APPROVALS,
+    ANALYTICS,
+    BROADCAST,
+    SETTINGS
+}
 
 @Composable
 fun AdminDashboard(
@@ -25,57 +31,12 @@ fun AdminDashboard(
     approvalsViewModel: ApprovalsViewModel,
     analyticsViewModel: AnalyticsViewModel,
     announcementViewModel: AnnouncementViewModel,
+    scanViewModel: ScanViewModel,
     onSignOut: () -> Unit
 ) {
-    var activeTab by remember { mutableIntStateOf(0) } // 0 = Dashboard, 1 = Presence, 2 = Operations
+    var currentScreen by remember { mutableStateOf(DashboardScreen.HOME) }
 
     Scaffold(
-        bottomBar = {
-            NavigationBar(
-                containerColor = ScrymeColors.SteelDark,
-                tonalElevation = 8.dp
-            ) {
-                NavigationBarItem(
-                    selected = activeTab == 0,
-                    onClick = { activeTab = 0 },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
-                    label = { Text("Dashboard") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = ScrymeColors.InkBg,
-                        selectedTextColor = ScrymeColors.Brass,
-                        indicatorColor = ScrymeColors.Brass,
-                        unselectedIconColor = ScrymeColors.SoftGray,
-                        unselectedTextColor = ScrymeColors.SoftGray
-                    )
-                )
-                NavigationBarItem(
-                    selected = activeTab == 1,
-                    onClick = { activeTab = 1 },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Presence") },
-                    label = { Text("Presence") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = ScrymeColors.InkBg,
-                        selectedTextColor = ScrymeColors.Brass,
-                        indicatorColor = ScrymeColors.Brass,
-                        unselectedIconColor = ScrymeColors.SoftGray,
-                        unselectedTextColor = ScrymeColors.SoftGray
-                    )
-                )
-                NavigationBarItem(
-                    selected = activeTab == 2,
-                    onClick = { activeTab = 2 },
-                    icon = { Icon(Icons.Default.Check, contentDescription = "Operations") },
-                    label = { Text("Operations") },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = ScrymeColors.InkBg,
-                        selectedTextColor = ScrymeColors.Brass,
-                        indicatorColor = ScrymeColors.Brass,
-                        unselectedIconColor = ScrymeColors.SoftGray,
-                        unselectedTextColor = ScrymeColors.SoftGray
-                    )
-                )
-            }
-        },
         containerColor = ScrymeColors.InkBg
     ) { paddingValues ->
         Box(
@@ -83,22 +44,42 @@ fun AdminDashboard(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (activeTab) {
-                0 -> DashboardView(
+            when (currentScreen) {
+                DashboardScreen.HOME -> DashboardView(
                     userName = userName,
                     userEmail = userEmail,
                     activeOrg = activeOrg,
                     sessionToken = sessionToken,
                     analyticsViewModel = analyticsViewModel,
                     presenceViewModel = presenceViewModel,
+                    onNavigateToScreen = { currentScreen = it },
                     onSignOut = onSignOut
                 )
-                1 -> PresenceView(
-                    presenceViewModel = presenceViewModel
+                DashboardScreen.PRESENCE -> PresenceView(
+                    presenceViewModel = presenceViewModel,
+                    onBackToHome = { currentScreen = DashboardScreen.HOME }
                 )
-                2 -> OperationsView(
+                DashboardScreen.SCAN -> ScanView(
+                    scanViewModel = scanViewModel,
+                    onBackToHome = { currentScreen = DashboardScreen.HOME }
+                )
+                DashboardScreen.APPROVALS -> ApprovalsView(
                     approvalsViewModel = approvalsViewModel,
-                    announcementViewModel = announcementViewModel
+                    onBackToHome = { currentScreen = DashboardScreen.HOME }
+                )
+                DashboardScreen.ANALYTICS -> AnalyticsView(
+                    analyticsViewModel = analyticsViewModel,
+                    presenceViewModel = presenceViewModel,
+                    onBackToHome = { currentScreen = DashboardScreen.HOME }
+                )
+                DashboardScreen.BROADCAST -> BroadcastView(
+                    announcementViewModel = announcementViewModel,
+                    onBackToHome = { currentScreen = DashboardScreen.HOME }
+                )
+                DashboardScreen.SETTINGS -> SettingsView(
+                    presenceViewModel = presenceViewModel,
+                    activeOrg = activeOrg,
+                    onBackToHome = { currentScreen = DashboardScreen.HOME }
                 )
             }
         }

@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
@@ -29,12 +30,14 @@ import tech.scryme.admin.presentation.theme.ScrymeColors
 
 @Composable
 fun PresenceView(
-    presenceViewModel: PresenceViewModel
+    presenceViewModel: PresenceViewModel,
+    onBackToHome: () -> Unit
 ) {
     val context = LocalContext.current
     val activeMembers by presenceViewModel.activeMembers.collectAsState()
     val presenceState by presenceViewModel.presenceState.collectAsState()
     val selectedLocationId by presenceViewModel.selectedLocationId.collectAsState()
+    val branches by presenceViewModel.branches.collectAsState()
 
     var searchQuery by remember { mutableStateOf("") }
     var showBranchDropdown by remember { mutableStateOf(false) }
@@ -49,20 +52,29 @@ fun PresenceView(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Title block
-        Column {
-            Text(
-                text = "PRESENCE MONITOR",
-                color = ScrymeColors.Brass,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            )
-            Text(
-                text = "Real-time Checked-in Staff & Active Members",
-                color = ScrymeColors.SoftGray,
-                fontSize = 12.sp
-            )
+        // Back Navigation & Title block
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onBackToHome) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = ScrymeColors.Brass)
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Column {
+                Text(
+                    text = "PRESENCE MONITOR",
+                    color = ScrymeColors.Brass,
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+                Text(
+                    text = "Real-time Checked-in Staff & Active Members",
+                    color = ScrymeColors.SoftGray,
+                    fontSize = 12.sp
+                )
+            }
         }
 
         // Search Bar & Filter Action Row
@@ -122,15 +134,11 @@ fun PresenceView(
                             showBranchDropdown = false
                         }
                     )
-                    listOf(
-                        "loc_1" to "North Branch",
-                        "loc_2" to "Downtown Bakery",
-                        "loc_3" to "Express Counter"
-                    ).forEach { (locId, locName) ->
+                    branches.filter { it.isActive }.forEach { branch ->
                         DropdownMenuItem(
-                            text = { Text(locName, color = ScrymeColors.Paper) },
+                            text = { Text(branch.name, color = ScrymeColors.Paper) },
                             onClick = {
-                                presenceViewModel.filterByBranch(locId)
+                                presenceViewModel.filterByBranch(branch.id)
                                 showBranchDropdown = false
                             }
                         )
@@ -221,7 +229,6 @@ fun PresenceView(
                                     verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    // S Logo or initial circle
                                     Box(
                                         modifier = Modifier
                                             .size(40.dp)
@@ -254,7 +261,6 @@ fun PresenceView(
                                     }
                                 }
 
-                                // Status indicator & Checkout action
                                 Column(horizontalAlignment = Alignment.End) {
                                     Row(
                                         verticalAlignment = Alignment.CenterVertically,

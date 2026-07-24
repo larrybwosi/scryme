@@ -31,6 +31,7 @@ import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
 import tech.scryme.admin.presentation.viewmodel.ApprovalsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnalyticsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnnouncementViewModel
+import tech.scryme.admin.presentation.viewmodel.ScanViewModel
 import tech.scryme.admin.presentation.theme.ScrymeTheme
 import tech.scryme.admin.presentation.components.LoginScreen
 import tech.scryme.admin.presentation.components.AdminDashboard
@@ -42,6 +43,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var approvalsViewModel: ApprovalsViewModel
     private lateinit var analyticsViewModel: AnalyticsViewModel
     private lateinit var announcementViewModel: AnnouncementViewModel
+    private lateinit var scanViewModel: ScanViewModel
     private lateinit var sessionManager: SessionManagerImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -81,6 +83,8 @@ class MainActivity : ComponentActivity() {
         val announcementRepository = AnnouncementRepositoryImpl(announcementApiService, sessionManager)
         announcementViewModel = AnnouncementViewModel(announcementRepository)
 
+        scanViewModel = ScanViewModel(presenceRepository)
+
         setContent {
             ScrymeTheme {
                 Surface(
@@ -93,6 +97,7 @@ class MainActivity : ComponentActivity() {
                         approvalsViewModel = approvalsViewModel,
                         analyticsViewModel = analyticsViewModel,
                         announcementViewModel = announcementViewModel,
+                        scanViewModel = scanViewModel,
                         sessionManager = sessionManager
                     )
                 }
@@ -108,6 +113,7 @@ fun AppNavigation(
     approvalsViewModel: ApprovalsViewModel,
     analyticsViewModel: AnalyticsViewModel,
     announcementViewModel: AnnouncementViewModel,
+    scanViewModel: ScanViewModel,
     sessionManager: SessionManagerImpl
 ) {
     val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
@@ -135,6 +141,7 @@ fun AppNavigation(
             approvalsViewModel = approvalsViewModel,
             analyticsViewModel = analyticsViewModel,
             announcementViewModel = announcementViewModel,
+            scanViewModel = scanViewModel,
             onSignOut = { authViewModel.logout() }
         )
     } else {
