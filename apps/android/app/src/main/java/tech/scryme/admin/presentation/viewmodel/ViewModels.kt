@@ -46,7 +46,18 @@ class AuthViewModel(
                         _loginState.value = UiState.Success(response)
                     }
                     .onFailure { error ->
-                        _loginState.value = UiState.Error(error.message ?: "Session invalid")
+                        val msg = error.message ?: ""
+                        if (msg.contains("401") ||
+                            msg.contains("Unauthorized", ignoreCase = true) ||
+                            msg.contains("invalid", ignoreCase = true) ||
+                            msg.contains("expired", ignoreCase = true)
+                        ) {
+                            // Automatically clear invalid/expired session to restore pristine logged-out state
+                            repository.signOut()
+                            _loginState.value = UiState.Idle
+                        } else {
+                            _loginState.value = UiState.Error(msg)
+                        }
                     }
             }
         }
