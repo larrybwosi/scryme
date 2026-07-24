@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { createDeal } from "../../actions/deals";
+import { createDeal, updateDeal } from "../../actions/deals";
 import { getCustomers } from "../../actions/customers";
 import { getCompanies } from "../../actions/companies";
 import { toast } from "sonner";
@@ -75,6 +75,14 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
   // Combine loading states for the UI selects
   const loadingOptions = loadingCustomers || loadingCompanies;
 
+  const associatedCustomerId = initialData?.associatedCustomerId !== undefined
+    ? initialData.associatedCustomerId
+    : (initialData?.targetAssociations?.find((a: any) => a.sourceRecord?.customer)?.sourceRecord?.customer?.id || null);
+
+  const associatedCompanyId = initialData?.associatedCompanyId !== undefined
+    ? initialData.associatedCompanyId
+    : (initialData?.targetAssociations?.find((a: any) => a.sourceRecord?.businessAccount)?.sourceRecord?.businessAccount?.id || null);
+
   const form = useForm<DealFormValues>({
     resolver: zodResolver(dealFormSchema),
     defaultValues: {
@@ -84,17 +92,19 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
       expectedCloseDate: initialData?.data?.expectedCloseDate || "",
       probability: initialData?.data?.probability || 0,
       description: initialData?.data?.description || "",
-      associatedCustomerId: initialData?.associatedCustomerId || null,
-      associatedCompanyId: initialData?.associatedCompanyId || null,
+      associatedCustomerId: associatedCustomerId,
+      associatedCompanyId: associatedCompanyId,
     },
   });
 
   async function onSubmit(values: DealFormValues) {
     setLoading(true);
     try {
-      const result = await createDeal(values);
+      const result = initialData?.id
+        ? await updateDeal(initialData.id, values)
+        : await createDeal(values);
       if (result.success) {
-        toast.success(initialData ? "Deal updated" : "Deal created");
+        toast.success(initialData?.id ? "Deal updated" : "Deal created");
         onSuccess();
       } else {
         toast.error(result.error || "Failed to save deal");
@@ -274,7 +284,7 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
         <div className="flex justify-end gap-3 pt-4">
           <Button type="submit" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {initialData ? "Update Deal" : "Create Deal"}
+            {initialData?.id ? "Update Deal" : "Create Deal"}
           </Button>
         </div>
       </form>
