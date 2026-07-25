@@ -25,7 +25,9 @@ interface PresenceRepository {
 interface ApprovalsRepository {
     suspend fun getPriceChangeRequests(offset: Int = 0, limit: Int = 20): Result<List<PriceChangeRequestDto>>
     suspend fun reviewPriceChange(id: String, approve: Boolean, reason: String? = null): Result<Unit>
+    suspend fun getStockAdjustments(offset: Int = 0, limit: Int = 50, status: String? = null): Result<List<StockAdjustmentResponseDto>>
     suspend fun approveInventoryAdjustment(id: String): Result<Unit>
+    suspend fun rejectInventoryAdjustment(id: String, reason: String? = null): Result<Unit>
 }
 
 interface AnalyticsRepository {

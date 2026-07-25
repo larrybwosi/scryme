@@ -249,6 +249,9 @@ class ApprovalsViewModel(
     private val _priceChanges = MutableStateFlow<UiState<List<PriceChangeRequestDto>>>(UiState.Idle)
     val priceChanges: StateFlow<UiState<List<PriceChangeRequestDto>>> = _priceChanges.asStateFlow()
 
+    private val _stockAdjustments = MutableStateFlow<UiState<List<StockAdjustmentResponseDto>>>(UiState.Idle)
+    val stockAdjustments: StateFlow<UiState<List<StockAdjustmentResponseDto>>> = _stockAdjustments.asStateFlow()
+
     private val _actionState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
     val actionState: StateFlow<UiState<Unit>> = _actionState.asStateFlow()
 
@@ -261,6 +264,19 @@ class ApprovalsViewModel(
                 }
                 .onFailure { error ->
                     _priceChanges.value = UiState.Error(error.message ?: "Failed to load price change requests")
+                }
+        }
+    }
+
+    fun loadStockAdjustments(status: String? = null) {
+        viewModelScope.launch {
+            _stockAdjustments.value = UiState.Loading
+            repository.getStockAdjustments(status = status)
+                .onSuccess { list ->
+                    _stockAdjustments.value = UiState.Success(list)
+                }
+                .onFailure { error ->
+                    _stockAdjustments.value = UiState.Error(error.message ?: "Failed to load stock adjustments")
                 }
         }
     }
@@ -280,12 +296,38 @@ class ApprovalsViewModel(
         }
     }
 
+    fun reviewStockAdjustment(requestId: String, approve: Boolean, rejectionReason: String? = null) {
+        viewModelScope.launch {
+            _actionState.value = UiState.Loading
+            val result = if (approve) {
+                repository.approveInventoryAdjustment(requestId)
+            } else {
+                repository.rejectInventoryAdjustment(requestId, rejectionReason)
+            }
+            result
+                .onSuccess {
+                    _actionState.value = UiState.Success(Unit)
+                    // Refresh requests
+                    loadStockAdjustments()
+                }
+                .onFailure { error ->
+                    _actionState.value = UiState.Error(error.message ?: "Stock adjustment action failed")
+                }
+        }
+    }
+
+    fun resetActionState() {
+        _actionState.value = UiState.Idle
+    }
+
     fun approveInventoryAdjustment(requestId: String) {
         viewModelScope.launch {
             _actionState.value = UiState.Loading
             repository.approveInventoryAdjustment(requestId)
                 .onSuccess {
                     _actionState.value = UiState.Success(Unit)
+                    // Refresh
+                    loadStockAdjustments()
                 }
                 .onFailure { error ->
                     _actionState.value = UiState.Error(error.message ?: "Inventory adjustment approval failed")
