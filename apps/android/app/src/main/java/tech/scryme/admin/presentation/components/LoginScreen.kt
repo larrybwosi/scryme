@@ -45,21 +45,14 @@ fun LoginScreen(viewModel: AuthViewModel) {
     val currentBaseUrl by viewModel.sessionManager.baseUrl.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
-    var selectedTab by remember { mutableIntStateOf(0) } // 0 = Email, 1 = Terminal PIN
-
     // Email Input States
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by remember { mutableStateOf(false) }
 
-    // Terminal Input States
-    var cardId by remember { mutableStateOf("") }
-    var pin by remember { mutableStateOf("") }
-
     // Validation States
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
-    var terminalError by remember { mutableStateOf<String?>(null) }
 
     // Dialog state for server settings
     var showServerSettingsDialog by remember { mutableStateOf(false) }
@@ -113,22 +106,6 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.padding(bottom = 8.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(CircleShape)
-                        .background(ScrymeColors.GreenLogo),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "S",
-                        color = Color.White,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = FontFamily.Serif
-                    )
-                }
-                Spacer(modifier = Modifier.width(14.dp))
                 Text(
                     text = "SCRYME",
                     color = ScrymeColors.Paper,
@@ -159,7 +136,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             )
 
-            // Auth Selector Card
+            // Auth Card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -169,277 +146,161 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
-                    // Custom tab selector
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 24.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(ScrymeColors.InkBg.copy(alpha = 0.6f))
-                            .padding(4.dp)
+                    // Email & Password Sign In
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = {
+                            email = it
+                            emailError = null
+                        },
+                        label = { Text("Business Email", color = ScrymeColors.SoftGray) },
+                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = ScrymeColors.Brass) },
+                        isError = emailError != null,
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ScrymeColors.Brass,
+                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                            focusedLabelColor = ScrymeColors.Brass,
+                            cursorColor = ScrymeColors.Brass
+                        ),
+                        singleLine = true
+                    )
+                    if (emailError != null) {
+                        Text(
+                            text = emailError!!,
+                            color = ScrymeColors.Crimson,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = {
+                            password = it
+                            passwordError = null
+                        },
+                        label = { Text("Secure Password", color = ScrymeColors.SoftGray) },
+                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = ScrymeColors.Brass) },
+                        trailingIcon = {
+                            TextButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                                Text(
+                                    text = if (isPasswordVisible) "HIDE" else "SHOW",
+                                    color = ScrymeColors.Brass,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 11.sp
+                                )
+                            }
+                        },
+                        visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        isError = passwordError != null,
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ScrymeColors.Brass,
+                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                            focusedLabelColor = ScrymeColors.Brass,
+                            cursorColor = ScrymeColors.Brass
+                        ),
+                        singleLine = true
+                    )
+                    if (passwordError != null) {
+                        Text(
+                            text = passwordError!!,
+                            color = ScrymeColors.Crimson,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+                            if (email.isBlank()) {
+                                emailError = "Email is required"
+                            } else if (!isEmailValid) {
+                                emailError = "Please enter a valid email"
+                            }
+                            if (password.length < 6) {
+                                passwordError = "Password must be at least 6 characters"
+                            }
+
+                            if (emailError == null && passwordError == null) {
+                                viewModel.login(email.trim(), password)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = loginState !is UiState.Loading
                     ) {
-                        Button(
-                            onClick = { selectedTab = 0 },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedTab == 0) ScrymeColors.Brass else Color.Transparent,
-                                contentColor = if (selectedTab == 0) ScrymeColors.InkBg else ScrymeColors.Paper
-                            ),
-                            shape = RoundedCornerShape(6.dp),
-                            contentPadding = PaddingValues(vertical = 10.dp)
-                        ) {
-                            Text("Manager Sign In", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-                        Button(
-                            onClick = { selectedTab = 1 },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (selectedTab == 1) ScrymeColors.Brass else Color.Transparent,
-                                contentColor = if (selectedTab == 1) ScrymeColors.InkBg else ScrymeColors.Paper
-                            ),
-                            shape = RoundedCornerShape(6.dp),
-                            contentPadding = PaddingValues(vertical = 10.dp)
-                        ) {
-                            Text("Terminal PIN", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                        if (loginState is UiState.Loading) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), color = ScrymeColors.InkBg)
+                        } else {
+                            Text("SIGN IN TO LEDGER", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
                         }
                     }
 
-                    if (selectedTab == 0) {
-                        // Email & Password tab
-                        OutlinedTextField(
-                            value = email,
-                            onValueChange = {
-                                email = it
-                                emailError = null
-                            },
-                            label = { Text("Business Email", color = ScrymeColors.SoftGray) },
-                            leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = ScrymeColors.Brass) },
-                            isError = emailError != null,
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ScrymeColors.Brass,
-                                unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
-                                focusedLabelColor = ScrymeColors.Brass,
-                                cursorColor = ScrymeColors.Brass
-                            ),
-                            singleLine = true
+                    // Decorative Spacer / Or separator
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = ScrymeColors.SoftGray.copy(alpha = 0.2f))
+                        Text(
+                            text = "OR CONTINUE WITH",
+                            color = ScrymeColors.SoftGray,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium,
+                            letterSpacing = 1.sp,
+                            modifier = Modifier.padding(horizontal = 12.dp)
                         )
-                        if (emailError != null) {
-                            Text(
-                                text = emailError!!,
-                                color = ScrymeColors.Crimson,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
-                            )
-                        }
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = ScrymeColors.SoftGray.copy(alpha = 0.2f))
+                    }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        OutlinedTextField(
-                            value = password,
-                            onValueChange = {
-                                password = it
-                                passwordError = null
-                            },
-                            label = { Text("Secure Password", color = ScrymeColors.SoftGray) },
-                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = ScrymeColors.Brass) },
-                            trailingIcon = {
-                                TextButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
-                                    Text(
-                                        text = if (isPasswordVisible) "HIDE" else "SHOW",
-                                        color = ScrymeColors.Brass,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp
-                                    )
-                                }
-                            },
-                            visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                            isError = passwordError != null,
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ScrymeColors.Brass,
-                                unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
-                                focusedLabelColor = ScrymeColors.Brass,
-                                cursorColor = ScrymeColors.Brass
-                            ),
-                            singleLine = true
-                        )
-                        if (passwordError != null) {
-                            Text(
-                                text = passwordError!!,
-                                color = ScrymeColors.Crimson,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Button(
-                            onClick = {
-                                val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
-                                if (email.isBlank()) {
-                                    emailError = "Email is required"
-                                } else if (!isEmailValid) {
-                                    emailError = "Please enter a valid email"
-                                }
-                                if (password.length < 6) {
-                                    passwordError = "Password must be at least 6 characters"
-                                }
-
-                                if (emailError == null && passwordError == null) {
-                                    viewModel.login(email.trim(), password)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
-                            shape = RoundedCornerShape(8.dp),
-                            enabled = loginState !is UiState.Loading
-                        ) {
-                            if (loginState is UiState.Loading) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = ScrymeColors.InkBg)
-                            } else {
-                                Text("SIGN IN TO LEDGER", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    // Google Sign-In Button
+                    OutlinedButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                // Trigger high-fidelity Mock Google Sign-In flow
+                                Toast.makeText(context, "Initiating Google Secure Authentication...", Toast.LENGTH_SHORT).show()
+                                viewModel.loginWithGoogle("google_oauth_id_token_scryme_prod")
                             }
-                        }
-
-                        // Decorative Spacer / Or separator
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.3f)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ScrymeColors.Paper),
+                        shape = RoundedCornerShape(8.dp),
+                        enabled = loginState !is UiState.Loading
+                    ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 20.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            HorizontalDivider(modifier = Modifier.weight(1f), color = ScrymeColors.SoftGray.copy(alpha = 0.2f))
-                            Text(
-                                text = "OR CONTINUE WITH",
-                                color = ScrymeColors.SoftGray,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Medium,
-                                letterSpacing = 1.sp,
-                                modifier = Modifier.padding(horizontal = 12.dp)
-                            )
-                            HorizontalDivider(modifier = Modifier.weight(1f), color = ScrymeColors.SoftGray.copy(alpha = 0.2f))
-                        }
-
-                        // Google Sign-In Button
-                        OutlinedButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    // Trigger high-fidelity Mock Google Sign-In flow
-                                    Toast.makeText(context, "Initiating Google Secure Authentication...", Toast.LENGTH_SHORT).show()
-                                    viewModel.loginWithGoogle("google_oauth_id_token_scryme_prod")
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.3f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ScrymeColors.Paper),
-                            shape = RoundedCornerShape(8.dp),
-                            enabled = loginState !is UiState.Loading
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
+                            // Customized Google Icon Vector representation
+                            Box(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White),
+                                contentAlignment = Alignment.Center
                             ) {
-                                // Customized Google Icon Vector representation
-                                Box(
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .clip(CircleShape)
-                                        .background(Color.White),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "G",
-                                        color = Color(0xFF4285F4),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Text("Sign In with Google", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                                Text(
+                                    text = "G",
+                                    color = Color(0xFF4285F4),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.ExtraBold
+                                )
                             }
-                        }
-
-                    } else {
-                        // Terminal PIN Tab
-                        OutlinedTextField(
-                            value = cardId,
-                            onValueChange = {
-                                cardId = it
-                                terminalError = null
-                            },
-                            label = { Text("Staff Card ID", color = ScrymeColors.SoftGray) },
-                            leadingIcon = { Icon(Icons.Default.Person, contentDescription = null, tint = ScrymeColors.Brass) },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ScrymeColors.Brass,
-                                unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
-                                focusedLabelColor = ScrymeColors.Brass,
-                                cursorColor = ScrymeColors.Brass
-                            ),
-                            singleLine = true
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        OutlinedTextField(
-                            value = pin,
-                            onValueChange = {
-                                if (it.length <= 4 && it.all { char -> char.isDigit() }) {
-                                    pin = it
-                                    terminalError = null
-                                }
-                            },
-                            label = { Text("4-Digit PIN", color = ScrymeColors.SoftGray) },
-                            leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = ScrymeColors.Brass) },
-                            visualTransformation = PasswordVisualTransformation(),
-                            modifier = Modifier.fillMaxWidth(),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = ScrymeColors.Brass,
-                                unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
-                                focusedLabelColor = ScrymeColors.Brass,
-                                cursorColor = ScrymeColors.Brass
-                            ),
-                            singleLine = true
-                        )
-
-                        if (terminalError != null) {
-                            Text(
-                                text = terminalError!!,
-                                color = ScrymeColors.Crimson,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Button(
-                            onClick = {
-                                if (cardId.isBlank()) {
-                                    terminalError = "Staff Card ID is required"
-                                } else if (pin.length != 4) {
-                                    terminalError = "PIN must be exactly 4 digits"
-                                }
-
-                                if (terminalError == null) {
-                                    viewModel.loginWithCard(cardId.trim(), pin)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
-                            shape = RoundedCornerShape(8.dp),
-                            enabled = loginState !is UiState.Loading
-                        ) {
-                            if (loginState is UiState.Loading) {
-                                CircularProgressIndicator(modifier = Modifier.size(20.dp), color = ScrymeColors.InkBg)
-                            } else {
-                                Text("VALIDATE CARD & ACCESS", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                            }
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text("Sign In with Google", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                         }
                     }
                 }

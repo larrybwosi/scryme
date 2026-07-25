@@ -132,9 +132,13 @@ fun AppNavigation(
     val loginState by authViewModel.loginState.collectAsState()
 
     if (isAuthenticated) {
-        var userEmail = "admin@scryme.tech"
-        var userName = "System Administrator"
-        var activeOrg = "The Operating Ledger"
+        val savedEmail by sessionManager.userEmail.collectAsState()
+        val savedName by sessionManager.userName.collectAsState()
+        val savedOrgId by sessionManager.activeOrgId.collectAsState()
+
+        var userEmail = savedEmail ?: "admin@scryme.tech"
+        var userName = savedName ?: "System Administrator"
+        var activeOrg = savedOrgId ?: "The Operating Ledger"
 
         // Safely extract active session details if available in State
         if (loginState is UiState.Success) {
