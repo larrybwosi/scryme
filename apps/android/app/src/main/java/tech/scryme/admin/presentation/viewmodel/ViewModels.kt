@@ -20,7 +20,7 @@ sealed interface UiState<out T> {
 
 class AuthViewModel(
     private val repository: AuthRepository,
-    private val sessionManager: SessionManager
+    val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _loginState = MutableStateFlow<UiState<BetterAuthSessionResponse>>(UiState.Idle)

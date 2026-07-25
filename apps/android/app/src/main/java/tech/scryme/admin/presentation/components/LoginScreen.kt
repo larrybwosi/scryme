@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,10 +37,12 @@ import tech.scryme.admin.presentation.viewmodel.AuthViewModel
 import tech.scryme.admin.presentation.viewmodel.UiState
 import tech.scryme.admin.presentation.theme.ScrymeColors
 
+@Suppress("ktlint:standard:function-naming")
 @Composable
 fun LoginScreen(viewModel: AuthViewModel) {
     val context = LocalContext.current
     val loginState by viewModel.loginState.collectAsState()
+    val currentBaseUrl by viewModel.sessionManager.baseUrl.collectAsState()
     val coroutineScope = rememberCoroutineScope()
 
     var selectedTab by remember { mutableIntStateOf(0) } // 0 = Email, 1 = Terminal PIN
@@ -56,6 +60,9 @@ fun LoginScreen(viewModel: AuthViewModel) {
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
     var terminalError by remember { mutableStateOf<String?>(null) }
+
+    // Dialog state for server settings
+    var showServerSettingsDialog by remember { mutableStateOf(false) }
 
     // Display state-driven error from API
     LaunchedEffect(loginState) {
@@ -78,6 +85,28 @@ fun LoginScreen(viewModel: AuthViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Server Config Shortcut at Top Right
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.End
+            ) {
+                IconButton(
+                    onClick = { showServerSettingsDialog = true },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(ScrymeColors.SteelDark)
+                        .border(1.dp, ScrymeColors.Brass.copy(alpha = 0.4f), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Configure Server Endpoint",
+                        tint = ScrymeColors.Brass
+                    )
+                }
+            }
+
             // App Logo Section
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -86,7 +115,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
             ) {
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(54.dp)
                         .clip(CircleShape)
                         .background(ScrymeColors.GreenLogo),
                     contentAlignment = Alignment.Center
@@ -94,16 +123,16 @@ fun LoginScreen(viewModel: AuthViewModel) {
                     Text(
                         text = "S",
                         color = Color.White,
-                        fontSize = 28.sp,
+                        fontSize = 32.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Serif
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(14.dp))
                 Text(
                     text = "SCRYME",
                     color = ScrymeColors.Paper,
-                    fontSize = 32.sp,
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.sp
                 )
@@ -115,7 +144,19 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 letterSpacing = 4.sp,
-                modifier = Modifier.padding(bottom = 32.dp)
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            // Current Server Badge
+            Text(
+                text = "Node: ${currentBaseUrl ?: "https://api.scryme.tech"}",
+                color = ScrymeColors.SoftGray,
+                fontSize = 11.sp,
+                modifier = Modifier
+                    .padding(bottom = 16.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(ScrymeColors.SteelDark)
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
             )
 
             // Auth Selector Card
@@ -288,7 +329,6 @@ fun LoginScreen(viewModel: AuthViewModel) {
                             onClick = {
                                 coroutineScope.launch {
                                     // Trigger high-fidelity Mock Google Sign-In flow
-                                    // We pass a fully valid mock oauth/idToken to the ViewModel
                                     Toast.makeText(context, "Initiating Google Secure Authentication...", Toast.LENGTH_SHORT).show()
                                     viewModel.loginWithGoogle("google_oauth_id_token_scryme_prod")
                                 }
@@ -425,5 +465,147 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 )
             }
         }
+    }
+
+    // Dynamic Server Settings dialog
+    if (showServerSettingsDialog) {
+        var inputUrl by remember { mutableStateOf(currentBaseUrl ?: "https://api.scryme.tech") }
+        var selectedPreset by remember { mutableStateOf(
+            when (currentBaseUrl) {
+                "https://api.scryme.tech" -> "production"
+                "http://10.0.2.2:3002" -> "emulator"
+                else -> "custom"
+            }
+        ) }
+
+        AlertDialog(
+            onDismissRequest = { showServerSettingsDialog = false },
+            title = {
+                Text(
+                    "Server Node Configuration",
+                    color = ScrymeColors.Paper,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        "Configure the endpoint of the Scryme ledger to dynamically connect to local or cloud instances.",
+                        color = ScrymeColors.SoftGray,
+                        fontSize = 13.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // Presets
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                selectedPreset = "production"
+                                inputUrl = "https://api.scryme.tech"
+                            },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(
+                                1.dp,
+                                if (selectedPreset == "production") ScrymeColors.Brass else ScrymeColors.SoftGray.copy(alpha = 0.2f)
+                            ),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (selectedPreset == "production") ScrymeColors.Brass.copy(alpha = 0.15f) else Color.Transparent,
+                                contentColor = ScrymeColors.Paper
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            Text("Prod Cloud", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                selectedPreset = "emulator"
+                                inputUrl = "http://10.0.2.2:3002"
+                            },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(
+                                1.dp,
+                                if (selectedPreset == "emulator") ScrymeColors.Brass else ScrymeColors.SoftGray.copy(alpha = 0.2f)
+                            ),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (selectedPreset == "emulator") ScrymeColors.Brass.copy(alpha = 0.15f) else Color.Transparent,
+                                contentColor = ScrymeColors.Paper
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            Text("Emulator", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        OutlinedButton(
+                            onClick = {
+                                selectedPreset = "custom"
+                            },
+                            modifier = Modifier.weight(1f),
+                            border = BorderStroke(
+                                1.dp,
+                                if (selectedPreset == "custom") ScrymeColors.Brass else ScrymeColors.SoftGray.copy(alpha = 0.2f)
+                            ),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                containerColor = if (selectedPreset == "custom") ScrymeColors.Brass.copy(alpha = 0.15f) else Color.Transparent,
+                                contentColor = ScrymeColors.Paper
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(vertical = 8.dp)
+                        ) {
+                            Text("Custom", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    // Custom URL input
+                    OutlinedTextField(
+                        value = inputUrl,
+                        onValueChange = {
+                            inputUrl = it
+                            selectedPreset = "custom"
+                        },
+                        label = { Text("Server URL", color = ScrymeColors.SoftGray) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = ScrymeColors.Brass,
+                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                            focusedLabelColor = ScrymeColors.Brass,
+                            cursorColor = ScrymeColors.Brass,
+                            focusedTextColor = ScrymeColors.Paper,
+                            unfocusedTextColor = ScrymeColors.Paper
+                        ),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val cleanedUrl = inputUrl.trim().removeSuffix("/")
+                        viewModel.sessionManager.saveBaseUrl(cleanedUrl)
+                        showServerSettingsDialog = false
+                        Toast.makeText(context, "Node configured to: $cleanedUrl", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ScrymeColors.Brass,
+                        contentColor = ScrymeColors.InkBg
+                    )
+                ) {
+                    Text("Apply & Connect", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showServerSettingsDialog = false }) {
+                    Text("Cancel", color = ScrymeColors.SoftGray)
+                }
+            },
+            containerColor = ScrymeColors.SteelDark,
+            shape = RoundedCornerShape(16.dp)
+        )
     }
 }
