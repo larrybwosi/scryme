@@ -42,6 +42,17 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
     private val _activeOrgId = MutableStateFlow<String?>(sharedPrefs?.getString("ACTIVE_ORG_ID", null))
     override val activeOrgId: StateFlow<String?> = _activeOrgId.asStateFlow()
 
+    private val _baseUrl = MutableStateFlow<String?>(sharedPrefs?.getString("BASE_URL", "https://api.scryme.tech"))
+    override val baseUrl: StateFlow<String?> = _baseUrl.asStateFlow()
+
+    override fun saveBaseUrl(url: String?) {
+        _baseUrl.value = url
+        sharedPrefs?.edit()?.apply {
+            putString("BASE_URL", url)
+            apply()
+        }
+    }
+
     override fun saveSession(token: String, orgSlug: String?, orgId: String?) {
         _token.value = token
         _activeOrgSlug.value = orgSlug

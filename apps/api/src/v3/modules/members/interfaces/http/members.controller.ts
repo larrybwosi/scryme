@@ -33,6 +33,7 @@ import {
 import { Status } from "@repo/db";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { AllowPublic } from "@/common/decorators/auth.decorator";
 
 @ApiTags("V3 Members")
 @ApiBearerAuth()
@@ -143,11 +144,42 @@ export class MembersController {
 export class TerminalMembersController {
   constructor(private readonly memberUseCase: MemberUseCase) {}
 
+  @AllowPublic()
   @Post("login")
   @ApiOperation({ summary: "Login member via terminal" })
   @ApiResponse({ status: 200, type: TerminalLoginResponseDto })
   async login(@Request() req: any, @Body() dto: TerminalLoginDto) {
-    const { organizationId, locationId } = req.v3Context;
+    let organizationId = req.v3Context?.organizationId;
+    if (!organizationId) {
+      const orgSlug = req.headers["x-organization-slug"] || req.headers["x-org-slug"];
+      const orgIdHeader = req.headers["x-organization-id"] || req.headers["x-org-id"];
+
+      if (orgIdHeader) {
+        organizationId = Array.isArray(orgIdHeader) ? orgIdHeader[0] : orgIdHeader;
+      } else if (orgSlug) {
+        const slugStr = Array.isArray(orgSlug) ? orgSlug[0] : orgSlug;
+        const org = await this.memberUseCase.prisma.client.organization.findUnique({
+          where: { slug: slugStr },
+        });
+        if (org) {
+          organizationId = org.id;
+        }
+      }
+    }
+
+    let locationId = req.v3Context?.locationId || req.headers["x-location-id"];
+    if (Array.isArray(locationId)) {
+      locationId = locationId[0];
+    }
+    if (!locationId && organizationId) {
+      const firstLoc = await this.memberUseCase.prisma.client.location.findFirst({
+        where: { organizationId, isActive: true },
+      });
+      if (firstLoc) {
+        locationId = firstLoc.id;
+      }
+    }
+
     return this.memberUseCase.login(
       organizationId,
       locationId,
