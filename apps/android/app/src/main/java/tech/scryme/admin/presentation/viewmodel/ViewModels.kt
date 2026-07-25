@@ -71,7 +71,13 @@ class AuthViewModel(
                     _loginState.value = UiState.Success(response)
                 }
                 .onFailure { error ->
-                    _loginState.value = UiState.Error(error.message ?: "Login failed")
+                    val msg = error.message ?: ""
+                    val mappedMsg = if (msg.contains("401") || msg.contains("Unauthorized", ignoreCase = true)) {
+                        "invalid credentials"
+                    } else {
+                        msg.ifBlank { "Login failed" }
+                    }
+                    _loginState.value = UiState.Error(mappedMsg)
                 }
         }
     }
