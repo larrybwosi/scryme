@@ -22,12 +22,37 @@ export class UtilityAccountUseCase {
   }
 
   async getAccount(organizationId: string, id: string) {
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced broad Prisma 'include' with a targeted 'select' block.
+     * Including the entire 'expenses' relation with heavy fields (like 'notes', 'tags',
+     * or 'receiptUrl') introduces significant database I/O, network payload, and NestJS
+     * serialization overhead. Pruning these fields and selecting only essential list-view
+     * attributes significantly improves execution speed and reduces memory pressure.
+     */
     const account = await this.prisma.client.utilityAccount.findFirst({
       where: { id, organizationId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        provider: true,
+        accountNumber: true,
+        meterNumber: true,
+        type: true,
+        organizationId: true,
+        createdAt: true,
+        updatedAt: true,
         expenses: {
           take: 10,
           orderBy: { expenseDate: "desc" },
+          select: {
+            id: true,
+            expenseNumber: true,
+            description: true,
+            amount: true,
+            status: true,
+            expenseDate: true,
+            paymentMethod: true,
+          },
         },
       },
     });

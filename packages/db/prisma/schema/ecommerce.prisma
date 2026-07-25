@@ -282,15 +282,17 @@ model CartItem {
   cartId String
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
-  productId String
-  product   Product @relation("ProductToCartItems", fields: [productId], references: [id], onDelete: Cascade)
-  variantId String
-  variant   ProductVariant @relation("VariantToCartItems", fields: [variantId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation("ProductToCartItems", fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   ProductVariant? @relation("VariantToCartItems", fields: [variantId], references: [id], onDelete: Cascade)
+
+  serviceId String?
+  bookingDetails Json? // Holds scheduledStartTime, staffIds, resourceIds, notes
+
   quantity  Int    @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([cartId, productId, variantId])
 }
 enum CartStatus {
   ACTIVE

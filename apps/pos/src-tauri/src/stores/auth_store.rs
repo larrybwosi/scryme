@@ -15,6 +15,7 @@ pub struct MemberProfile {
     pub name: String,
 
     pub role: Option<String>,
+    pub card_id: Option<String>,
     // Add other non-sensitive fields from your Member model
 }
 

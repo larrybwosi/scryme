@@ -268,6 +268,7 @@ export const ProductCard = memo(({ product, onAddToCart, onSelectProduct, pricin
                   className="h-full px-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-l-md transition-colors disabled:opacity-50"
                   disabled={qty <= 0}
                   aria-label={`Decrease quantity of ${product.name}`}
+                  title={`Decrease quantity of ${product.name}`}
                   onClick={() => handleQtyChange(qty - 1)}
                 >
                   <Minus className="w-3.5 h-3.5" />
@@ -289,6 +290,7 @@ export const ProductCard = memo(({ product, onAddToCart, onSelectProduct, pricin
                   className="h-full px-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-r-md transition-colors disabled:opacity-50"
                   disabled={qty >= stock}
                   aria-label={`Increase quantity of ${product.name}`}
+                  title={`Increase quantity of ${product.name}`}
                   onClick={() => handleQtyChange(qty + 1)}
                 >
                   <Plus className="w-3.5 h-3.5" />

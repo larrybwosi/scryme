@@ -22,11 +22,27 @@ export class PhysicalReconciliationUseCase {
   ) {}
 
   async generateCountSheet(organizationId: string, locationId: string) {
+    /**
+     * OPTIMIZATION (Bolt ⚡): Replaced broad 'include' statements with a highly targeted nested 'select' block.
+     * Fetching only essential scalar fields (sku, name, productName) avoids over-fetching heavy fields
+     * like variant/product descriptions, image URLs, barcodes, reorder points, and custom JSON metadata.
+     * This significantly reduces database memory, payload size, and NestJS object hydration overhead.
+     */
     const stock = await this.prisma.client.productVariantStock.findMany({
       where: { organizationId, locationId, currentStock: { gt: 0 } },
-      include: {
+      select: {
+        variantId: true,
+        currentStock: true,
         variant: {
-          include: { product: true },
+          select: {
+            sku: true,
+            name: true,
+            product: {
+              select: {
+                name: true,
+              },
+            },
+          },
         },
       },
     });

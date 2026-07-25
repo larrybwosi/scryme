@@ -11,6 +11,7 @@ import {
   Package,
   ClipboardCheck,
   Truck,
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -141,6 +142,22 @@ export function DeliveryTable({ fulfillments }: { fulfillments: any[] }) {
                       <DropdownMenuLabel>Manage</DropdownMenuLabel>
                       <DropdownMenuItem>
                         <Eye className="mr-2 h-4 w-4" /> View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <a href={`/api/sales/documents/${ful.transaction.id}?type=waybill`} download>
+                          <FileText className="mr-2 h-4 w-4" /> Download Waybill
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <a href={`/api/sales/documents/${ful.transaction.id}?type=delivery-note`} download>
+                          <FileText className="mr-2 h-4 w-4" /> Download Delivery Note
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <a href={`/api/sales/documents/${ful.transaction.id}?type=packing-list`} download>
+                          <FileText className="mr-2 h-4 w-4" /> Download Packing List
+                        </a>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem

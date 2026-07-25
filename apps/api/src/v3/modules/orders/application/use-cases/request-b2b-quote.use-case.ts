@@ -146,8 +146,16 @@ export class RequestB2BQuoteUseCase {
       },
     );
 
+    /**
+     * ⚡ Bolt Optimization: Map-Based Indexing in Stocking Workflows.
+     * Pre-indexing retrieved product variants into a Map (variantMap) before starting checks.
+     * This replaces a nested array search (.find()) inside a loop with an O(1) lookup,
+     * reducing lookup complexity from O(N * M) to O(N + M).
+     */
+    const variantMap = new Map(variants.map(v => [v.id, v]));
+
     for (const [variantId, totalQuantity] of aggregatedItems) {
-      const variant = variants.find(v => v.id === variantId)!;
+      const variant = variantMap.get(variantId)!;
       const stock = variant.variantStocks[0];
 
       if (!stock || stock.availableStock.toNumber() < totalQuantity) {

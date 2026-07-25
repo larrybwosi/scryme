@@ -439,6 +439,7 @@ export default async function LocationDetailPage({
                 </div>
                 <LocationStockTable
                   locationId={location.id}
+                  locationName={location.name}
                   initialData={formattedStock}
                   totalCount={stockTotal}
                 />

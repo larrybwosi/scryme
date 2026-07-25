@@ -72,7 +72,14 @@ describe("isSafeUrl", () => {
   });
 
   it("should block private IPv6 ranges", async () => {
-    const privateIps = ["fc00::1", "fc00::", "fe80::1"];
+    const privateIps = [
+      "fc00::1",
+      "fc00::",
+      "fe80::1",
+      "fec0::1", // Site-local
+      "ff02::1", // Link-local multicast
+      "ff01::1", // Interface-local multicast
+    ];
 
     for (const ip of privateIps) {
       mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
