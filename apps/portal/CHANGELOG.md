@@ -1,5 +1,11 @@
 # portal
 
+## 1.8.0
+
+### Minor Changes
+
+- 9c4c741: update
+
 ## 1.7.0
 
 ### Minor Changes
