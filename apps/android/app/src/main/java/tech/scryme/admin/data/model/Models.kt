@@ -199,3 +199,47 @@ data class ApiError(
     @SerializedName("message") val message: String,
     @SerializedName("code") val code: String? = null
 )
+
+// --- Stock Adjustment Models ---
+
+data class StockAdjustmentResponseDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("variantId") val variantId: String,
+    @SerializedName("locationId") val locationId: String,
+    @SerializedName("quantity") val quantity: Double,
+    @SerializedName("reason") val reason: String,
+    @SerializedName("status") val status: String, // PENDING, APPROVED, REJECTED, CANCELLED
+    @SerializedName("notes") val notes: String? = null,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("variant") val variant: StockAdjustmentVariantDto? = null,
+    @SerializedName("location") val location: StockAdjustmentLocationDto? = null,
+    @SerializedName("member") val member: StockAdjustmentMemberDto? = null
+)
+
+data class StockAdjustmentVariantDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("sku") val sku: String,
+    @SerializedName("product") val product: StockAdjustmentProductDto? = null
+)
+
+data class StockAdjustmentProductDto(
+    @SerializedName("name") val name: String
+)
+
+data class StockAdjustmentLocationDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String
+)
+
+data class StockAdjustmentMemberDto(
+    @SerializedName("user") val user: StockAdjustmentUserDto? = null
+)
+
+data class StockAdjustmentUserDto(
+    @SerializedName("name") val name: String
+)
+
+data class StockAdjustmentRejectDto(
+    @SerializedName("reason") val reason: String? = null
+)

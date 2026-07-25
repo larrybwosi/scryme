@@ -156,10 +156,24 @@ class ApprovalsRepositoryImpl(
         }
     }
 
+    override suspend fun getStockAdjustments(offset: Int, limit: Int, status: String?): Result<List<StockAdjustmentResponseDto>> {
+        val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getStockAdjustments(slug, offset, limit, status)
+        }
+    }
+
     override suspend fun approveInventoryAdjustment(id: String): Result<Unit> {
         val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
         return safeApiCallEnvelope {
             api.approveInventoryAdjustment(slug, id)
+        }
+    }
+
+    override suspend fun rejectInventoryAdjustment(id: String, reason: String?): Result<Unit> {
+        val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.rejectInventoryAdjustment(slug, id, StockAdjustmentRejectDto(reason))
         }
     }
 

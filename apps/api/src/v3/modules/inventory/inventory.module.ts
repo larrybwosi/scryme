@@ -9,6 +9,8 @@ import { MergeBatchesUseCase } from "./application/use-cases/merge-batches.use-c
 import {
   RequestStockAdjustmentUseCase,
   ApproveStockAdjustmentUseCase,
+  GetStockAdjustmentsUseCase,
+  RejectStockAdjustmentUseCase,
 } from "./application/use-cases/adjustment-workflow.use-case";
 import {
   GetSupplierLeadTimeUseCase,
@@ -43,6 +45,8 @@ import { ScrymeModule } from "../../../v2/scryme/scryme.module";
     MergeBatchesUseCase,
     RequestStockAdjustmentUseCase,
     ApproveStockAdjustmentUseCase,
+    GetStockAdjustmentsUseCase,
+    RejectStockAdjustmentUseCase,
     GetSupplierLeadTimeUseCase,
     GetWasteAnalysisUseCase,
     AssemblyUseCase,

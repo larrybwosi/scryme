@@ -81,10 +81,25 @@ interface ApprovalsApiService {
         @Body dto: PriceChangeReviewDto
     ): Response<ApiEnvelope<Unit>>
 
+    @GET("/v3/{orgSlug}/inventory/adjustments")
+    suspend fun getStockAdjustments(
+        @Path("orgSlug") orgSlug: String,
+        @Query("offset") offset: Int = 0,
+        @Query("limit") limit: Int = 50,
+        @Query("status") status: String? = null
+    ): Response<ApiEnvelope<List<StockAdjustmentResponseDto>>>
+
     @PATCH("/v3/{orgSlug}/inventory/adjustments/{id}/approve")
     suspend fun approveInventoryAdjustment(
         @Path("orgSlug") orgSlug: String,
         @Path("id") id: String
+    ): Response<ApiEnvelope<Unit>>
+
+    @PATCH("/v3/{orgSlug}/inventory/adjustments/{id}/reject")
+    suspend fun rejectInventoryAdjustment(
+        @Path("orgSlug") orgSlug: String,
+        @Path("id") id: String,
+        @Body dto: StockAdjustmentRejectDto
     ): Response<ApiEnvelope<Unit>>
 }
 
