@@ -1,5 +1,11 @@
 # api
 
+## 6.33.0
+
+### Minor Changes
+
+- 9c4c741: update
+
 ## 6.32.0
 
 ### Minor Changes
