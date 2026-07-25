@@ -93,12 +93,29 @@ export class CreateOrderUseCase {
       let extraSubtotal = new Prisma.Decimal(0);
       let extraTaxTotal = new Prisma.Decimal(0);
 
+      // ⚡ Bolt Optimization: Batch pre-fetch all requested services with their tax rates
+      // to eliminate the N+1 query bottleneck inside the loop.
+      const serviceIds = Array.from(new Set(dto.services!.map(s => s.serviceId)));
+      const services = await this.prisma.client.service.findMany({
+        where: {
+          id: { in: serviceIds },
+          organizationId,
+        },
+        include: {
+          taxRates: {
+            include: {
+              taxRate: true,
+            },
+          },
+        },
+      });
+
+      // Map-based lookup for O(1) constant-time resolution.
+      const serviceMap = new Map(services.map(s => [s.id, s]));
+
       for (const srvInput of dto.services!) {
-        // Retrieve Service detail
-        const service = await this.prisma.client.service.findFirst({
-          where: { id: srvInput.serviceId, organizationId },
-          include: { taxRates: { include: { taxRate: true } } }
-        });
+        // Retrieve Service detail from Map
+        const service = serviceMap.get(srvInput.serviceId);
 
         if (!service) {
           throw new BadRequestException(`Service ${srvInput.serviceId} not found`);
