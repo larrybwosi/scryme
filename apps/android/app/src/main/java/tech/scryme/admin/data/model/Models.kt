@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
 data class UserSummaryDto(
     @SerializedName("id") val id: String,
     @SerializedName("email") val email: String,
-    @SerializedName("name") val name: String,
+    @SerializedName("name") val name: String? = null,
     @SerializedName("image") val image: String? = null
 )
 
@@ -50,7 +50,7 @@ data class TerminalLoginResponseDto(
 data class SessionUser(
     @SerializedName("id") val id: String,
     @SerializedName("email") val email: String,
-    @SerializedName("name") val name: String,
+    @SerializedName("name") val name: String? = null,
     @SerializedName("role") val role: String? = null,
     @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null
 )
@@ -64,8 +64,8 @@ data class SessionDto(
 )
 
 data class BetterAuthSessionResponse(
-    @SerializedName("user") val user: SessionUser,
-    @SerializedName("session") val session: SessionDto
+    @SerializedName("user") val user: SessionUser? = null,
+    @SerializedName("session") val session: SessionDto? = null
 )
 
 // --- Presence & Attendance Models ---

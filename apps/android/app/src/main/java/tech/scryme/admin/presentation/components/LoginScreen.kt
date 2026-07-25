@@ -12,19 +12,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -64,10 +61,18 @@ fun LoginScreen(viewModel: AuthViewModel) {
         }
     }
 
+    // Elegant vertical linear gradient background for a premium feel
+    val backgroundBrush = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF070B14), // Ultra-deep slate/navy
+            ScrymeColors.InkBg // Dynamic primary background Navy
+        )
+    )
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(ScrymeColors.InkBg)
+            .background(backgroundBrush)
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -82,7 +87,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = 24.dp),
                 horizontalArrangement = Arrangement.End
             ) {
                 IconButton(
@@ -104,65 +109,57 @@ fun LoginScreen(viewModel: AuthViewModel) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
-                modifier = Modifier.padding(bottom = 8.dp)
+                modifier = Modifier.padding(bottom = 32.dp)
             ) {
                 Text(
                     text = "SCRYME",
                     color = ScrymeColors.Paper,
-                    fontSize = 36.sp,
+                    fontSize = 40.sp,
                     fontWeight = FontWeight.Bold,
-                    letterSpacing = 2.sp
+                    letterSpacing = 6.sp
                 )
             }
 
-            Text(
-                text = "THE OPERATING LEDGER",
-                color = ScrymeColors.Brass,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 4.sp,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
-            // Current Server Badge
-            Text(
-                text = "Node: ${currentBaseUrl ?: "https://api.scryme.tech"}",
-                color = ScrymeColors.SoftGray,
-                fontSize = 11.sp,
-                modifier = Modifier
-                    .padding(bottom = 16.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(ScrymeColors.SteelDark)
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            )
-
-            // Auth Card
+            // Auth Card with refined double-layered aesthetic border
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, ScrymeColors.Brass.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
-                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    .border(
+                        border = BorderStroke(
+                            width = 1.5.dp,
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    ScrymeColors.Brass.copy(alpha = 0.4f),
+                                    ScrymeColors.Brass.copy(alpha = 0.05f)
+                                )
+                            )
+                        ),
+                        shape = RoundedCornerShape(20.dp)
+                    ),
+                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark.copy(alpha = 0.95f)),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
-                    // Email & Password Sign In
+                    // Business Email Input (Premium & Polished, mail icon removed)
                     OutlinedTextField(
                         value = email,
                         onValueChange = {
                             email = it
                             emailError = null
                         },
-                        label = { Text("Business Email", color = ScrymeColors.SoftGray) },
-                        leadingIcon = { Icon(Icons.Default.Email, contentDescription = null, tint = ScrymeColors.Brass) },
+                        label = { Text("Business Email", color = ScrymeColors.SoftGray.copy(alpha = 0.7f), fontWeight = FontWeight.Medium) },
                         isError = emailError != null,
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = ScrymeColors.Brass,
-                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.2f),
                             focusedLabelColor = ScrymeColors.Brass,
-                            cursorColor = ScrymeColors.Brass
+                            cursorColor = ScrymeColors.Brass,
+                            focusedTextColor = ScrymeColors.Paper,
+                            unfocusedTextColor = ScrymeColors.Paper
                         ),
                         singleLine = true
                     )
@@ -177,33 +174,37 @@ fun LoginScreen(viewModel: AuthViewModel) {
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Secure Password Input (Premium & Polished, padlock icon removed)
                     OutlinedTextField(
                         value = password,
                         onValueChange = {
                             password = it
                             passwordError = null
                         },
-                        label = { Text("Secure Password", color = ScrymeColors.SoftGray) },
-                        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = ScrymeColors.Brass) },
+                        label = { Text("Secure Password", color = ScrymeColors.SoftGray.copy(alpha = 0.7f), fontWeight = FontWeight.Medium) },
                         trailingIcon = {
                             TextButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
                                 Text(
                                     text = if (isPasswordVisible) "HIDE" else "SHOW",
                                     color = ScrymeColors.Brass,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp
+                                    fontSize = 11.sp,
+                                    letterSpacing = 1.sp
                                 )
                             }
                         },
                         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         isError = passwordError != null,
                         modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = ScrymeColors.Brass,
-                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.3f),
+                            unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.2f),
                             focusedLabelColor = ScrymeColors.Brass,
-                            cursorColor = ScrymeColors.Brass
+                            cursorColor = ScrymeColors.Brass,
+                            focusedTextColor = ScrymeColors.Paper,
+                            unfocusedTextColor = ScrymeColors.Paper
                         ),
                         singleLine = true
                     )
@@ -216,8 +217,9 @@ fun LoginScreen(viewModel: AuthViewModel) {
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
+                    // Premium, High-fidelity Sign In Button
                     Button(
                         onClick = {
                             val isEmailValid = android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
@@ -234,15 +236,27 @@ fun LoginScreen(viewModel: AuthViewModel) {
                                 viewModel.login(email.trim(), password)
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
-                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ScrymeColors.Brass,
+                            contentColor = ScrymeColors.InkBg,
+                            disabledContainerColor = ScrymeColors.Brass.copy(alpha = 0.5f),
+                            disabledContentColor = ScrymeColors.InkBg.copy(alpha = 0.5f)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
                         enabled = loginState !is UiState.Loading
                     ) {
                         if (loginState is UiState.Loading) {
                             CircularProgressIndicator(modifier = Modifier.size(20.dp), color = ScrymeColors.InkBg)
                         } else {
-                            Text("SIGN IN TO LEDGER", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text(
+                                text = "SIGN IN TO LEDGER",
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.5.sp,
+                                fontSize = 14.sp
+                            )
                         }
                     }
 
@@ -253,19 +267,19 @@ fun LoginScreen(viewModel: AuthViewModel) {
                             .padding(vertical = 20.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = ScrymeColors.SoftGray.copy(alpha = 0.2f))
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = ScrymeColors.SoftGray.copy(alpha = 0.15f))
                         Text(
                             text = "OR CONTINUE WITH",
-                            color = ScrymeColors.SoftGray,
+                            color = ScrymeColors.SoftGray.copy(alpha = 0.6f),
                             fontSize = 10.sp,
-                            fontWeight = FontWeight.Medium,
-                            letterSpacing = 1.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp,
                             modifier = Modifier.padding(horizontal = 12.dp)
                         )
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = ScrymeColors.SoftGray.copy(alpha = 0.2f))
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = ScrymeColors.SoftGray.copy(alpha = 0.15f))
                     }
 
-                    // Google Sign-In Button
+                    // Google Sign-In Button with enhanced elevation and clean background
                     OutlinedButton(
                         onClick = {
                             coroutineScope.launch {
@@ -274,10 +288,15 @@ fun LoginScreen(viewModel: AuthViewModel) {
                                 viewModel.loginWithGoogle("google_oauth_id_token_scryme_prod")
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.3f)),
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ScrymeColors.Paper),
-                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.15f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = Color.White.copy(alpha = 0.03f),
+                            contentColor = ScrymeColors.Paper
+                        ),
+                        shape = RoundedCornerShape(12.dp),
                         enabled = loginState !is UiState.Loading
                     ) {
                         Row(
@@ -300,7 +319,12 @@ fun LoginScreen(viewModel: AuthViewModel) {
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text("Sign In with Google", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            Text(
+                                text = "Sign In with Google",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp,
+                                letterSpacing = 0.5.sp
+                            )
                         }
                     }
                 }
@@ -314,13 +338,13 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 Icon(
                     imageVector = Icons.Default.Info,
                     contentDescription = "Security Status",
-                    tint = ScrymeColors.SoftGray,
+                    tint = ScrymeColors.SoftGray.copy(alpha = 0.5f),
                     modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = "End-to-End Encrypted Session. Built for Scryme enterprise nodes.",
-                    color = ScrymeColors.SoftGray,
+                    color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
                     fontSize = 10.sp,
                     textAlign = TextAlign.Center
                 )
