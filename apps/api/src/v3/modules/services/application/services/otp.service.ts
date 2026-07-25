@@ -79,6 +79,12 @@ export class OtpService {
           }
       });
       if (!verification) throw new BadRequestException("Identity not verified");
+
+      // @security Delete/consume the verification code to prevent replay and multi-use bypass attacks
+      await this.prisma.client.bookingVerificationCode.delete({
+          where: { id: verificationId }
+      });
+
       return verification;
   }
 }
