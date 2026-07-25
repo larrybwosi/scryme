@@ -52,6 +52,13 @@ export class ExpenseController {
     });
   }
 
+  @Get("categories")
+  @Permissions("finance:read")
+  @ApiOperation({ summary: "List all expense categories" })
+  async getExpenseCategories(@Req() req: any) {
+    return this.expenseUseCase.getExpenseCategories(req.organization.id);
+  }
+
   @Get(":id")
   @Permissions("finance:read")
   @ApiOperation({ summary: "Get expense details" })

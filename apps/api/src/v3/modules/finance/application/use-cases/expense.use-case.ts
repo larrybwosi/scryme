@@ -21,11 +21,13 @@ export class ExpenseUseCase {
     const amountDecimal = new Prisma.Decimal(dto.amount);
 
     this.validateReceipt(org, amountDecimal, dto.receiptUrl);
-    const status = this.determineStatus(
-      org,
-      amountDecimal,
-      dto.pettyCashFundId,
-    );
+    const status = dto.autoApprove
+      ? ExpenseStatus.APPROVED
+      : this.determineStatus(
+          org,
+          amountDecimal,
+          dto.pettyCashFundId,
+        );
     const expenseNumber = await this.generateExpenseNumber(organizationId);
 
     return await this.prisma.client.$transaction(async (tx) => {
