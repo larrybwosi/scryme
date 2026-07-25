@@ -34,6 +34,7 @@ import { Status } from "@repo/db";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @ApiTags("V3 Members")
 @ApiBearerAuth()
@@ -142,7 +143,10 @@ export class MembersController {
 @UseInterceptors(StandardResponseInterceptor)
 @Controller("members")
 export class TerminalMembersController {
-  constructor(private readonly memberUseCase: MemberUseCase) {}
+  constructor(
+    private readonly memberUseCase: MemberUseCase,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @AllowPublic()
   @Post("login")
@@ -158,7 +162,7 @@ export class TerminalMembersController {
         organizationId = Array.isArray(orgIdHeader) ? orgIdHeader[0] : orgIdHeader;
       } else if (orgSlug) {
         const slugStr = Array.isArray(orgSlug) ? orgSlug[0] : orgSlug;
-        const org = await this.memberUseCase.prisma.client.organization.findUnique({
+        const org = await this.prisma.client.organization.findUnique({
           where: { slug: slugStr },
         });
         if (org) {
@@ -172,7 +176,7 @@ export class TerminalMembersController {
       locationId = locationId[0];
     }
     if (!locationId && organizationId) {
-      const firstLoc = await this.memberUseCase.prisma.client.location.findFirst({
+      const firstLoc = await this.prisma.client.inventoryLocation.findFirst({
         where: { organizationId, isActive: true },
       });
       if (firstLoc) {
