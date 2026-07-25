@@ -196,3 +196,8 @@
 **Vulnerability:** Pseudo-random number generation (`Math.random()`) was used to generate 6-digit booking OTP codes and loyalty reward vouchers. Because `Math.random()` is not cryptographically secure, the internal state of the PRNG could be predicted by an attacker after observing several generated codes, leading to OTP bypass and unauthorized voucher generation.
 **Learning:** Never use `Math.random()` or other predictable seed-based PRNGs for security-sensitive operations like passwords, OTPs, session keys, or vouchers. Cryptographically secure alternatives are standard and easy to integrate.
 **Prevention:** Always use Node.js native `crypto.randomInt` for numeric ranges (like 6-digit OTP codes) and `crypto.randomBytes` for raw random byte values (like hex vouchers) to guarantee non-predictability.
+
+## 2026-07-25 - OTP Verification Replay and Guest Booking Spamming Vulnerability
+**Vulnerability:** The booking verification OTP mechanism allowed the same validated verification identifier to be reused multiple times to submit guest bookings, leading to a replay/bypass attack vector and guest booking spamming.
+**Learning:** OTP or identity-verification tokens/records must follow a single-use "fail-closed" consumption model. Once validated successfully, the token or verification state must be immediately consumed, invalidated, or deleted. If left active, attackers can replay the verification ID to perform multiple authorized actions without re-authenticating or re-proving identity.
+**Prevention:** Always delete or invalidate verification records (`BookingVerificationCode`) in the database as soon as they are validated. Enforce a strict single-use policy on verification codes.

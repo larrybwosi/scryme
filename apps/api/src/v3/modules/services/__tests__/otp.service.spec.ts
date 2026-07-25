@@ -26,6 +26,7 @@ describe("OtpService", () => {
                 create: vi.fn(),
                 findFirst: vi.fn(),
                 update: vi.fn(),
+                delete: vi.fn(),
               },
             },
           },
@@ -110,12 +111,13 @@ describe("OtpService", () => {
   });
 
   describe("validateVerification", () => {
-    it("should return verification if it has been verified", async () => {
+    it("should return verification if it has been verified and delete it", async () => {
       const orgId = "org1";
       const verificationId = "ver-1";
 
       const mockVerification = { id: "ver-1", verifiedAt: new Date() };
       vi.spyOn(prisma.client.bookingVerificationCode, "findFirst").mockResolvedValue(mockVerification as any);
+      vi.spyOn(prisma.client.bookingVerificationCode, "delete").mockResolvedValue({} as any);
 
       const result = await service.validateVerification(orgId, verificationId);
 
@@ -125,6 +127,9 @@ describe("OtpService", () => {
           organizationId: orgId,
           verifiedAt: { not: null },
         },
+      });
+      expect(prisma.client.bookingVerificationCode.delete).toHaveBeenCalledWith({
+        where: { id: verificationId },
       });
       expect(result).toEqual(mockVerification);
     });
