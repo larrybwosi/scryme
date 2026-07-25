@@ -458,6 +458,7 @@ export function Cart() {
                       <button 
                         className="px-2 h-full text-muted-foreground hover:bg-muted/80 transition-colors"
                         aria-label="Decrease guest count"
+                        title="Decrease guest count"
                         onClick={() => {
                           const currentStr = usePosStore.getState().currentOrder.metadata?.guestsCount;
                           const guests = Math.max(1, (parseInt(currentStr) || 1) - 1);
@@ -475,6 +476,7 @@ export function Cart() {
                       <button 
                         className="px-2 h-full text-muted-foreground hover:bg-muted/80 transition-colors"
                         aria-label="Increase guest count"
+                        title="Increase guest count"
                         onClick={() => {
                           const currentStr = usePosStore.getState().currentOrder.metadata?.guestsCount;
                           const guests = (parseInt(currentStr) || 1) + 1;
@@ -561,6 +563,7 @@ export function Cart() {
                           <button
                             className="h-full px-2 text-muted-foreground hover:text-foreground disabled:opacity-30"
                             aria-label={`Decrease quantity of ${item.productName}`}
+                            title={`Decrease quantity of ${item.productName}`}
                             onClick={() => updateItemInOrder({ ...item, quantity: Math.max(1, item.quantity - 1) })}
                             disabled={item.quantity <= 1}
                           >
@@ -572,6 +575,7 @@ export function Cart() {
                           <button
                             className="h-full px-2 text-muted-foreground hover:text-foreground"
                             aria-label={`Increase quantity of ${item.productName}`}
+                            title={`Increase quantity of ${item.productName}`}
                             onClick={() => updateItemInOrder({ ...item, quantity: item.quantity + 1 })}
                           >
                             <Plus className="w-3 h-3" />
