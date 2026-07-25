@@ -197,6 +197,10 @@
 **Learning:** Never use `Math.random()` or other predictable seed-based PRNGs for security-sensitive operations like passwords, OTPs, session keys, or vouchers. Cryptographically secure alternatives are standard and easy to integrate.
 **Prevention:** Always use Node.js native `crypto.randomInt` for numeric ranges (like 6-digit OTP codes) and `crypto.randomBytes` for raw random byte values (like hex vouchers) to guarantee non-predictability.
 
+## 2026-07-25 - Cryptographically Insecure PRNG in Delivery Confirmation OTP
+**Vulnerability:** The delivery OTP confirmation token was generated using `Math.random()`, exposing the system to predictability attacks and delivery hijacking.
+**Learning:** Using standard seed-based PRNGs like `Math.random()` for any security-sensitive token, password, or OTP allows attackers who observe several values to predict future outputs.
+**Prevention:** Always use Node.js's native cryptographically secure random number generators, such as `crypto.randomInt` or `crypto.randomBytes`, for any security tokens or OTPs.
 ## 2026-07-25 - OTP Verification Replay and Guest Booking Spamming Vulnerability
 **Vulnerability:** The booking verification OTP mechanism allowed the same validated verification identifier to be reused multiple times to submit guest bookings, leading to a replay/bypass attack vector and guest booking spamming.
 **Learning:** OTP or identity-verification tokens/records must follow a single-use "fail-closed" consumption model. Once validated successfully, the token or verification state must be immediately consumed, invalidated, or deleted. If left active, attackers can replay the verification ID to perform multiple authorized actions without re-authenticating or re-proving identity.
