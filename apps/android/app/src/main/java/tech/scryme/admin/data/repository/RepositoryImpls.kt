@@ -21,7 +21,9 @@ class AuthRepositoryImpl(
             sessionManager.saveSession(
                 token = response.session.token,
                 orgSlug = response.user.activeOrganizationId, // slug fallback
-                orgId = response.user.activeOrganizationId
+                orgId = response.user.activeOrganizationId,
+                userEmail = response.user.email,
+                userName = response.user.name
             )
         }
     }
@@ -30,10 +32,13 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.getSession()
         }.onSuccess { response ->
-            // Keep organization information up-to-date
-            response.user.activeOrganizationId?.let { orgId ->
-                sessionManager.updateActiveOrg(orgId, orgId)
-            }
+            sessionManager.saveSession(
+                token = response.session.token,
+                orgSlug = response.user.activeOrganizationId,
+                orgId = response.user.activeOrganizationId,
+                userEmail = response.user.email,
+                userName = response.user.name
+            )
         }
     }
 
@@ -61,7 +66,9 @@ class AuthRepositoryImpl(
             sessionManager.saveSession(
                 token = response.session.token,
                 orgSlug = response.user.activeOrganizationId,
-                orgId = response.user.activeOrganizationId
+                orgId = response.user.activeOrganizationId,
+                userEmail = response.user.email,
+                userName = response.user.name
             )
         }
     }

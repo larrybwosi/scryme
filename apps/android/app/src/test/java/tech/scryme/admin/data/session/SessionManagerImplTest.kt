@@ -13,24 +13,42 @@ class SessionManagerImplTest {
         assertNull(sessionManager.token.value)
         assertNull(sessionManager.activeOrgSlug.value)
         assertNull(sessionManager.activeOrgId.value)
+        assertNull(sessionManager.userEmail.value)
+        assertNull(sessionManager.userName.value)
 
-        sessionManager.saveSession("token_123", "org_slug", "org_id")
+        sessionManager.saveSession(
+            token = "token_123",
+            orgSlug = "org_slug",
+            orgId = "org_id",
+            userEmail = "admin@scryme.tech",
+            userName = "System Admin"
+        )
 
         assertEquals("token_123", sessionManager.token.value)
         assertEquals("org_slug", sessionManager.activeOrgSlug.value)
         assertEquals("org_id", sessionManager.activeOrgId.value)
+        assertEquals("admin@scryme.tech", sessionManager.userEmail.value)
+        assertEquals("System Admin", sessionManager.userName.value)
     }
 
     @Test
-    fun `clearSession clears token activeOrgSlug and activeOrgId`() {
+    fun `clearSession clears token activeOrgSlug activeOrgId and user details`() {
         val sessionManager = SessionManagerImpl(context = null)
-        sessionManager.saveSession("token_123", "org_slug", "org_id")
+        sessionManager.saveSession(
+            token = "token_123",
+            orgSlug = "org_slug",
+            orgId = "org_id",
+            userEmail = "admin@scryme.tech",
+            userName = "System Admin"
+        )
 
         sessionManager.clearSession()
 
         assertNull(sessionManager.token.value)
         assertNull(sessionManager.activeOrgSlug.value)
         assertNull(sessionManager.activeOrgId.value)
+        assertNull(sessionManager.userEmail.value)
+        assertNull(sessionManager.userName.value)
     }
 
     @Test
