@@ -18,13 +18,16 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.signInWithEmail(mapOf("email" to email, "password" to password))
         }.onSuccess { response ->
-            sessionManager.saveSession(
-                token = response.session.token,
-                orgSlug = response.user.activeOrganizationId, // slug fallback
-                orgId = response.user.activeOrganizationId,
-                userEmail = response.user.email,
-                userName = response.user.name
-            )
+            val token = response.session?.token
+            if (!token.isNullOrBlank()) {
+                sessionManager.saveSession(
+                    token = token,
+                    orgSlug = response.user?.activeOrganizationId, // slug fallback
+                    orgId = response.user?.activeOrganizationId,
+                    userEmail = response.user?.email,
+                    userName = response.user?.name
+                )
+            }
         }
     }
 
@@ -32,13 +35,16 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.getSession()
         }.onSuccess { response ->
-            sessionManager.saveSession(
-                token = response.session.token,
-                orgSlug = response.user.activeOrganizationId,
-                orgId = response.user.activeOrganizationId,
-                userEmail = response.user.email,
-                userName = response.user.name
-            )
+            val token = response.session?.token
+            if (!token.isNullOrBlank()) {
+                sessionManager.saveSession(
+                    token = token,
+                    orgSlug = response.user?.activeOrganizationId,
+                    orgId = response.user?.activeOrganizationId,
+                    userEmail = response.user?.email,
+                    userName = response.user?.name
+                )
+            }
         }
     }
 
@@ -63,13 +69,16 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.signInWithGoogle(mapOf("idToken" to idToken))
         }.onSuccess { response ->
-            sessionManager.saveSession(
-                token = response.session.token,
-                orgSlug = response.user.activeOrganizationId,
-                orgId = response.user.activeOrganizationId,
-                userEmail = response.user.email,
-                userName = response.user.name
-            )
+            val token = response.session?.token
+            if (!token.isNullOrBlank()) {
+                sessionManager.saveSession(
+                    token = token,
+                    orgSlug = response.user?.activeOrganizationId,
+                    orgId = response.user?.activeOrganizationId,
+                    userEmail = response.user?.email,
+                    userName = response.user?.name
+                )
+            }
         }
     }
 }
