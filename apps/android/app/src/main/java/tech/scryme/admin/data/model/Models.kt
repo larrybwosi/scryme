@@ -243,3 +243,37 @@ data class StockAdjustmentUserDto(
 data class StockAdjustmentRejectDto(
     @SerializedName("reason") val reason: String? = null
 )
+
+// --- Expense Models ---
+
+data class ExpenseCategoryDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("isActive") val isActive: Boolean = true
+)
+
+data class CreateExpenseRequestDto(
+    @SerializedName("description") val description: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("categoryId") val categoryId: String,
+    @SerializedName("paymentMethod") val paymentMethod: String, // e.g. CASH, MPESA, CARD
+    @SerializedName("notes") val notes: String? = null,
+    @SerializedName("autoApprove") val autoApprove: Boolean = true
+)
+
+data class ExpenseDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("expenseNumber") val expenseNumber: String,
+    @SerializedName("description") val description: String,
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("status") val status: String,
+    @SerializedName("paymentMethod") val paymentMethod: String,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("category") val category: ExpenseCategorySummaryDto? = null
+)
+
+data class ExpenseCategorySummaryDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String
+)

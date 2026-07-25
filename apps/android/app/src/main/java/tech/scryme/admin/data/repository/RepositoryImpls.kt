@@ -222,6 +222,44 @@ class AnnouncementRepositoryImpl(
     }
 }
 
+class ExpenseRepositoryImpl(
+    private val api: ExpenseApiService
+) : ExpenseRepository {
+
+    override suspend fun getExpenses(status: String?, categoryId: String?): Result<List<ExpenseDto>> {
+        return safeApiCallEnvelope {
+            api.getExpenses(status, categoryId)
+        }
+    }
+
+    override suspend fun getExpenseCategories(): Result<List<ExpenseCategoryDto>> {
+        return safeApiCallEnvelope {
+            api.getExpenseCategories()
+        }
+    }
+
+    override suspend fun createExpense(
+        description: String,
+        amount: Double,
+        categoryId: String,
+        paymentMethod: String,
+        notes: String?
+    ): Result<ExpenseDto> {
+        return safeApiCallEnvelope {
+            api.createExpense(
+                CreateExpenseRequestDto(
+                    description = description,
+                    amount = amount,
+                    categoryId = categoryId,
+                    paymentMethod = paymentMethod,
+                    notes = notes,
+                    autoApprove = true
+                )
+            )
+        }
+    }
+}
+
 // --- API Helpers ---
 
 private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): Result<T> {

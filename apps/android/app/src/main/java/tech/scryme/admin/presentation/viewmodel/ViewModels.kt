@@ -389,3 +389,69 @@ class AnnouncementViewModel(
         _broadcastState.value = UiState.Idle
     }
 }
+
+// --- ExpenseViewModel ---
+
+class ExpenseViewModel(
+    private val repository: ExpenseRepository
+) : ViewModel() {
+
+    private val _expensesState = MutableStateFlow<UiState<List<ExpenseDto>>>(UiState.Idle)
+    val expensesState: StateFlow<UiState<List<ExpenseDto>>> = _expensesState.asStateFlow()
+
+    private val _categoriesState = MutableStateFlow<UiState<List<ExpenseCategoryDto>>>(UiState.Idle)
+    val categoriesState: StateFlow<UiState<List<ExpenseCategoryDto>>> = _categoriesState.asStateFlow()
+
+    private val _registerState = MutableStateFlow<UiState<ExpenseDto>>(UiState.Idle)
+    val registerState: StateFlow<UiState<ExpenseDto>> = _registerState.asStateFlow()
+
+    fun fetchExpenses() {
+        viewModelScope.launch {
+            _expensesState.value = UiState.Loading
+            repository.getExpenses()
+                .onSuccess { list ->
+                    _expensesState.value = UiState.Success(list)
+                }
+                .onFailure { error ->
+                    _expensesState.value = UiState.Error(error.message ?: "Failed to fetch expenses")
+                }
+        }
+    }
+
+    fun fetchCategories() {
+        viewModelScope.launch {
+            _categoriesState.value = UiState.Loading
+            repository.getExpenseCategories()
+                .onSuccess { list ->
+                    _categoriesState.value = UiState.Success(list)
+                }
+                .onFailure { error ->
+                    _categoriesState.value = UiState.Error(error.message ?: "Failed to fetch expense categories")
+                }
+        }
+    }
+
+    fun registerExpense(
+        description: String,
+        amount: Double,
+        categoryId: String,
+        paymentMethod: String,
+        notes: String? = null
+    ) {
+        viewModelScope.launch {
+            _registerState.value = UiState.Loading
+            repository.createExpense(description, amount, categoryId, paymentMethod, notes)
+                .onSuccess { expense ->
+                    _registerState.value = UiState.Success(expense)
+                    fetchExpenses() // reload list
+                }
+                .onFailure { error ->
+                    _registerState.value = UiState.Error(error.message ?: "Failed to register expense")
+                }
+        }
+    }
+
+    fun resetRegisterState() {
+        _registerState.value = UiState.Idle
+    }
+}
