@@ -152,4 +152,9 @@ export class CreateExpenseDto {
   @IsOptional()
   @IsBoolean()
   isBillable?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  autoApprove?: boolean;
 }

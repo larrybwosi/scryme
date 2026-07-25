@@ -1,0 +1,6 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.ScrymeAdmin" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+    </style>
+</resources>
