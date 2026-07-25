@@ -96,6 +96,7 @@ function NavItemLink({
     <Link
       href={item.href}
       title={isCollapsed ? item.title : undefined}
+      aria-label={item.title}
       className={cn(
         'relative flex items-center gap-2.5 px-3 py-[7px] rounded-md text-[13px] transition-all duration-150 group/item',
         isActive
@@ -275,6 +276,7 @@ export function Sidebar() {
             onClick={() => setIsCollapsed(true)}
             className="ml-auto p-1 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors"
             aria-label="Collapse sidebar"
+            title="Collapse sidebar"
           >
             <PanelLeftClose size={14} />
           </button>
@@ -287,6 +289,7 @@ export function Sidebar() {
           onClick={() => setIsCollapsed(false)}
           className="flex items-center justify-center h-9 mx-2 mt-2 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors"
           aria-label="Expand sidebar"
+          title="Expand sidebar"
         >
           <PanelLeftOpen size={14} />
         </button>
@@ -330,6 +333,7 @@ export function Sidebar() {
           <button
             key={label}
             title={isCollapsed ? label : undefined}
+            aria-label={label}
             className={cn(
               'w-full flex items-center gap-2.5 px-3 py-[7px] rounded-md text-[13px] text-sidebar-foreground/55 hover:text-sidebar-foreground/80 hover:bg-white/5 transition-all',
               isCollapsed && 'justify-center'
@@ -373,6 +377,7 @@ export function Sidebar() {
               onClick={handleLogout}
               className="p-1 rounded-md hover:bg-white/8 transition-colors"
               aria-label="Log out"
+              title="Log out"
             >
               <LogOut size={13} className="text-sidebar-foreground/40" />
             </button>
