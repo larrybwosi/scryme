@@ -9,6 +9,7 @@ import tech.scryme.admin.presentation.viewmodel.ApprovalsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnalyticsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnnouncementViewModel
 import tech.scryme.admin.presentation.viewmodel.ScanViewModel
+import tech.scryme.admin.presentation.viewmodel.ExpenseViewModel
 import tech.scryme.admin.presentation.theme.ScrymeColors
 
 enum class DashboardScreen {
@@ -16,6 +17,7 @@ enum class DashboardScreen {
     PRESENCE,
     SCAN,
     APPROVALS,
+    EXPENSES,
     ANALYTICS,
     BROADCAST,
     SETTINGS
@@ -32,6 +34,7 @@ fun AdminDashboard(
     analyticsViewModel: AnalyticsViewModel,
     announcementViewModel: AnnouncementViewModel,
     scanViewModel: ScanViewModel,
+    expenseViewModel: ExpenseViewModel,
     onSignOut: () -> Unit
 ) {
     var currentScreen by remember { mutableStateOf(DashboardScreen.HOME) }
@@ -54,6 +57,10 @@ fun AdminDashboard(
                     presenceViewModel = presenceViewModel,
                     onNavigateToScreen = { currentScreen = it },
                     onSignOut = onSignOut
+                )
+                DashboardScreen.EXPENSES -> ExpensesView(
+                    expenseViewModel = expenseViewModel,
+                    onBackToHome = { currentScreen = DashboardScreen.HOME }
                 )
                 DashboardScreen.PRESENCE -> PresenceView(
                     presenceViewModel = presenceViewModel,

@@ -193,6 +193,13 @@ fun DashboardView(
         )
 
         ShortcutCard(
+            title = "Registered Expenses",
+            subtitle = "Disburse auto-approved operational expenses",
+            icon = Icons.Default.ShoppingCart,
+            onClick = { onNavigateToScreen(DashboardScreen.EXPENSES) }
+        )
+
+        ShortcutCard(
             title = "Real-time Analytics",
             subtitle = "Analyze branch utilization and peak hours",
             icon = Icons.Default.Info,

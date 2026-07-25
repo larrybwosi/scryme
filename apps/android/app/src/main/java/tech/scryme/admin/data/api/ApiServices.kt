@@ -125,3 +125,19 @@ interface AnnouncementApiService {
         @Body dto: AnnouncementDto
     ): Response<ApiEnvelope<Unit>>
 }
+
+interface ExpenseApiService {
+    @GET("/v3/finance/expenses")
+    suspend fun getExpenses(
+        @Query("status") status: String? = null,
+        @Query("categoryId") categoryId: String? = null
+    ): Response<ApiEnvelope<List<ExpenseDto>>>
+
+    @GET("/v3/finance/expenses/categories")
+    suspend fun getExpenseCategories(): Response<ApiEnvelope<List<ExpenseCategoryDto>>>
+
+    @POST("/v3/finance/expenses")
+    suspend fun createExpense(
+        @Body dto: CreateExpenseRequestDto
+    ): Response<ApiEnvelope<ExpenseDto>>
+}
