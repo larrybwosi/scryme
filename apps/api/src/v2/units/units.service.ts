@@ -4,13 +4,29 @@ import type { V2ApiContext } from "@repo/shared/api/v2";
 
 @Injectable()
 export class UnitsService {
+  // ⚡ Bolt: Performance Optimization (In-Memory Cache for System Units)
+  // System units are system-wide, static, and highly frequently accessed.
+  // Serving them from an in-memory cache eliminates redundant database I/O and query overhead.
+  private cachedSystemUnits: any[] | null = null;
+
   constructor(private readonly prisma: PrismaService) {}
 
+  private async loadSystemUnits() {
+    if (!this.cachedSystemUnits) {
+      this.cachedSystemUnits = await this.prisma.client.systemUnit.findMany();
+    }
+    return this.cachedSystemUnits;
+  }
+
   async getSystemUnits() {
-    return this.prisma.client.systemUnit.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
-    });
+    const units = await this.loadSystemUnits();
+    return units
+      .filter(u => u.isActive)
+      .sort((a, b) => {
+        const orderA = a.sortOrder ?? 0;
+        const orderB = b.sortOrder ?? 0;
+        return orderA - orderB;
+      });
   }
 
   async getOrganizationUnits(ctx: V2ApiContext) {
@@ -61,18 +77,16 @@ export class UnitsService {
     const { organizationId } = ctx;
     const since = lastSync ? new Date(lastSync) : new Date(0);
 
+    // Retrieve system units directly from our local in-memory cache to save database I/O
+    const cached = await this.loadSystemUnits();
+    const systemUnits = cached.filter(u => u.updatedAt > since);
+
     const [
-      systemUnits,
       organizationUnits,
       unitConversions,
       orgUnitConversions,
       productUnitConversions,
     ] = await Promise.all([
-      this.prisma.client.systemUnit.findMany({
-        where: {
-          updatedAt: { gt: since },
-        },
-      }),
       this.prisma.client.organizationUnit.findMany({
         where: {
           organizationId,
