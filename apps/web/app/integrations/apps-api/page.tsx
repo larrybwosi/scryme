@@ -210,6 +210,7 @@ function AppsApiContent() {
     { id: "v3", label: "API Clients", icon: Key },
     { id: "webhooks", label: "Webhooks", icon: Webhook },
     { id: "devices", label: "Devices", icon: Monitor },
+    { id: "storefront", label: "Storefront / SPA", icon: Globe },
   ];
 
   const availableEvents = [
@@ -218,6 +219,10 @@ function AppsApiContent() {
     "inventory.low",
     "customer.created",
   ];
+
+  const [storefrontEnabled, setStorefrontEnabled] = useState(true);
+  const [selectedLocation, setSelectedLocation] = useState("default");
+  const [allowedOrigins, setAllowedOrigins] = useState("https://store.scryme.tech");
 
   return (
     <div className="space-y-8">
@@ -1055,6 +1060,175 @@ function AppsApiContent() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === "storefront" && (
+        <div className="space-y-8">
+          <div className="flex justify-between items-center">
+            <div className="space-y-1">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+                Storefront & SPA Integration
+              </h2>
+              <p className="text-[13px] text-slate-500">
+                Connect external client web storefronts, booking systems, or custom hybrid applications.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Settings Card */}
+              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
+                <h3 className="text-sm font-bold text-slate-900 tracking-tight uppercase tracking-wider text-slate-400">
+                  Connection Settings
+                </h3>
+
+                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-sm text-slate-900">Enable Client Storefront API</div>
+                    <div className="text-xs text-slate-500">Allow public SPA clients to communicate with your V3 APIs.</div>
+                  </div>
+                  <Switch
+                    checked={storefrontEnabled}
+                    onCheckedChange={setStorefrontEnabled}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-slate-700">Default Inventory Location</Label>
+                    <Select
+                      value={selectedLocation}
+                      onValueChange={setSelectedLocation}
+                    >
+                      <SelectTrigger className="h-10 text-sm rounded-lg">
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-lg">
+                        {locations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-slate-700">Allowed Origin CORS</Label>
+                    <Input
+                      value={allowedOrigins}
+                      onChange={e => setAllowedOrigins(e.target.value)}
+                      placeholder="e.g. https://mystore.com"
+                      className="h-10 text-sm rounded-lg"
+                    />
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => toast.success("Storefront settings updated successfully!")}
+                  className="bg-slate-900 hover:bg-slate-800 text-xs font-semibold h-9 rounded-lg"
+                >
+                  Save Storefront Settings
+                </Button>
+              </div>
+
+              {/* Developer Integration Code Card */}
+              <div className="bg-slate-900 text-slate-100 p-6 rounded-xl border border-slate-800 shadow-lg space-y-4 font-mono text-xs">
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                    Quick-Start Setup Code
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-400 hover:text-white h-7 px-2 font-sans font-bold text-[10px]"
+                    onClick={() => {
+                      copyToClipboard(
+                        `import { getSDK } from "@repo/sdk";\n\nconst scryme = getSDK({\n  baseURL: "https://api.scryme.tech/api/v3"\n});\n\n// 1. Fetch available timeslots\nconst slots = await scryme.services.getServiceAvailability("scryme-hq", "srv_123", "2026-10-15");\n\n// 2. Perform checkout with both items and bookings\nawait scryme.b2b.createOrder("scryme-hq", {\n  locationId: "loc_nairobi_001",\n  items: [{ variantId: "var_01", quantity: 2 }],\n  services: [{\n    serviceId: "srv_123",\n    scheduledStartTime: "2026-10-15T10:00:00Z"\n  }]\n});`
+                      );
+                    }}
+                  >
+                    <Copy size={11} className="mr-1" /> Copy Code
+                  </Button>
+                </div>
+                <div className="bg-slate-950 p-4 rounded-lg overflow-x-auto text-[11px] leading-relaxed max-h-72 text-emerald-400">
+                  <pre>{`// Setup Scryme SPA client
+import { getSDK } from "@repo/sdk";
+
+const scryme = getSDK({
+  baseURL: "https://api.scryme.tech/api/v3"
+});
+
+// 1. Query dynamic slots for any booking service
+const { availableSlots } = await scryme.services.getServiceAvailability(
+  "scryme-hq",
+  "srv_styling_id",
+  "2026-10-15"
+);
+
+// 2. Add both physical items and booking details to cart
+await scryme.cart.addItem("scryme-hq", {
+  serviceId: "srv_styling_id",
+  quantity: 1,
+  bookingDetails: {
+    scheduledStartTime: "2026-10-15T10:00:00Z",
+    staffIds: ["member_barista_01"]
+  }
+});
+
+// 3. Complete unified checkout (Physical items + Booking Services)
+const order = await scryme.b2b.createOrder("scryme-hq", {
+  locationId: "${selectedLocation !== "default" ? selectedLocation : "loc_nairobi_001"}",
+  items: [{ variantId: "var_shampoo_01", quantity: 2 }],
+  services: [{
+    serviceId: "srv_styling_id",
+    scheduledStartTime: "2026-10-15T10:00:00Z",
+    staffIds: ["member_barista_01"]
+  }]
+});`}</pre>
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar Overview */}
+            <div className="space-y-6">
+              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider text-slate-400">
+                  Storefront Status
+                </h4>
+                <div className="space-y-3 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">API Connection</span>
+                    <Badge className="bg-emerald-50 text-emerald-700 border-none font-bold text-[9px] uppercase">
+                      Operational
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">CORS Restrictions</span>
+                    <span className="font-semibold text-slate-700">{storefrontEnabled ? "Active" : "Disabled"}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500">Hybrid Orders</span>
+                    <Badge className="bg-blue-50 text-blue-700 border-none font-bold text-[9px] uppercase">
+                      Supported
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-amber-50/60 p-5 rounded-xl border border-amber-200/50 space-y-2">
+                <h4 className="text-xs font-bold text-amber-900 tracking-tight flex items-center gap-1.5">
+                  <Key size={14} />
+                  SPA Authentication Key
+                </h4>
+                <p className="text-xs text-amber-800/80 leading-relaxed">
+                  Storefront websites connect securely to Scryme using OAuth V3 API Clients. Generate a client with scope <code className="bg-amber-100/80 px-1 rounded text-[11px] font-mono text-amber-900">customer</code> and register the client-side SPA origin for smooth cross-origin lookups.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

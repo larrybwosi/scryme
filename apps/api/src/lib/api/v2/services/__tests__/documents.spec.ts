@@ -4,15 +4,22 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@repo/db", () => {
   const mockFindFirst = vi.fn();
+  const mockStockFindFirst = vi.fn();
   return {
     prisma: {
       transaction: {
         findFirst: mockFindFirst,
       },
+      stockTransfer: {
+        findFirst: mockStockFindFirst,
+      },
     },
     PrismaClient: vi.fn().mockImplementation(() => ({
       transaction: {
         findFirst: mockFindFirst,
+      },
+      stockTransfer: {
+        findFirst: mockStockFindFirst,
       },
     })),
   };
@@ -69,5 +76,39 @@ describe("Documents Service", () => {
     await expect(
       getDocumentStream("invoice", "txn_2", "org_1"),
     ).rejects.toThrow("Transaction not found");
+  });
+
+  it("should return a stream for stock transfer packing list", async () => {
+    const mockTransfer = {
+      id: "trf_1",
+      transferNumber: "TRF-001",
+      requestedDate: new Date(),
+      status: "PENDING_APPROVAL",
+      organization: { settings: {} },
+      fromLocation: { name: "Loc A" },
+      toLocation: { name: "Loc B" },
+      items: [
+        {
+          id: "item_1",
+          requestedQuantity: 5,
+          variant: {
+            sku: "SKU-001",
+            name: "V1",
+            product: { name: "Prod 1" },
+          },
+        },
+      ],
+    };
+
+    vi.mocked(prisma.transaction.findFirst).mockResolvedValue(null);
+    vi.mocked((prisma as any).stockTransfer.findFirst).mockResolvedValue(
+      mockTransfer as any,
+    );
+
+    const result = await getDocumentStream("packing-list", "trf_1", "org_1");
+
+    expect(result.stream).toBe("mock-stream");
+    expect(result.filename).toBe("PackingList_TRF-001.pdf");
+    expect(result.contentType).toBe("application/pdf");
   });
 });

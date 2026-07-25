@@ -1,12 +1,12 @@
 import { prisma as db } from "@repo/db";
-import { Mappers, generateQRCode, DocumentGenerator } from "@repo/documents";
+import { Mappers, generateQRCode, DocumentGenerator, resolveBranding, formatAddress } from "@repo/documents";
 
 export async function generateDocument(type: string, data: any): Promise<any> {
   return Buffer.from([]);
 }
 
 export async function getDocumentStream(
-  type: "invoice" | "waybill" | "receipt" | "quote",
+  type: "invoice" | "waybill" | "receipt" | "quote" | "packing-list" | "delivery-note",
   id: string,
   orgId?: string,
   format: "A4" | "80MM" | "58MM" = "A4",
@@ -35,11 +35,57 @@ export async function getDocumentStream(
       items: true,
       payments: true,
       location: true,
+      fulfillments: {
+        include: {
+          shippingAddress: true,
+          driver: {
+            include: {
+              member: true,
+            },
+          },
+        },
+      },
     },
   });
 
+  let transfer: any = null;
+  let isStockTransfer = false;
+
   if (!transaction) {
-    throw new Error("Transaction not found");
+    if (type === "packing-list" && (db as any).stockTransfer) {
+      transfer = await (db as any).stockTransfer.findFirst({
+        where: {
+          id,
+          organizationId: orgId,
+        },
+        include: {
+          organization: {
+            include: {
+              settings: true,
+            },
+          },
+          fromLocation: true,
+          toLocation: true,
+          items: {
+            include: {
+              variant: {
+                include: {
+                  product: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (transfer) {
+        isStockTransfer = true;
+      }
+    }
+
+    if (!isStockTransfer) {
+      throw new Error("Transaction not found");
+    }
   }
 
   let DocumentComponent: any;
@@ -47,15 +93,23 @@ export async function getDocumentStream(
   let filename: string;
   let qrCode: string = "";
 
-  const { getInvoiceTemplate, ReceiptTemplateV2 } =
-    await import("@repo/documents");
+  const {
+    getInvoiceTemplate,
+    ReceiptTemplateV2,
+    WaybillV3Document,
+    DeliveryNoteV3Document,
+    PackingListDocument,
+  } = await import("@repo/documents");
 
   switch (type) {
     case "invoice": {
+      if (isStockTransfer) {
+        throw new Error("Invoice is not supported for stock transfer");
+      }
       const selectedTemplate =
         template || transaction.organization?.settings?.defaultInvoiceTemplate;
       DocumentComponent = getInvoiceTemplate(selectedTemplate);
-      data = Mappers.toInvoiceData(transaction);
+      data = Mappers.toInvoiceData(transaction as any);
       filename = `Invoice_${transaction.number}.pdf`;
 
       try {
@@ -67,9 +121,59 @@ export async function getDocumentStream(
       break;
     }
     case "receipt":
+      if (isStockTransfer) {
+        throw new Error("Receipt is not supported for stock transfer");
+      }
       DocumentComponent = ReceiptTemplateV2;
-      data = Mappers.toReceiptData(transaction);
+      data = Mappers.toReceiptData(transaction as any);
       filename = `Receipt_${transaction.number}.pdf`;
+      break;
+    case "waybill":
+      if (isStockTransfer) {
+        throw new Error("Waybill is not supported for stock transfer");
+      }
+      DocumentComponent = WaybillV3Document;
+      data = Mappers.toWaybillData(transaction as any, transaction.fulfillments?.[0]);
+      filename = `Waybill_${transaction.number}.pdf`;
+      break;
+    case "delivery-note":
+      if (isStockTransfer) {
+        throw new Error("Delivery note is not supported for stock transfer");
+      }
+      DocumentComponent = DeliveryNoteV3Document;
+      data = Mappers.toDeliveryNoteData(transaction as any, transaction.fulfillments?.[0]);
+      filename = `DeliveryNote_${transaction.number}.pdf`;
+      break;
+    case "packing-list":
+      if (isStockTransfer) {
+        DocumentComponent = PackingListDocument;
+        const branding = resolveBranding(transfer.organization, transfer.organization?.waybillConfig);
+        data = {
+          id: transfer.id,
+          number: `PL-${transfer.transferNumber}`,
+          orderNumber: transfer.transferNumber,
+          date: transfer.requestedDate || new Date(),
+          branding,
+          customer: {
+            name: transfer.toLocation.name,
+            address: transfer.toLocation.address ? formatAddress(transfer.toLocation.address) : undefined,
+          },
+          shippingAddress: transfer.toLocation.address ? formatAddress(transfer.toLocation.address) : transfer.toLocation.name,
+          items: (transfer.items || []).map((item: any) => ({
+            id: item.id,
+            sku: item.variant?.sku || undefined,
+            description: `${item.variant?.product?.name || "Item"}${item.variant?.name ? ` - ${item.variant.name}` : ""}`,
+            quantity: Number(item.requestedQuantity || 0),
+            quantityPacked: item.shippedQuantity ? Number(item.shippedQuantity) : Number(item.requestedQuantity || 0),
+          })),
+          notes: transfer.notes || undefined,
+        };
+        filename = `PackingList_${transfer.transferNumber}.pdf`;
+      } else {
+        DocumentComponent = PackingListDocument;
+        data = Mappers.toPackingListData(transaction as any, transaction.fulfillments?.[0]);
+        filename = `PackingList_${transaction.number}.pdf`;
+      }
       break;
     default:
       throw new Error(`Document type ${type} not supported yet`);
@@ -79,7 +183,7 @@ export async function getDocumentStream(
     DocumentGenerator.createElement(DocumentComponent, {
       data,
       qrCode,
-      settings: transaction.organization?.settings,
+      settings: isStockTransfer ? transfer.organization?.settings : transaction.organization?.settings,
     }),
   )) as NodeJS.ReadableStream;
 

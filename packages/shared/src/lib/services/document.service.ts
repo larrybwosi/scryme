@@ -13,6 +13,7 @@ import { db } from "@repo/db";
 import { notificationEngine } from "@repo/notifications";
 import React from "react";
 import QRCode from "qrcode";
+import { randomInt } from "crypto";
 
 export class DocumentService {
   /**
@@ -52,8 +53,8 @@ export class DocumentService {
     const fulfillment = transaction.fulfillments[0];
     if (!fulfillment) throw new Error("Fulfillment not found");
 
-    // 2. Generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    // 2. Generate OTP using a cryptographically secure random number generator to prevent predictable OTPs
+    const otp = randomInt(100000, 1000000).toString();
     await db.fulfillment.update({
       where: { id: fulfillmentId },
       data: { confirmationToken: otp },

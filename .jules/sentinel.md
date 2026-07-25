@@ -191,3 +191,17 @@
 **Vulnerability:** The V3 `WebhookController` was completely ungated by RBAC/permissions, allowing any authenticated tenant member to create, list, and delete webhooks. Additionally, the fail-open nature of the `PermissionsGuard` allowed the endpoints to remain public to all authenticated users even if the guard had been applied globally.
 **Learning:** Controller-level security context is only a partial layer of defense. In APIs where a "fail-open" permission guard pattern is used, forgetting to decorate a controller class with `PermissionsGuard` and forgetting to decorate individual methods with explicit permission scopes (such as `webhooks:read` or `webhooks:write`) creates an authorization bypass.
 **Prevention:** Always secure every routing controller class using `PermissionsGuard` and decorate individual route handlers with explicit permissions. Implement metadata unit tests to prevent regression of endpoint permissions.
+
+## 2026-07-24 - Cryptographically Insecure PRNG in OTP and Voucher Generation
+**Vulnerability:** Pseudo-random number generation (`Math.random()`) was used to generate 6-digit booking OTP codes and loyalty reward vouchers. Because `Math.random()` is not cryptographically secure, the internal state of the PRNG could be predicted by an attacker after observing several generated codes, leading to OTP bypass and unauthorized voucher generation.
+**Learning:** Never use `Math.random()` or other predictable seed-based PRNGs for security-sensitive operations like passwords, OTPs, session keys, or vouchers. Cryptographically secure alternatives are standard and easy to integrate.
+**Prevention:** Always use Node.js native `crypto.randomInt` for numeric ranges (like 6-digit OTP codes) and `crypto.randomBytes` for raw random byte values (like hex vouchers) to guarantee non-predictability.
+
+## 2026-07-25 - Cryptographically Insecure PRNG in Delivery Confirmation OTP
+**Vulnerability:** The delivery OTP confirmation token was generated using `Math.random()`, exposing the system to predictability attacks and delivery hijacking.
+**Learning:** Using standard seed-based PRNGs like `Math.random()` for any security-sensitive token, password, or OTP allows attackers who observe several values to predict future outputs.
+**Prevention:** Always use Node.js's native cryptographically secure random number generators, such as `crypto.randomInt` or `crypto.randomBytes`, for any security tokens or OTPs.
+## 2026-07-25 - OTP Verification Replay and Guest Booking Spamming Vulnerability
+**Vulnerability:** The booking verification OTP mechanism allowed the same validated verification identifier to be reused multiple times to submit guest bookings, leading to a replay/bypass attack vector and guest booking spamming.
+**Learning:** OTP or identity-verification tokens/records must follow a single-use "fail-closed" consumption model. Once validated successfully, the token or verification state must be immediately consumed, invalidated, or deleted. If left active, attackers can replay the verification ID to perform multiple authorized actions without re-authenticating or re-proving identity.
+**Prevention:** Always delete or invalidate verification records (`BookingVerificationCode`) in the database as soon as they are validated. Enforce a strict single-use policy on verification codes.
