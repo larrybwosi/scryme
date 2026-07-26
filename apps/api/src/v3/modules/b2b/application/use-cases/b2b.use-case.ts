@@ -247,8 +247,12 @@ export class B2BUseCase {
     }
 
     // ⚡ Bolt: Optimized order creation by batching variant lookups to avoid N+1 query problem.
+    // SECURITY (Sentinel): Enforce multi-tenant isolation by filtering product variants by organizationId.
     const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds } },
+      where: {
+        id: { in: variantIds },
+        product: { organizationId },
+      },
       include: {
         product: { select: { name: true } },
         variantStocks: {
@@ -257,6 +261,11 @@ export class B2BUseCase {
         },
       },
     });
+
+    const uniqueVariantIds = new Set(variantIds);
+    if (variants.length !== uniqueVariantIds.size) {
+      throw new Error("One or more variants not found or do not belong to this organization");
+    }
 
     const variantMap = new Map(variants.map(v => [v.id, v]));
 
@@ -341,10 +350,20 @@ export class B2BUseCase {
 
     // ⚡ Bolt: Fetch variant details for quote items
     const variantIds = data.items.map((item: any) => item.variantId);
+    // SECURITY (Sentinel): Enforce multi-tenant isolation by filtering product variants by organizationId.
     const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds } },
+      where: {
+        id: { in: variantIds },
+        product: { organizationId },
+      },
       include: { product: { select: { name: true } } },
     });
+
+    const uniqueVariantIds = new Set(variantIds);
+    if (variants.length !== uniqueVariantIds.size) {
+      throw new Error("One or more variants not found or do not belong to this organization");
+    }
+
     const variantMap = new Map(variants.map(v => [v.id, v]));
 
     const transaction = await this.prisma.client.transaction.create({

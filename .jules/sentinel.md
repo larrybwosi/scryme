@@ -206,6 +206,10 @@
 **Learning:** OTP or identity-verification tokens/records must follow a single-use "fail-closed" consumption model. Once validated successfully, the token or verification state must be immediately consumed, invalidated, or deleted. If left active, attackers can replay the verification ID to perform multiple authorized actions without re-authenticating or re-proving identity.
 **Prevention:** Always delete or invalidate verification records (`BookingVerificationCode`) in the database as soon as they are validated. Enforce a strict single-use policy on verification codes.
 
+## 2026-07-26 - IDOR and Multi-tenant Product Variant Loading in B2B Orders and Quotes
+**Vulnerability:** The B2BUseCase `createOrder` and `createQuote` methods loaded product variants using only their primary IDs, permitting authenticated B2B customers to place orders or request quotes containing variants belonging to other tenants.
+**Learning:** Even when controller-level multi-tenancy guards are active, service-level transactional logic remains vulnerable to IDOR if it queries nested resources (like variants) by their primary IDs without validating that the resources belong to the active organization.
+**Prevention:** Always scope database lookups for nested relational entities to the current tenant (e.g. `product: { organizationId }`) and explicitly verify that the count of retrieved records matches the count of unique requested IDs to prevent unauthorized data manipulation.
 ## 2026-07-26 - IDOR Vulnerability in CRM Activity Communication Reply
 **Vulnerability:** The CRM integrations service resolved communication activities for replying using `findUnique` with only the `id` field, then validated ownership in-memory. This was inefficient and could lead to data leakage if organization checks were bypassed or omitted.
 **Learning:** For database tables that lack a composite unique index on `[id, organizationId]`, retrieving records with `findUnique` by ID first and then asserting ownership can fail-open or load extraneous records from other tenants. Implementing tenant isolation directly at the database query layer via `findFirst` is safer and more performant.
