@@ -1199,9 +1199,17 @@ export class PosService {
         },
       });
 
+      /**
+       * ⚡ Bolt Optimization: Index body.items into a Map to avoid O(N*M) nested array searches.
+       * This reduces item lookup to constant-time O(1) complexity, resulting in O(N + M) complexity overall.
+       */
+      const receivedItemMap = new Map<string, any>(
+        (body.items || []).map((i: any) => [i.variantId, i])
+      );
+
       // 2. Adjust inventory for each item
       for (const item of transfer.items) {
-        const receivedItem = body.items?.find((i: any) => i.variantId === item.variantId);
+        const receivedItem = receivedItemMap.get(item.variantId);
         const qtyToReceive = receivedItem ? new Decimal(receivedItem.acceptedQuantity ?? receivedItem.receivedQuantity) : item.requestedQuantity;
 
         if (qtyToReceive.lte(0)) continue;
