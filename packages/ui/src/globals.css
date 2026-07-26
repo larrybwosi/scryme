@@ -175,7 +175,7 @@
   --font-serif: 'Source Serif 4', serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --radius: 0.375rem;
+  --radius: 0px;
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
@@ -203,69 +203,66 @@
 */
 .dark {
   /* ── Backgrounds ─────────────────────────────────────────────────────── */
-  --background: oklch(0.11 0.012 240); /* Cold near-black — like brushed steel in shadow */
-  --foreground: oklch(0.93 0.008 240); /* Crisp off-white, zero eye strain */
+  /* Sanity Studio v3 dark background: clean, professional gray-slate */
+  --background: oklch(0.11 0.01 245); /* #0f1115 equivalent */
+  --foreground: oklch(0.93 0.008 245); /* Crisp off-white */
 
   /* ── Surface hierarchy ───────────────────────────────────────────────── */
-  /* Each step is +0.04–0.05L for clear depth without brightness bleed */
-  --card: oklch(0.155 0.014 240); /* L1 surface — panels, cards, modals */
-  --card-foreground: oklch(0.93 0.008 240);
+  --card: oklch(0.145 0.012 245); /* #16181d equivalent */
+  --card-foreground: oklch(0.93 0.008 245);
 
-  --popover: oklch(0.185 0.014 240); /* L2 surface — dropdowns, tooltips */
-  --popover-foreground: oklch(0.93 0.008 240);
+  --popover: oklch(0.17 0.014 245); /* #1e2025 equivalent */
+  --popover-foreground: oklch(0.93 0.008 245);
 
-  /* ── Primary accent — Steel Blue ─────────────────────────────────────── */
-  /* Deliberately desaturated vs light mode: enterprise UIs should feel
-     controlled, not vibrant. Enough chroma to guide attention, no more. */
-  --primary: oklch(0.58 0.14 240); /* Steel blue — readable on all dark surfaces */
-  --primary-foreground: oklch(0.98 0.005 240);
+  /* ── Primary accent — Steel Blue / Sanity Brand Blue ─────────────────── */
+  --primary: oklch(0.6 0.16 250); /* Crisper, slightly more vibrant brand blue */
+  --primary-foreground: oklch(0.98 0.005 245);
 
   /* ── Secondary & interactive surfaces ───────────────────────────────── */
-  --secondary: oklch(0.21 0.016 240); /* Slightly raised surface for buttons/tags */
-  --secondary-foreground: oklch(0.88 0.01 240);
+  --secondary: oklch(0.185 0.014 245); /* #21232c equivalent */
+  --secondary-foreground: oklch(0.88 0.01 245);
 
-  --muted: oklch(0.185 0.014 240); /* Table headers, dividers, code blocks */
-  --muted-foreground: oklch(0.6 0.014 240); /* Subdued label text */
+  --muted: oklch(0.16 0.013 245); /* #1c1e22 equivalent */
+  --muted-foreground: oklch(0.6 0.014 245);
 
-  --accent: oklch(0.215 0.016 240); /* Hover/focus highlight layer */
-  --accent-foreground: oklch(0.9 0.008 240);
+  --accent: oklch(0.185 0.014 245);
+  --accent-foreground: oklch(0.9 0.008 245);
 
   /* ── Semantic ────────────────────────────────────────────────────────── */
-  --destructive: oklch(0.58 0.19 22); /* Clean red, no orange bleed */
-  --destructive-foreground: oklch(0.98 0.005 240);
+  --destructive: oklch(0.58 0.19 22);
+  --destructive-foreground: oklch(0.98 0.005 245);
 
   /* ── Structural ──────────────────────────────────────────────────────── */
-  --border: oklch(0.24 0.016 240); /* Crisp grid lines for data tables */
-  --input: oklch(0.2 0.015 240); /* Input fields slightly recessed */
-  --ring: oklch(0.58 0.14 240); /* Focus ring matches primary */
+  --border: oklch(0.2 0.016 245); /* #24272f equivalent */
+  --input: oklch(0.16 0.013 245);
+  --ring: oklch(0.6 0.16 250);
 
   /* ── Data visualization ──────────────────────────────────────────────── */
-  /* Ordered by perceptual distinctness on dark backgrounds */
-  --chart-1: oklch(0.58 0.14 240); /* Steel blue */
-  --chart-2: oklch(0.58 0.13 175); /* Muted teal */
-  --chart-3: oklch(0.62 0.13 52); /* Warm amber — strong contrast anchor */
-  --chart-4: oklch(0.55 0.12 295); /* Soft violet */
-  --chart-5: oklch(0.58 0.13 355); /* Desaturated rose */
+  --chart-1: oklch(0.6 0.16 250);
+  --chart-2: oklch(0.58 0.13 175);
+  --chart-3: oklch(0.62 0.13 52);
+  --chart-4: oklch(0.55 0.12 295);
+  --chart-5: oklch(0.58 0.13 355);
 
   /* ── Status indicators ───────────────────────────────────────────────── */
-  --status-success: oklch(0.62 0.14 148); /* Green — clear but not neon */
-  --status-warning: oklch(0.67 0.15 72); /* Amber */
-  --status-error: oklch(0.58 0.19 22); /* Red */
-  --status-info: oklch(0.58 0.13 230); /* Blue */
-  --status-in-progress: oklch(0.58 0.14 240); /* Matches primary */
+  --status-success: oklch(0.62 0.14 148);
+  --status-warning: oklch(0.67 0.15 72);
+  --status-error: oklch(0.58 0.19 22);
+  --status-info: oklch(0.58 0.13 230);
+  --status-in-progress: oklch(0.6 0.16 250);
 
   /* ── Sidebar — deepest surface in the hierarchy ──────────────────────── */
-  --sidebar: oklch(0.085 0.01 240); /* Darker than main bg — structural anchor */
-  --sidebar-foreground: oklch(0.88 0.01 240);
-  --sidebar-primary: oklch(0.58 0.14 240);
-  --sidebar-primary-foreground: oklch(0.98 0.005 240);
-  --sidebar-accent: oklch(0.155 0.014 240);
-  --sidebar-accent-foreground: oklch(0.88 0.01 240);
-  --sidebar-border: oklch(0.2 0.013 240);
-  --sidebar-ring: oklch(0.58 0.14 240);
+  --sidebar: oklch(0.095 0.008 245); /* #0f1115 style deep background */
+  --sidebar-foreground: oklch(0.88 0.01 245);
+  --sidebar-primary: oklch(0.6 0.16 250);
+  --sidebar-primary-foreground: oklch(0.98 0.005 245);
+  --sidebar-accent: oklch(0.145 0.012 245);
+  --sidebar-accent-foreground: oklch(0.88 0.01 245);
+  --sidebar-border: oklch(0.16 0.013 245);
+  --sidebar-ring: oklch(0.6 0.16 250);
 
   /* ── Effects ─────────────────────────────────────────────────────────── */
-  --gradient-hero: linear-gradient(135deg, oklch(0.58 0.14 240 / 0.25) 0%, var(--background) 100%);
+  --gradient-hero: linear-gradient(135deg, oklch(0.6 0.16 250 / 0.25) 0%, var(--background) 100%);
   --gradient-subtle: linear-gradient(180deg, var(--background) 0%, var(--card) 100%);
-  --shadow-hover: 0 8px 30px -4px oklch(0.04 0.01 240 / 0.7); /* Deep shadow, no color bleed */
+  --shadow-hover: 0 8px 30px -4px oklch(0.04 0.01 245 / 0.7);
 }

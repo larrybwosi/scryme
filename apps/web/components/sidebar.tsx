@@ -168,7 +168,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen border-r bg-white transition-all duration-300 ease-in-out",
+        "flex flex-col h-screen border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out",
         isCollapsed ? "w-[80px]" : "w-[280px]",
       )}>
       {/* Brand Header */}
@@ -183,14 +183,14 @@ export function Sidebar() {
               <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-xl">S</span>
               </div>
-              <span className="font-bold text-xl text-[#1D1D1F]">
+              <span className="font-bold text-xl text-foreground">
                 Scryme <sup className="text-[10px] font-medium">TM</sup>
               </span>
             </div>
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label="Collapse sidebar"
-              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors">
+              className="p-1.5 rounded-md border border-sidebar-border bg-sidebar hover:bg-sidebar-accent transition-colors">
               <ChevronLeft size={14} />
             </button>
           </>
@@ -199,7 +199,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label="Expand sidebar"
-              className="p-1.5 rounded-md border bg-white hover:bg-gray-50 transition-colors">
+              className="p-1.5 rounded-md border border-sidebar-border bg-sidebar hover:bg-sidebar-accent transition-colors">
               <ChevronRight size={14} />
             </button>
             <div className="w-8 h-8 bg-[#34A853] rounded-lg flex items-center justify-center">
@@ -214,7 +214,7 @@ export function Sidebar() {
         {sidebarConfig.map((section, idx) => (
           <div key={idx} className="mb-6">
             {!isCollapsed && (
-              <div className="text-[11px] font-bold text-gray-400 mb-3 px-2 tracking-wider">
+              <div className="text-[11px] font-bold text-sidebar-foreground/60 mb-3 px-2 tracking-wider">
                 {section.title}
               </div>
             )}
@@ -238,15 +238,15 @@ export function Sidebar() {
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
                       isActive
-                        ? "text-[#34A853] bg-[#34A853]/5 font-medium"
-                        : "text-gray-500 hover:bg-gray-50",
+                        ? "text-sidebar-primary bg-sidebar-accent font-medium"
+                        : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
                       isCollapsed && "justify-center",
                     )}>
                     <div className="flex items-center gap-3">
                       <item.icon
                         size={20}
                         className={cn(
-                          isActive ? "text-[#34A853]" : "text-gray-400",
+                          isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60",
                         )}
                       />
                       {!isCollapsed && <span>{item.title}</span>}
@@ -277,7 +277,7 @@ export function Sidebar() {
                     )}
 
                     {!isCollapsed && hasSubmenu && isOpen && (
-                      <div className="mt-1 ml-4 border-l-2 border-gray-100 pl-4 space-y-1">
+                      <div className="mt-1 ml-4 border-l-2 border-sidebar-border pl-4 space-y-1">
                         {item.items?.map((subItem, subIdx) => {
                           const isSubActive = pathname === subItem.href;
                           return (
@@ -287,8 +287,8 @@ export function Sidebar() {
                               className={cn(
                                 "block py-2 text-sm transition-colors",
                                 isSubActive
-                                  ? "text-[#1D1D1F] font-bold"
-                                  : "text-gray-500 hover:text-gray-800",
+                                  ? "text-sidebar-foreground font-bold"
+                                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground",
                               )}>
                               {subItem.title}
                             </Link>
@@ -305,17 +305,17 @@ export function Sidebar() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="p-4 border-t space-y-1">
+      <div className="p-4 border-t border-sidebar-border space-y-1">
         {isCollapsed ? (
           <>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   aria-label="Notifications"
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent rounded-lg">
                   <div className="relative">
                     <Bell size={20} />
-                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
+                    <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-sidebar rounded-full"></span>
                   </div>
                 </button>
               </TooltipTrigger>
@@ -325,7 +325,7 @@ export function Sidebar() {
               <TooltipTrigger asChild>
                 <button
                   aria-label="Support"
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent rounded-lg">
                   <HelpCircle size={20} />
                 </button>
               </TooltipTrigger>
@@ -336,7 +336,7 @@ export function Sidebar() {
                 <button
                   onClick={() => setShowLogoutDialog(true)}
                   aria-label="Sign out"
-                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors">
+                  className="w-full flex items-center justify-center px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-colors">
                   <LogOut size={20} />
                 </button>
               </TooltipTrigger>
@@ -345,14 +345,14 @@ export function Sidebar() {
           </>
         ) : (
           <>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
+            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent rounded-lg">
               <div className="relative">
                 <Bell size={20} />
-                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-white rounded-full"></span>
+                <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 border-2 border-sidebar rounded-full"></span>
               </div>
               <span>Notifications</span>
             </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-500 hover:bg-gray-50 rounded-lg">
+            <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-sidebar-foreground/80 hover:bg-sidebar-accent rounded-lg">
               <HelpCircle size={20} />
               <span>Support</span>
             </button>
@@ -363,7 +363,7 @@ export function Sidebar() {
       {/* User Profile */}
       <div
         className={cn(
-          "p-4 bg-gray-50 border-t flex items-center justify-between",
+          "p-4 bg-sidebar-accent/50 border-t border-sidebar-border flex items-center justify-between",
           isCollapsed && "justify-center",
         )}>
         <div
@@ -381,7 +381,7 @@ export function Sidebar() {
           ) : (
             <div
               className={cn(
-                "w-10 h-10 rounded-full bg-[#1D1D1F] text-white flex items-center justify-center font-bold shrink-0",
+                "w-10 h-10 rounded-full bg-sidebar-foreground text-sidebar flex items-center justify-center font-bold shrink-0",
                 isCollapsed && "mx-auto",
               )}>
               {session?.user?.name?.charAt(0).toUpperCase() || "U"}
@@ -396,12 +396,12 @@ export function Sidebar() {
                 </>
               ) : (
                 <>
-                  <div className="font-bold text-sm truncate text-[#1D1D1F]">
+                  <div className="font-bold text-sm truncate text-sidebar-foreground">
                     {session?.user?.name}
                   </div>
                   <Badge
                     variant="secondary"
-                    className="w-fit text-[10px] px-1.5 py-0 h-4 capitalize bg-gray-200 text-gray-700 border-none">
+                    className="w-fit text-[10px] px-1.5 py-0 h-4 capitalize bg-sidebar-accent text-sidebar-foreground border-none">
                     {(session?.user as any)?.role || "user"}
                   </Badge>
                 </>
@@ -415,7 +415,7 @@ export function Sidebar() {
               <button
                 onClick={() => setShowLogoutDialog(true)}
                 aria-label="Sign out"
-                className="p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors">
+                className="p-1.5 rounded-md hover:bg-destructive/10 text-sidebar-foreground/60 hover:text-destructive transition-colors">
                 <LogOut size={16} />
               </button>
             </TooltipTrigger>
