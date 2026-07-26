@@ -293,7 +293,7 @@ export class OrdersService {
         return transaction;
       });
 
-      // Emit Windmill event
+      // Emit Windmill event using O(1) variant map lookup
       emitOrderPlaced(ctx.organizationId, {
         orderId: result.id,
         orderNumber: result.number,
@@ -301,7 +301,7 @@ export class OrdersService {
         totalAmount: Number(result.finalTotal),
         currency: result.currencyCode,
         items: data.items.map((i) => {
-          const v = variants.find((varnt) => varnt.id === i.variantId)!;
+          const v = variantMap.get(i.variantId)!;
           return {
             productName: `${v.product.name} - ${v.name}`,
             quantity: i.quantity,

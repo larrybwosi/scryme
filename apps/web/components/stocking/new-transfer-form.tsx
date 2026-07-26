@@ -37,6 +37,7 @@ interface Product {
   name: string;
   sku: string;
   currentStock: number;
+  variantName?: string;
 }
 
 interface Location {
@@ -87,9 +88,10 @@ export function NewTransferForm({
 
   const variants = products.map(p => ({
     id: p.variantId,
-    name: "Default",
+    name: p.variantName || "Default",
     productName: p.name,
     sku: p.sku,
+    stock: p.currentStock,
   }));
 
   const productByVariant = useMemo(() => {
@@ -209,6 +211,7 @@ export function NewTransferForm({
                   value={draftVariantId}
                   onValueChange={setDraftVariantId}
                   placeholder="Select a product..."
+                  allowZeroStock={true}
                 />
               </div>
               <div className="col-span-3">

@@ -33,24 +33,51 @@ pub async fn record_shift_sale_command(app: AppHandle, state: State<'_, ShiftSta
 pub async fn open_shift_command(
     app: AppHandle,
     state: State<'_, ShiftState>,
-    card_id: String,
-    pin: String,
+    auth_state: State<'_, AuthStateStore>,
+    card_id: Option<String>,
+    pin: Option<String>,
     float_amount: f64,
     opening_cash_details: Option<serde_json::Value>,
     device_id: Option<String>,
 ) -> Result<Shift, String> {
-    if card_id.is_empty() || pin.is_empty() {
-        return Err("Credentials missing".to_string());
-    }
+    let resolved_card_id = if let Some(ref cid) = card_id {
+        if cid.is_empty() { None } else { Some(cid.clone()) }
+    } else {
+        None
+    };
 
-    let result = shift_store::open_new_shift(app.clone(), &state, card_id.clone(), pin, float_amount, opening_cash_details, device_id).await;
+    let resolved_pin = if let Some(ref p) = pin {
+        if p.is_empty() { None } else { Some(p.clone()) }
+    } else {
+        None
+    };
+
+    let (final_card_id, final_pin) = if resolved_card_id.is_none() || resolved_pin.is_none() {
+        let active_user = auth_state.get_active_user()?;
+        let active_token = auth_state.get_active_token()?;
+
+        let cid = resolved_card_id
+            .or_else(|| active_user.as_ref().and_then(|u| u.card_id.clone()))
+            .or_else(|| active_user.as_ref().map(|u| u.id.clone()))
+            .ok_or_else(|| "No active member found and no Card ID provided".to_string())?;
+
+        let p = resolved_pin
+            .or_else(|| active_token)
+            .ok_or_else(|| "No active member token found and no PIN provided".to_string())?;
+
+        (cid, p)
+    } else {
+        (resolved_card_id.unwrap(), resolved_pin.unwrap())
+    };
+
+    let result = shift_store::open_new_shift(app.clone(), &state, final_card_id.clone(), final_pin, float_amount, opening_cash_details, device_id).await;
 
     if let Ok(ref shift) = result {
         let _ = crate::stores::audit_store::write_event(
             &app,
             crate::stores::audit_store::AuditLevel::Info,
             "SHIFT_OPENED",
-            Some(card_id),
+            Some(final_card_id),
             None,
             None,
             None,
@@ -73,23 +100,50 @@ pub async fn open_shift_command(
 pub async fn close_shift_command(
     app: AppHandle,
     state: State<'_, ShiftState>,
-    card_id: String,
-    pin: String,
+    auth_state: State<'_, AuthStateStore>,
+    card_id: Option<String>,
+    pin: Option<String>,
     actual_count: f64,
     closing_cash_details: Option<serde_json::Value>,
     printer_name: Option<String>,
 ) -> Result<Shift, String> {
-    if card_id.is_empty() || pin.is_empty() {
-        return Err("Credentials missing".to_string());
-    }
+    let resolved_card_id = if let Some(ref cid) = card_id {
+        if cid.is_empty() { None } else { Some(cid.clone()) }
+    } else {
+        None
+    };
 
-    let closed_shift = shift_store::close_current_shift(&app, &state, actual_count, Some(card_id.clone()), closing_cash_details).await?;
+    let resolved_pin = if let Some(ref p) = pin {
+        if p.is_empty() { None } else { Some(p.clone()) }
+    } else {
+        None
+    };
+
+    let (final_card_id, _final_pin) = if resolved_card_id.is_none() || resolved_pin.is_none() {
+        let active_user = auth_state.get_active_user()?;
+        let active_token = auth_state.get_active_token()?;
+
+        let cid = resolved_card_id
+            .or_else(|| active_user.as_ref().and_then(|u| u.card_id.clone()))
+            .or_else(|| active_user.as_ref().map(|u| u.id.clone()))
+            .ok_or_else(|| "No active member found and no Card ID provided".to_string())?;
+
+        let p = resolved_pin
+            .or_else(|| active_token)
+            .ok_or_else(|| "No active member token found and no PIN provided".to_string())?;
+
+        (cid, p)
+    } else {
+        (resolved_card_id.unwrap(), resolved_pin.unwrap())
+    };
+
+    let closed_shift = shift_store::close_current_shift(&app, &state, actual_count, Some(final_card_id.clone()), closing_cash_details).await?;
 
     let _ = crate::stores::audit_store::write_event(
         &app,
         crate::stores::audit_store::AuditLevel::Info,
         "SHIFT_CLOSED",
-        Some(card_id),
+        Some(final_card_id),
         None,
         None,
         None,

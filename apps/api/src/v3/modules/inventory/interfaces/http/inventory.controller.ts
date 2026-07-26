@@ -24,6 +24,8 @@ import { MergeBatchesUseCase } from "../../application/use-cases/merge-batches.u
 import {
   RequestStockAdjustmentUseCase,
   ApproveStockAdjustmentUseCase,
+  GetStockAdjustmentsUseCase,
+  RejectStockAdjustmentUseCase,
 } from "../../application/use-cases/adjustment-workflow.use-case";
 import { AssemblyUseCase } from "../../application/use-cases/assembly.use-case";
 import {
@@ -64,6 +66,8 @@ export class InventoryController {
     private readonly requestAdjustmentUseCase: RequestStockAdjustmentUseCase,
     private readonly assemblyUseCase: AssemblyUseCase,
     private readonly approveAdjustmentUseCase: ApproveStockAdjustmentUseCase,
+    private readonly getAdjustmentsUseCase: GetStockAdjustmentsUseCase,
+    private readonly rejectAdjustmentUseCase: RejectStockAdjustmentUseCase,
     private readonly getLeadTimeUseCase: GetSupplierLeadTimeUseCase,
     private readonly getWasteAnalysisUseCase: GetWasteAnalysisUseCase,
     private readonly checkB2BAvailabilityUseCase: CheckB2BAvailabilityUseCase,
@@ -228,6 +232,25 @@ export class InventoryController {
     );
   }
 
+  @Get("adjustments")
+  @Permissions("inventory:read")
+  @ApiOperation({
+    summary: "Get stock adjustments with pagination and status filters",
+    operationId: "Inventory_GetAdjustments",
+  })
+  async getAdjustments(
+    @Req() req: any,
+    @Query() paginationQuery: PaginationQueryDto,
+    @Query("status") status?: string,
+  ) {
+    const { limit = 20, offset = 0 } = paginationQuery;
+    return this.getAdjustmentsUseCase.execute(req.organization.id, {
+      limit: Number(limit),
+      offset: Number(offset),
+      status,
+    });
+  }
+
   @Patch("adjustments/:id/approve")
   @Permissions("inventory:manage")
   @ApiOperation({
@@ -239,6 +262,25 @@ export class InventoryController {
       req.organization.id,
       req.user.memberId,
       id,
+    );
+  }
+
+  @Patch("adjustments/:id/reject")
+  @Permissions("inventory:manage")
+  @ApiOperation({
+    summary: "Reject a pending stock adjustment",
+    operationId: "Inventory_RejectAdjustment",
+  })
+  async rejectAdjustment(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() body: { reason?: string },
+  ) {
+    return this.rejectAdjustmentUseCase.execute(
+      req.organization.id,
+      req.user.memberId,
+      id,
+      body.reason,
     );
   }
 

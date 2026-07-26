@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsNotEmpty,
   IsOptional,
@@ -29,6 +29,38 @@ export class OrderItemDto {
   unitPrice?: number;
 }
 
+export class ServiceBookingItemDto {
+  @ApiProperty({ example: "service_123" })
+  @IsString()
+  @IsNotEmpty()
+  serviceId: string;
+
+  @ApiProperty({ example: "2026-10-15T09:00:00Z" })
+  @IsString()
+  @IsNotEmpty()
+  scheduledStartTime: string;
+
+  @ApiPropertyOptional({ example: "2026-10-15T10:00:00Z" })
+  @IsString()
+  @IsOptional()
+  scheduledEndTime?: string;
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsArray()
+  @IsOptional()
+  staffIds?: string[];
+
+  @ApiPropertyOptional({ type: [String] })
+  @IsArray()
+  @IsOptional()
+  resourceIds?: string[];
+
+  @ApiPropertyOptional({ example: "Special service notes" })
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
+
 export enum V3TransactionChannel {
   ECOMMERCE_STORE = "ECOMMERCE_STORE",
   MOBILE_APP = "MOBILE_APP",
@@ -50,11 +82,19 @@ export class CreateOrderDto {
   @IsNotEmpty()
   locationId: string;
 
-  @ApiProperty({ type: [OrderItemDto] })
+  @ApiProperty({ type: [OrderItemDto], required: false })
   @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
-  items: OrderItemDto[];
+  items?: OrderItemDto[];
+
+  @ApiPropertyOptional({ type: [ServiceBookingItemDto] })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => ServiceBookingItemDto)
+  services?: ServiceBookingItemDto[];
 
   @ApiProperty({ type: AddressDto, required: false })
   @IsOptional()
