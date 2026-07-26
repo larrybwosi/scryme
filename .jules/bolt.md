@@ -69,6 +69,10 @@
 **Learning:** Filtering results after pagination (e.g., `lowStock` in `InventoryService`) in-memory is a performance anti-pattern that leads to inconsistent page sizes and unnecessary data fetching. Prisma v7.8.0 supports database-level field comparisons via `fields` (e.g., `availableStock: { lte: prisma.productVariantStock.fields.reorderPoint }`), which shifts the filter to the SQL `WHERE` clause.
 **Action:** Always move filters that compare two fields on the same model to the database level using Prisma's `fields` API to ensure correct pagination and reduce API overhead.
 
+## 2026-07-02 - [O(N*M) to O(N+M) Map-Based Indexing in receiveTransfer POS Path]
+**Learning:** Performing linear `.find()` lookups on received items array inside a loop of stock transfer items results in an $O(N \times M)$ complexity. Utilizing a pre-indexed Map structure mapping `variantId` to the item record reduces lookup to constant-time $O(1)$, resulting in an overall $O(N + M)$ execution profile during stock receipt.
+**Action:** Always pre-index arrays into Maps when reconciling collections inside processing loops, especially in high-volume inventory transfer and receipt operations.
+
 ## 2026-07-03 - [Parallelized Batched Aggregation in Movements]
 **Learning:** Sequential database lookups for multiple locations (e.g., 'from' and 'to' in transfers) within an integrity check create unnecessary database roundtrips. Combining these into parallelized queries with database-level aggregations ('groupBy' + '_sum') reduces network traffic and execution time from O(N) to O(1) database interactions per movement verification.
 **Action:** Always deduplicate entity IDs and use 'Promise.all' with 'groupBy' for any logic that requires summary statistics across multiple related entities or locations.
@@ -135,3 +139,10 @@
 ## 2026-07-24 - [Select Optimization in Physical Count Sheets]
 **Learning:** In stocking and physical inventory count sheet generation, eagerly loading full nested relation chains (like `variant` and deep `product` relations) with generic `include` statements is a massive overhead because count sheets only display scalar fields like variant SKU, name, and product name. Restricting the query with a highly targeted nested `select` statement avoids fetching unneeded heavy metadata, descriptions, image URLs, and barcodes, resulting in O(1) database/network load scaling with count sheet density.
 **Action:** Always audit listing or sheet generation endpoints and replace broad `include: { variant: { include: { product: true } } }` statements with targeted, precise nested `select` statements to eliminate over-fetching of relational text/JSON columns.
+
+## 2026-07-26 - [O(N*M) to O(1) Daily Slot Availability Pre-fetching]
+**Learning:** Performing multiple sequential database queries (`isStaffAvailable` and `serviceBooking.findFirst` for every time slot and staff member) inside nested time-slot evaluation loops creates a severe N+1 performance bottleneck. Pre-fetching all shifts and active bookings for all assigned staff members for the entire day in just two batch queries prior to loop execution, and then resolving time slot comparisons in-memory, completely eliminates the sequential database roundtrips, scaling constant-time O(1) with respect to the database.
+**Action:** For high-frequency loops evaluating slot availability or resource scheduling, always batch pre-fetch all relational configurations and schedules before entering loops and execute comparisons purely in-memory.
+## 2026-07-25 - [Select Optimization in Delivery Reconciliation Lists]
+**Learning:** Utilizing Prisma's nested `select` arrays inside a top-level `include` block on paginated listing endpoints is a performance anti-pattern. While it scopes the relational fields correctly, it still forces Prisma/SQL to fetch all scalar columns of the root query model (including heavy JSON blobs like `metadata` or huge text fields like `termsAndConditions`). Replacing top-level `include` blocks with targeted `select` blocks at the query's root ensures only requested scalars and relational attributes are retrieved, cutting DB payload size and NestJS hydration latency significantly.
+**Action:** Always replace top-level `include` blocks with precise `select` structures in list-retrieval and paginated search routes to avoid fetching unneeded bulky properties.
