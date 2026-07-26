@@ -9,6 +9,7 @@ import {
   Query,
   Param,
   Patch,
+  UsePipes,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -17,6 +18,8 @@ import {
   ApiResponse,
   ApiParam,
 } from "@nestjs/swagger";
+import { V3ZodValidationPipe } from "../../../../common/pipes/v3-zod-validation.pipe";
+import { RegisterCustomerSchema, UpdateCustomerSchema } from "../../application/dto/customer.schema";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";
 import { UpdateCustomerUseCase } from "../../application/use-cases/update-customer.use-case";
@@ -74,6 +77,7 @@ export class CustomerController {
 
   @Post("register")
   @AllowPublic()
+  @UsePipes(new V3ZodValidationPipe(RegisterCustomerSchema))
   @ApiOperation({
     summary: "Register a new customer (Zitadel)",
     operationId: "Customers_Register",
@@ -99,6 +103,7 @@ export class CustomerController {
 
   @Patch(":id")
   @Permissions("customer:update")
+  @UsePipes(new V3ZodValidationPipe(UpdateCustomerSchema))
   @ApiOperation({
     summary: "Update a customer profile",
     operationId: "Customers_Update",
