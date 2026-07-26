@@ -69,6 +69,10 @@
 **Learning:** Filtering results after pagination (e.g., `lowStock` in `InventoryService`) in-memory is a performance anti-pattern that leads to inconsistent page sizes and unnecessary data fetching. Prisma v7.8.0 supports database-level field comparisons via `fields` (e.g., `availableStock: { lte: prisma.productVariantStock.fields.reorderPoint }`), which shifts the filter to the SQL `WHERE` clause.
 **Action:** Always move filters that compare two fields on the same model to the database level using Prisma's `fields` API to ensure correct pagination and reduce API overhead.
 
+## 2026-07-02 - [O(N*M) to O(N+M) Map-Based Indexing in receiveTransfer POS Path]
+**Learning:** Performing linear `.find()` lookups on received items array inside a loop of stock transfer items results in an $O(N \times M)$ complexity. Utilizing a pre-indexed Map structure mapping `variantId` to the item record reduces lookup to constant-time $O(1)$, resulting in an overall $O(N + M)$ execution profile during stock receipt.
+**Action:** Always pre-index arrays into Maps when reconciling collections inside processing loops, especially in high-volume inventory transfer and receipt operations.
+
 ## 2026-07-03 - [Parallelized Batched Aggregation in Movements]
 **Learning:** Sequential database lookups for multiple locations (e.g., 'from' and 'to' in transfers) within an integrity check create unnecessary database roundtrips. Combining these into parallelized queries with database-level aggregations ('groupBy' + '_sum') reduces network traffic and execution time from O(N) to O(1) database interactions per movement verification.
 **Action:** Always deduplicate entity IDs and use 'Promise.all' with 'groupBy' for any logic that requires summary statistics across multiple related entities or locations.
