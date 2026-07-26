@@ -19,6 +19,7 @@ describe('ServiceAnalyticsService', () => {
             client: {
               serviceBooking: {
                 findMany: vi.fn(),
+                groupBy: vi.fn(),
               },
             },
           },
@@ -114,6 +115,70 @@ describe('ServiceAnalyticsService', () => {
       expect(result['staff-2']).toBeDefined();
       expect(result['staff-2'].bookingCount).toBe(1);
       expect(result['staff-2'].totalRevenue).toBe(200);
+    });
+  });
+
+  describe('getBookingConversionFunnel', () => {
+    it('should calculate booking conversion funnel using groupBy database aggregation', async () => {
+      const mockGroupByResult = [
+        {
+          status: BookingStatus.REQUESTED,
+          _count: { _all: 5 },
+        },
+        {
+          status: BookingStatus.CONFIRMED,
+          _count: { _all: 3 },
+        },
+        {
+          status: BookingStatus.COMPLETED,
+          _count: { _all: 12 },
+        },
+        {
+          status: BookingStatus.CANCELLED,
+          _count: { _all: 2 },
+        },
+      ];
+
+      vi.spyOn(prisma.client.serviceBooking, 'groupBy').mockResolvedValue(mockGroupByResult as any);
+
+      const startDate = new Date('2026-07-21T00:00:00Z');
+      const endDate = new Date('2026-07-21T23:59:59Z');
+
+      const result = await service.getBookingConversionFunnel('org-1', startDate, endDate);
+
+      expect(prisma.client.serviceBooking.groupBy).toHaveBeenCalledWith({
+        by: ['status'],
+        where: {
+          organizationId: 'org-1',
+          createdAt: { gte: startDate, lte: endDate },
+        },
+        _count: {
+          _all: true,
+        },
+      });
+
+      // Total bookings count: 5 + 3 + 12 + 2 = 22
+      // Scheduled = 22 - 5 (REQUESTED) - 2 (CANCELLED) = 15 (CONFIRMED + COMPLETED)
+      // Completed = 12
+      // Cancellations = 2
+      expect(result.stages[0]).toEqual({ name: 'Total Requests', count: 22, percentage: 100 });
+      expect(result.stages[1]).toEqual({ name: 'Scheduled', count: 15, percentage: (15 / 22) * 100 });
+      expect(result.stages[2]).toEqual({ name: 'Completed', count: 12, percentage: (12 / 15) * 100 });
+      expect(result.cancellations).toBe(2);
+    });
+
+    it('should handle division by zero or empty results safely', async () => {
+      vi.spyOn(prisma.client.serviceBooking, 'groupBy').mockResolvedValue([] as any);
+
+      const startDate = new Date('2026-07-21T00:00:00Z');
+      const endDate = new Date('2026-07-21T23:59:59Z');
+
+      const result = await service.getBookingConversionFunnel('org-1', startDate, endDate);
+
+      expect(result.stages[0]).toEqual({ name: 'Total Requests', count: 0, percentage: 100 });
+      expect(result.stages[1]).toEqual({ name: 'Scheduled', count: 0, percentage: 0 });
+      expect(result.stages[2]).toEqual({ name: 'Completed', count: 0, percentage: 0 });
+      expect(result.cancellations).toBe(0);
     });
   });
 });
