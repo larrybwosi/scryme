@@ -331,6 +331,36 @@ services:
       retries: 3
       start_period: 15s
 
+  docs:
+    image: ghcr.io/larrybwosi/scryme/docs:9.33.0
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    env_file:
+      - .env.example
+    environment:
+      - PORT=${DOCS_PORT:-3008}
+    networks:
+      - scryme-network
+      - proxy-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--timeout=3",
+          "--spider",
+          "http://localhost:${DOCS_PORT:-3008}/api/health",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
 volumes:
   postgres_data:
   rustfs_data:
