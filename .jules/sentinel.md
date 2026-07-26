@@ -205,3 +205,8 @@
 **Vulnerability:** The booking verification OTP mechanism allowed the same validated verification identifier to be reused multiple times to submit guest bookings, leading to a replay/bypass attack vector and guest booking spamming.
 **Learning:** OTP or identity-verification tokens/records must follow a single-use "fail-closed" consumption model. Once validated successfully, the token or verification state must be immediately consumed, invalidated, or deleted. If left active, attackers can replay the verification ID to perform multiple authorized actions without re-authenticating or re-proving identity.
 **Prevention:** Always delete or invalidate verification records (`BookingVerificationCode`) in the database as soon as they are validated. Enforce a strict single-use policy on verification codes.
+
+## 2026-07-26 - IDOR Vulnerability in CRM Activity Communication Reply
+**Vulnerability:** The CRM integrations service resolved communication activities for replying using `findUnique` with only the `id` field, then validated ownership in-memory. This was inefficient and could lead to data leakage if organization checks were bypassed or omitted.
+**Learning:** For database tables that lack a composite unique index on `[id, organizationId]`, retrieving records with `findUnique` by ID first and then asserting ownership can fail-open or load extraneous records from other tenants. Implementing tenant isolation directly at the database query layer via `findFirst` is safer and more performant.
+**Prevention:** Always use `findFirst` instead of `findUnique` with explicit `where: { id, organizationId }` for tenant-scoped record lookups on models lacking composite unique indices.
