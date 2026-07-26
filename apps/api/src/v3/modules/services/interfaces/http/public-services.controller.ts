@@ -110,30 +110,106 @@ export class PublicServicesController {
     const baseDay = targetDate.getDate();
 
     const duration = service.estimatedDuration || 30;
+    const staffIds = (service.staff || []).map(s => s.memberId);
+
+    /**
+     * OPTIMIZATION (Bolt ⚡): Resolved major performance bottleneck in slot calculation.
+     * Replaced repeated N+1 database queries (`isStaffAvailable` and `serviceBooking.findFirst`
+     * executed inside nested time-slot and staff iteration loops) with O(1) database queries
+     * that pre-fetch staff schedules/shifts and active bookings for the entire day.
+     * Time-slot analysis is then resolved completely in-memory, reducing database roundtrips
+     * from up to 120+ sequential requests to only 2 concurrent pre-fetched queries.
+     */
+    const dayOfWeek = targetDate.getDay();
+    const startOfDay = new Date(baseYear, baseMonth, baseDay, 0, 0, 0, 0);
+    const endOfDay = new Date(baseYear, baseMonth, baseDay, 23, 59, 59, 999);
+
+    const [shifts, bookings] = staffIds.length > 0
+      ? await Promise.all([
+          this.prisma.client.staffShift.findMany({
+            where: {
+              memberId: { in: staffIds },
+              dayOfWeek,
+              isActive: true,
+            },
+            select: {
+              memberId: true,
+              startTime: true,
+              endTime: true,
+              breaks: {
+                select: {
+                  startTime: true,
+                  endTime: true,
+                },
+              },
+            },
+          }),
+          this.prisma.client.serviceBooking.findMany({
+            where: {
+              staff: { some: { memberId: { in: staffIds } } },
+              status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+              scheduledStartTime: { lt: endOfDay },
+              scheduledEndTime: { gt: startOfDay },
+            },
+            select: {
+              scheduledStartTime: true,
+              scheduledEndTime: true,
+              staff: {
+                select: {
+                  memberId: true,
+                },
+              },
+            },
+          }),
+        ])
+      : [[], []];
+
+    const timeToMinutes = (time: string) => {
+      const [hours, minutes] = time.split(":").map(Number);
+      return hours * 60 + minutes;
+    };
 
     for (let hour = 8; hour < 18; hour++) {
       for (const min of [0, 30]) {
         const slotStart = new Date(baseYear, baseMonth, baseDay, hour, min, 0);
         const slotEnd = new Date(slotStart.getTime() + duration * 60 * 1000);
 
+        const startMinutes = slotStart.getHours() * 60 + slotStart.getMinutes();
+        const endMinutes = slotEnd.getHours() * 60 + slotEnd.getMinutes();
+
         let staffAvailable = false;
-        if (service.staff && service.staff.length > 0) {
+        if (staffIds.length > 0) {
           for (const s of service.staff) {
-            const isWorking = await this.staffScheduling.isStaffAvailable(s.memberId, slotStart, slotEnd);
-            if (isWorking) {
-              const overlap = await this.prisma.client.serviceBooking.findFirst({
-                where: {
-                  staff: { some: { memberId: s.memberId } },
-                  status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
-                  OR: [
-                    {
-                      scheduledStartTime: { lt: slotEnd },
-                      scheduledEndTime: { gt: slotStart },
-                    }
-                  ],
+            // 1. In-memory check: Is staff working in this shift (and not on break)?
+            const staffShifts = shifts.filter(sh => sh.memberId === s.memberId);
+            let isWorking = false;
+            for (const shift of staffShifts) {
+              const shiftStart = timeToMinutes(shift.startTime);
+              const shiftEnd = timeToMinutes(shift.endTime);
+
+              if (startMinutes >= shiftStart && endMinutes <= shiftEnd) {
+                const inBreak = shift.breaks.some(b => {
+                  const breakStart = timeToMinutes(b.startTime);
+                  const breakEnd = timeToMinutes(b.endTime);
+                  return startMinutes < breakEnd && endMinutes > breakStart;
+                });
+
+                if (!inBreak) {
+                  isWorking = true;
+                  break;
                 }
+              }
+            }
+
+            // 2. In-memory check: Does staff have any overlapping active bookings?
+            if (isWorking) {
+              const hasOverlap = bookings.some(b => {
+                const assignedToStaff = b.staff.some(st => st.memberId === s.memberId);
+                if (!assignedToStaff) return false;
+                return b.scheduledStartTime < slotEnd && b.scheduledEndTime > slotStart;
               });
-              if (!overlap) {
+
+              if (!hasOverlap) {
                 staffAvailable = true;
                 break;
               }
