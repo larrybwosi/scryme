@@ -9,7 +9,7 @@ export default function RootLayout({
 }): React.ReactElement {
   return (
     <html lang="en">
-      <body className="bg-[#f8f9fa] font-sans antialiased">
+      <body className="bg-background text-foreground font-sans antialiased">
         <Providers>
           <div className="flex h-screen overflow-hidden">
             <SidebarWrapper />
