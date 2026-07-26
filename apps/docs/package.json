@@ -1,0 +1,27 @@
+{
+  "name": "docs",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "predev": "cp ../../packages/v3-sdk/openapi.json src/openapi.json",
+    "dev": "vite",
+    "prebuild": "cp ../../packages/v3-sdk/openapi.json src/openapi.json",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "lucide-react": "^0.553.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.13",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@tailwindcss/vite": "^4.1.18",
+    "tailwindcss": "^4.1.18",
+    "typescript": "5.7.3",
+    "vite": "^8.0.2"
+  }
+}
