@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useCallback, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -50,18 +50,7 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
     setLocalSearch(currentQ);
   }, [currentQ]);
 
-  // Debounced search update
-  useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      if (localSearch !== currentQ) {
-        updateQueryParam("q", localSearch);
-      }
-    }, 400);
-
-    return () => clearTimeout(delayDebounce);
-  }, [localSearch, currentQ]);
-
-  const updateQueryParam = (key: string, value: string) => {
+  const updateQueryParam = useCallback((key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value === "all" || value === "") {
       params.delete(key);
@@ -72,7 +61,18 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`);
     });
-  };
+  }, [searchParams, pathname, router]);
+
+  // Debounced search update
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (localSearch !== currentQ) {
+        updateQueryParam("q", localSearch);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [localSearch, currentQ, updateQueryParam]);
 
   const resetAllFilters = () => {
     setLocalSearch("");
