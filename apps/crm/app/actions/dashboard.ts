@@ -376,28 +376,39 @@ export async function getCustomerData() {
 
     try {
         const months = 6;
-        const customerData = [];
+        const queries = [];
 
+        // ⚡ Bolt: Performance Optimization (N+1 Query Elimination / Parallelization)
+        // Creating monthly date ranges and parallelizing database calls using `Promise.all`
+        // instead of sequential, blocking database count roundtrips inside a `for` loop.
+        // This cuts down latency from 6x sequential database RTTs to a single parallel RTT.
+        const monthDates: Date[] = [];
         for (let i = months - 1; i >= 0; i--) {
             const date = subMonths(new Date(), i);
+            monthDates.push(date);
+
             const start = startOfMonth(date);
             const end = endOfMonth(date);
 
-            const count = await db.customer.count({
-                where: {
-                    organizationId,
-                    createdAt: {
-                        gte: start,
-                        lte: end,
+            queries.push(
+                db.customer.count({
+                    where: {
+                        organizationId,
+                        createdAt: {
+                            gte: start,
+                            lte: end,
+                        }
                     }
-                }
-            });
-
-            customerData.push({
-                name: date.toLocaleString('default', { month: 'short' }),
-                customers: count,
-            });
+                })
+            );
         }
+
+        const counts = await Promise.all(queries);
+
+        const customerData = monthDates.map((date, index) => ({
+            name: date.toLocaleString('default', { month: 'short' }),
+            customers: counts[index],
+        }));
 
         return customerData;
     } catch (error) {
