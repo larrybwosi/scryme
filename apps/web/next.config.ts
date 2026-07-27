@@ -52,9 +52,18 @@ const nextConfig: NextConfig = {
   experimental: {
     workerThreads: false,
     cpus: 1,
+    optimizePackageImports: [
+      "lucide-react",
+      "date-fns",
+      "recharts",
+      "@repo/ui",
+    ],
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
   },
 };
 
