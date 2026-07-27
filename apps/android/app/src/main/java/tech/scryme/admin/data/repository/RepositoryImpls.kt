@@ -296,7 +296,9 @@ class ExpenseRepositoryImpl(
 
 // --- API Helpers ---
 
-private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): Result<T> {
+private suspend inline fun <reified T> safeApiCall(
+    crossinline call: suspend () -> Response<T>
+): Result<T> {
     return try {
         val response = call()
         if (response.isSuccessful) {
@@ -304,7 +306,12 @@ private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): Result<T> 
             if (body != null) {
                 Result.success(body)
             } else {
-                Result.failure(Exception("Response body was empty"))
+                if (Unit is T) {
+                    @Suppress("UNCHECKED_CAST")
+                    Result.success(Unit as T)
+                } else {
+                    Result.failure(Exception("Response body was empty"))
+                }
             }
         } else {
             Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
@@ -314,7 +321,9 @@ private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): Result<T> 
     }
 }
 
-private suspend fun <T> safeApiCallEnvelope(call: suspend () -> Response<ApiEnvelope<T>>): Result<T> {
+private suspend inline fun <reified T> safeApiCallEnvelope(
+    crossinline call: suspend () -> Response<ApiEnvelope<T>>
+): Result<T> {
     return try {
         val response = call()
         if (response.isSuccessful) {
@@ -325,8 +334,12 @@ private suspend fun <T> safeApiCallEnvelope(call: suspend () -> Response<ApiEnve
                     if (data != null) {
                         Result.success(data)
                     } else {
-                        @Suppress("UNCHECKED_CAST")
-                        Result.success(Unit as T)
+                        if (Unit is T) {
+                            @Suppress("UNCHECKED_CAST")
+                            Result.success(Unit as T)
+                        } else {
+                            Result.failure(Exception("Expected data was null/missing in API response"))
+                        }
                     }
                 } else {
                     Result.failure(Exception(envelope.error?.message ?: "Unknown API error occurred"))
