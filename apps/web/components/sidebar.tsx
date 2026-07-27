@@ -190,6 +190,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label="Collapse sidebar"
+              title="Collapse sidebar"
               className="p-1.5 rounded-md border border-sidebar-border bg-sidebar hover:bg-sidebar-accent transition-colors">
               <ChevronLeft size={14} />
             </button>
@@ -199,6 +200,7 @@ export function Sidebar() {
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label="Expand sidebar"
+              title="Expand sidebar"
               className="p-1.5 rounded-md border border-sidebar-border bg-sidebar hover:bg-sidebar-accent transition-colors">
               <ChevronRight size={14} />
             </button>
@@ -235,6 +237,8 @@ export function Sidebar() {
                         router.push(item.href);
                       }
                     }}
+                    aria-label={item.title}
+                    title={isCollapsed ? item.title : undefined}
                     className={cn(
                       "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
                       isActive
