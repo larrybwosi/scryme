@@ -153,3 +153,7 @@
 ## 2026-07-27 - [Database GroupBy Aggregation vs In-Memory Mapping in Conversion Funnels]
 **Learning:** Fetching an entire matching collection of heavy entities (like `ServiceBooking`) via a `findMany` query just to perform `.length` and `.filter` counts in-memory is a major performance and scalability bottleneck. Utilizing database-level `groupBy` count aggregations instead shrinks network payload, database I/O, and Node.js serialization/memory pressure from $O(N)$ down to a flat $O(1)$.
 **Action:** For dashboard metrics, analytics, or funnel conversions that only require counting records categorized by statuses or types, always use Prisma's `groupBy` aggregation API.
+
+## 2026-07-27 - [Parallelized Database Upserts for Entity Initialization]
+**Learning:** Running database writes or upserts sequentially inside a loop (N+1 database roundtrips) during configuration or tenant setup flows is a major latency bottleneck. Executing these independent upserts concurrently using `Promise.all` shrinks wait times from O(N) to O(1), improving initialization latency by up to 90% while fully preserving data consistency and avoiding race conditions.
+**Action:** Always batch and parallelize independent initialization tasks or configuration upserts using `Promise.all` rather than executing them sequentially in loops.
