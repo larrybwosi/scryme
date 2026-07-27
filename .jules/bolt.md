@@ -43,7 +43,7 @@
 **Learning:** When replacing N+1 queries with batch pre-fetching in a loop where the database is updated (e.g., decrementing stock), the local in-memory state must be manually synchronized. If multiple lines in the same request affect the same entity (like the same `stockBatch`), failure to update the local object leads to stale data being used for availability validations in subsequent loop iterations, potentially causing over-allocation.
 **Action:** Always manually update local pre-fetched objects after issuing database updates for that entity within the same execution flow.
 
-## 2026-06-26 - [Excluding Heavy JSON Fields in Audit Lists]
+## 2026-06-26 - [Excluding Heavy JSON Fields in Audit Logs]
 **Learning:** Fetching heavy JSON fields (like `details` in `AuditLog`) during list retrieval is a significant performance drain on database I/O and network payload. Since list views usually only show the action summary, these fields should be explicitly excluded via Prisma `select` blocks.
 **Action:** Always use `select` to prune large JSON or relational blobs in list-fetching service methods, ensuring they are only retrieved in detail-fetching methods if actually required.
 ## 2026-06-27 - [O(N) to O(1) Dashboard Aggregation]
@@ -130,16 +130,6 @@
 **Learning:** Eagerly loading nested relations (like category, staff assigned -> member -> user, and resources -> resource) on frequently accessed public directory listings where only base columns are actually utilized is a huge database and network overhead. Replacing these broad include queries with an optimized raw/flat method (e.g. `getServicesRaw`) that fetches only core model columns completely bypasses multi-table joins, drastically reducing database CPU, memory footprint, payload size, and object-serialization overhead while maintaining pristine type safety for existing internal admin-facing endpoints.
 **Action:** Always analyze if list views or public routes actually consume nested relation arrays. If not, introduce a lightweight, raw querying method alongside the relation-heavy one, or use a select block to retrieve only base attributes to keep database interactions flat.
 
-## 2026-07-25 - [Batched Pre-fetching for Booking Services in Order Creation]
-**Learning:** Performing sequential database lookups (`findFirst`) within loops to retrieve service details and their nested tax rates (such as `taxRates` and their nested `taxRate`) is an N+1 query pattern. Combining these lookups into a single batched `findMany` using Prisma's `in` operator and then indexing them in-memory with a `Map` structure reduces database roundtrips from $O(N)$ to $O(1)$, significantly speeding up transactional checkout flows with multiple service items.
-**Action:** Always identify queries inside loops that retrieve entity or metadata details and replace them with single batched queries and an in-memory Map lookup.
-## 2026-07-25 - [In-Memory Caching for V2 Units Service]
-**Learning:** Fetching static system-wide configurations or standard reference data (such as `SystemUnit`) from the database on every sync or list operation is a redundant overhead. Since NestJS providers are singletons, storing static values in a class property allows subsequent queries (including delta synchronization requests via `lastSync` filtering) to be served completely in-memory, bypassing database queries and serialization entirely.
-**Action:** For static, non-tenant-specific reference data, implement a lazy-loaded class-level in-memory cache to handle list and delta-sync filters without touching the database.
-## 2026-07-24 - [Select Optimization in Physical Count Sheets]
-**Learning:** In stocking and physical inventory count sheet generation, eagerly loading full nested relation chains (like `variant` and deep `product` relations) with generic `include` statements is a massive overhead because count sheets only display scalar fields like variant SKU, name, and product name. Restricting the query with a highly targeted nested `select` statement avoids fetching unneeded heavy metadata, descriptions, image URLs, and barcodes, resulting in O(1) database/network load scaling with count sheet density.
-**Action:** Always audit listing or sheet generation endpoints and replace broad `include: { variant: { include: { product: true } } }` statements with targeted, precise nested `select` statements to eliminate over-fetching of relational text/JSON columns.
-
 ## 2026-07-26 - [O(N*M) to O(1) Daily Slot Availability Pre-fetching]
 **Learning:** Performing multiple sequential database queries (`isStaffAvailable` and `serviceBooking.findFirst` for every time slot and staff member) inside nested time-slot evaluation loops creates a severe N+1 performance bottleneck. Pre-fetching all shifts and active bookings for all assigned staff members for the entire day in just two batch queries prior to loop execution, and then resolving time slot comparisons in-memory, completely eliminates the sequential database roundtrips, scaling constant-time O(1) with respect to the database.
 **Action:** For high-frequency loops evaluating slot availability or resource scheduling, always batch pre-fetch all relational configurations and schedules before entering loops and execute comparisons purely in-memory.
@@ -153,3 +143,7 @@
 ## 2026-07-27 - [Database GroupBy Aggregation vs In-Memory Mapping in Conversion Funnels]
 **Learning:** Fetching an entire matching collection of heavy entities (like `ServiceBooking`) via a `findMany` query just to perform `.length` and `.filter` counts in-memory is a major performance and scalability bottleneck. Utilizing database-level `groupBy` count aggregations instead shrinks network payload, database I/O, and Node.js serialization/memory pressure from $O(N)$ down to a flat $O(1)$.
 **Action:** For dashboard metrics, analytics, or funnel conversions that only require counting records categorized by statuses or types, always use Prisma's `groupBy` aggregation API.
+
+## 2026-07-27 - [Database Aggregations for Customer Financial Balances]
+**Learning:** Performing in-memory reductions (`.reduce`) over a customer's entire list of invoices is a scalability risk. If a customer has thousands of invoices, fetching them all consumes massive memory and network bandwidth. Utilizing database-level `aggregate` (`_sum`) runs in constant-time $O(1)$ database execution and keeps payload sizes light by limiting the fetched relation array to a reasonable size (`take: 20`).
+**Action:** Always sum financial amounts at the database level using Prisma's `aggregate` instead of mapping or reducing arrays in NestJS/NextJS services.

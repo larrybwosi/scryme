@@ -121,6 +121,7 @@ export class CustomerService {
           },
           invoices: {
             orderBy: { postingDate: "desc" },
+            take: 20,
           },
           transactions: {
             where: { organizationId },
@@ -137,15 +138,23 @@ export class CustomerService {
       const crmData = (customer.crmRecord?.data as Record<string, any>) || {};
       const { firstName, lastName } = this.splitName(customer.name);
 
-      // Calculate balance
-      const totalInvoiced = customer.invoices.reduce(
-        (acc, inv) => acc + inv.grandTotal,
-        0,
-      );
-      const totalPaidInvoices = customer.invoices
-        .filter((inv) => inv.status === "PAID")
-        .reduce((acc, inv) => acc + inv.grandTotal, 0);
+      // ⚡ Bolt Optimization: Use database-level aggregations instead of in-memory reductions.
+      // Fetching and iterating over thousands of invoices in-memory is a major performance anti-pattern.
+      // Moving aggregation to the database using Prisma's `aggregate` reduces the runtime complexity from
+      // O(N) memory and network overhead to constant-time O(1).
+      const [invoiceSum, paidInvoiceSum] = await Promise.all([
+        this.prisma.invoice.aggregate({
+          where: { customerId, organizationId },
+          _sum: { grandTotal: true },
+        }),
+        this.prisma.invoice.aggregate({
+          where: { customerId, organizationId, status: "PAID" },
+          _sum: { grandTotal: true },
+        }),
+      ]);
 
+      const totalInvoiced = invoiceSum._sum.grandTotal || 0;
+      const totalPaidInvoices = paidInvoiceSum._sum.grandTotal || 0;
       const balance = totalInvoiced - totalPaidInvoices;
 
       return {
@@ -227,12 +236,18 @@ export class CustomerService {
         organizationId,
       };
 
-      if (formData.customerType !== undefined) customerData.customerType = formData.customerType || null;
-      if (formData.dateOfBirth !== undefined) customerData.dateOfBirth = formData.dateOfBirth || null;
-      if (formData.loyaltyPoints !== undefined) customerData.loyaltyPoints = Number(formData.loyaltyPoints) || 0;
-      if (formData.isActive !== undefined) customerData.isActive = formData.isActive ?? true;
-      if (formData.deliveryNotes !== undefined) customerData.deliveryNotes = formData.deliveryNotes || null;
-      if (formData.pinnedLocation !== undefined) customerData.pinnedLocation = formData.pinnedLocation || null;
+      if (formData.customerType !== undefined)
+        customerData.customerType = formData.customerType || null;
+      if (formData.dateOfBirth !== undefined)
+        customerData.dateOfBirth = formData.dateOfBirth || null;
+      if (formData.loyaltyPoints !== undefined)
+        customerData.loyaltyPoints = Number(formData.loyaltyPoints) || 0;
+      if (formData.isActive !== undefined)
+        customerData.isActive = formData.isActive ?? true;
+      if (formData.deliveryNotes !== undefined)
+        customerData.deliveryNotes = formData.deliveryNotes || null;
+      if (formData.pinnedLocation !== undefined)
+        customerData.pinnedLocation = formData.pinnedLocation || null;
       if (formData.tags !== undefined) customerData.tags = formData.tags || [];
 
       // 1. Ensure CRM Object Definition exists for "person"
