@@ -137,6 +137,24 @@ class PresenceRepositoryImpl(
         }
     }
 
+    override suspend fun getPettyCashTransactions(limit: Int?): Result<List<PettyCashTransactionDto>> {
+        val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getPettyCashTransactions(slug, limit)
+        }
+    }
+
+    override suspend fun getTransactions(
+        locationId: String?,
+        startDate: String?,
+        endDate: String?
+    ): Result<List<TransactionDto>> {
+        val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getTransactions(slug, locationId, startDate, endDate)
+        }
+    }
+
     override fun monitorActivePresence(pollIntervalMs: Long): Flow<List<MemberResponseDto>> = flow {
         while (true) {
             getMembers(status = "ONLINE").onSuccess { list ->

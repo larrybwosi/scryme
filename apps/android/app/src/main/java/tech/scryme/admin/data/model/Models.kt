@@ -232,6 +232,44 @@ data class StockAdjustmentLocationDto(
     @SerializedName("name") val name: String
 )
 
+// --- Petty Cash & Transactions ---
+
+data class PettyCashTransactionDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("fundId") val fundId: String,
+    @SerializedName("type") val type: String, // TOP_UP, EXPENSE, ADJUSTMENT
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("memberId") val memberId: String,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("member") val member: MemberResponseSummary? = null
+)
+
+data class TransactionDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("amount") val amount: Double? = null,
+    @SerializedName("locationId") val locationId: String? = null,
+    @SerializedName("memberId") val memberId: String? = null,
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("items") val items: List<TransactionItemDto>? = null
+)
+
+data class TransactionItemDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("productName") val productName: String,
+    @SerializedName("unitPrice") val unitPrice: Double,
+    @SerializedName("quantity") val quantity: Double,
+    @SerializedName("lineTotal") val lineTotal: Double
+)
+
+data class MemberSalesDto(
+    val memberId: String,
+    val memberName: String,
+    val salesCount: Int,
+    val totalAmount: Double
+)
+
 data class StockAdjustmentMemberDto(
     @SerializedName("user") val user: StockAdjustmentUserDto? = null
 )

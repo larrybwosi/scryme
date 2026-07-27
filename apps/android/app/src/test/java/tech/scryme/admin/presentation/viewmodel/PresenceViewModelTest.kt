@@ -108,4 +108,45 @@ class PresenceViewModelTest {
         updatedBranch = viewModel.branches.value.first { it.id == "loc_1" }
         assertEquals(true, updatedBranch.isActive)
     }
+
+    @Test
+    fun `selectBranchForDetail updates states and fetches from API or triggers fallbacks`() = runTest(testDispatcher) {
+        coEvery { repository.getAttendanceLogs(any(), any(), any(), eq("loc_1")) } returns Result.success(
+            AttendanceLogsResponse(items = emptyList(), meta = PaginationMeta(0, 1, 10, 0))
+        )
+        coEvery { repository.getPettyCashTransactions(any()) } returns Result.success(emptyList())
+        coEvery { repository.getTransactions(eq("loc_1"), any(), any()) } returns Result.success(emptyList())
+
+        // Initial states
+        assertEquals(null, viewModel.selectedBranchId.value)
+        assertEquals(UiState.Idle, viewModel.branchAttendanceLogs.value)
+
+        // Select branch
+        viewModel.selectBranchForDetail("loc_1")
+        assertEquals("loc_1", viewModel.selectedBranchId.value)
+
+        runCurrent()
+
+        // Wait for coroutines to execute
+        advanceTimeBy(100)
+
+        // Verify API was called
+        coVerify { repository.getAttendanceLogs(any(), any(), any(), eq("loc_1")) }
+        coVerify { repository.getPettyCashTransactions(any()) }
+        coVerify { repository.getTransactions(eq("loc_1"), any(), any()) }
+
+        // Fallbacks should be triggered as we returned empty lists
+        assertTrue(viewModel.branchAttendanceLogs.value is UiState.Success)
+        val logs = (viewModel.branchAttendanceLogs.value as UiState.Success).data
+        assertTrue(logs.isNotEmpty())
+        assertEquals("Sarah Connor", logs.first().member?.user?.name)
+
+        assertTrue(viewModel.pettyCashTransactions.value is UiState.Success)
+        val pcTxns = (viewModel.pettyCashTransactions.value as UiState.Success).data
+        assertTrue(pcTxns.isNotEmpty())
+        assertEquals("pc_1", pcTxns.first().id)
+
+        assertEquals(1845.50, viewModel.branchSales.value, 0.01)
+        assertEquals(3, viewModel.memberSalesList.value.size)
+    }
 }
