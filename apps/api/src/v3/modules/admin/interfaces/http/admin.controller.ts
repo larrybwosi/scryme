@@ -9,6 +9,8 @@ import {
   Body,
   Query,
   UseGuards,
+  Req,
+  BadRequestException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { AdminService } from "../../infrastructure/services/admin.service";
@@ -101,7 +103,14 @@ export class AdminController {
 
   @Post("users/:id/ban")
   @ApiOperation({ summary: "Globally ban a user and suspend associated members" })
-  async banUser(@Param("id") id: string, @Body() dto: BanUserDto) {
+  async banUser(
+    @Param("id") id: string,
+    @Body() dto: BanUserDto,
+    @Req() req: any,
+  ) {
+    if (req.user && req.user.id === id) {
+      throw new BadRequestException("You cannot ban yourself");
+    }
     return this.adminService.banUser(id, dto);
   }
 
