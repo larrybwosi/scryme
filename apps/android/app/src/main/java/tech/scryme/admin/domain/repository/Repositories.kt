@@ -17,6 +17,8 @@ interface PresenceRepository {
     suspend fun checkIn(locationId: String, notes: String? = null): Result<AttendanceLogDto>
     suspend fun checkOut(locationId: String? = null, notes: String? = null): Result<AttendanceLogDto>
     suspend fun adminCheckOut(memberId: String, locationId: String? = null, notes: String? = null): Result<AttendanceLogDto>
+    suspend fun getPettyCashTransactions(limit: Int? = null): Result<List<PettyCashTransactionDto>>
+    suspend fun getTransactions(locationId: String? = null, startDate: String? = null, endDate: String? = null): Result<List<TransactionDto>>
 
     // Real-time Presence Flow using Poll/WS Pattern
     fun monitorActivePresence(pollIntervalMs: Long = 10000L): Flow<List<MemberResponseDto>>

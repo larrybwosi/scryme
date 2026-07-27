@@ -213,6 +213,13 @@ fun DashboardView(
             )
 
             ShortcutCard(
+                title = "Branch ID Inspector",
+                subtitle = "View sales, petty cash, and check-ins per branch",
+                icon = Icons.Default.Home,
+                onClick = { onNavigateToScreen(DashboardScreen.BRANCH_DETAIL) }
+            )
+
+            ShortcutCard(
                 title = "Branch Broadcast",
                 subtitle = "Send global or branch-specific announcements",
                 icon = Icons.Default.Share,

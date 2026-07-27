@@ -20,7 +20,8 @@ enum class DashboardScreen {
     EXPENSES,
     ANALYTICS,
     BROADCAST,
-    SETTINGS
+    SETTINGS,
+    BRANCH_DETAIL
 }
 
 @Composable
@@ -86,6 +87,10 @@ fun AdminDashboard(
                 DashboardScreen.SETTINGS -> SettingsView(
                     presenceViewModel = presenceViewModel,
                     activeOrg = activeOrg,
+                    onBackToHome = { currentScreen = DashboardScreen.HOME }
+                )
+                DashboardScreen.BRANCH_DETAIL -> BranchDetailView(
+                    presenceViewModel = presenceViewModel,
                     onBackToHome = { currentScreen = DashboardScreen.HOME }
                 )
             }
