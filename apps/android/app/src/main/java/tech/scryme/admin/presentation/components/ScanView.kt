@@ -174,7 +174,7 @@ fun ScanView(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = member.user.name.take(1).uppercase(),
+                                text = (member.user.name ?: "Unknown").take(1).uppercase(),
                                 color = Color.Green,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 24.sp
@@ -184,7 +184,7 @@ fun ScanView(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = member.user.name,
+                            text = member.user.name ?: "Unknown",
                             color = ScrymeColors.Paper,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp

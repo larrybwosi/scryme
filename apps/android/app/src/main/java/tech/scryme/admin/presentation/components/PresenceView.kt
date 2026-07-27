@@ -237,7 +237,7 @@ fun PresenceView(
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
-                                            text = member.user.name.take(1).uppercase(),
+                                            text = (member.user.name ?: "Unknown").take(1).uppercase(),
                                             color = ScrymeColors.Brass,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 16.sp
@@ -248,7 +248,7 @@ fun PresenceView(
 
                                     Column {
                                         Text(
-                                            text = member.user.name,
+                                            text = member.user.name ?: "Unknown",
                                             color = ScrymeColors.Paper,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 15.sp
@@ -285,7 +285,7 @@ fun PresenceView(
                                         OutlinedButton(
                                             onClick = {
                                                 presenceViewModel.forceCheckoutMember(member.id)
-                                                Toast.makeText(context, "Force check-out sent for ${member.user.name}", Toast.LENGTH_SHORT).show()
+                                                Toast.makeText(context, "Force check-out sent for ${member.user.name ?: "Unknown"}", Toast.LENGTH_SHORT).show()
                                             },
                                             border = BorderStroke(1.dp, ScrymeColors.Crimson.copy(alpha = 0.5f)),
                                             shape = RoundedCornerShape(4.dp),

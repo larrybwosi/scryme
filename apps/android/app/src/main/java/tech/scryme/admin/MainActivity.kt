@@ -132,16 +132,21 @@ fun AppNavigation(
     val loginState by authViewModel.loginState.collectAsState()
 
     if (isAuthenticated) {
-        var userEmail = "admin@scryme.tech"
-        var userName = "System Administrator"
-        var activeOrg = "The Operating Ledger"
+        val savedEmail by sessionManager.userEmail.collectAsState()
+        val savedName by sessionManager.userName.collectAsState()
+        val savedOrgId by sessionManager.activeOrgId.collectAsState()
+
+        var userEmail = savedEmail ?: "admin@scryme.tech"
+        var userName = savedName ?: "System Administrator"
+        var activeOrg = savedOrgId ?: "The Operating Ledger"
 
         // Safely extract active session details if available in State
-        if (loginState is UiState.Success) {
-            val data = (loginState as UiState.Success<BetterAuthSessionResponse>).data
-            userEmail = data.user.email
-            userName = data.user.name
-            activeOrg = data.user.activeOrganizationId ?: activeOrg
+        val state = loginState
+        if (state is UiState.Success) {
+            val data = state.data
+            userEmail = data.user?.email ?: userEmail
+            userName = data.user?.name ?: userName
+            activeOrg = data.user?.activeOrganizationId ?: activeOrg
         }
 
         AdminDashboard(

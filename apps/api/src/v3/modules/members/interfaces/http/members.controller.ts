@@ -22,6 +22,8 @@ import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { MemberUseCase } from "../../application/use-cases/member.use-case";
+import { AttendanceUseCase } from "../../application/use-cases/attendance.use-case";
+import { CheckOutDto } from "../../application/dto/attendance.dto";
 import {
   CreateMemberDto,
   UpdateMemberDto,
@@ -43,7 +45,10 @@ import { PrismaService } from "@/prisma/prisma.service";
 @Controller(":orgSlug/members")
 @ApiParam({ name: "orgSlug", type: "string" })
 export class MembersController {
-  constructor(private readonly memberUseCase: MemberUseCase) {}
+  constructor(
+    private readonly memberUseCase: MemberUseCase,
+    private readonly attendanceUseCase: AttendanceUseCase,
+  ) {}
 
   @Get()
   @Permissions("members:read")
@@ -134,6 +139,21 @@ export class MembersController {
       id,
       status,
       actorId,
+    );
+  }
+
+  @Post(":memberId/attendance/check-out")
+  @Permissions("attendance:write")
+  @ApiOperation({ summary: "Admin check-out a member" })
+  async adminCheckOut(
+    @Request() req: any,
+    @Param("memberId") memberId: string,
+    @Body() dto: CheckOutDto,
+  ) {
+    return this.attendanceUseCase.checkOut(
+      req.v3Context.organizationId,
+      memberId,
+      dto,
     );
   }
 }

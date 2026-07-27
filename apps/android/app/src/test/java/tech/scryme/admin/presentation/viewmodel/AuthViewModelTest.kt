@@ -81,7 +81,7 @@ class AuthViewModelTest {
         advanceTimeBy(150)
 
         assertTrue(viewModel.loginState.value is UiState.Error)
-        assertEquals("Unauthorized", (viewModel.loginState.value as UiState.Error).message)
+        assertEquals("invalid credentials", (viewModel.loginState.value as UiState.Error).message)
     }
 
     @Test
