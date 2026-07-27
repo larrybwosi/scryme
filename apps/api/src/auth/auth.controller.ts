@@ -2,6 +2,7 @@ import { Controller, All, Req, Res } from "@nestjs/common";
 import { FastifyRequest, FastifyReply } from "fastify";
 import { AuthService } from "./auth.service";
 import { AllowPublic } from "../common/decorators/auth.decorator";
+import { db } from "@repo/db";
 
 @AllowPublic()
 @Controller("auth")
@@ -55,7 +56,39 @@ export class AuthController {
       const contentType = response.headers.get("content-type");
       if (contentType?.includes("application/json")) {
         try {
-          return res.send(await response.json());
+          const json = await response.json();
+          if (json && json.session) {
+            // Find/extract the token
+            let token = response.headers.get("set-auth-token");
+            if (!token) {
+              const setCookie = response.headers.get("set-cookie");
+              if (setCookie) {
+                const match = setCookie.match(/better-auth\.session_token=([^;]+)/);
+                if (match) {
+                  token = match[1];
+                }
+              }
+            }
+            if (!token) {
+              const authHeader = req.headers["authorization"] || req.headers["Authorization"];
+              if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+              }
+            }
+            if (!token && json.session.id) {
+              const sess = await db.session.findUnique({
+                where: { id: json.session.id },
+                select: { token: true }
+              });
+              if (sess) {
+                token = sess.token;
+              }
+            }
+            if (token) {
+              json.session.token = token;
+            }
+          }
+          return res.send(json);
         } catch (e) {
           // Fallback to text if JSON parsing fails
         }
