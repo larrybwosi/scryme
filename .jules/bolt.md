@@ -146,3 +146,7 @@
 ## 2026-07-25 - [Select Optimization in Delivery Reconciliation Lists]
 **Learning:** Utilizing Prisma's nested `select` arrays inside a top-level `include` block on paginated listing endpoints is a performance anti-pattern. While it scopes the relational fields correctly, it still forces Prisma/SQL to fetch all scalar columns of the root query model (including heavy JSON blobs like `metadata` or huge text fields like `termsAndConditions`). Replacing top-level `include` blocks with targeted `select` blocks at the query's root ensures only requested scalars and relational attributes are retrieved, cutting DB payload size and NestJS hydration latency significantly.
 **Action:** Always replace top-level `include` blocks with precise `select` structures in list-retrieval and paginated search routes to avoid fetching unneeded bulky properties.
+
+## 2026-07-27 - [Database GroupBy Aggregation vs In-Memory Mapping in Conversion Funnels]
+**Learning:** Fetching an entire matching collection of heavy entities (like `ServiceBooking`) via a `findMany` query just to perform `.length` and `.filter` counts in-memory is a major performance and scalability bottleneck. Utilizing database-level `groupBy` count aggregations instead shrinks network payload, database I/O, and Node.js serialization/memory pressure from $O(N)$ down to a flat $O(1)$.
+**Action:** For dashboard metrics, analytics, or funnel conversions that only require counting records categorized by statuses or types, always use Prisma's `groupBy` aggregation API.
