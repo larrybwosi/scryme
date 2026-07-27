@@ -2,6 +2,7 @@ import { ReceiptText, Plus } from "lucide-react";
 import { PageHeader } from "../../../components/page-header";
 import { FilterBar } from "../../../components/filter-bar";
 import { getTransactions } from "../../actions/sales";
+import { getLocations } from "../../actions/locations";
 import {
   TransactionType,
   TransactionStatus,
@@ -22,6 +23,7 @@ async function TransactionList({
     status?: string;
     paymentStatus?: string;
     locationId?: string;
+    sortBy?: string;
   };
   organizationId?: string;
 }) {
@@ -31,6 +33,7 @@ async function TransactionList({
     status: searchParams.status as TransactionStatus | "all",
     paymentStatus: searchParams.paymentStatus as PaymentStatus | "all",
     locationId: searchParams.locationId,
+    sortBy: searchParams.sortBy,
   });
 
   return (
@@ -59,11 +62,14 @@ export default async function TransactionsPage(props: {
     status?: string;
     paymentStatus?: string;
     locationId?: string;
+    sortBy?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;
   const context = await getOrganizationContext();
   const suspenseKey = JSON.stringify(searchParams);
+
+  const locations = await getLocations();
 
   return (
     /* Added a responsive outer container:
@@ -85,7 +91,7 @@ export default async function TransactionsPage(props: {
           }}
         />
       </Suspense>
-      <FilterBar />
+      <FilterBar locations={locations} />
 
       <Suspense key={suspenseKey} fallback={<TableFallback />}>
         <TransactionList
