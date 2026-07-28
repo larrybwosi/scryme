@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { V3ApiContext } from "@repo/shared/api/v2";
 import { RegisterPettyCashDto } from "../dto/petty-cash.dto";
@@ -15,6 +15,10 @@ export class RegisterPettyCashUseCase {
 
   async execute(ctx: V3ApiContext, dto: RegisterPettyCashDto) {
     const { organizationId, memberId, locationId } = ctx;
+
+    if (!memberId) {
+      throw new UnauthorizedException("Member authentication required to register petty cash.");
+    }
 
     // 1. Ensure "Petty Cash" category exists
     let category = await this.prisma.client.expenseCategory.findFirst({
