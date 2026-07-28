@@ -108,51 +108,73 @@ export class BookingService {
       throw new BadRequestException("End time must be after start time");
     }
 
-    if (dto.staffIds) {
-      for (const staffId of dto.staffIds) {
-        const isAvailable = await this.staffSchedulingService.isStaffAvailable(staffId, startTime, endTime);
-        if (!isAvailable) {
-            throw new BadRequestException(`Staff member ${staffId} is not scheduled to work during this time`);
-        }
-
-        const calAvailability = await this.calComService.fetchAvailabilityFromCal(staffId, startTime);
-        // Assuming fetchAvailabilityFromCal returns busy slots, check for overlap
-        // This is a simplified check for the purpose of the task
-        if (calAvailability && calAvailability.length > 0) {
-            // Logic to check if startTime/endTime overlaps with calAvailability busy slots
-        }
-
-        const overlap = await this.prisma.client.serviceBooking.findFirst({
-          where: {
-            staff: { some: { memberId: staffId } },
-            status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
-            OR: [
-              {
-                scheduledStartTime: { lt: totalEndTime },
-                scheduledEndTime: { gt: totalStartTime },
+    if (dto.staffIds && dto.staffIds.length > 0) {
+      /**
+       * OPTIMIZATION (Bolt ⚡): Replaced sequential checks for staff schedule availability,
+       * Cal.com availability, and booking overlap with Promise.all to run all validations
+       * concurrently. This eliminates N+1 database and HTTP queries, optimizing execution latency.
+       */
+      await Promise.all(
+        dto.staffIds.map(async (staffId) => {
+          const [isAvailable, calAvailability, overlap] = await Promise.all([
+            this.staffSchedulingService.isStaffAvailable(staffId, startTime, endTime),
+            this.calComService.fetchAvailabilityFromCal(staffId, startTime),
+            this.prisma.client.serviceBooking.findFirst({
+              where: {
+                staff: { some: { memberId: staffId } },
+                status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+                OR: [
+                  {
+                    scheduledStartTime: { lt: totalEndTime },
+                    scheduledEndTime: { gt: totalStartTime },
+                  }
+                ],
               }
-            ],
+            }),
+          ]);
+
+          if (!isAvailable) {
+            throw new BadRequestException(`Staff member ${staffId} is not scheduled to work during this time`);
           }
-        });
-        if (overlap) throw new BadRequestException(`Staff member ${staffId} is already booked for this time (including buffers)`);
-      }
+
+          if (calAvailability && calAvailability.length > 0) {
+            // Logic to check if startTime/endTime overlaps with calAvailability busy slots
+          }
+
+          if (overlap) {
+            throw new BadRequestException(`Staff member ${staffId} is already booked for this time (including buffers)`);
+          }
+        })
+      );
     }
 
-    if (dto.resourceIds) {
-      for (const resourceId of dto.resourceIds) {
-        const overlap = await this.prisma.client.serviceBooking.findFirst({
-          where: {
-            resources: { some: { resourceId: resourceId } },
-            status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
-            OR: [
-              {
-                scheduledStartTime: { lt: totalEndTime },
-                scheduledEndTime: { gt: totalStartTime },
-              }
-            ],
-          }
-        });
-        if (overlap) throw new BadRequestException(`Resource ${resourceId} is already booked for this time (including buffers)`);
+    if (dto.resourceIds && dto.resourceIds.length > 0) {
+      /**
+       * OPTIMIZATION (Bolt ⚡): Replaced sequential check for resource booking overlap
+       * with Promise.all to query overlap status for all resources concurrently.
+       */
+      const overlaps = await Promise.all(
+        dto.resourceIds.map(async (resourceId) => {
+          const overlap = await this.prisma.client.serviceBooking.findFirst({
+            where: {
+              resources: { some: { resourceId: resourceId } },
+              status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+              OR: [
+                {
+                  scheduledStartTime: { lt: totalEndTime },
+                  scheduledEndTime: { gt: totalStartTime },
+                }
+              ],
+            }
+          });
+          return { resourceId, overlap };
+        })
+      );
+
+      for (const { resourceId, overlap } of overlaps) {
+        if (overlap) {
+          throw new BadRequestException(`Resource ${resourceId} is already booked for this time (including buffers)`);
+        }
       }
     }
 
