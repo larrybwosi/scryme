@@ -64,6 +64,9 @@ export default function PendingTransactionsPage() {
   // State for download tracking
   const [isDownloading, setIsDownloading] = useState(false);
 
+  // State for search query filtering
+  const [searchQuery, setSearchQuery] = useState('');
+
   const locationId = useAuthStore(state => state.currentLocation?.id);
 
   // --- Query: Get Transactions ---
@@ -282,9 +285,32 @@ export default function PendingTransactionsPage() {
 
   const getActiveTransaction = () => transactions.find(t => t.id === activeTxId);
 
-  const pendingTx = transactions.filter(t => t.status === 'pending');
-  const dispatchedTx = transactions.filter(t => t.status === 'dispatched');
-  const totalOutstanding = transactions.reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0);
+  // Define all outstanding/pending transactions for the branch
+  const outstandingTx = transactions.filter(t => {
+    const isDispatched = t.status === 'dispatched';
+    const isUnpaid = t.status === 'unpaid' || t.status === 'pending' || t.status === 'partially_paid';
+    const hasBalance = t.paidAmount < t.totalAmount;
+    return isDispatched || isUnpaid || hasBalance;
+  });
+
+  // Calculate global statistics based on all outstanding transactions
+  const totalOutstanding = outstandingTx.reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0);
+  const globalDispatchedCount = outstandingTx.filter(t => t.status === 'dispatched').length;
+  const globalPendingCount = outstandingTx.filter(t => t.status !== 'dispatched').length;
+
+  // Filter transactions based on the search query
+  const filteredTransactions = outstandingTx.filter(t => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    const idMatches = t.id.toLowerCase().includes(query) || (t.number && t.number.toLowerCase().includes(query));
+    const customerMatches = t.customer?.toLowerCase().includes(query);
+    const emailMatches = t.email?.toLowerCase().includes(query);
+    return idMatches || customerMatches || emailMatches;
+  });
+
+  // Categorize filtered transactions for display in tabs
+  const dispatchedTx = filteredTransactions.filter(t => t.status === 'dispatched');
+  const pendingTx = filteredTransactions.filter(t => t.status !== 'dispatched');
 
   const TransactionTable = ({ data }: { data: Transaction[] }) => (
     <Table>
@@ -381,7 +407,7 @@ export default function PendingTransactionsPage() {
             <Truck className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dispatchedTx.length}</div>
+            <div className="text-2xl font-bold">{globalDispatchedCount}</div>
             <p className="text-xs text-muted-foreground">Require reconciliation</p>
           </CardContent>
         </Card>
@@ -391,7 +417,7 @@ export default function PendingTransactionsPage() {
             <AlertCircle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingTx.length}</div>
+            <div className="text-2xl font-bold">{globalPendingCount}</div>
             <p className="text-xs text-muted-foreground">Unpaid invoices</p>
           </CardContent>
         </Card>
@@ -408,14 +434,19 @@ export default function PendingTransactionsPage() {
 
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search..." className="pl-8" />
+            <Input
+              placeholder="Search by ID, customer name, email..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
           </div>
         </div>
 
         <TabsContent value="all">
           <Card className="rounded-none">
             <CardContent className="p-0">
-              <TransactionTable data={transactions} />
+              <TransactionTable data={filteredTransactions} />
             </CardContent>
           </Card>
         </TabsContent>
