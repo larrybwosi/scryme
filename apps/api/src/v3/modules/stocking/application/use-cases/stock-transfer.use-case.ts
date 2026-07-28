@@ -155,19 +155,24 @@ export class StockTransferUseCase {
         }
       }
 
-      // Perform updates (using Promise.all for concurrent updates within the transaction).
+      // ⚡ Bolt Optimization: Perform consolidated stock updates per unique variant.
+      // Doing this concurrently for each item in transfer.items can lead to concurrent updates
+      // on the exact same row (compound key variantId_locationId), which causes database lock contention,
+      // bottlenecks, or serialization/deadlock errors in transactions.
+      // Aggregating quantities and updating per unique variant ensures exactly one update per unique variant,
+      // reducing query roundtrips from O(N) to O(U) where U is unique variants, and eliminating race conditions.
       await Promise.all(
-        transfer.items.map((item) =>
+        Array.from(aggregatedRequested.entries()).map(([variantId, totalRequested]) =>
           tx.productVariantStock.update({
             where: {
               variantId_locationId: {
-                variantId: item.variantId,
+                variantId,
                 locationId: transfer.fromLocationId,
               },
             },
             data: {
-              reservedStock: { increment: item.requestedQuantity },
-              availableStock: { decrement: item.requestedQuantity },
+              reservedStock: { increment: totalRequested },
+              availableStock: { decrement: totalRequested },
             },
           }),
         ),
