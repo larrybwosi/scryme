@@ -19,6 +19,7 @@ import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
 import { env } from "@repo/env";
 import { Decimal } from "decimal.js";
+import { isSafeUrl } from "@repo/shared/server";
 
 @Injectable()
 export class BakeryService {
@@ -2042,6 +2043,11 @@ export class BakeryService {
           );
           if (sigAsset) {
             asset = a;
+            // @security Validate URL to prevent SSRF
+            if (!(await isSafeUrl(sigAsset.browser_download_url))) {
+              this.logger.warn(`Insecure signature download URL blocked: ${sigAsset.browser_download_url}`);
+              return null;
+            }
             // Fetch signature with auth headers if needed
             const sigResponse = await axios.get(sigAsset.browser_download_url, {
               headers,
