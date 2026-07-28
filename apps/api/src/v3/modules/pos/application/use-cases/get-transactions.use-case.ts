@@ -7,7 +7,8 @@ export class GetTransactionsUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute(ctx: V3ApiContext, query: any) {
-    const { organizationId, memberId, locationId } = ctx;
+    const { organizationId, memberId } = ctx;
+    const locationId = ctx.locationId || query.locationId;
     const { status, type, customerId, startDate, endDate } = query;
 
     const where: any = { organizationId };

@@ -529,10 +529,9 @@ export default function CreateOrderPage() {
 
   const { mutate: createOrder, isPending: isSubmitting } = useCreateOrder({
     onSuccess: async (res: any) => {
-      const data = res.data;
-      const orderData = data?.data;
-      const orderId = orderData?.number || orderData?.orderId || 'new-order';
-      const invoiceUrl = orderData?.invoiceUrl || null;
+      const orderData = res?.data?.data || res?.data || res;
+      const orderId = orderData?.number || orderData?.orderId || orderData?.id || 'new-order';
+      const invoiceUrl = orderData?.invoiceUrl || orderData?.invoiceLink || null;
 
       setCreatedOrderId(orderId);
       setCreatedInvoiceUrl(invoiceUrl);
