@@ -7,9 +7,13 @@
 **Action:** Always verify that collapsible layout links and action buttons maintain identical, explicit `title` and `aria-label` attributes when in a collapsed icon-only state.
 
 ## 2025-02-19 - [Desktop Tooltips on Icon-Only Segmented and Toggle Controls]
-**Learning:** Sighted desktop mouse users rely heavily on hover states and native tooltips (`title`) for quick, clear visual context of compact, abstract icon-only segmented controls (like increment/decrement and layout collapsers), especially when full textual labels are omitted. Combining matching `aria-label` (for screen readers) with descriptive `title` (for desktop hovers) ensures comprehensive multi-modal accessibility.
+**Learning:** Sighted desktop mouse users rely onscreen hover states and native tooltips (`title`) for quick, clear visual context of compact, abstract icon-only segmented controls (like increment/decrement and layout collapsers), especially when full textual labels are omitted. Combining matching `aria-label` (for screen readers) with descriptive `title` (for desktop hovers) ensures comprehensive multi-modal accessibility.
 **Action:** When designing space-constrained icon-only buttons or layout adjustment controls, always supply consistent, identical `aria-label` and `title` attributes.
 
 ## 2025-02-23 - [Synchronized Web Application Sidebar Accessibility]
 **Learning:** Sidebar navigation containers in full web applications benefit greatly from synchronized accessibility controls. Specifically, collapse/expand toggle buttons and collapsed main navigation item buttons should present unified `aria-label` and conditional `title` attributes (enabling `title` strictly when collapsed to represent the hidden visual label) to provide a rich visual tooltip for desktop hovers while preserving clean, semantic screen-reader compatibility.
 **Action:** Always verify sidebar navigation triggers maintain active `aria-label` attributes, and apply matching visual `title` triggers dynamically or conditionally based on container collapsed states.
+
+## 2026-07-28 - [Accessible Canvas and Palette Controls in Workflow Editors]
+**Learning:** Visual node-based workflow/campaign editors frequently contain complex toolbars, sidebar palettes, and properties panels loaded with compact, icon-only toggle and navigation controls. Sighted desktop users and screen reader users alike can easily get lost or confused without consistent accessibility features and tooltips on these controls.
+**Action:** Always equip icon-only control buttons within editor canvases and inspectors with matching, explicit `aria-label` and visual `title` attributes, and ensure collapsible group headers in the side palettes clearly announce their interactive state using `aria-expanded`.
