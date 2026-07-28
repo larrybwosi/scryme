@@ -497,6 +497,7 @@ export const useCreateBakeryCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => {
+      console.log("Creating category with data:", data);
       if (isTauri() && isOfflineMode()) {
         return tauriInvoke("create_category", {
           userId: "local-user",
@@ -507,6 +508,9 @@ export const useCreateBakeryCategory = () => {
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] }),
+    onError: (error: any) => {
+      console.error("Error creating category:", error.message);
+    }
   });
 };
 
@@ -524,6 +528,9 @@ export const useUpdateBakeryCategory = () => {
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] }),
+    onError: (error: any) => {
+      console.error("Error updating category:", error);
+    }
   });
 };
 
@@ -538,6 +545,9 @@ export const useDeleteBakeryCategory = () => {
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] }),
+    onError: (error: any) => {
+      console.error("Error deleting category:", error);
+    }
   });
 };
 

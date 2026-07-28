@@ -19,11 +19,8 @@ import {
   Database
 } from 'lucide-react';
 import { UserSwitcher } from "@/components/UserSwitcher";
-import { Button } from '@repo/ui/components/ui/button';
-import { cn } from '@/lib/utils';
 import { isOfflineMode } from '@/lib/sdk';
 import { useAuth } from '@/lib/providers/auth-context';
-import { BakeryAuthGuard } from '@/components/bakery/BakeryAuthGuard';
 import {
   Sidebar,
   SidebarContent,
