@@ -590,7 +590,8 @@ export class PosService {
   }
 
   async getTransactions(ctx: V2ApiContext, query: any) {
-    const { organizationId, memberId, locationId } = ctx;
+    const { organizationId, memberId } = ctx;
+    const locationId = ctx.locationId || query.locationId;
     const { status, type, customerId, startDate, endDate } = query;
 
     const where: any = { organizationId };
