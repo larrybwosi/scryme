@@ -480,6 +480,9 @@ function PalettePanel({
             <button
               className="flex items-center justify-between w-full mb-1.5 group"
               onClick={() => toggleGroup(group)}
+              aria-expanded={openGroups[group]}
+              aria-label={`Toggle ${group} group`}
+              title={`Toggle ${group} group`}
             >
               <span className="text-[9.5px] font-bold uppercase tracking-widest text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
                 {group}
@@ -577,6 +580,8 @@ function NodeInspector({
         <button
           onClick={onClose}
           className="p-1 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+          aria-label="Close properties inspector"
+          title="Close properties inspector"
         >
           <X size={13} />
         </button>
@@ -913,7 +918,8 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
           <button
             onClick={() => router.back()}
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            aria-label="Go back"
+            aria-label="Go back to campaigns list"
+            title="Go back to campaigns list"
           >
             <ChevronLeft size={16} />
           </button>
@@ -931,6 +937,8 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
               <button
                 onClick={() => setIsEditingName(false)}
                 className="p-1 rounded text-green-600 hover:bg-green-50 transition-colors"
+                aria-label="Save workflow name"
+                title="Save workflow name"
               >
                 <Check size={13} />
               </button>
@@ -943,6 +951,8 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
               <button
                 onClick={() => setIsEditingName(true)}
                 className="p-1 rounded text-muted-foreground/50 hover:text-muted-foreground hover:bg-accent transition-colors"
+                aria-label="Edit workflow name"
+                title="Edit workflow name"
               >
                 <Pencil size={11} />
               </button>
@@ -1014,7 +1024,8 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
-            aria-label="Toggle inspector"
+            aria-label="Toggle properties inspector"
+            title="Toggle properties inspector"
           >
             <PanelRight size={15} />
           </button>
