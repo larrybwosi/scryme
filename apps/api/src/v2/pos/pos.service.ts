@@ -1374,8 +1374,13 @@ export class PosService {
   }
 
   async registerPettyCash(ctx: V2ApiContext, body: any) {
-    const validated = this.validate<any>(RegisterPettyCashSchema, body);
     const { organizationId, memberId, locationId } = ctx;
+
+    if (!memberId) {
+      throw new UnauthorizedException("Member authentication required to register petty cash.");
+    }
+
+    const validated = this.validate<any>(RegisterPettyCashSchema, body);
 
     // 1. Ensure "Petty Cash" category exists
     let category = await this.prisma.client.expenseCategory.findFirst({
@@ -1471,7 +1476,7 @@ export class PosService {
           amount: amountDecimal,
           expenseNumber,
           status,
-          memberId: memberId || "system",
+          memberId: memberId,
           organizationId,
           categoryId: category.id,
           expenseDate: new Date(),
@@ -1480,7 +1485,7 @@ export class PosService {
           receiptUrl: validated.receiptUrl,
           ...(status === ExpenseStatus.APPROVED
             ? {
-                approverId: memberId || "system",
+                approverId: memberId,
                 approvalDate: new Date(),
               }
             : {}),
@@ -1506,7 +1511,7 @@ export class PosService {
             type: PettyCashTransactionType.EXPENSE,
             amount: amountDecimal,
             description: validated.description,
-            memberId: memberId || "system",
+            memberId: memberId,
           },
         });
       }
