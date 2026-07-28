@@ -113,15 +113,14 @@ export class PosCustomerService {
     const { CustomerService } = await import("./customer.service");
     const customerService = new CustomerService(this.prisma);
 
+    const { address, ...restOfData } = rawData;
+
     const response = await customerService.saveCustomer(
       organizationId,
       memberId || "",
       {
-        name: rawData.name,
-        email: rawData.email,
-        phone: rawData.phone,
-        ...rawData.address,
-        notes: rawData.notes,
+        ...restOfData,
+        ...address,
       },
     );
 
@@ -135,6 +134,18 @@ export class PosCustomerService {
       email: response.data.customer.email,
       phone: response.data.customer.phone,
       loyaltyPoints: response.data.customer.loyaltyPoints,
+      company: response.data.customer.company,
+      customerType: response.data.customer.customerType,
+      dateOfBirth: response.data.customer.dateOfBirth,
+      isActive: response.data.customer.isActive,
+      deliveryNotes: response.data.customer.deliveryNotes,
+      pinnedLocation: response.data.customer.pinnedLocation,
+      tags: response.data.customer.tags,
+      medicalHistory: response.data.customer.crmRecord?.data?.medicalHistory || response.data.customer.medicalHistory,
+      allergies: response.data.customer.crmRecord?.data?.allergies || response.data.customer.allergies,
+      chronicConditions: response.data.customer.crmRecord?.data?.chronicConditions || response.data.customer.chronicConditions,
+      insuranceProvider: response.data.customer.crmRecord?.data?.insuranceProvider || response.data.customer.insuranceProvider,
+      policyNumber: response.data.customer.crmRecord?.data?.policyNumber || response.data.customer.policyNumber,
     };
   }
 }
