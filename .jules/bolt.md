@@ -153,3 +153,7 @@
 ## 2026-07-27 - [Database GroupBy Aggregation vs In-Memory Mapping in Conversion Funnels]
 **Learning:** Fetching an entire matching collection of heavy entities (like `ServiceBooking`) via a `findMany` query just to perform `.length` and `.filter` counts in-memory is a major performance and scalability bottleneck. Utilizing database-level `groupBy` count aggregations instead shrinks network payload, database I/O, and Node.js serialization/memory pressure from $O(N)$ down to a flat $O(1)$.
 **Action:** For dashboard metrics, analytics, or funnel conversions that only require counting records categorized by statuses or types, always use Prisma's `groupBy` aggregation API.
+
+## 2026-07-28 - [Consolidated Database Row Updates vs Promise.all Lock Contention]
+**Learning:** Performing concurrent database updates (via `Promise.all` inside a transaction) on the exact same row (such as compound index `variantId_locationId` in `productVariantStock`) for multiple items in a list creates severe lock contention, query block times, and transactional deadlocks. Consolidating the items to unique entries and doing exactly one update query per unique row completely resolves this race condition.
+**Action:** When updating database rows concurrently inside a loop or mapping array, always aggregate the updates by unique row key first to ensure exactly one database operation per row, reducing operations from O(N) to O(U) unique keys.
