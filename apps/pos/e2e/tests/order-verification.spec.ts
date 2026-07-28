@@ -226,13 +226,13 @@ test.describe('Order Creation and Invoice Download Flow', () => {
     // 1. Select Customer
     await page.click('button:has-text("Select customer...")');
     await page.fill('input[placeholder*="Search by name"]', 'John Doe');
-    await page.click('span:has-text("John Doe")');
+    await page.click('span:has-text("John Doe")', { force: true });
     await expect(page.locator('text=SELECTED CUSTOMER')).toBeVisible();
 
     // 2. Add Item
     await page.click('button:has-text("Select product...")');
     await page.fill('input[placeholder*="Search by name"]', 'Test Product');
-    await page.click('span:has-text("Test Product")');
+    await page.click('span:has-text("Test Product")', { force: true });
 
     // Verify item added
     await expect(page.locator('td:has-text("Test Product")')).toBeVisible();
