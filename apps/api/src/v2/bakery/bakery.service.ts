@@ -10,10 +10,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { Prisma } from "@/prisma/client";
 import { AuthService } from "../../auth/auth.service";
 import { type V2ApiContext } from "@repo/shared/api/v2";
-import {
-  validateDeviceKey,
-  createMemberToken,
-} from "@repo/shared/api/v2";
+import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v2";
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
@@ -126,7 +123,11 @@ export class BakeryService {
    * ⚡ Bolt: Optimized using database-level aggregation and grouping to avoid O(N) in-memory processing.
    * This reduces memory usage and network overhead, especially for organizations with many batches.
    */
-  async getProductionStats(organizationId: string, startDate: Date, endDate: Date) {
+  async getProductionStats(
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const where = {
       organizationId,
       completedAt: {
@@ -153,7 +154,7 @@ export class BakeryService {
       }),
     ]);
 
-    const recipeIds = groups.map((g) => g.recipeId);
+    const recipeIds = groups.map(g => g.recipeId);
 
     // Fetch only necessary recipe details for the recipes found in the batches
     const recipes = await this.prisma.client.recipe.findMany({
@@ -166,15 +167,14 @@ export class BakeryService {
       },
     });
 
-    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+    const recipeMap = new Map(recipes.map(r => [r.id, r]));
 
-    const recipeStats = groups.map((g) => {
+    const recipeStats = groups.map(g => {
       const recipe = recipeMap.get(g.recipeId);
       return {
         name: recipe?.name || "Unknown",
         quantity: Number(g._sum.actualQuantity || 0),
-        unit:
-          recipe?.systemUnit?.symbol || recipe?.orgUnit?.symbol || "",
+        unit: recipe?.systemUnit?.symbol || recipe?.orgUnit?.symbol || "",
         waste: Number(g._sum.wasteQuantity || 0),
       };
     });
@@ -447,7 +447,8 @@ export class BakeryService {
         unitPrice: Number(v.buyingPrice || 0),
         currentStock,
         reorderLevel: v.reorderPoint || 0,
-        maxStock: v.reorderQty || (v.reorderPoint ? Number(v.reorderPoint) * 2 : 0),
+        maxStock:
+          v.reorderQty || (v.reorderPoint ? Number(v.reorderPoint) * 2 : 0),
         unit: v.baseUnit || v.baseOrgUnit || { symbol: "" },
         category: v.product.category,
         tags: v.tags,
@@ -961,7 +962,12 @@ export class BakeryService {
     const { organizationId } = ctx;
 
     // Strip organizationId and id from data to prevent mass assignment
-    const { organizationId: _, id: __, assistantBakerIds, ...updateData } = data;
+    const {
+      organizationId: _,
+      id: __,
+      assistantBakerIds,
+      ...updateData
+    } = data;
 
     return this.prisma.client.batch.update({
       where: { id, organizationId },
@@ -1050,7 +1056,7 @@ export class BakeryService {
           );
         }
 
-        const stockBatchMap = new Map(stockBatches.map((sb) => [sb.id, sb]));
+        const stockBatchMap = new Map(stockBatches.map(sb => [sb.id, sb]));
 
         const consumptionData = [];
         const movementData = [];
@@ -1066,11 +1072,14 @@ export class BakeryService {
         for (const consumption of ingredientConsumptions) {
           const stockBatch = stockBatchMap.get(consumption.stockBatchId);
           if (!stockBatch) {
-            throw new NotFoundException(`Stock batch ${consumption.stockBatchId} not found`);
+            throw new NotFoundException(
+              `Stock batch ${consumption.stockBatchId} not found`,
+            );
           }
 
           const qty = new Decimal(consumption.quantity);
-          const currentTotal = stockBatchUpdates.get(consumption.stockBatchId) || new Decimal(0);
+          const currentTotal =
+            stockBatchUpdates.get(consumption.stockBatchId) || new Decimal(0);
           const newTotal = currentTotal.add(qty);
 
           if (stockBatch.currentQuantity.lt(newTotal)) {
@@ -1111,7 +1120,9 @@ export class BakeryService {
         }
 
         // Batch inserts for consumption records and movements
-        await tx.batchIngredientConsumption.createMany({ data: consumptionData });
+        await tx.batchIngredientConsumption.createMany({
+          data: consumptionData,
+        });
         await tx.stockMovement.createMany({ data: movementData });
 
         // Batch execute all aggregated stock updates concurrently
@@ -1355,7 +1366,6 @@ export class BakeryService {
   async createCategory(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
 
-    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
     const { name, description } = data;
 
     return this.prisma.client.bakeryCategory.create({
@@ -1787,7 +1797,8 @@ export class BakeryService {
       stockingOrgUnitId,
     } = data;
 
-    const finalReorderPoint = reorderPoint !== undefined ? reorderPoint : reorderLevel;
+    const finalReorderPoint =
+      reorderPoint !== undefined ? reorderPoint : reorderLevel;
 
     return this.prisma.client.$transaction(async tx => {
       const product = await tx.product.create({
@@ -1837,7 +1848,8 @@ export class BakeryService {
       stockingOrgUnitId,
     } = data;
 
-    const finalReorderPoint = reorderPoint !== undefined ? reorderPoint : reorderLevel;
+    const finalReorderPoint =
+      reorderPoint !== undefined ? reorderPoint : reorderLevel;
 
     return this.prisma.client.$transaction(async tx => {
       // Find the product first to get its variant
@@ -1864,7 +1876,8 @@ export class BakeryService {
             name,
             sku,
             buyingPrice,
-            reorderPoint: finalReorderPoint !== undefined ? finalReorderPoint : undefined,
+            reorderPoint:
+              finalReorderPoint !== undefined ? finalReorderPoint : undefined,
             baseUnitId,
             baseOrgUnitId,
             stockingUnitId,
@@ -2045,7 +2058,9 @@ export class BakeryService {
             asset = a;
             // @security Validate URL to prevent SSRF
             if (!(await isSafeUrl(sigAsset.browser_download_url))) {
-              this.logger.warn(`Insecure signature download URL blocked: ${sigAsset.browser_download_url}`);
+              this.logger.warn(
+                `Insecure signature download URL blocked: ${sigAsset.browser_download_url}`,
+              );
               return null;
             }
             // Fetch signature with auth headers if needed

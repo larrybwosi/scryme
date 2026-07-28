@@ -113,10 +113,9 @@ const sidebarConfig: SidebarSection[] = [
       {
         title: "Stocking",
         icon: TrendingUp,
-        href: "/stocking",
+        href: "/stocking/list",
         items: [
           { title: "Stocking List", href: "/stocking/list" },
-          { title: "Dashboard", href: "/stocking" },
           { title: "Transfers", href: "/stocking/transfers" },
           { title: "Reorder Rules", href: "/stocking/reorder-rules" },
           { title: "Reports", href: "/stocking/reports" },
@@ -164,7 +163,9 @@ export function Sidebar() {
   const [openMenus, setOpenMenus] = useState<string[]>(["Report"]);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [showProfileDialog, setShowProfileDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState<"profile" | "preferences" | "system">("profile");
+  const [activeTab, setActiveTab] = useState<
+    "profile" | "preferences" | "system"
+  >("profile");
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [copied, setCopied] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
@@ -307,7 +308,9 @@ export function Sidebar() {
                       <item.icon
                         size={20}
                         className={cn(
-                          isActive ? "text-sidebar-primary" : "text-sidebar-foreground/60",
+                          isActive
+                            ? "text-sidebar-primary"
+                            : "text-sidebar-foreground/60",
                         )}
                       />
                       {!isCollapsed && <span>{item.title}</span>}
@@ -395,7 +398,7 @@ export function Sidebar() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={(e) => {
+                  onClick={e => {
                     e.stopPropagation();
                     setShowLogoutDialog(true);
                   }}
@@ -479,7 +482,7 @@ export function Sidebar() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation();
                   setShowLogoutDialog(true);
                 }}
@@ -527,7 +530,8 @@ export function Sidebar() {
                   User Account Control Panel
                 </DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground">
-                  Manage your personal session preferences, appearance themes, and check live system status.
+                  Manage your personal session preferences, appearance themes,
+                  and check live system status.
                 </DialogDescription>
               </div>
             </div>
@@ -542,9 +546,8 @@ export function Sidebar() {
                   "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left",
                   activeTab === "profile"
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}>
                 <User className="w-4 h-4" />
                 Profile Details
               </button>
@@ -554,9 +557,8 @@ export function Sidebar() {
                   "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left",
                   activeTab === "preferences"
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}>
                 <Settings2 className="w-4 h-4" />
                 Preferences
               </button>
@@ -566,9 +568,8 @@ export function Sidebar() {
                   "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all text-left",
                   activeTab === "system"
                     ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}>
                 <Activity className="w-4 h-4" />
                 Diagnostics & Status
               </button>
@@ -583,30 +584,40 @@ export function Sidebar() {
                   </h3>
                   <div className="space-y-3.5">
                     <div className="grid grid-cols-3 items-center border-b border-border/40 pb-2">
-                      <span className="text-xs font-bold text-muted-foreground">Name</span>
+                      <span className="text-xs font-bold text-muted-foreground">
+                        Name
+                      </span>
                       <span className="col-span-2 text-xs font-medium text-foreground">
                         {session?.user?.name || "Unassigned"}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-3 items-center border-b border-border/40 pb-2">
-                      <span className="text-xs font-bold text-muted-foreground">Email Address</span>
+                      <span className="text-xs font-bold text-muted-foreground">
+                        Email Address
+                      </span>
                       <span className="col-span-2 text-xs font-medium text-foreground truncate">
                         {session?.user?.email || "No email available"}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-3 items-center border-b border-border/40 pb-2">
-                      <span className="text-xs font-bold text-muted-foreground">Access Privilege</span>
+                      <span className="text-xs font-bold text-muted-foreground">
+                        Access Privilege
+                      </span>
                       <div className="col-span-2">
-                        <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-wider bg-primary/5 text-primary border-primary/20">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] uppercase font-mono tracking-wider bg-primary/5 text-primary border-primary/20">
                           {(session?.user as any)?.role || "User"}
                         </Badge>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-3 items-center">
-                      <span className="text-xs font-bold text-muted-foreground">Member Identifier</span>
+                      <span className="text-xs font-bold text-muted-foreground">
+                        Member Identifier
+                      </span>
                       <div className="col-span-2 flex items-center gap-2">
                         <span className="font-mono text-[11px] bg-muted px-2 py-0.5 rounded border border-border text-foreground truncate max-w-[140px]">
                           {session?.user?.id || "mem_usr_1029482"}
@@ -616,9 +627,12 @@ export function Sidebar() {
                           size="icon"
                           onClick={handleCopyId}
                           className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          title="Copy Member ID"
-                        >
-                          {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Clipboard className="w-3.5 h-3.5" />}
+                          title="Copy Member ID">
+                          {copied ? (
+                            <Check className="w-3.5 h-3.5 text-green-600" />
+                          ) : (
+                            <Clipboard className="w-3.5 h-3.5" />
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -644,9 +658,8 @@ export function Sidebar() {
                           "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-semibold transition-all",
                           theme === "light"
                             ? "border-primary bg-primary/5 text-primary"
-                            : "border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
+                            : "border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}>
                         <Sun className="w-4 h-4" />
                         System Light
                       </button>
@@ -656,9 +669,8 @@ export function Sidebar() {
                           "flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border text-xs font-semibold transition-all",
                           theme === "dark"
                             ? "border-primary bg-primary/5 text-primary"
-                            : "border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )}
-                      >
+                            : "border-border bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+                        )}>
                         <Moon className="w-4 h-4" />
                         Classic Slate Dark
                       </button>
@@ -671,21 +683,29 @@ export function Sidebar() {
                   <div className="space-y-3 pt-1">
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-foreground">Compact Mode</span>
-                        <span className="text-[10px] text-muted-foreground">Increases data density across tabular grids</span>
+                        <span className="text-xs font-bold text-foreground">
+                          Compact Mode
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Increases data density across tabular grids
+                        </span>
                       </div>
                       <input
                         type="checkbox"
                         checked={compactMode}
-                        onChange={(e) => setCompactMode(e.target.checked)}
+                        onChange={e => setCompactMode(e.target.checked)}
                         className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
                       />
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-foreground font-sans">Workspace Soundscape</span>
-                        <span className="text-[10px] text-muted-foreground">Play subtle confirmation chimes on actions</span>
+                        <span className="text-xs font-bold text-foreground font-sans">
+                          Workspace Soundscape
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Play subtle confirmation chimes on actions
+                        </span>
                       </div>
                       <input
                         type="checkbox"
@@ -708,7 +728,9 @@ export function Sidebar() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Activity className="w-4 h-4 text-emerald-500 animate-pulse" />
-                        <span className="text-xs font-bold text-foreground">API Edge Node Latency</span>
+                        <span className="text-xs font-bold text-foreground">
+                          API Edge Node Latency
+                        </span>
                       </div>
                       <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
                         {latency} ms (Optimal)
@@ -719,7 +741,9 @@ export function Sidebar() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <HardDrive className="w-4 h-4 text-primary" />
-                        <span className="text-xs font-bold text-foreground">Local Session Store</span>
+                        <span className="text-xs font-bold text-foreground">
+                          Local Session Store
+                        </span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground font-mono">
                         Secure IndexedDB
@@ -733,7 +757,10 @@ export function Sidebar() {
                         <span>1.4 GB / 10 GB</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2 overflow-hidden border border-border/40">
-                        <div className="bg-primary h-full rounded-full transition-all duration-500" style={{ width: "14%" }} />
+                        <div
+                          className="bg-primary h-full rounded-full transition-all duration-500"
+                          style={{ width: "14%" }}
+                        />
                       </div>
                     </div>
 
@@ -741,10 +768,16 @@ export function Sidebar() {
 
                     <div className="flex items-center justify-between pt-1">
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-foreground">Scryme Platform Release</span>
-                        <span className="text-[10px] text-muted-foreground font-mono">Build 6.33.0-stable (Linux/AMD64)</span>
+                        <span className="text-xs font-bold text-foreground">
+                          Scryme Platform Release
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          Build 6.33.0-stable (Linux/AMD64)
+                        </span>
                       </div>
-                      <Badge variant="outline" className="text-[10px] font-mono border-muted bg-muted/30">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-mono border-muted bg-muted/30">
                         v6.33.0
                       </Badge>
                     </div>
@@ -762,8 +795,7 @@ export function Sidebar() {
               variant="outline"
               size="sm"
               onClick={() => setShowProfileDialog(false)}
-              className="text-xs h-8 border-border"
-            >
+              className="text-xs h-8 border-border">
               Close Panel
             </Button>
           </div>
