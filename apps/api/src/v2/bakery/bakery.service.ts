@@ -205,9 +205,7 @@ export class BakeryService {
       totalBatches,
       activeBatches,
       completedToday,
-      lowStockItems,
-      lowStockPreview,
-      totalValueData,
+      rawMaterialStocks,
     ] = await Promise.all([
       /**
        * ⚡ Bolt: Optimized batch retrieval.
@@ -268,28 +266,14 @@ export class BakeryService {
         },
       }),
       /**
-       * ⚡ Bolt: Database-level field comparison.
-       * Using Prisma's field comparison (Prisma.ProductVariantStockScalarFieldEnum)
-       * to filter low stock items at the database level instead of in-memory.
+       * ⚡ Bolt: Fetch all raw material variant stocks for the organization
+       * to allow safe and correct in-memory comparisons and calculations.
        */
-      this.prisma.client.productVariantStock.count({
-        where: {
-          organizationId,
-          variant: { product: { type: "RAW_MATERIAL" as any } },
-          availableStock: {
-            lte: Prisma.ProductVariantStockScalarFieldEnum.reorderPoint,
-          },
-        },
-      }),
       this.prisma.client.productVariantStock.findMany({
         where: {
           organizationId,
           variant: { product: { type: "RAW_MATERIAL" as any } },
-          availableStock: {
-            lte: Prisma.ProductVariantStockScalarFieldEnum.reorderPoint,
-          },
         },
-        take: 10,
         select: {
           id: true,
           availableStock: true,
@@ -299,28 +283,20 @@ export class BakeryService {
             select: {
               name: true,
               sku: true,
+              buyingPrice: true,
               baseUnit: { select: { symbol: true } },
               baseOrgUnit: { select: { symbol: true } },
             },
           },
         },
       }),
-      /**
-       * ⚡ Bolt: Targeted inventory value query.
-       * Fetching only required numeric fields for total value calculation
-       * to minimize network traffic and memory usage.
-       */
-      this.prisma.client.productVariantStock.findMany({
-        where: {
-          organizationId,
-          variant: { product: { type: "RAW_MATERIAL" as any } },
-        },
-        select: {
-          availableStock: true,
-          variant: { select: { buyingPrice: true } },
-        },
-      }),
     ]);
+
+    const lowStockIngredientsAll = rawMaterialStocks.filter((s: any) =>
+      Number(s.availableStock) <= Number(s.reorderPoint ?? 5)
+    );
+    const lowStockItems = lowStockIngredientsAll.length;
+    const lowStockPreview = lowStockIngredientsAll.slice(0, 10);
 
     // Hydrate category names for the grouped results
     const categoryIds = recipeGroups
@@ -353,7 +329,7 @@ export class BakeryService {
       unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
     }));
 
-    const totalInventoryValue = totalValueData.reduce(
+    const totalInventoryValue = rawMaterialStocks.reduce(
       (acc, s: any) =>
         acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
       0,
