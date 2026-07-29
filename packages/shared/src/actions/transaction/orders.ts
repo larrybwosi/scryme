@@ -219,7 +219,8 @@ export async function createOrder(
         const variantStockUpdates = new Map<string, number>();
 
         for (const item of items) {
-          const variant = allVariants.find((v) => v.id === item.variantId) as any;
+          // OPTIMIZATION (Bolt ⚡): Use O(1) Map lookup instead of O(N) nested array search for each item
+          const variant = variantsMap.get(item.variantId) as any;
           if (!variant) {
             throw new Error(
               `Product variant ID ${item.variantId} is invalid, inactive, or not part of this organization.`,
@@ -829,13 +830,21 @@ export async function confirmOrder(
         const stockAdjustments: any[] = [];
         const allocationCreations: any[] = [];
 
+        // OPTIMIZATION (Bolt ⚡): Pre-group order.items by variantId to avoid O(M) scans inside nested loops
+        const itemsByVariantMap = new Map<string, typeof order.items>();
+        for (const item of order.items) {
+          if (!itemsByVariantMap.has(item.variantId)) {
+            itemsByVariantMap.set(item.variantId, []);
+          }
+          itemsByVariantMap.get(item.variantId)!.push(item);
+        }
+
         for (const [variantId, totalBaseNeeded] of Array.from(
           baseQuantitiesToCommit.entries(),
         )) {
           const pool = stockPoolMap.get(variantId) as any;
-          const variantName =
-            order.items.find((i) => i.variantId === variantId)?.variantName ||
-            "Unknown";
+          const variantItems = itemsByVariantMap.get(variantId) || [];
+          const variantName = variantItems[0]?.variantName || "Unknown";
 
           if (!pool) {
             throw new Error(
@@ -863,7 +872,7 @@ export async function confirmOrder(
           );
 
           // B. Log the Reservation (Audit Trail)
-          const refItem = order.items.find((i) => i.variantId === variantId);
+          const refItem = variantItems[0];
           stockAdjustments.push({
             organizationId,
             memberId,
@@ -888,9 +897,9 @@ export async function confirmOrder(
               new Prisma.Decimal(batch.currentQuantity as any).toNumber(),
             );
 
-            const applicableItems = order.items.filter(
-              (i) =>
-                i.variantId === variantId && (itemBaseNeeds.get(i.id) || 0) > 0,
+            // OPTIMIZATION (Bolt ⚡): Filter from pre-grouped variantItems instead of all order.items, preventing N*M*B complexity
+            const applicableItems = variantItems.filter(
+              (i) => (itemBaseNeeds.get(i.id) || 0) > 0,
             );
 
             let batchQtyUsed = 0;
