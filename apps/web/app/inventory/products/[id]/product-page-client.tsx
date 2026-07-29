@@ -60,6 +60,15 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@repo/ui/lib/utils";
@@ -290,9 +299,9 @@ export function ProductPageClient({
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-zinc-50/50">
+    <div className="flex flex-col min-h-screen bg-background">
       {/* Sticky Header */}
-      <div className="sticky top-0 z-20 bg-white border-b px-8 py-4 flex items-center justify-between shadow-sm">
+      <div className="sticky top-0 z-20 bg-background border-b px-8 py-4 flex items-center justify-between shadow-sm dark:border-zinc-800">
         <div className="flex items-center gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
@@ -311,45 +320,51 @@ export function ProductPageClient({
           </Tooltip>
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-zinc-900">
+              <h1 className="text-xl font-bold text-foreground">
                 {product.name}
               </h1>
-              <Badge variant="outline" className="bg-zinc-100 border-zinc-200">
+              <Badge variant="outline" className="bg-background border-border">
                 {product.sku}
               </Badge>
-              <select
-                className="h-7 text-[10px] font-bold uppercase rounded border border-zinc-200 bg-white px-2"
+              <Select
                 value={product.isActive ? "active" : "inactive"}
-                onChange={e =>
+                onValueChange={value =>
                   setProduct({
                     ...product,
-                    isActive: e.target.value === "active",
+                    isActive: value === "active",
                   })
                 }>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+                <SelectTrigger className="h-7 text-[10px] font-bold uppercase rounded border-border w-[100px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className="flex items-center gap-2 text-xs text-zinc-500">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Inventory</span>
               <ChevronRight className="w-3 h-3" />
               <span>Products</span>
               <ChevronRight className="w-3 h-3" />
-              <span className="font-medium text-zinc-900">{product.name}</span>
+              <span className="font-medium text-foreground">
+                {product.name}
+              </span>
             </div>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700">
+            className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950">
             <Trash2 className="w-4 h-4" />
             Delete
           </Button>
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="gap-2 bg-zinc-900 hover:bg-zinc-800 min-w-[120px]">
+            className="gap-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 min-w-[120px]">
             {isSaving ? (
               <span className="animate-pulse">Saving...</span>
             ) : (
@@ -368,7 +383,7 @@ export function ProductPageClient({
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full">
-            <div className="bg-white rounded-xl p-1 border shadow-sm mb-6 inline-flex">
+            <div className="bg-background rounded-xl p-1 border shadow-sm mb-6 inline-flex dark:border-zinc-800">
               <TabsList className="bg-transparent border-none p-0 h-auto">
                 {[
                   { value: "overview", label: "Overview", icon: Package },
@@ -390,7 +405,7 @@ export function ProductPageClient({
                     key={tab.value}
                     value={tab.value}
                     className={cn(
-                      "flex items-center gap-2 px-6 py-2.5 rounded-lg transition-all data-[state=active]:bg-zinc-900 data-[state=active]:text-white data-[state=active]:shadow-md",
+                      "flex items-center gap-2 px-6 py-2.5 rounded-lg transition-all data-[state=active]:bg-zinc-900 data-[state=active]:text-white data-[state=active]:shadow-md dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900",
                     )}>
                     <tab.icon className="w-4 h-4" />
                     {tab.label}
@@ -402,7 +417,7 @@ export function ProductPageClient({
             {/* OVERVIEW TAB */}
             <TabsContent value="overview" className="space-y-6 mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                   <CardHeader>
                     <CardTitle>General Information</CardTitle>
                     <CardDescription>
@@ -433,18 +448,27 @@ export function ProductPageClient({
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="type">Product Type</Label>
-                        <select
-                          id="type"
-                          className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm"
+                        <Select
                           value={product.type}
-                          onChange={e =>
-                            setProduct({ ...product, type: e.target.value })
+                          onValueChange={value =>
+                            setProduct({ ...product, type: value })
                           }>
-                          <option value="FINISHED_GOOD">Finished Good</option>
-                          <option value="RAW_MATERIAL">Raw Material</option>
-                          <option value="MERCHANDISE">Merchandise</option>
-                          <option value="OTHER">Other</option>
-                        </select>
+                          <SelectTrigger id="type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="FINISHED_GOOD">
+                              Finished Good
+                            </SelectItem>
+                            <SelectItem value="RAW_MATERIAL">
+                              Raw Material
+                            </SelectItem>
+                            <SelectItem value="MERCHANDISE">
+                              Merchandise
+                            </SelectItem>
+                            <SelectItem value="OTHER">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     <div className="grid gap-2">
@@ -470,21 +494,25 @@ export function ProductPageClient({
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label htmlFor="category">Category</Label>
-                        <select
-                          className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-zinc-900"
+                        <Select
                           value={product.categoryId}
-                          onChange={e =>
+                          onValueChange={value =>
                             setProduct({
                               ...product,
-                              categoryId: e.target.value,
+                              categoryId: value,
                             })
                           }>
-                          {categories.map((c: any) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger id="category">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((c: any) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="brand">Brand</Label>
@@ -525,13 +553,13 @@ export function ProductPageClient({
                             description: e.target.value,
                           })
                         }
-                        className="min-h-[100px]"
+                        className="min-h-25"
                       />
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                   <CardHeader>
                     <CardTitle>Media & Assets</CardTitle>
                     <CardDescription>
@@ -547,15 +575,15 @@ export function ProductPageClient({
                       maxImages={5}
                     />
                   </CardContent>
-                  <CardFooter className="bg-zinc-50/50 border-t py-3">
-                    <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">
+                  <CardFooter className="bg-muted/50 border-t py-3 dark:border-zinc-800">
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
                       Recommended: 1000x1000px JPG/PNG
                     </p>
                   </CardFooter>
                 </Card>
               </div>
 
-              <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader>
                   <CardTitle>Detailed Description</CardTitle>
                   <CardDescription>
@@ -580,7 +608,7 @@ export function ProductPageClient({
 
             {/* VARIANTS TAB */}
             <TabsContent value="variants" className="mt-0">
-              <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Product Variants</CardTitle>
@@ -589,7 +617,7 @@ export function ProductPageClient({
                     </CardDescription>
                   </div>
                   <Button
-                    className="gap-2 bg-zinc-900 hover:bg-zinc-800"
+                    className="gap-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                     onClick={() => {
                       setEditingVariant(null);
                       setVariantForm({
@@ -647,13 +675,13 @@ export function ProductPageClient({
                                 }}
                               />
                             </TableCell>
-                            <TableCell className="font-medium text-zinc-900">
+                            <TableCell className="font-medium text-foreground">
                               {v.name}
                             </TableCell>
-                            <TableCell className="text-zinc-500">
+                            <TableCell className="text-muted-foreground">
                               {v.sku}
                             </TableCell>
-                            <TableCell className="text-zinc-500">
+                            <TableCell className="text-muted-foreground">
                               {v.barcode || "-"}
                             </TableCell>
                             <TableCell className="text-right font-bold">
@@ -670,7 +698,7 @@ export function ProductPageClient({
                             </TableCell>
                             <TableCell>
                               {v.isActive ? (
-                                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] uppercase font-bold">
+                                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 text-[10px] uppercase font-bold">
                                   Active
                                 </Badge>
                               ) : (
@@ -709,14 +737,24 @@ export function ProductPageClient({
                                         initialStock: 0,
                                         isActive: v.isActive,
                                         attributes: v.attributes || {},
-                                        pointsOnPurchase: v.pointsOnPurchase || 0,
-                                        loyaltyPointsOverride: v.loyaltyPointsOverride || 0,
-                                        requiresExpiryTracking: v.requiresExpiryTracking ?? true,
-                                        expiryWarningDays: v.expiryWarningDays || 2,
-                                        defaultShelfLifeDays: v.defaultShelfLifeDays || 0,
-                                        requiresSerialNumber: v.requiresSerialNumber ?? false,
-                                        wholesalePrice: Number(v.wholesalePrice || 0),
-                                        promotionalPrice: Number(v.promotionalPrice || 0),
+                                        pointsOnPurchase:
+                                          v.pointsOnPurchase || 0,
+                                        loyaltyPointsOverride:
+                                          v.loyaltyPointsOverride || 0,
+                                        requiresExpiryTracking:
+                                          v.requiresExpiryTracking ?? true,
+                                        expiryWarningDays:
+                                          v.expiryWarningDays || 2,
+                                        defaultShelfLifeDays:
+                                          v.defaultShelfLifeDays || 0,
+                                        requiresSerialNumber:
+                                          v.requiresSerialNumber ?? false,
+                                        wholesalePrice: Number(
+                                          v.wholesalePrice || 0,
+                                        ),
+                                        promotionalPrice: Number(
+                                          v.promotionalPrice || 0,
+                                        ),
                                         isPopular: v.isPopular ?? false,
                                         isNew: v.isNew ?? false,
                                       });
@@ -730,7 +768,7 @@ export function ProductPageClient({
                                     Manage Media
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    className="text-red-600"
+                                    className="text-red-600 dark:text-red-400"
                                     disabled={product.variants?.length <= 1}
                                     onClick={() => setVariantsToDelete([v.id])}>
                                     <Trash2 className="w-4 h-4 mr-2" /> Delete
@@ -746,7 +784,7 @@ export function ProductPageClient({
                 </CardContent>
                 <CardFooter className="py-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-zinc-500">
+                    <span className="text-sm text-muted-foreground">
                       Bulk Actions ({selectedVariants.length}):
                     </span>
                     <Button
@@ -759,7 +797,7 @@ export function ProductPageClient({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-red-600"
+                      className="text-red-600 dark:text-red-400"
                       disabled={
                         selectedVariants.length === 0 ||
                         selectedVariants.length >=
@@ -778,7 +816,7 @@ export function ProductPageClient({
               {product.variants?.map((variant: any) => (
                 <Card
                   key={variant.id}
-                  className="border-none shadow-sm ring-1 ring-zinc-200">
+                  className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                   <CardHeader>
                     <CardTitle>Units for Variant: {variant.name}</CardTitle>
                     <CardDescription>
@@ -789,13 +827,11 @@ export function ProductPageClient({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-4">
                         <Label>Base Unit (Primary Inventory Unit)</Label>
-                        <select
-                          className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm"
+                        <Select
                           value={
                             variant.baseUnitId || variant.baseOrgUnitId || ""
                           }
-                          onChange={async e => {
-                            const val = e.target.value;
+                          onValueChange={async val => {
                             const isOrg = organizationUnits.some(
                               (u: any) => u.id === val,
                             );
@@ -816,34 +852,38 @@ export function ProductPageClient({
                             });
                             toast.success("Units updated");
                           }}>
-                          <option value="">Select Unit...</option>
-                          <optgroup label="System Units">
-                            {systemUnits.map((u: any) => (
-                              <option key={u.id} value={u.id}>
-                                {u.name} ({u.symbol})
-                              </option>
-                            ))}
-                          </optgroup>
-                          <optgroup label="Organization Units">
-                            {organizationUnits.map((u: any) => (
-                              <option key={u.id} value={u.id}>
-                                {u.name} ({u.symbol})
-                              </option>
-                            ))}
-                          </optgroup>
-                        </select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Unit..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>System Units</SelectLabel>
+                              {systemUnits.map((u: any) => (
+                                <SelectItem key={u.id} value={u.id}>
+                                  {u.name} ({u.symbol})
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                            <SelectGroup>
+                              <SelectLabel>Organization Units</SelectLabel>
+                              {organizationUnits.map((u: any) => (
+                                <SelectItem key={u.id} value={u.id}>
+                                  {u.name} ({u.symbol})
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-4">
                         <Label>Stocking Unit (Purchasing Unit)</Label>
-                        <select
-                          className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm"
+                        <Select
                           value={
                             variant.stockingUnitId ||
                             variant.stockingOrgUnitId ||
                             ""
                           }
-                          onChange={async e => {
-                            const val = e.target.value;
+                          onValueChange={async val => {
                             const isOrg = organizationUnits.some(
                               (u: any) => u.id === val,
                             );
@@ -864,22 +904,28 @@ export function ProductPageClient({
                             });
                             toast.success("Units updated");
                           }}>
-                          <option value="">Select Unit...</option>
-                          <optgroup label="System Units">
-                            {systemUnits.map((u: any) => (
-                              <option key={u.id} value={u.id}>
-                                {u.name} ({u.symbol})
-                              </option>
-                            ))}
-                          </optgroup>
-                          <optgroup label="Organization Units">
-                            {organizationUnits.map((u: any) => (
-                              <option key={u.id} value={u.id}>
-                                {u.name} ({u.symbol})
-                              </option>
-                            ))}
-                          </optgroup>
-                        </select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Unit..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectLabel>System Units</SelectLabel>
+                              {systemUnits.map((u: any) => (
+                                <SelectItem key={u.id} value={u.id}>
+                                  {u.name} ({u.symbol})
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                            <SelectGroup>
+                              <SelectLabel>Organization Units</SelectLabel>
+                              {organizationUnits.map((u: any) => (
+                                <SelectItem key={u.id} value={u.id}>
+                                  {u.name} ({u.symbol})
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
 
@@ -935,11 +981,9 @@ export function ProductPageClient({
                           {variant.sellingUnits?.map((su: any, idx: number) => (
                             <TableRow key={su.id || idx}>
                               <TableCell>
-                                <select
-                                  className="w-full h-9 px-2 rounded border border-zinc-200 text-xs"
+                                <Select
                                   value={su.systemUnitId || su.orgUnitId || ""}
-                                  onChange={async e => {
-                                    const val = e.target.value;
+                                  onValueChange={async val => {
                                     const isOrg = organizationUnits.some(
                                       (u: any) => u.id === val,
                                     );
@@ -963,22 +1007,30 @@ export function ProductPageClient({
                                       ),
                                     });
                                   }}>
-                                  <option value="">Select...</option>
-                                  <optgroup label="System Units">
-                                    {systemUnits.map((u: any) => (
-                                      <option key={u.id} value={u.id}>
-                                        {u.symbol}
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                  <optgroup label="Organization Units">
-                                    {organizationUnits.map((u: any) => (
-                                      <option key={u.id} value={u.id}>
-                                        {u.symbol}
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                </select>
+                                  <SelectTrigger className="h-9">
+                                    <SelectValue placeholder="Select..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectGroup>
+                                      <SelectLabel>System Units</SelectLabel>
+                                      {systemUnits.map((u: any) => (
+                                        <SelectItem key={u.id} value={u.id}>
+                                          {u.symbol}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                    <SelectGroup>
+                                      <SelectLabel>
+                                        Organization Units
+                                      </SelectLabel>
+                                      {organizationUnits.map((u: any) => (
+                                        <SelectItem key={u.id} value={u.id}>
+                                          {u.symbol}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
                               </TableCell>
                               <TableCell>
                                 <Input
@@ -1114,14 +1166,14 @@ export function ProductPageClient({
             {/* PRICING TAB */}
             <TabsContent value="pricing" className="space-y-6 mt-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                   <CardHeader>
                     <CardTitle className="text-lg">Retail Price</CardTitle>
                     <CardDescription>Default selling price.</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <Input
                         className="pl-9 text-2xl font-bold h-14"
                         value={Number(product.variants?.[0]?.retailPrice || 0)}
@@ -1137,7 +1189,7 @@ export function ProductPageClient({
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                   <CardHeader>
                     <CardTitle className="text-lg">Cost Price</CardTitle>
                     <CardDescription>
@@ -1146,7 +1198,7 @@ export function ProductPageClient({
                   </CardHeader>
                   <CardContent>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4" />
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                       <Input
                         className="pl-9 text-2xl font-bold h-14"
                         value={Number(product.variants?.[0]?.buyingPrice || 0)}
@@ -1162,7 +1214,7 @@ export function ProductPageClient({
                     </div>
                   </CardContent>
                 </Card>
-                <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                   <CardHeader>
                     <CardTitle className="text-lg">Margin</CardTitle>
                     <CardDescription>
@@ -1170,7 +1222,7 @@ export function ProductPageClient({
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="h-14 flex items-center">
-                    <span className="text-3xl font-black text-emerald-600">
+                    <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
                       {(
                         (1 -
                           Number(product.variants?.[0]?.buyingPrice || 0) /
@@ -1183,7 +1235,7 @@ export function ProductPageClient({
                 </Card>
               </div>
 
-              <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader>
                   <CardTitle>Loyalty & Points</CardTitle>
                   <CardDescription>
@@ -1220,7 +1272,7 @@ export function ProductPageClient({
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Price Lists & Rules</CardTitle>
@@ -1234,12 +1286,12 @@ export function ProductPageClient({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <div className="bg-zinc-50 rounded-xl p-6 border border-dashed border-zinc-200 flex flex-col items-center justify-center text-center">
-                      <Tag className="w-12 h-12 text-zinc-200 mb-4" />
-                      <h4 className="font-bold text-zinc-900 mb-1">
+                    <div className="bg-muted rounded-xl p-6 border border-dashed border-border flex flex-col items-center justify-center text-center">
+                      <Tag className="w-12 h-12 text-muted-foreground/30 mb-4" />
+                      <h4 className="font-bold text-foreground mb-1">
                         No custom pricing rules found
                       </h4>
-                      <p className="text-sm text-zinc-500 max-w-[300px]">
+                      <p className="text-sm text-muted-foreground max-w-[300px]">
                         Create rules to offer discounts for bulk orders,
                         specific seasons or VIP customers.
                       </p>
@@ -1251,7 +1303,7 @@ export function ProductPageClient({
 
             {/* INVENTORY TAB */}
             <TabsContent value="inventory" className="space-y-6 mt-0">
-              <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Automated Reorder Rules</CardTitle>
@@ -1326,7 +1378,7 @@ export function ProductPageClient({
                                   });
                                 }}
                               />
-                              <span className="text-zinc-400">/</span>
+                              <span className="text-muted-foreground">/</span>
                               <Input
                                 type="number"
                                 className="w-16 h-8 text-xs"
@@ -1374,32 +1426,38 @@ export function ProductPageClient({
                             />
                           </TableCell>
                           <TableCell>
-                            <select
-                              className="h-8 rounded border border-zinc-200 text-xs"
+                            <Select
                               value={rule.preferredSupplierId || ""}
-                              onChange={async e => {
-                                const val = e.target.value || null;
+                              onValueChange={async val => {
                                 await updateReorderRule({
                                   ...rule,
-                                  preferredSupplierId: val,
+                                  preferredSupplierId: val || null,
                                 });
                                 setProduct({
                                   ...product,
                                   reorderRules: product.reorderRules.map(
                                     (r: any) =>
                                       r.id === rule.id
-                                        ? { ...r, preferredSupplierId: val }
+                                        ? {
+                                            ...r,
+                                            preferredSupplierId: val || null,
+                                          }
                                         : r,
                                   ),
                                 });
                               }}>
-                              <option value="">None</option>
-                              {suppliers.map((s: any) => (
-                                <option key={s.id} value={s.id}>
-                                  {s.name}
-                                </option>
-                              ))}
-                            </select>
+                              <SelectTrigger className="h-8 text-xs">
+                                <SelectValue placeholder="None" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">None</SelectItem>
+                                {suppliers.map((s: any) => (
+                                  <SelectItem key={s.id} value={s.id}>
+                                    {s.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </TableCell>
                           <TableCell>
                             <input
@@ -1436,7 +1494,7 @@ export function ProductPageClient({
                         <TableRow>
                           <TableCell
                             colSpan={6}
-                            className="h-24 text-center text-zinc-500 italic">
+                            className="h-24 text-center text-muted-foreground italic">
                             No reorder rules configured.
                           </TableCell>
                         </TableRow>
@@ -1446,7 +1504,7 @@ export function ProductPageClient({
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader>
                   <CardTitle>Stock by Location</CardTitle>
                   <CardDescription>
@@ -1477,7 +1535,7 @@ export function ProductPageClient({
                             <TableCell className="font-bold">
                               {loc.name}
                             </TableCell>
-                            <TableCell className="text-zinc-500">
+                            <TableCell className="text-muted-foreground">
                               Default
                             </TableCell>
                             <TableCell className="text-right font-medium">
@@ -1485,10 +1543,10 @@ export function ProductPageClient({
                                 ? Number(variantStocks[0].availableStock)
                                 : 0}
                             </TableCell>
-                            <TableCell className="text-right text-zinc-400">
+                            <TableCell className="text-right text-muted-foreground">
                               0
                             </TableCell>
-                            <TableCell className="text-right font-bold text-zinc-900">
+                            <TableCell className="text-right font-bold text-foreground">
                               {variantStocks[0]?.currentStock
                                 ? Number(variantStocks[0].currentStock)
                                 : 0}
@@ -1516,7 +1574,7 @@ export function ProductPageClient({
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader>
                   <CardTitle>Inventory Settings</CardTitle>
                 </CardHeader>
@@ -1527,7 +1585,7 @@ export function ProductPageClient({
                         <Label className="text-base font-bold">
                           Low Stock Threshold
                         </Label>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-muted-foreground">
                           Global threshold for stock alerts.
                         </p>
                       </div>
@@ -1553,7 +1611,7 @@ export function ProductPageClient({
                         <Label className="text-base font-bold">
                           Product Rating & Visibility
                         </Label>
-                        <p className="text-sm text-zinc-500">
+                        <p className="text-sm text-muted-foreground">
                           Manage featured status and ratings.
                         </p>
                       </div>
@@ -1592,7 +1650,7 @@ export function ProductPageClient({
 
             {/* SUPPLIERS TAB */}
             <TabsContent value="suppliers" className="mt-0">
-              <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle>Assigned Suppliers</CardTitle>
@@ -1620,10 +1678,10 @@ export function ProductPageClient({
                       {product.suppliers?.length > 0 ? (
                         product.suppliers.map((s: any) => (
                           <TableRow key={s.id}>
-                            <TableCell className="font-bold text-zinc-900">
+                            <TableCell className="font-bold text-foreground">
                               {s.supplier.name}
                             </TableCell>
-                            <TableCell className="text-zinc-500">
+                            <TableCell className="text-muted-foreground">
                               {s.supplierSku || "-"}
                             </TableCell>
                             <TableCell className="text-right font-medium">
@@ -1634,7 +1692,7 @@ export function ProductPageClient({
                             </TableCell>
                             <TableCell>
                               {s.isPreferred ? (
-                                <Badge className="bg-blue-50 text-blue-700 border-blue-200">
+                                <Badge className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
                                   YES
                                 </Badge>
                               ) : (
@@ -1664,7 +1722,7 @@ export function ProductPageClient({
                                     Update Pricing
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600">
+                                  <DropdownMenuItem className="text-red-600 dark:text-red-400">
                                     Unlink Supplier
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -1675,7 +1733,7 @@ export function ProductPageClient({
                       ) : (
                         <TableRow>
                           <TableCell colSpan={6} className="h-40 text-center">
-                            <div className="flex flex-col items-center justify-center gap-2 text-zinc-400">
+                            <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
                               <Truck className="w-8 h-8" />
                               <p className="text-sm font-medium">
                                 No suppliers linked to this product.
@@ -1694,8 +1752,8 @@ export function ProductPageClient({
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <Card className="border-none shadow-sm ring-1 ring-zinc-200 overflow-hidden">
-            <div className="aspect-square relative bg-zinc-100">
+          <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800 overflow-hidden">
+            <div className="aspect-square relative bg-muted">
               {product.imageUrls?.[0] ? (
                 <Image
                   src={product.imageUrls[0]}
@@ -1705,17 +1763,17 @@ export function ProductPageClient({
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Package className="w-16 h-16 text-zinc-300" />
+                  <Package className="w-16 h-16 text-muted-foreground/30" />
                 </div>
               )}
             </div>
             <CardContent className="pt-6">
               <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center pb-4 border-b">
-                  <span className="text-sm text-zinc-500 font-medium">
+                <div className="flex justify-between items-center pb-4 border-b dark:border-zinc-800">
+                  <span className="text-sm text-muted-foreground font-medium">
                     Global Stock
                   </span>
-                  <span className="text-lg font-black text-zinc-900">
+                  <span className="text-lg font-black text-foreground">
                     {product.variants?.reduce(
                       (acc: number, v: any) =>
                         acc +
@@ -1728,7 +1786,7 @@ export function ProductPageClient({
                   </span>
                 </div>
                 <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                     Quick Actions
                   </h4>
                   <Button
@@ -1751,7 +1809,7 @@ export function ProductPageClient({
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-sm ring-1 ring-zinc-200">
+          <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
             <CardHeader>
               <CardTitle className="text-base">Tags & Organization</CardTitle>
             </CardHeader>
@@ -1779,7 +1837,7 @@ export function ProductPageClient({
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="bg-zinc-100 border-zinc-200 hover:bg-zinc-200 transition-colors cursor-pointer flex items-center gap-1"
+                      className="bg-muted border-border hover:bg-muted/80 transition-colors cursor-pointer flex items-center gap-1"
                       onClick={() => {
                         setProduct({
                           ...product,
@@ -1789,25 +1847,25 @@ export function ProductPageClient({
                       {tag} <XCircle className="w-3 h-3" />
                     </Badge>
                   )) || (
-                    <span className="text-xs text-zinc-400 italic">
+                    <span className="text-xs text-muted-foreground italic">
                       No tags added
                     </span>
                   )}
                 </div>
               </div>
-              <div className="grid gap-2 pt-4 border-t">
-                <Label className="text-xs font-bold uppercase text-zinc-400">
+              <div className="grid gap-2 pt-4 border-t dark:border-zinc-800">
+                <Label className="text-xs font-bold uppercase text-muted-foreground">
                   Created At
                 </Label>
-                <p className="text-sm font-medium text-zinc-600">
+                <p className="text-sm font-medium text-foreground">
                   {new Date(product.createdAt).toLocaleDateString()}
                 </p>
               </div>
               <div className="grid gap-2">
-                <Label className="text-xs font-bold uppercase text-zinc-400">
+                <Label className="text-xs font-bold uppercase text-muted-foreground">
                   Last Updated
                 </Label>
-                <p className="text-sm font-medium text-zinc-600">
+                <p className="text-sm font-medium text-foreground">
                   {new Date(product.updatedAt).toLocaleDateString()}
                 </p>
               </div>
@@ -1835,7 +1893,7 @@ export function ProductPageClient({
                 handleDeleteVariants();
               }}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600">
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600 dark:bg-red-700 dark:hover:bg-red-800">
               {isDeleting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1850,7 +1908,7 @@ export function ProductPageClient({
       </AlertDialog>
 
       <Dialog open={isVariantDialogOpen} onOpenChange={setIsVariantDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-155 ">
           <DialogHeader>
             <DialogTitle>
               {editingVariant ? "Edit Variant" : "Add New Variant"}
@@ -1923,15 +1981,20 @@ export function ProductPageClient({
                     <Button
                       type="button"
                       variant="link"
-                      className="h-auto p-0 text-xs text-indigo-600 hover:text-indigo-700 font-semibold"
+                      className="h-auto p-0 text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-semibold"
                       onClick={() => {
-                        const randomNum = Math.floor(100000000000 + Math.random() * 900000000000).toString();
-                        setVariantForm((prev: any) => ({ ...prev, barcode: randomNum }));
+                        const randomNum = Math.floor(
+                          100000000000 + Math.random() * 900000000000,
+                        ).toString();
+                        setVariantForm((prev: any) => ({
+                          ...prev,
+                          barcode: randomNum,
+                        }));
                       }}>
                       (Generate)
                     </Button>
                   </div>
-                  <span className="text-[10px] text-green-600 font-medium flex items-center gap-1.5 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                  <span className="text-[10px] text-green-600 dark:text-green-400 font-medium flex items-center gap-1.5 bg-green-50 dark:bg-green-950 px-2 py-0.5 rounded-full border border-green-200 dark:border-green-800">
                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
                     Scanner Ready
                   </span>
@@ -1947,19 +2010,22 @@ export function ProductPageClient({
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="v-status">Status</Label>
-                <select
-                  id="v-status"
-                  className="w-full h-10 px-3 py-2 rounded-md border border-zinc-200 text-sm"
+                <Select
                   value={variantForm.isActive ? "true" : "false"}
-                  onChange={e =>
+                  onValueChange={value =>
                     setVariantForm({
                       ...variantForm,
-                      isActive: e.target.value === "true",
+                      isActive: value === "true",
                     })
                   }>
-                  <option value="true">Active</option>
-                  <option value="false">Inactive</option>
-                </select>
+                  <SelectTrigger id="v-status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="true">Active</SelectItem>
+                    <SelectItem value="false">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -1993,7 +2059,7 @@ export function ProductPageClient({
               </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-4 pt-4 border-t dark:border-zinc-800">
               <Label className="font-bold">Loyalty Points</Label>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -2027,7 +2093,7 @@ export function ProductPageClient({
               </div>
             </div>
 
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-4 pt-4 border-t dark:border-zinc-800">
               <Label className="font-bold">Expiration & Serial Tracking</Label>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
@@ -2108,7 +2174,7 @@ export function ProductPageClient({
               </div>
             )}
 
-            <div className="space-y-4 pt-4 border-t">
+            <div className="space-y-4 pt-4 border-t dark:border-zinc-800">
               <div className="flex items-center justify-between">
                 <Label className="font-bold">Variant Attributes</Label>
                 <Button
@@ -2159,7 +2225,7 @@ export function ProductPageClient({
                 ),
               )}
               {Object.keys(variantForm.attributes || {}).length === 0 && (
-                <p className="text-xs text-zinc-400 italic">
+                <p className="text-xs text-muted-foreground italic">
                   No attributes defined.
                 </p>
               )}
@@ -2172,7 +2238,7 @@ export function ProductPageClient({
               Cancel
             </Button>
             <Button
-              className="bg-zinc-900"
+              className="bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-900"
               onClick={async () => {
                 try {
                   if (editingVariant) {

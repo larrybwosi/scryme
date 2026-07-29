@@ -362,7 +362,7 @@ export function NotificationCenter() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
+                                  className="h-6 w-6 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity rounded-md text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10"
                                   onClick={e => {
                                     e.stopPropagation();
                                     deleteNotification(notification.id);

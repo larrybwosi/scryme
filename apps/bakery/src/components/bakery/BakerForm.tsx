@@ -55,17 +55,25 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
   const handleSubmit = () => {
     if (!selectedMemberId) return;
 
-    const specialtiesArray = specialtiesInput
-      .split(',')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
+    let payload: any;
+    if (isEditMode) {
+      const specialtiesArray = specialtiesInput
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
 
-    const payload = {
-      memberId: selectedMemberId,
-      pin: pin || '1234',
-      specialties: specialtiesArray,
-      isDefault: isDefault,
-    };
+      payload = {
+        memberId: selectedMemberId,
+        specialties: specialtiesArray,
+        isActive: baker?.isActive ?? true,
+      };
+    } else {
+      payload = {
+        memberId: selectedMemberId,
+        specialties: [],
+        isActive: true,
+      };
+    }
 
     const options = {
       onSuccess: () => {
@@ -151,91 +159,93 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
           </div>
 
           {/* Section 2: Production Parameters */}
-          <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <Settings className="h-3.5 w-3.5" /> Routing & Execution
-            </Label>
-
-            <div className="space-y-2">
-              <Label htmlFor="pin" className="text-sm text-slate-700 dark:text-slate-300">
-                Access PIN (up to 20 chars)
+          {isEditMode && (
+            <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <Settings className="h-3.5 w-3.5" /> Routing & Execution
               </Label>
-              <Input
-                id="pin"
-                type="password"
-                maxLength={20}
-                placeholder="••••••••"
-                value={pin}
-                onChange={e => setPin(e.target.value)}
-                disabled={!selectedMemberId || isSubmitting}
-                className="h-9 border-slate-200 dark:border-slate-800 font-mono tracking-widest"
-              />
-              <p className="text-[11px] text-slate-400">
-                Used for terminal authentication in offline mode.
-              </p>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="specialties" className="text-sm text-slate-700 dark:text-slate-300">
-                Qualified Specialties
-              </Label>
-              <Input
-                id="specialties"
-                placeholder="e.g. Sourdough, Pastry, Lamination"
-                value={specialtiesInput}
-                onChange={e => setSpecialtiesInput(e.target.value)}
-                disabled={!selectedMemberId || isSubmitting}
-                className="h-9 border-slate-200 dark:border-slate-800"
-              />
-              <p className="text-[11px] text-slate-400">
-                Comma-separated matrix defining authorized production categories.
-              </p>
-
-              {/* Dynamic Tag Preview */}
-              {specialtiesInput && (
-                <div className="flex flex-wrap gap-1.5 pt-2">
-                  {specialtiesInput
-                    .split(',')
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0)
-                    .map((specialty, index) => (
-                      <span
-                        key={index}
-                        className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-medium px-2 py-0.5 rounded"
-                      >
-                        {specialty}
-                      </span>
-                    ))}
-                </div>
-              )}
-            </div>
-
-            {/* Default Operator Assignment Toggle */}
-            <div className="flex items-start space-x-3 p-3 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 mt-4">
-              <div className="flex items-center h-5">
-                <input
-                  id="default-baker"
-                  type="checkbox"
-                  checked={isDefault}
-                  onChange={e => setIsDefault(e.target.checked)}
-                  disabled={!selectedMemberId || isSubmitting}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
-                />
-              </div>
-              <div className="flex flex-col">
-                <Label
-                  htmlFor="default-baker"
-                  className="text-sm font-medium text-slate-900 dark:text-slate-100 cursor-pointer"
-                >
-                  Primary Shift Operator
+              <div className="space-y-2">
+                <Label htmlFor="pin" className="text-sm text-slate-700 dark:text-slate-300">
+                  Access PIN (up to 20 chars)
                 </Label>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Automatically assign this operator to new production runs via the Smart Wizard by default.
+                <Input
+                  id="pin"
+                  type="password"
+                  maxLength={20}
+                  placeholder="••••••••"
+                  value={pin}
+                  onChange={e => setPin(e.target.value)}
+                  disabled={!selectedMemberId || isSubmitting}
+                  className="h-9 border-slate-200 dark:border-slate-800 font-mono tracking-widest"
+                />
+                <p className="text-[11px] text-slate-400">
+                  Used for terminal authentication in offline mode.
                 </p>
               </div>
-              <Star className={cn('h-4 w-4 ml-auto', isDefault ? 'text-amber-500 fill-current' : 'text-slate-300')} />
+
+              <div className="space-y-2">
+                <Label htmlFor="specialties" className="text-sm text-slate-700 dark:text-slate-300">
+                  Qualified Specialties
+                </Label>
+                <Input
+                  id="specialties"
+                  placeholder="e.g. Sourdough, Pastry, Lamination"
+                  value={specialtiesInput}
+                  onChange={e => setSpecialtiesInput(e.target.value)}
+                  disabled={!selectedMemberId || isSubmitting}
+                  className="h-9 border-slate-200 dark:border-slate-800"
+                />
+                <p className="text-[11px] text-slate-400">
+                  Comma-separated matrix defining authorized production categories.
+                </p>
+
+                {/* Dynamic Tag Preview */}
+                {specialtiesInput && (
+                  <div className="flex flex-wrap gap-1.5 pt-2">
+                    {specialtiesInput
+                      .split(',')
+                      .map(s => s.trim())
+                      .filter(s => s.length > 0)
+                      .map((specialty, index) => (
+                        <span
+                          key={index}
+                          className="inline-block bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 text-[10px] font-medium px-2 py-0.5 rounded"
+                        >
+                          {specialty}
+                        </span>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Default Operator Assignment Toggle */}
+              <div className="flex items-start space-x-3 p-3 rounded-md border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 mt-4">
+                <div className="flex items-center h-5">
+                  <input
+                    id="default-baker"
+                    type="checkbox"
+                    checked={isDefault}
+                    onChange={e => setIsDefault(e.target.checked)}
+                    disabled={!selectedMemberId || isSubmitting}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Label
+                    htmlFor="default-baker"
+                    className="text-sm font-medium text-slate-900 dark:text-slate-100 cursor-pointer"
+                  >
+                    Primary Shift Operator
+                  </Label>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Automatically assign this operator to new production runs via the Smart Wizard by default.
+                  </p>
+                </div>
+                <Star className={cn('h-4 w-4 ml-auto', isDefault ? 'text-amber-500 fill-current' : 'text-slate-300')} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer Area */}

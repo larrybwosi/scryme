@@ -76,18 +76,44 @@ export class ServiceAnalyticsService {
   }
 
   async getBookingConversionFunnel(orgId: string, startDate: Date, endDate: Date) {
-      const bookings = await this.prisma.client.serviceBooking.findMany({
+      /**
+       * OPTIMIZATION (Bolt ⚡): Replaced the highly inefficient full findMany fetch with
+       * database-level 'groupBy' count aggregations. This prevents fetching, transferring,
+       * and deserializing heavy serviceBooking objects for potentially thousands of records,
+       * reducing both execution time and memory footprint from O(N) to O(1).
+       */
+      const statusCounts = await this.prisma.client.serviceBooking.groupBy({
+          by: ['status'],
           where: {
               organizationId: orgId,
               createdAt: { gte: startDate, lte: endDate }
+          },
+          _count: {
+              _all: true
           }
       });
 
+      const counts: Record<string, number> = {};
+      let totalCount = 0;
+
+      for (const row of statusCounts) {
+          const count = row._count._all;
+          counts[row.status] = count;
+          totalCount += count;
+      }
+
+      const completed = counts[BookingStatus.COMPLETED] || 0;
+      const cancelled = counts[BookingStatus.CANCELLED] || 0;
+      const requested = counts[BookingStatus.REQUESTED] || 0;
+
+      // Scheduled: any booking that is neither REQUESTED nor CANCELLED
+      const scheduled = totalCount - requested - cancelled;
+
       const funnel = {
-          requested: bookings.length,
-          scheduled: bookings.filter(b => b.status !== BookingStatus.REQUESTED && b.status !== BookingStatus.CANCELLED).length,
-          completed: bookings.filter(b => b.status === BookingStatus.COMPLETED).length,
-          cancelled: bookings.filter(b => b.status === BookingStatus.CANCELLED).length,
+          requested: totalCount,
+          scheduled,
+          completed,
+          cancelled,
       };
 
       return {

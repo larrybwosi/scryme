@@ -88,6 +88,7 @@ export class BakeryAuthController {
     };
   }
 
+  @AllowPublic()
   @Post("logout")
   @ApiOperation({ summary: "Logout from bakery app" })
   async logout(@Res() res: any) {

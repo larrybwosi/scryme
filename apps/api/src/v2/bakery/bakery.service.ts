@@ -10,15 +10,13 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { Prisma } from "@/prisma/client";
 import { AuthService } from "../../auth/auth.service";
 import { type V2ApiContext } from "@repo/shared/api/v2";
-import {
-  validateDeviceKey,
-  createMemberToken,
-} from "@repo/shared/api/v2";
+import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v2";
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
 import { env } from "@repo/env";
 import { Decimal } from "decimal.js";
+import { isSafeUrl } from "@repo/shared/server";
 
 @Injectable()
 export class BakeryService {
@@ -125,7 +123,11 @@ export class BakeryService {
    * ⚡ Bolt: Optimized using database-level aggregation and grouping to avoid O(N) in-memory processing.
    * This reduces memory usage and network overhead, especially for organizations with many batches.
    */
-  async getProductionStats(organizationId: string, startDate: Date, endDate: Date) {
+  async getProductionStats(
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const where = {
       organizationId,
       completedAt: {
@@ -152,7 +154,7 @@ export class BakeryService {
       }),
     ]);
 
-    const recipeIds = groups.map((g) => g.recipeId);
+    const recipeIds = groups.map(g => g.recipeId);
 
     // Fetch only necessary recipe details for the recipes found in the batches
     const recipes = await this.prisma.client.recipe.findMany({
@@ -165,15 +167,14 @@ export class BakeryService {
       },
     });
 
-    const recipeMap = new Map(recipes.map((r) => [r.id, r]));
+    const recipeMap = new Map(recipes.map(r => [r.id, r]));
 
-    const recipeStats = groups.map((g) => {
+    const recipeStats = groups.map(g => {
       const recipe = recipeMap.get(g.recipeId);
       return {
         name: recipe?.name || "Unknown",
         quantity: Number(g._sum.actualQuantity || 0),
-        unit:
-          recipe?.systemUnit?.symbol || recipe?.orgUnit?.symbol || "",
+        unit: recipe?.systemUnit?.symbol || recipe?.orgUnit?.symbol || "",
         waste: Number(g._sum.wasteQuantity || 0),
       };
     });
@@ -204,9 +205,7 @@ export class BakeryService {
       totalBatches,
       activeBatches,
       completedToday,
-      lowStockItems,
-      lowStockPreview,
-      totalValueData,
+      rawMaterialStocks,
     ] = await Promise.all([
       /**
        * ⚡ Bolt: Optimized batch retrieval.
@@ -267,28 +266,14 @@ export class BakeryService {
         },
       }),
       /**
-       * ⚡ Bolt: Database-level field comparison.
-       * Using Prisma's field comparison (Prisma.ProductVariantStockScalarFieldEnum)
-       * to filter low stock items at the database level instead of in-memory.
+       * ⚡ Bolt: Fetch all raw material variant stocks for the organization
+       * to allow safe and correct in-memory comparisons and calculations.
        */
-      this.prisma.client.productVariantStock.count({
-        where: {
-          organizationId,
-          variant: { product: { type: "RAW_MATERIAL" as any } },
-          availableStock: {
-            lte: Prisma.ProductVariantStockScalarFieldEnum.reorderPoint,
-          },
-        },
-      }),
       this.prisma.client.productVariantStock.findMany({
         where: {
           organizationId,
           variant: { product: { type: "RAW_MATERIAL" as any } },
-          availableStock: {
-            lte: Prisma.ProductVariantStockScalarFieldEnum.reorderPoint,
-          },
         },
-        take: 10,
         select: {
           id: true,
           availableStock: true,
@@ -298,28 +283,20 @@ export class BakeryService {
             select: {
               name: true,
               sku: true,
+              buyingPrice: true,
               baseUnit: { select: { symbol: true } },
               baseOrgUnit: { select: { symbol: true } },
             },
           },
         },
       }),
-      /**
-       * ⚡ Bolt: Targeted inventory value query.
-       * Fetching only required numeric fields for total value calculation
-       * to minimize network traffic and memory usage.
-       */
-      this.prisma.client.productVariantStock.findMany({
-        where: {
-          organizationId,
-          variant: { product: { type: "RAW_MATERIAL" as any } },
-        },
-        select: {
-          availableStock: true,
-          variant: { select: { buyingPrice: true } },
-        },
-      }),
     ]);
+
+    const lowStockIngredientsAll = rawMaterialStocks.filter((s: any) =>
+      Number(s.availableStock) <= Number(s.reorderPoint ?? 5)
+    );
+    const lowStockItems = lowStockIngredientsAll.length;
+    const lowStockPreview = lowStockIngredientsAll.slice(0, 10);
 
     // Hydrate category names for the grouped results
     const categoryIds = recipeGroups
@@ -352,7 +329,7 @@ export class BakeryService {
       unit: s.variant.baseUnit?.symbol || s.variant.baseOrgUnit?.symbol || "",
     }));
 
-    const totalInventoryValue = totalValueData.reduce(
+    const totalInventoryValue = rawMaterialStocks.reduce(
       (acc, s: any) =>
         acc + Number(s.availableStock) * Number(s.variant.buyingPrice || 0),
       0,
@@ -446,7 +423,8 @@ export class BakeryService {
         unitPrice: Number(v.buyingPrice || 0),
         currentStock,
         reorderLevel: v.reorderPoint || 0,
-        maxStock: v.reorderQty || (v.reorderPoint ? Number(v.reorderPoint) * 2 : 0),
+        maxStock:
+          v.reorderQty || (v.reorderPoint ? Number(v.reorderPoint) * 2 : 0),
         unit: v.baseUnit || v.baseOrgUnit || { symbol: "" },
         category: v.product.category,
         tags: v.tags,
@@ -960,7 +938,12 @@ export class BakeryService {
     const { organizationId } = ctx;
 
     // Strip organizationId and id from data to prevent mass assignment
-    const { organizationId: _, id: __, assistantBakerIds, ...updateData } = data;
+    const {
+      organizationId: _,
+      id: __,
+      assistantBakerIds,
+      ...updateData
+    } = data;
 
     return this.prisma.client.batch.update({
       where: { id, organizationId },
@@ -1049,7 +1032,7 @@ export class BakeryService {
           );
         }
 
-        const stockBatchMap = new Map(stockBatches.map((sb) => [sb.id, sb]));
+        const stockBatchMap = new Map(stockBatches.map(sb => [sb.id, sb]));
 
         const consumptionData = [];
         const movementData = [];
@@ -1065,11 +1048,14 @@ export class BakeryService {
         for (const consumption of ingredientConsumptions) {
           const stockBatch = stockBatchMap.get(consumption.stockBatchId);
           if (!stockBatch) {
-            throw new NotFoundException(`Stock batch ${consumption.stockBatchId} not found`);
+            throw new NotFoundException(
+              `Stock batch ${consumption.stockBatchId} not found`,
+            );
           }
 
           const qty = new Decimal(consumption.quantity);
-          const currentTotal = stockBatchUpdates.get(consumption.stockBatchId) || new Decimal(0);
+          const currentTotal =
+            stockBatchUpdates.get(consumption.stockBatchId) || new Decimal(0);
           const newTotal = currentTotal.add(qty);
 
           if (stockBatch.currentQuantity.lt(newTotal)) {
@@ -1110,7 +1096,9 @@ export class BakeryService {
         }
 
         // Batch inserts for consumption records and movements
-        await tx.batchIngredientConsumption.createMany({ data: consumptionData });
+        await tx.batchIngredientConsumption.createMany({
+          data: consumptionData,
+        });
         await tx.stockMovement.createMany({ data: movementData });
 
         // Batch execute all aggregated stock updates concurrently
@@ -1354,7 +1342,6 @@ export class BakeryService {
   async createCategory(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
 
-    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
     const { name, description } = data;
 
     return this.prisma.client.bakeryCategory.create({
@@ -1786,7 +1773,8 @@ export class BakeryService {
       stockingOrgUnitId,
     } = data;
 
-    const finalReorderPoint = reorderPoint !== undefined ? reorderPoint : reorderLevel;
+    const finalReorderPoint =
+      reorderPoint !== undefined ? reorderPoint : reorderLevel;
 
     return this.prisma.client.$transaction(async tx => {
       const product = await tx.product.create({
@@ -1836,7 +1824,8 @@ export class BakeryService {
       stockingOrgUnitId,
     } = data;
 
-    const finalReorderPoint = reorderPoint !== undefined ? reorderPoint : reorderLevel;
+    const finalReorderPoint =
+      reorderPoint !== undefined ? reorderPoint : reorderLevel;
 
     return this.prisma.client.$transaction(async tx => {
       // Find the product first to get its variant
@@ -1863,7 +1852,8 @@ export class BakeryService {
             name,
             sku,
             buyingPrice,
-            reorderPoint: finalReorderPoint !== undefined ? finalReorderPoint : undefined,
+            reorderPoint:
+              finalReorderPoint !== undefined ? finalReorderPoint : undefined,
             baseUnitId,
             baseOrgUnitId,
             stockingUnitId,
@@ -2042,6 +2032,13 @@ export class BakeryService {
           );
           if (sigAsset) {
             asset = a;
+            // @security Validate URL to prevent SSRF
+            if (!(await isSafeUrl(sigAsset.browser_download_url))) {
+              this.logger.warn(
+                `Insecure signature download URL blocked: ${sigAsset.browser_download_url}`,
+              );
+              return null;
+            }
             // Fetch signature with auth headers if needed
             const sigResponse = await axios.get(sigAsset.browser_download_url, {
               headers,

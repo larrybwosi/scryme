@@ -277,10 +277,13 @@ export async function getCompanies() {
     const auth = await getServerAuth();
     if (!auth?.organizationId) redirect("/login");
 
+    // ⚡ Bolt: Performance Optimization (Pruning Unused Relational Includes)
+    // Removing `contacts: true` nested join block because only the count is needed,
+    // which is already provided by `_count`. This prevents over-fetching all columns
+    // of all contacts into memory and serializing them over the network.
     const companies = await db.businessAccount.findMany({
       where: { organizationId: auth.organizationId },
       include: {
-        contacts: true,
         _count: {
           select: { contacts: true },
         },

@@ -117,12 +117,14 @@ export class CommunicationIntegrationService {
     activityId: string,
     text: string,
   ) {
-    const activity = await this.prisma.client.crmActivity.findUnique({
-      where: { id: activityId },
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because crm_activities lacks
+    // a composite unique index on [id, organizationId], ensuring proper tenant scoping.
+    const activity = await this.prisma.client.crmActivity.findFirst({
+      where: { id: activityId, organizationId },
       include: { record: true },
     });
 
-    if (!activity || activity.organizationId !== organizationId) {
+    if (!activity) {
       throw new NotFoundException("Activity not found");
     }
 

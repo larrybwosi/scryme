@@ -86,4 +86,74 @@ class InterceptorsTest {
         assertEquals("org_id_abc", capturedRequest?.header("X-Organization-Id"))
         assertEquals("org_slug_abc", capturedRequest?.header("X-Organization-Slug"))
     }
+
+    @Test
+    fun `DynamicBaseUrlInterceptor rewrites URL with custom HTTP base URL`() {
+        val mockBaseUrl = "http://10.0.2.2:3002"
+        every { sessionManager.baseUrl } returns MutableStateFlow(mockBaseUrl)
+
+        val interceptor = DynamicBaseUrlInterceptor(sessionManager)
+
+        val request = Request.Builder()
+            .url("https://api.scryme.tech/v3/test")
+            .build()
+
+        var capturedRequest: Request? = null
+        val chain = mockk<Interceptor.Chain>()
+        every { chain.request() } returns request
+        every { chain.proceed(any()) } answers {
+            capturedRequest = firstArg()
+            mockk<Response>()
+        }
+
+        interceptor.intercept(chain)
+
+        assertEquals("http://10.0.2.2:3002/v3/test", capturedRequest?.url.toString())
+    }
+
+    @Test
+    fun `DynamicBaseUrlInterceptor keeps original URL when base URL is empty`() {
+        every { sessionManager.baseUrl } returns MutableStateFlow("")
+
+        val interceptor = DynamicBaseUrlInterceptor(sessionManager)
+
+        val request = Request.Builder()
+            .url("https://api.scryme.tech/v3/test")
+            .build()
+
+        var capturedRequest: Request? = null
+        val chain = mockk<Interceptor.Chain>()
+        every { chain.request() } returns request
+        every { chain.proceed(any()) } answers {
+            capturedRequest = firstArg()
+            mockk<Response>()
+        }
+
+        interceptor.intercept(chain)
+
+        assertEquals("https://api.scryme.tech/v3/test", capturedRequest?.url.toString())
+    }
+
+    @Test
+    fun `DynamicBaseUrlInterceptor keeps original URL on invalid base URL`() {
+        every { sessionManager.baseUrl } returns MutableStateFlow("invalid-url-format")
+
+        val interceptor = DynamicBaseUrlInterceptor(sessionManager)
+
+        val request = Request.Builder()
+            .url("https://api.scryme.tech/v3/test")
+            .build()
+
+        var capturedRequest: Request? = null
+        val chain = mockk<Interceptor.Chain>()
+        every { chain.request() } returns request
+        every { chain.proceed(any()) } answers {
+            capturedRequest = firstArg()
+            mockk<Response>()
+        }
+
+        interceptor.intercept(chain)
+
+        assertEquals("https://api.scryme.tech/v3/test", capturedRequest?.url.toString())
+    }
 }

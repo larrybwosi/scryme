@@ -105,4 +105,57 @@ describe('B2BUseCase', () => {
       );
     });
   });
+
+  describe('createOrder - Security Checks', () => {
+    it('should reject order creation if one or more variant IDs belong to another organization', async () => {
+      vi.spyOn(prisma.client.inventoryLocation, 'findFirst').mockResolvedValue({ id: 'loc-1' } as any);
+      // Mock findMany to return empty array because the variant doesn't belong to the current organization
+      vi.spyOn(prisma.client.productVariant, 'findMany').mockResolvedValue([]);
+
+      const orderData = {
+        items: [
+          { variantId: 'unowned-variant-id', quantity: 2 },
+        ],
+      };
+
+      await expect(
+        useCase.createOrder('org-current', 'ba-1', orderData)
+      ).rejects.toThrow("One or more variants not found or do not belong to this organization");
+
+      expect(prisma.client.productVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: ['unowned-variant-id'] },
+            product: { organizationId: 'org-current' },
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('createQuote - Security Checks', () => {
+    it('should reject quote creation if one or more variant IDs belong to another organization', async () => {
+      vi.spyOn(prisma.client.inventoryLocation, 'findFirst').mockResolvedValue({ id: 'loc-1' } as any);
+      vi.spyOn(prisma.client.productVariant, 'findMany').mockResolvedValue([]);
+
+      const quoteData = {
+        items: [
+          { variantId: 'unowned-variant-id', quantity: 5 },
+        ],
+      };
+
+      await expect(
+        useCase.createQuote('org-current', 'ba-1', quoteData)
+      ).rejects.toThrow("One or more variants not found or do not belong to this organization");
+
+      expect(prisma.client.productVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            id: { in: ['unowned-variant-id'] },
+            product: { organizationId: 'org-current' },
+          }),
+        }),
+      );
+    });
+  });
 });

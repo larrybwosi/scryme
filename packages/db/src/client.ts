@@ -31,7 +31,7 @@ const connectionString = env.DATABASE_URL;
 if (!globalForPrisma.pgPool) {
   globalForPrisma.pgPool = new Pool({
     connectionString,
-    max: parseInt(env.DATABASE_POOL_SIZE || "50", 10), // Scalable pool size
+    max: parseInt(env.DATABASE_POOL_SIZE || "15", 10), // Scalable pool size (optimized to 15 for 4GB VPS servers)
     connectionTimeoutMillis: 10000, // Wait up to 10 seconds to connect (increased from 5000 to prevent timeouts under load)
     idleTimeoutMillis: 30000, // close idle connections after 30 seconds
     maxUses: 7500, // recycle connections to prevent memory leaks in pg

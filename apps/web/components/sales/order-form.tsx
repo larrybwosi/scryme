@@ -101,15 +101,18 @@ type OrderFormValues = z.infer<typeof orderSchema>;
 const ORDER_TYPE_META = {
   SALES_ORDER: {
     label: "Sales Order",
-    color: "bg-blue-50 text-blue-700 border-blue-200",
+    color:
+      "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800",
   },
   QUOTE: {
     label: "Quote",
-    color: "bg-amber-50 text-amber-700 border-amber-200",
+    color:
+      "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800",
   },
   POS_SALE: {
     label: "POS Sale",
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    color:
+      "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800",
   },
 } as const;
 
@@ -129,15 +132,15 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-start gap-3 mb-6">
-      <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-100 shrink-0">
-        <Icon className="w-4 h-4 text-emerald-600" />
+      <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-100 shrink-0 dark:bg-emerald-950 dark:border-emerald-800">
+        <Icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
       </div>
       <div>
-        <h3 className="text-sm font-semibold text-zinc-900 leading-none">
+        <h3 className="text-sm font-semibold text-foreground leading-none">
           {title}
         </h3>
         {description && (
-          <p className="text-xs text-zinc-500 mt-1">{description}</p>
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
         )}
       </div>
     </div>
@@ -147,7 +150,7 @@ function SectionHeader({
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <p className="flex items-center gap-1 text-xs text-red-600 mt-1">
+    <p className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 mt-1">
       <AlertCircle className="w-3 h-3" />
       {message}
     </p>
@@ -169,19 +172,21 @@ function SummaryRow({
     <div
       className={cn(
         "flex justify-between items-center",
-        muted && "text-zinc-500",
+        muted && "text-muted-foreground",
       )}>
       <span
         className={cn(
           "text-sm",
-          highlight ? "font-semibold text-zinc-900" : "",
+          highlight ? "font-semibold text-foreground" : "",
         )}>
         {label}
       </span>
       <span
         className={cn(
           "text-sm tabular-nums",
-          highlight ? "text-lg font-bold text-emerald-600" : "",
+          highlight
+            ? "text-lg font-bold text-emerald-600 dark:text-emerald-400"
+            : "",
         )}>
         {value}
       </span>
@@ -317,18 +322,20 @@ export function OrderForm({
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-zinc-50/60">
+      <div className="min-h-screen bg-muted/50 dark:bg-background">
         {/* ── Page Header ── */}
-        <div className="bg-white border-b border-zinc-200">
+        <div className="bg-card border-b border-border dark:border-zinc-800">
           <div className="w-full px-6 lg:px-10 py-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-xs text-zinc-400 font-medium">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
                 <span>Sales</span>
                 <ChevronRight className="w-3 h-3" />
                 <span>Transactions</span>
                 <ChevronRight className="w-3 h-3" />
               </div>
-              <h1 className="text-lg font-semibold text-zinc-900">New Order</h1>
+              <h1 className="text-lg font-semibold text-foreground">
+                New Order
+              </h1>
               {watchType && (
                 <Badge
                   variant="outline"
@@ -346,7 +353,7 @@ export function OrderForm({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-zinc-600"
+                className="text-muted-foreground"
                 onClick={() => router.back()}>
                 Cancel
               </Button>
@@ -354,7 +361,7 @@ export function OrderForm({
                 form="order-form"
                 type="submit"
                 size="sm"
-                className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2"
+                className="bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 gap-2"
                 disabled={isSubmitting}>
                 <Save className="w-3.5 h-3.5" />
                 {isSubmitting ? "Creating..." : "Create Order"}
@@ -372,7 +379,7 @@ export function OrderForm({
             {/* ── LEFT COLUMN ── */}
             <div className="space-y-6">
               {/* Order Details Card */}
-              <Card className="shadow-none border-zinc-200">
+              <Card className="shadow-none border-border dark:border-zinc-800">
                 <CardHeader className="pb-0">
                   <SectionHeader
                     icon={FileText}
@@ -384,7 +391,7 @@ export function OrderForm({
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                     {/* Customer */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                         <User className="w-3 h-3" /> Customer
                       </Label>
                       <Controller
@@ -394,7 +401,7 @@ export function OrderForm({
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}>
-                            <SelectTrigger className="bg-white">
+                            <SelectTrigger className="bg-background">
                               <SelectValue placeholder="Select customer" />
                             </SelectTrigger>
                             <SelectContent>
@@ -414,7 +421,7 @@ export function OrderForm({
 
                     {/* Location */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                         <MapPin className="w-3 h-3" /> Location
                       </Label>
                       <Controller
@@ -424,7 +431,7 @@ export function OrderForm({
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}>
-                            <SelectTrigger className="bg-white">
+                            <SelectTrigger className="bg-background">
                               <SelectValue placeholder="Select location" />
                             </SelectTrigger>
                             <SelectContent>
@@ -444,7 +451,7 @@ export function OrderForm({
 
                     {/* Order Type */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                         <ReceiptText className="w-3 h-3" /> Order Type
                       </Label>
                       <Controller
@@ -454,7 +461,7 @@ export function OrderForm({
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}>
-                            <SelectTrigger className="bg-white">
+                            <SelectTrigger className="bg-background">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -471,24 +478,25 @@ export function OrderForm({
 
                     {/* Expected Delivery */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                         <CalendarIcon className="w-3 h-3" /> Expected Delivery
                       </Label>
                       <Input
                         type="date"
                         {...register("expectedDeliveryDate")}
-                        className="bg-white"
+                        className="bg-background"
                       />
                     </div>
                   </div>
 
-                  <Separator className="my-6" />
+                  <Separator className="my-6 dark:bg-zinc-800" />
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {/* Business Account */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
-                        <Building2 className="w-3 h-3" /> Business Account (Enterprise)
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                        <Building2 className="w-3 h-3" /> Business Account
+                        (Enterprise)
                       </Label>
                       <Controller
                         name="businessAccountId"
@@ -497,7 +505,7 @@ export function OrderForm({
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}>
-                            <SelectTrigger className="bg-white">
+                            <SelectTrigger className="bg-background">
                               <SelectValue placeholder="Select business account" />
                             </SelectTrigger>
                             <SelectContent>
@@ -514,7 +522,7 @@ export function OrderForm({
 
                     {/* Delivery Partner */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                         <Truck className="w-3 h-3" /> Delivery Partner
                       </Label>
                       <Controller
@@ -524,7 +532,7 @@ export function OrderForm({
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}>
-                            <SelectTrigger className="bg-white">
+                            <SelectTrigger className="bg-background">
                               <SelectValue placeholder="Select partner" />
                             </SelectTrigger>
                             <SelectContent>
@@ -541,7 +549,7 @@ export function OrderForm({
 
                     {/* Shipping Address */}
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-zinc-500 flex items-center gap-1.5">
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
                         <MapPin className="w-3 h-3" /> Shipping Address
                       </Label>
                       <Controller
@@ -550,25 +558,32 @@ export function OrderForm({
                         render={({ field }) => {
                           const selectedCustomerId = watch("customerId");
                           const selectedBusinessId = watch("businessAccountId");
-                          const customer = customers.find(c => c.id === selectedCustomerId);
-                          const business = businessAccounts.find(b => b.id === selectedBusinessId);
+                          const customer = customers.find(
+                            c => c.id === selectedCustomerId,
+                          );
+                          const business = businessAccounts.find(
+                            b => b.id === selectedBusinessId,
+                          );
                           const addresses = [
                             ...(customer?.addresses || []),
-                            ...(business?.addresses || [])
+                            ...(business?.addresses || []),
                           ];
 
                           return (
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
-                              disabled={!selectedCustomerId && !selectedBusinessId}>
-                              <SelectTrigger className="bg-white">
+                              disabled={
+                                !selectedCustomerId && !selectedBusinessId
+                              }>
+                              <SelectTrigger className="bg-background">
                                 <SelectValue placeholder="Select shipping address" />
                               </SelectTrigger>
                               <SelectContent>
                                 {addresses.map(a => (
                                   <SelectItem key={a.id} value={a.id}>
-                                    {a.street1}, {a.city} ({a.label || "Address"})
+                                    {a.street1}, {a.city} (
+                                    {a.label || "Address"})
                                   </SelectItem>
                                 ))}
                                 {addresses.length === 0 && (
@@ -587,7 +602,7 @@ export function OrderForm({
               </Card>
 
               {/* Line Items Card */}
-              <Card className="shadow-none border-zinc-200">
+              <Card className="shadow-none border-border dark:border-zinc-800">
                 <CardHeader className="pb-0">
                   <SectionHeader
                     icon={ShoppingCart}
@@ -610,7 +625,7 @@ export function OrderForm({
                       <div
                         key={i}
                         className={cn(
-                          "text-xs font-semibold uppercase tracking-wide text-zinc-400",
+                          "text-xs font-semibold uppercase tracking-wide text-muted-foreground",
                           i === 0
                             ? "col-span-4"
                             : i === 5
@@ -623,7 +638,7 @@ export function OrderForm({
                       </div>
                     ))}
                   </div>
-                  <Separator className="mb-4" />
+                  <Separator className="mb-4 dark:bg-zinc-800" />
 
                   <div className="space-y-3">
                     {fields.map((field, index) => {
@@ -636,7 +651,7 @@ export function OrderForm({
                       return (
                         <div
                           key={field.id}
-                          className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-zinc-50 border border-zinc-100 hover:border-zinc-200 transition-colors group">
+                          className="grid grid-cols-12 gap-3 items-center p-3 rounded-lg bg-muted border border-border hover:border-zinc-300 dark:hover:border-zinc-600 transition-colors group">
                           {/* Product */}
                           <div className="col-span-12 sm:col-span-4">
                             <Controller
@@ -679,7 +694,7 @@ export function OrderForm({
                             <Input
                               type="number"
                               min={1}
-                              className="bg-white text-sm text-center"
+                              className="bg-background text-sm text-center"
                               {...register(`items.${index}.quantity`, {
                                 valueAsNumber: true,
                               })}
@@ -692,7 +707,7 @@ export function OrderForm({
                               type="number"
                               step="0.01"
                               min={0}
-                              className="bg-white text-sm"
+                              className="bg-background text-sm"
                               {...register(`items.${index}.unitPrice`, {
                                 valueAsNumber: true,
                               })}
@@ -705,7 +720,7 @@ export function OrderForm({
                               type="number"
                               step="0.01"
                               min={0}
-                              className="bg-white text-sm"
+                              className="bg-background text-sm"
                               {...register(`items.${index}.taxAmount`, {
                                 valueAsNumber: true,
                               })}
@@ -718,7 +733,7 @@ export function OrderForm({
                               type="number"
                               step="0.01"
                               min={0}
-                              className="bg-white text-sm"
+                              className="bg-background text-sm"
                               {...register(`items.${index}.discountAmount`, {
                                 valueAsNumber: true,
                               })}
@@ -727,7 +742,7 @@ export function OrderForm({
 
                           {/* Line Total */}
                           <div className="col-span-6 sm:col-span-2 text-right">
-                            <span className="text-sm font-semibold text-zinc-900 tabular-nums">
+                            <span className="text-sm font-semibold text-foreground tabular-nums">
                               {fmt(lineTotal, currency)}
                             </span>
                           </div>
@@ -740,7 +755,7 @@ export function OrderForm({
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all"
                                   onClick={() => remove(index)}
                                   disabled={fields.length === 1}>
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -758,7 +773,7 @@ export function OrderForm({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="w-full mt-4 border-dashed border-zinc-300 text-zinc-500 hover:text-zinc-700 hover:border-zinc-400"
+                    className="w-full mt-4 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-zinc-400 dark:hover:border-zinc-500"
                     onClick={() =>
                       append({
                         variantId: "",
@@ -777,7 +792,7 @@ export function OrderForm({
 
               {/* Notes & Terms Card */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="shadow-none border-zinc-200">
+                <Card className="shadow-none border-border dark:border-zinc-800">
                   <CardHeader className="pb-0">
                     <SectionHeader
                       icon={StickyNote}
@@ -790,12 +805,12 @@ export function OrderForm({
                       {...register("notes")}
                       rows={4}
                       placeholder="Add instructions, references, or delivery notes…"
-                      className="bg-white resize-none text-sm"
+                      className="bg-background resize-none text-sm"
                     />
                   </CardContent>
                 </Card>
 
-                <Card className="shadow-none border-zinc-200">
+                <Card className="shadow-none border-border dark:border-zinc-800">
                   <CardHeader className="pb-0">
                     <SectionHeader
                       icon={FileText}
@@ -808,14 +823,14 @@ export function OrderForm({
                       {...register("termsAndConditions")}
                       rows={4}
                       placeholder="Enter billing terms, payment deadlines, or legal conditions…"
-                      className="bg-white resize-none text-sm"
+                      className="bg-background resize-none text-sm"
                     />
                   </CardContent>
                 </Card>
               </div>
 
               {/* Attachments Card */}
-              <Card className="shadow-none border-zinc-200">
+              <Card className="shadow-none border-border dark:border-zinc-800">
                 <CardHeader className="pb-0">
                   <SectionHeader
                     icon={Paperclip}
@@ -854,17 +869,17 @@ export function OrderForm({
                         {watchAttachments.map((file: any, idx: number) => (
                           <div
                             key={idx}
-                            className="flex items-center justify-between p-2 bg-white border border-zinc-200 rounded-lg shadow-sm">
+                            className="flex items-center justify-between p-2 bg-card border border-border rounded-lg shadow-sm dark:border-zinc-700">
                             <div className="flex items-center gap-2 overflow-hidden">
-                              <Paperclip className="w-4 h-4 text-zinc-400 shrink-0" />
-                              <span className="text-xs truncate font-medium text-zinc-700">
+                              <Paperclip className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <span className="text-xs truncate font-medium text-foreground">
                                 {file.fileName}
                               </span>
                             </div>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6 text-zinc-400 hover:text-red-500"
+                              className="h-6 w-6 text-muted-foreground hover:text-red-500 dark:hover:text-red-400"
                               onClick={() => removeAttachment(idx)}>
                               <X className="w-4 h-4" />
                             </Button>
@@ -880,14 +895,14 @@ export function OrderForm({
             {/* ── RIGHT COLUMN ── */}
             <div className="space-y-4">
               {/* Order Summary */}
-              <Card className="shadow-none border-zinc-200 sticky top-6">
+              <Card className="shadow-none border-border dark:border-zinc-800 sticky top-6">
                 <CardHeader className="pb-0">
                   <SectionHeader icon={Package} title="Order Summary" />
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Item count */}
-                  <div className="flex items-center justify-between p-3 rounded-lg bg-zinc-50 border border-zinc-100">
-                    <span className="text-xs text-zinc-500 font-medium">
+                  <div className="flex items-center justify-between p-3 rounded-lg bg-muted border border-border dark:border-zinc-700">
+                    <span className="text-xs text-muted-foreground font-medium">
                       {fields.length} line item{fields.length !== 1 ? "s" : ""}
                     </span>
                     <Badge variant="secondary" className="text-xs">
@@ -895,7 +910,7 @@ export function OrderForm({
                     </Badge>
                   </div>
 
-                  <Separator />
+                  <Separator className="dark:bg-zinc-800" />
 
                   {/* Pricing breakdown */}
                   <div className="space-y-2.5">
@@ -914,7 +929,7 @@ export function OrderForm({
                       muted
                     />
                     <div className="pt-2">
-                      <Label className="text-[10px] font-bold uppercase text-zinc-400 mb-1.5 block">
+                      <Label className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5 block">
                         Transport / Shipping Fee
                       </Label>
                       <div className="relative">
@@ -922,17 +937,17 @@ export function OrderForm({
                           type="number"
                           step="0.01"
                           min={0}
-                          className="pl-7 h-9 text-sm font-semibold bg-white border-zinc-200"
+                          className="pl-7 h-9 text-sm font-semibold bg-background border-border dark:border-zinc-700"
                           {...register("shippingFee", { valueAsNumber: true })}
                         />
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
                           $
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <Separator />
+                  <Separator className="dark:bg-zinc-800" />
 
                   <SummaryRow
                     label="Total"
@@ -943,13 +958,13 @@ export function OrderForm({
                   <Button
                     form="order-form"
                     type="submit"
-                    className="w-full bg-zinc-900 hover:bg-zinc-800 text-white mt-2 gap-2 h-11"
+                    className="w-full bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 mt-2 gap-2 h-11"
                     disabled={isSubmitting}>
                     <Save className="w-4 h-4" />
                     {isSubmitting ? "Creating Order…" : "Create Order"}
                   </Button>
 
-                  <p className="text-[11px] text-center text-zinc-400">
+                  <p className="text-[11px] text-center text-muted-foreground">
                     This order will be saved and can be edited later.
                   </p>
                 </CardContent>
@@ -962,16 +977,16 @@ export function OrderForm({
       <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="flex flex-col items-center justify-center text-center space-y-3 pt-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-              <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center">
+              <CheckCircle2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div className="space-y-1">
               <DialogTitle className="text-xl font-bold">
                 Order Created!
               </DialogTitle>
-              <DialogDescription className="text-zinc-500">
+              <DialogDescription className="text-muted-foreground">
                 Order{" "}
-                <span className="font-semibold text-zinc-900">
+                <span className="font-semibold text-foreground">
                   {createdOrder?.number}
                 </span>{" "}
                 has been successfully generated.
@@ -980,16 +995,16 @@ export function OrderForm({
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-3 py-4">
-            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 space-y-3">
+            <div className="rounded-lg border border-border bg-muted p-4 space-y-3 dark:border-zinc-700">
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Amount Due</span>
-                <span className="font-bold text-zinc-900">
+                <span className="text-muted-foreground">Amount Due</span>
+                <span className="font-bold text-foreground">
                   {fmt(createdOrder?.finalTotal || 0, currency)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-zinc-500">Customer</span>
-                <span className="font-medium text-zinc-900">
+                <span className="text-muted-foreground">Customer</span>
+                <span className="font-medium text-foreground">
                   {createdOrder?.customer?.name || "Walk-in Customer"}
                 </span>
               </div>
@@ -1009,7 +1024,7 @@ export function OrderForm({
             </Button>
             <Button
               type="button"
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white dark:bg-emerald-700 dark:hover:bg-emerald-800 gap-2"
               onClick={handleDownloadInvoice}>
               <Download className="w-4 h-4" />
               Download Invoice

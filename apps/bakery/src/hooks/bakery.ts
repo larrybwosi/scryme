@@ -205,12 +205,22 @@ export const useBakers = () => {
     queryKey: ["bakers"],
     queryFn: async () => {
       if (isTauri() && isOfflineMode()) {
-        return tauriInvoke<BakeryBaker[]>("get_bakers");
+        const localBakers = await tauriInvoke<BakeryBaker[]>("get_bakers");
+        return localBakers.map(baker => ({
+          ...baker,
+          name: baker.name || baker.member?.user?.name || "Unknown",
+          email: baker.email || baker.member?.user?.email || "",
+        }));
       }
       const data = await sdk.bakery.getBakers();
-      return (Array.isArray(data)
+      const rawBakers = (Array.isArray(data)
         ? data
         : data?.data || []) as unknown as BakeryBaker[];
+      return rawBakers.map(baker => ({
+        ...baker,
+        name: baker.name || baker.member?.user?.name || "Unknown",
+        email: baker.email || baker.member?.user?.email || "",
+      }));
     },
   });
 };
@@ -497,6 +507,7 @@ export const useCreateBakeryCategory = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => {
+      console.log("Creating category with data:", data);
       if (isTauri() && isOfflineMode()) {
         return tauriInvoke("create_category", {
           userId: "local-user",
@@ -507,6 +518,9 @@ export const useCreateBakeryCategory = () => {
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] }),
+    onError: (error: any) => {
+      console.error("Error creating category:", error.message);
+    }
   });
 };
 
@@ -524,6 +538,9 @@ export const useUpdateBakeryCategory = () => {
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] }),
+    onError: (error: any) => {
+      console.error("Error updating category:", error);
+    }
   });
 };
 
@@ -538,6 +555,9 @@ export const useDeleteBakeryCategory = () => {
     },
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["bakeryCategories"] }),
+    onError: (error: any) => {
+      console.error("Error deleting category:", error);
+    }
   });
 };
 

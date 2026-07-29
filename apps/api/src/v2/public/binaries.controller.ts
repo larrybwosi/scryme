@@ -6,6 +6,7 @@ import {
   Res,
   NotFoundException,
   InternalServerErrorException,
+  BadRequestException,
   Logger,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiQuery } from "@nestjs/swagger";
@@ -13,6 +14,7 @@ import { AllowPublic } from "../../common/decorators/auth.decorator";
 import axios from "axios";
 import { env } from "@repo/env";
 import type { FastifyReply } from "fastify";
+import { isSafeUrl } from "@repo/shared/server";
 
 @ApiTags("Public")
 @Controller("public")
@@ -103,6 +105,11 @@ export class BinariesController {
         );
       }
 
+      // @security Validate URL to prevent SSRF
+      if (!(await isSafeUrl(asset.browser_download_url))) {
+        throw new BadRequestException("Insecure download URL blocked");
+      }
+
       const response = await axios({
         method: "get",
         url: asset.browser_download_url,
@@ -126,7 +133,7 @@ export class BinariesController {
       return response.data.pipe(res);
     } catch (error) {
       this.logger.error(`Failed to proxy binary: ${error.message}`);
-      if (error instanceof NotFoundException) throw error;
+      if (error instanceof NotFoundException || error instanceof BadRequestException) throw error;
       throw new InternalServerErrorException("Failed to fetch binary from source");
     }
   }

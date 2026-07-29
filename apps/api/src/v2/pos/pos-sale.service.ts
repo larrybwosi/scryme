@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException, Logger } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import type { V2ApiContext } from "@repo/shared/api/v2";
+import { getDocumentUrl } from "@repo/shared/api/v2";
 import { processSale } from "@repo/shared/actions";
 import { triggerStkPush } from "@repo/shared/actions";
 import { createOrder } from "@repo/shared/actions";
@@ -122,6 +123,15 @@ export class PosSaleService {
 
     if (!result.success) {
       throw new BadRequestException(result.error || "Failed to process order");
+    }
+
+    // Populate invoiceUrl so POS can directly view and download/print the invoice
+    if (result.data) {
+      (result.data as any).invoiceUrl = getDocumentUrl(
+        "invoice",
+        result.data.id,
+        organizationId,
+      );
     }
 
     return result;
