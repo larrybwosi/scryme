@@ -11,10 +11,11 @@ import { RedisModule } from "../../../redis/redis.module";
 import { PricingResolverService } from "./application/services/pricing-resolver.service";
 import { PricingManagementService } from "./application/services/pricing-management.service";
 import { InventoryModule } from "../inventory/inventory.module";
+import { ServicesModule } from "../services/services.module";
 
 @Global()
 @Module({
-  imports: [PrismaModule, RedisModule, InventoryModule],
+  imports: [PrismaModule, RedisModule, InventoryModule, ServicesModule],
   controllers: [ProductController],
   providers: [
     ProductResolver,

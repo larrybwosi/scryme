@@ -8,5 +8,14 @@ export class Product {
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly sku?: string,
+    public readonly slug?: string | null,
+    public readonly imageUrls?: string[],
+    public readonly category?: { id: string; name: string },
+    public readonly variants?: Array<{
+      id: string;
+      name: string;
+      sku: string;
+      retailPrice: number | null;
+    }>,
   ) {}
 }
