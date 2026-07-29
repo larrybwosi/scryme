@@ -3,6 +3,7 @@ import { ProcessSaleUseCase } from "./process-sale.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
 import { InvoiceUseCase } from "../../../finance/application/use-cases/invoice.use-case";
+import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
 import { BadRequestException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
@@ -15,6 +16,7 @@ vi.mock("@repo/windmill/server", () => ({
 describe("ProcessSaleUseCase", () => {
   let useCase: ProcessSaleUseCase;
   let prisma: any;
+  let inventoryMovementService: any;
 
   beforeEach(async () => {
     prisma = {
@@ -27,13 +29,21 @@ describe("ProcessSaleUseCase", () => {
         stockMovement: { createMany: vi.fn() },
         loyaltyVoucher: { findUnique: vi.fn(), update: vi.fn() },
         organization: { findUnique: vi.fn() },
+        service: { findMany: vi.fn() },
+        serviceBooking: { findFirst: vi.fn(), update: vi.fn() },
+        bookingConsumedMaterial: { createMany: vi.fn() },
       },
+    };
+
+    inventoryMovementService = {
+      recordMovement: vi.fn().mockResolvedValue({}),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProcessSaleUseCase,
         { provide: PrismaService, useValue: prisma },
+        { provide: InventoryMovementService, useValue: inventoryMovementService },
         {
           provide: LoyaltyService,
           useValue: {
@@ -143,5 +153,143 @@ describe("ProcessSaleUseCase", () => {
     await expect(useCase.execute(ctx, dto)).rejects.toThrow(
       BadRequestException,
     );
+  });
+
+  it("should support Option C - direct service sale without booking, and consume its materials", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      serviceItems: [
+        { serviceId: "srv1", quantity: 1, unitPrice: 50 },
+      ],
+      payments: [{ method: "CASH", amount: 50 }],
+    };
+
+    prisma.client.service.findMany.mockResolvedValue([
+      {
+        id: "srv1",
+        name: "Hair Wash",
+        sku: "SRV-HW",
+        price: 50,
+        materials: [
+          { variantId: "shampoo_v", quantity: 0.1 },
+        ],
+      },
+    ]);
+
+    prisma.client.transaction.create.mockResolvedValue({
+      id: "t2",
+      number: "T2",
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(result.id).toBe("t2");
+    expect(prisma.client.productVariantStock.update).toHaveBeenCalledOnce();
+    expect(prisma.client.productVariantStock.update).toHaveBeenCalledWith({
+      where: { variantId_locationId: { variantId: "shampoo_v", locationId: "loc_1" } },
+      data: {
+        currentStock: { decrement: 0.1 },
+        availableStock: { decrement: 0.1 },
+      },
+    });
+
+    expect(inventoryMovementService.recordMovement).toHaveBeenCalledOnce();
+    expect(inventoryMovementService.recordMovement).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        variantId: "shampoo_v",
+        quantity: 0.1,
+        movementType: "ADJUSTMENT_OUT",
+        referenceId: "t2",
+        referenceType: "Transaction",
+      })
+    );
+  });
+
+  it("should support Option A - complete existing booking, consume booking materials, and update booking details", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      serviceItems: [
+        { serviceId: "srv1", quantity: 1, bookingId: "bk1" },
+      ],
+      payments: [{ method: "CASH", amount: 45 }],
+    };
+
+    prisma.client.service.findMany.mockResolvedValue([
+      {
+        id: "srv1",
+        name: "Haircut",
+        sku: "SRV-HC",
+        price: 45,
+        materials: [],
+      },
+    ]);
+
+    prisma.client.serviceBooking.findFirst.mockResolvedValue({
+      id: "bk1",
+      status: "SCHEDULED",
+      scheduledStartTime: new Date(),
+      service: {
+        materials: [
+          { variantId: "scissors_v", quantity: 1 },
+        ],
+      },
+    });
+
+    prisma.client.transaction.create.mockResolvedValue({
+      id: "t3",
+      number: "T3",
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(result.id).toBe("t3");
+
+    // Verify booking was updated to COMPLETED
+    expect(prisma.client.serviceBooking.update).toHaveBeenCalledWith({
+      where: { id: "bk1" },
+      data: expect.objectContaining({
+        status: "COMPLETED",
+        transactionId: "t3",
+      }),
+    });
+
+    // Verify stock update for booking materials
+    expect(prisma.client.productVariantStock.update).toHaveBeenCalledWith({
+      where: { variantId_locationId: { variantId: "scissors_v", locationId: "loc_1" } },
+      data: {
+        currentStock: { decrement: 1 },
+        availableStock: { decrement: 1 },
+      },
+    });
+
+    // Verify bookingConsumedMaterial is recorded
+    expect(prisma.client.bookingConsumedMaterial.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          bookingId: "bk1",
+          variantId: "scissors_v",
+          quantity: 1,
+        },
+      ],
+    });
   });
 });
