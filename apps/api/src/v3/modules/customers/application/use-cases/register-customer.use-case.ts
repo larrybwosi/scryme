@@ -32,7 +32,9 @@ export class RegisterCustomerUseCase {
       `Registering customer for organization ${organizationId}: ${dto.email}`,
     );
 
-    await this.verifyZitadelUser(dto.zitadelUserId);
+    if (dto.zitadelUserId) {
+      await this.verifyZitadelUser(dto.zitadelUserId);
+    }
 
     const result = await this.prisma.client.$transaction(async (tx) => {
       // Security: Check if customer with this email already exists in this organization
@@ -45,12 +47,29 @@ export class RegisterCustomerUseCase {
         },
       });
 
-      const internalId = await this.getOrCreateInternalMapping(
-        tx,
-        organizationId,
-        dto.zitadelUserId,
-        dto.email,
-      );
+      let internalId: string;
+      if (dto.zitadelUserId) {
+        internalId = await this.getOrCreateInternalMapping(
+          tx,
+          organizationId,
+          dto.zitadelUserId,
+          dto.email,
+        );
+      } else {
+        const cleanEmail = dto.email?.trim() || null;
+        if (cleanEmail) {
+          const existing = await tx.customer.findFirst({
+            where: {
+              organizationId,
+              email: cleanEmail,
+            },
+            select: { id: true },
+          });
+          internalId = existing ? existing.id : randomUUID();
+        } else {
+          internalId = randomUUID();
+        }
+      }
 
       if (existingCustomer && existingCustomer.id !== internalId) {
         throw new BadRequestException(

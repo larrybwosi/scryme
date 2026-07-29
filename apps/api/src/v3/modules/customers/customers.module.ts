@@ -4,6 +4,9 @@ import { CustomerResolver } from "./interfaces/graphql/customer.resolver";
 import { GetCustomersUseCase } from "./application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "./application/use-cases/register-customer.use-case";
 import { UpdateCustomerUseCase } from "./application/use-cases/update-customer.use-case";
+import { GetCustomerByIdUseCase } from "./application/use-cases/get-customer-by-id.use-case";
+import { DeleteCustomerUseCase } from "./application/use-cases/delete-customer.use-case";
+import { ManageAddressesUseCase } from "./application/use-cases/manage-addresses.use-case";
 import { PrismaCustomerRepository } from "./infrastructure/persistence/prisma-customer.repository";
 import { ICustomerRepository } from "./domain/repositories/customer-repository.interface";
 import { PrismaModule } from "@/prisma/prisma.module";
@@ -26,6 +29,9 @@ import { LoyaltyModule } from "../loyalty/loyalty.module";
     GetCustomersUseCase,
     RegisterCustomerUseCase,
     UpdateCustomerUseCase,
+    GetCustomerByIdUseCase,
+    DeleteCustomerUseCase,
+    ManageAddressesUseCase,
     BusinessAccountService,
     {
       provide: ICustomerRepository,
@@ -36,6 +42,9 @@ import { LoyaltyModule } from "../loyalty/loyalty.module";
     GetCustomersUseCase,
     RegisterCustomerUseCase,
     UpdateCustomerUseCase,
+    GetCustomerByIdUseCase,
+    DeleteCustomerUseCase,
+    ManageAddressesUseCase,
     BusinessAccountService,
     ICustomerRepository,
   ],

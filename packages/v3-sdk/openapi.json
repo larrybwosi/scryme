@@ -357,6 +357,69 @@
         ]
       }
     },
+    "/v3/{orgSlug}/inventory/adjustments": {
+      "get": {
+        "operationId": "Inventory_GetAdjustments",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get stock adjustments with pagination and status filters",
+        "tags": [
+          "V3 Inventory"
+        ]
+      }
+    },
     "/v3/{orgSlug}/inventory/adjustments/{id}/approve": {
       "patch": {
         "operationId": "Inventory_ApproveAdjustment",
@@ -389,6 +452,43 @@
           }
         ],
         "summary": "Approve a pending stock adjustment",
+        "tags": [
+          "V3 Inventory"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/inventory/adjustments/{id}/reject": {
+      "patch": {
+        "operationId": "Inventory_RejectAdjustment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a pending stock adjustment",
         "tags": [
           "V3 Inventory"
         ]
@@ -679,6 +779,26 @@
           }
         ],
         "summary": "List all expenses",
+        "tags": [
+          "V3 Finance"
+        ]
+      }
+    },
+    "/v3/finance/expenses/categories": {
+      "get": {
+        "operationId": "ExpenseController_getExpenseCategories",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all expense categories",
         "tags": [
           "V3 Finance"
         ]
@@ -2930,6 +3050,255 @@
           }
         ],
         "summary": "Update a customer profile",
+        "tags": [
+          "V3 Customers"
+        ]
+      },
+      "get": {
+        "operationId": "Customers_GetCustomerById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a customer profile by ID",
+        "tags": [
+          "V3 Customers"
+        ]
+      },
+      "delete": {
+        "operationId": "Customers_Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer deleted/deactivated successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete/Deactivate a customer",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/{id}/addresses": {
+      "get": {
+        "operationId": "Customers_GetAddresses",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Addresses retrieved successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get customer addresses",
+        "tags": [
+          "V3 Customers"
+        ]
+      },
+      "post": {
+        "operationId": "Customers_AddAddress",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Address added/updated successfully"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add or update customer address",
         "tags": [
           "V3 Customers"
         ]
@@ -6006,6 +6375,53 @@
         ]
       }
     },
+    "/v3/{orgSlug}/members/{memberId}/attendance/check-out": {
+      "post": {
+        "operationId": "MembersController_adminCheckOut",
+        "parameters": [
+          {
+            "name": "memberId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckOutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin check-out a member",
+        "tags": [
+          "V3 Members"
+        ]
+      }
+    },
     "/v3/members/login": {
       "post": {
         "operationId": "TerminalMembersController_login",
@@ -7284,6 +7700,45 @@
         ]
       }
     },
+    "/v3/{orgSlug}/announcements": {
+      "post": {
+        "operationId": "AnnouncementController_broadcastAnnouncement",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Broadcast an announcement",
+        "tags": [
+          "V3 Announcements"
+        ]
+      }
+    },
     "/v3/{orgSlug}/cart": {
       "get": {
         "operationId": "CartController_getCart",
@@ -7323,6 +7778,41 @@
           }
         ],
         "summary": "Get current cart",
+        "tags": [
+          "V3 Cart"
+        ]
+      },
+      "delete": {
+        "operationId": "CartController_clearCart",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear entire cart",
         "tags": [
           "V3 Cart"
         ]
@@ -9444,6 +9934,80 @@
           "V3 Strapi Webhooks"
         ]
       }
+    },
+    "/v3/{orgSlug}/analytics/dashboard": {
+      "get": {
+        "operationId": "AnalyticsController_getDashboardAnalytics",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get dashboard analytics",
+        "tags": [
+          "V3 Analytics"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/analytics/utilization": {
+      "get": {
+        "operationId": "AnalyticsController_getResourceUtilization",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get resource utilization",
+        "tags": [
+          "V3 Analytics"
+        ]
+      }
     }
   },
   "info": {
@@ -9608,6 +10172,9 @@
             "type": "boolean"
           },
           "isBillable": {
+            "type": "boolean"
+          },
+          "autoApprove": {
             "type": "boolean"
           }
         },
@@ -10284,7 +10851,6 @@
           }
         },
         "required": [
-          "zitadelUserId",
           "name",
           "email"
         ]
@@ -11740,6 +12306,20 @@
           }
         }
       },
+      "CheckOutDto": {
+        "type": "object",
+        "properties": {
+          "locationId": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "isAutoCheckout": {
+            "type": "boolean"
+          }
+        }
+      },
       "TerminalLoginDto": {
         "type": "object",
         "properties": {
@@ -12096,19 +12676,26 @@
           "locationId"
         ]
       },
-      "CheckOutDto": {
+      "AnnouncementDto": {
         "type": "object",
         "properties": {
-          "locationId": {
+          "title": {
             "type": "string"
           },
-          "notes": {
+          "message": {
             "type": "string"
           },
-          "isAutoCheckout": {
-            "type": "boolean"
+          "targetBranchId": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "title",
+          "message"
+        ]
       },
       "CartItemDto": {
         "type": "object",
