@@ -51,10 +51,10 @@ export class AddressDto {
 }
 
 export class RegisterCustomerDto {
-  @ApiProperty({ example: "user_12345" })
+  @ApiProperty({ example: "user_12345", required: false })
   @IsString()
-  @IsNotEmpty()
-  zitadelUserId: string;
+  @IsOptional()
+  zitadelUserId?: string;
 
   @ApiProperty({ example: "John Doe" })
   @IsString()

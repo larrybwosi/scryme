@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   UseGuards,
   UseInterceptors,
@@ -19,11 +20,14 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { V3ZodValidationPipe } from "../../../../common/pipes/v3-zod-validation.pipe";
-import { RegisterCustomerSchema, UpdateCustomerSchema } from "../../application/dto/customer.schema";
+import { RegisterCustomerSchema, UpdateCustomerSchema, AddressSchema } from "../../application/dto/customer.schema";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";
 import { UpdateCustomerUseCase } from "../../application/use-cases/update-customer.use-case";
-import { RegisterCustomerDto } from "../../application/dto/register-customer.dto";
+import { GetCustomerByIdUseCase } from "../../application/use-cases/get-customer-by-id.use-case";
+import { DeleteCustomerUseCase } from "../../application/use-cases/delete-customer.use-case";
+import { ManageAddressesUseCase } from "../../application/use-cases/manage-addresses.use-case";
+import { RegisterCustomerDto, AddressDto } from "../../application/dto/register-customer.dto";
 import { UpdateCustomerDto } from "../../application/dto/update-customer.dto";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
@@ -47,6 +51,9 @@ export class CustomerController {
     private readonly getCustomersUseCase: GetCustomersUseCase,
     private readonly registerCustomerUseCase: RegisterCustomerUseCase,
     private readonly updateCustomerUseCase: UpdateCustomerUseCase,
+    private readonly getCustomerByIdUseCase: GetCustomerByIdUseCase,
+    private readonly deleteCustomerUseCase: DeleteCustomerUseCase,
+    private readonly manageAddressesUseCase: ManageAddressesUseCase,
   ) {}
 
   @Get()
@@ -134,5 +141,121 @@ export class CustomerController {
     @Body() dto: UpdateCustomerDto,
   ) {
     return this.updateCustomerUseCase.execute(req.organization.id, id, dto);
+  }
+
+  @Get(":id")
+  @Permissions("customer:read")
+  @ApiOperation({
+    summary: "Get a customer profile by ID",
+    operationId: "Customers_GetCustomerById",
+  })
+  @ApiResponse({
+    status: 200,
+    type: CustomerResponseDto,
+    description: "Customer found successfully",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Unauthorized",
+  })
+  @ApiResponse({
+    status: 404,
+    type: ApiErrorResponseDto,
+    description: "Customer not found",
+  })
+  async getCustomerById(
+    @Req() req: any,
+    @Param("id") id: string,
+  ) {
+    return this.getCustomerByIdUseCase.execute(req.organization.id, id);
+  }
+
+  @Delete(":id")
+  @Permissions("customer:delete")
+  @ApiOperation({
+    summary: "Delete/Deactivate a customer",
+    operationId: "Customers_Delete",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Customer deleted/deactivated successfully",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Unauthorized",
+  })
+  @ApiResponse({
+    status: 404,
+    type: ApiErrorResponseDto,
+    description: "Customer not found",
+  })
+  async deleteCustomer(
+    @Req() req: any,
+    @Param("id") id: string,
+  ) {
+    return this.deleteCustomerUseCase.execute(req.organization.id, id);
+  }
+
+  @Get(":id/addresses")
+  @Permissions("customer:read")
+  @ApiOperation({
+    summary: "Get customer addresses",
+    operationId: "Customers_GetAddresses",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Addresses retrieved successfully",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Unauthorized",
+  })
+  @ApiResponse({
+    status: 404,
+    type: ApiErrorResponseDto,
+    description: "Customer not found",
+  })
+  async getAddresses(
+    @Req() req: any,
+    @Param("id") id: string,
+  ) {
+    return this.manageAddressesUseCase.getAddresses(req.organization.id, id);
+  }
+
+  @Post(":id/addresses")
+  @Permissions("customer:update")
+  @UsePipes(new V3ZodValidationPipe(AddressSchema))
+  @ApiOperation({
+    summary: "Add or update customer address",
+    operationId: "Customers_AddAddress",
+  })
+  @ApiResponse({
+    status: 201,
+    description: "Address added/updated successfully",
+  })
+  @ApiResponse({
+    status: 400,
+    type: ApiErrorResponseDto,
+    description: "Invalid input",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Unauthorized",
+  })
+  @ApiResponse({
+    status: 404,
+    type: ApiErrorResponseDto,
+    description: "Customer not found",
+  })
+  async addAddress(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() dto: AddressDto,
+  ) {
+    return this.manageAddressesUseCase.addAddress(req.organization.id, id, dto);
   }
 }
