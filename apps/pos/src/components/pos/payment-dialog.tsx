@@ -1291,7 +1291,7 @@ const PaymentModal = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 rounded-lg text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all"
+                        className="h-7 w-7 rounded-lg text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-all"
                         onClick={() => removePayment(p.id)}
                       >
                         <Trash2 className="w-3.5 h-3.5" />

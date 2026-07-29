@@ -153,3 +153,7 @@
 ## 2026-07-27 - [Parallelized Database Upserts for Entity Initialization]
 **Learning:** Running database writes or upserts sequentially inside a loop (N+1 database roundtrips) during configuration or tenant setup flows is a major latency bottleneck. Executing these independent upserts concurrently using `Promise.all` shrinks wait times from O(N) to O(1), improving initialization latency by up to 90% while fully preserving data consistency and avoiding race conditions.
 **Action:** Always batch and parallelize independent initialization tasks or configuration upserts using `Promise.all` rather than executing them sequentially in loops.
+
+## 2026-07-29 - [Eliminating O(N*M) scans in Transactional Operations]
+**Learning:** Performing nested collection scans (such as filtering or finding items from an order list inside variant/batch loops) results in severe O(N*M) performance bottlenecks under high item volumes. Pre-grouping list elements into a Map by their relational identifiers (such as `variantId`) prior to loop entry allows O(1) retrieval of relevant slices, transforming execution complexity to an optimal O(N+M) or O(N).
+**Action:** Always pre-group array inputs into Map-based indices before iterating through parent entity trees when doing complex transactional allocations or availability checks.
