@@ -18,6 +18,7 @@ describe("StandalonePosService", () => {
         create: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
       },
       standaloneDevice: {
         create: vi.fn(),
@@ -139,6 +140,7 @@ describe("StandalonePosService", () => {
       };
 
       mockPrisma.client.standaloneSetupKey.findUnique.mockResolvedValue(setupKey);
+      mockPrisma.client.standaloneSetupKey.updateMany.mockResolvedValue({ count: 1 });
       mockPrisma.client.standaloneDevice.findUnique.mockResolvedValue(null);
       mockPrisma.client.standaloneDevice.create.mockResolvedValue({ id: "d1", name: "Test Setup" });
       mockPrisma.client.standaloneDeviceKey.create.mockImplementation(({ data }) => Promise.resolve({
@@ -153,6 +155,11 @@ describe("StandalonePosService", () => {
         where: { token: expectedHashedToken },
       });
 
+      expect(mockPrisma.client.standaloneSetupKey.updateMany).toHaveBeenCalledWith({
+        where: { id: setupKey.id, usedAt: null },
+        data: { usedAt: expect.any(Date) },
+      });
+
       // Hashed key should be SHA-256 of result.key
       expect(result.key).toHaveLength(32); // 16 bytes rawKey hex is 32 chars
       const expectedHashedKey = crypto.createHash("sha256").update(result.key).digest("hex");
@@ -163,6 +170,27 @@ describe("StandalonePosService", () => {
           }),
         }),
       );
+    });
+
+    it("should throw ForbiddenException if atomic updateMany returns count 0 (already used / race condition)", async () => {
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 1);
+
+      const setupKey = {
+        id: "s1",
+        name: "Test Setup",
+        deviceId: "POS-1",
+        expiresAt: futureDate,
+        usedAt: null,
+      };
+
+      mockPrisma.client.standaloneSetupKey.findUnique.mockResolvedValue(setupKey);
+      mockPrisma.client.standaloneSetupKey.updateMany.mockResolvedValue({ count: 0 });
+      mockPrisma.client.standaloneDevice.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.activateDevice({ token: "my-token", machineId: "m1" }),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
