@@ -50,6 +50,7 @@ const settingsSchema = z.object({
   lowStockThreshold: z.number().min(0).default(10),
   negativeStock: z.boolean().default(false),
   adminsCanManageStaff: z.boolean().default(false),
+  managersCanManageShifts: z.boolean().default(false),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -246,6 +247,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
       lowStockThreshold: initialData?.settings?.lowStockThreshold || 10,
       negativeStock: initialData?.settings?.negativeStock || false,
       adminsCanManageStaff: initialData?.settings?.adminsCanManageStaff || false,
+      managersCanManageShifts: initialData?.settings?.managersCanManageShifts || false,
     },
   });
 
@@ -642,6 +644,22 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                       checked={form.watch("negativeStock")}
                       onCheckedChange={(val) =>
                         form.setValue("negativeStock", val, {
+                          shouldDirty: true,
+                        })
+                      }
+                      className="data-[state=checked]:bg-blue-600"
+                    />
+                  </PolicyRow>
+
+                  <PolicyRow
+                    title="Allow Managers to Manage Shifts"
+                    description="When enabled, users with the MANAGER role can create, update, and delete staff weekly shifts and breaks. By default, only owners and admins can manage shifts."
+                    risk="low"
+                  >
+                    <Switch
+                      checked={form.watch("managersCanManageShifts")}
+                      onCheckedChange={(val) =>
+                        form.setValue("managersCanManageShifts", val, {
                           shouldDirty: true,
                         })
                       }

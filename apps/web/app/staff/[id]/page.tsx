@@ -2,6 +2,9 @@ import React, { Suspense } from "react";
 import { getStaffMemberDetail, getStaffMembers } from "../../actions/staff";
 import { getMemberDepartments } from "../../actions/department";
 import { getOrganizationSettings } from "../../actions/organization";
+import { getStaffShifts } from "../../actions/shifts";
+import { getServerAuth } from "@repo/auth/server";
+import { db } from "@repo/db";
 import { notFound } from "next/navigation";
 import { StaffDetailHeader } from "@/components/staff/detail/staff-detail-header";
 import { StaffOverview } from "@/components/staff/detail/staff-overview";
@@ -9,6 +12,7 @@ import { StaffActivity } from "@/components/staff/detail/staff-activity";
 import { StaffSettings } from "@/components/staff/detail/staff-settings";
 import { StaffPerformance } from "@/components/staff/detail/staff-performance";
 import { StaffDepartments } from "@/components/staff/detail/staff-departments";
+import { StaffMemberShiftsTab } from "@/components/staff/detail/staff-shifts";
 import {
   Tabs,
   TabsContent,
@@ -21,6 +25,7 @@ import {
   Settings,
   LayoutDashboard,
   Building2,
+  Clock,
 } from "lucide-react";
 
 export default async function StaffMemberPage({
@@ -29,13 +34,30 @@ export default async function StaffMemberPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [result, membersResult, departmentsResult, organization] = await Promise.all([
+  const session = await getServerAuth();
+  const [result, membersResult, departmentsResult, organization, shiftsResult] = await Promise.all([
     getStaffMemberDetail(id),
     getStaffMembers(),
     getMemberDepartments(id),
     getOrganizationSettings(),
+    getStaffShifts(id),
   ]);
   const currency = organization?.settings?.defaultCurrency || "USD";
+  const memberShifts = (shiftsResult.success ? shiftsResult.data : []) || [];
+
+  // Fetch managersCanManageShifts setting
+  const settings = session?.organizationId
+    ? await db.organizationSettings.findUnique({
+        where: { organizationId: session.organizationId },
+        select: { managersCanManageShifts: true },
+      })
+    : null;
+
+  const role = session?.role as string;
+  const canManage =
+    role === "OWNER" ||
+    role === "ADMIN" ||
+    (role === "MANAGER" && !!settings?.managersCanManageShifts);
 
   if (!result.success || !result.data) {
     if (result.error === "Member not found") {
@@ -84,6 +106,12 @@ export default async function StaffMemberPage({
               Settings
             </TabsTrigger>
             <TabsTrigger
+              value="shifts"
+              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              <Clock size={16} />
+              Shifts
+            </TabsTrigger>
+            <TabsTrigger
               value="departments"
               className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
               <Building2 size={16} />
@@ -119,6 +147,14 @@ export default async function StaffMemberPage({
             <StaffSettings
               member={member}
               allMembers={membersResult.success ? membersResult.data : []}
+            />
+          </TabsContent>
+
+          <TabsContent value="shifts" className="outline-none">
+            <StaffMemberShiftsTab
+              member={member}
+              shifts={memberShifts as any}
+              canManage={canManage}
             />
           </TabsContent>
 
