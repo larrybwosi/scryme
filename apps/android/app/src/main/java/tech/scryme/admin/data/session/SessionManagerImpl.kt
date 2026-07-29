@@ -58,6 +58,42 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
         }
     }
 
+    private fun getIntSafely(key: String, defaultValue: Int): Int {
+        if (!useFallback) {
+            try {
+                val eps = encryptedPrefs
+                if (eps != null) {
+                    return eps.getInt(key, defaultValue)
+                }
+            } catch (e: Exception) {
+                useFallback = true
+            }
+        }
+        try {
+            return fallbackPrefs?.getInt(key, defaultValue) ?: defaultValue
+        } catch (e: Exception) {
+            return defaultValue
+        }
+    }
+
+    private fun getBooleanSafely(key: String, defaultValue: Boolean): Boolean {
+        if (!useFallback) {
+            try {
+                val eps = encryptedPrefs
+                if (eps != null) {
+                    return eps.getBoolean(key, defaultValue)
+                }
+            } catch (e: Exception) {
+                useFallback = true
+            }
+        }
+        try {
+            return fallbackPrefs?.getBoolean(key, defaultValue) ?: defaultValue
+        } catch (e: Exception) {
+            return defaultValue
+        }
+    }
+
     private fun writeSafely(block: SharedPreferences.Editor.() -> Unit) {
         if (!useFallback) {
             try {
@@ -101,6 +137,19 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
 
     private val _userName = MutableStateFlow<String?>(getStringSafely("USER_NAME", null))
     override val userName: StateFlow<String?> = _userName.asStateFlow()
+
+    // Preferences & Customization state flows
+    private val _themePreference = MutableStateFlow<String>(getStringSafely("THEME_PREF", "Deep Navy") ?: "Deep Navy")
+    override val themePreference: StateFlow<String> = _themePreference.asStateFlow()
+
+    private val _syncIntervalSeconds = MutableStateFlow<Int>(getIntSafely("SYNC_INTERVAL", 10))
+    override val syncIntervalSeconds: StateFlow<Int> = _syncIntervalSeconds.asStateFlow()
+
+    private val _notificationsEnabled = MutableStateFlow<Boolean>(getBooleanSafely("NOTIFICATIONS_ENABLED", true))
+    override val notificationsEnabled: StateFlow<Boolean> = _notificationsEnabled.asStateFlow()
+
+    private val _autoLoginEnabled = MutableStateFlow<Boolean>(getBooleanSafely("AUTO_LOGIN_ENABLED", true))
+    override val autoLoginEnabled: StateFlow<Boolean> = _autoLoginEnabled.asStateFlow()
 
     override fun saveBaseUrl(url: String?) {
         _baseUrl.value = url
@@ -174,6 +223,35 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
         writeSafely {
             putString("ACTIVE_ORG_SLUG", orgSlug)
             putString("ACTIVE_ORG_ID", orgId)
+        }
+    }
+
+    // Setters for Settings
+    override fun saveThemePreference(theme: String) {
+        _themePreference.value = theme
+        writeSafely {
+            putString("THEME_PREF", theme)
+        }
+    }
+
+    override fun saveSyncInterval(seconds: Int) {
+        _syncIntervalSeconds.value = seconds
+        writeSafely {
+            putInt("SYNC_INTERVAL", seconds)
+        }
+    }
+
+    override fun saveNotificationsEnabled(enabled: Boolean) {
+        _notificationsEnabled.value = enabled
+        writeSafely {
+            putBoolean("NOTIFICATIONS_ENABLED", enabled)
+        }
+    }
+
+    override fun saveAutoLoginEnabled(enabled: Boolean) {
+        _autoLoginEnabled.value = enabled
+        writeSafely {
+            putBoolean("AUTO_LOGIN_ENABLED", enabled)
         }
     }
 }

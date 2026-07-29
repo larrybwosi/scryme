@@ -10,6 +10,12 @@ interface SessionManager {
     val userEmail: StateFlow<String?>
     val userName: StateFlow<String?>
 
+    // User Customization Settings
+    val themePreference: StateFlow<String>
+    val syncIntervalSeconds: StateFlow<Int>
+    val notificationsEnabled: StateFlow<Boolean>
+    val autoLoginEnabled: StateFlow<Boolean>
+
     fun saveSession(
         token: String,
         orgSlug: String?,
@@ -20,4 +26,10 @@ interface SessionManager {
     fun clearSession()
     fun updateActiveOrg(orgSlug: String, orgId: String)
     fun saveBaseUrl(url: String?)
+
+    // Setters for settings
+    fun saveThemePreference(theme: String)
+    fun saveSyncInterval(seconds: Int)
+    fun saveNotificationsEnabled(enabled: Boolean)
+    fun saveAutoLoginEnabled(enabled: Boolean)
 }
