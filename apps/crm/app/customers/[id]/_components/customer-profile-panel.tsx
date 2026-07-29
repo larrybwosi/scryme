@@ -189,6 +189,7 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
                 customId: customer.customId || "",
                 creationType: customer.creationType || "MEMBER_CREATED",
                 defaultLocationId: customer.defaultLocationId || "",
+                tags: customer.tags || [],
               }}
               onSuccess={() => {
                 setIsEditOpen(false);
