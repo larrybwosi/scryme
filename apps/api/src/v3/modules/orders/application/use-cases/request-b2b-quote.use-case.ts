@@ -4,6 +4,7 @@ import {
   BadRequestException,
   NotFoundException,
 } from "@nestjs/common";
+import * as crypto from "crypto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
 import { RequestB2BQuoteDto } from "../dto/request-b2b-quote.dto";
@@ -40,12 +41,11 @@ export class RequestB2BQuoteUseCase {
     }
 
     if (dto.businessAccountId) {
-      const businessAccount = await this.prisma.client.businessAccount.findFirst(
-        {
+      const businessAccount =
+        await this.prisma.client.businessAccount.findFirst({
           where: { id: dto.businessAccountId, organizationId },
           select: { id: true, defaultLocationId: true },
-        },
-      );
+        });
       if (!businessAccount) {
         throw new BadRequestException(
           "Business account not found in this organization",
@@ -189,7 +189,8 @@ export class RequestB2BQuoteUseCase {
     );
 
     // 4. Generate Quote Number
-    const quoteNumber = `QT-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // SECURITY (Sentinel): Use cryptographically secure random integers instead of Math.random() to prevent predictable quote numbers
+    const quoteNumber = `QT-${Date.now()}-${crypto.randomInt(0, 1000)}`;
 
     // 5. Create Transaction (QUOTE type)
     const quote = await this.prisma.client.transaction.create({
