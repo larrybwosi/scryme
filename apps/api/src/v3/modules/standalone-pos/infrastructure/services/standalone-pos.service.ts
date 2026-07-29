@@ -67,6 +67,16 @@ export class StandalonePosService {
       throw new ConflictException("Device already registered");
     }
 
+    // SECURITY (Sentinel): Mark token as used first via an atomic updateMany to prevent concurrent activation race conditions (double redeem)
+    const updateResult = await this.prisma.client.standaloneSetupKey.updateMany({
+      where: { id: setupKey.id, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    if (updateResult.count === 0) {
+      throw new ForbiddenException("Setup token has already been used");
+    }
+
     // Create device
     device = await this.prisma.client.standaloneDevice.create({
       data: {
@@ -92,12 +102,6 @@ export class StandalonePosService {
         deviceId: device.id,
         expiresAt: keyExpiresAt,
       },
-    });
-
-    // Mark token as used
-    await this.prisma.client.standaloneSetupKey.update({
-      where: { id: setupKey.id },
-      data: { usedAt: new Date() },
     });
 
     return {
