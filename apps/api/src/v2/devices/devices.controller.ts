@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from "@nestjs/common";
+import { Controller, Post, Body, Get, ForbiddenException } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { DevicesService } from "./devices.service";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
@@ -18,9 +18,13 @@ export class DevicesController {
   }
 
   @Get("me")
+  @AllowPublic()
   @ApiSecurity("x-api-key")
   @ApiOperation({ summary: "Get current device information" })
   async getMe(@v2Context() ctx: V2ApiContext) {
+    if (!ctx || (!ctx.deviceId && !ctx.memberId)) {
+      throw new ForbiddenException("Access denied: Not authenticated as device or member.");
+    }
     return {
       id: ctx.deviceId,
       name: ctx.deviceName,

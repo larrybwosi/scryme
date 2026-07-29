@@ -78,6 +78,7 @@ COPY --from=pruner /app/entrypoint.sh /entrypoint.sh
 USER root
 RUN chmod +x /entrypoint.sh
 
+ENV PORT=3003
 EXPOSE 3003
 
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \

@@ -150,128 +150,6 @@ export async function bulkUpdateLocationStock(
   return { success: true, message: "Stock updated successfully." };
 }
 
-export async function getStockDashboardStats(): Promise<any> {
-  const context = await getServerAuth();
-  if (!context?.organizationId) return null;
-
-  const [totalProducts, totalStockValue, pendingTransfers, lowStockAlerts] =
-    await Promise.all([
-      db.product.count({ where: { organizationId: context.organizationId } }),
-      db.productVariantStock.aggregate({
-        where: { organizationId: context.organizationId },
-        _sum: { currentStock: true },
-      }),
-      db.stockTransfer.count({
-        where: {
-          organizationId: context.organizationId,
-          status: { in: ["PENDING_APPROVAL", "SHIPPED", "IN_TRANSIT"] },
-        },
-      }),
-      db.productVariantStock.count({
-        where: {
-          organizationId: context.organizationId,
-          currentStock: { lte: 10 }, // Simplified for now as Prisma doesn't support field-to-field comparison easily
-        },
-      }),
-    ]);
-
-  // For total value, we ideally want currentStock * buyingPrice.
-  // This aggregate only gives sum of stock. We'll do a more detailed query if needed.
-  // For now, let's just get the count of items in stock as a placeholder or a simple sum.
-
-  return {
-    totalProducts,
-    totalStockItems: totalStockValue._sum.currentStock?.toNumber() || 0,
-    pendingTransfers,
-    lowStockAlerts,
-  };
-}
-
-export async function getStockMovementsChartData(): Promise<any[]> {
-  const context = await getServerAuth();
-  if (!context?.organizationId) return [];
-
-  const last6Months = Array.from({ length: 6 }, (_, i) => {
-    const d = subMonths(new Date(), i);
-    return {
-      start: startOfMonth(d),
-      end: endOfMonth(d),
-      label: format(d, "MMM"),
-    };
-  }).reverse();
-
-  const data = await Promise.all(
-    last6Months.map(async month => {
-      const movements = await db.stockMovement.groupBy({
-        by: ["movementType"],
-        where: {
-          organizationId: context.organizationId,
-          movementDate: {
-            gte: month.start,
-            lte: month.end,
-          },
-        },
-        _sum: {
-          quantity: true,
-        },
-      });
-
-      const inbound = movements
-        .filter(m =>
-          [
-            "PURCHASE_RECEIPT",
-            "ADJUSTMENT_IN",
-            "TRANSFER",
-            "CUSTOMER_RETURN",
-          ].includes(m.movementType),
-        )
-        .reduce((acc, m) => acc + (m._sum.quantity?.toNumber() || 0), 0);
-
-      const outbound = movements
-        .filter(m =>
-          ["SALE", "ADJUSTMENT_OUT", "SUPPLIER_RETURN"].includes(
-            m.movementType,
-          ),
-        )
-        .reduce(
-          (acc, m) => acc + Math.abs(m._sum.quantity?.toNumber() || 0),
-          0,
-        );
-
-      return {
-        name: month.label,
-        inbound,
-        outbound,
-      };
-    }),
-  );
-
-  return data;
-}
-
-export async function getStockDistributionByLocation(): Promise<any[]> {
-  const context = await getServerAuth();
-  if (!context?.organizationId) return [];
-
-  const distribution = await db.productVariantStock.groupBy({
-    by: ["locationId"],
-    where: { organizationId: context.organizationId },
-    _sum: {
-      currentStock: true,
-    },
-  });
-
-  const locations = await db.inventoryLocation.findMany({
-    where: { id: { in: distribution.map(d => d.locationId) } },
-    select: { id: true, name: true },
-  });
-
-  return distribution.map(d => ({
-    name: locations.find(l => l.id === d.locationId)?.name || "Unknown",
-    value: d._sum.currentStock?.toNumber() || 0,
-  }));
-}
-
 export async function getStockTransferList(params?: {
   search?: string;
   status?: string;
@@ -379,7 +257,9 @@ export async function updateStockTransfer(
   if (!transfer) throw new Error("Transfer not found");
 
   if (["COMPLETED", "CANCELLED", "REJECTED"].includes(transfer.status)) {
-    throw new Error(`Cannot edit a stock transfer that is already ${transfer.status}`);
+    throw new Error(
+      `Cannot edit a stock transfer that is already ${transfer.status}`,
+    );
   }
 
   const result = await db.$transaction(async tx => {

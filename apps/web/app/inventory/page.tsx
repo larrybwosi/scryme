@@ -9,7 +9,14 @@ import { InventoryTable } from "../../components/inventory/inventory-table";
 import { InventoryFilters } from "../../components/inventory/inventory-filters";
 import { PageHeader } from "../../components/page-header";
 import { Button } from "@repo/ui/components/ui/button";
-import { Plus, Filter, RotateCw, LayoutGrid, Download, Tag } from "lucide-react";
+import {
+  Plus,
+  Filter,
+  RotateCw,
+  LayoutGrid,
+  Download,
+  Tag,
+} from "lucide-react";
 import { ProductSheet } from "../../components/inventory/product-sheet";
 import { ProductImport } from "../../components/inventory/product-import";
 import Link from "next/link";
@@ -30,29 +37,30 @@ export default async function InventoryPage({
 }) {
   const params = await searchParams;
 
-  const [products, locations, categories, suppliers, organization] = await Promise.all([
-    getInventoryProducts({
-      search: params.search,
-      locationId: params.locationId,
-      categoryId: params.categoryId,
-      supplierId: params.supplierId,
-      stockLevel: params.stockLevel as any,
-      sortBy: params.sortBy,
-      sortOrder: params.sortOrder,
-      groupByProduct: true,
-    }),
-    getInventoryLocations(),
-    getCategories(),
-    getSuppliers(),
-    getOrganizationSettings(),
-  ]);
+  const [products, locations, categories, suppliers, organization] =
+    await Promise.all([
+      getInventoryProducts({
+        search: params.search,
+        locationId: params.locationId,
+        categoryId: params.categoryId,
+        supplierId: params.supplierId,
+        stockLevel: params.stockLevel as any,
+        sortBy: params.sortBy,
+        sortOrder: params.sortOrder,
+        groupByProduct: true,
+      }),
+      getInventoryLocations(),
+      getCategories(),
+      getSuppliers(),
+      getOrganizationSettings(),
+    ]);
   const currency = organization?.settings?.defaultCurrency || "USD";
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1D1D1F]">Inventory</h1>
+          <h1 className="text-2xl font-bold text-foreground">Inventory</h1>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/inventory/pricelists">

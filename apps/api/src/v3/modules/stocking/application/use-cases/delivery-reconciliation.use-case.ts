@@ -36,9 +36,40 @@ export class DeliveryReconciliationUseCase {
           },
         },
       },
-      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
-      // to avoid over-fetching large JSON fields (like metadata and customFields) in lists.
-      include: {
+      // ⚡ Bolt Optimization: Replace broad 'include' with targeted top-level 'select'
+      // to avoid fetching heavy JSON fields (like metadata) and text fields (like termsAndConditions) in list views.
+      select: {
+        id: true,
+        number: true,
+        type: true,
+        channel: true,
+        status: true,
+        paymentStatus: true,
+        totalPaid: true,
+        organizationId: true,
+        customerId: true,
+        businessAccountId: true,
+        deliveryPartnerId: true,
+        memberId: true,
+        locationId: true,
+        subtotal: true,
+        discountTotal: true,
+        taxTotal: true,
+        shippingTotal: true,
+        finalTotal: true,
+        currencyCode: true,
+        exchangeRate: true,
+        baseCurrencyTotal: true,
+        createdAt: true,
+        confirmedAt: true,
+        completedAt: true,
+        cancelledAt: true,
+        expiresAt: true,
+        updatedAt: true,
+        parentTransactionId: true,
+        notes: true,
+        tags: true,
+        receiptUrl: true,
         customer: {
           select: {
             id: true,
@@ -73,9 +104,36 @@ export class DeliveryReconciliationUseCase {
         },
         status: FulfillmentStatus.SHIPPED,
       },
-      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
-      // to avoid over-fetching large JSON fields in nested relations.
-      include: {
+      // ⚡ Bolt Optimization: Replace broad 'include' with targeted top-level 'select'
+      // to avoid fetching unneeded columns of Fulfillment in list views.
+      select: {
+        id: true,
+        transactionId: true,
+        type: true,
+        status: true,
+        shippingAddressId: true,
+        billingAddressId: true,
+        pickupLocationId: true,
+        driverId: true,
+        quantityHandedOver: true,
+        quantityDelivered: true,
+        isReconciled: true,
+        trackingNumber: true,
+        carrier: true,
+        deliveryNotes: true,
+        podType: true,
+        proofOfDeliveryUrl: true,
+        receivedBy: true,
+        confirmationToken: true,
+        confirmedByCustomerAt: true,
+        reconciledAt: true,
+        reconciledBy: true,
+        scheduledAt: true,
+        preparedAt: true,
+        dispatchedAt: true,
+        deliveredAt: true,
+        createdAt: true,
+        updatedAt: true,
         transaction: {
           select: {
             id: true,

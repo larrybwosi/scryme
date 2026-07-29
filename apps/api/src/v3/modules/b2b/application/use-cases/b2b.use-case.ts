@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import * as crypto from "crypto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { PricingResolverService } from "../../../catalog/application/services/pricing-resolver.service";
 import { CatalogPaginationDto } from "../dto/b2b.dto";
@@ -247,8 +248,12 @@ export class B2BUseCase {
     }
 
     // ⚡ Bolt: Optimized order creation by batching variant lookups to avoid N+1 query problem.
+    // SECURITY (Sentinel): Enforce multi-tenant isolation by filtering product variants by organizationId.
     const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds } },
+      where: {
+        id: { in: variantIds },
+        product: { organizationId },
+      },
       include: {
         product: { select: { name: true } },
         variantStocks: {
@@ -257,6 +262,13 @@ export class B2BUseCase {
         },
       },
     });
+
+    const uniqueVariantIds = new Set(variantIds);
+    if (variants.length !== uniqueVariantIds.size) {
+      throw new Error(
+        "One or more variants not found or do not belong to this organization",
+      );
+    }
 
     const variantMap = new Map(variants.map(v => [v.id, v]));
 
@@ -267,7 +279,9 @@ export class B2BUseCase {
 
       const stock = variant.variantStocks[0]?.availableStock || 0;
       if (stock < item.quantity) {
-        throw new Error(`Insufficient stock for variant ${variant.product.name} - ${variant.name}`);
+        throw new Error(
+          `Insufficient stock for variant ${variant.product.name} - ${variant.name}`,
+        );
       }
     }
 
@@ -278,7 +292,8 @@ export class B2BUseCase {
         type: "SALES_ORDER" as any,
         status: "PENDING" as any,
         locationId: location.id,
-        number: `B2B-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
+        number: `B2B-${crypto.randomBytes(4).toString("hex").slice(0, 7).toUpperCase()}`,
         subtotal,
         finalTotal: subtotal,
         baseCurrencyTotal: subtotal,
@@ -341,10 +356,22 @@ export class B2BUseCase {
 
     // ⚡ Bolt: Fetch variant details for quote items
     const variantIds = data.items.map((item: any) => item.variantId);
+    // SECURITY (Sentinel): Enforce multi-tenant isolation by filtering product variants by organizationId.
     const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds } },
+      where: {
+        id: { in: variantIds },
+        product: { organizationId },
+      },
       include: { product: { select: { name: true } } },
     });
+
+    const uniqueVariantIds = new Set(variantIds);
+    if (variants.length !== uniqueVariantIds.size) {
+      throw new Error(
+        "One or more variants not found or do not belong to this organization",
+      );
+    }
+
     const variantMap = new Map(variants.map(v => [v.id, v]));
 
     const transaction = await this.prisma.client.transaction.create({
@@ -354,7 +381,8 @@ export class B2BUseCase {
         type: "QUOTE" as any,
         status: "PENDING" as any,
         locationId: location?.id,
-        number: `QT-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable quote numbers
+        number: `QT-${crypto.randomBytes(4).toString("hex").slice(0, 7).toUpperCase()}`,
         subtotal,
         finalTotal: subtotal,
         baseCurrencyTotal: subtotal,

@@ -23,7 +23,9 @@ import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
 import { V3Module, V3_SUB_MODULES } from "./v3/v3.module";
 import { AllExceptionsFilter } from "./common/filters/all-exceptions.filter";
 import { StandardResponseInterceptor } from "./common/interceptors/standard-response.interceptor";
+import { TimeoutInterceptor } from "./common/interceptors/timeout.interceptor";
 import { redactSensitiveData } from "./common/utils/redaction";
+import fastifyCompress from "@fastify/compress";
 
 async function bootstrap() {
   // Verify encryption key at startup
@@ -100,6 +102,10 @@ async function bootstrap() {
   // Middlewares & Plugins
   await app.register(fastifyCookie as any);
   await app.register(fastifyMultipart as any);
+  await app.register(fastifyCompress as any, {
+    global: true,
+    threshold: 1024, // compress responses over 1KB
+  });
 
   // Global Configuration
   app.setGlobalPrefix("api", {
@@ -123,6 +129,7 @@ async function bootstrap() {
   );
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalInterceptors(new StandardResponseInterceptor());
+  app.useGlobalInterceptors(new TimeoutInterceptor());
 
   // Swagger V2
   const configV2 = new DocumentBuilder()

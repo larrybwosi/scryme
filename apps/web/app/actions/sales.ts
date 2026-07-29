@@ -48,6 +48,7 @@ export async function getTransactions(params: {
   locationId?: string;
   startDate?: Date;
   endDate?: Date;
+  sortBy?: string;
 }) {
   const { auth } = await checkPermission([
     "OWNER",
@@ -90,6 +91,23 @@ export async function getTransactions(params: {
     if (params.endDate) where.createdAt.lte = params.endDate;
   }
 
+  // Parse sortBy safely to avoid any Prisma injection
+  let orderBy: Prisma.TransactionOrderByWithRelationInput = {
+    createdAt: "desc",
+  };
+
+  if (params.sortBy) {
+    const [field, direction] = params.sortBy.split("_");
+    if (
+      field &&
+      direction &&
+      (direction === "asc" || direction === "desc") &&
+      ["createdAt", "finalTotal", "number", "updatedAt"].includes(field)
+    ) {
+      orderBy = { [field]: direction };
+    }
+  }
+
   const transactions = await db.transaction.findMany({
     where,
     select: {
@@ -129,9 +147,7 @@ export async function getTransactions(params: {
         select: { items: true },
       },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy,
   });
 
   // Convert Decimal fields to numbers

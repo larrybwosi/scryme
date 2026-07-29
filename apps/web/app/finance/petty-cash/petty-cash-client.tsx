@@ -70,9 +70,18 @@ export function PettyCashClient({
 }) {
   const [funds, setFunds] = useState(initialFunds);
   const [allTransactions, setAllTransactions] = useState(initialTransactions);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedBranchFilter, setSelectedBranchFilter] = useState("all");
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState("all");
+
+  // Tab 1: Funds Overview States
+  const [fundSearchQuery, setFundSearchQuery] = useState("");
+  const [fundBranchFilter, setFundBranchFilter] = useState("all");
+  const [fundSortOption, setFundSortOption] = useState("createdAt-desc");
+
+  // Tab 2: All Expenses & Transactions States
+  const [txSearchQuery, setTxSearchQuery] = useState("");
+  const [txBranchFilter, setTxBranchFilter] = useState("all");
+  const [txTypeFilter, setTxTypeFilter] = useState("all");
+  const [txSortOption, setTxSortOption] = useState("createdAt-desc");
+
   const [isPending, startTransition] = useTransition();
 
   // Create Fund Dialog State
@@ -174,31 +183,56 @@ export function PettyCashClient({
     }
   };
 
-  // Filters for Funds Overview
-  const filteredFunds = funds.filter(f =>
-    f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    f.location?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filters & Sorts for Funds Overview
+  const filteredFunds = funds
+    .filter(f => {
+      const matchesSearch =
+        f.name.toLowerCase().includes(fundSearchQuery.toLowerCase()) ||
+        f.location?.name?.toLowerCase().includes(fundSearchQuery.toLowerCase());
 
-  // Filters for All Transactions Tab
-  const filteredTransactions = allTransactions.filter(tx => {
-    const matchesSearch =
-      tx.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.fund?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.fund?.location?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      tx.member?.user?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesBranch =
+        fundBranchFilter === "all" ||
+        f.locationId === fundBranchFilter;
 
-    const matchesBranch =
-      selectedBranchFilter === "all" ||
-      tx.fund?.locationId === selectedBranchFilter;
+      return matchesSearch && matchesBranch;
+    })
+    .sort((a, b) => {
+      if (fundSortOption === "name-asc") return a.name.localeCompare(b.name);
+      if (fundSortOption === "name-desc") return b.name.localeCompare(a.name);
+      if (fundSortOption === "amount-asc") return Number(a.amount || 0) - Number(b.amount || 0);
+      if (fundSortOption === "amount-desc") return Number(b.amount || 0) - Number(a.amount || 0);
+      if (fundSortOption === "floatAmount-asc") return Number(a.floatAmount || 0) - Number(b.floatAmount || 0);
+      if (fundSortOption === "floatAmount-desc") return Number(b.floatAmount || 0) - Number(a.floatAmount || 0);
+      if (fundSortOption === "createdAt-asc") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // createdAt-desc (default)
+    });
 
-    const matchesType =
-      selectedTypeFilter === "all" ||
-      tx.type === selectedTypeFilter;
+  // Filters & Sorts for All Transactions Tab
+  const filteredTransactions = allTransactions
+    .filter(tx => {
+      const matchesSearch =
+        tx.description?.toLowerCase().includes(txSearchQuery.toLowerCase()) ||
+        tx.type?.toLowerCase().includes(txSearchQuery.toLowerCase()) ||
+        tx.fund?.name?.toLowerCase().includes(txSearchQuery.toLowerCase()) ||
+        tx.fund?.location?.name?.toLowerCase().includes(txSearchQuery.toLowerCase()) ||
+        tx.member?.user?.name?.toLowerCase().includes(txSearchQuery.toLowerCase());
 
-    return matchesSearch && matchesBranch && matchesType;
-  });
+      const matchesBranch =
+        txBranchFilter === "all" ||
+        tx.fund?.locationId === txBranchFilter;
+
+      const matchesType =
+        txTypeFilter === "all" ||
+        tx.type === txTypeFilter;
+
+      return matchesSearch && matchesBranch && matchesType;
+    })
+    .sort((a, b) => {
+      if (txSortOption === "amount-asc") return Number(a.amount || 0) - Number(b.amount || 0);
+      if (txSortOption === "amount-desc") return Number(b.amount || 0) - Number(a.amount || 0);
+      if (txSortOption === "createdAt-asc") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(); // createdAt-desc (default)
+    });
 
   return (
     <div className="space-y-6">
@@ -223,15 +257,57 @@ export function PettyCashClient({
 
         {/* TAB 1: FUNDS OVERVIEW */}
         <TabsContent value="funds" className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-zinc-200">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
-              <Input
-                placeholder="Search funds by name or location..."
-                className="pl-9 h-11"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-zinc-200">
+            <div className="flex flex-col sm:flex-row flex-1 gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Input
+                  placeholder="Search funds by name or location..."
+                  className="pl-9 h-11"
+                  value={fundSearchQuery}
+                  onChange={e => setFundSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="w-full sm:w-56">
+                <Select
+                  value={fundBranchFilter}
+                  onValueChange={setFundBranchFilter}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="All Branches" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Branches / Locations</SelectItem>
+                    {locations.map(l => (
+                      <SelectItem key={l.id} value={l.id}>
+                        {l.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-full sm:w-56">
+                <Select
+                  value={fundSortOption}
+                  onValueChange={setFundSortOption}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt-desc">Newest Created</SelectItem>
+                    <SelectItem value="createdAt-asc">Oldest Created</SelectItem>
+                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                    <SelectItem value="amount-desc">Balance (High-Low)</SelectItem>
+                    <SelectItem value="amount-asc">Balance (Low-High)</SelectItem>
+                    <SelectItem value="floatAmount-desc">Float Amount (High-Low)</SelectItem>
+                    <SelectItem value="floatAmount-asc">Float Amount (Low-High)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -314,22 +390,22 @@ export function PettyCashClient({
 
         {/* TAB 2: ALL TRANSACTIONS (ORGANISATION & BRANCH VIEW) */}
         <TabsContent value="transactions" className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-zinc-200">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-zinc-200">
             <div className="flex flex-col sm:flex-row flex-1 gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
                 <Input
                   placeholder="Search description, staff, fund, location..."
                   className="pl-9 h-11"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+                  value={txSearchQuery}
+                  onChange={e => setTxSearchQuery(e.target.value)}
                 />
               </div>
 
               <div className="w-full sm:w-56">
                 <Select
-                  value={selectedBranchFilter}
-                  onValueChange={setSelectedBranchFilter}
+                  value={txBranchFilter}
+                  onValueChange={setTxBranchFilter}
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="All Branches" />
@@ -347,8 +423,8 @@ export function PettyCashClient({
 
               <div className="w-full sm:w-48">
                 <Select
-                  value={selectedTypeFilter}
-                  onValueChange={setSelectedTypeFilter}
+                  value={txTypeFilter}
+                  onValueChange={setTxTypeFilter}
                 >
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="All Types" />
@@ -357,6 +433,23 @@ export function PettyCashClient({
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="EXPENSE">Expenses</SelectItem>
                     <SelectItem value="TOP_UP">Top Ups / Float</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="w-full sm:w-48">
+                <Select
+                  value={txSortOption}
+                  onValueChange={setTxSortOption}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="createdAt-desc">Newest First</SelectItem>
+                    <SelectItem value="createdAt-asc">Oldest First</SelectItem>
+                    <SelectItem value="amount-desc">Amount (High-Low)</SelectItem>
+                    <SelectItem value="amount-asc">Amount (Low-High)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

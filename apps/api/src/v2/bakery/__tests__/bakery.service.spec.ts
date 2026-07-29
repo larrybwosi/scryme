@@ -144,19 +144,38 @@ describe("BakeryService", () => {
         .mockResolvedValueOnce(10) // total
         .mockResolvedValueOnce(2)  // active
         .mockResolvedValueOnce(3); // completed today
-      mockPrisma.client.productVariantStock.count.mockResolvedValue(4);
-      mockPrisma.client.productVariantStock.findMany
-        .mockResolvedValueOnce([
-          {
-            id: "s1",
-            availableStock: 5,
-            reorderPoint: 10,
-            variant: { name: "Flour", sku: "FL-01" },
-          },
-        ]) // lowStockPreview
-        .mockResolvedValueOnce([
-          { availableStock: 100, variant: { buyingPrice: 2 } },
-        ]); // totalValueData
+      mockPrisma.client.productVariantStock.findMany.mockResolvedValue([
+        {
+          id: "s1",
+          availableStock: 5,
+          reorderPoint: 10,
+          variant: { name: "Flour", sku: "FL-01", buyingPrice: 0 },
+        },
+        {
+          id: "s2",
+          availableStock: 100,
+          reorderPoint: 5,
+          variant: { name: "Sugar", sku: "SG-01", buyingPrice: 2 },
+        },
+        {
+          id: "s3",
+          availableStock: 20,
+          reorderPoint: 30,
+          variant: { name: "Yeast", sku: "YS-01", buyingPrice: 0 },
+        },
+        {
+          id: "s4",
+          availableStock: 15,
+          reorderPoint: 25,
+          variant: { name: "Salt", sku: "SL-01", buyingPrice: 0 },
+        },
+        {
+          id: "s5",
+          availableStock: 12,
+          reorderPoint: 22,
+          variant: { name: "Butter", sku: "BT-01", buyingPrice: 0 },
+        },
+      ]);
       mockPrisma.client.bakeryCategory.findMany.mockResolvedValue([
         { id: "cat1", name: "Bread" },
       ]);
@@ -171,7 +190,7 @@ describe("BakeryService", () => {
       expect(result.summary.activeBatches).toBe(2);
       expect(result.summary.completedToday).toBe(3);
       expect(result.summary.lowStockItems).toBe(4);
-      expect(result.lowStockIngredients).toHaveLength(1);
+      expect(result.lowStockIngredients).toHaveLength(4);
       expect(result.lowStockIngredients[0].name).toBe("Flour");
       expect(result.totalInventoryValue).toBe(200);
       expect(result.recipesByCategory["Bread"]).toBe(3);

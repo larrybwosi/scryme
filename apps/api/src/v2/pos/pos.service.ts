@@ -590,7 +590,8 @@ export class PosService {
   }
 
   async getTransactions(ctx: V2ApiContext, query: any) {
-    const { organizationId, memberId, locationId } = ctx;
+    const { organizationId, memberId } = ctx;
+    const locationId = ctx.locationId || query.locationId;
     const { status, type, customerId, startDate, endDate } = query;
 
     const where: any = { organizationId };
@@ -1199,9 +1200,17 @@ export class PosService {
         },
       });
 
+      /**
+       * ⚡ Bolt Optimization: Index body.items into a Map to avoid O(N*M) nested array searches.
+       * This reduces item lookup to constant-time O(1) complexity, resulting in O(N + M) complexity overall.
+       */
+      const receivedItemMap = new Map<string, any>(
+        (body.items || []).map((i: any) => [i.variantId, i])
+      );
+
       // 2. Adjust inventory for each item
       for (const item of transfer.items) {
-        const receivedItem = body.items?.find((i: any) => i.variantId === item.variantId);
+        const receivedItem = receivedItemMap.get(item.variantId);
         const qtyToReceive = receivedItem ? new Decimal(receivedItem.acceptedQuantity ?? receivedItem.receivedQuantity) : item.requestedQuantity;
 
         if (qtyToReceive.lte(0)) continue;
@@ -1365,8 +1374,13 @@ export class PosService {
   }
 
   async registerPettyCash(ctx: V2ApiContext, body: any) {
-    const validated = this.validate<any>(RegisterPettyCashSchema, body);
     const { organizationId, memberId, locationId } = ctx;
+
+    if (!memberId) {
+      throw new UnauthorizedException("Member authentication required to register petty cash.");
+    }
+
+    const validated = this.validate<any>(RegisterPettyCashSchema, body);
 
     // 1. Ensure "Petty Cash" category exists
     let category = await this.prisma.client.expenseCategory.findFirst({
@@ -1462,7 +1476,7 @@ export class PosService {
           amount: amountDecimal,
           expenseNumber,
           status,
-          memberId: memberId || "system",
+          memberId: memberId,
           organizationId,
           categoryId: category.id,
           expenseDate: new Date(),
@@ -1471,7 +1485,7 @@ export class PosService {
           receiptUrl: validated.receiptUrl,
           ...(status === ExpenseStatus.APPROVED
             ? {
-                approverId: memberId || "system",
+                approverId: memberId,
                 approvalDate: new Date(),
               }
             : {}),
@@ -1497,7 +1511,7 @@ export class PosService {
             type: PettyCashTransactionType.EXPENSE,
             amount: amountDecimal,
             description: validated.description,
-            memberId: memberId || "system",
+            memberId: memberId,
           },
         });
       }

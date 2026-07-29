@@ -57,7 +57,10 @@ interface InventoryTableProps {
 import { cn } from "@repo/ui/lib/utils";
 import { formatCurrency } from "../../lib/utils";
 
-export function InventoryTable({ data, currency = "USD" }: InventoryTableProps) {
+export function InventoryTable({
+  data,
+  currency = "USD",
+}: InventoryTableProps) {
   const [selectedItem, setSelectedItem] = useState<InventoryProduct | null>(
     null,
   );
@@ -113,7 +116,7 @@ export function InventoryTable({ data, currency = "USD" }: InventoryTableProps) 
   );
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-background">
       <Table>
         <TableHeader>
           <TableRow>
@@ -123,7 +126,7 @@ export function InventoryTable({ data, currency = "USD" }: InventoryTableProps) 
             <TableHead>Supplier</TableHead>
             <SortableHeader title="Current Stock" column="currentStock" />
             <SortableHeader title="Unit Price" column="unitPrice" />
-            <TableHead className="w-[50px]"></TableHead>
+            <TableHead className="w-12.5"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

@@ -3,7 +3,7 @@ import { RegisterPettyCashUseCase } from "./register-petty-cash.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ExpenseUseCase } from "../../../finance/application/use-cases/expense.use-case";
 import { PettyCashUseCase } from "../../../finance/application/use-cases/petty-cash.use-case";
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { PaymentMethod } from "@repo/db";
 
@@ -123,6 +123,20 @@ describe("RegisterPettyCashUseCase", () => {
     prisma.client.pettyCashFund.findFirst.mockResolvedValue(null);
 
     await expect(useCase.execute(ctx, dto)).rejects.toThrow(NotFoundException);
+  });
+
+  it("should throw error if memberId is not present", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      locationId: "loc_1",
+    } as any;
+    const dto = {
+      description: "Test expense",
+      amount: 100,
+      paymentMethod: PaymentMethod.CASH,
+    };
+
+    await expect(useCase.execute(ctx, dto)).rejects.toThrow(UnauthorizedException);
   });
 
   it("should fetch recent transactions", async () => {
