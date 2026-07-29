@@ -28,6 +28,7 @@ import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import {
   CreateProductDto,
   ProductResponseDto,
+  ServiceCatalogResponseDto,
 } from "../../application/dto/product.dto";
 import { UpdateSupplierProductDto } from "../../application/dto/supplier-product.dto";
 import { ReviewPriceChangeDto } from "../../application/dto/price-change.dto";
@@ -37,6 +38,7 @@ import { PaginationQueryDto } from "@/v3/common/utils/pagination";
 import { PricingManagementService } from "../../application/services/pricing-management.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ReviewPriceChangeUseCase } from "../../application/use-cases/review-price-change.use-case";
+import { ServiceManagementService } from "../../../services/application/services/service-management.service";
 
 @ApiTags("V3 Catalog")
 @ApiBearerAuth()
@@ -51,6 +53,7 @@ export class ProductController {
     private readonly reviewPriceChangeUseCase: ReviewPriceChangeUseCase,
     private readonly pricingManagementService: PricingManagementService,
     private readonly prisma: PrismaService,
+    private readonly serviceManagement: ServiceManagementService,
   ) {}
 
   @Get("products")
@@ -73,10 +76,99 @@ export class ProductController {
     @Req() req: any,
     @Query() paginationQuery: PaginationQueryDto,
   ) {
-    return this.getProductsUseCase.execute(
+    const products = await this.getProductsUseCase.execute(
       req.organization.id,
       paginationQuery,
     );
+
+    return products.map((p) => {
+      const firstVariant = p.variants?.[0];
+      const retailPrice = firstVariant?.retailPrice ?? null;
+
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        sku: p.sku || "",
+        retailPrice,
+        images: p.imageUrls || [],
+        category: p.category
+          ? {
+              id: p.categoryId,
+              name: p.category.name,
+            }
+          : {
+              id: p.categoryId,
+              name: "Unknown",
+            },
+        slug: p.slug || null,
+        variants: p.variants || [],
+      };
+    });
+  }
+
+  @Get("services")
+  @Permissions("services:read")
+  @ApiOperation({
+    summary: "Get all services for an organization",
+    operationId: "Catalog_GetServices",
+  })
+  @ApiResponse({
+    status: 200,
+    type: [ServiceCatalogResponseDto],
+    description: "List of services",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Unauthorized",
+  })
+  async getServices(
+    @Req() req: any,
+    @Query() paginationQuery: PaginationQueryDto,
+  ) {
+    const organizationId = req.organization.id;
+
+    // Use ServiceManagementService to load services cleanly (Architectural Consistency)
+    const items = await this.serviceManagement.getServices(organizationId);
+
+    // Filter/slice in memory based on pagination if present
+    const limit = paginationQuery.limit || 20;
+    const offset = paginationQuery.offset || 0;
+    const paginatedItems = items.slice(offset, offset + limit);
+
+    return paginatedItems.map((s) => {
+      const customFieldsObj =
+        s.customFields && typeof s.customFields === "object"
+          ? (s.customFields as any)
+          : {};
+      const slug = customFieldsObj.slug || null;
+      const images = Array.isArray(customFieldsObj.images)
+        ? customFieldsObj.images
+        : [];
+
+      return {
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        sku: s.sku,
+        retailPrice: s.price ? Number(s.price) : 0,
+        images,
+        category: s.category
+          ? {
+              id: s.categoryId,
+              name: s.category.name,
+            }
+          : {
+              id: s.categoryId,
+              name: "Unknown",
+            },
+        slug,
+        pricingModel: s.pricingModel,
+        estimatedDuration: s.estimatedDuration,
+        isActive: s.isActive,
+      };
+    });
   }
 
   @Post("products")
@@ -96,10 +188,25 @@ export class ProductController {
     description: "Invalid input",
   })
   async createProduct(@Req() req: any, @Body() body: CreateProductDto) {
-    return this.createProductUseCase.execute({
+    const product = await this.createProductUseCase.execute({
       ...body,
       organizationId: req.organization.id,
     });
+
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      sku: product.sku || "",
+      retailPrice: null,
+      images: [],
+      category: {
+        id: product.categoryId,
+        name: "Unknown",
+      },
+      slug: null,
+      variants: [],
+    };
   }
 
   @Patch("suppliers/:supplierId/variants/:variantId")
