@@ -129,6 +129,31 @@ describe("ExpenseUseCase", () => {
       expect(result.status).toBe(ExpenseStatus.PENDING);
     });
 
+    it("should create an approved expense when autoApprove is true, regardless of threshold", async () => {
+      const autoApproveDto = { ...dto, amount: 2000, autoApprove: true };
+      mockPrismaClient.organization.findUnique.mockResolvedValue({
+        expenseApprovalThreshold: 50,
+        expenseReceiptThreshold: 10000,
+      });
+      mockPrismaClient.expense.count.mockResolvedValue(0);
+      mockPrismaClient.expenseCategory.count.mockResolvedValue(1);
+      mockPrismaClient.expense.create.mockResolvedValue({
+        id: "exp-1",
+        status: ExpenseStatus.APPROVED,
+      });
+
+      const result = await useCase.createExpense(orgId, memberId, autoApproveDto);
+
+      expect(result.status).toBe(ExpenseStatus.APPROVED);
+      expect(mockPrismaClient.expense.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: ExpenseStatus.APPROVED,
+          }),
+        }),
+      );
+    });
+
     it("should handle petty cash decrement when approved", async () => {
       const pettyDto = { ...dto, pettyCashFundId: "fund-1" };
       mockPrismaClient.organization.findUnique.mockResolvedValue({

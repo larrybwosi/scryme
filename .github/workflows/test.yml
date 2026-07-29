@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [dev, nextgen, crm]
+    branches: [dev, nextgen, crm, android]
   pull_request:
-    branches: [dev, nextgen, crm]
+    branches: [dev, nextgen, crm, android]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,12 +36,15 @@ jobs:
       pkg_windmill: ${{ steps.changes.outputs.pkg_windmill }}
       workflow: ${{ steps.changes.outputs.workflow }}
       test_workflow: ${{ steps.changes.outputs.test_workflow }}
+      android: ${{ steps.changes.outputs.android }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: changes
         with:
           filters: |
+            android:
+              - 'apps/android/**'
             pos:
               - 'apps/pos/**'
             pos_rust:
@@ -98,7 +101,8 @@ jobs:
     steps:
       - id: check
         run: |
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || \
+          if [ "${{ needs.filter.outputs.android }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.pos }}" == "true" ] || \
              [ "${{ needs.filter.outputs.bakery }}" == "true" ] || \
              [ "${{ needs.filter.outputs.api }}" == "true" ] || \
              [ "${{ needs.filter.outputs.crm }}" == "true" ] || \
@@ -159,6 +163,34 @@ jobs:
 
       - name: Build and Verify
         run: pnpm turbo build lint type-check test --filter=api
+
+  android-ci:
+    needs: [filter]
+    if: |
+      needs.filter.outputs.android == 'true' ||
+      needs.filter.outputs.workflow == 'true' ||
+      needs.filter.outputs.test_workflow == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'zulu'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
+
+      - name: Verify Android Code Quality & Compilation
+        run: |
+          cd apps/android
+          gradle lintDebug testDebugUnitTest assembleDebug --no-daemon
 
   lint-typecheck:
     needs: [filter, validation-needed]

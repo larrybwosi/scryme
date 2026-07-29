@@ -242,7 +242,10 @@ export const getSDK = (config: SDKConfig) => {
       addItem: (
         orgSlug: string,
         data: {
-          variantId: string;
+          productId?: string;
+          variantId?: string;
+          serviceId?: string;
+          bookingDetails?: any;
           quantity: number;
           customerId?: string;
           sessionId?: string;
@@ -250,7 +253,7 @@ export const getSDK = (config: SDKConfig) => {
       ) => sdk.client.post(`/${orgSlug}/cart/items`, data),
       removeItem: (
         orgSlug: string,
-        data: { variantId: string; customerId?: string; sessionId?: string },
+        data: { productId?: string; variantId?: string; serviceId?: string; customerId?: string; sessionId?: string },
       ) => sdk.client.delete(`/${orgSlug}/cart/items`, { data }),
     },
     customers: {
@@ -258,6 +261,22 @@ export const getSDK = (config: SDKConfig) => {
         sdk.client.get(`/${orgSlug}/customers/${id}`),
       updateCustomer: (orgSlug: string, id: string, data: any) =>
         sdk.client.patch(`/${orgSlug}/customers/${id}`, data),
+    },
+    services: {
+      getPublicServices: (orgSlug: string) =>
+        sdk.client.get(`/public/${orgSlug}/services`),
+      getPublicCategories: (orgSlug: string) =>
+        sdk.client.get(`/public/${orgSlug}/services/categories`),
+      getPublicService: (orgSlug: string, id: string) =>
+        sdk.client.get(`/public/${orgSlug}/services/${id}`),
+      getServiceAvailability: (orgSlug: string, id: string, date?: string) =>
+        sdk.client.get(`/public/${orgSlug}/services/${id}/availability`, { params: { date } }),
+      requestOtp: (orgSlug: string, data: { email?: string; phoneNumber?: string }) =>
+        sdk.client.post(`/public/${orgSlug}/services/otp/request`, data),
+      verifyOtp: (orgSlug: string, data: { email?: string; phoneNumber?: string; code: string }) =>
+        sdk.client.post(`/public/${orgSlug}/services/otp/verify`, data),
+      createPublicBooking: (orgSlug: string, data: { serviceId: string; verificationId: string; scheduledStartTime: string; notes?: string }) =>
+        sdk.client.post(`/public/${orgSlug}/services/bookings`, data),
     },
   };
 

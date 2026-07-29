@@ -169,6 +169,128 @@ export class ApproveStockAdjustmentUseCase {
         notes: adjustment.notes || undefined,
       });
 
+      // 5. Update corresponding ApprovalRequest status to APPROVED
+      await tx.approvalRequest.updateMany({
+        where: {
+          organizationId,
+          relatedId: adjustmentId,
+          requestType: ApprovalRequestType.STOCK_ADJUSTMENT,
+        },
+        data: {
+          status: ApprovalStatus.APPROVED,
+        },
+      });
+
+      return updatedAdjustment;
+    });
+  }
+}
+
+@Injectable()
+export class GetStockAdjustmentsUseCase {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async execute(
+    organizationId: string,
+    query: { limit?: number; offset?: number; status?: string },
+  ) {
+    const { limit = 20, offset = 0, status } = query;
+    const where: any = { organizationId };
+    if (status) {
+      where.status = status;
+    }
+
+    const [items, total] = await Promise.all([
+      this.prisma.client.stockAdjustment.findMany({
+        where,
+        include: {
+          variant: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              product: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+          location: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          member: {
+            select: {
+              user: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        skip: offset,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      this.prisma.client.stockAdjustment.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      limit,
+      offset,
+    };
+  }
+}
+
+@Injectable()
+export class RejectStockAdjustmentUseCase {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async execute(
+    organizationId: string,
+    approvalMemberId: string,
+    adjustmentId: string,
+    reason?: string,
+  ) {
+    return this.prisma.client.$transaction(async tx => {
+      const adjustment = await tx.stockAdjustment.findUnique({
+        where: { id: adjustmentId, organizationId },
+      });
+
+      if (!adjustment)
+        throw new NotFoundException("Adjustment request not found");
+      if (adjustment.status !== "PENDING")
+        throw new BadRequestException("Adjustment is not in PENDING status");
+
+      // 1. Update adjustment status
+      const updatedAdjustment = await tx.stockAdjustment.update({
+        where: { id: adjustmentId },
+        data: {
+          status: "REJECTED",
+          approvedById: approvalMemberId,
+          approvedAt: new Date(),
+          notes: reason ? `${adjustment.notes || ""}\nRejected reason: ${reason}` : adjustment.notes,
+        },
+      });
+
+      // 2. Update corresponding ApprovalRequest status to REJECTED
+      await tx.approvalRequest.updateMany({
+        where: {
+          organizationId,
+          relatedId: adjustmentId,
+          requestType: ApprovalRequestType.STOCK_ADJUSTMENT,
+        },
+        data: {
+          status: ApprovalStatus.REJECTED,
+        },
+      });
+
       return updatedAdjustment;
     });
   }

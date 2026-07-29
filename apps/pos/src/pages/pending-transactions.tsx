@@ -197,6 +197,43 @@ export default function PendingTransactionsPage() {
     }
   };
 
+  // --- Packing List Download Handler (NEW) ---
+  const handleDownloadPackingList = async (tx: Transaction) => {
+    if (!tx.fulfillmentId) {
+      toast.error('This transaction has not been dispatched yet.');
+      return;
+    }
+
+    if (isDownloading) return;
+
+    setIsDownloading(true);
+
+    const loadingToastId = toast.loading('Downloading packing list...', {
+      description: `Order: ${tx.number || tx.id}`,
+    });
+
+    try {
+      const url = API_ROUTES.FULFILLMENT.PACKING_LIST(tx.id);
+      const blob = await invoke<number[]>('get_invoice_blob_command', { url });
+      const uint8Array = new Uint8Array(blob);
+      const blobObj = new Blob([uint8Array], { type: 'application/pdf' });
+
+      const safeOrderNum = (tx.number || tx.id).replace(/[^a-z0-9]/gi, '_');
+      const fileName = `PackingList_${safeOrderNum}.pdf`;
+
+      await processFileDownload(blobObj, fileName, loadingToastId);
+    } catch (error) {
+      console.error('Packing list download error:', error);
+      toast.error('Failed to save packing list', {
+        description: 'Please try again',
+        id: loadingToastId,
+      });
+    } finally {
+      setIsDownloading(false);
+      setOpenMenuId(null);
+    }
+  };
+
   const handlePrintInvoice = async (tx: Transaction) => {
     if (!tx.invoiceLink) return;
     try {
@@ -288,6 +325,7 @@ export default function PendingTransactionsPage() {
               onCopyId={handleCopyId}
               onDownloadInvoice={handleDownloadInvoice}
               onDownloadWaybill={handleDownloadWaybill}
+              onDownloadPackingList={handleDownloadPackingList}
               onPrintInvoice={handlePrintInvoice}
               onPrintWaybill={handlePrintWaybill}
               onOpenReconcile={handleOpenReconcile}

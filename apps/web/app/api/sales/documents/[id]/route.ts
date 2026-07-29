@@ -35,17 +35,22 @@ export async function GET(
     return new NextResponse("Not Found", { status: 404 });
   }
 
-  if (type === "invoice" || type === "receipt") {
+  if (["invoice", "receipt", "waybill", "delivery-note", "packing-list"].includes(type)) {
     try {
       const { generateDocumentToken } = await import("@repo/shared/api/v2");
-      const token = generateDocumentToken(type, id, auth.organizationId);
+      const token = generateDocumentToken(type as any, id, auth.organizationId);
 
       const defaultApiUrl = "http://localhost:3002";
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
-      const fetchUrl =
-        type === "invoice"
-          ? `${apiUrl}/api/v3/public-invoices/transactions/${id}/download?token=${token}`
-          : `${apiUrl}/api/v3/public-invoices/receipts/${id}/download?token=${token}`;
+
+      let fetchUrl = "";
+      if (type === "invoice") {
+        fetchUrl = `${apiUrl}/api/v3/public-invoices/transactions/${id}/download?token=${token}`;
+      } else if (type === "receipt") {
+        fetchUrl = `${apiUrl}/api/v3/public-invoices/receipts/${id}/download?token=${token}`;
+      } else {
+        fetchUrl = `${apiUrl}/api/v2/public/documents/${type}/${id}?token=${token}`;
+      }
 
       const response = await fetch(fetchUrl);
       if (!response.ok) {
@@ -66,61 +71,6 @@ export async function GET(
     } catch (error) {
       console.error(`Error delegating ${type} generation to API:`, error);
       return new NextResponse(`Error generating ${type}`, { status: 500 });
-    }
-  }
-
-  if (type === "delivery-note") {
-    try {
-      const fullTransaction = await db.transaction.findUnique({
-        where: {
-          id,
-          organizationId: auth.organizationId,
-        },
-        include: {
-          attachments: true,
-          fulfillments: {
-            include: { shippingAddress: true },
-          },
-          customer: {
-            include: {
-              addresses: true,
-            },
-          },
-          items: true,
-          organization: {
-            include: {
-              settings: true,
-            },
-          },
-          location: true,
-          payments: true,
-        },
-      });
-
-      if (!fullTransaction) {
-        return new NextResponse("Not Found", { status: 404 });
-      }
-
-      const documentData = Mappers.toDeliveryNoteData(
-        fullTransaction,
-        fullTransaction.fulfillments[0],
-      );
-      const stream = await renderToStream(
-        createElement(
-          DeliveryNoteDocument as any,
-          { data: documentData } as any,
-        ) as any,
-      );
-
-      return new NextResponse(stream as any, {
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="${type}-${transaction.number}.pdf"`,
-        },
-      });
-    } catch (error) {
-      console.error("PDF Generation Error (Delivery Note):", error);
-      return new NextResponse("Error generating PDF", { status: 500 });
     }
   }
 

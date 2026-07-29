@@ -22,6 +22,8 @@ import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { MemberUseCase } from "../../application/use-cases/member.use-case";
+import { AttendanceUseCase } from "../../application/use-cases/attendance.use-case";
+import { CheckOutDto } from "../../application/dto/attendance.dto";
 import {
   CreateMemberDto,
   UpdateMemberDto,
@@ -33,6 +35,8 @@ import {
 import { Status } from "@repo/db";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { PrismaService } from "@/prisma/prisma.service";
 
 @ApiTags("V3 Members")
 @ApiBearerAuth()
@@ -41,7 +45,10 @@ import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 @Controller(":orgSlug/members")
 @ApiParam({ name: "orgSlug", type: "string" })
 export class MembersController {
-  constructor(private readonly memberUseCase: MemberUseCase) {}
+  constructor(
+    private readonly memberUseCase: MemberUseCase,
+    private readonly attendanceUseCase: AttendanceUseCase,
+  ) {}
 
   @Get()
   @Permissions("members:read")
@@ -134,6 +141,21 @@ export class MembersController {
       actorId,
     );
   }
+
+  @Post(":memberId/attendance/check-out")
+  @Permissions("attendance:write")
+  @ApiOperation({ summary: "Admin check-out a member" })
+  async adminCheckOut(
+    @Request() req: any,
+    @Param("memberId") memberId: string,
+    @Body() dto: CheckOutDto,
+  ) {
+    return this.attendanceUseCase.checkOut(
+      req.v3Context.organizationId,
+      memberId,
+      dto,
+    );
+  }
 }
 
 @ApiTags("V3 Members Terminal")
@@ -141,13 +163,47 @@ export class MembersController {
 @UseInterceptors(StandardResponseInterceptor)
 @Controller("members")
 export class TerminalMembersController {
-  constructor(private readonly memberUseCase: MemberUseCase) {}
+  constructor(
+    private readonly memberUseCase: MemberUseCase,
+    private readonly prisma: PrismaService,
+  ) {}
 
+  @AllowPublic()
   @Post("login")
   @ApiOperation({ summary: "Login member via terminal" })
   @ApiResponse({ status: 200, type: TerminalLoginResponseDto })
   async login(@Request() req: any, @Body() dto: TerminalLoginDto) {
-    const { organizationId, locationId } = req.v3Context;
+    let organizationId = req.v3Context?.organizationId;
+    if (!organizationId) {
+      const orgSlug = req.headers["x-organization-slug"] || req.headers["x-org-slug"];
+      const orgIdHeader = req.headers["x-organization-id"] || req.headers["x-org-id"];
+
+      if (orgIdHeader) {
+        organizationId = Array.isArray(orgIdHeader) ? orgIdHeader[0] : orgIdHeader;
+      } else if (orgSlug) {
+        const slugStr = Array.isArray(orgSlug) ? orgSlug[0] : orgSlug;
+        const org = await this.prisma.client.organization.findUnique({
+          where: { slug: slugStr },
+        });
+        if (org) {
+          organizationId = org.id;
+        }
+      }
+    }
+
+    let locationId = req.v3Context?.locationId || req.headers["x-location-id"];
+    if (Array.isArray(locationId)) {
+      locationId = locationId[0];
+    }
+    if (!locationId && organizationId) {
+      const firstLoc = await this.prisma.client.inventoryLocation.findFirst({
+        where: { organizationId, isActive: true },
+      });
+      if (firstLoc) {
+        locationId = firstLoc.id;
+      }
+    }
+
     return this.memberUseCase.login(
       organizationId,
       locationId,
