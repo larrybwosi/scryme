@@ -20,6 +20,7 @@ describe("CartUseCase", () => {
           create: vi.fn(),
           update: vi.fn(),
           delete: vi.fn(),
+          deleteMany: vi.fn(),
         },
       },
     } as any;
@@ -113,6 +114,25 @@ describe("CartUseCase", () => {
         bookingDetails: dto.bookingDetails,
         quantity: 1,
       }
+    });
+  });
+
+  it("should clear the entire cart", async () => {
+    const orgId = "org-1";
+    const mockCart = {
+      id: "cart-1",
+      organizationId: orgId,
+      sessionId: "sess-1",
+    };
+
+    vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
+    vi.mocked(prisma.client.cartItem.deleteMany).mockResolvedValue({ count: 2 } as any);
+
+    const result = await useCase.clearCart(orgId, undefined, "sess-1");
+
+    expect(result).toBeDefined();
+    expect(prisma.client.cartItem.deleteMany).toHaveBeenCalledWith({
+      where: { cartId: "cart-1" },
     });
   });
 });

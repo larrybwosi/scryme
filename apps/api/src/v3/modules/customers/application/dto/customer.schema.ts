@@ -12,7 +12,7 @@ export const AddressSchema = z.object({
 });
 
 export const RegisterCustomerSchema = z.object({
-  zitadelUserId: z.string().min(1, "Zitadel User ID is required"),
+  zitadelUserId: z.string().optional(),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email format"),
   phone: z.string().optional(),

@@ -135,4 +135,21 @@ export class CartUseCase {
       where: { id: existingItem.id },
     });
   }
+
+  async clearCart(
+    organizationId: string,
+    customerId?: string,
+    sessionId?: string,
+  ) {
+    const cart = await this.getCart(
+      organizationId,
+      customerId,
+      sessionId,
+      false,
+    );
+
+    return this.prisma.client.cartItem.deleteMany({
+      where: { cartId: cart.id },
+    });
+  }
 }

@@ -62,4 +62,11 @@ export class CartController {
       customerId: customerId || dto.customerId,
     });
   }
+
+  @Delete()
+  @ApiOperation({ summary: "Clear entire cart" })
+  async clearCart(@Request() req: any, @Query("sessionId") sessionId?: string) {
+    const customerId = req.user?.id;
+    return this.cartUseCase.clearCart(req.organization.id, customerId, sessionId);
+  }
 }
