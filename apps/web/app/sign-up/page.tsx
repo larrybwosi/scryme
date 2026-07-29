@@ -66,11 +66,11 @@ function getPasswordStrength(password: string): {
 
 const ScrymeLogo = () => (
   <div className="flex items-center gap-1">
-    <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
-      <span className="text-white font-black text-xs tracking-tight">S</span>
+    <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+      <span className="text-primary-foreground font-black text-xs tracking-tight">S</span>
     </div>
-    <span className="text-xl font-bold tracking-tight text-gray-900">
-      scry<span className="text-emerald-600">me</span>
+    <span className="text-xl font-bold tracking-tight text-foreground">
+      scry<span className="text-primary">me</span>
     </span>
   </div>
 );
@@ -121,9 +121,9 @@ const SocialButton = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-colors duration-150 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
+    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md border border-border bg-card hover:bg-accent transition-colors duration-150 text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed">
     {disabled ? (
-      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
     ) : (
       icon
     )}
@@ -142,12 +142,12 @@ const FieldWrapper = ({
   children: React.ReactNode;
 }) => (
   <div className="space-y-1.5">
-    <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+    <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
       {label}
     </label>
     {children}
     {error && (
-      <p className="text-xs text-red-600 flex items-center gap-1">
+      <p className="text-xs text-destructive flex items-center gap-1">
         <XCircle className="h-3 w-3 shrink-0" />
         {error}
       </p>
@@ -241,14 +241,14 @@ export function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex bg-background">
       {/* ── Left Panel ── */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-[420px]">
           {/* Header row */}
           <div className="flex items-center justify-between mb-10">
             <ScrymeLogo />
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Already a member?{" "}
               <button
                 type="button"
@@ -261,7 +261,7 @@ export function SignupPage() {
                   const queryString = params.toString();
                   router.push(`/login${queryString ? `?${queryString}` : ""}`);
                 }}
-                className="text-emerald-700 font-semibold hover:text-emerald-800 transition-colors">
+                className="text-primary font-semibold hover:text-primary/90 transition-colors">
                 Log in
               </button>
             </p>
@@ -269,13 +269,13 @@ export function SignupPage() {
 
           {/* Headline */}
           <div className="mb-8">
-            <p className="text-[11px] font-mono uppercase tracking-widest text-emerald-700 mb-2">
+            <p className="text-[11px] font-mono uppercase tracking-widest text-primary mb-2">
               New organization
             </p>
-            <h1 className="text-[1.85rem] font-serif font-semibold text-gray-900 leading-tight tracking-tight">
+            <h1 className="text-[1.85rem] font-serif font-semibold text-foreground leading-tight tracking-tight">
               Create your account
             </h1>
-            <p className="text-gray-500 text-sm mt-2">
+            <p className="text-muted-foreground text-sm mt-2">
               Join the procurement teams hiring the world&#39;s best dev shops.
             </p>
           </div>
@@ -304,17 +304,17 @@ export function SignupPage() {
 
           {/* Divider */}
           <div className="relative flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-[11px] font-mono uppercase tracking-wide text-gray-400">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-[11px] font-mono uppercase tracking-wide text-muted-foreground">
               or continue with email
             </span>
-            <div className="flex-1 h-px bg-gray-100" />
+            <div className="flex-1 h-px bg-border" />
           </div>
 
           {/* Form */}
           <div className="relative pt-1">
-            <span className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-emerald-700/30" />
-            <span className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-emerald-700/30" />
+            <span className="absolute -top-1 -left-1 w-3 h-3 border-t-2 border-l-2 border-primary/30" />
+            <span className="absolute -top-1 -right-1 w-3 h-3 border-t-2 border-r-2 border-primary/30" />
 
             <form
               onSubmit={handleSubmit(handleEmailSignup)}
@@ -328,9 +328,9 @@ export function SignupPage() {
                     {...register("firstName")}
                     placeholder="Adam"
                     className={cn(
-                      "h-10 text-sm rounded-md border-gray-200 focus-visible:ring-emerald-700/20 focus-visible:border-emerald-700",
+                      "h-10 text-sm rounded-md border-border bg-background text-foreground focus-visible:ring-primary/25 focus-visible:border-primary",
                       errors.firstName &&
-                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                        "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                     )}
                   />
                 </FieldWrapper>
@@ -341,9 +341,9 @@ export function SignupPage() {
                     {...register("lastName")}
                     placeholder="Johnson"
                     className={cn(
-                      "h-10 text-sm rounded-md border-gray-200 focus-visible:ring-emerald-700/20 focus-visible:border-emerald-700",
+                      "h-10 text-sm rounded-md border-border bg-background text-foreground focus-visible:ring-primary/25 focus-visible:border-primary",
                       errors.lastName &&
-                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                        "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                     )}
                   />
                 </FieldWrapper>
@@ -356,16 +356,16 @@ export function SignupPage() {
                   {...register("email")}
                   placeholder="adam@company.com"
                   className={cn(
-                    "h-10 text-sm rounded-md border-gray-200 focus-visible:ring-emerald-700/20 focus-visible:border-emerald-700",
+                    "h-10 text-sm rounded-md border-border bg-background text-foreground focus-visible:ring-primary/25 focus-visible:border-primary",
                     errors.email &&
-                      "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                      "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                   )}
                 />
               </FieldWrapper>
 
               {/* Password with toggle */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Password
                 </label>
                 <div className="relative">
@@ -374,15 +374,15 @@ export function SignupPage() {
                     {...register("password")}
                     placeholder="Create a strong password"
                     className={cn(
-                      "h-10 text-sm rounded-md border-gray-200 pr-10 focus-visible:ring-emerald-700/20 focus-visible:border-emerald-700",
+                      "h-10 text-sm rounded-md border-border bg-background text-foreground pr-10 focus-visible:ring-primary/25 focus-visible:border-primary",
                       errors.password &&
-                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                        "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                     )}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     tabIndex={-1}
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
@@ -405,13 +405,13 @@ export function SignupPage() {
                           className={cn(
                             "h-1 flex-1 rounded-full transition-all duration-300",
                             i <= strength.score
-                              ? "bg-emerald-700"
-                              : "bg-gray-100",
+                              ? "bg-primary"
+                              : "bg-muted",
                           )}
                         />
                       ))}
                       {strength.label && (
-                        <span className="text-[11px] font-mono uppercase tracking-wide text-gray-500 ml-1">
+                        <span className="text-[11px] font-mono uppercase tracking-wide text-muted-foreground ml-1">
                           {strength.label}
                         </span>
                       )}
@@ -424,14 +424,14 @@ export function SignupPage() {
                             key={rule.label}
                             className="flex items-center gap-1.5">
                             {ok ? (
-                              <CheckCircle2 className="h-3 w-3 text-emerald-700 shrink-0" />
+                              <CheckCircle2 className="h-3 w-3 text-primary shrink-0" />
                             ) : (
-                              <div className="h-3 w-3 rounded-full border border-gray-300 shrink-0" />
+                              <div className="h-3 w-3 rounded-full border border-border shrink-0" />
                             )}
                             <span
                               className={cn(
                                 "text-xs",
-                                ok ? "text-gray-700" : "text-gray-400",
+                                ok ? "text-foreground" : "text-muted-foreground",
                               )}>
                               {rule.label}
                             </span>
@@ -443,7 +443,7 @@ export function SignupPage() {
                 )}
 
                 {errors.password && !watchedPassword?.length && (
-                  <p className="text-xs text-red-600 flex items-center gap-1">
+                  <p className="text-xs text-destructive flex items-center gap-1">
                     <XCircle className="h-3 w-3 shrink-0" />
                     {errors.password.message}
                   </p>
@@ -451,17 +451,17 @@ export function SignupPage() {
               </div>
 
               {/* Terms */}
-              <p className="text-xs text-gray-400 leading-relaxed pt-1">
+              <p className="text-xs text-muted-foreground leading-relaxed pt-1">
                 By signing up you agree to Scryme&#39;s{" "}
                 <button
                   type="button"
-                  className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
+                  className="text-foreground/80 underline underline-offset-2 hover:text-foreground transition-colors">
                   Terms of Service
                 </button>{" "}
                 and{" "}
                 <button
                   type="button"
-                  className="text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
+                  className="text-foreground/80 underline underline-offset-2 hover:text-foreground transition-colors">
                   Privacy Policy
                 </button>
                 .
@@ -470,7 +470,7 @@ export function SignupPage() {
               {/* Submit */}
               <Button
                 type="submit"
-                className="w-full h-11 bg-emerald-700 hover:bg-emerald-800 text-white font-semibold rounded-md transition-colors duration-150 flex items-center justify-center gap-2 group"
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-md transition-colors duration-150 flex items-center justify-center gap-2 group"
                 disabled={isLoading}>
                 {isLoading ? (
                   <>
@@ -486,13 +486,13 @@ export function SignupPage() {
               </Button>
             </form>
 
-            <span className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-emerald-700/30" />
-            <span className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-emerald-700/30" />
+            <span className="absolute -bottom-1 -left-1 w-3 h-3 border-b-2 border-l-2 border-primary/30" />
+            <span className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-primary/30" />
           </div>
 
           {/* Trust line */}
-          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
-            <ShieldCheck className="h-3.5 w-3.5 text-gray-300" />
+          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5 text-muted-foreground" />
             <span>SOC 2 Type II · 256-bit encryption · GDPR compliant</span>
           </div>
         </div>

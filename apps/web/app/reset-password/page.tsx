@@ -44,11 +44,11 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 // Logos
 const ScrymeLogo = () => (
   <div className="flex items-center gap-1">
-    <div className="w-7 h-7 rounded-lg bg-emerald-600 flex items-center justify-center">
-      <span className="text-white font-black text-xs tracking-tight">S</span>
+    <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
+      <span className="text-primary-foreground font-black text-xs tracking-tight">S</span>
     </div>
-    <span className="text-xl font-bold tracking-tight text-gray-900">
-      scry<span className="text-emerald-600">me</span>
+    <span className="text-xl font-bold tracking-tight text-foreground">
+      scry<span className="text-primary">me</span>
     </span>
   </div>
 );
@@ -81,10 +81,10 @@ const FieldWrapper = ({
   children: React.ReactNode;
 }) => (
   <div className="space-y-1.5">
-    <label className="block text-sm font-medium text-gray-700">{label}</label>
+    <label className="block text-sm font-medium text-foreground">{label}</label>
     {children}
     {error && (
-      <p className="text-xs text-red-600 flex items-center gap-1">
+      <p className="text-xs text-destructive flex items-center gap-1">
         <XCircle className="h-3 w-3 shrink-0" />
         {error}
       </p>
@@ -170,21 +170,21 @@ const PasswordResetPageContent = () => {
   };
 
   const SuccessMessage = ({ text }: { text: string }) => (
-    <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start gap-3">
-      <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5" />
-      <span className="text-emerald-800 text-sm font-medium">{text}</span>
+    <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-start gap-3">
+      <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5" />
+      <span className="text-emerald-800 dark:text-emerald-200 text-sm font-medium">{text}</span>
     </div>
   );
 
   const ErrorMessage = ({ text }: { text: string }) => (
-    <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-      <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
-      <span className="text-red-800 text-sm font-medium">{text}</span>
+    <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3">
+      <AlertCircle className="w-5 h-5 text-destructive mt-0.5" />
+      <span className="text-destructive text-sm font-medium">{text}</span>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex bg-background">
       {/* ── Left Panel ── */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-[420px]">
@@ -196,15 +196,15 @@ const PasswordResetPageContent = () => {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <button
               onClick={() => router.push("/login")}
-              className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-800 mb-8 transition-colors">
+              className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground mb-8 transition-colors">
               <ArrowLeft className="w-4 h-4" /> Back to login
             </button>
 
             <div className="mb-8">
-              <h1 className="text-[1.75rem] font-bold text-gray-900 leading-tight tracking-tight">
+              <h1 className="text-[1.75rem] font-bold text-foreground leading-tight tracking-tight">
                 Create new password
               </h1>
-              <p className="text-gray-500 text-sm mt-2">
+              <p className="text-muted-foreground text-sm mt-2">
                 Enter your new password below. Make sure it&#39;s strong and
                 secure.
               </p>
@@ -223,16 +223,16 @@ const PasswordResetPageContent = () => {
                     {...register("password")}
                     placeholder="At least 8 characters"
                     className={cn(
-                      "h-10 text-sm rounded-lg border-gray-200 pr-10 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
+                      "h-10 text-sm rounded-lg border-border bg-background text-foreground pr-10 focus-visible:ring-primary/25 focus-visible:border-primary",
                       errors.password &&
-                        "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                        "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                     )}
                     disabled={isLoading || status === "success"}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     tabIndex={-1}>
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -251,9 +251,9 @@ const PasswordResetPageContent = () => {
                   {...register("confirmPassword")}
                   placeholder="Confirm your new password"
                   className={cn(
-                    "h-10 text-sm rounded-lg border-gray-200 focus-visible:ring-emerald-500/30 focus-visible:border-emerald-500",
+                    "h-10 text-sm rounded-lg border-border bg-background text-foreground focus-visible:ring-primary/25 focus-visible:border-primary",
                     errors.confirmPassword &&
-                      "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-400",
+                      "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                   )}
                   disabled={isLoading || status === "success"}
                 />
@@ -261,7 +261,7 @@ const PasswordResetPageContent = () => {
 
               <Button
                 type="submit"
-                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2"
+                className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2"
                 disabled={isLoading || status === "success"}>
                 {isLoading ? (
                   <>
@@ -279,8 +279,8 @@ const PasswordResetPageContent = () => {
           </div>
 
           {/* Trust badge */}
-          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-400">
-            <Shield className="h-3.5 w-3.5 text-gray-300" />
+          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <Shield className="h-3.5 w-3.5 text-muted-foreground" />
             <span>
               SOC 2 Type II certified · 256-bit encryption · GDPR compliant
             </span>
@@ -369,8 +369,8 @@ const PasswordResetPage = () => {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-white">
-          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       }>
       <PasswordResetPageContent />

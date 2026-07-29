@@ -78,7 +78,7 @@ type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 // ── Wordmark ──
 const ScrymeMark = () => (
   <div className="flex items-center gap-2.5">
-    <div className="w-8 h-8 rounded-md bg-[#0F1B2E] flex items-center justify-center shrink-0">
+    <div className="w-8 h-8 rounded-md bg-[#0F1B2E] dark:bg-primary flex items-center justify-center shrink-0">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="7" stroke="#A9824C" strokeWidth="1.4" />
         <circle cx="12" cy="12" r="2" fill="#A9824C" />
@@ -100,7 +100,7 @@ const ScrymeMark = () => (
     <span
       className={cn(
         display.className,
-        "text-[1.35rem] font-medium tracking-tight text-[#0F1B2E]",
+        "text-[1.35rem] font-medium tracking-tight text-foreground",
       )}>
       scryme
     </span>
@@ -236,9 +236,9 @@ const SocialButton = ({
     type="button"
     onClick={onClick}
     disabled={disabled}
-    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md border border-[#E7E2D9] bg-white hover:bg-[#FBFAF7] hover:border-[#A9824C]/40 transition-all duration-150 text-sm font-medium text-[#33404D] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm">
+    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-md border border-border bg-card hover:bg-accent hover:border-accent transition-all duration-150 text-sm font-medium text-foreground disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm">
     {disabled ? (
-      <Loader2 className="h-4 w-4 animate-spin text-[#9AA6B2]" />
+      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
     ) : (
       icon
     )}
@@ -256,10 +256,10 @@ const FieldWrapper = ({
   children: React.ReactNode;
 }) => (
   <div className="space-y-1.5">
-    <label className="block text-sm font-medium text-[#33404D]">{label}</label>
+    <label className="block text-sm font-medium text-foreground">{label}</label>
     {children}
     {error && (
-      <p className="text-xs text-[#B3352A] flex items-center gap-1">
+      <p className="text-xs text-destructive flex items-center gap-1">
         <XCircle className="h-3 w-3 shrink-0" />
         {error}
       </p>
@@ -385,9 +385,9 @@ const LoginPageContent = () => {
   };
 
   const SuccessMessage = ({ text }: { text: string }) => (
-    <div className="mb-6 p-4 bg-[#F3F6F1] border border-[#C7D9C0] rounded-md flex items-start gap-3">
-      <CheckCircle className="w-5 h-5 text-[#2F7A4F] mt-0.5 shrink-0" />
-      <span className="text-[#2F5B3F] text-sm font-medium">{text}</span>
+    <div className="mb-6 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-md flex items-start gap-3">
+      <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+      <span className="text-emerald-800 dark:text-emerald-200 text-sm font-medium">{text}</span>
     </div>
   );
 
@@ -398,7 +398,7 @@ const LoginPageContent = () => {
         display.variable,
         sans.variable,
         mono.variable,
-        "min-h-screen flex bg-[#FBFAF7]",
+        "min-h-screen flex bg-background",
       )}>
       {/* ── Left Panel ── */}
       <div className="flex-1 flex items-center justify-center p-8 lg:p-12">
@@ -407,7 +407,7 @@ const LoginPageContent = () => {
           <div className="flex items-center justify-between mb-10">
             <ScrymeMark />
             {currentView === "login" && (
-              <p className="text-sm text-[#5B6B7C]">
+              <p className="text-sm text-muted-foreground">
                 Need an account?{" "}
                 <button
                   onClick={() => {
@@ -421,7 +421,7 @@ const LoginPageContent = () => {
                       `/sign-up${queryString ? `?${queryString}` : ""}`,
                     );
                   }}
-                  className="text-[#8A6A3E] font-semibold hover:text-[#0F1B2E] transition-colors cursor-pointer">
+                  className="text-primary font-semibold hover:text-foreground transition-colors cursor-pointer">
                   Request access
                 </button>
               </p>
@@ -434,11 +434,11 @@ const LoginPageContent = () => {
                 <h1
                   className={cn(
                     display.className,
-                    "text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight",
+                    "text-[1.9rem] font-medium text-foreground leading-tight tracking-tight",
                   )}>
                   Welcome back
                 </h1>
-                <p className="text-[#5B6B7C] text-sm mt-2">
+                <p className="text-muted-foreground text-sm mt-2">
                   Sign in to your Scryme workspace.
                 </p>
               </div>
@@ -467,15 +467,15 @@ const LoginPageContent = () => {
 
               {/* Divider */}
               <div className="relative flex items-center gap-3 mb-6">
-                <div className="flex-1 h-px bg-[#E7E2D9]" />
+                <div className="flex-1 h-px bg-border" />
                 <span
                   className={cn(
                     mono.className,
-                    "text-[10px] text-[#9AA6B2] tracking-wider uppercase",
+                    "text-[10px] text-muted-foreground tracking-wider uppercase",
                   )}>
                   or continue with email
                 </span>
-                <div className="flex-1 h-px bg-[#E7E2D9]" />
+                <div className="flex-1 h-px bg-border" />
               </div>
 
               <form
@@ -489,22 +489,22 @@ const LoginPageContent = () => {
                     {...registerLogin("email")}
                     placeholder="name@company.com"
                     className={cn(
-                      "h-10 text-sm rounded-md border-[#E7E2D9] focus-visible:ring-[#A9824C]/25 focus-visible:border-[#A9824C]",
+                      "h-10 text-sm rounded-md border-border bg-background text-foreground focus-visible:ring-primary/25 focus-visible:border-primary",
                       loginErrors.email &&
-                        "border-[#B3352A] focus-visible:ring-[#B3352A]/20 focus-visible:border-[#B3352A]",
+                        "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                     )}
                   />
                 </FieldWrapper>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-[#33404D]">
+                    <label className="block text-sm font-medium text-foreground">
                       Password
                     </label>
                     <button
                       type="button"
                       onClick={() => setCurrentView("forgot-password")}
-                      className="text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors cursor-pointer">
+                      className="text-xs text-primary hover:text-foreground font-semibold transition-colors cursor-pointer">
                       Forgot password?
                     </button>
                   </div>
@@ -514,15 +514,15 @@ const LoginPageContent = () => {
                       {...registerLogin("password")}
                       placeholder="Enter your password"
                       className={cn(
-                        "h-10 text-sm rounded-md border-[#E7E2D9] pr-10 focus-visible:ring-[#A9824C]/25 focus-visible:border-[#A9824C]",
+                        "h-10 text-sm rounded-md border-border bg-background text-foreground pr-10 focus-visible:ring-primary/25 focus-visible:border-primary",
                         loginErrors.password &&
-                          "border-[#B3352A] focus-visible:ring-[#B3352A]/20 focus-visible:border-[#B3352A]",
+                          "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                       )}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9AA6B2] hover:text-[#5B6B7C] transition-colors cursor-pointer"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       tabIndex={-1}>
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
@@ -532,7 +532,7 @@ const LoginPageContent = () => {
                     </button>
                   </div>
                   {loginErrors.password && (
-                    <p className="text-xs text-[#B3352A] flex items-center gap-1">
+                    <p className="text-xs text-destructive flex items-center gap-1">
                       <XCircle className="h-3 w-3 shrink-0" />
                       {loginErrors.password.message}
                     </p>
@@ -541,7 +541,7 @@ const LoginPageContent = () => {
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 cursor-pointer"
+                  className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 cursor-pointer"
                   disabled={isLoading}>
                   {isLoading ? (
                     <>
@@ -563,7 +563,7 @@ const LoginPageContent = () => {
             <div className="animate-in fade-in slide-in-from-right-4 duration-300">
               <button
                 onClick={() => setCurrentView("login")}
-                className="flex items-center gap-2 text-sm font-medium text-[#5B6B7C] hover:text-[#0F1B2E] mb-8 transition-colors cursor-pointer">
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground mb-8 transition-colors cursor-pointer">
                 <ArrowLeft className="w-4 h-4" /> Back to login
               </button>
 
@@ -571,11 +571,11 @@ const LoginPageContent = () => {
                 <h1
                   className={cn(
                     display.className,
-                    "text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight",
+                    "text-[1.9rem] font-medium text-foreground leading-tight tracking-tight",
                   )}>
                   Reset password
                 </h1>
-                <p className="text-[#5B6B7C] text-sm mt-2">
+                <p className="text-muted-foreground text-sm mt-2">
                   Enter your email and we&apos;ll send you a link to reset your
                   password.
                 </p>
@@ -596,16 +596,16 @@ const LoginPageContent = () => {
                     {...registerForgot("email")}
                     placeholder="name@company.com"
                     className={cn(
-                      "h-10 text-sm rounded-md border-[#E7E2D9] focus-visible:ring-[#A9824C]/25 focus-visible:border-[#A9824C]",
+                      "h-10 text-sm rounded-md border-border bg-background text-foreground focus-visible:ring-primary/25 focus-visible:border-primary",
                       forgotErrors.email &&
-                        "border-[#B3352A] focus-visible:ring-[#B3352A]/20 focus-visible:border-[#B3352A]",
+                        "border-destructive focus-visible:ring-destructive/20 focus-visible:border-destructive",
                     )}
                   />
                 </FieldWrapper>
 
                 <Button
                   type="submit"
-                  className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md cursor-pointer"
+                  className="w-full h-11 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md cursor-pointer"
                   disabled={isLoading}>
                   {isLoading ? "Processing..." : "Send reset instructions"}
                 </Button>
@@ -614,8 +614,8 @@ const LoginPageContent = () => {
           )}
 
           {/* Trust badge */}
-          <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-[#9AA6B2]">
-            <Shield className="h-3.5 w-3.5 text-[#A9824C]" />
+          <div className="mt-6 flex items-center justify-center gap-2 text-[11px] text-muted-foreground">
+            <Shield className="h-3.5 w-3.5 text-primary" />
             <span className={cn(mono.className, "tracking-wide")}>
               SOC 2 TYPE II · 256-BIT ENCRYPTION · GDPR COMPLIANT
             </span>
@@ -705,8 +705,8 @@ const LoginPage = () => {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-[#FBFAF7]">
-          <Loader2 className="h-8 w-8 animate-spin text-[#0F1B2E]" />
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       }>
       <LoginPageContent />
