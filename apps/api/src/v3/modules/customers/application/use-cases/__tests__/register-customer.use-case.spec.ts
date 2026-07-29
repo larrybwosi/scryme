@@ -91,4 +91,32 @@ describe("RegisterCustomerUseCase", () => {
       expect.any(String),
     );
   });
+
+  it("should register a customer successfully without a zitadelUserId", async () => {
+    const organizationId = "org-123";
+    const dto = {
+      name: "Standard Customer",
+      email: "standard@example.com",
+    };
+
+    vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.client.customer.upsert).mockResolvedValue({
+      id: "cust-standard",
+      name: "Standard Customer",
+      email: "standard@example.com",
+      organizationId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+
+    const result = await useCase.execute(organizationId, dto);
+
+    expect(result.name).toBe("Standard Customer");
+    expect(prisma.client.customer.upsert).toHaveBeenCalled();
+    expect(crmSyncService.enqueueSyncCustomer).toHaveBeenCalled();
+    expect(loyaltyService.handleCustomerSignup).toHaveBeenCalledWith(
+      organizationId,
+      expect.any(String),
+    );
+  });
 });

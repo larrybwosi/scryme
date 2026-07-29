@@ -44,6 +44,14 @@ export async function createOrganization(data: {
       },
     });
 
+    // Pre-create default organization settings
+    await tx.organizationSettings.create({
+      data: {
+        organizationId: org.id,
+        adminsCanManageStaff: false,
+      },
+    });
+
     return tx.organization.update({
       where: { id: org.id },
       data: {

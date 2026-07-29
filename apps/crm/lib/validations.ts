@@ -13,6 +13,7 @@ export const customerSchema = z.object({
   customId: z.string().optional().or(z.literal('')),
   creationType: z.enum(['MEMBER_CREATED', 'SELF_REGISTERED', 'IMPORTED', 'API_CREATED', 'OTHER']).optional(),
   defaultLocationId: z.string().optional().nullable(),
+  tags: z.array(z.string()).optional(),
 });
 
 export type CustomerFormValues = z.infer<typeof customerSchema>;

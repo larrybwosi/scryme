@@ -16,6 +16,7 @@ import {
   Loader2,
   Settings,
   Download,
+  Tag,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 import {
@@ -23,6 +24,7 @@ import {
   deleteCustomer,
   getCustomerIdSettings,
   saveCustomerIdSettings,
+  bulkAddTagsToCustomers,
 } from "../../actions/customers";
 import {
   Dialog,
@@ -85,6 +87,11 @@ export function CustomersView() {
     sequence: 1001,
   });
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<string[]>([]);
+  const [isBulkTagOpen, setIsBulkTagOpen] = useState(false);
+  const [bulkTagsInput, setBulkTagsInput] = useState("");
+  const [isSubmittingBulkTags, setIsSubmittingBulkTags] = useState(false);
 
   const openSettings = async () => {
     setIsSettingsOpen(true);
@@ -235,12 +242,44 @@ export function CustomersView() {
   const handleCustomerSuccess = () => {
     setIsCreateOpen(false);
     setEditingCustomer(null);
+    setSelectedCustomerIds([]);
     mutate(); // Re-fetch customers data
     toast.success(
       editingCustomer
         ? "Customer updated successfully"
         : "Customer created successfully",
     );
+  };
+
+  const handleBulkAddTags = async () => {
+    if (selectedCustomerIds.length === 0) return;
+    const tagsArray = bulkTagsInput
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+
+    if (tagsArray.length === 0) {
+      toast.error("Please enter at least one tag.");
+      return;
+    }
+
+    setIsSubmittingBulkTags(true);
+    try {
+      const res = await bulkAddTagsToCustomers(selectedCustomerIds, tagsArray);
+      if (res.success) {
+        toast.success(`Successfully added tags to ${selectedCustomerIds.length} customer(s).`);
+        setSelectedCustomerIds([]);
+        setBulkTagsInput("");
+        setIsBulkTagOpen(false);
+        mutate();
+      } else {
+        toast.error(res.error || "Failed to add tags.");
+      }
+    } catch (err) {
+      toast.error("An unexpected error occurred.");
+    } finally {
+      setIsSubmittingBulkTags(false);
+    }
   };
 
   const activeCount = customers.filter((c: any) => c.isActive).length;
@@ -342,7 +381,10 @@ export function CustomersView() {
                   type="text"
                   placeholder="Search by name, email or company..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setSelectedCustomerIds([]);
+                  }}
                   className="w-full pl-9 pr-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 />
               </div>
@@ -353,6 +395,7 @@ export function CustomersView() {
                     onClick={() => {
                       setStatusFilter(s);
                       setPage(1); // Reset to first page when filter changes
+                      setSelectedCustomerIds([]);
                     }}
                     className={cn(
                       "px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors",
@@ -389,7 +432,23 @@ export function CustomersView() {
             <table className="w-full">
               <thead>
                 <tr className="bg-muted/50 border-b border-border">
-                  <th className="text-left px-5 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  <th className="px-5 py-3 text-left w-12">
+                    <input
+                      type="checkbox"
+                      checked={paged.length > 0 && paged.every((c: any) => selectedCustomerIds.includes(c.id))}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          const newSelected = Array.from(new Set([...selectedCustomerIds, ...paged.map((c: any) => c.id)]));
+                          setSelectedCustomerIds(newSelected);
+                        } else {
+                          const remaining = selectedCustomerIds.filter(id => !paged.some((c: any) => c.id === id));
+                          setSelectedCustomerIds(remaining);
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                    />
+                  </th>
+                  <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                     Customer
                   </th>
                   <th className="text-left px-4 py-3 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -410,7 +469,7 @@ export function CustomersView() {
               <tbody className="divide-y divide-border">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={6} className="text-center py-16">
+                    <td colSpan={7} className="text-center py-16">
                       <div className="flex flex-col items-center gap-2">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                         <p className="text-[13px] text-muted-foreground">
@@ -422,7 +481,7 @@ export function CustomersView() {
                 ) : paged.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="text-center py-16 text-[13px] text-muted-foreground"
                     >
                       {search || statusFilter !== "All"
@@ -436,32 +495,67 @@ export function CustomersView() {
                       key={customer.id}
                       className={cn(
                         "hover:bg-muted/30 transition-colors group",
+                        selectedCustomerIds.includes(customer.id) && "bg-primary/5",
                         deletingId === customer.id &&
                           "opacity-50 pointer-events-none",
                       )}
                     >
-                      <td className="px-5 py-3.5">
-                        <Link
-                          href={`/customers/${customer.id}`}
-                          className="flex items-center gap-3"
-                        >
-                          <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] shrink-0">
+                      <td className="px-5 py-3.5 w-12">
+                        <input
+                          type="checkbox"
+                          checked={selectedCustomerIds.includes(customer.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCustomerIds([...selectedCustomerIds, customer.id]);
+                            } else {
+                              setSelectedCustomerIds(selectedCustomerIds.filter(id => id !== customer.id));
+                            }
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                        />
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-3">
+                          <Link
+                            href={`/customers/${customer.id}`}
+                            className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold text-[13px] shrink-0"
+                          >
                             {customer.name.charAt(0).toUpperCase()}
-                          </div>
+                          </Link>
                           <div>
-                            <div className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 flex-wrap">
+                            <Link
+                              href={`/customers/${customer.id}`}
+                              className="text-[13px] font-semibold text-foreground group-hover:text-primary transition-colors flex items-center gap-1.5 flex-wrap"
+                            >
                               {customer.name}
                               {customer.customId && (
                                 <span className="text-[10px] font-mono bg-primary/10 text-primary px-1.5 py-0.5 rounded font-semibold">
                                   {customer.customId}
                                 </span>
                               )}
-                            </div>
+                            </Link>
                             <div className="text-[11.5px] text-muted-foreground">
                               {customer.email || "No email"}
                             </div>
+                            {customer.tags && customer.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {customer.tags.slice(0, 3).map((tag: string) => (
+                                  <span
+                                    key={tag}
+                                    className="text-[9.5px] bg-accent text-accent-foreground border border-border px-1.5 py-0.5 rounded-md font-semibold"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))}
+                                {customer.tags.length > 3 && (
+                                  <span className="text-[9.5px] text-muted-foreground font-semibold px-1 py-0.5">
+                                    +{customer.tags.length - 3} more
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        </Link>
+                        </div>
                       </td>
                       <td className="px-4 py-3.5 text-[13px] text-foreground font-medium">
                         {customer.company || "—"}
@@ -696,6 +790,89 @@ export function CustomersView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Bulk Add Tags Dialog */}
+      <Dialog open={isBulkTagOpen} onOpenChange={setIsBulkTagOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-1.5">
+              <Tag size={16} className="text-primary" />
+              Bulk Add Tags
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-[13.5px] text-muted-foreground">
+              Add tags to categorize the <strong>{selectedCustomerIds.length}</strong> selected customer(s). Enter multiple tags separated by commas.
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-[12px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                Tags (comma-separated)
+              </label>
+              <input
+                type="text"
+                value={bulkTagsInput}
+                onChange={(e) => setBulkTagsInput(e.target.value)}
+                className="w-full px-3 py-2 text-[13px] bg-background border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                placeholder="e.g. VIP, Q4-Lead, Loyalty"
+                disabled={isSubmittingBulkTags}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleBulkAddTags();
+                  }
+                }}
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsBulkTagOpen(false);
+                  setBulkTagsInput("");
+                }}
+                disabled={isSubmittingBulkTags}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleBulkAddTags} disabled={isSubmittingBulkTags}>
+                {isSubmittingBulkTags ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin animate-duration-1000" />
+                    Applying...
+                  </>
+                ) : (
+                  "Apply Tags"
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Floating Toolbar for Bulk Actions */}
+      {selectedCustomerIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-card border border-border shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <span className="text-[13px] font-bold text-foreground">
+            {selectedCustomerIds.length} customer{selectedCustomerIds.length !== 1 ? "s" : ""} selected
+          </span>
+          <div className="h-4 w-[1px] bg-border" />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsBulkTagOpen(true)}
+              className="flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-[12.5px] font-bold hover:bg-primary/90 transition-all cursor-pointer shadow-md shadow-primary/10 hover:shadow-lg hover:shadow-primary/20"
+            >
+              <Tag size={13} />
+              Add Tags
+            </button>
+            <button
+              onClick={() => setSelectedCustomerIds([])}
+              className="flex items-center gap-1.5 bg-background border border-border text-foreground hover:bg-accent px-4 py-2 rounded-xl text-[12.5px] font-bold transition-all cursor-pointer"
+            >
+              Clear Selection
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

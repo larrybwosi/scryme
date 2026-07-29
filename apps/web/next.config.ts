@@ -63,7 +63,10 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   compiler: {
-    removeConsole: process.env.NODE_ENV === "production" ? { exclude: ["error", "warn"] } : false,
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
   },
 };
 
@@ -82,4 +85,15 @@ export default withSentryConfig(nextConfig, {
 
   // Suppress non-CI output
   silent: !process.env.CI,
+
+  // Disable Sentry sourcemaps generation and upload during build to reduce resources
+  sourcemaps: {
+    disable: true,
+  },
+
+  // Bundle size optimizations to exclude heavy features from the build
+  bundleSizeOptimizations: {
+    excludeDebugStatements: true,
+    excludeTracing: true,
+  },
 });

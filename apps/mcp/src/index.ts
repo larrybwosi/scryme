@@ -201,6 +201,70 @@ server.registerTool(
   }
 );
 
+server.registerTool(
+  "get_customer_by_id",
+  {
+    description: "Retrieve a customer profile by their unique ID",
+    inputSchema: {
+      orgSlug: z.string().describe("The organization's unique slug"),
+      id: z.string().describe("The customer UUID"),
+    },
+  },
+  async ({ orgSlug, id }) => {
+    return callSdk(orgSlug, (config) => v3.customersGetCustomerById(orgSlug, id, config));
+  }
+);
+
+server.registerTool(
+  "delete_customer",
+  {
+    description: "Delete or deactivate a customer profile by their unique ID",
+    inputSchema: {
+      orgSlug: z.string().describe("The organization's unique slug"),
+      id: z.string().describe("The customer UUID"),
+    },
+  },
+  async ({ orgSlug, id }) => {
+    return callSdk(orgSlug, (config) => v3.customersDelete(orgSlug, id, config));
+  }
+);
+
+server.registerTool(
+  "get_customer_addresses",
+  {
+    description: "Get all registered addresses for a customer",
+    inputSchema: {
+      orgSlug: z.string().describe("The organization's unique slug"),
+      id: z.string().describe("The customer UUID"),
+    },
+  },
+  async ({ orgSlug, id }) => {
+    return callSdk(orgSlug, (config) => v3.customersGetAddresses(orgSlug, id, config));
+  }
+);
+
+server.registerTool(
+  "add_customer_address",
+  {
+    description: "Add a new address or update an existing one for a customer",
+    inputSchema: {
+      orgSlug: z.string().describe("The organization's unique slug"),
+      id: z.string().describe("The customer UUID"),
+      label: z.string().optional().describe("Label of address e.g. Home or Work"),
+      street1: z.string().describe("Main street address"),
+      street2: z.string().optional().describe("Suite/Apartment number"),
+      city: z.string().describe("City name"),
+      state: z.string().optional().describe("State/Province"),
+      postalCode: z.string().optional().describe("Postal/ZIP code"),
+      country: z.string().describe("Country name"),
+      isDefault: z.boolean().optional().describe("Whether this is the default address"),
+    },
+  },
+  async ({ orgSlug, id, ...addressDto }) => {
+    return callSdk(orgSlug, (config) => v3.customersAddAddress(orgSlug, id, addressDto as any, config));
+  }
+);
+
 // ==========================================
 // 3. INVENTORY TOOLS
 // ==========================================
@@ -556,6 +620,76 @@ server.registerTool(
   },
   async ({ orgSlug }) => {
     return callSdk(orgSlug, (config) => v3.unitsGetUnits(orgSlug, {}, config));
+  }
+);
+
+// ==========================================
+// 10. CART TOOLS
+// ==========================================
+
+server.registerTool(
+  "get_cart",
+  {
+    description: "Retrieve the active shopping cart by sessionId or customer ID",
+    inputSchema: {
+      orgSlug: z.string().describe("The organization's unique slug"),
+      sessionId: z.string().optional().describe("The guest session ID"),
+    },
+  },
+  async ({ orgSlug, sessionId }) => {
+    return callSdk(orgSlug, (config) => v3.cartControllerGetCart(orgSlug, { sessionId } as any, config));
+  }
+);
+
+server.registerTool(
+  "add_to_cart",
+  {
+    description: "Add a product variant or service to the shopping cart",
+    inputSchema: {
+      orgSlug: z.string().describe("The organization's unique slug"),
+      productId: z.string().optional().describe("UUID of product"),
+      variantId: z.string().optional().describe("UUID of variant"),
+      serviceId: z.string().optional().describe("UUID of service"),
+      bookingDetails: z.any().optional().describe("Details of booking if service"),
+      quantity: z.number().describe("Quantity of item to add"),
+      sessionId: z.string().optional().describe("The guest session ID"),
+      customerId: z.string().optional().describe("The customer ID"),
+    },
+  },
+  async ({ orgSlug, ...dto }) => {
+    return callSdk(orgSlug, (config) => v3.cartControllerAddToCart(orgSlug, dto as any, config));
+  }
+);
+
+server.registerTool(
+  "remove_from_cart",
+  {
+    description: "Remove a product variant or service from the shopping cart",
+    inputSchema: {
+      orgSlug: z.string().describe("The organization's unique slug"),
+      productId: z.string().optional().describe("UUID of product"),
+      variantId: z.string().optional().describe("UUID of variant"),
+      serviceId: z.string().optional().describe("UUID of service"),
+      sessionId: z.string().optional().describe("The guest session ID"),
+      customerId: z.string().optional().describe("The customer ID"),
+    },
+  },
+  async ({ orgSlug, ...dto }) => {
+    return callSdk(orgSlug, (config) => v3.cartControllerRemoveFromCart(orgSlug, dto as any, config));
+  }
+);
+
+server.registerTool(
+  "clear_cart",
+  {
+    description: "Remove all items from the active shopping cart",
+    inputSchema: {
+      orgSlug: z.string().describe("The organization's unique slug"),
+      sessionId: z.string().optional().describe("The guest session ID"),
+    },
+  },
+  async ({ orgSlug, sessionId }) => {
+    return callSdk(orgSlug, (config) => v3.cartControllerClearCart(orgSlug, { sessionId } as any, config));
   }
 );
 

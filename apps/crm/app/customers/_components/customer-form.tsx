@@ -41,7 +41,7 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { User, Building2, Settings2, Truck } from "lucide-react";
+import { User, Building2, Settings2, Truck, Tag as TagIcon, X } from "lucide-react";
 
 interface CustomerFormProps {
   initialData?: CustomerFormValues & { id: string };
@@ -73,10 +73,12 @@ export function CustomerForm({
       customId: initialData?.customId || "",
       creationType: initialData?.creationType || "MEMBER_CREATED",
       defaultLocationId: initialData?.defaultLocationId || "",
+      tags: initialData?.tags || [],
     },
   });
 
   const isActive = form.watch("isActive");
+  const [tagInputValue, setTagInputValue] = React.useState("");
 
   const onSubmit = async (values: CustomerFormValues) => {
     try {
@@ -185,6 +187,77 @@ export function CustomerForm({
                   <FormMessage />
                 </FormItem>
               )}
+            />
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }: { field: any }) => {
+                const tags = field.value || [];
+
+                const addTag = () => {
+                  const trimmed = tagInputValue.trim();
+                  if (trimmed && !tags.includes(trimmed)) {
+                    field.onChange([...tags, trimmed]);
+                  }
+                  setTagInputValue("");
+                };
+
+                const removeTag = (tagToRemove: string) => {
+                  field.onChange(tags.filter((t: string) => t !== tagToRemove));
+                };
+
+                return (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel className="flex items-center gap-1.5">
+                      <TagIcon size={14} className="text-muted-foreground" />
+                      Customer Tags
+                    </FormLabel>
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="e.g. VIP, Loyalty, Wholesale (Press Enter or comma)"
+                          value={tagInputValue}
+                          onChange={(e) => setTagInputValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === ",") {
+                              e.preventDefault();
+                              addTag();
+                            }
+                          }}
+                        />
+                        <Button type="button" variant="outline" onClick={addTag}>
+                          Add Tag
+                        </Button>
+                      </div>
+                      {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 p-2 bg-muted/30 rounded-lg border border-border">
+                          {tags.map((tag: string) => (
+                            <Badge
+                              key={tag}
+                              variant="secondary"
+                              className="flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold"
+                            >
+                              {tag}
+                              <button
+                                type="button"
+                                onClick={() => removeTag(tag)}
+                                className="text-muted-foreground hover:text-foreground transition-colors shrink-0 cursor-pointer"
+                                aria-label={`Remove tag ${tag}`}
+                              >
+                                <X size={12} />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <FormDescription>
+                      Categorize and group customers with reusable tags.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
           </CardContent>
         </Card>

@@ -38,6 +38,10 @@ describe("Scryme V3 MCP Server Tool Suite", () => {
       "get_customers",
       "register_customer",
       "update_customer",
+      "get_customer_by_id",
+      "delete_customer",
+      "get_customer_addresses",
+      "add_customer_address",
       "get_inventory",
       "trace_batch",
       "split_batch",
@@ -59,6 +63,10 @@ describe("Scryme V3 MCP Server Tool Suite", () => {
       "create_stock_transfer",
       "receive_stock_transfer",
       "get_measurement_units",
+      "get_cart",
+      "add_to_cart",
+      "remove_from_cart",
+      "clear_cart",
     ];
 
     for (const toolName of expectedTools) {
