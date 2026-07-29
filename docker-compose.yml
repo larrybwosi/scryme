@@ -332,7 +332,7 @@ services:
       start_period: 15s
 
   docs:
-    image: ghcr.io/larrybwosi/scryme/docs:9.33.0
+    image: ghcr.io/larrybwosi/scryme/docs:9.48.0
     restart: always
     deploy:
       resources:
