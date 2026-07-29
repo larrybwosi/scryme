@@ -9,6 +9,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
 import { VoucherStatus } from "@repo/db";
 import { InvoiceUseCase } from "../../../finance/application/use-cases/invoice.use-case";
+import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
 
 @Injectable()
 export class ProcessSaleUseCase {
@@ -17,6 +18,7 @@ export class ProcessSaleUseCase {
     private readonly loyaltyService: LoyaltyService,
     @Inject(forwardRef(() => InvoiceUseCase))
     private readonly invoiceUseCase: InvoiceUseCase,
+    private readonly inventoryMovementService: InventoryMovementService,
   ) {}
 
   async execute(ctx: any, dto: any) {
@@ -25,11 +27,67 @@ export class ProcessSaleUseCase {
       throw new UnauthorizedException("Member session required for POS sales");
     }
 
+    // Validation: At least one product item or service item must be present
+    const hasProducts = dto.items && dto.items.length > 0;
+    const hasServices = dto.serviceItems && dto.serviceItems.length > 0;
+
+    if (!hasProducts && !hasServices) {
+      throw new BadRequestException(
+        "At least one product item or service item is required to process a sale"
+      );
+    }
+
     const { transaction, total } = await this.prisma.client.$transaction(
       async (tx: any) => {
-        const variants = await this.getV(tx, dto.items);
-        const items = this.prepI(dto.items, variants, orgId);
-        const sub = items.reduce((s: number, i: any) => s + i.lineTotal, 0);
+        let sub = 0;
+        let items: any[] = [];
+        let serviceItemsToCreate: any[] = [];
+        let serviceMap = new Map<string, any>();
+
+        // 1. Process Product Items if present
+        if (hasProducts) {
+          const variants = await this.getV(tx, dto.items);
+          items = this.prepI(dto.items, variants, orgId);
+          sub += items.reduce((s: number, i: any) => s + i.lineTotal, 0);
+        }
+
+        // 2. Process Service Items if present
+        if (hasServices) {
+          const serviceIds = dto.serviceItems.map((si: any) => si.serviceId);
+          const services = await tx.service.findMany({
+            where: { id: { in: serviceIds }, organizationId: orgId },
+            include: { materials: true },
+          });
+
+          serviceMap = new Map(services.map((s: any) => [s.id, s]));
+
+          for (const si of dto.serviceItems) {
+            const service = serviceMap.get(si.serviceId);
+            if (!service) {
+              throw new BadRequestException(`Service with ID ${si.serviceId} not found`);
+            }
+
+            const unitPrice = si.unitPrice !== undefined ? Number(si.unitPrice) : Number(service.price);
+            const lineSubtotal = unitPrice * si.quantity;
+
+            serviceItemsToCreate.push({
+              serviceId: service.id,
+              bookingId: si.bookingId || undefined,
+              serviceName: service.name,
+              sku: service.sku,
+              quantity: si.quantity,
+              unitPrice: unitPrice,
+              subtotal: lineSubtotal,
+              discountAmount: 0,
+              taxAmount: 0,
+              lineTotal: lineSubtotal,
+              notes: si.notes,
+            });
+          }
+
+          sub += serviceItemsToCreate.reduce((s: number, si: any) => s + si.lineTotal, 0);
+        }
+
         const cId = await this.getC(tx, orgId, dto.customerPhone);
         const disc = await this.vDisc(tx, dto.loyaltyVoucherCode, cId, sub);
         const total = sub - (dto.discountAmount || 0) - disc;
@@ -51,7 +109,19 @@ export class ProcessSaleUseCase {
             baseCurrencyTotal: total,
             currencyCode: "KES",
             notes: dto.notes,
-            items: { create: items },
+            items: hasProducts ? { create: items } : undefined,
+            serviceItems: hasServices ? { create: serviceItemsToCreate } : undefined,
+            payments: dto.payments && dto.payments.length > 0
+              ? {
+                  create: dto.payments.map((p: any) => ({
+                    method: p.method,
+                    status: "COMPLETED",
+                    amount: p.amount,
+                    referenceNumber: p.reference,
+                    organizationId: orgId,
+                  })),
+                }
+              : undefined,
             loyaltyVouchers: dto.loyaltyVoucherCode
               ? { connect: { code: dto.loyaltyVoucherCode } }
               : undefined,
@@ -59,7 +129,24 @@ export class ProcessSaleUseCase {
           select: { id: true, number: true, customerId: true },
         });
 
-        await this.stock(tx, orgId, locId, mId, dto.items, t.id, t.number);
+        // 3. Update stock levels for physical items
+        if (hasProducts) {
+          await this.stock(tx, orgId, locId, mId, dto.items, t.id, t.number);
+        }
+
+        // 4. Update booking statuses and consume service materials
+        if (hasServices) {
+          await this.consumeServiceMaterials(
+            tx,
+            orgId,
+            locId,
+            mId,
+            dto.serviceItems,
+            serviceMap,
+            t.id,
+            t.number
+          );
+        }
 
         return { transaction: t, total, customerId: cId };
       },
@@ -207,6 +294,131 @@ export class ProcessSaleUseCase {
       ...stockUpdates,
       tx.stockMovement.createMany({ data: movements }),
     ]);
+  }
+
+  private async consumeServiceMaterials(
+    tx: any,
+    orgId: string,
+    locId: string,
+    mId: string,
+    serviceItems: any[],
+    serviceMap: Map<string, any>,
+    tId: string,
+    tNo: string,
+  ) {
+    const stockUpdates: any[] = [];
+    const movements: any[] = [];
+    const consumedMaterialsToCreate: any[] = [];
+
+    for (const si of serviceItems) {
+      const service = serviceMap.get(si.serviceId)!;
+
+      if (si.bookingId) {
+        // Option A: Complete and link existing booking
+        const booking = await tx.serviceBooking.findFirst({
+          where: { id: si.bookingId, organizationId: orgId },
+          include: { service: { include: { materials: true } } },
+        });
+
+        if (!booking) {
+          throw new BadRequestException(`Booking with ID ${si.bookingId} not found`);
+        }
+        if (booking.status === "COMPLETED") {
+          throw new BadRequestException(`Booking with ID ${si.bookingId} is already completed`);
+        }
+
+        await tx.serviceBooking.update({
+          where: { id: booking.id },
+          data: {
+            status: "COMPLETED",
+            actualStartTime: booking.actualStartTime || booking.scheduledStartTime,
+            actualEndTime: new Date(),
+            transactionId: tId,
+          },
+        });
+
+        const materials = booking.service.materials || [];
+        for (const mat of materials) {
+          const qty = Number(mat.quantity) * si.quantity;
+
+          stockUpdates.push(
+            tx.productVariantStock.update({
+              where: {
+                variantId_locationId: { variantId: mat.variantId, locationId: locId },
+              },
+              data: {
+                currentStock: { decrement: qty },
+                availableStock: { decrement: qty },
+              },
+            })
+          );
+
+          movements.push({
+            organizationId: orgId,
+            memberId: mId,
+            variantId: mat.variantId,
+            quantity: qty,
+            fromLocationId: locId,
+            movementType: "ADJUSTMENT_OUT" as const,
+            referenceId: booking.id,
+            referenceType: "ServiceBooking",
+            notes: `Consumed for booking ${booking.id} during sale ${tNo}`,
+          });
+
+          consumedMaterialsToCreate.push({
+            bookingId: booking.id,
+            variantId: mat.variantId,
+            quantity: qty,
+          });
+        }
+      } else {
+        // Option C: Consume materials directly based on service description (no booking record needed)
+        const materials = service.materials || [];
+        for (const mat of materials) {
+          const qty = Number(mat.quantity) * si.quantity;
+
+          stockUpdates.push(
+            tx.productVariantStock.update({
+              where: {
+                variantId_locationId: { variantId: mat.variantId, locationId: locId },
+              },
+              data: {
+                currentStock: { decrement: qty },
+                availableStock: { decrement: qty },
+              },
+            })
+          );
+
+          movements.push({
+            organizationId: orgId,
+            memberId: mId,
+            variantId: mat.variantId,
+            quantity: qty,
+            fromLocationId: locId,
+            movementType: "ADJUSTMENT_OUT" as const,
+            referenceId: tId,
+            referenceType: "Transaction",
+            notes: `Consumed for service ${service.name} during sale ${tNo}`,
+          });
+        }
+      }
+    }
+
+    if (stockUpdates.length > 0) {
+      await Promise.all(stockUpdates);
+    }
+
+    if (movements.length > 0) {
+      for (const movement of movements) {
+        await this.inventoryMovementService.recordMovement(tx, movement);
+      }
+    }
+
+    if (consumedMaterialsToCreate.length > 0) {
+      await tx.bookingConsumedMaterial.createMany({
+        data: consumedMaterialsToCreate,
+      });
+    }
   }
 
   private async handlePostSale(
