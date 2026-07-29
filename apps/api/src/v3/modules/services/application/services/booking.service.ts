@@ -108,12 +108,8 @@ export class BookingService {
       throw new BadRequestException("End time must be after start time");
     }
 
+    // Concurrently validate staff schedules, Cal.com availability, and booking overlaps
     if (dto.staffIds && dto.staffIds.length > 0) {
-      /**
-       * OPTIMIZATION (Bolt ⚡): Replaced sequential checks for staff schedule availability,
-       * Cal.com availability, and booking overlap with Promise.all to run all validations
-       * concurrently. This eliminates N+1 database and HTTP queries, optimizing execution latency.
-       */
       await Promise.all(
         dto.staffIds.map(async (staffId) => {
           const [isAvailable, calAvailability, overlap] = await Promise.all([
@@ -148,11 +144,8 @@ export class BookingService {
       );
     }
 
+    // Concurrently validate resource booking overlaps
     if (dto.resourceIds && dto.resourceIds.length > 0) {
-      /**
-       * OPTIMIZATION (Bolt ⚡): Replaced sequential check for resource booking overlap
-       * with Promise.all to query overlap status for all resources concurrently.
-       */
       const overlaps = await Promise.all(
         dto.resourceIds.map(async (resourceId) => {
           const overlap = await this.prisma.client.serviceBooking.findFirst({
@@ -202,103 +195,103 @@ export class BookingService {
     });
 
     if (service.requiresDeposit && service.depositAmount) {
-        let depositValue = new Prisma.Decimal(service.depositAmount);
-        if (service.depositType === DepositType.PERCENTAGE) {
-            depositValue = service.price.mul(depositValue).div(100);
-        }
+      let depositValue = new Prisma.Decimal(service.depositAmount);
+      if (service.depositType === DepositType.PERCENTAGE) {
+        depositValue = service.price.mul(depositValue).div(100);
+      }
 
-        // Create a transaction for the deposit
-        await this.prisma.client.transaction.create({
-            data: {
-                organizationId: orgId,
-                number: `DEP-${Date.now().toString().slice(-6)}`,
-                type: TransactionType.SALES_ORDER,
-                channel: TransactionChannel.ECOMMERCE_STORE,
-                status: TransactionStatus.PENDING_CONFIRMATION,
-                paymentStatus: PaymentStatus.UNPAID,
-                customerId: resolvedCustomerId,
-                locationId: dto.locationId || (await this.prisma.client.inventoryLocation.findFirst({ where: { organizationId: orgId } }))?.id || "",
-                subtotal: depositValue,
-                taxTotal: 0,
-                finalTotal: depositValue,
-                baseCurrencyTotal: depositValue,
-                currencyCode: "KES",
-                notes: `Deposit for booking ${booking.id}`,
-            }
-        });
+      // Create a transaction for the deposit
+      await this.prisma.client.transaction.create({
+        data: {
+          organizationId: orgId,
+          number: `DEP-${Date.now().toString().slice(-6)}`,
+          type: TransactionType.SALES_ORDER,
+          channel: TransactionChannel.ECOMMERCE_STORE,
+          status: TransactionStatus.PENDING_CONFIRMATION,
+          paymentStatus: PaymentStatus.UNPAID,
+          customerId: resolvedCustomerId,
+          locationId: dto.locationId || (await this.prisma.client.inventoryLocation.findFirst({ where: { organizationId: orgId } }))?.id || "",
+          subtotal: depositValue,
+          taxTotal: 0,
+          finalTotal: depositValue,
+          baseCurrencyTotal: depositValue,
+          currencyCode: "KES",
+          notes: `Deposit for booking ${booking.id}`,
+        }
+      });
     }
 
     if (dto.recurrenceRule) {
-        const rule = rrulestr(dto.recurrenceRule, { dtstart: startTime });
-        const dates = rule.all((d, i) => i < 50); // Limit to 50 occurrences for safety
+      const rule = rrulestr(dto.recurrenceRule, { dtstart: startTime });
+      const dates = rule.all((d, i) => i < 50); // Limit to 50 occurrences for safety
 
-        const recurrence = await this.prisma.client.bookingRecurrence.create({
-            data: {
-                organizationId: orgId,
-                rule: dto.recurrenceRule,
-                startDate: startTime,
-            }
-        });
-
-        for (const date of dates) {
-            if (date.getTime() === startTime.getTime()) continue;
-
-            const occStartTime = date;
-            const occEndTime = new Date(occStartTime.getTime() + (endTime.getTime() - startTime.getTime()));
-
-            await this.prisma.client.serviceBooking.create({
-                data: {
-                    organizationId: orgId,
-                    serviceId: dto.serviceId,
-                    customerId: resolvedCustomerId,
-                    locationId: dto.locationId,
-                    scheduledStartTime: occStartTime,
-                    scheduledEndTime: occEndTime,
-                    notes: dto.notes,
-                    customFields: dto.customFields as any,
-                    serviceName: service.name,
-                    price: service.price,
-                    pricingModel: service.pricingModel,
-                    status: BookingStatus.SCHEDULED,
-                    recurrenceId: recurrence.id,
-                    staff: dto.staffIds ? {
-                        create: dto.staffIds.map(id => ({ memberId: id }))
-                    } : undefined,
-                    resources: dto.resourceIds ? {
-                        create: dto.resourceIds.map(id => ({ resourceId: id }))
-                    } : undefined,
-                }
-            });
+      const recurrence = await this.prisma.client.bookingRecurrence.create({
+        data: {
+          organizationId: orgId,
+          rule: dto.recurrenceRule,
+          startDate: startTime,
         }
+      });
 
-        await this.prisma.client.serviceBooking.update({
-            where: { id: booking.id },
-            data: { recurrenceId: recurrence.id }
+      for (const date of dates) {
+        if (date.getTime() === startTime.getTime()) continue;
+
+        const occStartTime = date;
+        const occEndTime = new Date(occStartTime.getTime() + (endTime.getTime() - startTime.getTime()));
+
+        await this.prisma.client.serviceBooking.create({
+          data: {
+            organizationId: orgId,
+            serviceId: dto.serviceId,
+            customerId: resolvedCustomerId,
+            locationId: dto.locationId,
+            scheduledStartTime: occStartTime,
+            scheduledEndTime: occEndTime,
+            notes: dto.notes,
+            customFields: dto.customFields as any,
+            serviceName: service.name,
+            price: service.price,
+            pricingModel: service.pricingModel,
+            status: BookingStatus.SCHEDULED,
+            recurrenceId: recurrence.id,
+            staff: dto.staffIds ? {
+              create: dto.staffIds.map(id => ({ memberId: id }))
+            } : undefined,
+            resources: dto.resourceIds ? {
+              create: dto.resourceIds.map(id => ({ resourceId: id }))
+            } : undefined,
+          }
         });
+      }
+
+      await this.prisma.client.serviceBooking.update({
+        where: { id: booking.id },
+        data: { recurrenceId: recurrence.id }
+      });
     }
 
     if (dto.staffIds && dto.staffIds.length > 0) {
-        for (const staffId of dto.staffIds) {
-            await this.calComService.syncBookingToCal(staffId, booking);
-        }
+      for (const staffId of dto.staffIds) {
+        await this.calComService.syncBookingToCal(staffId, booking);
+      }
 
-        try {
-            await notificationEngine.notify({
-                organizationId: orgId,
-                templateName: "SERVICE_BOOKING_ASSIGNED",
-                data: {
-                    bookingId: booking.id,
-                    serviceName: service.name,
-                    startTime: booking.scheduledStartTime,
-                    customerContact: dto.customerContact
-                },
-                recipients: {
-                    memberIds: dto.staffIds
-                }
-            });
-        } catch (e) {
-            console.error("Failed to send booking notification", e);
-        }
+      try {
+        await notificationEngine.notify({
+          organizationId: orgId,
+          templateName: "SERVICE_BOOKING_ASSIGNED",
+          data: {
+            bookingId: booking.id,
+            serviceName: service.name,
+            startTime: booking.scheduledStartTime,
+            customerContact: dto.customerContact
+          },
+          recipients: {
+            memberIds: dto.staffIds
+          }
+        });
+      } catch (e) {
+        console.error("Failed to send booking notification", e);
+      }
     }
 
     return booking;
@@ -321,38 +314,38 @@ export class BookingService {
     return this.prisma.client.$transaction(async (tx) => {
       if (booking.locationId) {
         for (const material of materialsUsed) {
-            await tx.bookingConsumedMaterial.create({
-                data: {
-                    bookingId: bookingId,
-                    variantId: material.variantId,
-                    quantity: material.quantity
-                }
-            });
+          await tx.bookingConsumedMaterial.create({
+            data: {
+              bookingId: bookingId,
+              variantId: material.variantId,
+              quantity: material.quantity
+            }
+          });
 
-            await tx.productVariantStock.update({
-                where: {
-                    variantId_locationId: {
-                        variantId: material.variantId,
-                        locationId: booking.locationId!,
-                    },
-                },
-                data: {
-                    currentStock: { decrement: material.quantity },
-                    availableStock: { decrement: material.quantity },
-                },
-            });
-
-            await this.inventoryMovementService.recordMovement(tx, {
-                organizationId: orgId,
-                memberId: memberId,
+          await tx.productVariantStock.update({
+            where: {
+              variantId_locationId: {
                 variantId: material.variantId,
-                quantity: Number(material.quantity),
-                fromLocationId: booking.locationId!,
-                movementType: MovementType.ADJUSTMENT_OUT,
-                referenceId: booking.id,
-                referenceType: "ServiceBooking",
-                notes: `Consumed for service: ${booking.serviceName}`,
-            });
+                locationId: booking.locationId!,
+              },
+            },
+            data: {
+              currentStock: { decrement: material.quantity },
+              availableStock: { decrement: material.quantity },
+            },
+          });
+
+          await this.inventoryMovementService.recordMovement(tx, {
+            organizationId: orgId,
+            memberId: memberId,
+            variantId: material.variantId,
+            quantity: Number(material.quantity),
+            fromLocationId: booking.locationId!,
+            movementType: MovementType.ADJUSTMENT_OUT,
+            referenceId: booking.id,
+            referenceType: "ServiceBooking",
+            notes: `Consumed for service: ${booking.serviceName}`,
+          });
         }
       }
 
@@ -369,51 +362,51 @@ export class BookingService {
       let taxTotal = new Prisma.Decimal(0);
 
       const taxData = booking.service.taxRates.map(tr => {
-          const amount = subtotal.mul(tr.taxRate.rate);
-          taxTotal = taxTotal.add(amount);
-          return {
-              taxRateId: tr.taxRateId,
-              name: tr.taxRate.name,
-              rate: tr.taxRate.rate,
-              amount
-          };
+        const amount = subtotal.mul(tr.taxRate.rate);
+        taxTotal = taxTotal.add(amount);
+        return {
+          taxRateId: tr.taxRateId,
+          name: tr.taxRate.name,
+          rate: tr.taxRate.rate,
+          amount
+        };
       });
 
       const finalTotal = subtotal.add(taxTotal);
 
       const transaction = await tx.transaction.create({
-          data: {
-              organizationId: orgId,
-              number: `SRV-${Date.now().toString().slice(-6)}`,
-              type: TransactionType.SERVICE_BOOKING,
-              channel: TransactionChannel.MANUAL_ENTRY,
-              status: TransactionStatus.COMPLETED,
-              paymentStatus: PaymentStatus.UNPAID,
-              customerId: booking.customerId,
-              memberId: memberId,
-              locationId: booking.locationId || "placeholder",
+        data: {
+          organizationId: orgId,
+          number: `SRV-${Date.now().toString().slice(-6)}`,
+          type: TransactionType.SERVICE_BOOKING,
+          channel: TransactionChannel.MANUAL_ENTRY,
+          status: TransactionStatus.COMPLETED,
+          paymentStatus: PaymentStatus.UNPAID,
+          customerId: booking.customerId,
+          memberId: memberId,
+          locationId: booking.locationId || "placeholder",
+          subtotal,
+          taxTotal,
+          finalTotal,
+          baseCurrencyTotal: finalTotal,
+          currencyCode: "KES",
+          serviceItems: {
+            create: [{
+              serviceId: booking.serviceId,
+              bookingId: booking.id,
+              serviceName: booking.serviceName,
+              sku: booking.service.sku,
+              quantity: 1,
+              unitPrice: finalUnitPrice,
               subtotal,
-              taxTotal,
-              finalTotal,
-              baseCurrencyTotal: finalTotal,
-              currencyCode: "KES",
-              serviceItems: {
-                  create: [{
-                      serviceId: booking.serviceId,
-                      bookingId: booking.id,
-                      serviceName: booking.serviceName,
-                      sku: booking.service.sku,
-                      quantity: 1,
-                      unitPrice: finalUnitPrice,
-                      subtotal,
-                      taxAmount: taxTotal,
-                      lineTotal: finalTotal
-                  }]
-              },
-              taxes: {
-                  create: taxData
-              }
+              taxAmount: taxTotal,
+              lineTotal: finalTotal
+            }]
+          },
+          taxes: {
+            create: taxData
           }
+        }
       });
 
       const updatedBooking = await tx.serviceBooking.update({
@@ -427,22 +420,22 @@ export class BookingService {
       });
 
       if (booking.customerId) {
-          try {
-              await notificationEngine.notify({
-                  organizationId: orgId,
-                  templateName: "SERVICE_BOOKING_COMPLETED",
-                  data: {
-                      bookingId: booking.id,
-                      serviceName: booking.serviceName,
-                      totalAmount: finalTotal.toString(),
-                  },
-                  recipients: {
-                      userIds: [booking.customerId]
-                  }
-              });
-          } catch (e) {
-              console.error("Failed to send completion notification", e);
-          }
+        try {
+          await notificationEngine.notify({
+            organizationId: orgId,
+            templateName: "SERVICE_BOOKING_COMPLETED",
+            data: {
+              bookingId: booking.id,
+              serviceName: booking.serviceName,
+              totalAmount: finalTotal.toString(),
+            },
+            recipients: {
+              userIds: [booking.customerId]
+            }
+          });
+        } catch (e) {
+          console.error("Failed to send completion notification", e);
+        }
       }
 
       return updatedBooking;
@@ -450,12 +443,6 @@ export class BookingService {
   }
 
   async getBookings(orgId: string) {
-    /**
-     * OPTIMIZATION (Bolt ⚡): Replaced broad Prisma 'include' with a targeted 'select' block
-     * to avoid over-fetching heavy fields (such as service description/customFields) and unused
-     * relational columns. This reduces database I/O, network payload size, and NestJS/Prisma
-     * serialization overhead.
-     */
     return this.prisma.client.serviceBooking.findMany({
       where: { organizationId: orgId },
       select: {
@@ -563,14 +550,14 @@ export class BookingService {
 
   async getBookingById(orgId: string, id: string) {
     const booking = await this.prisma.client.serviceBooking.findFirst({
-        where: { id, organizationId: orgId },
-        include: {
-            service: true,
-            customer: true,
-            staff: { include: { member: { include: { user: true } } } },
-            resources: { include: { resource: true } },
-            materials: { include: { variant: true } }
-        }
+      where: { id, organizationId: orgId },
+      include: {
+        service: true,
+        customer: true,
+        staff: { include: { member: { include: { user: true } } } },
+        resources: { include: { resource: true } },
+        materials: { include: { variant: true } }
+      }
     });
 
     if (!booking) throw new NotFoundException("Booking not found");
@@ -579,27 +566,27 @@ export class BookingService {
 
   async updateBookingStatus(orgId: string, id: string, status: BookingStatus) {
     const booking = await this.prisma.client.serviceBooking.findFirst({
-        where: { id, organizationId: orgId }
+      where: { id, organizationId: orgId }
     });
 
     if (!booking) throw new NotFoundException("Booking not found");
 
     return this.prisma.client.serviceBooking.update({
-        where: { id },
-        data: { status }
+      where: { id },
+      data: { status }
     });
   }
 
   async cancelBookingSeries(orgId: string, recurrenceId: string) {
     return this.prisma.client.serviceBooking.updateMany({
-        where: {
-            organizationId: orgId,
-            recurrenceId,
-            status: { in: [BookingStatus.SCHEDULED, BookingStatus.REQUESTED] }
-        },
-        data: {
-            status: BookingStatus.CANCELLED
-        }
+      where: {
+        organizationId: orgId,
+        recurrenceId,
+        status: { in: [BookingStatus.SCHEDULED, BookingStatus.REQUESTED] }
+      },
+      data: {
+        status: BookingStatus.CANCELLED
+      }
     });
   }
 }
