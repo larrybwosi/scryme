@@ -193,7 +193,7 @@ export function ShiftsManager({
     setError(null);
 
     startTransition(async () => {
-      let result;
+      let result: any;
       if (editingShift) {
         result = await updateStaffShift(editingShift.id, {
           dayOfWeek: parseInt(shiftFormData.dayOfWeek),
@@ -288,7 +288,7 @@ export function ShiftsManager({
         startTime: breakFormData.startTime,
         endTime: breakFormData.endTime,
         description: breakFormData.description,
-      });
+      }) as any;
 
       if (result.success) {
         const newBreak = result.data as ShiftBreak;
