@@ -1,12 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Activity, Zap, ZapOff } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useRealtime } from "@repo/shared/realtime/client";
 import { TransactionTable } from "./transaction-table";
-import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "sonner";
-import { cn } from "@repo/ui/lib/utils";
 
 export function RealtimeTransactionWrapper({
   initialTransactions,
@@ -16,7 +14,8 @@ export function RealtimeTransactionWrapper({
   organizationId?: string;
 }) {
   const [transactions, setTransactions] = useState(initialTransactions);
-  const [isRealtime, setIsRealtime] = useState(false);
+  const searchParams = useSearchParams();
+  const isRealtime = searchParams.get("realtime") === "true";
   const { subscribe } = useRealtime();
 
   useEffect(() => {
@@ -62,31 +61,6 @@ export function RealtimeTransactionWrapper({
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsRealtime(!isRealtime)}
-          className={cn(
-            "gap-2 transition-all",
-            isRealtime
-              ? "border-emerald-500 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-700"
-              : "text-zinc-500",
-          )}>
-          {isRealtime ? (
-            <>
-              <Zap className="w-4 h-4 fill-current" />
-              Real-time Active
-            </>
-          ) : (
-            <>
-              <ZapOff className="w-4 h-4" />
-              View Real-time
-            </>
-          )}
-        </Button>
-      </div>
-
       <TransactionTable transactions={transactions} />
     </div>
   );
