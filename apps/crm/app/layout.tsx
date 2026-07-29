@@ -2,6 +2,13 @@ import { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SidebarWrapper } from "../components/sidebar-wrapper";
 import { Providers } from "@/lib/providers";
+import { Roboto } from "next/font/google";
+
+const roboto = Roboto({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "700", "900"],
+  variable: "--font-roboto",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -44,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <html lang="en">
+    <html lang="en" className={roboto.variable}>
       <head>
         <link rel="preconnect" href="https://api.scryme.tech" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.scryme.tech" />
