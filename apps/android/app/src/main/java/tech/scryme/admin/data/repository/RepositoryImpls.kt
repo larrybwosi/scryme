@@ -18,11 +18,16 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.signInWithEmail(mapOf("email" to email, "password" to password))
         }.onSuccess { response ->
-            sessionManager.saveSession(
-                token = response.session.token,
-                orgSlug = response.user.activeOrganizationId, // slug fallback
-                orgId = response.user.activeOrganizationId
-            )
+            val token = response.session?.token
+            if (!token.isNullOrBlank()) {
+                sessionManager.saveSession(
+                    token = token,
+                    orgSlug = response.user?.activeOrganizationId, // slug fallback
+                    orgId = response.user?.activeOrganizationId,
+                    userEmail = response.user?.email,
+                    userName = response.user?.name
+                )
+            }
         }
     }
 
@@ -30,9 +35,15 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.getSession()
         }.onSuccess { response ->
-            // Keep organization information up-to-date
-            response.user.activeOrganizationId?.let { orgId ->
-                sessionManager.updateActiveOrg(orgId, orgId)
+            val token = response.session?.token
+            if (!token.isNullOrBlank()) {
+                sessionManager.saveSession(
+                    token = token,
+                    orgSlug = response.user?.activeOrganizationId,
+                    orgId = response.user?.activeOrganizationId,
+                    userEmail = response.user?.email,
+                    userName = response.user?.name
+                )
             }
         }
     }
@@ -58,11 +69,16 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.signInWithGoogle(mapOf("idToken" to idToken))
         }.onSuccess { response ->
-            sessionManager.saveSession(
-                token = response.session.token,
-                orgSlug = response.user.activeOrganizationId,
-                orgId = response.user.activeOrganizationId
-            )
+            val token = response.session?.token
+            if (!token.isNullOrBlank()) {
+                sessionManager.saveSession(
+                    token = token,
+                    orgSlug = response.user?.activeOrganizationId,
+                    orgId = response.user?.activeOrganizationId,
+                    userEmail = response.user?.email,
+                    userName = response.user?.name
+                )
+            }
         }
     }
 }
@@ -118,6 +134,24 @@ class PresenceRepositoryImpl(
         val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
         return safeApiCallEnvelope {
             api.adminCheckOut(slug, memberId, CheckOutDto(locationId, notes))
+        }
+    }
+
+    override suspend fun getPettyCashTransactions(limit: Int?): Result<List<PettyCashTransactionDto>> {
+        val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getPettyCashTransactions(slug, limit)
+        }
+    }
+
+    override suspend fun getTransactions(
+        locationId: String?,
+        startDate: String?,
+        endDate: String?
+    ): Result<List<TransactionDto>> {
+        val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getTransactions(slug, locationId, startDate, endDate)
         }
     }
 
@@ -262,7 +296,9 @@ class ExpenseRepositoryImpl(
 
 // --- API Helpers ---
 
-private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): Result<T> {
+private suspend inline fun <reified T> safeApiCall(
+    crossinline call: suspend () -> Response<T>
+): Result<T> {
     return try {
         val response = call()
         if (response.isSuccessful) {
@@ -270,7 +306,12 @@ private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): Result<T> 
             if (body != null) {
                 Result.success(body)
             } else {
-                Result.failure(Exception("Response body was empty"))
+                if (Unit is T) {
+                    @Suppress("UNCHECKED_CAST")
+                    Result.success(Unit as T)
+                } else {
+                    Result.failure(Exception("Response body was empty"))
+                }
             }
         } else {
             Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
@@ -280,7 +321,9 @@ private suspend fun <T> safeApiCall(call: suspend () -> Response<T>): Result<T> 
     }
 }
 
-private suspend fun <T> safeApiCallEnvelope(call: suspend () -> Response<ApiEnvelope<T>>): Result<T> {
+private suspend inline fun <reified T> safeApiCallEnvelope(
+    crossinline call: suspend () -> Response<ApiEnvelope<T>>
+): Result<T> {
     return try {
         val response = call()
         if (response.isSuccessful) {
@@ -291,8 +334,12 @@ private suspend fun <T> safeApiCallEnvelope(call: suspend () -> Response<ApiEnve
                     if (data != null) {
                         Result.success(data)
                     } else {
-                        @Suppress("UNCHECKED_CAST")
-                        Result.success(Unit as T)
+                        if (Unit is T) {
+                            @Suppress("UNCHECKED_CAST")
+                            Result.success(Unit as T)
+                        } else {
+                            Result.failure(Exception("Expected data was null/missing in API response"))
+                        }
                     }
                 } else {
                     Result.failure(Exception(envelope.error?.message ?: "Unknown API error occurred"))

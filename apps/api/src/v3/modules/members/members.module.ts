@@ -7,6 +7,7 @@ import { InvitationController } from "./interfaces/http/invitation.controller";
 import { RoleManagementController } from "./interfaces/http/role-management.controller";
 import { DepartmentController } from "./interfaces/http/department.controller";
 import { AttendanceController } from "./interfaces/http/attendance.controller";
+import { AnnouncementController } from "./interfaces/http/announcement.controller";
 
 import { MemberUseCase } from "./application/use-cases/member.use-case";
 import { InvitationUseCase } from "./application/use-cases/invitation.use-case";
@@ -25,6 +26,7 @@ import { ScrymeModule } from "@/v2/scryme/scryme.module";
     RoleManagementController,
     DepartmentController,
     AttendanceController,
+    AnnouncementController,
   ],
   providers: [
     MemberUseCase,

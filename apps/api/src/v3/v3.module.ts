@@ -22,6 +22,7 @@ import { CrmIntegrationsModule } from "./modules/crm-integrations/crm-integratio
 import { UnitsModule } from "./modules/units/units.module";
 import { StrapiModule } from "./modules/strapi/strapi.module";
 import { ServicesModule } from "./modules/services/services.module";
+import { AnalyticsModule } from "./modules/analytics/analytics.module";
 
 export const V3_SUB_MODULES = [
   V3CommonModule,
@@ -47,6 +48,7 @@ export const V3_SUB_MODULES = [
   UnitsModule,
   StrapiModule,
   ServicesModule,
+  AnalyticsModule,
 ];
 
 @Module({

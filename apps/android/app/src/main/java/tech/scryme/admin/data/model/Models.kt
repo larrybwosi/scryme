@@ -7,7 +7,7 @@ import com.google.gson.annotations.SerializedName
 data class UserSummaryDto(
     @SerializedName("id") val id: String,
     @SerializedName("email") val email: String,
-    @SerializedName("name") val name: String,
+    @SerializedName("name") val name: String? = null,
     @SerializedName("image") val image: String? = null
 )
 
@@ -50,7 +50,7 @@ data class TerminalLoginResponseDto(
 data class SessionUser(
     @SerializedName("id") val id: String,
     @SerializedName("email") val email: String,
-    @SerializedName("name") val name: String,
+    @SerializedName("name") val name: String? = null,
     @SerializedName("role") val role: String? = null,
     @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null
 )
@@ -64,8 +64,8 @@ data class SessionDto(
 )
 
 data class BetterAuthSessionResponse(
-    @SerializedName("user") val user: SessionUser,
-    @SerializedName("session") val session: SessionDto
+    @SerializedName("user") val user: SessionUser? = null,
+    @SerializedName("session") val session: SessionDto? = null
 )
 
 // --- Presence & Attendance Models ---
@@ -230,6 +230,44 @@ data class StockAdjustmentProductDto(
 data class StockAdjustmentLocationDto(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String
+)
+
+// --- Petty Cash & Transactions ---
+
+data class PettyCashTransactionDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("fundId") val fundId: String,
+    @SerializedName("type") val type: String, // TOP_UP, EXPENSE, ADJUSTMENT
+    @SerializedName("amount") val amount: Double,
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("memberId") val memberId: String,
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("member") val member: MemberResponseSummary? = null
+)
+
+data class TransactionDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("amount") val amount: Double? = null,
+    @SerializedName("locationId") val locationId: String? = null,
+    @SerializedName("memberId") val memberId: String? = null,
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("items") val items: List<TransactionItemDto>? = null
+)
+
+data class TransactionItemDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("productName") val productName: String,
+    @SerializedName("unitPrice") val unitPrice: Double,
+    @SerializedName("quantity") val quantity: Double,
+    @SerializedName("lineTotal") val lineTotal: Double
+)
+
+data class MemberSalesDto(
+    val memberId: String,
+    val memberName: String,
+    val salesCount: Int,
+    val totalAmount: Double
 )
 
 data class StockAdjustmentMemberDto(

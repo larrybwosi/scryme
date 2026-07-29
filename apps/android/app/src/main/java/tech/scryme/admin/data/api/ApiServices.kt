@@ -64,6 +64,20 @@ interface PresenceApiService {
         @Path("memberId") memberId: String,
         @Body dto: CheckOutDto
     ): Response<ApiEnvelope<AttendanceLogDto>>
+
+    @GET("/v3/{orgSlug}/pos/petty-cash/transactions")
+    suspend fun getPettyCashTransactions(
+        @Path("orgSlug") orgSlug: String,
+        @Query("limit") limit: Int? = null
+    ): Response<ApiEnvelope<List<PettyCashTransactionDto>>>
+
+    @GET("/v3/{orgSlug}/pos/transactions")
+    suspend fun getTransactions(
+        @Path("orgSlug") orgSlug: String,
+        @Query("locationId") locationId: String? = null,
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): Response<ApiEnvelope<List<TransactionDto>>>
 }
 
 interface ApprovalsApiService {
