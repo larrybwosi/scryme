@@ -24,6 +24,23 @@ export class PrismaProductRepository implements IProductRepository {
         categoryId: true,
         createdAt: true,
         updatedAt: true,
+        sku: true,
+        slug: true,
+        imageUrls: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        variants: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            retailPrice: true,
+          },
+        },
       },
     });
     return products.map(
@@ -36,6 +53,16 @@ export class PrismaProductRepository implements IProductRepository {
           p.categoryId,
           p.createdAt,
           p.updatedAt,
+          p.sku,
+          p.slug,
+          p.imageUrls,
+          p.category,
+          p.variants.map((v) => ({
+            id: v.id,
+            name: v.name,
+            sku: v.sku,
+            retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
+          })),
         ),
     );
   }
@@ -51,6 +78,23 @@ export class PrismaProductRepository implements IProductRepository {
         categoryId: true,
         createdAt: true,
         updatedAt: true,
+        sku: true,
+        slug: true,
+        imageUrls: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        variants: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            retailPrice: true,
+          },
+        },
       },
     });
     if (!p) return null;
@@ -62,6 +106,16 @@ export class PrismaProductRepository implements IProductRepository {
       p.categoryId,
       p.createdAt,
       p.updatedAt,
+      p.sku,
+      p.slug,
+      p.imageUrls,
+      p.category,
+      p.variants.map((v) => ({
+        id: v.id,
+        name: v.name,
+        sku: v.sku,
+        retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
+      })),
     );
   }
 
@@ -80,6 +134,32 @@ export class PrismaProductRepository implements IProductRepository {
         sku: product.sku || `PROD-${Date.now()}`,
         category: { connect: { id: product.categoryId } },
       },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        organizationId: true,
+        categoryId: true,
+        createdAt: true,
+        updatedAt: true,
+        sku: true,
+        slug: true,
+        imageUrls: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        variants: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            retailPrice: true,
+          },
+        },
+      },
     });
     return new Product(
       p.id,
@@ -89,6 +169,16 @@ export class PrismaProductRepository implements IProductRepository {
       p.categoryId,
       p.createdAt,
       p.updatedAt,
+      p.sku,
+      p.slug,
+      p.imageUrls,
+      p.category,
+      p.variants.map((v) => ({
+        id: v.id,
+        name: v.name,
+        sku: v.sku,
+        retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
+      })),
     );
   }
 }
