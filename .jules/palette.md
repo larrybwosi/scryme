@@ -17,3 +17,7 @@
 ## 2026-07-28 - [Accessible Canvas and Palette Controls in Workflow Editors]
 **Learning:** Visual node-based workflow/campaign editors frequently contain complex toolbars, sidebar palettes, and properties panels loaded with compact, icon-only toggle and navigation controls. Sighted desktop users and screen reader users alike can easily get lost or confused without consistent accessibility features and tooltips on these controls.
 **Action:** Always equip icon-only control buttons within editor canvases and inspectors with matching, explicit `aria-label` and visual `title` attributes, and ensure collapsible group headers in the side palettes clearly announce their interactive state using `aria-expanded`.
+
+## 2026-07-28 - [Keyboard Visibility of Hover-Only Action Buttons]
+**Learning:** Interactive action buttons that are hidden by default via hover-only classes (e.g., `opacity-0 group-hover:opacity-100`) become invisible focus traps for keyboard-only users who tab through the interface. Adding focus-within and focus-visible classes ensures they are rendered fully visible when they or their parents receive keyboard focus.
+**Action:** Always complement hover-only visibility toggles (`group-hover:opacity-100`) with `group-focus-within:opacity-100` and `focus-visible:opacity-100` (or `focus-within:opacity-100`) to ensure full interactive visibility for keyboard-only or non-visual navigation.
