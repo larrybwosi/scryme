@@ -38,6 +38,7 @@ describe("BakeryService Security", () => {
       productVariant: {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
+        findMany: vi.fn(),
       },
       batch: {
         findUnique: vi.fn(),
@@ -213,26 +214,24 @@ describe("BakeryService Security", () => {
   describe("receiveIngredients", () => {
     it("should prevent receiving stock for a variant from another organization (IDOR)", async () => {
       mockPrisma.client.stockReceipt.create.mockResolvedValue({ id: "receipt-1" });
-      // In a vulnerable state, findUnique only checks ID, so it might return a variant
-      // even if it belongs to another org.
-      mockPrisma.client.productVariant.findUnique.mockResolvedValue({ productId: "p-1" });
-      mockPrisma.client.productVariant.findFirst.mockResolvedValue(null);
+      // In an optimized state, we pre-fetch using findMany.
+      // We simulate that findMany returns an empty array because the variant belongs to another org.
+      mockPrisma.client.productVariant.findMany.mockResolvedValue([]);
 
       const data = {
         receiptReference: "REF-1",
         lines: [{ ingredientId: "other-org-variant", quantity: 10, unitCost: 5 }],
       };
 
-      // If we use findFirst (the fix), it should throw NotFoundException because it won't find it in the current org
       await expect(service.receiveIngredients(ctx, data)).rejects.toThrow(NotFoundException);
 
-      // We check that findFirst was called with organizationId scoping
-      expect(mockPrisma.client.productVariant.findFirst).toHaveBeenCalledWith({
+      // We check that findMany was called with organizationId scoping
+      expect(mockPrisma.client.productVariant.findMany).toHaveBeenCalledWith({
         where: {
-          id: "other-org-variant",
+          id: { in: ["other-org-variant"] },
           product: { organizationId: "org-1" }
         },
-        select: { productId: true },
+        select: { id: true, productId: true },
       });
     });
   });
