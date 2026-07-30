@@ -357,6 +357,69 @@
         ]
       }
     },
+    "/v3/{orgSlug}/inventory/adjustments": {
+      "get": {
+        "operationId": "Inventory_GetAdjustments",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get stock adjustments with pagination and status filters",
+        "tags": [
+          "V3 Inventory"
+        ]
+      }
+    },
     "/v3/{orgSlug}/inventory/adjustments/{id}/approve": {
       "patch": {
         "operationId": "Inventory_ApproveAdjustment",
@@ -389,6 +452,43 @@
           }
         ],
         "summary": "Approve a pending stock adjustment",
+        "tags": [
+          "V3 Inventory"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/inventory/adjustments/{id}/reject": {
+      "patch": {
+        "operationId": "Inventory_RejectAdjustment",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Reject a pending stock adjustment",
         "tags": [
           "V3 Inventory"
         ]
@@ -679,6 +779,26 @@
           }
         ],
         "summary": "List all expenses",
+        "tags": [
+          "V3 Finance"
+        ]
+      }
+    },
+    "/v3/finance/expenses/categories": {
+      "get": {
+        "operationId": "ExpenseController_getExpenseCategories",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List all expense categories",
         "tags": [
           "V3 Finance"
         ]
@@ -2553,6 +2673,81 @@
         ]
       }
     },
+    "/v3/{orgSlug}/catalog/services": {
+      "get": {
+        "operationId": "Catalog_GetServices",
+        "parameters": [
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "cursor",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of services",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ServiceCatalogResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all services for an organization",
+        "tags": [
+          "V3 Catalog"
+        ]
+      }
+    },
     "/v3/{orgSlug}/catalog/suppliers/{supplierId}/variants/{variantId}": {
       "patch": {
         "operationId": "Catalog_UpdateSupplierVariant",
@@ -2707,6 +2902,951 @@
         "summary": "Approve or reject a price change request",
         "tags": [
           "V3 Catalog"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/categories": {
+      "post": {
+        "operationId": "ServicesController_createCategory",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a service category",
+        "tags": [
+          "V3 Services"
+        ]
+      },
+      "get": {
+        "operationId": "ServicesController_getCategories",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List service categories",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/categories/{id}": {
+      "patch": {
+        "operationId": "ServicesController_updateCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceCategoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a service category",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/categories/{id}/delete": {
+      "post": {
+        "operationId": "ServicesController_deleteCategory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a service category",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services": {
+      "post": {
+        "operationId": "ServicesController_createService",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new service",
+        "tags": [
+          "V3 Services"
+        ]
+      },
+      "get": {
+        "operationId": "ServicesController_getServices",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List services",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/{id}": {
+      "get": {
+        "operationId": "ServicesController_getService",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get service details",
+        "tags": [
+          "V3 Services"
+        ]
+      },
+      "patch": {
+        "operationId": "ServicesController_updateService",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a service",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/{id}/delete": {
+      "post": {
+        "operationId": "ServicesController_deleteService",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a service",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/resources": {
+      "post": {
+        "operationId": "ServicesController_createResource",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceResourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a service resource",
+        "tags": [
+          "V3 Services"
+        ]
+      },
+      "get": {
+        "operationId": "ServicesController_getResources",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List service resources",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/resources/{id}": {
+      "patch": {
+        "operationId": "ServicesController_updateResource",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateServiceResourceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update a service resource",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/resources/{id}/delete": {
+      "post": {
+        "operationId": "ServicesController_deleteResource",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a service resource",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/bookings": {
+      "post": {
+        "operationId": "ServicesController_createBooking",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a service booking",
+        "tags": [
+          "V3 Services"
+        ]
+      },
+      "get": {
+        "operationId": "ServicesController_getBookings",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List bookings",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/bookings/{id}": {
+      "get": {
+        "operationId": "ServicesController_getBooking",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get booking details",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/bookings/{id}/status": {
+      "patch": {
+        "operationId": "ServicesController_updateBookingStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update booking status",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/bookings/{id}/complete": {
+      "patch": {
+        "operationId": "ServicesController_completeBooking",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteBookingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Complete a booking and consume materials",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/staff/{memberId}/shifts": {
+      "post": {
+        "operationId": "ServicesController_createShift",
+        "parameters": [
+          {
+            "name": "memberId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a staff shift",
+        "tags": [
+          "V3 Services"
+        ]
+      },
+      "get": {
+        "operationId": "ServicesController_getStaffShifts",
+        "parameters": [
+          {
+            "name": "memberId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get staff shifts",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/shifts/{shiftId}/breaks": {
+      "post": {
+        "operationId": "ServicesController_addBreak",
+        "parameters": [
+          {
+            "name": "shiftId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a break to a shift",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/register-customer-app": {
+      "post": {
+        "operationId": "ServicesController_registerCustomerApp",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a customer-facing application",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/analytics/utilization": {
+      "get": {
+        "operationId": "ServicesController_getUtilization",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get resource utilization analytics",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/analytics/performance": {
+      "get": {
+        "operationId": "ServicesController_getPerformance",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get staff performance analytics",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/analytics/funnel": {
+      "get": {
+        "operationId": "ServicesController_getFunnel",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get booking conversion funnel analytics",
+        "tags": [
+          "V3 Services"
         ]
       }
     },
@@ -2930,6 +4070,255 @@
           }
         ],
         "summary": "Update a customer profile",
+        "tags": [
+          "V3 Customers"
+        ]
+      },
+      "get": {
+        "operationId": "Customers_GetCustomerById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a customer profile by ID",
+        "tags": [
+          "V3 Customers"
+        ]
+      },
+      "delete": {
+        "operationId": "Customers_Delete",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer deleted/deactivated successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete/Deactivate a customer",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/{id}/addresses": {
+      "get": {
+        "operationId": "Customers_GetAddresses",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Addresses retrieved successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get customer addresses",
+        "tags": [
+          "V3 Customers"
+        ]
+      },
+      "post": {
+        "operationId": "Customers_AddAddress",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Address added/updated successfully"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Customer not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add or update customer address",
         "tags": [
           "V3 Customers"
         ]
@@ -4053,1202 +5442,6 @@
         ]
       }
     },
-    "/v3/{orgSlug}/services/categories": {
-      "post": {
-        "operationId": "ServicesController_createCategory",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateServiceCategoryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a service category",
-        "tags": [
-          "V3 Services"
-        ]
-      },
-      "get": {
-        "operationId": "ServicesController_getCategories",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List service categories",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/categories/{id}": {
-      "patch": {
-        "operationId": "ServicesController_updateCategory",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateServiceCategoryDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a service category",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/categories/{id}/delete": {
-      "post": {
-        "operationId": "ServicesController_deleteCategory",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Delete a service category",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services": {
-      "post": {
-        "operationId": "ServicesController_createService",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateServiceDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a new service",
-        "tags": [
-          "V3 Services"
-        ]
-      },
-      "get": {
-        "operationId": "ServicesController_getServices",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List services",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/{id}": {
-      "get": {
-        "operationId": "ServicesController_getService",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get service details",
-        "tags": [
-          "V3 Services"
-        ]
-      },
-      "patch": {
-        "operationId": "ServicesController_updateService",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateServiceDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a service",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/{id}/delete": {
-      "post": {
-        "operationId": "ServicesController_deleteService",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Delete a service",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/resources": {
-      "post": {
-        "operationId": "ServicesController_createResource",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateServiceResourceDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a service resource",
-        "tags": [
-          "V3 Services"
-        ]
-      },
-      "get": {
-        "operationId": "ServicesController_getResources",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List service resources",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/resources/{id}": {
-      "patch": {
-        "operationId": "ServicesController_updateResource",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateServiceResourceDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update a service resource",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/resources/{id}/delete": {
-      "post": {
-        "operationId": "ServicesController_deleteResource",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Delete a service resource",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/bookings": {
-      "post": {
-        "operationId": "ServicesController_createBooking",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateBookingDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a service booking",
-        "tags": [
-          "V3 Services"
-        ]
-      },
-      "get": {
-        "operationId": "ServicesController_getBookings",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "List bookings",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/bookings/{id}": {
-      "get": {
-        "operationId": "ServicesController_getBooking",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get booking details",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/bookings/{id}/status": {
-      "patch": {
-        "operationId": "ServicesController_updateBookingStatus",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update booking status",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/bookings/{id}/complete": {
-      "patch": {
-        "operationId": "ServicesController_completeBooking",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CompleteBookingDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Complete a booking and consume materials",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/staff/{memberId}/shifts": {
-      "post": {
-        "operationId": "ServicesController_createShift",
-        "parameters": [
-          {
-            "name": "memberId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Create a staff shift",
-        "tags": [
-          "V3 Services"
-        ]
-      },
-      "get": {
-        "operationId": "ServicesController_getStaffShifts",
-        "parameters": [
-          {
-            "name": "memberId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get staff shifts",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/shifts/{shiftId}/breaks": {
-      "post": {
-        "operationId": "ServicesController_addBreak",
-        "parameters": [
-          {
-            "name": "shiftId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Add a break to a shift",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/register-customer-app": {
-      "post": {
-        "operationId": "ServicesController_registerCustomerApp",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Register a customer-facing application",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/analytics/utilization": {
-      "get": {
-        "operationId": "ServicesController_getUtilization",
-        "parameters": [
-          {
-            "name": "startDate",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "endDate",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get resource utilization analytics",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/analytics/performance": {
-      "get": {
-        "operationId": "ServicesController_getPerformance",
-        "parameters": [
-          {
-            "name": "startDate",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "endDate",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get staff performance analytics",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/{orgSlug}/services/analytics/funnel": {
-      "get": {
-        "operationId": "ServicesController_getFunnel",
-        "parameters": [
-          {
-            "name": "startDate",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "endDate",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get booking conversion funnel analytics",
-        "tags": [
-          "V3 Services"
-        ]
-      }
-    },
-    "/v3/public/{orgSlug}/services": {
-      "get": {
-        "operationId": "PublicServicesController_getServices",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "List available services for public booking",
-        "tags": [
-          "Public Services"
-        ]
-      }
-    },
-    "/v3/public/{orgSlug}/services/categories": {
-      "get": {
-        "operationId": "PublicServicesController_getCategories",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "List service categories publicly",
-        "tags": [
-          "Public Services"
-        ]
-      }
-    },
-    "/v3/public/{orgSlug}/services/{id}": {
-      "get": {
-        "operationId": "PublicServicesController_getService",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Get service details publicly",
-        "tags": [
-          "Public Services"
-        ]
-      }
-    },
-    "/v3/public/{orgSlug}/services/{id}/availability": {
-      "get": {
-        "operationId": "PublicServicesController_getServiceAvailability",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "date",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "summary": "Get available time slots for a service",
-        "tags": [
-          "Public Services"
-        ]
-      }
-    },
-    "/v3/public/{orgSlug}/services/otp/request": {
-      "post": {
-        "operationId": "PublicServicesController_requestOtp",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RequestOtpDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "summary": "Request an OTP for booking",
-        "tags": [
-          "Public Services"
-        ]
-      }
-    },
-    "/v3/public/{orgSlug}/services/otp/verify": {
-      "post": {
-        "operationId": "PublicServicesController_verifyOtp",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyOtpDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "summary": "Verify the OTP",
-        "tags": [
-          "Public Services"
-        ]
-      }
-    },
-    "/v3/public/{orgSlug}/services/bookings": {
-      "post": {
-        "operationId": "PublicServicesController_createBooking",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PublicBookingDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "summary": "Create a booking as a guest/customer",
-        "tags": [
-          "Public Services"
-        ]
-      }
-    },
-    "/v3/public/{orgSlug}/services/me/bookings": {
-      "get": {
-        "operationId": "PublicServicesController_getMyBookings",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Get my bookings (authenticated customer)",
-        "tags": [
-          "Public Services"
-        ]
-      }
-    },
     "/v3/{orgSlug}/payments/webhooks/mpesa/stkpush/{paymentId}": {
       "post": {
         "operationId": "PaymentsController_handleStkCallback",
@@ -6001,6 +6194,53 @@
           }
         ],
         "summary": "Update member real-time status",
+        "tags": [
+          "V3 Members"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/members/{memberId}/attendance/check-out": {
+      "post": {
+        "operationId": "MembersController_adminCheckOut",
+        "parameters": [
+          {
+            "name": "memberId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckOutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Admin check-out a member",
         "tags": [
           "V3 Members"
         ]
@@ -7284,6 +7524,45 @@
         ]
       }
     },
+    "/v3/{orgSlug}/announcements": {
+      "post": {
+        "operationId": "AnnouncementController_broadcastAnnouncement",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnouncementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Broadcast an announcement",
+        "tags": [
+          "V3 Announcements"
+        ]
+      }
+    },
     "/v3/{orgSlug}/cart": {
       "get": {
         "operationId": "CartController_getCart",
@@ -7323,6 +7602,41 @@
           }
         ],
         "summary": "Get current cart",
+        "tags": [
+          "V3 Cart"
+        ]
+      },
+      "delete": {
+        "operationId": "CartController_clearCart",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear entire cart",
         "tags": [
           "V3 Cart"
         ]
@@ -9444,6 +9758,80 @@
           "V3 Strapi Webhooks"
         ]
       }
+    },
+    "/v3/{orgSlug}/analytics/dashboard": {
+      "get": {
+        "operationId": "AnalyticsController_getDashboardAnalytics",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get dashboard analytics",
+        "tags": [
+          "V3 Analytics"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/analytics/utilization": {
+      "get": {
+        "operationId": "AnalyticsController_getResourceUtilization",
+        "parameters": [
+          {
+            "name": "startDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "endDate",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get resource utilization",
+        "tags": [
+          "V3 Analytics"
+        ]
+      }
     }
   },
   "info": {
@@ -9608,6 +9996,9 @@
             "type": "boolean"
           },
           "isBillable": {
+            "type": "boolean"
+          },
+          "autoApprove": {
             "type": "boolean"
           }
         },
@@ -10082,6 +10473,51 @@
           "secret"
         ]
       },
+      "ProductCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cat_123"
+          },
+          "name": {
+            "type": "string",
+            "example": "Beverages"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ProductVariantResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "var_123"
+          },
+          "name": {
+            "type": "string",
+            "example": "Espresso Beans - 1kg"
+          },
+          "sku": {
+            "type": "string",
+            "example": "SKU-123-1"
+          },
+          "retailPrice": {
+            "type": "object",
+            "example": 15.99,
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sku",
+          "retailPrice"
+        ]
+      },
       "ProductResponseDto": {
         "type": "object",
         "properties": {
@@ -10093,20 +10529,137 @@
             "type": "string",
             "example": "Espresso Beans"
           },
-          "price": {
-            "type": "number",
-            "example": 15.99
+          "description": {
+            "type": "object",
+            "example": "High-quality arabica beans",
+            "nullable": true
           },
           "sku": {
             "type": "string",
             "example": "SKU-123"
+          },
+          "retailPrice": {
+            "type": "object",
+            "example": 15.99,
+            "nullable": true
+          },
+          "images": {
+            "example": [
+              "https://example.com/image.jpg"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "category": {
+            "$ref": "#/components/schemas/ProductCategoryResponseDto"
+          },
+          "slug": {
+            "type": "object",
+            "example": "espresso-beans",
+            "nullable": true
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductVariantResponseDto"
+            }
           }
         },
         "required": [
           "id",
           "name",
-          "price",
-          "sku"
+          "description",
+          "sku",
+          "retailPrice",
+          "images",
+          "category",
+          "slug"
+        ]
+      },
+      "ServiceCategoryResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cat_456"
+          },
+          "name": {
+            "type": "string",
+            "example": "Consultation"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ServiceCatalogResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "srv_123"
+          },
+          "name": {
+            "type": "string",
+            "example": "Plumbing Service"
+          },
+          "description": {
+            "type": "object",
+            "example": "Professional plumbing repair",
+            "nullable": true
+          },
+          "sku": {
+            "type": "string",
+            "example": "SRV-PLUMB"
+          },
+          "retailPrice": {
+            "type": "number",
+            "example": 85
+          },
+          "images": {
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "category": {
+            "$ref": "#/components/schemas/ServiceCategoryResponseDto"
+          },
+          "slug": {
+            "type": "object",
+            "example": "plumbing-service",
+            "nullable": true
+          },
+          "pricingModel": {
+            "type": "string",
+            "example": "FIXED"
+          },
+          "estimatedDuration": {
+            "type": "object",
+            "example": 60,
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "sku",
+          "retailPrice",
+          "images",
+          "category",
+          "slug",
+          "pricingModel",
+          "estimatedDuration",
+          "isActive"
         ]
       },
       "CreateProductDto": {
@@ -10179,6 +10732,354 @@
         "required": [
           "status"
         ]
+      },
+      "CreateServiceCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Category name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Category description"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Parent category ID"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateServiceCategoryDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Category name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Category description"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "Parent category ID"
+          }
+        }
+      },
+      "ServiceMaterialDto": {
+        "type": "object",
+        "properties": {
+          "variantId": {
+            "type": "string",
+            "description": "Product variant ID"
+          },
+          "quantity": {
+            "type": "number",
+            "description": "Quantity required"
+          }
+        },
+        "required": [
+          "variantId",
+          "quantity"
+        ]
+      },
+      "CreateServiceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Service name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Service description"
+          },
+          "sku": {
+            "type": "string",
+            "description": "Service SKU"
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "Category ID"
+          },
+          "pricingModel": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "HOURLY",
+              "VARIABLE"
+            ],
+            "description": "Pricing model"
+          },
+          "price": {
+            "type": "number",
+            "description": "Base price"
+          },
+          "minPrice": {
+            "type": "number",
+            "description": "Minimum price for VARIABLE model"
+          },
+          "estimatedDuration": {
+            "type": "number",
+            "description": "Estimated duration in minutes"
+          },
+          "bufferTimeBefore": {
+            "type": "number",
+            "description": "Buffer time before in minutes"
+          },
+          "bufferTimeAfter": {
+            "type": "number",
+            "description": "Buffer time after in minutes"
+          },
+          "customFields": {
+            "type": "object",
+            "description": "Custom fields (JSON)",
+            "additionalProperties": true
+          },
+          "staffIds": {
+            "description": "Assigned staff member IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resourceIds": {
+            "description": "Assigned resource IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "materials": {
+            "description": "Bill of materials",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceMaterialDto"
+            }
+          },
+          "taxRateIds": {
+            "description": "Tax rate IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Is service active"
+          }
+        },
+        "required": [
+          "name",
+          "sku",
+          "categoryId",
+          "pricingModel",
+          "price"
+        ]
+      },
+      "UpdateServiceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Service name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Service description"
+          },
+          "sku": {
+            "type": "string",
+            "description": "Service SKU"
+          },
+          "categoryId": {
+            "type": "string",
+            "description": "Category ID"
+          },
+          "pricingModel": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "HOURLY",
+              "VARIABLE"
+            ],
+            "description": "Pricing model"
+          },
+          "price": {
+            "type": "number",
+            "description": "Base price"
+          },
+          "minPrice": {
+            "type": "number",
+            "description": "Minimum price for VARIABLE model"
+          },
+          "estimatedDuration": {
+            "type": "number",
+            "description": "Estimated duration in minutes"
+          },
+          "bufferTimeBefore": {
+            "type": "number",
+            "description": "Buffer time before in minutes"
+          },
+          "bufferTimeAfter": {
+            "type": "number",
+            "description": "Buffer time after in minutes"
+          },
+          "customFields": {
+            "type": "object",
+            "description": "Custom fields (JSON)",
+            "additionalProperties": true
+          },
+          "staffIds": {
+            "description": "Assigned staff member IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resourceIds": {
+            "description": "Assigned resource IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "materials": {
+            "description": "Bill of materials",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceMaterialDto"
+            }
+          },
+          "taxRateIds": {
+            "description": "Tax rate IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Is service active"
+          }
+        }
+      },
+      "CreateServiceResourceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Resource name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Resource type"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Is resource active"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "UpdateServiceResourceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Resource name"
+          },
+          "type": {
+            "type": "string",
+            "description": "Resource type"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Is resource active"
+          }
+        }
+      },
+      "CreateBookingDto": {
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "description": "Service ID"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "Customer ID"
+          },
+          "locationId": {
+            "type": "string",
+            "description": "Location ID for stock deduction"
+          },
+          "scheduledStartTime": {
+            "type": "string",
+            "description": "Scheduled start time"
+          },
+          "scheduledEndTime": {
+            "type": "string",
+            "description": "Scheduled end time (calculated if omitted)"
+          },
+          "staffIds": {
+            "description": "Assigned staff IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resourceIds": {
+            "description": "Assigned resource IDs",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "notes": {
+            "type": "string",
+            "description": "Booking notes"
+          },
+          "customFields": {
+            "type": "object",
+            "description": "Custom fields",
+            "additionalProperties": true
+          },
+          "recurrenceRule": {
+            "type": "string",
+            "description": "Recurrence rule (RRULE string)"
+          }
+        },
+        "required": [
+          "serviceId",
+          "scheduledStartTime"
+        ]
+      },
+      "CompleteBookingDto": {
+        "type": "object",
+        "properties": {
+          "materials": {
+            "description": "Actual materials consumed",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceMaterialDto"
+            }
+          },
+          "actualStartTime": {
+            "type": "string",
+            "description": "Actual start time"
+          },
+          "actualEndTime": {
+            "type": "string",
+            "description": "Actual end time"
+          }
+        }
       },
       "CustomerResponseDto": {
         "type": "object",
@@ -10284,7 +11185,6 @@
           }
         },
         "required": [
-          "zitadelUserId",
           "name",
           "email"
         ]
@@ -10883,413 +11783,6 @@
           "items"
         ]
       },
-      "CreateServiceCategoryDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Category name"
-          },
-          "description": {
-            "type": "string",
-            "description": "Category description"
-          },
-          "parentId": {
-            "type": "string",
-            "description": "Parent category ID"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "UpdateServiceCategoryDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Category name"
-          },
-          "description": {
-            "type": "string",
-            "description": "Category description"
-          },
-          "parentId": {
-            "type": "string",
-            "description": "Parent category ID"
-          }
-        }
-      },
-      "ServiceMaterialDto": {
-        "type": "object",
-        "properties": {
-          "variantId": {
-            "type": "string",
-            "description": "Product variant ID"
-          },
-          "quantity": {
-            "type": "number",
-            "description": "Quantity required"
-          }
-        },
-        "required": [
-          "variantId",
-          "quantity"
-        ]
-      },
-      "CreateServiceDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Service name"
-          },
-          "description": {
-            "type": "string",
-            "description": "Service description"
-          },
-          "sku": {
-            "type": "string",
-            "description": "Service SKU"
-          },
-          "categoryId": {
-            "type": "string",
-            "description": "Category ID"
-          },
-          "pricingModel": {
-            "type": "string",
-            "enum": [
-              "FIXED",
-              "HOURLY",
-              "VARIABLE"
-            ],
-            "description": "Pricing model"
-          },
-          "price": {
-            "type": "number",
-            "description": "Base price"
-          },
-          "minPrice": {
-            "type": "number",
-            "description": "Minimum price for VARIABLE model"
-          },
-          "estimatedDuration": {
-            "type": "number",
-            "description": "Estimated duration in minutes"
-          },
-          "bufferTimeBefore": {
-            "type": "number",
-            "description": "Buffer time before in minutes"
-          },
-          "bufferTimeAfter": {
-            "type": "number",
-            "description": "Buffer time after in minutes"
-          },
-          "customFields": {
-            "type": "object",
-            "description": "Custom fields (JSON)",
-            "additionalProperties": true
-          },
-          "staffIds": {
-            "description": "Assigned staff member IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "resourceIds": {
-            "description": "Assigned resource IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "materials": {
-            "description": "Bill of materials",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ServiceMaterialDto"
-            }
-          },
-          "taxRateIds": {
-            "description": "Tax rate IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "isActive": {
-            "type": "boolean",
-            "description": "Is service active"
-          }
-        },
-        "required": [
-          "name",
-          "sku",
-          "categoryId",
-          "pricingModel",
-          "price"
-        ]
-      },
-      "UpdateServiceDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Service name"
-          },
-          "description": {
-            "type": "string",
-            "description": "Service description"
-          },
-          "sku": {
-            "type": "string",
-            "description": "Service SKU"
-          },
-          "categoryId": {
-            "type": "string",
-            "description": "Category ID"
-          },
-          "pricingModel": {
-            "type": "string",
-            "enum": [
-              "FIXED",
-              "HOURLY",
-              "VARIABLE"
-            ],
-            "description": "Pricing model"
-          },
-          "price": {
-            "type": "number",
-            "description": "Base price"
-          },
-          "minPrice": {
-            "type": "number",
-            "description": "Minimum price for VARIABLE model"
-          },
-          "estimatedDuration": {
-            "type": "number",
-            "description": "Estimated duration in minutes"
-          },
-          "bufferTimeBefore": {
-            "type": "number",
-            "description": "Buffer time before in minutes"
-          },
-          "bufferTimeAfter": {
-            "type": "number",
-            "description": "Buffer time after in minutes"
-          },
-          "customFields": {
-            "type": "object",
-            "description": "Custom fields (JSON)",
-            "additionalProperties": true
-          },
-          "staffIds": {
-            "description": "Assigned staff member IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "resourceIds": {
-            "description": "Assigned resource IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "materials": {
-            "description": "Bill of materials",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ServiceMaterialDto"
-            }
-          },
-          "taxRateIds": {
-            "description": "Tax rate IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "isActive": {
-            "type": "boolean",
-            "description": "Is service active"
-          }
-        }
-      },
-      "CreateServiceResourceDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Resource name"
-          },
-          "type": {
-            "type": "string",
-            "description": "Resource type"
-          },
-          "isActive": {
-            "type": "boolean",
-            "description": "Is resource active"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "UpdateServiceResourceDto": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Resource name"
-          },
-          "type": {
-            "type": "string",
-            "description": "Resource type"
-          },
-          "isActive": {
-            "type": "boolean",
-            "description": "Is resource active"
-          }
-        }
-      },
-      "CreateBookingDto": {
-        "type": "object",
-        "properties": {
-          "serviceId": {
-            "type": "string",
-            "description": "Service ID"
-          },
-          "customerId": {
-            "type": "string",
-            "description": "Customer ID"
-          },
-          "locationId": {
-            "type": "string",
-            "description": "Location ID for stock deduction"
-          },
-          "scheduledStartTime": {
-            "type": "string",
-            "description": "Scheduled start time"
-          },
-          "scheduledEndTime": {
-            "type": "string",
-            "description": "Scheduled end time (calculated if omitted)"
-          },
-          "staffIds": {
-            "description": "Assigned staff IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "resourceIds": {
-            "description": "Assigned resource IDs",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "notes": {
-            "type": "string",
-            "description": "Booking notes"
-          },
-          "customFields": {
-            "type": "object",
-            "description": "Custom fields",
-            "additionalProperties": true
-          },
-          "recurrenceRule": {
-            "type": "string",
-            "description": "Recurrence rule (RRULE string)"
-          }
-        },
-        "required": [
-          "serviceId",
-          "scheduledStartTime"
-        ]
-      },
-      "CompleteBookingDto": {
-        "type": "object",
-        "properties": {
-          "materials": {
-            "description": "Actual materials consumed",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ServiceMaterialDto"
-            }
-          },
-          "actualStartTime": {
-            "type": "string",
-            "description": "Actual start time"
-          },
-          "actualEndTime": {
-            "type": "string",
-            "description": "Actual end time"
-          }
-        }
-      },
-      "RequestOtpDto": {
-        "type": "object",
-        "properties": {
-          "phoneNumber": {
-            "type": "string",
-            "description": "Phone number to send OTP to"
-          },
-          "email": {
-            "type": "string",
-            "description": "Email address to send OTP to"
-          }
-        }
-      },
-      "VerifyOtpDto": {
-        "type": "object",
-        "properties": {
-          "phoneNumber": {
-            "type": "string",
-            "description": "Phone number used"
-          },
-          "email": {
-            "type": "string",
-            "description": "Email address used"
-          },
-          "code": {
-            "type": "string",
-            "description": "OTP code"
-          }
-        },
-        "required": [
-          "code"
-        ]
-      },
-      "PublicBookingDto": {
-        "type": "object",
-        "properties": {
-          "serviceId": {
-            "type": "string",
-            "description": "Service ID"
-          },
-          "verificationId": {
-            "type": "string",
-            "description": "Verification ID (from OTP verification)"
-          },
-          "scheduledStartTime": {
-            "type": "string",
-            "description": "Scheduled start time"
-          },
-          "notes": {
-            "type": "string",
-            "description": "Booking notes"
-          }
-        },
-        "required": [
-          "serviceId",
-          "verificationId",
-          "scheduledStartTime"
-        ]
-      },
       "ProvisionDeviceDto": {
         "type": "object",
         "properties": {
@@ -11740,6 +12233,20 @@
           }
         }
       },
+      "CheckOutDto": {
+        "type": "object",
+        "properties": {
+          "locationId": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          },
+          "isAutoCheckout": {
+            "type": "boolean"
+          }
+        }
+      },
       "TerminalLoginDto": {
         "type": "object",
         "properties": {
@@ -12096,19 +12603,26 @@
           "locationId"
         ]
       },
-      "CheckOutDto": {
+      "AnnouncementDto": {
         "type": "object",
         "properties": {
-          "locationId": {
+          "title": {
             "type": "string"
           },
-          "notes": {
+          "message": {
             "type": "string"
           },
-          "isAutoCheckout": {
-            "type": "boolean"
+          "targetBranchId": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
           }
-        }
+        },
+        "required": [
+          "title",
+          "message"
+        ]
       },
       "CartItemDto": {
         "type": "object",
