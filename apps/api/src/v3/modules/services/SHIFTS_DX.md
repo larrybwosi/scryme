@@ -64,7 +64,7 @@ Designed specifically for connected apps and dashboard modules to retrieve shift
 ```http
 GET /v3/acme-corp/services/shifts?dayOfWeek=1&isActive=true HTTP/1.1
 Host: api.scryme.tech
-Authorization: Bearer scryme_v3_tok_abc123
+Authorization: Bearer <your_v3_token>
 ```
 
 #### High-Fidelity Response Payload (200 OK):
