@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -96,10 +97,11 @@ class MainActivity : ComponentActivity() {
         expenseViewModel = ExpenseViewModel(expenseRepository)
 
         setContent {
-            ScrymeTheme {
+            val themePreference by sessionManager.themePreference.collectAsState()
+            ScrymeTheme(themeName = themePreference) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(red = 0x0B, green = 0x12, blue = 0x20) // Deep Navy Background #0B1220
+                    color = MaterialTheme.colorScheme.background
                 ) {
                     AppNavigation(
                         authViewModel = authViewModel,
@@ -160,6 +162,7 @@ fun AppNavigation(
             announcementViewModel = announcementViewModel,
             scanViewModel = scanViewModel,
             expenseViewModel = expenseViewModel,
+            sessionManager = sessionManager,
             onSignOut = { authViewModel.logout() }
         )
     } else {
