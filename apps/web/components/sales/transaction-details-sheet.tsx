@@ -159,7 +159,7 @@ export function TransactionDetailsSheet({
       if (cleanDownloadUrl) {
         toast.success(
           <div className="flex flex-col gap-1 text-xs text-left pointer-events-auto">
-            <span className="font-semibold text-zinc-900">
+            <span className="font-semibold text-foreground">
               {type.charAt(0).toUpperCase() + type.slice(1)} generated
               successfully
             </span>
@@ -168,7 +168,7 @@ export function TransactionDetailsSheet({
               target="_blank"
               rel="noopener noreferrer"
               onClick={e => e.stopPropagation()}
-              className="text-zinc-600 underline font-medium hover:text-zinc-900 flex items-center gap-1 mt-0.5 cursor-pointer z-10">
+              className="text-muted-foreground underline font-medium hover:text-foreground flex items-center gap-1 mt-0.5 cursor-pointer z-10">
               Click here to download/view{" "}
               <ExternalLink className="w-3 h-3 inline" />
             </a>
@@ -244,7 +244,7 @@ export function TransactionDetailsSheet({
       <Sheet open={isOpen} onOpenChange={onClose}>
         <SheetContent className="sm:max-w-162.5">
           <div className="flex h-full items-center justify-center">
-            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
         </SheetContent>
       </Sheet>
@@ -255,27 +255,27 @@ export function TransactionDetailsSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
-      <SheetContent className="sm:max-w-185 p-0 flex flex-col h-full bg-zinc-50 border-l border-zinc-200">
+      <SheetContent className="sm:max-w-185 p-0 flex flex-col h-full bg-background border-l border-border">
         {/* Status Accent Bar */}
         <div
           className={cn(
             "h-1 w-full shrink-0",
-            STATUS_ACCENT[transaction.status] || "bg-zinc-300",
+            STATUS_ACCENT[transaction.status] || "bg-muted",
           )}
         />
 
         {/* Header Block */}
-        <div className="p-6 bg-white border-b border-zinc-200 sticky top-0 z-10 shadow-sm shadow-zinc-100/40">
+        <div className="p-6 bg-card border-b border-border sticky top-0 z-10 shadow-sm dark:shadow-none">
           <div className="flex items-start justify-between mb-6">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <SheetTitle className="text-xl font-mono tracking-tight font-semibold text-zinc-900 tabular-nums">
+                <SheetTitle className="text-xl font-mono tracking-tight font-semibold text-foreground tabular-nums">
                   {transaction.number}
                 </SheetTitle>
                 <button
                   type="button"
                   onClick={handleCopyNumber}
-                  className="text-zinc-300 hover:text-zinc-600 transition-colors"
+                  className="text-muted-foreground/40 hover:text-foreground transition-colors"
                   aria-label="Copy transaction number">
                   {copiedNumber ? (
                     <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -285,12 +285,12 @@ export function TransactionDetailsSheet({
                 </button>
                 <Badge
                   variant="secondary"
-                  className="font-mono text-[10px] tracking-wider uppercase bg-zinc-100 text-zinc-700 hover:bg-zinc-100 rounded border border-zinc-200/60 px-1.5 py-0">
+                  className="font-mono text-[10px] tracking-wider uppercase bg-accent text-accent-foreground hover:bg-accent rounded border border-border px-1.5 py-0">
                   {transaction.type}
                 </Badge>
               </div>
-              <p className="text-xs text-zinc-500 flex items-center gap-1.5 font-medium">
-                <Calendar className="w-3.5 h-3.5 text-zinc-400" />
+              <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                <Calendar className="w-3.5 h-3.5 text-muted-foreground/60" />
                 Created{" "}
                 {format(
                   new Date(transaction.createdAt),
@@ -299,31 +299,31 @@ export function TransactionDetailsSheet({
               </p>
             </div>
 
-            <div className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-zinc-50/60 p-1">
+            <div className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/60 p-1">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 gap-1.5 text-xs text-zinc-600 hover:bg-white hover:shadow-sm font-medium"
+                className="h-7 gap-1.5 text-xs text-muted-foreground hover:bg-background hover:shadow-sm font-medium"
                 onClick={() => handleGenerateDocument("invoice")}
                 disabled={isGeneratingInvoice}>
                 {isGeneratingInvoice ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <FileText className="w-3.5 h-3.5 text-zinc-500" />
+                  <FileText className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
                 Invoice
               </Button>
-              <Separator orientation="vertical" className="h-4 bg-zinc-200" />
+              <Separator orientation="vertical" className="h-4 bg-border" />
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 gap-1.5 text-xs text-zinc-600 hover:bg-white hover:shadow-sm font-medium"
+                className="h-7 gap-1.5 text-xs text-muted-foreground hover:bg-background hover:shadow-sm font-medium"
                 onClick={() => handleGenerateDocument("receipt")}
                 disabled={isGeneratingReceipt}>
                 {isGeneratingReceipt ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
-                  <Receipt className="w-3.5 h-3.5 text-zinc-500" />
+                  <Receipt className="w-3.5 h-3.5 text-muted-foreground" />
                 )}
                 Receipt
               </Button>
@@ -331,24 +331,24 @@ export function TransactionDetailsSheet({
           </div>
 
           {/* Metric Summary Bar */}
-          <div className="grid grid-cols-3 gap-4 bg-zinc-50/70 rounded-lg p-3.5 border border-zinc-200/60">
+          <div className="grid grid-cols-3 gap-4 bg-muted/70 rounded-lg p-3.5 border border-border/60">
             <div className="space-y-1">
-              <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground block">
                 Order Status
               </span>
               <StatusBadge status={transaction.status} />
             </div>
-            <div className="space-y-1 border-l border-zinc-200/80 pl-4">
-              <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
+            <div className="space-y-1 border-l border-border/80 pl-4">
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground block">
                 Payment Status
               </span>
               <PaymentStatusBadge status={transaction.paymentStatus} />
             </div>
-            <div className="space-y-0.5 border-l border-zinc-200/80 pl-4 text-right">
-              <span className="text-[10px] uppercase font-semibold tracking-wider text-zinc-400 block">
+            <div className="space-y-0.5 border-l border-border/80 pl-4 text-right">
+              <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground block">
                 Total Gross Amount
               </span>
-              <span className="text-lg font-semibold tracking-tight font-mono tabular-nums text-zinc-900">
+              <span className="text-lg font-semibold tracking-tight font-mono tabular-nums text-foreground">
                 {formatCurrency(transaction.finalTotal)}
               </span>
             </div>
@@ -356,12 +356,12 @@ export function TransactionDetailsSheet({
         </div>
 
         {/* Dynamic Content Panel */}
-        <ScrollArea className="flex-1 bg-zinc-50">
+        <ScrollArea className="flex-1 bg-background">
           <div className="p-6 space-y-6">
             {/* Timeline Workflow Component */}
-            <Card className="p-5 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
-              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-5 flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-zinc-400" />
+            <Card className="p-5 shadow-sm dark:shadow-none border-border">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-5 flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-muted-foreground/60" />
                 Fulfillment Workflow Line
               </h3>
               <TransactionTimeline currentStatus={transaction.status} />
@@ -369,7 +369,7 @@ export function TransactionDetailsSheet({
 
             {/* Core Tab System */}
             <Tabs defaultValue="items" className="w-full">
-              <TabsList className="w-full grid grid-cols-4 bg-zinc-200/60 p-1 border border-zinc-200/40 rounded-lg">
+              <TabsList className="w-full grid grid-cols-4 bg-muted p-1 border border-border/40 rounded-lg">
                 <TabsTrigger
                   value="items"
                   className="text-xs font-medium data-[state=active]:shadow-sm">
@@ -394,36 +394,36 @@ export function TransactionDetailsSheet({
 
               {/* Items Panel */}
               <TabsContent value="items" className="mt-4 outline-none">
-                <Card className="overflow-hidden shadow-sm shadow-zinc-100/50 border-zinc-200/80 py-0 gap-0">
+                <Card className="overflow-hidden shadow-sm dark:shadow-none border-border py-0 gap-0">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="bg-zinc-50/70 border-b border-zinc-200/80">
-                          <th className="px-4 py-3 font-semibold text-zinc-500 uppercase tracking-wider">
+                        <tr className="bg-muted/70 border-b border-border/80">
+                          <th className="px-4 py-3 font-semibold text-muted-foreground uppercase tracking-wider">
                             Product / SKU
                           </th>
-                          <th className="px-4 py-3 font-semibold text-zinc-500 uppercase tracking-wider text-center w-16">
+                          <th className="px-4 py-3 font-semibold text-muted-foreground uppercase tracking-wider text-center w-16">
                             Qty
                           </th>
-                          <th className="px-4 py-3 font-semibold text-zinc-500 uppercase tracking-wider text-right w-28">
+                          <th className="px-4 py-3 font-semibold text-muted-foreground uppercase tracking-wider text-right w-28">
                             Unit Price
                           </th>
-                          <th className="px-4 py-3 font-semibold text-zinc-500 uppercase tracking-wider text-right w-28">
+                          <th className="px-4 py-3 font-semibold text-muted-foreground uppercase tracking-wider text-right w-28">
                             Total
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-zinc-100 font-medium text-zinc-700">
+                      <tbody className="divide-y divide-border font-medium text-foreground/80">
                         {transaction.items?.map((item: any) => (
                           <tr
                             key={item.id}
-                            className="hover:bg-zinc-50/40 transition-colors">
+                            className="hover:bg-muted/40 transition-colors">
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-0.5">
-                                <span className="font-semibold text-zinc-900">
+                                <span className="font-semibold text-foreground">
                                   {item.productName}
                                 </span>
-                                <span className="text-[11px] font-mono text-zinc-400 font-normal">
+                                <span className="text-[11px] font-mono text-muted-foreground font-normal">
                                   {item.variantName
                                     ? `${item.variantName} • `
                                     : ""}
@@ -431,13 +431,13 @@ export function TransactionDetailsSheet({
                                 </span>
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-center font-mono tabular-nums text-zinc-600">
+                            <td className="px-4 py-3 text-center font-mono tabular-nums text-muted-foreground">
                               {item.quantity}
                             </td>
-                            <td className="px-4 py-3 text-right font-mono tabular-nums text-zinc-600">
+                            <td className="px-4 py-3 text-right font-mono tabular-nums text-muted-foreground">
                               {formatCurrency(item.unitPrice)}
                             </td>
-                            <td className="px-4 py-3 text-right font-mono tabular-nums font-semibold text-zinc-900">
+                            <td className="px-4 py-3 text-right font-mono tabular-nums font-semibold text-foreground">
                               {formatCurrency(item.lineTotal)}
                             </td>
                           </tr>
@@ -447,23 +447,23 @@ export function TransactionDetailsSheet({
                   </div>
 
                   {/* Financial Reconciliation Summary */}
-                  <div className="bg-zinc-50/50 border-t border-zinc-200/80 p-4 font-medium text-xs space-y-2.5 w-full ml-auto sm:max-w-[340px]">
-                    <div className="flex justify-between text-zinc-500">
+                  <div className="bg-muted/50 border-t border-border/80 p-4 font-medium text-xs space-y-2.5 w-full ml-auto sm:max-w-[340px]">
+                    <div className="flex justify-between text-muted-foreground">
                       <span>Subtotal</span>
-                      <span className="font-mono tabular-nums text-zinc-700">
+                      <span className="font-mono tabular-nums text-foreground">
                         {formatCurrency(transaction.subtotal)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-zinc-500">
+                    <div className="flex justify-between text-muted-foreground">
                       <span>Tax Ledger</span>
-                      <span className="font-mono tabular-nums text-zinc-700">
+                      <span className="font-mono tabular-nums text-foreground">
                         {formatCurrency(transaction.taxTotal)}
                       </span>
                     </div>
-                    <Separator className="bg-zinc-200/60 my-1" />
-                    <div className="flex justify-between items-baseline text-zinc-900">
+                    <Separator className="bg-border/60 my-1" />
+                    <div className="flex justify-between items-baseline text-foreground">
                       <span className="font-semibold">Grand Total</span>
-                      <span className="font-mono tabular-nums text-base font-bold text-zinc-950 tracking-tight">
+                      <span className="font-mono tabular-nums text-base font-bold text-foreground tracking-tight">
                         {formatCurrency(transaction.finalTotal)}
                       </span>
                     </div>
@@ -477,38 +477,38 @@ export function TransactionDetailsSheet({
                 className="mt-4 space-y-4 outline-none">
                 <div className="space-y-6">
                   {/* Generate Public Link Form Card */}
-                  <Card className="p-5 shadow-sm shadow-zinc-100/50 border-zinc-200/80 space-y-4">
+                  <Card className="p-5 shadow-sm dark:shadow-none border-border space-y-4">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-zinc-950" />
-                      <h3 className="text-sm font-semibold text-zinc-950">
+                      <FileText className="w-4 h-4 text-foreground" />
+                      <h3 className="text-sm font-semibold text-foreground">
                         Generate Secure Public Link
                       </h3>
                     </div>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                       Create an unguessable public link with a customizable
                       expiry period to share with clients.
                     </p>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <label className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block">
+                        <label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">
                           Document Type
                         </label>
                         <select
                           id="public-doc-type"
-                          className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-900">
+                          className="w-full text-xs bg-background border border-border text-foreground rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring">
                           <option value="invoice">Invoice</option>
                           <option value="receipt">Receipt</option>
                         </select>
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block">
+                        <label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground block">
                           Expiry Period
                         </label>
                         <select
                           id="public-doc-expiry"
-                          className="w-full text-xs bg-zinc-50 border border-zinc-200 rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-zinc-900">
+                          className="w-full text-xs bg-background border border-border text-foreground rounded px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-ring">
                           <option value="7">7 Days (Default)</option>
                           <option value="1">1 Day</option>
                           <option value="30">30 Days</option>
@@ -519,7 +519,7 @@ export function TransactionDetailsSheet({
 
                     <Button
                       size="sm"
-                      className="w-full h-8 text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white shadow-sm"
+                      className="w-full h-8 text-xs font-semibold bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-sm"
                       onClick={async () => {
                         const typeSelect = document.getElementById(
                           "public-doc-type",
@@ -606,35 +606,35 @@ export function TransactionDetailsSheet({
                         return (
                           <Card
                             key={groupName}
-                            className="overflow-hidden shadow-sm shadow-zinc-100/50 border-zinc-200/80 py-0 gap-0">
-                            <div className="p-4 border-b border-zinc-100 bg-zinc-50/50">
-                              <h3 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
-                                <FileText className="w-3.5 h-3.5 text-zinc-400" />
+                            className="overflow-hidden shadow-sm dark:shadow-none border-border py-0 gap-0">
+                            <div className="p-4 border-b border-border bg-muted/50">
+                              <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                                <FileText className="w-3.5 h-3.5 text-muted-foreground/60" />
                                 {groupName} ({docs.length})
                               </h3>
                             </div>
-                            <div className="divide-y divide-zinc-100">
+                            <div className="divide-y divide-border">
                               {docs.map((att: any) => {
                                 const isPublicLink =
                                   groupName === "Public Document Links";
                                 return (
                                   <div
                                     key={att.id}
-                                    className="p-4 flex items-center justify-between hover:bg-zinc-50 transition-colors">
+                                    className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors">
                                     <div className="flex items-center gap-3">
                                       <div
                                         className={cn(
                                           "w-10 h-10 rounded-lg flex items-center justify-center",
                                           isPublicLink
-                                            ? "bg-emerald-50 border border-emerald-200 text-emerald-600"
-                                            : "bg-zinc-50 border border-zinc-200 text-zinc-400",
+                                            ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-500"
+                                            : "bg-muted border border-border text-muted-foreground/80",
                                         )}>
                                         {att.mimeType === "application/pdf" ? (
                                           <FileText
                                             className={cn(
                                               "w-5 h-5",
                                               isPublicLink
-                                                ? "text-emerald-600"
+                                                ? "text-emerald-500"
                                                 : "text-red-500",
                                             )}
                                           />
@@ -647,7 +647,7 @@ export function TransactionDetailsSheet({
                                         )}
                                       </div>
                                       <div>
-                                        <p className="text-sm font-semibold text-zinc-900 flex flex-wrap items-center gap-1.5">
+                                        <p className="text-sm font-semibold text-foreground flex flex-wrap items-center gap-1.5">
                                           {isPublicLink ? (
                                             <>
                                               {att.description}
@@ -683,7 +683,7 @@ export function TransactionDetailsSheet({
                                           )}
                                         </p>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                          <span className="text-[10px] text-zinc-400 font-medium font-mono truncate max-w-[280px]">
+                                          <span className="text-[10px] text-muted-foreground font-medium font-mono truncate max-w-[280px]">
                                             {isPublicLink
                                               ? getCleanUrl(
                                                   att.shortUrl || att.fileUrl,
@@ -693,8 +693,8 @@ export function TransactionDetailsSheet({
                                           </span>
                                           {!isPublicLink && (
                                             <>
-                                              <span className="w-1 h-1 rounded-full bg-zinc-300" />
-                                              <span className="text-[10px] text-zinc-400 font-medium">
+                                              <span className="w-1 h-1 rounded-full bg-border" />
+                                              <span className="text-[10px] text-muted-foreground font-medium">
                                                 {format(
                                                   new Date(att.uploadedAt),
                                                   "MMM d, yyyy HH:mm",
@@ -710,7 +710,7 @@ export function TransactionDetailsSheet({
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                           onClick={() =>
                                             handleCopyLink(
                                               getCleanUrl(
@@ -724,7 +724,7 @@ export function TransactionDetailsSheet({
                                       <Button
                                         variant="ghost"
                                         size="icon"
-                                        className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                         asChild>
                                         <a
                                           href={getCleanUrl(
@@ -739,7 +739,7 @@ export function TransactionDetailsSheet({
                                         <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                           asChild>
                                           <a
                                             href={getCleanUrl(
@@ -760,14 +760,14 @@ export function TransactionDetailsSheet({
                       });
                     })()
                   ) : (
-                    <Card className="p-12 text-center space-y-2 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
-                      <div className="w-12 h-12 rounded-full bg-zinc-50 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-300 mb-2">
+                    <Card className="p-12 text-center space-y-2 shadow-sm dark:shadow-none border-border">
+                      <div className="w-12 h-12 rounded-full bg-muted border border-border flex items-center justify-center mx-auto text-muted-foreground/50 mb-2">
                         <FileText className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-medium text-zinc-500">
+                      <p className="text-sm font-medium text-muted-foreground">
                         No documents archived
                       </p>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-muted-foreground">
                         Invoices and receipts for orders are automatically
                         stored here.
                       </p>
@@ -785,17 +785,17 @@ export function TransactionDetailsSheet({
                     transaction.payments.map((payment: any) => (
                       <Card
                         key={payment.id}
-                        className="p-4 shadow-sm shadow-zinc-100/50 border-zinc-200/80 space-y-3">
+                        className="p-4 shadow-sm dark:shadow-none border-border space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3.5">
-                            <div className="w-9 h-9 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-center text-zinc-600 shadow-sm">
-                              <CreditCard className="w-4 h-4 text-zinc-500" />
+                            <div className="w-9 h-9 rounded-lg bg-muted border border-border flex items-center justify-center text-muted-foreground shadow-sm">
+                              <CreditCard className="w-4 h-4 text-muted-foreground" />
                             </div>
                             <div className="space-y-0.5">
-                              <span className="font-mono tabular-nums text-sm font-semibold text-zinc-900 block">
+                              <span className="font-mono tabular-nums text-sm font-semibold text-foreground block">
                                 {formatCurrency(payment.amount)}
                               </span>
-                              <span className="text-[11px] text-zinc-400 block font-medium">
+                              <span className="text-[11px] text-muted-foreground block font-medium">
                                 {payment.method.replace(/_/g, " ")} •{" "}
                                 {format(
                                   new Date(payment.createdAt),
@@ -806,29 +806,29 @@ export function TransactionDetailsSheet({
                           </div>
                           <Badge
                             variant="outline"
-                            className="bg-emerald-50/60 text-emerald-700 border-emerald-200 text-[10px] font-semibold uppercase tracking-wider rounded px-2 py-0.5">
+                            className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/40 text-[10px] font-semibold uppercase tracking-wider rounded px-2 py-0.5">
                             {payment.status}
                           </Badge>
                         </div>
 
                         {/* Cheque Details & Notes */}
                         {(payment.method === "CHEQUE" || payment.notes) && (
-                          <div className="bg-zinc-50/50 rounded-lg p-2.5 border border-zinc-100 text-[11px] space-y-1.5">
+                          <div className="bg-muted/50 rounded-lg p-2.5 border border-border text-[11px] space-y-1.5">
                             {payment.method === "CHEQUE" && (
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">
+                                  <span className="text-muted-foreground uppercase font-bold tracking-tighter text-[9px] block">
                                     Bank Name
                                   </span>
-                                  <span className="text-zinc-700 font-semibold">
+                                  <span className="text-foreground font-semibold">
                                     {payment.bankName || "N/A"}
                                   </span>
                                 </div>
                                 <div>
-                                  <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">
+                                  <span className="text-muted-foreground uppercase font-bold tracking-tighter text-[9px] block">
                                     Cheque Date
                                   </span>
-                                  <span className="text-zinc-700 font-semibold">
+                                  <span className="text-foreground font-semibold">
                                     {payment.chequeDate
                                       ? format(
                                           new Date(payment.chequeDate),
@@ -841,10 +841,10 @@ export function TransactionDetailsSheet({
                             )}
                             {payment.notes && (
                               <div>
-                                <span className="text-zinc-400 uppercase font-bold tracking-tighter text-[9px] block">
+                                <span className="text-muted-foreground uppercase font-bold tracking-tighter text-[9px] block">
                                   Payment Notes
                                 </span>
-                                <p className="text-zinc-600 italic leading-relaxed">
+                                <p className="text-muted-foreground italic leading-relaxed">
                                   {payment.notes}
                                 </p>
                               </div>
@@ -855,13 +855,13 @@ export function TransactionDetailsSheet({
                         {/* Attachments Section */}
                         <div className="space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                               Attachments
                             </span>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 px-1.5 text-[10px] font-bold text-zinc-500 hover:text-zinc-900 gap-1"
+                              className="h-6 px-1.5 text-[10px] font-bold text-muted-foreground hover:text-foreground gap-1"
                               onClick={() =>
                                 document
                                   .getElementById(`payment-att-${payment.id}`)
@@ -887,8 +887,8 @@ export function TransactionDetailsSheet({
                                   )}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center gap-1.5 px-2 py-1 bg-white border border-zinc-200 rounded-md text-[10px] font-medium text-zinc-600 hover:bg-zinc-50 transition-colors">
-                                  <Paperclip className="w-3 h-3 text-zinc-400" />
+                                  className="flex items-center gap-1.5 px-2 py-1 bg-background border border-border rounded-md text-[10px] font-medium text-foreground hover:bg-muted transition-colors">
+                                  <Paperclip className="w-3 h-3 text-muted-foreground" />
                                   <span className="max-w-[100px] truncate">
                                     {att.fileName}
                                   </span>
@@ -896,7 +896,7 @@ export function TransactionDetailsSheet({
                               ))}
                             </div>
                           ) : (
-                            <p className="text-[10px] text-zinc-400 italic">
+                            <p className="text-[10px] text-muted-foreground italic">
                               No attachments found
                             </p>
                           )}
@@ -904,8 +904,8 @@ export function TransactionDetailsSheet({
                       </Card>
                     ))
                   ) : (
-                    <Card className="border-dashed p-8 text-center shadow-none border-zinc-200">
-                      <p className="text-zinc-400 text-xs font-medium">
+                    <Card className="border-dashed p-8 text-center shadow-none border-border">
+                      <p className="text-muted-foreground text-xs font-medium">
                         No financial transactions recorded.
                       </p>
                     </Card>
@@ -914,10 +914,10 @@ export function TransactionDetailsSheet({
                   {transaction.type !== "POS_SALE" &&
                     transaction.paymentStatus !== "PAID" && (
                       <Button
-                        className="w-full gap-2 h-10 text-xs font-semibold border-zinc-200 text-zinc-700 hover:bg-zinc-50 shadow-sm mt-1"
+                        className="w-full gap-2 h-10 text-xs font-semibold border-border text-foreground hover:bg-accent shadow-sm mt-1"
                         variant="outline"
                         onClick={() => setIsPaymentModalOpen(true)}>
-                        <CreditCard className="w-3.5 h-3.5 text-zinc-500" />
+                        <CreditCard className="w-3.5 h-3.5 text-muted-foreground" />
                         Register Payment Transaction
                       </Button>
                     )}
@@ -929,38 +929,38 @@ export function TransactionDetailsSheet({
                 value="details"
                 className="mt-4 space-y-4 outline-none">
                 <div className="grid grid-cols-2 gap-4">
-                  <Card className="p-4 space-y-3 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
-                    <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
-                      <User className="w-3 h-3 text-zinc-400" /> Account Profile
+                  <Card className="p-4 space-y-3 shadow-sm dark:shadow-none border-border">
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5">
+                      <User className="w-3 h-3 text-muted-foreground" /> Account Profile
                     </h4>
                     <div className="text-xs space-y-1">
-                      <p className="font-semibold text-zinc-900">
+                      <p className="font-semibold text-foreground">
                         {transaction.customer?.name || "Anonymous Customer"}
                       </p>
-                      <p className="text-zinc-500 font-mono text-[11px]">
+                      <p className="text-muted-foreground font-mono text-[11px]">
                         {transaction.customer?.email ||
                           "No electronic billing mail"}
                       </p>
-                      <p className="text-zinc-500 font-mono text-[11px]">
+                      <p className="text-muted-foreground font-mono text-[11px]">
                         {transaction.customer?.phone ||
                           "No active contact record"}
                       </p>
                     </div>
                   </Card>
 
-                  <Card className="p-4 space-y-3 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
-                    <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
-                      <MapPin className="w-3 h-3 text-zinc-400" /> Hub &
+                  <Card className="p-4 space-y-3 shadow-sm dark:shadow-none border-border">
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5">
+                      <MapPin className="w-3 h-3 text-muted-foreground" /> Hub &
                       Management
                     </h4>
                     <div className="text-xs space-y-1">
-                      <p className="font-semibold text-zinc-900 flex items-center gap-1">
-                        <Building2 className="w-3 h-3 text-zinc-400" />{" "}
+                      <p className="font-semibold text-foreground flex items-center gap-1">
+                        <Building2 className="w-3 h-3 text-muted-foreground" />{" "}
                         {transaction.location?.name}
                       </p>
-                      <p className="text-zinc-500">
+                      <p className="text-muted-foreground">
                         Corporate Member:{" "}
-                        <span className="text-zinc-700 font-medium">
+                        <span className="text-foreground font-medium">
                           {transaction.member?.user?.name}
                         </span>
                       </p>
@@ -969,9 +969,9 @@ export function TransactionDetailsSheet({
                 </div>
 
                 {/* Logistics Block */}
-                <Card className="p-4 space-y-3.5 shadow-sm shadow-zinc-100/50 border-zinc-200/80">
-                  <h4 className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-zinc-100 pb-1.5">
-                    <Truck className="w-3 h-3 text-zinc-400" /> Order
+                <Card className="p-4 space-y-3.5 shadow-sm dark:shadow-none border-border">
+                  <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 border-b border-border pb-1.5">
+                    <Truck className="w-3 h-3 text-muted-foreground" /> Order
                     Fulfillment Registry
                   </h4>
                   {transaction.fulfillments?.length > 0 ? (
@@ -980,26 +980,26 @@ export function TransactionDetailsSheet({
                         <div
                           key={f.id}
                           className="flex items-start gap-3 text-xs">
-                          <div className="mt-0.5 p-1.5 bg-zinc-50 border border-zinc-200 rounded-lg text-zinc-600">
+                          <div className="mt-0.5 p-1.5 bg-muted border border-border rounded-lg text-muted-foreground">
                             <Truck className="w-3.5 h-3.5" />
                           </div>
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center justify-between">
-                              <span className="font-semibold text-zinc-900">
+                              <span className="font-semibold text-foreground">
                                 {f.type} Dispatched
                               </span>
                               <Badge
                                 variant="outline"
-                                className="text-[9px] uppercase tracking-wider bg-zinc-50 px-1.5 font-semibold text-zinc-600 rounded">
+                                className="text-[9px] uppercase tracking-wider bg-muted px-1.5 font-semibold text-muted-foreground rounded border-border">
                                 {f.status}
                               </Badge>
                             </div>
-                            <p className="text-[11px] text-zinc-500">
+                            <p className="text-[11px] text-muted-foreground">
                               Provider Method: {f.type}{" "}
                               {f.carrier && `via ${f.carrier}`}
                             </p>
                             {f.trackingNumber && (
-                              <p className="text-[11px] font-mono text-zinc-900 bg-zinc-50 border border-zinc-100 inline-block px-1.5 py-0.5 rounded mt-1">
+                              <p className="text-[11px] font-mono text-foreground bg-muted border border-border inline-block px-1.5 py-0.5 rounded mt-1">
                                 Tracking Ref: {f.trackingNumber}
                               </p>
                             )}
@@ -1008,7 +1008,7 @@ export function TransactionDetailsSheet({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-xs text-zinc-400 italic">
+                    <p className="text-xs text-muted-foreground italic">
                       No historical logistics/fulfillment updates initialized.
                     </p>
                   )}
@@ -1016,11 +1016,11 @@ export function TransactionDetailsSheet({
 
                 {/* Audit & Manifest Notes */}
                 {transaction.notes && (
-                  <Card className="bg-amber-50/40 border-amber-200/60 p-4 space-y-1.5 shadow-none">
-                    <h4 className="text-[10px] font-semibold text-amber-800 uppercase tracking-wider">
+                  <Card className="bg-amber-500/10 border-amber-500/20 p-4 space-y-1.5 shadow-none text-amber-700 dark:text-amber-400">
+                    <h4 className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                       Internal Operations Memo
                     </h4>
-                    <p className="text-xs text-amber-900/90 leading-relaxed font-medium">
+                    <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed font-medium">
                       {transaction.notes}
                     </p>
                   </Card>
@@ -1031,10 +1031,10 @@ export function TransactionDetailsSheet({
         </ScrollArea>
 
         {/* Global Action Footer */}
-        <div className="p-4 bg-white/95 backdrop-blur border-t border-zinc-200 flex items-center gap-3 shadow-[0_-4px_16px_-8px_rgba(0,0,0,0.08)]">
+        <div className="p-4 bg-card/95 backdrop-blur border-t border-border flex items-center gap-3 shadow-md">
           <Button
             variant="outline"
-            className="flex-1 h-10 text-xs font-semibold text-red-600 border-zinc-200 hover:bg-red-50/50 hover:border-red-200 hover:text-red-700 transition-colors"
+            className="flex-1 h-10 text-xs font-semibold text-red-600 border-border hover:bg-red-500/10 hover:border-red-500/30 dark:hover:bg-red-950/20 transition-colors"
             onClick={() => handleStatusUpdate("CANCELLED")}
             disabled={["COMPLETED", "CANCELLED"].includes(transaction.status)}>
             Cancel Order
@@ -1042,21 +1042,21 @@ export function TransactionDetailsSheet({
 
           {transaction.status === "PENDING_CONFIRMATION" && (
             <Button
-              className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
+              className="flex-1 h-10 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow"
               onClick={() => handleStatusUpdate("CONFIRMED")}>
               Approve Statement
             </Button>
           )}
           {transaction.status === "CONFIRMED" && (
             <Button
-              className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
+              className="flex-1 h-10 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow"
               onClick={() => handleStatusUpdate("PROCESSING")}>
               Release to Processing
             </Button>
           )}
           {transaction.status === "PROCESSING" && (
             <Button
-              className="flex-1 h-10 text-xs font-semibold bg-zinc-900 text-white hover:bg-zinc-800 shadow"
+              className="flex-1 h-10 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow"
               onClick={() => handleStatusUpdate("COMPLETED")}>
               Mark Dispatch Completed
             </Button>
@@ -1092,7 +1092,7 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
   return (
     <div className="relative flex justify-between items-center w-full px-2 pt-2 pb-4">
       {/* Visual Alignment Connector Bar */}
-      <div className="absolute top-[15px] left-4 right-4 h-[2px] bg-zinc-100 z-0" />
+      <div className="absolute top-[15px] left-4 right-4 h-[2px] bg-border z-0" />
 
       {/* Progress tracking line */}
       <div
@@ -1118,14 +1118,14 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
                 isCompleted
                   ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
                   : isCurrent
-                    ? "bg-white border-zinc-900 ring-4 ring-zinc-100 shadow-sm"
-                    : "bg-white border-zinc-200 text-zinc-300",
+                    ? "bg-background border-primary ring-4 ring-muted shadow-sm"
+                    : "bg-background border-border text-muted-foreground/30",
               )}>
               {isCompleted && (
                 <CheckCircle2 className="w-2.5 h-2.5 text-white stroke-[3px]" />
               )}
               {isCurrent && (
-                <div className="w-1.5 h-1.5 bg-zinc-900 rounded-full" />
+                <div className="w-1.5 h-1.5 bg-primary rounded-full" />
               )}
             </div>
 
@@ -1134,10 +1134,10 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
                 className={cn(
                   "text-[9px] font-semibold uppercase tracking-wider whitespace-nowrap",
                   isCompleted
-                    ? "text-emerald-700 font-bold"
+                    ? "text-emerald-600 dark:text-emerald-400 font-bold"
                     : isCurrent
-                      ? "text-zinc-900 font-bold"
-                      : "text-zinc-400",
+                      ? "text-foreground font-bold"
+                      : "text-muted-foreground",
                 )}>
                 {stage.label}
               </span>
@@ -1151,12 +1151,12 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    COMPLETED: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
-    PENDING_CONFIRMATION: "bg-amber-50 text-amber-700 border-amber-200/60",
-    CONFIRMED: "bg-blue-50 text-blue-700 border-blue-200/60",
-    PROCESSING: "bg-indigo-50 text-indigo-700 border-indigo-200/60",
-    CANCELLED: "bg-red-50 text-red-700 border-red-200/60",
-    DRAFT: "bg-zinc-50 text-zinc-600 border-zinc-200",
+    COMPLETED: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30",
+    PENDING_CONFIRMATION: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30",
+    CONFIRMED: "bg-blue-500/10 text-blue-600 border-blue-500/20 dark:bg-blue-500/20 dark:text-blue-400 dark:border-blue-500/30",
+    PROCESSING: "bg-indigo-500/10 text-indigo-600 border-indigo-500/20 dark:bg-indigo-500/20 dark:text-indigo-400 dark:border-indigo-500/30",
+    CANCELLED: "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30",
+    DRAFT: "bg-muted text-muted-foreground border-border",
   };
 
   return (
@@ -1164,7 +1164,7 @@ function StatusBadge({ status }: { status: string }) {
       variant="outline"
       className={cn(
         "font-semibold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded",
-        styles[status] || "bg-zinc-50 text-zinc-600 border-zinc-200",
+        styles[status] || "bg-muted text-muted-foreground border-border",
       )}>
       {status.replace(/_/g, " ")}
     </Badge>
@@ -1173,9 +1173,9 @@ function StatusBadge({ status }: { status: string }) {
 
 function PaymentStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    PAID: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
-    UNPAID: "bg-red-50 text-red-700 border-red-200/60",
-    PARTIALLY_PAID: "bg-amber-50 text-amber-700 border-amber-200/60",
+    PAID: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30",
+    UNPAID: "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30",
+    PARTIALLY_PAID: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30",
   };
 
   return (
@@ -1183,7 +1183,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
       variant="outline"
       className={cn(
         "font-semibold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded",
-        styles[status] || "bg-zinc-50 text-zinc-600 border-zinc-200",
+        styles[status] || "bg-muted text-muted-foreground border-border",
       )}>
       {status.replace(/_/g, " ")}
     </Badge>
