@@ -238,11 +238,11 @@ export function PettyCashClient({
     <div className="space-y-6">
       <Tabs defaultValue="funds" className="w-full">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 pb-3 mb-6">
-          <TabsList className="bg-zinc-100 p-1 rounded-xl w-fit flex gap-1">
-            <TabsTrigger value="funds" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm">
+          <TabsList className="bg-muted p-1 rounded-xl w-fit flex gap-1">
+            <TabsTrigger value="funds" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
               Funds Overview ({filteredFunds.length})
             </TabsTrigger>
-            <TabsTrigger value="transactions" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-white data-[state=active]:text-zinc-900 data-[state=active]:shadow-sm">
+            <TabsTrigger value="transactions" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
               All Expenses & Transactions ({filteredTransactions.length})
             </TabsTrigger>
           </TabsList>
@@ -257,7 +257,7 @@ export function PettyCashClient({
 
         {/* TAB 1: FUNDS OVERVIEW */}
         <TabsContent value="funds" className="space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-zinc-200">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-zinc-200">
             <div className="flex flex-col sm:flex-row flex-1 gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -315,10 +315,10 @@ export function PettyCashClient({
             {filteredFunds.map(fund => (
               <div
                 key={fund.id}
-                className="bg-white p-6 rounded-2xl border border-zinc-200 hover:shadow-md transition-all group"
+                className="bg-card p-6 rounded-2xl border border-zinc-200 hover:shadow-md transition-all group"
               >
                 <div className="flex items-start justify-between mb-6">
-                  <div className="p-3 rounded-2xl bg-zinc-100 text-zinc-600 group-hover:bg-[#34A853]/10 group-hover:text-[#34A853] transition-colors">
+                  <div className="p-3 rounded-2xl bg-muted text-zinc-600 group-hover:bg-[#34A853]/10 group-hover:text-[#34A853] transition-colors">
                     <Wallet className="w-6 h-6" />
                   </div>
                   <DropdownMenu>
@@ -346,7 +346,7 @@ export function PettyCashClient({
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-zinc-50 border border-zinc-100 space-y-4 mb-6">
+                <div className="p-4 rounded-xl bg-background border border-zinc-100 space-y-4 mb-6">
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-[10px] font-bold uppercase text-zinc-400 mb-1">Current Balance</p>
@@ -354,7 +354,7 @@ export function PettyCashClient({
                         {fund.currencyCode} {Number(fund.amount || 0).toLocaleString()}
                       </p>
                     </div>
-                    <Badge variant="secondary" className="bg-white border-zinc-200">
+                    <Badge variant="secondary" className="bg-card border-zinc-200">
                       Float: {Number(fund.floatAmount || 0).toLocaleString()}
                     </Badge>
                   </div>
@@ -390,7 +390,7 @@ export function PettyCashClient({
 
         {/* TAB 2: ALL TRANSACTIONS (ORGANISATION & BRANCH VIEW) */}
         <TabsContent value="transactions" className="space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-zinc-200">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-zinc-200">
             <div className="flex flex-col sm:flex-row flex-1 gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
@@ -456,9 +456,9 @@ export function PettyCashClient({
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden shadow-sm">
+          <div className="bg-card rounded-2xl border border-zinc-200 overflow-hidden shadow-sm">
             <Table>
-              <TableHeader className="bg-zinc-50 border-b border-zinc-200">
+              <TableHeader className="bg-muted/50 border-b border-zinc-200">
                 <TableRow>
                   <TableHead className="font-bold py-4 pl-6">Transaction / Description</TableHead>
                   <TableHead className="font-bold">Fund / Branch</TableHead>
@@ -476,7 +476,7 @@ export function PettyCashClient({
                   </TableRow>
                 ) : (
                   filteredTransactions.map(tx => (
-                    <TableRow key={tx.id} className="hover:bg-zinc-50/50">
+                    <TableRow key={tx.id} className="hover:bg-muted/50">
                       <TableCell className="py-4 pl-6">
                         <div className="font-bold text-zinc-900">{tx.description || tx.type}</div>
                         <div className="text-[11px] text-zinc-400 mt-1">
@@ -684,7 +684,7 @@ export function PettyCashClient({
             ) : (
               <div className="space-y-4 py-4">
                 {transactions.map(tx => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-zinc-50/50">
+                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-muted/30">
                     <div className="flex items-center gap-4">
                       <div className={cn(
                         "p-2 rounded-lg",

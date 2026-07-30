@@ -76,44 +76,44 @@ export default async function StaffMemberPage({
 
   return (
     <Suspense>
-      <div className="flex flex-col gap-8 p-8 bg-gray-50/50 min-h-screen overflow-y-scroll">
+      <div className="flex flex-col gap-8 p-8 bg-background min-h-screen overflow-y-scroll">
         <StaffDetailHeader member={member} />
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="bg-white border p-1 h-auto gap-1 overflow-x-auto">
+          <TabsList className="bg-card border p-1 h-auto gap-1 overflow-x-auto">
             <TabsTrigger
               value="overview"
-              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-[#1D1D1F]">
               <LayoutDashboard size={16} />
               Overview
             </TabsTrigger>
             <TabsTrigger
               value="performance"
-              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-[#1D1D1F]">
               <BarChart3 size={16} />
               Performance
             </TabsTrigger>
             <TabsTrigger
               value="activity"
-              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-[#1D1D1F]">
               <Activity size={16} />
               Activity
             </TabsTrigger>
             <TabsTrigger
               value="settings"
-              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-[#1D1D1F]">
               <Settings size={16} />
               Settings
             </TabsTrigger>
             <TabsTrigger
               value="shifts"
-              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-[#1D1D1F]">
               <Clock size={16} />
               Shifts
             </TabsTrigger>
             <TabsTrigger
               value="departments"
-              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-[#1D1D1F]">
               <Building2 size={16} />
               Departments
             </TabsTrigger>
