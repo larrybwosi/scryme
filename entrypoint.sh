@@ -6,11 +6,20 @@ set -e
 echo "Starting container in directory: $(pwd)"
 
 # ---------------------------------------------------------
-# 1. Nginx / Static Site Environment (e.g., Bakery)
+# 1. Static Site Environment (e.g., Bakery, Docs)
 # ---------------------------------------------------------
-# Static sites have their HTML/JS files in /usr/share/nginx/html
+# Static sites have their HTML/JS files in /usr/share/nginx/html, /app/dist, or ./dist
+STATIC_DIR=""
 if [ -d "/usr/share/nginx/html" ]; then
-  echo "Detected Nginx static site environment..."
+  STATIC_DIR="/usr/share/nginx/html"
+elif [ -d "/app/dist" ]; then
+  STATIC_DIR="/app/dist"
+elif [ -d "dist" ]; then
+  STATIC_DIR="dist"
+fi
+
+if [ -n "$STATIC_DIR" ]; then
+  echo "Detected static site environment in $STATIC_DIR..."
 
   # Replace VITE_ placeholders in JavaScript files
   echo "Replacing VITE_ placeholders in JavaScript files..."
@@ -20,7 +29,7 @@ if [ -d "/usr/share/nginx/html" ]; then
     if [ -n "$val" ]; then
       echo "Injecting $var=$val"
       escaped_val=$(echo "$val" | sed 's/[/&\]/\\&/g')
-      find /usr/share/nginx/html -type f -name "*.js" -exec sed -i "s/APP_${var}_PLACEHOLDER/$escaped_val/g" {} +
+      find "$STATIC_DIR" -type f -name "*.js" -exec sed -i "s/APP_${var}_PLACEHOLDER/$escaped_val/g" {} +
     fi
   done
 
@@ -30,8 +39,11 @@ if [ -d "/usr/share/nginx/html" ]; then
     sed -i "s/LISTEN_PORT/${PORT:-3003}/g" /etc/nginx/conf.d/default.conf
   fi
 
-  echo "Starting Nginx..."
-  exec nginx -g "daemon off;"
+  # Start Nginx only if it is installed
+  if command -v nginx > /dev/null 2>&1; then
+    echo "Starting Nginx..."
+    exec nginx -g "daemon off;"
+  fi
 fi
 
 # ---------------------------------------------------------
