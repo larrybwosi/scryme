@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, forwardRef, Inject } from "@nestjs/common";
+import * as crypto from "crypto";
 import { PrismaService } from "../../prisma/prisma.service";
 import type { V2ApiContext } from "@repo/shared/api/v2";
 import { StockMovementReportService } from "../../v3/modules/inventory/application/services/stock-movement-report.service";
@@ -147,8 +148,9 @@ export class WorkflowsService {
       config = await (this.prisma.client as any).windmillConfiguration.create({
         data: {
           organizationId: ctx.organizationId,
+          // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable simulated keys
           windmillApiKey:
-            "simulated_key_" + Math.random().toString(36).substring(7),
+            "simulated_key_" + crypto.randomBytes(4).toString("hex"),
           windmillBaseUrl: "https://windmill.internal",
           workspaceId: "ws_" + ctx.organizationId.substring(0, 8),
           workspaceName: "Org Workspace",
@@ -218,7 +220,8 @@ export class WorkflowsService {
       data: {
         organizationId: ctx.organizationId,
         configId: config.id,
-        jobId: "job_" + Math.random().toString(36).substring(7),
+        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable simulated job IDs
+        jobId: "job_" + crypto.randomBytes(4).toString("hex"),
         scriptPath: path,
         dealioEventType: "MANUAL_TRIGGER",
         correlationId: "manual_" + Date.now(),

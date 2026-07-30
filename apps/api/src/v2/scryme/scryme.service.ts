@@ -476,7 +476,8 @@ export class ScrymeService {
         data: {
           organizationId: config.organizationId,
           configId: config.organization.windmillConfiguration.id,
-          jobId: `scryme_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable job IDs
+          jobId: `scryme_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
           scriptPath,
           dealioEventType: "SCRYME_ACTION",
           correlationId: message.id,
