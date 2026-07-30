@@ -120,7 +120,7 @@ export function InventoryTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <SortableHeader title="Product name" column="name" />
+            <SortableHeader title="Item name" column="name" />
             <TableHead>SKU</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Supplier</TableHead>
@@ -133,7 +133,7 @@ export function InventoryTable({
           {data.length === 0 ? (
             <TableRow>
               <TableCell colSpan={7} className="h-24 text-center">
-                No products found.
+                No items found.
               </TableCell>
             </TableRow>
           ) : (
@@ -153,11 +153,20 @@ export function InventoryTable({
                         <Package className="w-5 h-5 text-gray-400" />
                       )}
                     </div>
-                    <Link
-                      href={`/inventory/products/${item.id}`}
-                      className="font-medium text-sm hover:underline hover:text-zinc-900">
-                      {item.name}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/inventory/products/${item.id}`}
+                        className="font-medium text-sm hover:underline hover:text-zinc-900">
+                        {item.name}
+                      </Link>
+                      {item.type === "RAW_MATERIAL" && (
+                        <Badge
+                          variant="secondary"
+                          className="bg-orange-100 text-orange-700 text-[10px] px-1.5 py-0.5 h-4 border-none hover:bg-orange-100">
+                          Raw Material
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-gray-500">

@@ -60,7 +60,7 @@ export default async function InventoryPage({
     <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Inventory</h1>
+          <h1 className="text-2xl font-bold text-foreground">Items</h1>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/inventory/pricelists">
@@ -88,7 +88,7 @@ export default async function InventoryPage({
           <ProductSheet categories={categories} currency={currency}>
             <Button className="gap-2">
               <Plus size={16} />
-              <span>Add Product</span>
+              <span>Add Item</span>
             </Button>
           </ProductSheet>
         </div>
@@ -98,7 +98,7 @@ export default async function InventoryPage({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 border-b w-fit pb-1">
             <button className="px-4 py-2 text-sm font-medium border-b-2 border-black mb-[-6px]">
-              All product
+              All items
             </button>
             <button className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-gray-600 flex items-center gap-1">
               <Plus size={14} />
