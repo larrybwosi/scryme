@@ -13,8 +13,13 @@ interface BreadcrumbsProps {
 
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   return (
-    <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
-      <Link href="/" className="hover:text-foreground transition-colors">
+    <nav aria-label="Breadcrumb" className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
+      <Link
+        href="/"
+        className="hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+        aria-label="Home"
+        title="Home"
+      >
         <Home className="w-4 h-4" />
       </Link>
       {items.map((item, index) => (
@@ -23,7 +28,8 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
           {item.href ? (
             <Link
               href={item.href}
-              className="hover:text-foreground transition-colors">
+              className="hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+            >
               {item.label}
             </Link>
           ) : (
