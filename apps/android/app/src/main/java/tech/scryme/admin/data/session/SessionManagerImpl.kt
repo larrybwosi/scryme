@@ -129,7 +129,7 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
     private val _activeOrgId = MutableStateFlow<String?>(getStringSafely("ACTIVE_ORG_ID", null))
     override val activeOrgId: StateFlow<String?> = _activeOrgId.asStateFlow()
 
-    private val _baseUrl = MutableStateFlow<String?>(getStringSafely("BASE_URL", "https://api.scryme.tech"))
+    private val _baseUrl = MutableStateFlow<String?>(getStringSafely("BASE_URL", "https://api.scryme.tech/"))
     override val baseUrl: StateFlow<String?> = _baseUrl.asStateFlow()
 
     private val _userEmail = MutableStateFlow<String?>(getStringSafely("USER_EMAIL", null))
@@ -152,10 +152,14 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
     override val autoLoginEnabled: StateFlow<Boolean> = _autoLoginEnabled.asStateFlow()
 
     override fun saveBaseUrl(url: String?) {
-        _baseUrl.value = url
+        var formattedUrl = url
+        if (!formattedUrl.isNullOrBlank() && !formattedUrl.endsWith("/")) {
+            formattedUrl = "$formattedUrl/"
+        }
+        _baseUrl.value = formattedUrl
         writeSafely {
-            if (url != null) {
-                putString("BASE_URL", url)
+            if (formattedUrl != null) {
+                putString("BASE_URL", formattedUrl)
             } else {
                 remove("BASE_URL")
             }
