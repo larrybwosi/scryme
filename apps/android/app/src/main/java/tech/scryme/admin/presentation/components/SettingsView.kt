@@ -10,7 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,25 +24,38 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
 import tech.scryme.admin.presentation.theme.ScrymeColors
+import tech.scryme.admin.domain.session.SessionManager
 
 @Composable
 fun SettingsView(
     presenceViewModel: PresenceViewModel,
-    activeOrg: String,
+    sessionManager: SessionManager,
     onBackToHome: () -> Unit
 ) {
     val context = LocalContext.current
     val branches by presenceViewModel.branches.collectAsState()
+
+    // Configuration preferences from SessionManager
+    val themePref by sessionManager.themePreference.collectAsState()
+    val syncIntervalPref by sessionManager.syncIntervalSeconds.collectAsState()
+    val notificationsPref by sessionManager.notificationsEnabled.collectAsState()
+    val autoLoginPref by sessionManager.autoLoginEnabled.collectAsState()
+    val currentBaseUrl by sessionManager.baseUrl.collectAsState()
 
     var newBranchName by remember { mutableStateOf("") }
     var newBranchCode by remember { mutableStateOf("") }
     var newBranchType by remember { mutableStateOf("RETAIL_SHOP") }
     var showTypeDropdown by remember { mutableStateOf(false) }
 
+    // Customization states
+    var showThemeDropdown by remember { mutableStateOf(false) }
+    var showSyncDropdown by remember { mutableStateOf(false) }
+    var customUrlInput by remember { mutableStateOf(currentBaseUrl ?: "https://api.scryme.tech") }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ScrymeColors.InkBg)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 12.dp, bottom = 24.dp),
@@ -57,7 +70,7 @@ fun SettingsView(
                 onClick = onBackToHome,
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
-                    .background(ScrymeColors.SteelDark.copy(alpha = 0.6f))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f))
                     .border(1.dp, ScrymeColors.Paper.copy(alpha = 0.08f), RoundedCornerShape(10.dp))
             ) {
                 Icon(
@@ -78,7 +91,7 @@ fun SettingsView(
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
                 Text(
-                    text = "Branch & Settings",
+                    text = "Customization & Settings",
                     color = ScrymeColors.Paper,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
@@ -86,10 +99,302 @@ fun SettingsView(
             }
         }
 
+        // --- PREFERENCES & CUSTOMIZATION CARD ---
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
+            border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.08f)),
+            shape = RoundedCornerShape(16.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Text(
+                    text = "PREFERENCES & CUSTOMIZATION",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.2.sp,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                // 1. Theme selection dropdown
+                Text(
+                    text = "APP THEME",
+                    color = ScrymeColors.SoftGray.copy(alpha = 0.55f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { showThemeDropdown = !showThemeDropdown },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, ScrymeColors.SoftGray.copy(alpha = 0.18f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            contentColor = ScrymeColors.Paper
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp, horizontal = 16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Star,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(text = themePref, color = ScrymeColors.Paper, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                            }
+                            Text(text = if (showThemeDropdown) "▲" else "▼", color = ScrymeColors.SoftGray.copy(alpha = 0.6f), fontSize = 10.sp)
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showThemeDropdown,
+                        onDismissRequest = { showThemeDropdown = false },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                    ) {
+                        listOf("Deep Navy", "Amoled Black", "Forest Dark").forEach { themeName ->
+                            DropdownMenuItem(
+                                text = { Text(themeName, color = ScrymeColors.Paper, fontSize = 13.sp) },
+                                onClick = {
+                                    sessionManager.saveThemePreference(themeName)
+                                    showThemeDropdown = false
+                                    Toast.makeText(context, "Theme updated to: $themeName", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 2. Sync / refresh rate dropdown
+                Text(
+                    text = "SYNC INTERVAL",
+                    color = ScrymeColors.SoftGray.copy(alpha = 0.55f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { showSyncDropdown = !showSyncDropdown },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, ScrymeColors.SoftGray.copy(alpha = 0.18f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            contentColor = ScrymeColors.Paper
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp, horizontal = 16.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "Every $syncIntervalPref seconds",
+                                    color = ScrymeColors.Paper,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            Text(text = if (showSyncDropdown) "▲" else "▼", color = ScrymeColors.SoftGray.copy(alpha = 0.6f), fontSize = 10.sp)
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showSyncDropdown,
+                        onDismissRequest = { showSyncDropdown = false },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
+                    ) {
+                        listOf(5, 10, 30, 60).forEach { seconds ->
+                            DropdownMenuItem(
+                                text = { Text("$seconds seconds", color = ScrymeColors.Paper, fontSize = 13.sp) },
+                                onClick = {
+                                    sessionManager.saveSyncInterval(seconds)
+                                    showSyncDropdown = false
+                                    Toast.makeText(context, "Refresh interval configured to: $seconds seconds", Toast.LENGTH_SHORT).show()
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // 3. Toggles for Notifications & Auto-Login
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Notifications,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text("Approval Notifications", color = ScrymeColors.Paper, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Alerts for price & stock approvals", color = ScrymeColors.SoftGray.copy(alpha = 0.6f), fontSize = 10.5.sp)
+                        }
+                    }
+                    Switch(
+                        checked = notificationsPref,
+                        onCheckedChange = {
+                            sessionManager.saveNotificationsEnabled(it)
+                            Toast.makeText(context, if (it) "Notifications enabled" else "Notifications muted", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.scale(0.8f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Lock,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text("Remember Credentials", color = ScrymeColors.Paper, fontSize = 13.5.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Store secure login for auto-sign in", color = ScrymeColors.SoftGray.copy(alpha = 0.6f), fontSize = 10.5.sp)
+                        }
+                    }
+                    Switch(
+                        checked = autoLoginPref,
+                        onCheckedChange = {
+                            sessionManager.saveAutoLoginEnabled(it)
+                            Toast.makeText(context, if (it) "Remember login active" else "Credentials won't be saved", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.scale(0.8f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+                HorizontalDivider(color = ScrymeColors.SoftGray.copy(alpha = 0.08f), modifier = Modifier.padding(vertical = 12.dp))
+
+                // 4. API Endpoint Customizer directly in settings
+                Text(
+                    text = "ACTIVE SERVER ENDPOINT",
+                    color = ScrymeColors.SoftGray.copy(alpha = 0.55f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = customUrlInput,
+                    onValueChange = { customUrlInput = it },
+                    label = { Text("Server Endpoint URL", color = ScrymeColors.SoftGray.copy(alpha = 0.6f)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.18f),
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        cursorColor = MaterialTheme.colorScheme.primary,
+                        focusedTextColor = ScrymeColors.Paper,
+                        unfocusedTextColor = ScrymeColors.Paper
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Presets & Apply Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            customUrlInput = "https://api.scryme.tech"
+                            sessionManager.saveBaseUrl("https://api.scryme.tech")
+                            Toast.makeText(context, "Cloud Server configured", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, ScrymeColors.SoftGray.copy(alpha = 0.15f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            contentColor = ScrymeColors.Paper
+                        )
+                    ) {
+                        Text("Cloud", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            customUrlInput = "http://10.0.2.2:3002"
+                            sessionManager.saveBaseUrl("http://10.0.2.2:3002")
+                            Toast.makeText(context, "Local Emulator configured", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, ScrymeColors.SoftGray.copy(alpha = 0.15f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.background,
+                            contentColor = ScrymeColors.Paper
+                        )
+                    ) {
+                        Text("Emulator", fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Button(
+                        onClick = {
+                            val cleaned = customUrlInput.trim().removeSuffix("/")
+                            sessionManager.saveBaseUrl(cleaned)
+                            Toast.makeText(context, "Node updated: $cleaned", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.background
+                        )
+                    ) {
+                        Text("Apply", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+
         // Branch registry management card
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark.copy(alpha = 0.9f)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
             border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.08f)),
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -97,7 +402,7 @@ fun SettingsView(
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
                     text = "BRANCH REGISTRY",
-                    color = ScrymeColors.Brass,
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 1.2.sp,
@@ -117,7 +422,7 @@ fun SettingsView(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(ScrymeColors.InkBg)
+                                    .background(MaterialTheme.colorScheme.background)
                                     .border(1.dp, ScrymeColors.Paper.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
                                     .padding(14.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -151,7 +456,7 @@ fun SettingsView(
                                             checkedThumbColor = ScrymeColors.Paper,
                                             checkedTrackColor = ScrymeColors.GreenLogo.copy(alpha = 0.5f),
                                             uncheckedThumbColor = ScrymeColors.SoftGray,
-                                            uncheckedTrackColor = ScrymeColors.InkBg
+                                            uncheckedTrackColor = MaterialTheme.colorScheme.background
                                         ),
                                         modifier = Modifier.scale(0.8f)
                                     )
@@ -166,7 +471,7 @@ fun SettingsView(
         // Add branch form
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark.copy(alpha = 0.9f)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)),
             border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.08f)),
             shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
@@ -174,7 +479,7 @@ fun SettingsView(
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(
                     text = "REGISTER NEW BRANCH",
-                    color = ScrymeColors.Brass,
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     letterSpacing = 1.2.sp,
@@ -189,10 +494,10 @@ fun SettingsView(
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ScrymeColors.Brass,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.18f),
-                        focusedLabelColor = ScrymeColors.Brass,
-                        cursorColor = ScrymeColors.Brass,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        cursorColor = MaterialTheme.colorScheme.primary,
                         focusedTextColor = ScrymeColors.Paper,
                         unfocusedTextColor = ScrymeColors.Paper
                     )
@@ -208,10 +513,10 @@ fun SettingsView(
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ScrymeColors.Brass,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
                         unfocusedBorderColor = ScrymeColors.SoftGray.copy(alpha = 0.18f),
-                        focusedLabelColor = ScrymeColors.Brass,
-                        cursorColor = ScrymeColors.Brass,
+                        focusedLabelColor = MaterialTheme.colorScheme.primary,
+                        cursorColor = MaterialTheme.colorScheme.primary,
                         focusedTextColor = ScrymeColors.Paper,
                         unfocusedTextColor = ScrymeColors.Paper
                     )
@@ -234,7 +539,7 @@ fun SettingsView(
                         modifier = Modifier.fillMaxWidth(),
                         border = BorderStroke(1.dp, ScrymeColors.SoftGray.copy(alpha = 0.18f)),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            containerColor = ScrymeColors.InkBg,
+                            containerColor = MaterialTheme.colorScheme.background,
                             contentColor = ScrymeColors.Paper
                         ),
                         shape = RoundedCornerShape(12.dp),
@@ -253,7 +558,7 @@ fun SettingsView(
                     DropdownMenu(
                         expanded = showTypeDropdown,
                         onDismissRequest = { showTypeDropdown = false },
-                        modifier = Modifier.background(ScrymeColors.SteelDark)
+                        modifier = Modifier.background(MaterialTheme.colorScheme.surface)
                     ) {
                         listOf("RETAIL_SHOP", "WAREHOUSE", "KITCHEN", "OFFICE").forEach { type ->
                             DropdownMenuItem(
@@ -283,7 +588,10 @@ fun SettingsView(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = ScrymeColors.Brass, contentColor = ScrymeColors.InkBg),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.background
+                    ),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {

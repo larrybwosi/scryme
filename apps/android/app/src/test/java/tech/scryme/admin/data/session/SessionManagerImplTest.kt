@@ -2,6 +2,8 @@ package tech.scryme.admin.data.session
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class SessionManagerImplTest {
@@ -61,5 +63,28 @@ class SessionManagerImplTest {
         assertEquals("token_123", sessionManager.token.value)
         assertEquals("new_slug", sessionManager.activeOrgSlug.value)
         assertEquals("new_id", sessionManager.activeOrgId.value)
+    }
+
+    @Test
+    fun `customization preferences have expected defaults and update correctly`() {
+        val sessionManager = SessionManagerImpl(context = null)
+
+        // Verify Defaults
+        assertEquals("Deep Navy", sessionManager.themePreference.value)
+        assertEquals(10, sessionManager.syncIntervalSeconds.value)
+        assertTrue(sessionManager.notificationsEnabled.value)
+        assertTrue(sessionManager.autoLoginEnabled.value)
+
+        // Save new values
+        sessionManager.saveThemePreference("Forest Dark")
+        sessionManager.saveSyncInterval(30)
+        sessionManager.saveNotificationsEnabled(false)
+        sessionManager.saveAutoLoginEnabled(false)
+
+        // Verify values updated successfully
+        assertEquals("Forest Dark", sessionManager.themePreference.value)
+        assertEquals(30, sessionManager.syncIntervalSeconds.value)
+        assertFalse(sessionManager.notificationsEnabled.value)
+        assertFalse(sessionManager.autoLoginEnabled.value)
     }
 }
