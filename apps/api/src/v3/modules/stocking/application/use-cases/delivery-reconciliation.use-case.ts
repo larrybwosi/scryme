@@ -290,6 +290,28 @@ export class DeliveryReconciliationUseCase {
         // Simple proportional return for now
         const returnRatio = qtyReturned / (fulfillment.quantityHandedOver || 1);
 
+        const variantIds = fulfillment.transaction.items
+          .map((i) => i.variantId)
+          .filter(Boolean) as string[];
+
+        // ⚡ Bolt Optimization: Batch pre-fetch all matching stock batches to eliminate N+1 queries.
+        // Indexing latest batches by variantId allows O(1) constant-time lookup.
+        const allBatches = await tx.stockBatch.findMany({
+          where: {
+            variantId: { in: variantIds },
+            locationId: fulfillment.transaction.locationId,
+            organizationId,
+          },
+          orderBy: { receivedDate: "desc" },
+        });
+
+        const latestBatchByVariant = new Map<string, any>();
+        for (const b of allBatches) {
+          if (!latestBatchByVariant.has(b.variantId)) {
+            latestBatchByVariant.set(b.variantId, b);
+          }
+        }
+
         for (const item of fulfillment.transaction.items) {
           const itemQtyToReturn = Math.round(
             Number(item.quantity) * returnRatio,
@@ -331,19 +353,14 @@ export class DeliveryReconciliationUseCase {
               }
             }
 
-            const batch = await tx.stockBatch.findFirst({
-              where: {
-                variantId: item.variantId,
-                locationId: fulfillment.transaction.locationId,
-              },
-              orderBy: { receivedDate: "desc" },
-            });
+            const batch = latestBatchByVariant.get(item.variantId);
 
             if (batch) {
               await tx.stockBatch.update({
                 where: { id: batch.id },
                 data: { currentQuantity: { increment: qtyToRestock } },
               });
+              batch.currentQuantity = Number(batch.currentQuantity) + qtyToRestock;
             }
 
             await tx.productVariantStock.update({

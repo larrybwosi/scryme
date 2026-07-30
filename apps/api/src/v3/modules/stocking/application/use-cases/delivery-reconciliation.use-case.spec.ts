@@ -1,6 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { DeliveryReconciliationUseCase } from "./delivery-reconciliation.use-case";
 import { TransactionStatus, FulfillmentStatus } from "@repo/db";
+import { ReconciliationOutcome } from "../dto/delivery.dto";
 
 describe("DeliveryReconciliationUseCase", () => {
   let deliveryReconciliationUseCase: DeliveryReconciliationUseCase;
@@ -10,10 +11,40 @@ describe("DeliveryReconciliationUseCase", () => {
   const mockOrgId = "org-1";
 
   beforeEach(() => {
-    mockTx = {};
+    mockTx = {
+      fulfillment: {
+        findFirst: vi.fn(),
+      },
+      transaction: {
+        update: vi.fn(),
+      },
+      deliveryPartner: {
+        update: vi.fn(),
+      },
+      partnerWalletLog: {
+        create: vi.fn(),
+      },
+      return: {
+        create: vi.fn(),
+      },
+      returnItem: {
+        create: vi.fn(),
+      },
+      stockBatch: {
+        findMany: vi.fn(),
+        update: vi.fn(),
+      },
+      productVariantStock: {
+        update: vi.fn(),
+      },
+      stockMovement: {
+        create: vi.fn(),
+      },
+    };
 
     prisma = {
       client: {
+        $transaction: vi.fn(async (callback) => await callback(mockTx)),
         transaction: {
           findMany: vi.fn(),
         },
@@ -162,6 +193,90 @@ describe("DeliveryReconciliationUseCase", () => {
       });
 
       expect(result).toEqual(mockFulfillments);
+    });
+  });
+
+  describe("reconcilePod", () => {
+    it("should successfully reconcile delivered quantities and update transaction and delivery partner benefit", async () => {
+      const mockFulfillment = {
+        id: "ful-1",
+        transactionId: "tx-1",
+        quantityHandedOver: 10,
+        transaction: {
+          id: "tx-1",
+          number: "TX-1",
+          finalTotal: 200,
+          deliveryPartner: {
+            id: "dp-1",
+            benefitType: "COMMISSION",
+            commissionRate: 10,
+            walletBalance: 50,
+          },
+          items: [
+            {
+              id: "item-1",
+              variantId: "var-1",
+              quantity: 10,
+              unitPrice: 20,
+              variant: { baseUnitId: "unit-1" },
+            },
+          ],
+        },
+      };
+
+      mockTx.fulfillment.findFirst.mockResolvedValue(mockFulfillment);
+
+      const dto = {
+        fulfillmentId: "ful-1",
+        outcome: ReconciliationOutcome.DELIVERED,
+        quantityDelivered: 10,
+      };
+
+      const result = await deliveryReconciliationUseCase.reconcilePod(
+        mockOrgId,
+        "member-1",
+        dto as any,
+      );
+
+      expect(mockTx.fulfillment.findFirst).toHaveBeenCalledWith({
+        where: { id: "ful-1", transaction: { organizationId: mockOrgId } },
+        include: expect.any(Object),
+      });
+
+      expect(mockTx.transaction.update).toHaveBeenCalledWith({
+        where: { id: "tx-1" },
+        data: expect.objectContaining({
+          status: TransactionStatus.COMPLETED,
+        }),
+      });
+
+      expect(mockTx.deliveryPartner.update).toHaveBeenCalledWith({
+        where: { id: "dp-1" },
+        data: { walletBalance: 70 }, // 50 + 20 (10% of 200)
+      });
+
+      expect(mockTx.partnerWalletLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          partnerId: "dp-1",
+          amount: 20,
+          balanceAfter: 70,
+        }),
+      });
+
+      expect(result).toEqual({ success: true });
+    });
+
+    it("should throw NotFoundException if fulfillment is not found", async () => {
+      mockTx.fulfillment.findFirst.mockResolvedValue(null);
+
+      const dto = {
+        fulfillmentId: "non-existent",
+        outcome: ReconciliationOutcome.DELIVERED,
+      };
+
+      await expect(
+        deliveryReconciliationUseCase.reconcilePod(mockOrgId, "member-1", dto as any),
+      ).rejects.toThrow();
     });
   });
 });

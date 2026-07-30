@@ -1086,6 +1086,14 @@ export async function fulfillStockRequestItems(data: {
     throw new Error("Unauthorized");
 
   const result = await db.$transaction(async tx => {
+    // ⚡ Bolt Optimization: Pre-fetch the product variant once up-front to completely eliminate
+    // redundant/N+1 database lookups inside the target location loop and nested item mapping.
+    const variant = await tx.productVariant.findUnique({
+      where: { id: data.variantId },
+      select: { buyingPrice: true },
+    });
+    const buyingPrice = variant?.buyingPrice || new Decimal(0);
+
     // 1. Create the fulfillment record (StockTransfer or Purchase)
     if (data.fulfillmentType === "TRANSFER") {
       if (!data.fromLocationId)
@@ -1120,19 +1128,13 @@ export async function fulfillStockRequestItems(data: {
             requestedById: context.memberId,
             status: "PENDING_APPROVAL",
             items: {
-              create: await Promise.all(
-                itemsForThisLocation.map(async item => {
-                  const variant = await tx.productVariant.findUnique({
-                    where: { id: data.variantId },
-                    select: { buyingPrice: true },
-                  });
-                  return {
-                    variantId: data.variantId,
-                    requestedQuantity: new Decimal(item.quantity),
-                    unitCost: variant?.buyingPrice || new Decimal(0),
-                  };
-                }),
-              ),
+              // ⚡ Bolt Optimization: Replaced async mapping with clean, synchronous map.
+              // This completely bypasses the previous inner N+1 query pattern.
+              create: itemsForThisLocation.map(item => ({
+                variantId: data.variantId,
+                requestedQuantity: new Decimal(item.quantity),
+                unitCost: buyingPrice,
+              })),
             },
           },
         });
@@ -1156,14 +1158,8 @@ export async function fulfillStockRequestItems(data: {
 
       const purchaseNumber = `PO-REQ-${Date.now()}`;
 
-      const variant = await tx.productVariant.findUnique({
-        where: { id: data.variantId },
-        select: { buyingPrice: true },
-      });
-      const unitCost = variant?.buyingPrice || new Decimal(0);
-
       const totalQuantity = data.items.reduce((acc, i) => acc + i.quantity, 0);
-      const totalAmount = unitCost.mul(totalQuantity);
+      const totalAmount = buyingPrice.mul(totalQuantity);
 
       const purchase = await tx.purchase.create({
         data: {
@@ -1181,7 +1177,7 @@ export async function fulfillStockRequestItems(data: {
               {
                 variantId: data.variantId,
                 orderedQuantity: totalQuantity,
-                unitCost: unitCost,
+                unitCost: buyingPrice,
                 totalCost: totalAmount,
               },
             ],
