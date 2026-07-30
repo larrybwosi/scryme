@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://api.scryme.tech")
+            .baseUrl("https://api.scryme.tech/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
