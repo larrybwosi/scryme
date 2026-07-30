@@ -157,3 +157,7 @@
 ## 2026-07-29 - [Eliminating O(N*M) scans in Transactional Operations]
 **Learning:** Performing nested collection scans (such as filtering or finding items from an order list inside variant/batch loops) results in severe O(N*M) performance bottlenecks under high item volumes. Pre-grouping list elements into a Map by their relational identifiers (such as `variantId`) prior to loop entry allows O(1) retrieval of relevant slices, transforming execution complexity to an optimal O(N+M) or O(N).
 **Action:** Always pre-group array inputs into Map-based indices before iterating through parent entity trees when doing complex transactional allocations or availability checks.
+
+## 2026-07-30 - [Redundant N+1 Query Elimination in Stock Request Fulfillment]
+**Learning:** Querying metadata (such as `buyingPrice` of the parent `variantId`) inside a loop over line items (like `itemsForThisLocation.map(...)`) within stock transaction blocks is a critical performance anti-pattern. Since the root entity identifier remains identical across items, moving this lookup up-front before loops or conditional blocks completely resolves the N+1 query overhead, reducing database operations inside the transaction block significantly.
+**Action:** Always pre-fetch and cache singular properties and metadata before executing loop iterations or mapping arrays within transactions.

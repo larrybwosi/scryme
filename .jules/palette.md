@@ -21,3 +21,7 @@
 ## 2026-07-28 - [Keyboard Visibility of Hover-Only Action Buttons]
 **Learning:** Interactive action buttons that are hidden by default via hover-only classes (e.g., `opacity-0 group-hover:opacity-100`) become invisible focus traps for keyboard-only users who tab through the interface. Adding focus-within and focus-visible classes ensures they are rendered fully visible when they or their parents receive keyboard focus.
 **Action:** Always complement hover-only visibility toggles (`group-hover:opacity-100`) with `group-focus-within:opacity-100` and `focus-visible:opacity-100` (or `focus-within:opacity-100`) to ensure full interactive visibility for keyboard-only or non-visual navigation.
+
+## 2026-07-29 - [Inline-Editing Input Blur Race Condition and Revert Mechanics]
+**Learning:** In inline-editing input fields, clicking on external action buttons (like Save/Cancel) normally triggers the input's `onBlur` handler before the button's `onClick` can fire, which often prematurely unmounts the editing state and swallows the button click. Additionally, direct state mutation during typing prevents the user from canceling or reverting changes gracefully.
+**Action:** Always decouple active state from an edit buffer (e.g., using a `tempName` state) to support clean cancel/revert mechanics on `Escape` keypress or Cancel clicks. To prevent input `onBlur` from pre-empting button click handlers, use `onMouseDown={(e) => e.preventDefault()}` on the action buttons.

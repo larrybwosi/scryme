@@ -11,6 +11,7 @@ import {
   AllocationStatus,
   Prisma,
 } from "@repo/db";
+import * as crypto from "crypto";
 import { createAuditLog } from "../../lib/logs/logger";
 import {
   OrderFilterSchema,
@@ -373,7 +374,8 @@ export async function createOrder(
         else if (totalPaidAmount.gt(0))
           calcPaymentStatus = PaymentStatus.PARTIALLY_PAID;
 
-        const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
+        const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${crypto.randomBytes(2).toString("hex").slice(0, 3).toUpperCase()}`;
 
         // 7. --- Update Stock (Deduct immediately for orders) ---
         if (enableStockTracking && locationId) {

@@ -24,6 +24,8 @@ async function TransactionList({
     paymentStatus?: string;
     locationId?: string;
     sortBy?: string;
+    startDate?: string;
+    endDate?: string;
   };
   organizationId?: string;
 }) {
@@ -34,6 +36,8 @@ async function TransactionList({
     paymentStatus: searchParams.paymentStatus as PaymentStatus | "all",
     locationId: searchParams.locationId,
     sortBy: searchParams.sortBy,
+    startDate: searchParams.startDate ? new Date(searchParams.startDate) : undefined,
+    endDate: searchParams.endDate ? new Date(searchParams.endDate) : undefined,
   });
 
   return (
@@ -63,6 +67,8 @@ export default async function TransactionsPage(props: {
     paymentStatus?: string;
     locationId?: string;
     sortBy?: string;
+    startDate?: string;
+    endDate?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;

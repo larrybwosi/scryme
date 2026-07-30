@@ -9,6 +9,7 @@ import {
   prisma as db,
   Prisma,
 } from "@repo/db";
+import * as crypto from "crypto";
 import {
   ProcessSaleInput,
   ProcessSaleResult,
@@ -401,7 +402,7 @@ export async function processSale(
         // --- 7. Create Transaction ---
         const newTransactionNumber =
           saleNumber ||
-          `SALE-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+          `SALE-${Date.now().toString().slice(-6)}-${crypto.randomBytes(2).toString("hex").slice(0, 4).toUpperCase()}`;
         const transactionDate = saleDate || new Date();
 
         // Transaction is considered "Complete" operationally if full payment is received
