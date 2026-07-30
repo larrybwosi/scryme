@@ -105,13 +105,13 @@ export function ServicesPageClient({
     description: "",
     sku: "",
     categoryId: "",
-    pricingModel: PricingModel.FIXED,
+    pricingModel: PricingModel.FIXED as PricingModel,
     price: "",
     minPrice: "",
     estimatedDuration: "",
     requiresDeposit: false,
     depositAmount: "",
-    depositType: DepositType.FIXED,
+    depositType: DepositType.FIXED as DepositType,
     isActive: true,
   });
 
