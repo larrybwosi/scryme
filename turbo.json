@@ -12,6 +12,10 @@
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
+    "@repo/v3-sdk#build": {
+      "dependsOn": ["^build", "generate", "generate:sdk"],
+      "outputs": ["dist/**"]
+    },
     "db:migrate:dev": {
       "cache": false,
       "persistent": true
@@ -47,6 +51,7 @@
       "cache": true
     },
     "generate:openapi": {
+      "dependsOn": ["^build"],
       "outputs": ["packages/v3-sdk/openapi.json"],
       "cache": false
     },

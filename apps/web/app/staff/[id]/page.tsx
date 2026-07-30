@@ -35,13 +35,14 @@ export default async function StaffMemberPage({
 }) {
   const { id } = await params;
   const session = await getServerAuth();
-  const [result, membersResult, departmentsResult, organization, shiftsResult] = await Promise.all([
-    getStaffMemberDetail(id),
-    getStaffMembers(),
-    getMemberDepartments(id),
-    getOrganizationSettings(),
-    getStaffShifts(id),
-  ]);
+  const [result, membersResult, departmentsResult, organization, shiftsResult] =
+    await Promise.all([
+      getStaffMemberDetail(id),
+      getStaffMembers(),
+      getMemberDepartments(id),
+      getOrganizationSettings(),
+      getStaffShifts(id),
+    ]);
   const currency = organization?.settings?.defaultCurrency || "USD";
   const memberShifts = (shiftsResult.success ? shiftsResult.data : []) || [];
 
@@ -121,7 +122,11 @@ export default async function StaffMemberPage({
 
           <TabsContent value="overview" className="space-y-6 outline-none">
             <StaffOverview stats={stats} currency={currency} />
-            <StaffDepartments memberships={(departmentsResult.success ? departmentsResult.data : []) ?? []} />
+            <StaffDepartments
+              memberships={
+                (departmentsResult.success ? departmentsResult.data : []) ?? []
+              }
+            />
             <StaffActivity
               transactions={member.transactions}
               attendanceLogs={member.attendanceLogs}

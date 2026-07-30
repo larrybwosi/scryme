@@ -1,9 +1,0 @@
-▲ Next.js 16.2.12
-- Local:         http://localhost:3005
-- Network:       http://0.0.0.0:3005
-✓ Ready in 0ms
-Invalid Sentry Dsn: https://placeholder-dsn@sentry.io/placeholder
-[2m2026-07-29T12:31:18.458Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
-[2m2026-07-29T12:31:18.459Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.
-[2m2026-07-29T12:32:46.061Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET should be at least 32 characters long for adequate security. Generate one with `npx auth secret` or `openssl rand -base64 32`.
-[2m2026-07-29T12:32:46.062Z[0m [33mWARN[0m [1m[Better Auth]:[0m [better-auth] Warning: your BETTER_AUTH_SECRET appears low-entropy. Use a randomly generated secret for production.

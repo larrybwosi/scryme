@@ -10,6 +10,7 @@ import tech.scryme.admin.presentation.viewmodel.AnalyticsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnnouncementViewModel
 import tech.scryme.admin.presentation.viewmodel.ScanViewModel
 import tech.scryme.admin.presentation.viewmodel.ExpenseViewModel
+import tech.scryme.admin.domain.session.SessionManager
 import tech.scryme.admin.presentation.theme.ScrymeColors
 
 enum class DashboardScreen {
@@ -36,6 +37,7 @@ fun AdminDashboard(
     announcementViewModel: AnnouncementViewModel,
     scanViewModel: ScanViewModel,
     expenseViewModel: ExpenseViewModel,
+    sessionManager: SessionManager,
     onSignOut: () -> Unit
 ) {
     var currentScreen by remember { mutableStateOf(DashboardScreen.HOME) }
@@ -86,7 +88,7 @@ fun AdminDashboard(
                 )
                 DashboardScreen.SETTINGS -> SettingsView(
                     presenceViewModel = presenceViewModel,
-                    activeOrg = activeOrg,
+                    sessionManager = sessionManager,
                     onBackToHome = { currentScreen = DashboardScreen.HOME }
                 )
                 DashboardScreen.BRANCH_DETAIL -> BranchDetailView(
