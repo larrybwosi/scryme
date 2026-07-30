@@ -85,4 +85,82 @@ describe("StaffSchedulingService", () => {
       expect(isAvailable).toBeDefined();
     });
   });
+
+  describe("getShifts", () => {
+    it("should query all shifts for the organization with no filters", async () => {
+      const orgId = "org-1";
+      const mockShifts = [
+        {
+          id: "shift-1",
+          memberId: "member-1",
+          dayOfWeek: 1,
+          startTime: "09:00",
+          endTime: "17:00",
+        },
+      ];
+
+      vi.spyOn(prisma.client.staffShift, "findMany").mockResolvedValue(mockShifts as any);
+
+      const result = await service.getShifts(orgId, {});
+
+      expect(prisma.client.staffShift.findMany).toHaveBeenCalledWith({
+        where: { organizationId: orgId },
+        include: {
+          breaks: true,
+          member: {
+            select: {
+              id: true,
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      });
+      expect(result).toEqual(mockShifts);
+    });
+
+    it("should query shifts with filters (memberId, dayOfWeek, isActive)", async () => {
+      const orgId = "org-1";
+      const filters = {
+        memberId: "member-2",
+        dayOfWeek: 3,
+        isActive: true,
+      };
+
+      vi.spyOn(prisma.client.staffShift, "findMany").mockResolvedValue([] as any);
+
+      await service.getShifts(orgId, filters);
+
+      expect(prisma.client.staffShift.findMany).toHaveBeenCalledWith({
+        where: {
+          organizationId: orgId,
+          memberId: "member-2",
+          dayOfWeek: 3,
+          isActive: true,
+        },
+        include: {
+          breaks: true,
+          member: {
+            select: {
+              id: true,
+              role: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+  });
 });

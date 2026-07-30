@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   Req,
   Query,
+  UnauthorizedException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -37,6 +38,7 @@ import {
   CreateBookingDto,
   CompleteBookingDto,
 } from "../../application/dto/service.dto";
+import { GetShiftsQueryDto } from "../../application/dto/shift.dto";
 import { BookingStatus } from "@repo/db";
 
 @ApiTags("V3 Services")
@@ -97,6 +99,26 @@ export class ServicesController {
   @ApiOperation({ summary: "List services" })
   async getServices(@Req() req: any) {
     return this.serviceManagement.getServices(req.organization.id);
+  }
+
+  @Get("shifts/me")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "Get current member's shifts" })
+  @ApiResponse({ status: 200, description: "Successfully retrieved shifts of the currently logged-in member" })
+  async getCurrentMemberShifts(@Req() req: any) {
+    const memberId = req.v3Context?.memberId;
+    if (!memberId) {
+      throw new UnauthorizedException("No active member session found");
+    }
+    return this.staffScheduling.getStaffShifts(req.v3Context.organizationId, memberId);
+  }
+
+  @Get("shifts")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "Get all staff shifts for the organization (useful for connected apps)" })
+  @ApiResponse({ status: 200, description: "Successfully retrieved list of staff shifts matching filters" })
+  async getShifts(@Req() req: any, @Query() query: GetShiftsQueryDto) {
+    return this.staffScheduling.getShifts(req.v3Context.organizationId, query);
   }
 
   @Get(":id")
