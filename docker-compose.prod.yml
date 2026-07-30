@@ -19,9 +19,10 @@ services:
           memory: 512M
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 30s
 
   zitadel-db:
     image: postgres:17-alpine
@@ -38,9 +39,10 @@ services:
       - scryme-prod-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 30s
 
   windmill-db:
     image: postgres:17-alpine
@@ -57,9 +59,10 @@ services:
       - scryme-prod-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 30s
 
   # --- INFRASTRUCTURE ---
   redis:
@@ -76,9 +79,10 @@ services:
           memory: 384M
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 15s
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
@@ -98,9 +102,10 @@ services:
       - scryme-prod-network
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "5672"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
+      start_period: 60s
 
   rustfs-perms:
     image: alpine
@@ -110,9 +115,10 @@ services:
     command: sh -c "chown -R 10001:10001 /fix_path && touch /tmp/done && sleep infinity"
     healthcheck:
       test: ["CMD", "test", "-f", "/tmp/done"]
-      interval: 5s
-      timeout: 2s
+      interval: 30s
+      timeout: 5s
       retries: 3
+      start_period: 10s
     networks:
       - scryme-prod-network
 
@@ -139,9 +145,10 @@ services:
           "CMD-SHELL",
           "curl -f http://localhost:9000/health || wget --no-verbose --tries=1 --spider http://localhost:9000/health || nc -z localhost 9000 || exit 1",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
+      start_period: 45s
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
@@ -193,9 +200,10 @@ services:
           "--spider",
           "http://localhost:3100/ready",
         ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
 
   promtail:
     image: grafana/promtail:latest
@@ -260,10 +268,10 @@ services:
           "--spider",
           "http://localhost:8080/debug/healthz",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 60s
     networks:
       - scryme-prod-network
       - proxy
@@ -302,10 +310,10 @@ services:
           "--spider",
           "http://localhost:8000/api/health",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 60s
     networks:
       - scryme-prod-network
       - proxy
@@ -357,10 +365,10 @@ services:
           "--spider",
           "http://localhost:${API_PORT:-4000}/api/v2/health",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 90s
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
       REDIS_HOST: redis
@@ -422,10 +430,10 @@ services:
           "--spider",
           "http://localhost:${CRM_PORT:-3001}/health",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 90s
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
       NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
@@ -476,10 +484,10 @@ services:
           "--spider",
           "http://localhost:${WEB_PORT:-3000}/health",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 90s
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
       NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
@@ -525,10 +533,10 @@ services:
           "--spider",
           "http://localhost:${BAKERY_PORT:-3003}/api/health",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 60s
     environment:
       VITE_API_URL: https://${API_DOMAIN:-api.scryme.tech}
       PORT: ${BAKERY_PORT:-3003}
@@ -573,10 +581,10 @@ services:
           "--spider",
           "http://localhost:${PORTAL_PORT:-3006}/health",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 90s
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
       NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
@@ -623,10 +631,10 @@ services:
           "--spider",
           "http://localhost:${DOCS_PORT:-3008}/api/health",
         ]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 60s
     environment:
       PORT: ${DOCS_PORT:-3008}
     networks:
