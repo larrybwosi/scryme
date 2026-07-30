@@ -1,11 +1,15 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BinariesController } from "../binaries.controller";
-import { NotFoundException, InternalServerErrorException } from "@nestjs/common";
+import { NotFoundException, InternalServerErrorException, BadRequestException } from "@nestjs/common";
 import axios from "axios";
 import { FastifyReply } from "fastify";
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { isSafeUrl } from "@repo/shared/server";
 
 vi.mock("axios");
+vi.mock("@repo/shared/server", () => ({
+  isSafeUrl: vi.fn().mockResolvedValue(true),
+}));
 vi.mock("@repo/env", () => ({
   env: {
     GITHUB_OWNER: "test-owner",
@@ -144,5 +148,21 @@ describe("BinariesController", () => {
     const res = {} as FastifyReply;
 
     await expect(controller.downloadBinary("windows", res)).rejects.toThrow(InternalServerErrorException);
+  });
+
+  it("should throw BadRequestException if URL is unsafe", async () => {
+    (isSafeUrl as any).mockResolvedValueOnce(false);
+
+    const mockRelease = {
+      assets: [
+        { name: "app.msi", browser_download_url: "http://malicious.com/app.msi", size: 1000 },
+      ],
+    };
+
+    (axios.get as any).mockResolvedValueOnce({ data: mockRelease });
+
+    const res = {} as FastifyReply;
+
+    await expect(controller.downloadBinary("windows", res)).rejects.toThrow(BadRequestException);
   });
 });

@@ -582,7 +582,7 @@ export function Cart() {
                           </button>
                         </div>
 
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
                             size="icon"

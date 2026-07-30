@@ -89,10 +89,52 @@ export class CrmRelationshipService {
         OR: [{ sourceRecordId: recordId }, { targetRecordId: recordId }],
         relationship: { organizationId },
       },
-      include: {
-        relationship: true,
-        sourceRecord: true,
-        targetRecord: true,
+      // ⚡ Bolt Optimization: Replacing top-level broad 'include' with targeted nested 'select'.
+      // Selecting only essential crmRecord identity/metadata fields and relationship properties,
+      // while completely bypassing the dynamic JSON 'data' field (which can contain massive payloads
+      // of custom CRM attributes). This drastically reduces database I/O, network footprint,
+      // and object-hydration latency on high-frequency association/sidebar queries.
+      select: {
+        id: true,
+        relationshipId: true,
+        sourceRecordId: true,
+        targetRecordId: true,
+        createdAt: true,
+        updatedAt: true,
+        relationship: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            sourceObjectId: true,
+            targetObjectId: true,
+            sourceLabel: true,
+            targetLabel: true,
+            organizationId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        sourceRecord: {
+          select: {
+            id: true,
+            objectId: true,
+            organizationId: true,
+            ownerId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        targetRecord: {
+          select: {
+            id: true,
+            objectId: true,
+            organizationId: true,
+            ownerId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
       },
     });
   }

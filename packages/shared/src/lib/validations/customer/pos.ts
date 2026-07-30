@@ -39,6 +39,24 @@ export type CreatePosCustomerData = {
     postalCode?: string;
     country?: string;
   };
+  company?: string;
+  avatar?: string;
+  gender?: string;
+  customerType?: string;
+  dateOfBirth?: string;
+  loyaltyPoints?: number;
+  isActive?: boolean;
+  loyaltyTierId?: string;
+  deliveryNotes?: string;
+  pinnedLocation?: any;
+  tags?: string[];
+  isBusiness?: boolean;
+  taxId?: string;
+  medicalHistory?: string;
+  allergies?: string;
+  chronicConditions?: string;
+  insuranceProvider?: string;
+  policyNumber?: string;
 };
 
 // Input validation schema

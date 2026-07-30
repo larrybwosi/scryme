@@ -28,7 +28,7 @@ export class SystemAdminGuard implements CanActivate {
 
     const user = await this.prisma.client.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true },
+      select: { id: true, name: true, email: true, role: true },
     });
 
     if (!user || user.role !== "SUPER_ADMIN") {
@@ -36,6 +36,13 @@ export class SystemAdminGuard implements CanActivate {
         "Only system administrators can perform this action",
       );
     }
+
+    request.user = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    };
 
     return true;
   }

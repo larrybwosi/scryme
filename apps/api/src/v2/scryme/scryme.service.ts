@@ -472,11 +472,12 @@ export class ScrymeService {
         process.env.SCRYME_ACTION_WORKFLOW_PATH ||
         "f/dealio/scryme_action_handler";
 
+      const secureRandomSuffix = crypto.randomBytes(4).toString("hex");
       await (this.prisma.client as any).windmillExecution.create({
         data: {
           organizationId: config.organizationId,
           configId: config.organization.windmillConfiguration.id,
-          jobId: `scryme_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+          jobId: `scryme_${Date.now()}_${secureRandomSuffix}`,
           scriptPath,
           dealioEventType: "SCRYME_ACTION",
           correlationId: message.id,

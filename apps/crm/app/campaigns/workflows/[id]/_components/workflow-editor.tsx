@@ -480,6 +480,9 @@ function PalettePanel({
             <button
               className="flex items-center justify-between w-full mb-1.5 group"
               onClick={() => toggleGroup(group)}
+              aria-expanded={openGroups[group]}
+              aria-label={`Toggle ${group} group`}
+              title={`Toggle ${group} group`}
             >
               <span className="text-[9.5px] font-bold uppercase tracking-widest text-muted-foreground/70 group-hover:text-muted-foreground transition-colors">
                 {group}
@@ -577,6 +580,8 @@ function NodeInspector({
         <button
           onClick={onClose}
           className="p-1 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+          aria-label="Close properties inspector"
+          title="Close properties inspector"
         >
           <X size={13} />
         </button>
@@ -766,6 +771,7 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
   const [workflowName, setWorkflowName] = useState(
     workflow?.name || "Untitled Workflow",
   );
+  const [tempName, setTempName] = useState(workflowName);
   const [showInspector, setShowInspector] = useState(false);
   const isActive = workflow?.isActive;
 
@@ -913,7 +919,8 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
           <button
             onClick={() => router.back()}
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            aria-label="Go back"
+            aria-label="Go back to campaigns list"
+            title="Go back to campaigns list"
           >
             <ChevronLeft size={16} />
           </button>
@@ -922,17 +929,58 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
           {isEditingName ? (
             <div className="flex items-center gap-1.5">
               <input
-                value={workflowName}
-                onChange={(e) => setWorkflowName(e.target.value)}
+                value={tempName}
+                onChange={(e) => setTempName(e.target.value)}
                 className="text-[13px] font-semibold bg-background border border-primary rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground min-w-[200px]"
-                onKeyDown={(e) => e.key === "Enter" && setIsEditingName(false)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const trimmed = tempName.trim();
+                    if (trimmed) {
+                      setWorkflowName(trimmed);
+                    }
+                    setIsEditingName(false);
+                  } else if (e.key === "Escape") {
+                    setTempName(workflowName);
+                    setIsEditingName(false);
+                  }
+                }}
+                onBlur={() => {
+                  const trimmed = tempName.trim();
+                  if (trimmed) {
+                    setWorkflowName(trimmed);
+                  } else {
+                    setTempName(workflowName);
+                  }
+                  setIsEditingName(false);
+                }}
                 autoFocus
               />
               <button
-                onClick={() => setIsEditingName(false)}
+                onMouseDown={(e) => e.preventDefault()} // prevent blur from triggering first and skipping onClick
+                onClick={() => {
+                  const trimmed = tempName.trim();
+                  if (trimmed) {
+                    setWorkflowName(trimmed);
+                  }
+                  setIsEditingName(false);
+                }}
                 className="p-1 rounded text-green-600 hover:bg-green-50 transition-colors"
+                aria-label="Save workflow name"
+                title="Save workflow name"
               >
                 <Check size={13} />
+              </button>
+              <button
+                onMouseDown={(e) => e.preventDefault()} // prevent blur from triggering first and skipping onClick
+                onClick={() => {
+                  setTempName(workflowName);
+                  setIsEditingName(false);
+                }}
+                className="p-1 rounded text-red-600 hover:bg-red-50 transition-colors"
+                aria-label="Cancel editing workflow name"
+                title="Cancel editing workflow name"
+              >
+                <X size={13} />
               </button>
             </div>
           ) : (
@@ -941,8 +989,13 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
                 {workflowName}
               </h1>
               <button
-                onClick={() => setIsEditingName(true)}
+                onClick={() => {
+                  setTempName(workflowName);
+                  setIsEditingName(true);
+                }}
                 className="p-1 rounded text-muted-foreground/50 hover:text-muted-foreground hover:bg-accent transition-colors"
+                aria-label="Edit workflow name"
+                title="Edit workflow name"
               >
                 <Pencil size={11} />
               </button>
@@ -1014,7 +1067,8 @@ export function WorkflowEditor({ workflow }: WorkflowEditorProps) {
                 ? "bg-primary/10 text-primary"
                 : "text-muted-foreground hover:bg-accent hover:text-foreground",
             )}
-            aria-label="Toggle inspector"
+            aria-label="Toggle properties inspector"
+            title="Toggle properties inspector"
           >
             <PanelRight size={15} />
           </button>

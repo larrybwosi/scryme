@@ -5,8 +5,9 @@ import { StaffTable } from "../../components/staff/staff-table";
 import { InvitationsTable } from "../../components/staff/invitations-table";
 import { PageHeader } from "../../components/page-header";
 import { Button } from "@repo/ui/components/ui/button";
-import { Plus, Users, Search, Filter, Download, Mail } from "lucide-react";
+import { Plus, Users, Search, Filter, Download, Mail, Clock } from "lucide-react";
 import { AddMemberSheet } from "../../components/staff/add-member-sheet";
+import Link from "next/link";
 import { Input } from "@repo/ui/components/ui/input";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
@@ -42,6 +43,12 @@ export default async function StaffPage() {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <Link href="/staff/shifts">
+            <Button variant="outline" className="gap-2 border-gray-200">
+              <Clock size={16} />
+              <span>Shift Schedule</span>
+            </Button>
+          </Link>
           <Button variant="outline" className="gap-2 border-gray-200">
             <Download size={16} />
             <span>Export</span>

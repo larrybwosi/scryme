@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, forwardRef, Inject } from "@nestjs/commo
 import { PrismaService } from "../../prisma/prisma.service";
 import type { V2ApiContext } from "@repo/shared/api/v2";
 import { StockMovementReportService } from "../../v3/modules/inventory/application/services/stock-movement-report.service";
+import * as crypto from "crypto";
 
 @Injectable()
 export class WorkflowsService {
@@ -144,11 +145,12 @@ export class WorkflowsService {
     });
 
     if (!config) {
+      const secureRandomKey = crypto.randomBytes(4).toString("hex");
       config = await (this.prisma.client as any).windmillConfiguration.create({
         data: {
           organizationId: ctx.organizationId,
           windmillApiKey:
-            "simulated_key_" + Math.random().toString(36).substring(7),
+            "simulated_key_" + secureRandomKey,
           windmillBaseUrl: "https://windmill.internal",
           workspaceId: "ws_" + ctx.organizationId.substring(0, 8),
           workspaceName: "Org Workspace",
@@ -212,13 +214,14 @@ export class WorkflowsService {
     }
 
     // Simulate an execution record
+    const secureJobSuffix = crypto.randomBytes(4).toString("hex");
     const execution = await (
       this.prisma.client as any
     ).windmillExecution.create({
       data: {
         organizationId: ctx.organizationId,
         configId: config.id,
-        jobId: "job_" + Math.random().toString(36).substring(7),
+        jobId: "job_" + secureJobSuffix,
         scriptPath: path,
         dealioEventType: "MANUAL_TRIGGER",
         correlationId: "manual_" + Date.now(),

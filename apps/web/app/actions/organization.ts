@@ -49,6 +49,7 @@ export async function createOrganization(data: {
       data: {
         organizationId: org.id,
         adminsCanManageStaff: false,
+        managersCanManageShifts: false,
       },
     });
 
@@ -92,6 +93,7 @@ export async function updateOrganizationSettings(data: {
   lowStockThreshold?: number;
   negativeStock?: boolean;
   adminsCanManageStaff?: boolean;
+  managersCanManageShifts?: boolean;
 }): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");

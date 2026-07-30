@@ -1,14 +1,15 @@
 import { ReceiptText, Plus } from "lucide-react";
-import { PageHeader } from "../../../components/page-header";
-import { FilterBar } from "../../../components/filter-bar";
+import { PageHeader } from "@/components/page-header";
+import { FilterBar } from "@/components/filter-bar";
 import { getTransactions } from "../../actions/sales";
+import { getLocations } from "../../actions/locations";
 import {
   TransactionType,
   TransactionStatus,
   PaymentStatus,
 } from "@repo/db/client";
 import { getOrganizationContext } from "@/app/actions/auth";
-import { RealtimeTransactionWrapper } from "../../../components/sales/realtime-transaction-wrapper";
+import { RealtimeTransactionWrapper } from "@/components/sales/realtime-transaction-wrapper";
 import { Suspense } from "react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 
@@ -22,6 +23,9 @@ async function TransactionList({
     status?: string;
     paymentStatus?: string;
     locationId?: string;
+    sortBy?: string;
+    startDate?: string;
+    endDate?: string;
   };
   organizationId?: string;
 }) {
@@ -31,6 +35,9 @@ async function TransactionList({
     status: searchParams.status as TransactionStatus | "all",
     paymentStatus: searchParams.paymentStatus as PaymentStatus | "all",
     locationId: searchParams.locationId,
+    sortBy: searchParams.sortBy,
+    startDate: searchParams.startDate ? new Date(searchParams.startDate) : undefined,
+    endDate: searchParams.endDate ? new Date(searchParams.endDate) : undefined,
   });
 
   return (
@@ -59,19 +66,18 @@ export default async function TransactionsPage(props: {
     status?: string;
     paymentStatus?: string;
     locationId?: string;
+    sortBy?: string;
+    startDate?: string;
+    endDate?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;
   const context = await getOrganizationContext();
   const suspenseKey = JSON.stringify(searchParams);
 
+  const locations = await getLocations();
+
   return (
-    /* Added a responsive outer container:
-      - mx-auto centers the layout on ultra-wide displays
-      - px-4 sm:px-6 lg:px-8 handles elegant side margins across mobile, tablet, and desktop
-      - py-6 handles top/bottom page spacing
-      - max-w-7xl (optional) keeps your dashboard content tight and readable
-    */
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <Suspense>
         <PageHeader
@@ -85,7 +91,7 @@ export default async function TransactionsPage(props: {
           }}
         />
       </Suspense>
-      <FilterBar />
+      <FilterBar locations={locations} />
 
       <Suspense key={suspenseKey} fallback={<TableFallback />}>
         <TransactionList

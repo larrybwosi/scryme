@@ -5,6 +5,7 @@ import {
   InternalServerErrorException,
   forwardRef,
 } from "@nestjs/common";
+import * as crypto from "crypto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApiRealtimeService } from "@/common/services/realtime.service";
 import { emitOrderPlaced } from "@repo/windmill/server";
@@ -15,7 +16,13 @@ import { IOrderRepository } from "../../domain/repositories/order-repository.int
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { ScrymeNotificationService } from "@/v2/scryme/scryme-notification.service";
 import { BookingService } from "@/v3/modules/services/application/services/booking.service";
-import { Prisma, TransactionType, TransactionChannel, TransactionStatus, PaymentStatus } from "@repo/db";
+import {
+  Prisma,
+  TransactionType,
+  TransactionChannel,
+  TransactionStatus,
+  PaymentStatus,
+} from "@repo/db";
 
 @Injectable()
 export class CreateOrderUseCase {
@@ -37,7 +44,9 @@ export class CreateOrderUseCase {
     const hasServices = dto.services && dto.services.length > 0;
 
     if (!hasPhysicalItems && !hasServices) {
-      throw new BadRequestException("Order must contain at least one physical product or service booking.");
+      throw new BadRequestException(
+        "Order must contain at least one physical product or service booking.",
+      );
     }
 
     if (hasPhysicalItems) {
@@ -52,13 +61,16 @@ export class CreateOrderUseCase {
       } as CreateOrderInput);
 
       if (!result.success) {
-        throw new BadRequestException(result.error || "Failed to create physical order");
+        throw new BadRequestException(
+          result.error || "Failed to create physical order",
+        );
       }
 
       transaction = result.data;
     } else {
       // 2. Pure Service Checkout: Create the base Transaction directly
-      const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
+      // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
+      const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${crypto.randomBytes(2).toString("hex").slice(0, 3).toUpperCase()}`;
 
       transaction = await this.prisma.client.transaction.create({
         data: {
@@ -84,7 +96,7 @@ export class CreateOrderUseCase {
           payments: true,
           fulfillments: true,
           customer: true,
-        }
+        },
       });
     }
 
@@ -95,7 +107,9 @@ export class CreateOrderUseCase {
 
       // ⚡ Bolt Optimization: Batch pre-fetch all requested services with their tax rates
       // to eliminate the N+1 query bottleneck inside the loop.
-      const serviceIds = Array.from(new Set(dto.services!.map(s => s.serviceId)));
+      const serviceIds = Array.from(
+        new Set(dto.services!.map(s => s.serviceId)),
+      );
       const services = await this.prisma.client.service.findMany({
         where: {
           id: { in: serviceIds },
@@ -118,20 +132,25 @@ export class CreateOrderUseCase {
         const service = serviceMap.get(srvInput.serviceId);
 
         if (!service) {
-          throw new BadRequestException(`Service ${srvInput.serviceId} not found`);
+          throw new BadRequestException(
+            `Service ${srvInput.serviceId} not found`,
+          );
         }
 
         // Schedule the booking slot
-        const booking = await this.bookingService.createBooking(organizationId, {
-          serviceId: srvInput.serviceId,
-          customerId: dto.customerId,
-          locationId: dto.locationId,
-          scheduledStartTime: srvInput.scheduledStartTime,
-          scheduledEndTime: srvInput.scheduledEndTime,
-          staffIds: srvInput.staffIds,
-          resourceIds: srvInput.resourceIds,
-          notes: srvInput.notes || dto.notes,
-        });
+        const booking = await this.bookingService.createBooking(
+          organizationId,
+          {
+            serviceId: srvInput.serviceId,
+            customerId: dto.customerId,
+            locationId: dto.locationId,
+            scheduledStartTime: srvInput.scheduledStartTime,
+            scheduledEndTime: srvInput.scheduledEndTime,
+            staffIds: srvInput.staffIds,
+            resourceIds: srvInput.resourceIds,
+            notes: srvInput.notes || dto.notes,
+          },
+        );
 
         const srvPrice = new Prisma.Decimal(service.price);
         extraSubtotal = extraSubtotal.add(srvPrice);
@@ -156,20 +175,27 @@ export class CreateOrderUseCase {
             subtotal: srvPrice,
             taxAmount: srvTax,
             lineTotal: srvPrice.add(srvTax),
-          }
+          },
         });
 
         // Link ServiceBooking to Transaction
         await this.prisma.client.serviceBooking.update({
           where: { id: booking.id },
-          data: { transactionId: transaction.id }
+          data: { transactionId: transaction.id },
         });
       }
 
       // Update Transaction totals
-      const finalSubtotal = new Prisma.Decimal(transaction.subtotal).add(extraSubtotal);
-      const finalTaxTotal = new Prisma.Decimal(transaction.taxTotal).add(extraTaxTotal);
-      const finalTotal = finalSubtotal.add(finalTaxTotal).add(new Prisma.Decimal(transaction.shippingTotal || 0)).sub(new Prisma.Decimal(transaction.discountTotal || 0));
+      const finalSubtotal = new Prisma.Decimal(transaction.subtotal).add(
+        extraSubtotal,
+      );
+      const finalTaxTotal = new Prisma.Decimal(transaction.taxTotal).add(
+        extraTaxTotal,
+      );
+      const finalTotal = finalSubtotal
+        .add(finalTaxTotal)
+        .add(new Prisma.Decimal(transaction.shippingTotal || 0))
+        .sub(new Prisma.Decimal(transaction.discountTotal || 0));
 
       transaction = await this.prisma.client.transaction.update({
         where: { id: transaction.id },
@@ -186,19 +212,22 @@ export class CreateOrderUseCase {
           fulfillments: true,
           customer: true,
           serviceBookings: true,
-        }
+        },
       });
     }
 
     // 4. Trigger events
-    await this.realtimeService.publish(
-      `order:${transaction.id}`,
-      "order.created",
-      transaction,
-    ).catch(err => console.error("[v3 Order] Failed to publish realtime:", err));
+    await this.realtimeService
+      .publish(`order:${transaction.id}`, "order.created", transaction)
+      .catch(err =>
+        console.error("[v3 Order] Failed to publish realtime:", err),
+      );
 
-    await this.webhookService.dispatch("order.created", organizationId, transaction)
-      .catch(err => console.error("[v3 Order] Failed to dispatch webhook:", err));
+    await this.webhookService
+      .dispatch("order.created", organizationId, transaction)
+      .catch(err =>
+        console.error("[v3 Order] Failed to dispatch webhook:", err),
+      );
 
     // 5. Emit Windmill event
     await emitOrderPlaced(organizationId, {
@@ -217,7 +246,7 @@ export class CreateOrderUseCase {
           productName: i.serviceName,
           quantity: Number(i.quantity),
           lineTotal: Number(i.lineTotal),
-        }))
+        })),
       ],
     }).catch(err =>
       console.error("[v3 Order] Failed to emit Windmill event:", err),

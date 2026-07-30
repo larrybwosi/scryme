@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react"
 import posthog from 'posthog-js';
 import { usePosStore } from "@/store/store"
+import { useAuthStore } from "@/store/pos-auth-store"
 import { Card } from "@repo/ui/components/ui/card"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
@@ -32,6 +33,7 @@ export function HistoryPage() {
   useOldSalesCheck() // Check for old sales on mount
   
   const settings = usePosStore((state) => state.settings)
+  const currentLocationId = useAuthStore((state) => state.currentLocation?.id)
   
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
@@ -125,6 +127,11 @@ export function HistoryPage() {
     }
 
     return queue.filter((item) => {
+      // Filter transactions by the current branch/location
+      if (currentLocationId && item.locationId !== currentLocationId) {
+        return false
+      }
+
       const customerId = item.transactionData.customerId || ""
       const saleNumber = item.transactionData.saleNumber || ""
       
@@ -137,7 +144,7 @@ export function HistoryPage() {
 
       return matchesSearch && matchesStatus && matchesDate
     })
-  }, [queue, searchQuery, statusFilter, dateFilter])
+  }, [queue, searchQuery, statusFilter, dateFilter, currentLocationId])
 
   const selectedOrderData = selectedOrderId ? queue.find((o) => o.id === selectedOrderId) : null
 
