@@ -310,15 +310,27 @@ export class ProcessSaleUseCase {
     const movements: any[] = [];
     const consumedMaterialsToCreate: any[] = [];
 
+    // ⚡ Bolt Optimization: Batch pre-fetch all matching service bookings to eliminate N+1 database queries.
+    // This reduces the query overhead from O(N) sequential requests down to a single constant-time O(1) query.
+    const bookingIds = serviceItems
+      .map((si) => si.bookingId)
+      .filter((id): id is string => !!id);
+
+    let bookingMap = new Map<string, any>();
+    if (bookingIds.length > 0) {
+      const bookings = await tx.serviceBooking.findMany({
+        where: { id: { in: bookingIds }, organizationId: orgId },
+        include: { service: { include: { materials: true } } },
+      });
+      bookingMap = new Map(bookings.map((b: any) => [b.id, b]));
+    }
+
     for (const si of serviceItems) {
       const service = serviceMap.get(si.serviceId)!;
 
       if (si.bookingId) {
         // Option A: Complete and link existing booking
-        const booking = await tx.serviceBooking.findFirst({
-          where: { id: si.bookingId, organizationId: orgId },
-          include: { service: { include: { materials: true } } },
-        });
+        const booking = bookingMap.get(si.bookingId);
 
         if (!booking) {
           throw new BadRequestException(`Booking with ID ${si.bookingId} not found`);
