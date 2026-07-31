@@ -233,3 +233,8 @@
 **Vulnerability:** Predictable pseudo-random number generation (`Math.random()`) was used to generate suffixes for order and POS sale numbers in the shared transaction action files (`orders.ts` and `process.sale.ts`).
 **Learning:** Using predictable random suffixes for transaction-facing numbers exposes the system to transaction enumeration, sequence forecasting, and sales volume estimation by competitors. Secure identifiers must use cryptographically strong random suffixes.
 **Prevention:** Always employ cryptographically secure pseudo-random generators (CSPRNG) via Node's native `crypto` module (like `crypto.randomBytes()`) for generating order and sale identification number suffixes.
+
+## 2026-07-31 - SSRF Bypass via Incomplete IPv6 Range Blocking in Duplicated Security Utility
+**Vulnerability:** The `isSafeIp` function in `packages/notifications/src/security.ts` lacked filters for site-local IPv6 addresses (`fec0::/10`) and multicast IPv6 addresses (`ff00::/8`), allowing attackers to bypass SSRF protections in notifications.
+**Learning:** Security-critical utility functions that are duplicated across multiple packages (e.g. `packages/shared` and `packages/notifications`) are prone to security configuration drift. While the main shared utility had been hardened against these ranges in a prior security patch, the notifications-specific variant was missed.
+**Prevention:** Centralize security-critical logic in a single shared package (like `@repo/shared/server`) and consume it everywhere, or keep copy-pasted implementations in strict sync via unified automated integration test suites.
