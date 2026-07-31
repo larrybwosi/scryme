@@ -30,7 +30,7 @@ describe("ProcessSaleUseCase", () => {
         loyaltyVoucher: { findUnique: vi.fn(), update: vi.fn() },
         organization: { findUnique: vi.fn() },
         service: { findMany: vi.fn() },
-        serviceBooking: { findFirst: vi.fn(), update: vi.fn() },
+        serviceBooking: { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn() },
         bookingConsumedMaterial: { createMany: vi.fn() },
       },
     };
@@ -238,16 +238,18 @@ describe("ProcessSaleUseCase", () => {
       },
     ]);
 
-    prisma.client.serviceBooking.findFirst.mockResolvedValue({
-      id: "bk1",
-      status: "SCHEDULED",
-      scheduledStartTime: new Date(),
-      service: {
-        materials: [
-          { variantId: "scissors_v", quantity: 1 },
-        ],
+    prisma.client.serviceBooking.findMany.mockResolvedValue([
+      {
+        id: "bk1",
+        status: "SCHEDULED",
+        scheduledStartTime: new Date(),
+        service: {
+          materials: [
+            { variantId: "scissors_v", quantity: 1 },
+          ],
+        },
       },
-    });
+    ]);
 
     prisma.client.transaction.create.mockResolvedValue({
       id: "t3",
