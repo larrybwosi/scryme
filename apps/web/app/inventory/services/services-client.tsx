@@ -58,6 +58,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { formatCurrency } from "../../../lib/utils";
+import Link from "next/link";
 import {
   createService,
   updateService,
@@ -399,7 +400,12 @@ export function ServicesPageClient({
                     <TableRow key={srv.id}>
                       <TableCell className="font-medium text-sm">
                         <div className="flex flex-col">
-                          <span>{srv.name}</span>
+                          <Link
+                            href={`/inventory/services/${srv.id}`}
+                            className="font-semibold text-slate-900 hover:text-[#c89a4b] hover:underline transition-colors cursor-pointer"
+                          >
+                            {srv.name}
+                          </Link>
                           {srv.description && (
                             <span className="text-xs text-muted-foreground font-normal line-clamp-1">
                               {srv.description}
@@ -469,9 +475,15 @@ export function ServicesPageClient({
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                              <Link href={`/inventory/services/${srv.id}`} className="cursor-pointer w-full flex items-center">
+                                <Sparkles className="mr-2 h-4 w-4 text-[#c89a4b]" />
+                                Customize Content (CMS)
+                              </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleOpenServiceDialog(srv)}>
                               <Edit className="mr-2 h-4 w-4" />
-                              Edit Service
+                              Edit Core Service
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteService(srv.id)}

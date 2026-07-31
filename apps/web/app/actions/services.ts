@@ -90,6 +90,21 @@ export async function getServices() {
   });
 }
 
+export async function getService(id: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) return null;
+
+  return db.service.findFirst({
+    where: {
+      id,
+      organizationId: context.organizationId,
+    },
+    include: {
+      category: true,
+    },
+  });
+}
+
 export async function createService(data: {
   name: string;
   description?: string;
@@ -144,6 +159,7 @@ export async function updateService(
     depositAmount?: number;
     depositType?: DepositType;
     isActive?: boolean;
+    customFields?: any;
   },
 ) {
   const context = await getServerAuth();
@@ -167,10 +183,12 @@ export async function updateService(
       depositAmount: data.depositAmount !== undefined ? new Decimal(data.depositAmount) : undefined,
       depositType: data.depositType,
       isActive: data.isActive,
+      customFields: data.customFields !== undefined ? data.customFields : undefined,
     },
   });
 
   revalidatePath("/inventory/services");
+  revalidatePath(`/inventory/services/${id}`);
   return service;
 }
 
