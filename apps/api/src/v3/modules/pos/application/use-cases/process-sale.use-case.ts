@@ -41,7 +41,7 @@ export class ProcessSaleUseCase {
       async (tx: any) => {
         let sub = 0;
         let items: any[] = [];
-        let serviceItemsToCreate: any[] = [];
+        const serviceItemsToCreate: any[] = [];
         let serviceMap = new Map<string, any>();
 
         // 1. Process Product Items if present

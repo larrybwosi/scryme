@@ -321,8 +321,9 @@ export class ScrymeApprovalService {
    * Enterprise: Post to a central discussion channel for the approval request.
    */
   private async notifyDiscussionChannel(organizationId: string, requestId: string) {
-    const request = await this.prisma.client.approvalRequest.findUnique({
-      where: { id: requestId },
+    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent cross-tenant IDOR
+    const request = await this.prisma.client.approvalRequest.findFirst({
+      where: { id: requestId, organizationId },
       include: {
         requester: { include: { user: true } },
         organization: { include: { scrymeConfiguration: true } },

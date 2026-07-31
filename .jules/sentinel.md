@@ -233,3 +233,8 @@
 **Vulnerability:** Predictable pseudo-random number generation (`Math.random()`) was used to generate suffixes for order and POS sale numbers in the shared transaction action files (`orders.ts` and `process.sale.ts`).
 **Learning:** Using predictable random suffixes for transaction-facing numbers exposes the system to transaction enumeration, sequence forecasting, and sales volume estimation by competitors. Secure identifiers must use cryptographically strong random suffixes.
 **Prevention:** Always employ cryptographically secure pseudo-random generators (CSPRNG) via Node's native `crypto` module (like `crypto.randomBytes()`) for generating order and sale identification number suffixes.
+
+## 2026-07-31 - IDOR Vulnerability in Scryme Channel Provisioning and Notifications
+**Vulnerability:** The Scryme module queried `Department`, `InventoryLocation`, `Transaction`, and `ApprovalRequest` using `findUnique` by global record ID only, ignoring the tenant's `organizationId` or querying without it entirely.
+**Learning:** In a multi-tenant application, referencing linked entity IDs without scoping the lookups to the authenticated tenant's `organizationId` introduces IDOR vectors. Even with global authorization guards active, individual handler or helper queries must enforce strict multi-tenant boundaries.
+**Prevention:** Always utilize `findFirst` instead of `findUnique` when performing database lookups on tables lacking composite unique indices, explicitly including `{ id, organizationId }` in the query's `where` filter to guarantee isolation.
