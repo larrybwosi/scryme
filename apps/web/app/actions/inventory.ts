@@ -336,6 +336,7 @@ export async function updateProduct(
     isActive?: boolean;
     pointsOnPurchase?: number;
     loyaltyPointsOverride?: number;
+    customFields?: any;
   },
 ): Promise<any> {
   const context = await getServerAuth();
@@ -362,6 +363,7 @@ export async function updateProduct(
         isActive: data.isActive,
         pointsOnPurchase: data.pointsOnPurchase,
         loyaltyPointsOverride: data.loyaltyPointsOverride,
+        customFields: data.customFields !== undefined ? data.customFields : undefined,
       },
     });
 

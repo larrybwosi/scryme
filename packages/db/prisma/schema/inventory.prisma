@@ -69,6 +69,8 @@ model Product {
   favorites       Favorite[]
   reviews         ProductReview[]
 
+  customFields    Json?
+
   organizationId       String
   organization         Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
