@@ -157,12 +157,14 @@ export class ScrymeService {
 
     let entity;
     if (entityType === "department") {
-      entity = await this.prisma.client.department.findUnique({
-        where: { id: entityId },
+      // SECURITY (Sentinel): Use findFirst with organizationId to prevent cross-tenant IDOR
+      entity = await this.prisma.client.department.findFirst({
+        where: { id: entityId, organizationId },
       });
     } else {
-      entity = await this.prisma.client.inventoryLocation.findUnique({
-        where: { id: entityId },
+      // SECURITY (Sentinel): Use findFirst with organizationId to prevent cross-tenant IDOR
+      entity = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: entityId, organizationId },
       });
     }
 

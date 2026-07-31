@@ -13,7 +13,8 @@ export class ScrymeNotificationService {
    * Notify about a new order.
    */
   async notifyOrderCreated(organizationId: string, orderId: string) {
-    const order = await this.prisma.client.transaction.findUnique({
+    // SECURITY (Sentinel): Use findFirst instead of findUnique because transaction lacks a composite unique index on [id, organizationId]
+    const order = await this.prisma.client.transaction.findFirst({
       where: { id: orderId, organizationId },
       include: {
         customer: true,
@@ -44,8 +45,9 @@ export class ScrymeNotificationService {
 
     // Enterprise: If it's a B2B customer, notify their specific branch/location channel
     if (order.businessAccount?.defaultLocationId) {
-      const location = await this.prisma.client.inventoryLocation.findUnique({
-        where: { id: order.businessAccount.defaultLocationId },
+      // SECURITY (Sentinel): Use findFirst with organizationId scoping to ensure strict tenant isolation
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: order.businessAccount.defaultLocationId, organizationId },
       });
 
       if (location?.scrymeChannelId) {
