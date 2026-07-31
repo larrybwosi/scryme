@@ -161,3 +161,7 @@
 ## 2026-07-30 - [Redundant N+1 Query Elimination in Stock Request Fulfillment]
 **Learning:** Querying metadata (such as `buyingPrice` of the parent `variantId`) inside a loop over line items (like `itemsForThisLocation.map(...)`) within stock transaction blocks is a critical performance anti-pattern. Since the root entity identifier remains identical across items, moving this lookup up-front before loops or conditional blocks completely resolves the N+1 query overhead, reducing database operations inside the transaction block significantly.
 **Action:** Always pre-fetch and cache singular properties and metadata before executing loop iterations or mapping arrays within transactions.
+
+## 2026-07-31 - [Consolidated Database Row Updates in PO Receipt]
+**Learning:** Performing multiple sequential database `upsert` queries on the exact same `ProductVariantStock` row inside a transaction for multiple batches creates row lock contention and deadlocks. Consolidating updates down to exactly one query per unique `variantId` completely eliminates lock contention and reduces database roundtrips.
+**Action:** Always accumulate quantities by unique keys (like `variantId`) in-memory during batch-processing loop operations, then execute exactly one database update/upsert per unique key, while deferring validation checks or movement records as necessary to keep integrity checks aligned.
