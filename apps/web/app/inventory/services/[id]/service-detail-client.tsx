@@ -198,7 +198,7 @@ export function ServiceDetailPageClient({
   // 2. Rich content CMS states (Markdown + Multiple Images)
   const [markdown, setMarkdown] = useState<string>(
     customFieldsData.markdownDescription ||
-    `# ${service.name}\n\nExperience our high-quality service tailored specifically to your needs.\n\n## What is Included\n- Step-by-step masterclass\n- All materials and resources provided\n- Certificate of completion\n\n## Frequently Asked Questions\n> **Do I need prior experience?**\n> No prior experience is needed! This session is perfect for beginners and pros alike.`
+    `# ${service.name}\n\n${service.description || ""}`
   );
 
   // Multiple images state
@@ -208,18 +208,7 @@ export function ServiceDetailPageClient({
         url: img.url || "",
         caption: img.caption || "",
       }))
-    : [
-        {
-          id: "img-default-1",
-          url: "https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80",
-          caption: "Beautiful, freshly prepared ingredients",
-        },
-        {
-          id: "img-default-2",
-          url: "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=800&q=80",
-          caption: "Hands-on individual workspace configurations",
-        },
-      ];
+    : [];
   const [images, setImages] = useState<ImageItem[]>(initialImages);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [newImageCaption, setNewImageCaption] = useState("");
@@ -239,11 +228,7 @@ export function ServiceDetailPageClient({
           key,
           value: val || "",
         }))
-      : [
-          { id: "attr-1", key: "difficulty", value: "Beginner Friendly" },
-          { id: "attr-2", key: "recommended_age", value: "12 years and above" },
-          { id: "attr-3", key: "max_capacity", value: "15 attendees per session" },
-        ];
+      : [];
   const [customAttrs, setCustomAttrs] = useState<CustomAttribute[]>(initialAttrs);
   const [newAttrKey, setNewAttrKey] = useState("");
   const [newAttrValue, setNewAttrValue] = useState("");
@@ -1227,17 +1212,6 @@ export function ServiceDetailPageClient({
             </div>
           )}
 
-          {/* Rating stars & storefront review simulation */}
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <div className="flex text-amber-400">
-              <Star size={11} fill="currentColor" />
-              <Star size={11} fill="currentColor" />
-              <Star size={11} fill="currentColor" />
-              <Star size={11} fill="currentColor" />
-              <Star size={11} fill="currentColor" />
-            </div>
-            <span className="text-[10px] text-slate-400 font-semibold">(4.9 out of 5 &bull; 82 verified clients)</span>
-          </div>
 
           {/* Markdown text preview container */}
           <div className="space-y-1.5">
