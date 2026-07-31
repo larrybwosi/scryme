@@ -3,7 +3,7 @@ import dns from "node:dns";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("node:dns", async () => {
-  const actual = await vi.importActual("node:dns") as any;
+  const actual = (await vi.importActual("node:dns")) as any;
   return {
     ...actual,
     default: {
@@ -24,7 +24,7 @@ describe("isSafeUrl - multi-IP support", () => {
 
     // Mock resolving to one safe and one unsafe IP
     mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
-      if (typeof options === 'function') {
+      if (typeof options === "function") {
         cb = options;
         options = {};
       }
@@ -32,7 +32,7 @@ describe("isSafeUrl - multi-IP support", () => {
       if (options.all) {
         cb(null, [
           { address: "93.184.216.34", family: 4 }, // example.com (safe)
-          { address: "127.0.0.1", family: 4 }      // localhost (unsafe)
+          { address: "127.0.0.1", family: 4 }, // localhost (unsafe)
         ]);
       } else {
         cb(null, "93.184.216.34", 4);
@@ -41,7 +41,11 @@ describe("isSafeUrl - multi-IP support", () => {
 
     const isSafe = await isSafeUrl("http://attacker.com");
     expect(isSafe).toBe(false);
-    expect(mockLookup).toHaveBeenCalledWith("attacker.com", { all: true }, expect.any(Function));
+    expect(mockLookup).toHaveBeenCalledWith(
+      "attacker.com",
+      { all: true },
+      expect.any(Function),
+    );
   });
 
   it("should allow hostname if ALL resolved IPs are safe", async () => {
@@ -51,7 +55,7 @@ describe("isSafeUrl - multi-IP support", () => {
       if (options.all) {
         cb(null, [
           { address: "93.184.216.34", family: 4 },
-          { address: "1.1.1.1", family: 4 }
+          { address: "1.1.1.1", family: 4 },
         ]);
       } else {
         cb(null, "93.184.216.34", 4);
@@ -67,15 +71,43 @@ describe("isSafeUrl - multi-IP support", () => {
 
     mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
       if (options.all) {
-        cb(null, [
-          { address: "::ffff:127.0.0.1", family: 6 }
-        ]);
+        cb(null, [{ address: "::ffff:127.0.0.1", family: 6 }]);
       } else {
         cb(null, "::ffff:127.0.0.1", 6);
       }
     });
 
     const isSafe = await isSafeUrl("http://malicious-v6.com");
+    expect(isSafe).toBe(false);
+  });
+
+  it("should block hostname if it resolves to a Site-local IPv6 address", async () => {
+    const mockLookup = dns.lookup as any;
+
+    mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+      if (options.all) {
+        cb(null, [{ address: "fec0::1", family: 6 }]);
+      } else {
+        cb(null, "fec0::1", 6);
+      }
+    });
+
+    const isSafe = await isSafeUrl("http://site-local-v6.com");
+    expect(isSafe).toBe(false);
+  });
+
+  it("should block hostname if it resolves to a Multicast IPv6 address", async () => {
+    const mockLookup = dns.lookup as any;
+
+    mockLookup.mockImplementation((hostname: string, options: any, cb: any) => {
+      if (options.all) {
+        cb(null, [{ address: "ff02::1", family: 6 }]);
+      } else {
+        cb(null, "ff02::1", 6);
+      }
+    });
+
+    const isSafe = await isSafeUrl("http://multicast-v6.com");
     expect(isSafe).toBe(false);
   });
 });
