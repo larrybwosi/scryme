@@ -23,6 +23,14 @@ describe("ScrymeService", () => {
       approvalDecision: {
         findUnique: vi.fn(),
       },
+      department: {
+        findFirst: vi.fn(),
+        update: vi.fn(),
+      },
+      inventoryLocation: {
+        findFirst: vi.fn(),
+        update: vi.fn(),
+      },
     },
   };
 
@@ -86,6 +94,66 @@ describe("ScrymeService", () => {
       ).rejects.toThrow(BadRequestException);
 
       delete process.env.SCRYME_WEBHOOK_SECRET;
+    });
+  });
+
+  describe("provisionChannelForEntity (IDOR defense)", () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should query department scoped to organizationId (IDOR protection)", async () => {
+      mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+        workspaceSlug: "test-workspace",
+        isActive: true,
+      });
+
+      mockPrisma.client.department.findFirst.mockResolvedValue({
+        id: "dept-123",
+        name: "Engineering",
+        scrymeChannelId: null,
+      });
+
+      vi.spyOn(service["scrymeClient"], "createChannel").mockResolvedValue({
+        id: "channel-123",
+      } as any);
+
+      await service.provisionChannelForEntity("org-123", "department", "dept-123");
+
+      expect(mockPrisma.client.department.findFirst).toHaveBeenCalledWith({
+        where: { id: "dept-123", organizationId: "org-123" },
+      });
+      expect(mockPrisma.client.department.update).toHaveBeenCalledWith({
+        where: { id: "dept-123" },
+        data: { scrymeChannelId: "channel-123" },
+      });
+    });
+
+    it("should query inventory location scoped to organizationId (IDOR protection)", async () => {
+      mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+        workspaceSlug: "test-workspace",
+        isActive: true,
+      });
+
+      mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue({
+        id: "loc-123",
+        name: "Warehouse",
+        scrymeChannelId: null,
+      });
+
+      vi.spyOn(service["scrymeClient"], "createChannel").mockResolvedValue({
+        id: "channel-456",
+      } as any);
+
+      await service.provisionChannelForEntity("org-123", "location", "loc-123");
+
+      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "loc-123", organizationId: "org-123" },
+      });
+      expect(mockPrisma.client.inventoryLocation.update).toHaveBeenCalledWith({
+        where: { id: "loc-123" },
+        data: { scrymeChannelId: "channel-456" },
+      });
     });
   });
 });

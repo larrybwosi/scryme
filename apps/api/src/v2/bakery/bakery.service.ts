@@ -1890,17 +1890,30 @@ export class BakeryService {
         } as any,
       });
 
+      /**
+       * ⚡ Bolt: Performance Optimization (N+1 Query Elimination)
+       * Pre-fetch all matching product variants in a single `findMany` query
+       * to avoid sequential database lookups inside the line item processing loop.
+       */
+      const ingredientIds = lines.map((line: any) => line.ingredientId);
+      const variants = await tx.productVariant.findMany({
+        where: {
+          id: { in: ingredientIds },
+          product: { organizationId },
+        },
+        select: {
+          id: true,
+          productId: true,
+        },
+      });
+
+      const variantMap = new Map(variants.map(v => [v.id, v]));
+
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
 
         // 🛡️ Sentinel: Enforce multi-tenant isolation by scoping product variant lookup to the organization
-        const variant = await tx.productVariant.findFirst({
-          where: {
-            id: line.ingredientId,
-            product: { organizationId },
-          },
-          select: { productId: true },
-        });
+        const variant = variantMap.get(line.ingredientId);
 
         if (!variant) {
           throw new NotFoundException(
