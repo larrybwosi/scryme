@@ -28,6 +28,11 @@ import {
   Clock,
   Layers,
   HelpCircle,
+  Upload,
+  X,
+  Loader2,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
@@ -238,6 +243,13 @@ export function ServiceDetailPageClient({
 
   // Markdown editor textarea ref
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Image upload states
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Simulated Preview Settings
+  const [previewTheme, setPreviewTheme] = useState<"light" | "dark">("dark");
 
   // Markdown syntax insertion helper
   const insertMarkdown = (syntax: string, placeholder = "") => {
@@ -695,10 +707,6 @@ export function ServiceDetailPageClient({
                             src={img.url}
                             alt={img.caption || "Service Image"}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // Fallback on broken URL
-                              e.currentTarget.src = "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=400&q=80";
-                            }}
                           />
                           <div className="absolute top-2 left-2 bg-slate-900/80 px-2 py-0.5 text-[10px] font-mono text-white tracking-widest font-bold">
                             #{idx + 1} {idx === 0 && "(MAIN)"}
@@ -759,17 +767,75 @@ export function ServiceDetailPageClient({
 
                 {/* Add new image form */}
                 <div className="border p-4 bg-slate-50/50 space-y-3">
-                  <span className="text-xs font-bold text-slate-700">Add Image URL to Showcase</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <span className="text-xs font-bold text-slate-700">Add New Showcase Image</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <Label htmlFor="new-img-url" className="text-[10px] font-bold uppercase text-slate-500">Direct Image Link (URL)</Label>
-                      <Input
-                        id="new-img-url"
-                        placeholder="https://images.unsplash.com/photo-..."
-                        value={newImageUrl}
-                        onChange={(e) => setNewImageUrl(e.target.value)}
-                        className="text-xs h-8 rounded-none bg-white border-slate-300"
-                      />
+                      <Label className="text-[10px] font-bold uppercase text-slate-500">Upload Image</Label>
+                      <div
+                        onClick={() => !isUploading && fileInputRef.current?.click()}
+                        className="relative border-2 border-dashed border-slate-300 bg-white p-4 text-center rounded-none hover:border-slate-400 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1 min-h-[90px]"
+                      >
+                        {isUploading ? (
+                          <div className="flex flex-col items-center gap-1">
+                            <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+                            <span className="text-[10px] text-slate-500 font-semibold">Uploading to storage...</span>
+                          </div>
+                        ) : newImageUrl ? (
+                          <div className="flex items-center gap-2 w-full justify-between">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img src={newImageUrl} className="h-10 w-10 object-cover" alt="Upload preview" />
+                              <span className="text-[10px] text-emerald-600 font-bold truncate">Uploaded successfully</span>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              className="h-6 w-6 p-0 hover:bg-slate-100 rounded-none text-slate-500"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setNewImageUrl("");
+                              }}
+                            >
+                              <X size={14} />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center">
+                            <Upload className="h-5 w-5 text-slate-400 mb-1" />
+                            <span className="text-[10px] text-slate-500 font-semibold">Click or Drag to Upload</span>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setIsUploading(true);
+                            try {
+                              const formData = new FormData();
+                              formData.append("file", file);
+                              const res = await fetch("/api/upload", {
+                                method: "POST",
+                                body: formData,
+                              });
+                              if (!res.ok) throw new Error("Upload failed");
+                              const resData = await res.json();
+                              const url = resData.data?.url || resData.url;
+                              if (!url) throw new Error("No URL returned");
+                              setNewImageUrl(url);
+                              toast.success("Image uploaded successfully!");
+                            } catch (err) {
+                              console.error(err);
+                              toast.error("Failed to upload image");
+                            } finally {
+                              setIsUploading(false);
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="new-img-caption" className="text-[10px] font-bold uppercase text-slate-500">Caption</Label>
@@ -1095,149 +1161,211 @@ export function ServiceDetailPageClient({
 
   // Reusable sub-component: Simulated High-Fidelity Storefront Card Preview
   function StorefrontCardPreview() {
-    const mainImgUrl = images[storefrontMainImageIdx]?.url || "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=600&q=80";
-    const mainImgCaption = images[storefrontMainImageIdx]?.caption || "Service preview placeholder";
+    const isDark = previewTheme === "dark";
+    const mainImgUrl = images[storefrontMainImageIdx]?.url || "";
+    const mainImgCaption = images[storefrontMainImageIdx]?.caption || "Service preview";
     const selectedCategory = categories.find((c) => c.id === coreForm.categoryId);
 
     return (
-      <div className="border bg-[#0f1115] text-white overflow-hidden shadow-xl rounded-none flex flex-col font-sans">
-
-        {/* Preview header info */}
-        <div className="bg-[#16181d] border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-          <span className="text-[10px] tracking-widest font-bold uppercase text-[#c89a4b] flex items-center gap-1.5">
-            <Check size={12} />
-            <span>Storefront Live Preview</span>
+      <div className="flex flex-col gap-3">
+        {/* Theme toggle controls */}
+        <div className="flex items-center justify-between bg-slate-100 p-2 border border-slate-200">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 pl-1.5 flex items-center gap-1">
+            <Settings size={12} className="text-slate-400" />
+            <span>Preview Mode</span>
           </span>
-          <span className="text-[9px] px-1.5 py-0.5 font-mono bg-emerald-500/10 text-emerald-400 font-bold">
-            SYNCED
-          </span>
+          <div className="flex items-center gap-1.5 h-8 bg-white p-0.5 border">
+            <button
+              type="button"
+              onClick={() => setPreviewTheme("light")}
+              className={cn(
+                "flex items-center gap-1 px-3 py-1 text-[10px] transition-all font-semibold rounded-none h-full",
+                !isDark ? "bg-[#c89a4b] text-white font-bold" : "text-slate-500 hover:text-slate-800"
+              )}
+            >
+              <Sun size={11} />
+              <span>Light</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewTheme("dark")}
+              className={cn(
+                "flex items-center gap-1 px-3 py-1 text-[10px] transition-all font-semibold rounded-none h-full",
+                isDark ? "bg-slate-900 text-white font-bold" : "text-slate-500 hover:text-slate-800"
+              )}
+            >
+              <Moon size={11} />
+              <span>Dark</span>
+            </button>
+          </div>
         </div>
 
-        {/* Gallery main image display */}
-        <div className="aspect-video w-full bg-slate-900 relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={mainImgUrl}
-            alt={mainImgCaption}
-            className="w-full h-full object-cover transition-all duration-300"
-            onError={(e) => {
-              e.currentTarget.src = "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=600&q=80";
-            }}
-          />
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-6">
-            <span className="text-[9px] tracking-wider uppercase font-bold text-[#c89a4b]">
-              {selectedCategory?.name || "Service Category"}
+        <div className={cn(
+          "border overflow-hidden shadow-xl rounded-none flex flex-col font-sans transition-all duration-300",
+          isDark ? "bg-[#0f1115] border-slate-800 text-white" : "bg-white border-slate-200 text-slate-900"
+        )}>
+
+          {/* Preview header info */}
+          <div className={cn(
+            "border-b px-4 py-3 flex items-center justify-between transition-colors",
+            isDark ? "bg-[#16181d] border-slate-800" : "bg-slate-50 border-slate-200"
+          )}>
+            <span className="text-[10px] tracking-widest font-bold uppercase text-[#c89a4b] flex items-center gap-1.5">
+              <Check size={12} />
+              <span>Storefront Live Preview</span>
             </span>
-            <h4 className="text-sm font-bold text-slate-100">{coreForm.name || "Unnamed Premium Service"}</h4>
+            <span className={cn(
+              "text-[9px] px-1.5 py-0.5 font-mono font-bold rounded",
+              isDark ? "bg-emerald-500/10 text-emerald-400" : "bg-emerald-100 text-emerald-800"
+            )}>
+              SYNCED
+            </span>
           </div>
-        </div>
 
-        {/* Gallery thumbnails strip */}
-        {images.length > 0 && (
-          <div className="bg-[#16181d] p-2 flex gap-1.5 overflow-x-auto border-b border-slate-800/60">
-            {images.map((img, idx) => (
-              <button
-                key={img.id}
-                onClick={() => setStorefrontMainImageIdx(idx)}
-                className={cn(
-                  "h-10 w-16 flex-shrink-0 bg-slate-900 border relative overflow-hidden transition-all duration-150",
-                  storefrontMainImageIdx === idx ? "border-[#c89a4b] ring-1 ring-[#c89a4b]" : "border-slate-700 opacity-60 hover:opacity-100"
-                )}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.url}
-                  alt={img.caption || "Thumbnail"}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1549931319-a545dcf3bc73?auto=format&fit=crop&w=100&q=80";
-                  }}
-                />
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Card pricing and brief context */}
-        <div className="p-4 space-y-4">
-          <div className="flex items-center justify-between gap-2 border-b border-slate-800 pb-3">
-            <div>
-              <span className="text-[9px] uppercase tracking-wider text-slate-400">Booking Price</span>
-              <div className="text-base font-extrabold text-slate-100">
-                {coreForm.pricingModel === PricingModel.VARIABLE ? (
-                  <span>
-                    {formatCurrency(Number(coreForm.minPrice || 0), currency)} - {formatCurrency(Number(coreForm.price || 0), currency)}
-                  </span>
-                ) : (
-                  formatCurrency(Number(coreForm.price || 0), currency)
-                )}
+          {/* Gallery main image display */}
+          <div className="aspect-video w-full bg-slate-900 relative flex items-center justify-center">
+            {mainImgUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={mainImgUrl}
+                alt={mainImgCaption}
+                className="w-full h-full object-cover transition-all duration-300"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-slate-500">
+                <ImageIcon className="h-10 w-10 stroke-[1.5]" />
+                <span className="text-xs font-semibold">No image uploaded</span>
               </div>
+            )}
+            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 pt-6 w-full text-left">
+              <span className="text-[9px] tracking-wider uppercase font-bold text-[#c89a4b]">
+                {selectedCategory?.name || "Service Category"}
+              </span>
+              <h4 className="text-sm font-bold text-slate-100">{coreForm.name || "Unnamed Premium Service"}</h4>
+            </div>
+          </div>
+
+          {/* Gallery thumbnails strip */}
+          {images.length > 0 && (
+            <div className={cn(
+              "p-2 flex gap-1.5 overflow-x-auto border-b transition-colors",
+              isDark ? "bg-[#16181d] border-slate-800/60" : "bg-slate-100 border-slate-200"
+            )}>
+              {images.map((img, idx) => (
+                <button
+                  key={img.id}
+                  onClick={() => setStorefrontMainImageIdx(idx)}
+                  className={cn(
+                    "h-10 w-16 flex-shrink-0 border relative overflow-hidden transition-all duration-150",
+                    storefrontMainImageIdx === idx
+                      ? "border-[#c89a4b] ring-1 ring-[#c89a4b]"
+                      : isDark
+                      ? "border-slate-700 bg-slate-900 opacity-60 hover:opacity-100"
+                      : "border-slate-300 bg-white opacity-60 hover:opacity-100"
+                  )}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.url}
+                    alt={img.caption || "Thumbnail"}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Card pricing and brief context */}
+          <div className="p-4 space-y-4 text-left">
+            <div className={cn("flex items-center justify-between gap-2 border-b pb-3 transition-colors", isDark ? "border-slate-800" : "border-slate-200")}>
+              <div>
+                <span className={cn("text-[9px] uppercase tracking-wider", isDark ? "text-slate-400" : "text-slate-500")}>Booking Price</span>
+                <div className={cn("text-base font-extrabold", isDark ? "text-slate-100" : "text-slate-900")}>
+                  {coreForm.pricingModel === PricingModel.VARIABLE ? (
+                    <span>
+                      {formatCurrency(Number(coreForm.minPrice || 0), currency)} - {formatCurrency(Number(coreForm.price || 0), currency)}
+                    </span>
+                  ) : (
+                    formatCurrency(Number(coreForm.price || 0), currency)
+                  )}
+                </div>
+              </div>
+
+              {coreForm.estimatedDuration && (
+                <div className="text-right">
+                  <span className={cn("text-[9px] uppercase tracking-wider", isDark ? "text-slate-400" : "text-slate-500")}>Duration</span>
+                  <div className={cn("text-xs font-semibold flex items-center gap-1 justify-end mt-0.5", isDark ? "text-slate-200" : "text-slate-700")}>
+                    <Clock size={11} className="text-[#c89a4b]" />
+                    <span>{coreForm.estimatedDuration} Minutes</span>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {coreForm.estimatedDuration && (
-              <div className="text-right">
-                <span className="text-[9px] uppercase tracking-wider text-slate-400">Duration</span>
-                <div className="text-xs font-semibold text-slate-200 flex items-center gap-1 justify-end mt-0.5">
-                  <Clock size={11} className="text-[#c89a4b]" />
-                  <span>{coreForm.estimatedDuration} Minutes</span>
+            {coreForm.requiresDeposit && (
+              <div className={cn(
+                "border p-2 text-[10px] flex items-center justify-between rounded-none transition-colors",
+                isDark
+                  ? "bg-emerald-950/40 border-emerald-800/40 text-emerald-300"
+                  : "bg-emerald-50 border-emerald-200 text-emerald-700"
+              )}>
+                <span className="font-semibold">Secure deposit required:</span>
+                <span className={cn("font-mono px-1.5 py-0.5 font-bold transition-colors", isDark ? "bg-emerald-500/20" : "bg-emerald-100")}>
+                  {coreForm.depositType === DepositType.PERCENTAGE
+                    ? `${coreForm.depositAmount}%`
+                    : formatCurrency(Number(coreForm.depositAmount || 0), currency)}
+                </span>
+              </div>
+            )}
+
+            {/* Dynamic attributes preview (only shows first 3 keys for nice sizing) */}
+            {customAttrs.length > 0 && (
+              <div className={cn("space-y-1.5 border-b pb-3 transition-colors", isDark ? "border-slate-800" : "border-slate-200")}>
+                <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold font-mono">Service Details</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {customAttrs.slice(0, 4).map((attr) => (
+                    <div key={attr.id} className={cn(
+                      "border px-2 py-0.5 text-[10px] flex items-center gap-1 transition-colors",
+                      isDark ? "bg-[#1e2025] border-slate-800" : "bg-slate-50 border-slate-200"
+                    )}>
+                      <span className="text-[#c89a4b] font-semibold">{attr.key.replace(/_/g, " ")}:</span>
+                      <span className={isDark ? "text-slate-300" : "text-slate-600"}>{attr.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Deposit disclaimer */}
-          {coreForm.requiresDeposit && (
-            <div className="bg-emerald-950/40 border border-emerald-800/40 p-2 text-[10px] text-emerald-300 flex items-center justify-between rounded-none">
-              <span className="font-semibold">Secure deposit required:</span>
-              <span className="font-mono bg-emerald-500/20 px-1.5 py-0.5 font-bold">
-                {coreForm.depositType === DepositType.PERCENTAGE
-                  ? `${coreForm.depositAmount}%`
-                  : formatCurrency(Number(coreForm.depositAmount || 0), currency)}
-              </span>
-            </div>
-          )}
 
-          {/* Dynamic attributes preview (only shows first 3 keys for nice sizing) */}
-          {customAttrs.length > 0 && (
-            <div className="space-y-1.5 border-b border-slate-800 pb-3">
-              <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold font-mono">Service Details</span>
-              <div className="flex flex-wrap gap-1.5">
-                {customAttrs.slice(0, 4).map((attr) => (
-                  <div key={attr.id} className="bg-[#1e2025] border border-slate-800 px-2 py-0.5 text-[10px] flex items-center gap-1">
-                    <span className="text-[#c89a4b] font-semibold">{attr.key.replace(/_/g, " ")}:</span>
-                    <span className="text-slate-300">{attr.value}</span>
-                  </div>
-                ))}
+            {/* Markdown text preview container */}
+            <div className="space-y-1.5">
+              <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold font-mono">Storefront About / Info</span>
+              <div className={cn(
+                "max-h-[140px] overflow-y-auto border p-2.5 text-xs leading-relaxed font-sans scrollbar-thin transition-colors",
+                isDark ? "bg-[#16181d] border-slate-800 text-slate-300" : "bg-slate-50 border-slate-200 text-slate-700"
+              )}>
+                {markdown ? (
+                  <div
+                    className={cn("prose prose-xs transition-colors", isDark ? "prose-invert text-slate-300" : "text-slate-700")}
+                    dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(markdown) }}
+                  />
+                ) : (
+                  <span className="text-[11px] text-slate-400 italic">No custom description.</span>
+                )}
               </div>
             </div>
-          )}
 
+            {/* CTA preview button */}
+            <Button
+              type="button"
+              className="w-full bg-[#c89a4b] hover:bg-[#b0843a] text-white py-2 font-bold uppercase tracking-widest text-xs h-9 rounded-none border-none mt-2 flex items-center justify-center gap-1"
+            >
+              <span>Book Service Slot</span>
+            </Button>
 
-          {/* Markdown text preview container */}
-          <div className="space-y-1.5">
-            <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold font-mono">Storefront About / Info</span>
-            <div className="max-h-[140px] overflow-y-auto bg-[#16181d] border border-slate-800 p-2.5 text-xs text-slate-300 leading-relaxed font-sans scrollbar-thin">
-              {markdown ? (
-                <div
-                  className="prose prose-invert prose-xs text-slate-300"
-                  dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(markdown) }}
-                />
-              ) : (
-                <span className="text-[11px] text-slate-500 italic">No custom description.</span>
-              )}
-            </div>
           </div>
 
-          {/* CTA preview button */}
-          <Button
-            type="button"
-            className="w-full bg-[#c89a4b] hover:bg-[#b0843a] text-white py-2 font-bold uppercase tracking-widest text-xs h-9 rounded-none border-none mt-2 flex items-center justify-center gap-1"
-          >
-            <span>Book Service Slot</span>
-          </Button>
-
         </div>
-
       </div>
     );
   }

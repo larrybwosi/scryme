@@ -16,6 +16,8 @@ import {
   Image as ImageIcon,
   ChevronRight,
   Loader2,
+  Upload,
+  X,
   ExternalLink,
   Edit,
   Scale,
@@ -163,18 +165,7 @@ export function ProductPageClient({
         url,
         caption: "Product Image",
       }))
-    : [
-        {
-          id: "img-default-1",
-          url: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
-          caption: "Primary athletic sneaker profile preview",
-        },
-        {
-          id: "img-default-2",
-          url: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?auto=format&fit=crop&w=800&q=80",
-          caption: "Responsive cushioning technology breakdown",
-        },
-      ];
+    : [];
   const [cmsImages, setCmsImages] = useState<any[]>(initialCMSImages);
   const [newImageUrl, setNewImageUrl] = useState("");
   const [newImageCaption, setNewImageCaption] = useState("");
@@ -215,6 +206,10 @@ export function ProductPageClient({
   const [storefrontMainImageIdx, setStorefrontMainImageIdx] = useState(0);
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Image upload states
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Synchronization helpers
   React.useEffect(() => {
@@ -540,8 +535,8 @@ export function ProductPageClient({
 
   // Reusable sub-component: Simulated High-Fidelity Storefront Card Preview with Light/Dark Mode Support
   function StorefrontCardPreview() {
-    const mainImgUrl = cmsImages[storefrontMainImageIdx]?.url || "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80";
-    const mainImgCaption = cmsImages[storefrontMainImageIdx]?.caption || "Product preview placeholder";
+    const mainImgUrl = cmsImages[storefrontMainImageIdx]?.url || "";
+    const mainImgCaption = cmsImages[storefrontMainImageIdx]?.caption || "Product preview";
     const selectedCategory = categories.find((c: any) => c.id === product.categoryId);
 
     // Calculate retail price range
@@ -580,17 +575,21 @@ export function ProductPageClient({
         </div>
 
         {/* Gallery main image display */}
-        <div className="aspect-video w-full bg-zinc-900 relative">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={mainImgUrl}
-            alt={mainImgCaption}
-            className="w-full h-full object-cover transition-all duration-300"
-            onError={(e) => {
-              e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80";
-            }}
-          />
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-3 pt-6">
+        <div className="aspect-video w-full bg-zinc-900 relative flex items-center justify-center">
+          {mainImgUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={mainImgUrl}
+              alt={mainImgCaption}
+              className="w-full h-full object-cover transition-all duration-300"
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-2 text-zinc-500">
+              <ImageIcon className="h-10 w-10 stroke-[1.5]" />
+              <span className="text-xs">No image uploaded</span>
+            </div>
+          )}
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-3 pt-6 w-full text-left">
             <span className="text-[9px] tracking-wider uppercase font-bold text-amber-400">
               {selectedCategory?.name || "Product Category"}
             </span>
@@ -622,9 +621,6 @@ export function ProductPageClient({
                   src={img.url}
                   alt={img.caption || "Thumbnail"}
                   className="w-full h-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=100&q=80";
-                  }}
                 />
               </button>
             ))}
@@ -1117,9 +1113,6 @@ export function ProductPageClient({
                                   src={img.url}
                                   alt={img.caption || "Product Image"}
                                   className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.currentTarget.src = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=400&q=80";
-                                  }}
                                 />
                                 <div className="absolute top-2 left-2 bg-zinc-900/90 px-2 py-0.5 text-[10px] font-mono text-white tracking-widest font-bold rounded">
                                   #{idx + 1} {idx === 0 && "(MAIN)"}
@@ -1181,16 +1174,74 @@ export function ProductPageClient({
                       {/* Add new image form */}
                       <div className="border p-4 bg-muted/10 space-y-3 rounded-lg dark:border-zinc-800">
                         <span className="text-xs font-bold text-foreground">Add New Showcase Image</span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
-                            <Label htmlFor="new-img-url" className="text-[10px] font-bold uppercase text-muted-foreground">Direct Image Link (URL)</Label>
-                            <Input
-                              id="new-img-url"
-                              placeholder="https://images.unsplash.com/photo-..."
-                              value={newImageUrl}
-                              onChange={(e) => setNewImageUrl(e.target.value)}
-                              className="text-xs h-8 rounded bg-background border-border"
-                            />
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Upload Image</Label>
+                            <div
+                              onClick={() => !isUploading && fileInputRef.current?.click()}
+                              className="relative border-2 border-dashed border-border dark:border-zinc-800 bg-background p-4 text-center rounded-lg hover:border-muted-foreground/30 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1 min-h-[90px]"
+                            >
+                              {isUploading ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+                                  <span className="text-[10px] text-muted-foreground font-semibold">Uploading to storage...</span>
+                                </div>
+                              ) : newImageUrl ? (
+                                <div className="flex items-center gap-2 w-full justify-between">
+                                  <div className="flex items-center gap-2 overflow-hidden">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={newImageUrl} className="h-10 w-10 object-cover rounded" alt="Upload preview" />
+                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold truncate">Uploaded successfully</span>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 hover:bg-muted rounded text-muted-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setNewImageUrl("");
+                                    }}
+                                  >
+                                    <X size={14} />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center">
+                                  <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+                                  <span className="text-[10px] text-muted-foreground font-semibold">Click or Drag to Upload</span>
+                                </div>
+                              )}
+                              <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  setIsUploading(true);
+                                  try {
+                                    const formData = new FormData();
+                                    formData.append("file", file);
+                                    const res = await fetch("/api/upload", {
+                                      method: "POST",
+                                      body: formData,
+                                    });
+                                    if (!res.ok) throw new Error("Upload failed");
+                                    const resData = await res.json();
+                                    const url = resData.data?.url || resData.url;
+                                    if (!url) throw new Error("No URL returned");
+                                    setNewImageUrl(url);
+                                    toast.success("Image uploaded successfully!");
+                                  } catch (err) {
+                                    console.error(err);
+                                    toast.error("Failed to upload image");
+                                  } finally {
+                                    setIsUploading(false);
+                                  }
+                                }}
+                              />
+                            </div>
                           </div>
                           <div className="space-y-1.5">
                             <Label htmlFor="new-img-caption" className="text-[10px] font-bold uppercase text-muted-foreground">Caption / Alt text</Label>
