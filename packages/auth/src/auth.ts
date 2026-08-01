@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import type { User, Session } from "better-auth";
 import { authOptions } from "./index";
-import { admin, customSession, jwt } from "better-auth/plugins";
+import { admin, customSession, jwt, bearer } from "better-auth/plugins";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { nextCookies } from "better-auth/next-js";
 import { UserRole, MemberRole } from "@repo/db";
@@ -166,6 +166,7 @@ export const auth = betterAuth({
   },
   plugins: [
     jwt(),
+    bearer(),
     admin({
       defaultRole: UserRole.MEMBER,
     }),
