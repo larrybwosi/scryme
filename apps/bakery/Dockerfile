@@ -65,23 +65,32 @@ RUN --mount=type=cache,id=turbo,target=/app/.turbo \
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
 # ---------------------------------------------------------
-FROM nginx:alpine AS runner
+FROM base AS runner
+WORKDIR /app
 
-# Copy the built static files from the installer stage
-COPY --from=installer /app/apps/bakery/dist /usr/share/nginx/html
+ENV NODE_ENV=production
+ENV PORT=3003
 
-# Copy the Nginx configuration safely from the pruned context
-COPY --from=pruner /app/out/full/apps/bakery/nginx.conf /etc/nginx/conf.d/default.conf
+# Create a system user to run the application securely
+RUN groupadd --system --gid 1001 nodejs
+RUN useradd --system --uid 1001 -g nodejs appuser
+
+# Copy the built static files and the server script from the installer/pruner stages
+COPY --from=installer --chown=appuser:nodejs /app/apps/bakery/dist ./dist
+COPY --from=pruner --chown=appuser:nodejs /app/out/full/apps/bakery/server.js ./server.js
 
 # Copy entrypoint script safely from the pruner stage root
-COPY --from=pruner /app/entrypoint.sh /entrypoint.sh
+COPY --from=pruner --chown=appuser:nodejs /app/entrypoint.sh ./entrypoint.sh
 USER root
-RUN chmod +x /entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
-ENV PORT=3003
+USER appuser
+
 EXPOSE 3003
 
+# Use built-in node to do healthcheck. Node is built-in and always available!
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3003}/api/health || exit 1
+  CMD node -e "fetch('http://localhost:' + (process.env.PORT || 3003) + '/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
+CMD ["node", "server.js"]

@@ -27,7 +27,7 @@ export default async function StaffPage() {
   const invitations = (invitationsResult.success ? invitationsResult.data : []) || [];
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-[#34A853]/10 rounded-xl flex items-center justify-center text-[#34A853]">
@@ -65,7 +65,7 @@ export default async function StaffPage() {
       <div className="flex flex-col gap-4">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2">
-          <div className="bg-white p-4 rounded-xl border shadow-sm">
+          <div className="bg-card p-4 rounded-xl border shadow-sm">
             <p className="text-sm font-medium text-gray-500">Total Members</p>
             <div className="flex items-center justify-between mt-1">
               <h3 className="text-2xl font-bold">{members.length}</h3>
@@ -76,7 +76,7 @@ export default async function StaffPage() {
               </Badge>
             </div>
           </div>
-          <div className="bg-white p-4 rounded-xl border shadow-sm">
+          <div className="bg-card p-4 rounded-xl border shadow-sm">
             <p className="text-sm font-medium text-gray-500">Admins</p>
             <div className="flex items-center justify-between mt-1">
               <h3 className="text-2xl font-bold">
@@ -89,7 +89,7 @@ export default async function StaffPage() {
               </Badge>
             </div>
           </div>
-          <div className="bg-white p-4 rounded-xl border shadow-sm">
+          <div className="bg-card p-4 rounded-xl border shadow-sm">
             <p className="text-sm font-medium text-gray-500">Pending Invitations</p>
             <div className="flex items-center justify-between mt-1">
               <h3 className="text-2xl font-bold">{invitations.length}</h3>
@@ -100,7 +100,7 @@ export default async function StaffPage() {
               </Badge>
             </div>
           </div>
-          <div className="bg-white p-4 rounded-xl border shadow-sm">
+          <div className="bg-card p-4 rounded-xl border shadow-sm">
             <p className="text-sm font-medium text-gray-500">Suspended</p>
             <div className="flex items-center justify-between mt-1">
               <h3 className="text-2xl font-bold text-red-600">
@@ -117,17 +117,17 @@ export default async function StaffPage() {
 
         <Tabs defaultValue="members" className="w-full">
           <div className="flex items-center justify-between border-b border-gray-200 pb-2 mb-4">
-            <TabsList className="bg-white border p-1 h-auto gap-1">
+            <TabsList className="bg-card border p-1 h-auto gap-1">
               <TabsTrigger
                 value="members"
-                className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]"
+                className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-[#1D1D1F]"
               >
                 <Users size={16} />
                 Active Staff ({members.length})
               </TabsTrigger>
               <TabsTrigger
                 value="invitations"
-                className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]"
+                className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-[#1D1D1F]"
               >
                 <Mail size={16} />
                 Pending Invitations ({invitations.length})
@@ -142,7 +142,7 @@ export default async function StaffPage() {
                 />
                 <Input
                   placeholder="Search..."
-                  className="pl-10 h-9 bg-white border-gray-200"
+                  className="pl-10 h-9 bg-card border-gray-200"
                 />
               </div>
               <Button

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db, WindmillExecutionStatus } from "@repo/db";
+import { randomBytes } from "crypto";
 // @ts-ignore
 import {
   WindmillTemplateService,
@@ -80,7 +81,8 @@ async function provisionWorkflow(
     config = await db.windmillConfiguration.create({
       data: {
         organizationId,
-        windmillApiKey: "simulated_key_" + Math.random().toString(36).substring(7),
+        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable simulated API keys
+        windmillApiKey: "simulated_key_" + randomBytes(4).toString("hex"),
         windmillBaseUrl: "https://windmill.internal",
         workspaceId: "ws_" + organizationId.substring(0, 8),
         workspaceName: "Org Workspace",
@@ -156,7 +158,8 @@ async function triggerWorkflow(
       config = await db.windmillConfiguration.create({
         data: {
           organizationId,
-          windmillApiKey: "simulated_key_" + Math.random().toString(36).substring(7),
+          // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable simulated API keys
+          windmillApiKey: "simulated_key_" + randomBytes(4).toString("hex"),
           windmillBaseUrl: "https://windmill.internal",
           workspaceId: "ws_" + organizationId.substring(0, 8),
           workspaceName: "Org Workspace",
@@ -164,7 +167,8 @@ async function triggerWorkflow(
       });
     }
 
-    jobId = "job_sim_" + Math.random().toString(36).substring(7);
+    // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable simulated job IDs
+    jobId = "job_sim_" + randomBytes(4).toString("hex");
     await db.windmillExecution.create({
       data: {
         organizationId,

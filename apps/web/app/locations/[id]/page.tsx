@@ -120,9 +120,9 @@ export default async function LocationDetailPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-200 bg-white">
+      <div className="border-b border-slate-200 bg-card">
         <div className="px-8 pt-4">
           <nav
             aria-label="Breadcrumb"
@@ -395,7 +395,7 @@ export default async function LocationDetailPage({
                     description="Add a sub-location to break this site down into floors, rooms, or storage areas."
                   />
                 ) : (
-                  <div className="border border-slate-200 divide-y divide-slate-200 bg-white">
+                  <div className="border border-slate-200 divide-y divide-slate-200 bg-card">
                     {location.childLocations.map((child: any) => (
                       <Link key={child.id} href={`/locations/${child.id}`}>
                         <div className="px-4 py-3 hover:bg-slate-50 transition-colors flex items-center justify-between group">
@@ -427,7 +427,7 @@ export default async function LocationDetailPage({
             </TabsContent>
 
             <TabsContent value="stock" className="mt-6">
-              <div className="border border-slate-200 bg-white">
+              <div className="border border-slate-200 bg-card">
                 <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                   <span className="text-[13px] font-semibold text-slate-900 flex items-center gap-2">
                     <Database size={14} className="text-slate-500" />
@@ -472,7 +472,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border border-slate-200 bg-white">
+    <div className="border border-slate-200 bg-card">
       <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-50/60">
         <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
           {title}
@@ -537,7 +537,7 @@ function EmptyState({
   description: string;
 }) {
   return (
-    <div className="p-8 border border-dashed border-slate-300 bg-white text-center flex flex-col items-center gap-2">
+    <div className="p-8 border border-dashed border-slate-300 bg-card text-center flex flex-col items-center gap-2">
       <div className="text-slate-300">{icon}</div>
       <p className="text-[13px] font-semibold text-slate-900">{title}</p>
       <p className="text-[13px] text-slate-500 max-w-sm">{description}</p>

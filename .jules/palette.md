@@ -25,3 +25,7 @@
 ## 2026-07-29 - [Inline-Editing Input Blur Race Condition and Revert Mechanics]
 **Learning:** In inline-editing input fields, clicking on external action buttons (like Save/Cancel) normally triggers the input's `onBlur` handler before the button's `onClick` can fire, which often prematurely unmounts the editing state and swallows the button click. Additionally, direct state mutation during typing prevents the user from canceling or reverting changes gracefully.
 **Action:** Always decouple active state from an edit buffer (e.g., using a `tempName` state) to support clean cancel/revert mechanics on `Escape` keypress or Cancel clicks. To prevent input `onBlur` from pre-empting button click handlers, use `onMouseDown={(e) => e.preventDefault()}` on the action buttons.
+
+## 2026-07-30 - [W3C WAI-ARIA Accessible Breadcrumb Trails]
+**Learning:** Icon-only breadcrumb navigation links (like Home) and their parent layout containers are often overlooked in accessibility styling and semantic structure. Applying `aria-label="Breadcrumb"` to the outer `<nav>` container conforms to W3C ARIA landmarks, while adding focus outline offset/ring utilities alongside consistent `aria-label` and `title` attributes on icon-only links guarantees visual clarity, screen-reader discoverability, and clean keyboard tab highlights.
+**Action:** Always wrap breadcrumb navigation inside an `<nav aria-label="Breadcrumb">` tag, supplement icon-only trail links with synchronized `aria-label` and `title` labels, and apply focus-visible ring styles.

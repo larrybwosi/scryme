@@ -1,3 +1,11 @@
+## 2026-07-31 - [N+1 Query Bottlenecks in Strapi E-Commerce Integration]
+**Learning:** Sequential `findFirst` database requests on mapping tables (like `ecommerceProductMapping` and `ecommerceCustomerMapping`) within bulk outbound/inbound loops during e-commerce synchronization processes degrade throughput heavily. Batch pre-fetching all relevant mappings using single `findMany` queries with the `in` operator, and constructing in-memory Map caches, reduces database transaction pressure and query latency from $O(N)$ down to a flat $O(1)$ roundtrips.
+**Action:** Always pre-fetch integration mapping tables for bulk processing batches and use constant-time Map lookups inside iterative sync flows.
+
+## 2026-07-30 - [Pre-fetching Product Variants in Bakery GRN]
+**Learning:** Sequential database queries (like `findFirst` on `productVariant`) inside bulk inventory receiving loops (such as GRNs) create critical N+1 query bottlenecks within database transactions. Aggregating requested variant IDs up-front and using a single scoped `findMany` query preserves multi-tenant isolation while reducing transaction hold times and query overhead from $O(N)$ down to $O(1)$.
+**Action:** Always pre-fetch and map validation records before entering bulk transactional loops, ensuring all tenant-scoping fields (`organizationId`) are strictly applied to the batch query.
+
 ## 2026-06-04 - [Prisma Select Optimization vs API Contract]
 **Learning:** Using Prisma's `select` block for performance optimization is effective but requires careful mapping to maintain the API contract. Specifically, scalar and relational fields needed for final data shaping must be explicitly selected, while internal data used only for intermediate calculations (e.g., raw stock records used to calculate a total) must be explicitly removed from the final response object to prevent leaking internal database structures and increasing payload size unnecessarily.
 **Action:** Always cross-reference the `select` block with the `map`/shaping logic and the original `include` block to ensure no required fields are missed and no internal data is inadvertently exposed.
@@ -161,3 +169,11 @@
 ## 2026-07-30 - [Redundant N+1 Query Elimination in Stock Request Fulfillment]
 **Learning:** Querying metadata (such as `buyingPrice` of the parent `variantId`) inside a loop over line items (like `itemsForThisLocation.map(...)`) within stock transaction blocks is a critical performance anti-pattern. Since the root entity identifier remains identical across items, moving this lookup up-front before loops or conditional blocks completely resolves the N+1 query overhead, reducing database operations inside the transaction block significantly.
 **Action:** Always pre-fetch and cache singular properties and metadata before executing loop iterations or mapping arrays within transactions.
+
+## 2026-07-31 - [Consolidated Database Row Updates in PO Receipt]
+**Learning:** Performing multiple sequential database `upsert` queries on the exact same `ProductVariantStock` row inside a transaction for multiple batches creates row lock contention and deadlocks. Consolidating updates down to exactly one query per unique `variantId` completely eliminates lock contention and reduces database roundtrips.
+**Action:** Always accumulate quantities by unique keys (like `variantId`) in-memory during batch-processing loop operations, then execute exactly one database update/upsert per unique key, while deferring validation checks or movement records as necessary to keep integrity checks aligned.
+
+## 2026-07-31 - [Delta Category Sync in V2 POS Path]
+**Learning:** Fetching and returning all organization categories during POS sync requests is a scalability bottleneck and defeats the purpose of delta sync protocols. Adding conditional `updatedAt` filtering scoped by `lastSync` converts category sync to a true incremental/delta sync, eliminating redundant database I/O, serialization overhead, and network footprint under heavy client request load.
+**Action:** Always scope reference and catalog list fetches with `lastSync` filtering where applicable in sync endpoints to enforce strict delta sync standards.

@@ -123,6 +123,25 @@ export class PurchaseOrderUseCase {
       // ⚡ Bolt Optimization: Pre-index purchase items into a Map to avoid O(N*M) nested loop search
       const purchaseItemsMap = new Map(purchase.items.map((i) => [i.id, i]));
 
+      // Keep track of total received quantity per variantId to consolidate productVariantStock upserts.
+      // This eliminates concurrent or sequential updates on the exact same row (compound key variantId_locationId)
+      // for multiple batches, which prevents database lock contention, deadlocks, and reduces transactional roundtrips.
+      const variantStockUpdates = new Map<
+        string,
+        {
+          productId: string;
+          totalQuantity: number;
+        }
+      >();
+
+      // Keep track of recorded movements to execute them after the stock upsert, to preserve stock integrity checks
+      const movementsToRecord: {
+        purchaseItem: any;
+        batchId: string;
+        quantity: number;
+        serialNumbers?: string[];
+      }[] = [];
+
       for (const itemDto of dto.items) {
         const purchaseItem = purchaseItemsMap.get(itemDto.purchaseItemId);
         if (!purchaseItem)
@@ -204,39 +223,24 @@ export class PurchaseOrderUseCase {
             }
           }
 
-          await this.inventoryMovementService.recordMovement(tx, {
-            organizationId,
-            memberId,
-            variantId: purchaseItem.variantId,
-            stockBatchId: batch.id,
-            quantity: batchDto.quantity,
-            toLocationId: dto.locationId,
-            movementType: MovementType.PURCHASE_RECEIPT,
-            serialNumbers: batchDto.serialNumbers,
-            referenceId: purchase.id,
-            referenceType: "Purchase",
-            notes: `Received from PO #${purchase.purchaseNumber}`,
-          });
-
-          await tx.productVariantStock.upsert({
-            where: {
-              variantId_locationId: {
-                variantId: purchaseItem.variantId,
-                locationId: dto.locationId,
-              },
-            },
-            update: {
-              currentStock: { increment: batchDto.quantity },
-              availableStock: { increment: batchDto.quantity },
-            },
-            create: {
-              organizationId,
+          // Accumulate the received quantity for this variant
+          const existingUpdate = variantStockUpdates.get(purchaseItem.variantId);
+          if (existingUpdate) {
+            existingUpdate.totalQuantity += batchDto.quantity;
+          } else {
+            variantStockUpdates.set(purchaseItem.variantId, {
               productId: purchaseItem.variant.productId,
-              variantId: purchaseItem.variantId,
-              locationId: dto.locationId,
-              currentStock: batchDto.quantity,
-              availableStock: batchDto.quantity,
-            },
+              totalQuantity: batchDto.quantity,
+            });
+          }
+
+          // Defer recording the movement until after we upsert the variant stock
+          // so that the integrity check in InventoryMovementService passes.
+          movementsToRecord.push({
+            purchaseItem,
+            batchId: batch.id,
+            quantity: batchDto.quantity,
+            serialNumbers: batchDto.serialNumbers,
           });
 
           totalReceivedForItem += batchDto.quantity;
@@ -252,6 +256,50 @@ export class PurchaseOrderUseCase {
                 ? QualityCheckStatus.FAILED
                 : QualityCheckStatus.PASSED,
           },
+        });
+      }
+
+      // ⚡ Bolt Optimization: Consolidate ProductVariantStock upserts.
+      // Running exactly one upsert query per unique variantId reduces lock contention,
+      // database I/O, and speeds up bulk receipts under high concurrency.
+      for (const [variantId, updateInfo] of variantStockUpdates.entries()) {
+        await tx.productVariantStock.upsert({
+          where: {
+            variantId_locationId: {
+              variantId,
+              locationId: dto.locationId,
+            },
+          },
+          update: {
+            currentStock: { increment: updateInfo.totalQuantity },
+            availableStock: { increment: updateInfo.totalQuantity },
+          },
+          create: {
+            organizationId,
+            productId: updateInfo.productId,
+            variantId,
+            locationId: dto.locationId,
+            currentStock: updateInfo.totalQuantity,
+            availableStock: updateInfo.totalQuantity,
+          },
+        });
+      }
+
+      // Record deferred movements now that productVariantStock has been updated.
+      // This ensures that the integrity check in InventoryMovementService matches perfectly.
+      for (const movement of movementsToRecord) {
+        await this.inventoryMovementService.recordMovement(tx, {
+          organizationId,
+          memberId,
+          variantId: movement.purchaseItem.variantId,
+          stockBatchId: movement.batchId,
+          quantity: movement.quantity,
+          toLocationId: dto.locationId,
+          movementType: MovementType.PURCHASE_RECEIPT,
+          serialNumbers: movement.serialNumbers,
+          referenceId: purchase.id,
+          referenceType: "Purchase",
+          notes: `Received from PO #${purchase.purchaseNumber}`,
         });
       }
 

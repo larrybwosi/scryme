@@ -156,6 +156,7 @@ export function ProductSheet({
     retailPrice: 0,
     initialStock: 0,
     imageUrls: [] as string[],
+    type: "FINISHED_GOOD",
   });
 
   const [isCheckingUniqueness, setIsCheckingUniqueness] = useState(false);
@@ -221,6 +222,7 @@ export function ProductSheet({
                 : 0,
               initialStock: 0,
               imageUrls: product.imageUrls,
+              type: product.type || "FINISHED_GOOD",
             });
           }
         } catch {
@@ -240,6 +242,7 @@ export function ProductSheet({
         retailPrice: 0,
         initialStock: 0,
         imageUrls: [],
+        type: "FINISHED_GOOD",
       });
       setIsManualSku(false);
       setIsManualSlug(false);
@@ -262,11 +265,12 @@ export function ProductSheet({
           buyingPrice: formData.buyingPrice,
           retailPrice: formData.retailPrice,
           imageUrls: formData.imageUrls,
+          type: formData.type,
         });
-        toast.success("Product updated successfully");
+        toast.success("Item updated successfully");
       } else {
         await createProduct(formData);
-        toast.success("Product created successfully");
+        toast.success("Item created successfully");
       }
       setOpen(false);
     } catch (error: any) {
@@ -410,45 +414,77 @@ export function ProductSheet({
                     </FieldWrapper>
                   </div>
 
-                  <FieldWrapper className="w-1/2 pr-2">
-                    <FieldLabel htmlFor="category">Category</FieldLabel>
-                    {categories.length === 0 ? (
-                      <div className="flex flex-col gap-1.5">
-                        <div className="h-9 px-3 flex items-center text-sm border border-dashed border-zinc-200 rounded-md bg-zinc-50 text-zinc-400">
-                          No categories available
+                  <div className="grid grid-cols-2 gap-4">
+                    <FieldWrapper>
+                      <FieldLabel htmlFor="category">Category</FieldLabel>
+                      {categories.length === 0 ? (
+                        <div className="flex flex-col gap-1.5">
+                          <div className="h-9 px-3 flex items-center text-sm border border-dashed border-zinc-200 rounded-md bg-zinc-50 text-zinc-400">
+                            No categories available
+                          </div>
+                          <Link
+                            href="/inventory/categories"
+                            className="text-[10px] text-zinc-500 hover:text-zinc-900 underline flex items-center gap-1 transition-colors">
+                            <Plus className="h-3 w-3" />
+                            Create categories first
+                          </Link>
                         </div>
-                        <Link
-                          href="/inventory/categories"
-                          className="text-[10px] text-zinc-500 hover:text-zinc-900 underline flex items-center gap-1 transition-colors">
-                          <Plus className="h-3 w-3" />
-                          Create categories first
-                        </Link>
-                      </div>
-                    ) : (
+                      ) : (
+                        <Select
+                          value={formData.categoryId}
+                          onValueChange={value =>
+                            setFormData({ ...formData, categoryId: value })
+                          }
+                          required>
+                          <SelectTrigger
+                            id="category"
+                            className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
+                            <SelectValue placeholder="Select category…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map(cat => (
+                              <SelectItem
+                                key={cat.id}
+                                value={cat.id}
+                                className="text-sm">
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </FieldWrapper>
+
+                    <FieldWrapper>
+                      <FieldLabel htmlFor="product-type">Item Type</FieldLabel>
                       <Select
-                        value={formData.categoryId}
+                        value={formData.type}
                         onValueChange={value =>
-                          setFormData({ ...formData, categoryId: value })
+                          setFormData({ ...formData, type: value })
                         }
                         required>
                         <SelectTrigger
-                          id="category"
+                          id="product-type"
                           className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
-                          <SelectValue placeholder="Select category…" />
+                          <SelectValue placeholder="Select item type…" />
                         </SelectTrigger>
                         <SelectContent>
-                          {categories.map(cat => (
-                            <SelectItem
-                              key={cat.id}
-                              value={cat.id}
-                              className="text-sm">
-                              {cat.name}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="FINISHED_GOOD" className="text-sm">
+                            Finished Good
+                          </SelectItem>
+                          <SelectItem value="RAW_MATERIAL" className="text-sm">
+                            Raw Material
+                          </SelectItem>
+                          <SelectItem value="MERCHANDISE" className="text-sm">
+                            Merchandise
+                          </SelectItem>
+                          <SelectItem value="OTHER" className="text-sm">
+                            Other
+                          </SelectItem>
                         </SelectContent>
                       </Select>
-                    )}
-                  </FieldWrapper>
+                    </FieldWrapper>
+                  </div>
                 </div>
               </section>
 

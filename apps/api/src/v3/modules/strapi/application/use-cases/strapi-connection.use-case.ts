@@ -102,7 +102,7 @@ export class StrapiConnectionUseCase {
       `Created Strapi connection ${connection.id} for org ${organizationId}`,
     );
 
-    return this.toResponse(connection.id);
+    return this.toResponse(connection.id, organizationId);
   }
 
   // ─────────────────────────────────────────
@@ -175,7 +175,7 @@ export class StrapiConnectionUseCase {
       }
     });
 
-    return this.toResponse(connectionId);
+    return this.toResponse(connectionId, organizationId);
   }
 
   // ─────────────────────────────────────────
@@ -264,12 +264,12 @@ export class StrapiConnectionUseCase {
 
   private async toResponse(
     connectionId: string,
-    organizationId?: string,
+    organizationId: string,
   ): Promise<StrapiConnectionResponseDto> {
     const conn = await this.prisma.client.ecommerceConnection.findFirst({
       where: {
         id: connectionId,
-        ...(organizationId ? { organizationId } : {}),
+        organizationId,
         platform: EcommercePlatform.STRAPI,
       },
       include: { strapiConfig: true },
