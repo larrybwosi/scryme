@@ -5,27 +5,27 @@ import retrofit2.http.*
 import tech.scryme.admin.data.model.*
 
 interface AuthApiService {
-    @POST("/api/auth/sign-in/email")
+    @POST("/api/android/auth/sign-in/email")
     suspend fun signInWithEmail(
         @Body request: Map<String, String> // e.g. email, password
     ): Response<BetterAuthSessionResponse>
 
-    @GET("/api/auth/get-session")
+    @GET("/api/android/auth/get-session")
     suspend fun getSession(): Response<BetterAuthSessionResponse>
 
-    @POST("/v3/members/login")
+    @POST("/api/android/auth/terminal-login")
     suspend fun terminalLogin(
         @Body request: TerminalLoginDto
     ): Response<ApiEnvelope<TerminalLoginResponseDto>>
 
-    @POST("/api/auth/login/social/google")
+    @POST("/api/android/auth/login/social/google")
     suspend fun signInWithGoogle(
         @Body request: Map<String, String> // e.g., idToken or token
     ): Response<BetterAuthSessionResponse>
 }
 
 interface PresenceApiService {
-    @GET("/v3/{orgSlug}/members")
+    @GET("/api/android/{orgSlug}/members")
     suspend fun getMembers(
         @Path("orgSlug") orgSlug: String,
         @Query("role") role: String? = null,
@@ -34,7 +34,7 @@ interface PresenceApiService {
         @Query("search") search: String? = null
     ): Response<ApiEnvelope<List<MemberResponseDto>>>
 
-    @GET("/v3/{orgSlug}/members/attendance/logs")
+    @GET("/api/android/{orgSlug}/members/attendance/logs")
     suspend fun getAttendanceLogs(
         @Path("orgSlug") orgSlug: String,
         @Query("page") page: Int,
@@ -45,33 +45,33 @@ interface PresenceApiService {
         @Query("endDate") endDate: String? = null
     ): Response<ApiEnvelope<AttendanceLogsResponse>>
 
-    @POST("/v3/{orgSlug}/members/attendance/check-in")
+    @POST("/api/android/{orgSlug}/members/attendance/check-in")
     suspend fun checkIn(
         @Path("orgSlug") orgSlug: String,
         @Body dto: CheckInDto
     ): Response<ApiEnvelope<AttendanceLogDto>>
 
-    @POST("/v3/{orgSlug}/members/attendance/check-out")
+    @POST("/api/android/{orgSlug}/members/attendance/check-out")
     suspend fun checkOut(
         @Path("orgSlug") orgSlug: String,
         @Body dto: CheckOutDto
     ): Response<ApiEnvelope<AttendanceLogDto>>
 
     // Admin direct checkout on behalf of a member
-    @POST("/v3/{orgSlug}/members/{memberId}/attendance/check-out")
+    @POST("/api/android/{orgSlug}/members/{memberId}/attendance/check-out")
     suspend fun adminCheckOut(
         @Path("orgSlug") orgSlug: String,
         @Path("memberId") memberId: String,
         @Body dto: CheckOutDto
     ): Response<ApiEnvelope<AttendanceLogDto>>
 
-    @GET("/v3/{orgSlug}/pos/petty-cash/transactions")
+    @GET("/api/android/{orgSlug}/pos/petty-cash/transactions")
     suspend fun getPettyCashTransactions(
         @Path("orgSlug") orgSlug: String,
         @Query("limit") limit: Int? = null
     ): Response<ApiEnvelope<List<PettyCashTransactionDto>>>
 
-    @GET("/v3/{orgSlug}/pos/transactions")
+    @GET("/api/android/{orgSlug}/pos/transactions")
     suspend fun getTransactions(
         @Path("orgSlug") orgSlug: String,
         @Query("locationId") locationId: String? = null,
@@ -81,21 +81,21 @@ interface PresenceApiService {
 }
 
 interface ApprovalsApiService {
-    @GET("/v3/{orgSlug}/catalog/price-change-requests")
+    @GET("/api/android/{orgSlug}/catalog/price-change-requests")
     suspend fun getPriceChangeRequests(
         @Path("orgSlug") orgSlug: String,
         @Query("offset") offset: Int = 0,
         @Query("limit") limit: Int = 20
     ): Response<ApiEnvelope<List<PriceChangeRequestDto>>>
 
-    @POST("/v3/{orgSlug}/catalog/price-change-requests/{id}/review")
+    @POST("/api/android/{orgSlug}/catalog/price-change-requests/{id}/review")
     suspend fun reviewPriceChange(
         @Path("orgSlug") orgSlug: String,
         @Path("id") id: String,
         @Body dto: PriceChangeReviewDto
     ): Response<ApiEnvelope<Unit>>
 
-    @GET("/v3/{orgSlug}/inventory/adjustments")
+    @GET("/api/android/{orgSlug}/inventory/adjustments")
     suspend fun getStockAdjustments(
         @Path("orgSlug") orgSlug: String,
         @Query("offset") offset: Int = 0,
@@ -103,13 +103,13 @@ interface ApprovalsApiService {
         @Query("status") status: String? = null
     ): Response<ApiEnvelope<List<StockAdjustmentResponseDto>>>
 
-    @PATCH("/v3/{orgSlug}/inventory/adjustments/{id}/approve")
+    @PATCH("/api/android/{orgSlug}/inventory/adjustments/{id}/approve")
     suspend fun approveInventoryAdjustment(
         @Path("orgSlug") orgSlug: String,
         @Path("id") id: String
     ): Response<ApiEnvelope<Unit>>
 
-    @PATCH("/v3/{orgSlug}/inventory/adjustments/{id}/reject")
+    @PATCH("/api/android/{orgSlug}/inventory/adjustments/{id}/reject")
     suspend fun rejectInventoryAdjustment(
         @Path("orgSlug") orgSlug: String,
         @Path("id") id: String,
@@ -118,7 +118,7 @@ interface ApprovalsApiService {
 }
 
 interface AnalyticsApiService {
-    @GET("/v3/{orgSlug}/analytics/utilization")
+    @GET("/api/android/{orgSlug}/analytics/utilization")
     suspend fun getResourceUtilization(
         @Path("orgSlug") orgSlug: String,
         @Query("startDate") startDate: String,
@@ -126,14 +126,14 @@ interface AnalyticsApiService {
     ): Response<ApiEnvelope<Unit>>
 
     // Creative consolidated dash statistics for admins
-    @GET("/v3/{orgSlug}/analytics/dashboard")
+    @GET("/api/android/{orgSlug}/analytics/dashboard")
     suspend fun getDashboardAnalytics(
         @Path("orgSlug") orgSlug: String
     ): Response<ApiEnvelope<DashboardAnalyticsDto>>
 }
 
 interface AnnouncementApiService {
-    @POST("/v3/{orgSlug}/announcements")
+    @POST("/api/android/{orgSlug}/announcements")
     suspend fun broadcastAnnouncement(
         @Path("orgSlug") orgSlug: String,
         @Body dto: AnnouncementDto
@@ -141,16 +141,16 @@ interface AnnouncementApiService {
 }
 
 interface ExpenseApiService {
-    @GET("/v3/finance/expenses")
+    @GET("/api/android/finance/expenses")
     suspend fun getExpenses(
         @Query("status") status: String? = null,
         @Query("categoryId") categoryId: String? = null
     ): Response<ApiEnvelope<List<ExpenseDto>>>
 
-    @GET("/v3/finance/expenses/categories")
+    @GET("/api/android/finance/expenses/categories")
     suspend fun getExpenseCategories(): Response<ApiEnvelope<List<ExpenseCategoryDto>>>
 
-    @POST("/v3/finance/expenses")
+    @POST("/api/android/finance/expenses")
     suspend fun createExpense(
         @Body dto: CreateExpenseRequestDto
     ): Response<ApiEnvelope<ExpenseDto>>

@@ -65,7 +65,7 @@ data class SessionDto(
 
 data class BetterAuthSessionResponse(
     @SerializedName("user") val user: SessionUser? = null,
-    @SerializedName("session") val session: SessionDto? = null
+    @SerializedName("token") val token: String? = null
 )
 
 // --- Presence & Attendance Models ---
