@@ -119,8 +119,12 @@ const DEFAULT_HOME_PAGE = {
   storefrontSubtitle: 'Instantly build, customize, and manage customer-facing storefront websites for your brand. Beautiful e-commerce templates synchronized natively with your central stock database and retail POS registers.',
   multiBranchTitle: 'Unified Multi-Branch Orchestration',
   multiBranchSubtitle: 'Scale across several branches with ease. Oversee location-specific pricing, staff shift rosters, live drawer reconciliations, and inter-branch inventory transfers from a unified cloud console.',
-  stockManagementTitle: 'Advanced Stock & Inventory Control',
-  stockManagementSubtitle: 'Optimize cash flow with intelligent stock level monitoring. Prevent stockouts using multi-warehouse replenishment workflows and automated trigger thresholds synchronized with online and offline channels.',
+  cmsTitle: 'Customizable Storefront CMS & SEO',
+  cmsSubtitle: 'Take complete control of your digital storefront. Customize layouts, optimize meta tags, manage SEO settings, and publish content seamlessly with built-in enterprise CMS tools.',
+  crmTeaserTitle: 'Launch beautiful, high-converting customer storefronts',
+  crmTeaserSubtitle: 'Scryme enables you to create and manage stunning customer-facing storefront websites instantly. Build robust digital layouts for your clients, fully synchronized in real-time with your central stock levels, integrated POS registers, and consolidated customer data.',
+  posTeaserTitle: 'An integrated POS system built for high-performance retail',
+  posTeaserSubtitle: 'Whether you manage a single warehouse store, or scale several branches across various regions, every purchase made offline or online updates your stock levels instantly. Zero lag, zero human error, maximum operational speed.',
 }
 
 const DEFAULT_ABOUT_PAGE = {
