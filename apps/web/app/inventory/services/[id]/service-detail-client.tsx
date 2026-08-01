@@ -412,6 +412,8 @@ export function ServiceDetailPageClient({
             onClick={() => router.push("/inventory/services")}
             variant="outline"
             className="h-9 w-9 p-0 border-slate-300 bg-white hover:bg-slate-50 text-slate-700 rounded-none shadow-none"
+            title="Back to services list"
+            aria-label="Back to services list"
           >
             <ArrowLeft size={16} />
           </Button>
@@ -737,6 +739,7 @@ export function ServiceDetailPageClient({
                               variant="outline"
                               className="h-6 w-6 p-0 rounded-none border-slate-300 bg-white"
                               title="Move main image forward"
+                              aria-label="Move main image forward"
                             >
                               <ChevronUp size={12} />
                             </Button>
@@ -746,6 +749,7 @@ export function ServiceDetailPageClient({
                               variant="outline"
                               className="h-6 w-6 p-0 rounded-none border-slate-300 bg-white"
                               title="Move back"
+                              aria-label="Move back"
                             >
                               <ChevronDown size={12} />
                             </Button>
@@ -755,6 +759,8 @@ export function ServiceDetailPageClient({
                             onClick={() => handleRemoveImage(img.id)}
                             variant="ghost"
                             className="h-6 px-2 hover:bg-red-50 text-red-600 text-xs rounded-none"
+                            title="Remove image"
+                            aria-label="Remove image"
                           >
                             <Trash2 size={12} className="mr-1 inline" />
                             <span>Remove</span>
@@ -881,8 +887,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("bold", "bold text")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs font-bold text-slate-700 hover:bg-slate-200 rounded-none"
                     title="Bold (**text**)"
+                    aria-label="Bold (**text**)"
                   >
                     <Bold size={13} />
                   </Button>
@@ -890,8 +898,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("italic", "italic text")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs text-slate-700 hover:bg-slate-200 rounded-none"
                     title="Italic (*text*)"
+                    aria-label="Italic (*text*)"
                   >
                     <Italic size={13} />
                   </Button>
@@ -899,8 +909,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("h1", "Heading 1")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs text-slate-700 hover:bg-slate-200 rounded-none font-bold"
                     title="H1 heading (# Heading)"
+                    aria-label="H1 heading (# Heading)"
                   >
                     <Heading1 size={13} />
                   </Button>
@@ -908,8 +920,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("h2", "Heading 2")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs text-slate-700 hover:bg-slate-200 rounded-none font-bold"
                     title="H2 heading (## Heading)"
+                    aria-label="H2 heading (## Heading)"
                   >
                     <Heading2 size={13} />
                   </Button>
@@ -917,8 +931,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("quote", "blockquote citation")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs text-slate-700 hover:bg-slate-200 rounded-none"
                     title="Blockquote (> citation)"
+                    aria-label="Blockquote (> citation)"
                   >
                     <Quote size={13} />
                   </Button>
@@ -927,8 +943,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("bullet", "list item")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs text-slate-700 hover:bg-slate-200 rounded-none"
                     title="Bullet List (- item)"
+                    aria-label="Bullet List (- item)"
                   >
                     <List size={13} />
                   </Button>
@@ -936,8 +954,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("ordered", "list item")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs text-slate-700 hover:bg-slate-200 rounded-none"
                     title="Numbered List (1. item)"
+                    aria-label="Numbered List (1. item)"
                   >
                     <ListOrdered size={13} />
                   </Button>
@@ -946,8 +966,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("link", "Link Title")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs text-slate-700 hover:bg-slate-200 rounded-none"
                     title="Hyperlink ([title](url))"
+                    aria-label="Hyperlink ([title](url))"
                   >
                     <Link2 size={13} />
                   </Button>
@@ -955,8 +977,10 @@ export function ServiceDetailPageClient({
                     type="button"
                     variant="ghost"
                     onClick={() => insertMarkdown("image", "Image alt caption")}
+                    onMouseDown={(e) => e.preventDefault()}
                     className="h-7 px-2 text-xs text-slate-700 hover:bg-slate-200 rounded-none"
                     title="Image ([caption](url))"
+                    aria-label="Image ([caption](url))"
                   >
                     <ImageIcon size={13} />
                   </Button>
