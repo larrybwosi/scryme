@@ -6,6 +6,8 @@ server:
 
 common:
   instance_addr: 127.0.0.1
+  instance_interface_names:
+    - lo
   path_prefix: /tmp/loki
   storage:
     filesystem:
@@ -15,6 +17,8 @@ common:
   ring:
     kvstore:
       store: inmemory
+    instance_interface_names:
+      - lo
 
 query_range:
   results_cache:
