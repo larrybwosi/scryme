@@ -130,10 +130,10 @@ export async function createService(data: {
       categoryId: data.categoryId,
       pricingModel: data.pricingModel,
       price: new Decimal(data.price),
-      minPrice: data.minPrice !== undefined ? new Decimal(data.minPrice) : null,
+      minPrice: data.minPrice !== undefined && data.minPrice !== null ? new Decimal(data.minPrice) : null,
       estimatedDuration: data.estimatedDuration ?? null,
       requiresDeposit: data.requiresDeposit ?? false,
-      depositAmount: data.depositAmount !== undefined ? new Decimal(data.depositAmount) : null,
+      depositAmount: data.depositAmount !== undefined && data.depositAmount !== null ? new Decimal(data.depositAmount) : null,
       depositType: data.depositType ?? DepositType.FIXED,
       isActive: data.isActive ?? true,
       organizationId: context.organizationId,
@@ -153,10 +153,10 @@ export async function updateService(
     categoryId?: string;
     pricingModel?: PricingModel;
     price?: number;
-    minPrice?: number;
+    minPrice?: number | null;
     estimatedDuration?: number;
     requiresDeposit?: boolean;
-    depositAmount?: number;
+    depositAmount?: number | null;
     depositType?: DepositType;
     isActive?: boolean;
     customFields?: any;
@@ -177,10 +177,10 @@ export async function updateService(
       categoryId: data.categoryId,
       pricingModel: data.pricingModel,
       price: data.price !== undefined ? new Decimal(data.price) : undefined,
-      minPrice: data.minPrice !== undefined ? new Decimal(data.minPrice) : undefined,
+      minPrice: data.minPrice !== undefined && data.minPrice !== null ? new Decimal(data.minPrice) : (data.minPrice === null ? null : undefined),
       estimatedDuration: data.estimatedDuration !== undefined ? data.estimatedDuration : undefined,
       requiresDeposit: data.requiresDeposit,
-      depositAmount: data.depositAmount !== undefined ? new Decimal(data.depositAmount) : undefined,
+      depositAmount: data.depositAmount !== undefined && data.depositAmount !== null ? new Decimal(data.depositAmount) : (data.depositAmount === null ? null : undefined),
       depositType: data.depositType,
       isActive: data.isActive,
       customFields: data.customFields !== undefined ? data.customFields : undefined,
