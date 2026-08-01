@@ -27,5 +27,9 @@ import { FinanceModule } from "../finance/finance.module";
     GetTransactionsUseCase,
     RegisterPettyCashUseCase,
   ],
+  exports: [
+    GetTransactionsUseCase,
+    RegisterPettyCashUseCase,
+  ],
 })
 export class PosModule {}

@@ -34,6 +34,7 @@ import { ServicesModule } from "../services/services.module";
     CreateProductUseCase,
     PricingResolverService,
     PricingManagementService,
+    ReviewPriceChangeUseCase,
   ],
 })
 export class CatalogModule {}
