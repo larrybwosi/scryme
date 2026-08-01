@@ -1143,6 +1143,7 @@ export function ProductPageClient({
                                     variant="outline"
                                     className="h-6 w-6 p-0 rounded border-border bg-background"
                                     title="Move main image forward"
+                                    aria-label="Move main image forward"
                                   >
                                     <ChevronUp size={12} />
                                   </Button>
@@ -1152,6 +1153,7 @@ export function ProductPageClient({
                                     variant="outline"
                                     className="h-6 w-6 p-0 rounded border-border bg-background"
                                     title="Move back"
+                                    aria-label="Move back"
                                   >
                                     <ChevronDown size={12} />
                                   </Button>
@@ -1161,6 +1163,8 @@ export function ProductPageClient({
                                   onClick={() => handleRemoveImage(img.id)}
                                   variant="ghost"
                                   className="h-6 px-2 hover:bg-red-50 dark:hover:bg-red-950 text-red-600 dark:text-red-400 text-xs rounded"
+                                  title="Remove image"
+                                  aria-label="Remove image"
                                 >
                                   <Trash2 size={12} className="mr-1 inline" />
                                   <span>Remove</span>
@@ -1292,8 +1296,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("bold", "bold text")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
                           title="Bold (**text**)"
+                          aria-label="Bold (**text**)"
                         >
                           <Bold size={13} />
                         </Button>
@@ -1301,8 +1307,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("italic", "italic text")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
                           title="Italic (*text*)"
+                          aria-label="Italic (*text*)"
                         >
                           <Italic size={13} />
                         </Button>
@@ -1310,8 +1318,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("h1", "Heading 1")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
                           title="H1 heading (# Heading)"
+                          aria-label="H1 heading (# Heading)"
                         >
                           <Heading1 size={13} />
                         </Button>
@@ -1319,8 +1329,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("h2", "Heading 2")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
                           title="H2 heading (## Heading)"
+                          aria-label="H2 heading (## Heading)"
                         >
                           <Heading2 size={13} />
                         </Button>
@@ -1328,8 +1340,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("quote", "blockquote citation")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
                           title="Blockquote (> citation)"
+                          aria-label="Blockquote (> citation)"
                         >
                           <Quote size={13} />
                         </Button>
@@ -1338,8 +1352,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("bullet", "list item")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
                           title="Bullet List (- item)"
+                          aria-label="Bullet List (- item)"
                         >
                           <List size={13} />
                         </Button>
@@ -1347,8 +1363,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("ordered", "list item")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
                           title="Numbered List (1. item)"
+                          aria-label="Numbered List (1. item)"
                         >
                           <ListOrdered size={13} />
                         </Button>
@@ -1357,8 +1375,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("link", "Link Title")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
                           title="Hyperlink ([title](url))"
+                          aria-label="Hyperlink ([title](url))"
                         >
                           <Link2 size={13} />
                         </Button>
@@ -1366,8 +1386,10 @@ export function ProductPageClient({
                           type="button"
                           variant="ghost"
                           onClick={() => insertMarkdown("image", "Image alt caption")}
+                          onMouseDown={(e) => e.preventDefault()}
                           className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
                           title="Image ([caption](url))"
+                          aria-label="Image ([caption](url))"
                         >
                           <ImageIcon size={13} />
                         </Button>
