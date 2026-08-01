@@ -128,7 +128,7 @@ services:
 
   # --- APPLICATIONS ---
   api:
-    image: ghcr.io/larrybwosi/scryme/api:9.51.0
+    image: ghcr.io/larrybwosi/scryme/api:9.56.0
     restart: always
     deploy:
       resources:
@@ -181,7 +181,7 @@ services:
       start_period: 60s
 
   web:
-    image: ghcr.io/larrybwosi/scryme/web:9.51.0
+    image: ghcr.io/larrybwosi/scryme/web:9.56.0
     restart: always
     deploy:
       resources:
@@ -225,7 +225,7 @@ services:
       start_period: 60s
 
   crm:
-    image: ghcr.io/larrybwosi/scryme/crm:9.51.0
+    image: ghcr.io/larrybwosi/scryme/crm:9.56.0
     restart: always
     deploy:
       resources:
