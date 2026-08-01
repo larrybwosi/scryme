@@ -134,44 +134,42 @@
    ======================================== */
 .dark,
 ::backdrop {
-  --background: #313338;
-  --foreground: #f2f3f5;
-  --card: #2b2d31;
-  --card-foreground: #f2f3f5;
-  --popover: #1e1f22;
-  --popover-foreground: #f2f3f5;
-  --border: #1f2023;
-  --primary: #5865f2;
-  --ring: #5865f2;
+  --background: #0b1220;
+  --foreground: #f1e9d8;
+  --card: #121b2e;
+  --card-foreground: #f1e9d8;
+  --popover: #121b2e;
+  --popover-foreground: #f1e9d8;
+  --border: rgba(241, 233, 216, 0.09);
 
-  --ink-bg: #313338;
-  --ink-panel: #2b2d31;
-  --ink-panel-alt: #1e1f22;
-  --ink-line: #1f2023;
-  --paper: #f2f3f5;
+  --ink-bg: #0b1220;
+  --ink-panel: #121b2e;
+  --ink-panel-alt: #0e1626;
+  --ink-line: rgba(241, 233, 216, 0.09);
+  --paper: #f1e9d8;
   --brass: #c89a4b;
   --brass-dim: rgba(200, 154, 75, 0.16);
   --brass-line: rgba(200, 154, 75, 0.35);
   --ledger-green: #4b9073;
   --ledger-rust: #b4553a;
-  --text-primary: #f2f3f5;
-  --text-muted: #949ba4;
-  --text-faint: rgba(148, 155, 164, 0.4);
+  --text-primary: #f1e9d8;
+  --text-muted: rgba(241, 233, 216, 0.56);
+  --text-faint: rgba(241, 233, 216, 0.32);
 
   /* Theme-adaptive helper variables — Dark mode values */
-  --hover-bg: rgba(242, 243, 245, 0.04);
-  --hover-bg-intense: rgba(242, 243, 245, 0.08);
-  --navbar-bg-scrolled: rgba(49, 51, 56, 0.92);
-  --mobile-menu-bg: rgba(49, 51, 56, 0.97);
+  --hover-bg: rgba(241, 233, 216, 0.04);
+  --hover-bg-intense: rgba(241, 233, 216, 0.08);
+  --navbar-bg-scrolled: rgba(11, 18, 32, 0.92);
+  --mobile-menu-bg: rgba(11, 18, 32, 0.97);
 
   /* Pricing CTA adaptive variables (inverted from primary theme layout) */
-  --pricing-cta-text-muted: rgba(49, 51, 56, 0.68);
-  --pricing-cta-text-body: rgba(49, 51, 56, 0.8);
-  --pricing-cta-border-dim: rgba(49, 51, 56, 0.3);
-  --pricing-cta-card-bg: rgba(49, 51, 56, 0.04);
-  --pricing-cta-card-border: rgba(49, 51, 56, 0.14);
-  --pricing-cta-text-faint: rgba(49, 51, 56, 0.4);
-  --pricing-cta-text-muted-alt: rgba(49, 51, 56, 0.65);
+  --pricing-cta-text-muted: rgba(11, 18, 32, 0.68);
+  --pricing-cta-text-body: rgba(11, 18, 32, 0.8);
+  --pricing-cta-border-dim: rgba(11, 18, 32, 0.3);
+  --pricing-cta-card-bg: rgba(11, 18, 32, 0.04);
+  --pricing-cta-card-border: rgba(11, 18, 32, 0.14);
+  --pricing-cta-text-faint: rgba(11, 18, 32, 0.4);
+  --pricing-cta-text-muted-alt: rgba(11, 18, 32, 0.65);
 }
 
 /* ========================================

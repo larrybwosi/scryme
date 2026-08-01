@@ -17,26 +17,29 @@ export default async function HomePage() {
 
   return (
     <main>
-      <Hero data={{
-        heroTitle: content.heroTitle,
-        heroSubtitle: content.heroSubtitle,
-        reconciledToday: content.reconciledToday,
-      }} />
+      <Hero
+        data={{
+          heroTitle: content.heroTitle,
+          heroSubtitle: content.heroSubtitle,
+          reconciledToday: content.reconciledToday,
+        }}
+      />
       <TrustBar brands={content.brands} />
       <FeaturesGrid modules={content.modules} />
       <StatsStrip stats={content.stats} />
-      <PlatformShowcase />
-      <SolutionsSpotlight data={{
-        storefrontTitle: content.storefrontTitle,
-        storefrontSubtitle: content.storefrontSubtitle,
-        storefrontImage: content.storefrontImage,
-        multiBranchTitle: content.multiBranchTitle,
-        multiBranchSubtitle: content.multiBranchSubtitle,
-        multiBranchImage: content.multiBranchImage,
-        stockManagementTitle: content.stockManagementTitle,
-        stockManagementSubtitle: content.stockManagementSubtitle,
-        stockManagementImage: content.stockManagementImage,
-      }} />
+      <SolutionsSpotlight
+        data={{
+          storefrontTitle: content.storefrontTitle,
+          storefrontSubtitle: content.storefrontSubtitle,
+          storefrontImage: content.storefrontImage,
+          multiBranchTitle: content.multiBranchTitle,
+          multiBranchSubtitle: content.multiBranchSubtitle,
+          multiBranchImage: content.multiBranchImage,
+          stockManagementTitle: content.stockManagementTitle,
+          stockManagementSubtitle: content.stockManagementSubtitle,
+          stockManagementImage: content.stockManagementImage,
+        }}
+      />
       <CRMTeaser />
       <POSTeaser />
       <Testimonials testimonials={content.testimonials} />
