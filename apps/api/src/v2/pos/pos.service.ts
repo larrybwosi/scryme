@@ -572,11 +572,17 @@ export class PosService {
 
     if (!locationId) throw new BadRequestException("Location ID is required.");
 
+    // ⚡ Bolt Optimization: Conditionally filter the `category.findMany` query with `updatedAt: { gt: new Date(lastSync) }`
+    // when `lastSync` is provided in the query parameters. This converts category synchronization to a true delta/incremental sync,
+    // avoiding redundant database reads and bloated category payload transfers on every POS synchronization request.
     const [products, customers, categories] = await Promise.all([
       this.getProducts(ctx, { ...query, locationId }),
       this.getCustomersDelta(ctx, lastSync),
       this.prisma.client.category.findMany({
-        where: { organizationId: ctx.organizationId },
+        where: {
+          organizationId: ctx.organizationId,
+          ...(lastSync ? { updatedAt: { gt: new Date(lastSync) } } : {}),
+        },
         select: { id: true, name: true, description: true },
       }),
     ]);

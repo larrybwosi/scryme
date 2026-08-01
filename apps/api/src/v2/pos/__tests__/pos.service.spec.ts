@@ -190,3 +190,96 @@ describe("PosService.receiveTransfer", () => {
     });
   });
 });
+
+describe("PosService.sync", () => {
+  let service: PosService;
+  let prisma: PrismaService;
+
+  const mockCtx: V2ApiContext = {
+    organizationId: "org_123",
+    memberId: "mem_123",
+    locationId: "loc_123",
+    permissions: [],
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PosService,
+        {
+          provide: PrismaService,
+          useValue: {
+            client: {
+              category: {
+                findMany: vi.fn(),
+              },
+            },
+          },
+        },
+        { provide: RedisService, useValue: {} },
+        { provide: InventoryService, useValue: {} },
+        {
+          provide: PosCustomerService,
+          useValue: {
+            getCustomersDelta: vi.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<PosService>(PosService);
+    prisma = module.get<PrismaService>(PrismaService);
+
+    vi.clearAllMocks();
+  });
+
+  it("should sync products, customers, and categories without lastSync filtering when lastSync is not provided", async () => {
+    const mockCategories = [
+      { id: "cat_1", name: "Category 1", description: "Desc 1" },
+    ];
+
+    vi.spyOn(service, "getProducts").mockResolvedValue({
+      products: [],
+      pagination: {},
+    } as any);
+
+    vi.mocked(prisma.client.category.findMany).mockResolvedValue(mockCategories as any);
+
+    const result = await service.sync(mockCtx, { locationId: "loc_123" });
+
+    expect(prisma.client.category.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_123",
+      },
+      select: { id: true, name: true, description: true },
+    });
+
+    expect(result.categories).toEqual(mockCategories);
+  });
+
+  it("should filter categories by updatedAt when lastSync is provided in the query parameters", async () => {
+    const lastSyncStr = "2026-07-30T00:00:00.000Z";
+    const mockCategories = [
+      { id: "cat_2", name: "Category 2", description: "Desc 2" },
+    ];
+
+    vi.spyOn(service, "getProducts").mockResolvedValue({
+      products: [],
+      pagination: {},
+    } as any);
+
+    vi.mocked(prisma.client.category.findMany).mockResolvedValue(mockCategories as any);
+
+    const result = await service.sync(mockCtx, { locationId: "loc_123", lastSync: lastSyncStr });
+
+    expect(prisma.client.category.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org_123",
+        updatedAt: { gt: new Date(lastSyncStr) },
+      },
+      select: { id: true, name: true, description: true },
+    });
+
+    expect(result.categories).toEqual(mockCategories);
+  });
+});

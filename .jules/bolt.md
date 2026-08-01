@@ -169,3 +169,7 @@
 ## 2026-07-31 - [Consolidated Database Row Updates in PO Receipt]
 **Learning:** Performing multiple sequential database `upsert` queries on the exact same `ProductVariantStock` row inside a transaction for multiple batches creates row lock contention and deadlocks. Consolidating updates down to exactly one query per unique `variantId` completely eliminates lock contention and reduces database roundtrips.
 **Action:** Always accumulate quantities by unique keys (like `variantId`) in-memory during batch-processing loop operations, then execute exactly one database update/upsert per unique key, while deferring validation checks or movement records as necessary to keep integrity checks aligned.
+
+## 2026-07-31 - [Delta Category Sync in V2 POS Path]
+**Learning:** Fetching and returning all organization categories during POS sync requests is a scalability bottleneck and defeats the purpose of delta sync protocols. Adding conditional `updatedAt` filtering scoped by `lastSync` converts category sync to a true incremental/delta sync, eliminating redundant database I/O, serialization overhead, and network footprint under heavy client request load.
+**Action:** Always scope reference and catalog list fetches with `lastSync` filtering where applicable in sync endpoints to enforce strict delta sync standards.
