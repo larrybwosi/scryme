@@ -826,50 +826,24 @@ export function ProductPageClient({
 
             {/* CMS STUDIO TAB */}
             <TabsContent value="cms" className="space-y-6 mt-0">
-              <CMSTab
-                product={product}
-                categories={categories}
-                markdown={markdown}
-                setMarkdown={setMarkdown}
-                cmsImages={cmsImages}
-                setCmsImages={setCmsImages}
-                newImageUrl={newImageUrl}
-                setNewImageUrl={setNewImageUrl}
-                newImageCaption={newImageCaption}
-                setNewImageCaption={setNewImageCaption}
-                seo={seo}
-                setSeo={setSeo}
-                customAttrs={customAttrs}
-                setCustomAttrs={setCustomAttrs}
-                newAttrKey={newAttrKey}
-                setNewAttrKey={setNewAttrKey}
-                newAttrValue={newAttrValue}
-                setNewAttrValue={setNewAttrValue}
-                publishStatus={publishStatus}
-                setPublishStatus={setPublishStatus}
-                publishedAt={publishedAt}
-                setPublishedAt={setPublishedAt}
-                archivedAt={archivedAt}
-                setArchivedAt={setArchivedAt}
-                layoutTemplate={layoutTemplate}
-                setLayoutTemplate={setLayoutTemplate}
-                customSlugOverride={customSlugOverride}
-                setCustomSlugOverride={setCustomSlugOverride}
-                previewTheme={previewTheme}
-                setPreviewTheme={setPreviewTheme}
-                storefrontMainImageIdx={storefrontMainImageIdx}
-                setStorefrontMainImageIdx={setStorefrontMainImageIdx}
-                textareaRef={textareaRef}
-                isUploading={isUploading}
-                setIsUploading={setIsUploading}
-                fileInputRef={fileInputRef}
-                insertMarkdown={insertMarkdown}
-                handleAddImage={handleAddImage}
-                handleRemoveImage={handleRemoveImage}
-                handleMoveImage={handleMoveImage}
-                handleAddCustomAttr={handleAddCustomAttr}
-                handleRemoveCustomAttr={handleRemoveCustomAttr}
-              />
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-amber-500" />
+                    <span>Enterprise Hybrid CMS Studio</span>
+                  </CardTitle>
+                  <CardDescription>
+                    To configure stunning multi-channel layouts, run AI copywriting engines, optimize visual assets, and inspect rich metadata indexings, please proceed to the unified Enterprise Studio.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2 pb-6">
+                  <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2">
+                    <Link href={`/inventory/cms/${product.id}?type=product`}>
+                      Open Hybrid CMS Studio
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* VARIANTS TAB */}
