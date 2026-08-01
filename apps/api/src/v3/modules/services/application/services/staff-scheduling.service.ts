@@ -26,6 +26,45 @@ export class StaffSchedulingService {
     });
   }
 
+  async getShifts(
+    orgId: string,
+    filters: { memberId?: string; dayOfWeek?: number; isActive?: boolean },
+  ) {
+    const where: any = { organizationId: orgId };
+
+    if (filters.memberId) {
+      where.memberId = filters.memberId;
+    }
+
+    if (filters.dayOfWeek !== undefined) {
+      where.dayOfWeek = filters.dayOfWeek;
+    }
+
+    if (filters.isActive !== undefined) {
+      where.isActive = filters.isActive;
+    }
+
+    return this.prisma.client.staffShift.findMany({
+      where,
+      include: {
+        breaks: true,
+        member: {
+          select: {
+            id: true,
+            role: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async addBreak(
     shiftId: string,
     data: { startTime: string; endTime: string; description?: string },

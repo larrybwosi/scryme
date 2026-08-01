@@ -253,11 +253,22 @@ export class StrapiCustomerSyncUseCase {
     let failureCount = 0;
     const errors: string[] = [];
 
+    // ⚡ Bolt Optimization: Batch pre-fetch all customer mappings to eliminate N+1 queries.
+    const customerIds = customers.map((c) => c.id);
+    const mappings = await this.prisma.client.ecommerceCustomerMapping.findMany({
+      where: {
+        connectionId,
+        customerId: { in: customerIds },
+      },
+    });
+    const mappingMap = new Map<string, any>(
+      mappings.map((m) => [m.customerId, m]),
+    );
+
     for (const customer of customers) {
       try {
-        const mapping = await this.prisma.client.ecommerceCustomerMapping.findFirst({
-          where: { connectionId, customerId: customer.id },
-        });
+        // Check for existing mapping using pre-fetched cache
+        const mapping = mappingMap.get(customer.id);
 
         if (mapping) {
           await this.strapiProvider.updateCustomer(config, Number(mapping.externalCustomerId), {

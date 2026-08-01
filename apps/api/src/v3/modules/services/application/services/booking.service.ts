@@ -19,28 +19,77 @@ export class BookingService {
   ) {}
 
   async createBooking(orgId: string, dto: CreateBookingDto & { customerContact?: string }) {
-    const service = await this.prisma.client.service.findFirst({
-      where: { id: dto.serviceId, organizationId: orgId },
-    });
+    const contact = dto.customerContact?.trim();
+    const isEmail = contact?.includes("@");
+
+    // ⚡ Bolt Optimization: Parallelize all initial existence/count lookup validations to avoid O(N) sequential database roundtrips.
+    const [service, existingCustomer, customerValid, locationValid, staffCount, resourceCount, defaultLocation] = await Promise.all([
+      this.prisma.client.service.findFirst({
+        where: { id: dto.serviceId, organizationId: orgId },
+      }),
+      !dto.customerId && contact
+        ? this.prisma.client.customer.findFirst({
+            where: {
+              organizationId: orgId,
+              OR: [
+                isEmail ? { email: contact } : { phone: contact }
+              ]
+            }
+          })
+        : Promise.resolve(null),
+      dto.customerId
+        ? this.prisma.client.customer.findFirst({
+            where: { id: dto.customerId, organizationId: orgId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.locationId
+        ? this.prisma.client.inventoryLocation.findFirst({
+            where: { id: dto.locationId, organizationId: orgId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.staffIds && dto.staffIds.length > 0
+        ? this.prisma.client.member.count({
+            where: { id: { in: dto.staffIds }, organizationId: orgId }
+          })
+        : Promise.resolve(0),
+      dto.resourceIds && dto.resourceIds.length > 0
+        ? this.prisma.client.serviceResource.count({
+            where: { id: { in: dto.resourceIds }, organizationId: orgId }
+          })
+        : Promise.resolve(0),
+      !dto.locationId
+        ? this.prisma.client.inventoryLocation.findFirst({
+            where: { organizationId: orgId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
     if (!service) throw new NotFoundException("Service not found");
 
-    // Validate or Auto-Register Customer
+    if (dto.customerId && !customerValid) {
+      throw new BadRequestException("Customer does not exist or does not belong to this organization");
+    }
+
+    if (dto.locationId && !locationValid) {
+      throw new BadRequestException("Location does not exist or does not belong to this organization");
+    }
+
+    if (dto.staffIds && dto.staffIds.length > 0 && staffCount !== dto.staffIds.length) {
+      throw new BadRequestException("One or more staff members are invalid or do not belong to this organization");
+    }
+
+    if (dto.resourceIds && dto.resourceIds.length > 0 && resourceCount !== dto.resourceIds.length) {
+      throw new BadRequestException("One or more service resources are invalid or do not belong to this organization");
+    }
+
+    // Resolve or Auto-Register Customer
     let resolvedCustomerId = dto.customerId;
 
-    if (!resolvedCustomerId && dto.customerContact) {
-      const contact = dto.customerContact.trim();
-      const isEmail = contact.includes("@");
-
-      let customer = await this.prisma.client.customer.findFirst({
-        where: {
-          organizationId: orgId,
-          OR: [
-            isEmail ? { email: contact } : { phone: contact }
-          ]
-        }
-      });
-
+    if (!resolvedCustomerId && contact) {
+      let customer = existingCustomer;
       if (!customer) {
         customer = await this.prisma.client.customer.create({
           data: {
@@ -52,47 +101,7 @@ export class BookingService {
           }
         });
       }
-
       resolvedCustomerId = customer.id;
-    }
-
-    if (resolvedCustomerId) {
-      const customer = await this.prisma.client.customer.findFirst({
-        where: { id: resolvedCustomerId, organizationId: orgId }
-      });
-      if (!customer) {
-        throw new BadRequestException("Customer does not exist or does not belong to this organization");
-      }
-    }
-
-    // Validate Location
-    if (dto.locationId) {
-      const location = await this.prisma.client.inventoryLocation.findFirst({
-        where: { id: dto.locationId, organizationId: orgId }
-      });
-      if (!location) {
-        throw new BadRequestException("Location does not exist or does not belong to this organization");
-      }
-    }
-
-    // Validate Staff belong to the organization
-    if (dto.staffIds && dto.staffIds.length > 0) {
-      const staffCount = await this.prisma.client.member.count({
-        where: { id: { in: dto.staffIds }, organizationId: orgId }
-      });
-      if (staffCount !== dto.staffIds.length) {
-        throw new BadRequestException("One or more staff members are invalid or do not belong to this organization");
-      }
-    }
-
-    // Validate Resources belong to the organization
-    if (dto.resourceIds && dto.resourceIds.length > 0) {
-      const resourceCount = await this.prisma.client.serviceResource.count({
-        where: { id: { in: dto.resourceIds }, organizationId: orgId }
-      });
-      if (resourceCount !== dto.resourceIds.length) {
-        throw new BadRequestException("One or more service resources are invalid or do not belong to this organization");
-      }
     }
 
     const startTime = new Date(dto.scheduledStartTime);
@@ -210,7 +219,7 @@ export class BookingService {
           status: TransactionStatus.PENDING_CONFIRMATION,
           paymentStatus: PaymentStatus.UNPAID,
           customerId: resolvedCustomerId,
-          locationId: dto.locationId || (await this.prisma.client.inventoryLocation.findFirst({ where: { organizationId: orgId } }))?.id || "",
+          locationId: dto.locationId || defaultLocation?.id || "",
           subtotal: depositValue,
           taxTotal: 0,
           finalTotal: depositValue,

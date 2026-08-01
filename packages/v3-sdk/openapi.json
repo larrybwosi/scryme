@@ -2913,6 +2913,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -2930,7 +2931,17 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Service category successfully created"
+          },
+          "400": {
+            "description": "Invalid category input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2950,6 +2961,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -2957,7 +2969,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns a list of all service categories for the organization"
           }
         },
         "security": [
@@ -2979,6 +2991,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the service category to update",
             "schema": {
               "type": "string"
             }
@@ -2987,6 +3000,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3004,7 +3018,17 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Service category successfully updated"
+          },
+          "404": {
+            "description": "Service category not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3026,6 +3050,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the service category to delete",
             "schema": {
               "type": "string"
             }
@@ -3034,14 +3059,25 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
           }
         ],
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Service category successfully deleted"
+          },
+          "404": {
+            "description": "Service category not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3063,6 +3099,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3080,7 +3117,17 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Service successfully created"
+          },
+          "400": {
+            "description": "Invalid service input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3100,6 +3147,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3107,7 +3155,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns a list of all services for the organization"
           }
         },
         "security": [
@@ -3121,6 +3169,95 @@
         ]
       }
     },
+    "/v3/{orgSlug}/services/shifts/me": {
+      "get": {
+        "operationId": "ServicesController_getCurrentMemberShifts",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved shifts of the currently logged-in member"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get current member's shifts",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/shifts": {
+      "get": {
+        "operationId": "ServicesController_getShifts",
+        "parameters": [
+          {
+            "name": "memberId",
+            "required": false,
+            "in": "query",
+            "description": "Filter shifts by member ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "dayOfWeek",
+            "required": false,
+            "in": "query",
+            "description": "Filter shifts by day of the week (0 = Sunday, 6 = Saturday)",
+            "schema": {
+              "minimum": 0,
+              "maximum": 6,
+              "type": "number"
+            }
+          },
+          {
+            "name": "isActive",
+            "required": false,
+            "in": "query",
+            "description": "Filter shifts by active status",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved list of staff shifts matching filters"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all staff shifts for the organization (useful for connected apps)",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
     "/v3/{orgSlug}/services/{id}": {
       "get": {
         "operationId": "ServicesController_getService",
@@ -3129,6 +3266,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the service to fetch",
             "schema": {
               "type": "string"
             }
@@ -3137,6 +3275,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3144,7 +3283,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns details of the specified service"
+          },
+          "404": {
+            "description": "Service not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3164,6 +3313,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the service to update",
             "schema": {
               "type": "string"
             }
@@ -3172,6 +3322,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3189,7 +3340,17 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Service successfully updated"
+          },
+          "404": {
+            "description": "Service not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3211,6 +3372,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the service to delete",
             "schema": {
               "type": "string"
             }
@@ -3219,14 +3381,25 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
           }
         ],
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Service successfully deleted"
+          },
+          "404": {
+            "description": "Service not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3248,6 +3421,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3265,7 +3439,7 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Service resource successfully created"
           }
         },
         "security": [
@@ -3285,6 +3459,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3292,7 +3467,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns a list of all service resources for the organization"
           }
         },
         "security": [
@@ -3314,6 +3489,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the service resource to update",
             "schema": {
               "type": "string"
             }
@@ -3322,6 +3498,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3339,7 +3516,17 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Service resource successfully updated"
+          },
+          "404": {
+            "description": "Service resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3361,6 +3548,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the service resource to delete",
             "schema": {
               "type": "string"
             }
@@ -3369,14 +3557,25 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
           }
         ],
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Service resource successfully deleted"
+          },
+          "404": {
+            "description": "Service resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3398,6 +3597,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3415,7 +3615,17 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Service booking successfully created"
+          },
+          "400": {
+            "description": "Resource/staff conflict or invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3435,6 +3645,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3442,7 +3653,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns all service bookings for the organization"
           }
         },
         "security": [
@@ -3464,6 +3675,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the booking to fetch",
             "schema": {
               "type": "string"
             }
@@ -3472,6 +3684,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3479,7 +3692,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns detailed information of the service booking"
+          },
+          "404": {
+            "description": "Booking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3501,6 +3724,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the booking to update status for",
             "schema": {
               "type": "string"
             }
@@ -3509,14 +3733,52 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "REQUESTED",
+                      "SCHEDULED",
+                      "IN_PROGRESS",
+                      "COMPLETED",
+                      "CANCELLED",
+                      "NOSHOW"
+                    ],
+                    "example": "IN_PROGRESS"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Booking status updated successfully"
+          },
+          "404": {
+            "description": "Booking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3538,6 +3800,7 @@
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the booking to complete",
             "schema": {
               "type": "string"
             }
@@ -3546,6 +3809,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3563,7 +3827,17 @@
         },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Booking completed successfully and inventory stock deducted"
+          },
+          "404": {
+            "description": "Booking not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3585,6 +3859,7 @@
             "name": "memberId",
             "required": true,
             "in": "path",
+            "description": "The ID of the member to assign shift to",
             "schema": {
               "type": "string"
             }
@@ -3593,14 +3868,49 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "dayOfWeek": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 6,
+                    "example": 1,
+                    "description": "0 for Sunday, 6 for Saturday"
+                  },
+                  "startTime": {
+                    "type": "string",
+                    "example": "09:00",
+                    "description": "Shift start time in HH:mm"
+                  },
+                  "endTime": {
+                    "type": "string",
+                    "example": "17:00",
+                    "description": "Shift end time in HH:mm"
+                  }
+                },
+                "required": [
+                  "dayOfWeek",
+                  "startTime",
+                  "endTime"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Staff shift successfully created"
           }
         },
         "security": [
@@ -3620,6 +3930,7 @@
             "name": "memberId",
             "required": true,
             "in": "path",
+            "description": "The ID of the staff member",
             "schema": {
               "type": "string"
             }
@@ -3628,6 +3939,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3635,7 +3947,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns all scheduled shifts for the staff member"
           }
         },
         "security": [
@@ -3657,6 +3969,7 @@
             "name": "shiftId",
             "required": true,
             "in": "path",
+            "description": "The ID of the staff shift to add a break to",
             "schema": {
               "type": "string"
             }
@@ -3665,14 +3978,46 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "startTime": {
+                    "type": "string",
+                    "example": "12:00",
+                    "description": "Break start time in HH:mm"
+                  },
+                  "endTime": {
+                    "type": "string",
+                    "example": "13:00",
+                    "description": "Break end time in HH:mm"
+                  },
+                  "description": {
+                    "type": "string",
+                    "example": "Lunch break",
+                    "nullable": true
+                  }
+                },
+                "required": [
+                  "startTime",
+                  "endTime"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Break successfully added to shift"
           }
         },
         "security": [
@@ -3694,14 +4039,35 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "My Booking App",
+                    "description": "The name of the customer application"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Customer-facing application registered successfully"
           }
         },
         "security": [
@@ -3724,6 +4090,8 @@
             "required": true,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-01-01",
               "type": "string"
             }
           },
@@ -3732,6 +4100,8 @@
             "required": true,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-01-31",
               "type": "string"
             }
           },
@@ -3739,6 +4109,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3746,7 +4117,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns resource utilization statistics over the specified date range"
           }
         },
         "security": [
@@ -3769,6 +4140,8 @@
             "required": true,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-01-01",
               "type": "string"
             }
           },
@@ -3777,6 +4150,8 @@
             "required": true,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-01-31",
               "type": "string"
             }
           },
@@ -3784,6 +4159,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3791,7 +4167,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns staff performance analytics over the specified date range"
           }
         },
         "security": [
@@ -3814,6 +4190,8 @@
             "required": true,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-01-01",
               "type": "string"
             }
           },
@@ -3822,6 +4200,8 @@
             "required": true,
             "in": "query",
             "schema": {
+              "format": "date",
+              "example": "2026-01-31",
               "type": "string"
             }
           },
@@ -3829,6 +4209,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -3836,7 +4217,7 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Returns booking conversion funnel over the specified date range"
           }
         },
         "security": [
@@ -11854,11 +12235,13 @@
         "properties": {
           "variantId": {
             "type": "string",
-            "example": "var_123"
+            "example": "var_123",
+            "description": "Product variant ID"
           },
           "quantity": {
             "type": "number",
-            "example": 2
+            "example": 2,
+            "description": "Quantity of the variant purchased"
           },
           "unitPrice": {
             "type": "number",
@@ -11872,19 +12255,57 @@
           "unitPrice"
         ]
       },
+      "SaleServiceItemDto": {
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "example": "srv_123",
+            "description": "Service ID"
+          },
+          "quantity": {
+            "type": "number",
+            "example": 1,
+            "description": "Quantity of the service purchased"
+          },
+          "unitPrice": {
+            "type": "number",
+            "example": 45,
+            "description": "Optional unit price override (defaults to service base price if not provided)"
+          },
+          "bookingId": {
+            "type": "string",
+            "example": "bk_123",
+            "description": "Option A: Optional existing booking ID to associate, complete, and consume materials for"
+          },
+          "notes": {
+            "type": "string",
+            "example": "Notes for service",
+            "description": "Optional notes for the service line item"
+          }
+        },
+        "required": [
+          "serviceId",
+          "quantity"
+        ]
+      },
       "SalePaymentDto": {
         "type": "object",
         "properties": {
           "method": {
             "type": "string",
-            "example": "CASH"
+            "example": "CASH",
+            "description": "Payment method (e.g. CASH, CARD, MPESA)"
           },
           "amount": {
             "type": "number",
-            "example": 31.98
+            "example": 31.98,
+            "description": "Payment amount"
           },
           "reference": {
-            "type": "string"
+            "type": "string",
+            "example": "TXN12345",
+            "description": "Optional gateway transaction reference or check number"
           }
         },
         "required": [
@@ -11896,12 +12317,21 @@
         "type": "object",
         "properties": {
           "items": {
+            "description": "List of physical product variants purchased",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SaleItemDto"
             }
           },
+          "serviceItems": {
+            "description": "List of services purchased (Option A with bookingId or Option C without)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SaleServiceItemDto"
+            }
+          },
           "payments": {
+            "description": "List of payments applied to this transaction",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/SalePaymentDto"
@@ -11909,19 +12339,26 @@
           },
           "discountAmount": {
             "type": "number",
-            "example": 0
+            "example": 0,
+            "description": "Generic discount amount applied to the overall transaction"
           },
           "customerPhone": {
             "type": "string",
-            "example": "+1234567890"
+            "example": "+1234567890",
+            "description": "Optional customer phone number (auto-creates or links customer)"
           },
           "notes": {
             "type": "string",
-            "example": "Quick sale"
+            "example": "Quick sale",
+            "description": "Optional transaction notes"
+          },
+          "loyaltyVoucherCode": {
+            "type": "string",
+            "example": "VCH-1234",
+            "description": "Optional loyalty voucher code to apply discount"
           }
         },
         "required": [
-          "items",
           "payments"
         ]
       },

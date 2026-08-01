@@ -16,6 +16,8 @@ import {
   Image as ImageIcon,
   ChevronRight,
   Loader2,
+  Upload,
+  X,
   ExternalLink,
   Edit,
   Scale,
@@ -24,6 +26,26 @@ import {
   XCircle,
   AlertCircle,
   CheckCircle2,
+  Sparkles,
+  Bold,
+  Italic,
+  Heading1,
+  Heading2,
+  Quote,
+  List,
+  ListOrdered,
+  Link2,
+  Globe,
+  Clock,
+  Check,
+  Sun,
+  Moon,
+  Calendar,
+  Settings,
+  Eye,
+  ChevronUp,
+  ChevronDown,
+  Star,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -119,6 +141,193 @@ export function ProductPageClient({
   const [product, setProduct] = useState(initialProduct);
   const [activeTab, setActiveTab] = useState("overview");
   const [isSaving, setIsSaving] = useState(false);
+
+  // Extract initial dynamic JSON data from customFields
+  const customFieldsData = typeof product.customFields === "object" && product.customFields ? product.customFields : {};
+
+  // 1. Rich Description (Markdown)
+  const [markdown, setMarkdown] = useState<string>(
+    customFieldsData.markdownDescription ||
+    product.detailedDescription ||
+    `# ${product.name}\n\nExperience our high-quality product tailored specifically to your needs.\n\n## Key Features\n- Premium build quality\n- Long-lasting durability\n- High customer satisfaction`
+  );
+
+  // 2. Multiple Images State (with captions and ordering)
+  const initialCMSImages = Array.isArray(customFieldsData.images)
+    ? customFieldsData.images.map((img: any, idx: number) => ({
+        id: img.id || `img-${idx}-${Date.now()}`,
+        url: img.url || "",
+        caption: img.caption || "",
+      }))
+    : product.imageUrls && product.imageUrls.length > 0
+    ? product.imageUrls.map((url: string, idx: number) => ({
+        id: `img-init-${idx}`,
+        url,
+        caption: "Product Image",
+      }))
+    : [];
+  const [cmsImages, setCmsImages] = useState<any[]>(initialCMSImages);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [newImageCaption, setNewImageCaption] = useState("");
+
+  // 3. SEO Settings State
+  const [seo, setSeo] = useState({
+    title: customFieldsData.seo?.title || `${product.name} | Enterprise Shop`,
+    description: customFieldsData.seo?.description || `Explore our high-performance ${product.name}. High quality, affordable pricing, order now!`,
+    keywords: customFieldsData.seo?.keywords || `${product.name}, premium gear, online store`,
+  });
+
+  // 4. Custom Attributes Metadata State
+  const initialAttrs =
+    typeof customFieldsData.customAttributes === "object" && customFieldsData.customAttributes
+      ? Object.entries(customFieldsData.customAttributes).map(([key, val]: any, idx) => ({
+          id: `attr-${idx}-${Date.now()}`,
+          key: typeof key === "string" ? key : "",
+          value: typeof val === "string" ? val : "",
+        }))
+      : [
+          { id: "attr-1", key: "material", value: "Premium Synthetic Rubber & Mesh" },
+          { id: "attr-2", key: "designed_in", value: "Milan, Italy" },
+          { id: "attr-3", key: "warranty_period", value: "2 Year Global Warranty" },
+        ];
+  const [customAttrs, setCustomAttrs] = useState<any[]>(initialAttrs);
+  const [newAttrKey, setNewAttrKey] = useState("");
+  const [newAttrValue, setNewAttrValue] = useState("");
+
+  // 5. High-end CMS Specific States
+  const [publishStatus, setPublishStatus] = useState<string>(customFieldsData.publishStatus || "Draft");
+  const [publishedAt, setPublishedAt] = useState<string>(customFieldsData.publishedAt || "");
+  const [archivedAt, setArchivedAt] = useState<string>(customFieldsData.archivedAt || "");
+  const [layoutTemplate, setLayoutTemplate] = useState<string>(customFieldsData.layoutTemplate || "Default Grid");
+  const [customSlugOverride, setCustomSlugOverride] = useState<string>(customFieldsData.customSlugOverride || product.slug || "");
+
+  // Simulated Preview Settings
+  const [previewTheme, setPreviewTheme] = useState<"light" | "dark">("dark");
+  const [storefrontMainImageIdx, setStorefrontMainImageIdx] = useState(0);
+
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  // Image upload states
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Synchronization helpers
+  React.useEffect(() => {
+    const urls = cmsImages.map(img => img.url);
+    if (JSON.stringify(product.imageUrls) !== JSON.stringify(urls)) {
+      setProduct((prev: any) => ({ ...prev, imageUrls: urls }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cmsImages]);
+
+  React.useEffect(() => {
+    const urls = cmsImages.map(img => img.url);
+    if (JSON.stringify(product.imageUrls) !== JSON.stringify(urls)) {
+      const updated = product.imageUrls.map((url: string, idx: number) => {
+        const existing = cmsImages.find((img: any) => img.url === url);
+        return {
+          id: existing?.id || `img-sync-${idx}-${Date.now()}`,
+          url,
+          caption: existing?.caption || "Product Image",
+        };
+      });
+      setCmsImages(updated);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.imageUrls]);
+
+  // Markdown insertion helper
+  const insertMarkdown = (syntax: string, placeholder = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end) || placeholder;
+
+    let insertion = "";
+    if (syntax === "bold") insertion = `**${selectedText}**`;
+    else if (syntax === "italic") insertion = `*${selectedText}*`;
+    else if (syntax === "h1") insertion = `\n# ${selectedText}\n`;
+    else if (syntax === "h2") insertion = `\n## ${selectedText}\n`;
+    else if (syntax === "quote") insertion = `\n> ${selectedText}\n`;
+    else if (syntax === "bullet") insertion = `\n- ${selectedText}`;
+    else if (syntax === "ordered") insertion = `\n1. ${selectedText}`;
+    else if (syntax === "link") insertion = `[${selectedText}](https://example.com)`;
+    else if (syntax === "image") insertion = `![${selectedText}](https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80)`;
+
+    const updatedText = text.substring(0, start) + insertion + text.substring(end);
+    setMarkdown(updatedText);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + insertion.length, start + insertion.length);
+    }, 50);
+  };
+
+  const handleAddImage = () => {
+    if (!newImageUrl.trim()) return toast.error("Please provide a valid image URL");
+    const item = {
+      id: `img-user-${Date.now()}`,
+      url: newImageUrl.trim(),
+      caption: newImageCaption.trim() || "Showcase Image",
+    };
+    setCmsImages((prev) => [...prev, item]);
+    setNewImageUrl("");
+    setNewImageCaption("");
+    toast.success("Image added to showcase gallery");
+  };
+
+  const handleRemoveImage = (id: string) => {
+    setCmsImages((prev) => prev.filter((img) => img.id !== id));
+    if (storefrontMainImageIdx >= cmsImages.length - 1) {
+      setStorefrontMainImageIdx(0);
+    }
+    toast.success("Image removed from showcase gallery");
+  };
+
+  const handleMoveImage = (index: number, direction: "up" | "down") => {
+    const targetIdx = direction === "up" ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= cmsImages.length) return;
+
+    const updated = [...cmsImages];
+    const temp = updated[index];
+    updated[index] = updated[targetIdx];
+    updated[targetIdx] = temp;
+    setCmsImages(updated);
+  };
+
+  const handleAddCustomAttr = () => {
+    if (!newAttrKey.trim()) return toast.error("Attribute key name cannot be empty");
+    if (!newAttrValue.trim()) return toast.error("Attribute value cannot be empty");
+
+    const normalizedKey = newAttrKey
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, "_");
+
+    if (customAttrs.some((attr) => attr.key === normalizedKey)) {
+      return toast.error("Attribute key already exists");
+    }
+
+    const attr = {
+      id: `attr-user-${Date.now()}`,
+      key: normalizedKey,
+      value: newAttrValue.trim(),
+    };
+
+    setCustomAttrs((prev) => [...prev, attr]);
+    setNewAttrKey("");
+    setNewAttrValue("");
+    toast.success(`Metadata parameter '${normalizedKey}' registered`);
+  };
+
+  const handleRemoveCustomAttr = (id: string) => {
+    setCustomAttrs((prev) => prev.filter((attr) => attr.id !== id));
+    toast.success("Metadata parameter removed");
+  };
+
   const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [variantsToDelete, setVariantsToDelete] = useState<string[] | null>(
@@ -228,13 +437,38 @@ export function ProductPageClient({
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      const customAttributesObj: Record<string, string> = {};
+      customAttrs.forEach((attr: any) => {
+        if (attr.key.trim()) {
+          customAttributesObj[attr.key.trim()] = attr.value;
+        }
+      });
+
+      const customFieldsPayload = {
+        markdownDescription: markdown,
+        images: cmsImages.map((img: any) => ({ id: img.id, url: img.url, caption: img.caption })),
+        seo: {
+          title: seo.title.trim(),
+          description: seo.description.trim(),
+          keywords: seo.keywords.trim(),
+        },
+        customAttributes: customAttributesObj,
+        publishStatus,
+        publishedAt: publishedAt || null,
+        archivedAt: archivedAt || null,
+        layoutTemplate,
+        customSlugOverride: customSlugOverride.trim(),
+      };
+
+      const updatedImages = cmsImages.map((img: any) => img.url);
+
       await updateProduct(product.id, {
         name: product.name,
         sku: product.sku,
-        slug: product.slug,
+        slug: customSlugOverride.trim() || product.slug,
         categoryId: product.categoryId,
         description: product.description,
-        detailedDescription: product.detailedDescription,
+        detailedDescription: markdown,
         tags: product.tags,
         type: product.type,
         brand: product.brand,
@@ -245,11 +479,12 @@ export function ProductPageClient({
         isActive: product.isActive,
         buyingPrice: product.variants?.[0]?.buyingPrice,
         retailPrice: product.variants?.[0]?.retailPrice,
-        imageUrls: product.imageUrls,
+        imageUrls: updatedImages,
         pointsOnPurchase: product.pointsOnPurchase,
         loyaltyPointsOverride: product.loyaltyPointsOverride,
+        customFields: customFieldsPayload,
       });
-      toast.success("Product updated successfully");
+      toast.success("Product and CMS Studio data saved successfully!");
     } catch (error) {
       toast.error("Failed to update product");
     } finally {
@@ -297,6 +532,209 @@ export function ProductPageClient({
       setIsDeleting(false);
     }
   };
+
+  // Reusable sub-component: Simulated High-Fidelity Storefront Card Preview with Light/Dark Mode Support
+  function StorefrontCardPreview() {
+    const mainImgUrl = cmsImages[storefrontMainImageIdx]?.url || "";
+    const mainImgCaption = cmsImages[storefrontMainImageIdx]?.caption || "Product preview";
+    const selectedCategory = categories.find((c: any) => c.id === product.categoryId);
+
+    // Calculate retail price range
+    const prices = product.variants?.map((v: any) => Number(v.retailPrice || 0)) || [];
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+
+    const isDark = previewTheme === "dark";
+
+    return (
+      <Card className={cn(
+        "border shadow-xl rounded-xl overflow-hidden flex flex-col font-sans transition-all duration-300",
+        isDark ? "bg-[#0f1115] border-zinc-800 text-white" : "bg-white border-zinc-200 text-zinc-900"
+      )}>
+        {/* Preview header info */}
+        <div className={cn(
+          "border-b px-4 py-3 flex items-center justify-between transition-colors",
+          isDark ? "bg-[#16181d] border-zinc-800" : "bg-zinc-50 border-zinc-200"
+        )}>
+          <span className="text-[10px] tracking-widest font-bold uppercase text-amber-500 flex items-center gap-1.5">
+            <Check size={12} />
+            <span>Storefront Live Preview</span>
+          </span>
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              "text-[9px] px-1.5 py-0.5 font-mono font-bold uppercase rounded",
+              publishStatus === "Published"
+                ? "bg-emerald-500/10 text-emerald-400"
+                : publishStatus === "Scheduled"
+                ? "bg-blue-500/10 text-blue-400"
+                : "bg-amber-500/10 text-amber-400"
+            )}>
+              {publishStatus}
+            </span>
+          </div>
+        </div>
+
+        {/* Gallery main image display */}
+        <div className="aspect-video w-full bg-zinc-900 relative flex items-center justify-center">
+          {mainImgUrl ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={mainImgUrl}
+              alt={mainImgCaption}
+              className="w-full h-full object-cover transition-all duration-300"
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-2 text-zinc-500">
+              <ImageIcon className="h-10 w-10 stroke-[1.5]" />
+              <span className="text-xs">No image uploaded</span>
+            </div>
+          )}
+          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-3 pt-6 w-full text-left">
+            <span className="text-[9px] tracking-wider uppercase font-bold text-amber-400">
+              {selectedCategory?.name || "Product Category"}
+            </span>
+            <h4 className="text-sm font-bold text-slate-100">{product.name || "Unnamed Premium Product"}</h4>
+          </div>
+        </div>
+
+        {/* Gallery thumbnails strip */}
+        {cmsImages.length > 0 && (
+          <div className={cn(
+            "p-2 flex gap-1.5 overflow-x-auto border-b transition-colors",
+            isDark ? "bg-[#16181d] border-zinc-800" : "bg-zinc-50 border-zinc-200"
+          )}>
+            {cmsImages.map((img, idx) => (
+              <button
+                key={img.id}
+                onClick={() => setStorefrontMainImageIdx(idx)}
+                className={cn(
+                  "h-10 w-16 flex-shrink-0 bg-zinc-900 border relative overflow-hidden transition-all duration-150 rounded",
+                  storefrontMainImageIdx === idx
+                    ? "border-amber-500 ring-1 ring-amber-500"
+                    : isDark
+                    ? "border-zinc-700 opacity-60 hover:opacity-100"
+                    : "border-zinc-300 opacity-60 hover:opacity-100"
+                )}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.url}
+                  alt={img.caption || "Thumbnail"}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Card pricing and brief context */}
+        <div className="p-4 space-y-4">
+          <div className={cn(
+            "flex items-center justify-between gap-2 border-b pb-3 transition-colors",
+            isDark ? "border-zinc-800" : "border-zinc-200"
+          )}>
+            <div>
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Storefront Price</span>
+              <div className={cn("text-base font-extrabold", isDark ? "text-slate-100" : "text-zinc-900")}>
+                {minPrice === maxPrice ? (
+                  `$${minPrice.toFixed(2)}`
+                ) : (
+                  `$${minPrice.toFixed(2)} - $${maxPrice.toFixed(2)}`
+                )}
+              </div>
+            </div>
+
+            {product.brand && (
+              <div className="text-right">
+                <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Brand</span>
+                <div className={cn("text-xs font-semibold mt-0.5", isDark ? "text-slate-200" : "text-zinc-800")}>
+                  {product.brand}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Schedule status disclaimer */}
+          {publishStatus === "Scheduled" && publishedAt && (
+            <div className="bg-amber-500/10 border border-amber-500/20 p-2 text-[10px] text-amber-500 flex items-center justify-between rounded-lg">
+              <span className="font-semibold">Auto-publishing active:</span>
+              <span className="font-mono bg-amber-500/10 px-1.5 py-0.5 rounded font-bold">
+                {new Date(publishedAt).toLocaleString()}
+              </span>
+            </div>
+          )}
+
+          {/* Layout Template badge */}
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground border-b pb-2 dark:border-zinc-800">
+            <span>Template Style:</span>
+            <span className="font-bold text-amber-500 font-mono">{layoutTemplate}</span>
+          </div>
+
+          {/* Dynamic attributes preview (only shows first 4 keys for nice sizing) */}
+          {customAttrs.length > 0 && (
+            <div className={cn(
+              "space-y-1.5 border-b pb-3 transition-colors",
+              isDark ? "border-zinc-800" : "border-zinc-200"
+            )}>
+              <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold font-mono">Product Parameters</span>
+              <div className="flex flex-wrap gap-1.5">
+                {customAttrs.slice(0, 4).map((attr: any) => (
+                  <div key={attr.id} className={cn(
+                    "border px-2 py-0.5 text-[9px] flex items-center gap-1 rounded",
+                    isDark ? "bg-zinc-900 border-zinc-800" : "bg-zinc-100 border-zinc-200"
+                  )}>
+                    <span className="text-amber-500 font-semibold">{attr.key.replace(/_/g, " ")}:</span>
+                    <span className={isDark ? "text-slate-300" : "text-zinc-600"}>{attr.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Rating stars & storefront review simulation */}
+          <div className={cn(
+            "flex items-center gap-2 border-b pb-3 transition-colors",
+            isDark ? "border-zinc-800" : "border-zinc-200"
+          )}>
+            <div className="flex text-amber-400">
+              <Star size={11} fill="currentColor" />
+              <Star size={11} fill="currentColor" />
+              <Star size={11} fill="currentColor" />
+              <Star size={11} fill="currentColor" />
+              <Star size={11} fill="currentColor" />
+            </div>
+            <span className="text-[10px] text-muted-foreground font-semibold">(4.8 out of 5 &bull; 246 reviews)</span>
+          </div>
+
+          {/* Markdown text preview container */}
+          <div className="space-y-1.5">
+            <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold font-mono">Storefront About / Story</span>
+            <div className={cn(
+              "max-h-[140px] overflow-y-auto border p-2.5 text-xs leading-relaxed font-sans scrollbar-thin rounded-lg",
+              isDark ? "bg-zinc-900/40 border-zinc-800 text-slate-300" : "bg-zinc-50 border-zinc-200 text-zinc-700"
+            )}>
+              {markdown ? (
+                <div
+                  className="prose prose-xs text-inherit dark:prose-invert"
+                  dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(markdown) }}
+                />
+              ) : (
+                <span className="text-[11px] text-muted-foreground italic">No custom description configured.</span>
+              )}
+            </div>
+          </div>
+
+          {/* CTA preview button */}
+          <Button
+            type="button"
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 font-bold uppercase tracking-widest text-xs h-9 rounded-lg border-none mt-2 flex items-center justify-center gap-1"
+          >
+            <span>Add to Cart</span>
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -387,6 +825,7 @@ export function ProductPageClient({
               <TabsList className="bg-transparent border-none p-0 h-auto">
                 {[
                   { value: "overview", label: "Overview", icon: Package },
+                  { value: "cms", label: "CMS Studio", icon: Sparkles },
                   { value: "variants", label: "Variants", icon: Layers },
                   {
                     value: "pricing",
@@ -604,6 +1043,708 @@ export function ProductPageClient({
                   />
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            {/* CMS STUDIO TAB */}
+            <TabsContent value="cms" className="space-y-6 mt-0">
+              <div className="bg-white dark:bg-zinc-950 p-6 border shadow-sm rounded-xl dark:border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-amber-500" />
+                  <h3 className="text-lg font-bold text-foreground">Enterprise CMS Studio</h3>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Manage high-fidelity storefront presentation, rich markdown guides, SEO target parameters, layouts, and scheduled publishing options.
+                </p>
+              </div>
+
+              <Tabs defaultValue="rich-images" className="w-full">
+                <div className="bg-background dark:bg-zinc-950 rounded-xl p-1 border shadow-sm mb-6 inline-flex dark:border-zinc-800">
+                  <TabsList className="bg-transparent border-none p-0 h-auto gap-1">
+                    <TabsTrigger
+                      value="rich-images"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <span>Rich Content & Gallery</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="seo-layout"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+                    >
+                      <Globe className="w-4 h-4" />
+                      <span>SEO & Theme Settings</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="publishing"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
+                    >
+                      <Settings className="w-4 h-4" />
+                      <span>Publishing & Attributes</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                {/* SUB-TAB 1: Rich Description & Images */}
+                <TabsContent value="rich-images" className="space-y-6 mt-0">
+                  {/* Image Manager Section */}
+                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                        <ImageIcon size={18} className="text-amber-500" />
+                        <span>Showcase Gallery (Unified Images)</span>
+                      </CardTitle>
+                      <CardDescription>
+                        Reorder gallery items, define captions/alt text, and manage direct image links. Keep standard assets fully unified.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Grid list of current images */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border p-4 bg-muted/30 rounded-lg dark:border-zinc-800">
+                        {cmsImages.length === 0 ? (
+                          <div className="col-span-full py-8 text-center text-xs text-muted-foreground italic">
+                            No images added yet. Storefront will use fallback placeholders.
+                          </div>
+                        ) : (
+                          cmsImages.map((img, idx) => (
+                            <div key={img.id} className="bg-background border p-3 flex flex-col gap-2 relative shadow-xs rounded-lg dark:border-zinc-800">
+                              <div className="aspect-video w-full bg-muted overflow-hidden relative rounded-md">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={img.url}
+                                  alt={img.caption || "Product Image"}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute top-2 left-2 bg-zinc-900/90 px-2 py-0.5 text-[10px] font-mono text-white tracking-widest font-bold rounded">
+                                  #{idx + 1} {idx === 0 && "(MAIN)"}
+                                </div>
+                              </div>
+
+                              {/* Caption input */}
+                              <div className="space-y-1">
+                                <Label className="text-[10px] font-bold uppercase text-muted-foreground">Caption / Alternative Text</Label>
+                                <Input
+                                  value={img.caption}
+                                  onChange={(e) => {
+                                    const updated = [...cmsImages];
+                                    updated[idx].caption = e.target.value;
+                                    setCmsImages(updated);
+                                  }}
+                                  className="text-xs h-7 rounded border-border"
+                                  placeholder="e.g. Ergonomic sole close up"
+                                />
+                              </div>
+
+                              {/* Reordering and removal controls */}
+                              <div className="flex items-center justify-between border-t pt-2 mt-1 dark:border-zinc-800">
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    onClick={() => handleMoveImage(idx, "up")}
+                                    disabled={idx === 0}
+                                    variant="outline"
+                                    className="h-6 w-6 p-0 rounded border-border bg-background"
+                                    title="Move main image forward"
+                                    aria-label="Move main image forward"
+                                  >
+                                    <ChevronUp size={12} />
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleMoveImage(idx, "down")}
+                                    disabled={idx === cmsImages.length - 1}
+                                    variant="outline"
+                                    className="h-6 w-6 p-0 rounded border-border bg-background"
+                                    title="Move back"
+                                    aria-label="Move back"
+                                  >
+                                    <ChevronDown size={12} />
+                                  </Button>
+                                </div>
+
+                                <Button
+                                  onClick={() => handleRemoveImage(img.id)}
+                                  variant="ghost"
+                                  className="h-6 px-2 hover:bg-red-50 dark:hover:bg-red-950 text-red-600 dark:text-red-400 text-xs rounded"
+                                  title="Remove image"
+                                  aria-label="Remove image"
+                                >
+                                  <Trash2 size={12} className="mr-1 inline" />
+                                  <span>Remove</span>
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Add new image form */}
+                      <div className="border p-4 bg-muted/10 space-y-3 rounded-lg dark:border-zinc-800">
+                        <span className="text-xs font-bold text-foreground">Add New Showcase Image</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Upload Image</Label>
+                            <div
+                              onClick={() => !isUploading && fileInputRef.current?.click()}
+                              className="relative border-2 border-dashed border-border dark:border-zinc-800 bg-background p-4 text-center rounded-lg hover:border-muted-foreground/30 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1 min-h-[90px]"
+                            >
+                              {isUploading ? (
+                                <div className="flex flex-col items-center gap-1">
+                                  <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+                                  <span className="text-[10px] text-muted-foreground font-semibold">Uploading to storage...</span>
+                                </div>
+                              ) : newImageUrl ? (
+                                <div className="flex items-center gap-2 w-full justify-between">
+                                  <div className="flex items-center gap-2 overflow-hidden">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img src={newImageUrl} className="h-10 w-10 object-cover rounded" alt="Upload preview" />
+                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold truncate">Uploaded successfully</span>
+                                  </div>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    className="h-6 w-6 p-0 hover:bg-muted rounded text-muted-foreground"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setNewImageUrl("");
+                                    }}
+                                  >
+                                    <X size={14} />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center">
+                                  <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+                                  <span className="text-[10px] text-muted-foreground font-semibold">Click or Drag to Upload</span>
+                                </div>
+                              )}
+                              <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  setIsUploading(true);
+                                  try {
+                                    const formData = new FormData();
+                                    formData.append("file", file);
+                                    const res = await fetch("/api/upload", {
+                                      method: "POST",
+                                      body: formData,
+                                    });
+                                    if (!res.ok) throw new Error("Upload failed");
+                                    const resData = await res.json();
+                                    const url = resData.data?.url || resData.url;
+                                    if (!url) throw new Error("No URL returned");
+                                    setNewImageUrl(url);
+                                    toast.success("Image uploaded successfully!");
+                                  } catch (err) {
+                                    console.error(err);
+                                    toast.error("Failed to upload image");
+                                  } finally {
+                                    setIsUploading(false);
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label htmlFor="new-img-caption" className="text-[10px] font-bold uppercase text-muted-foreground">Caption / Alt text</Label>
+                            <Input
+                              id="new-img-caption"
+                              placeholder="e.g. Back view of the product"
+                              value={newImageCaption}
+                              onChange={(e) => setNewImageCaption(e.target.value)}
+                              className="text-xs h-8 rounded bg-background border-border"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleAddImage();
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <Button
+                            onClick={handleAddImage}
+                            variant="outline"
+                            className="h-8 rounded text-xs border-border hover:bg-muted flex items-center gap-1"
+                          >
+                            <Plus size={13} />
+                            <span>Insert Image</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Split-pane Markdown Editor */}
+                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                        <Sparkles size={18} className="text-amber-500" />
+                        <span>Storefront Rich Content Composer</span>
+                      </CardTitle>
+                      <CardDescription>
+                        Compose detailed Markdown stories, manuals, or guides that render as high-fidelity HTML on public listings.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Formatting Helper Tools */}
+                      <div className="flex items-center gap-1.5 flex-wrap bg-muted/60 p-2 border border-border rounded-lg dark:border-zinc-800">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("bold", "bold text")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
+                          title="Bold (**text**)"
+                          aria-label="Bold (**text**)"
+                        >
+                          <Bold size={13} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("italic", "italic text")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
+                          title="Italic (*text*)"
+                          aria-label="Italic (*text*)"
+                        >
+                          <Italic size={13} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("h1", "Heading 1")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
+                          title="H1 heading (# Heading)"
+                          aria-label="H1 heading (# Heading)"
+                        >
+                          <Heading1 size={13} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("h2", "Heading 2")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
+                          title="H2 heading (## Heading)"
+                          aria-label="H2 heading (## Heading)"
+                        >
+                          <Heading2 size={13} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("quote", "blockquote citation")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
+                          title="Blockquote (> citation)"
+                          aria-label="Blockquote (> citation)"
+                        >
+                          <Quote size={13} />
+                        </Button>
+                        <span className="h-4 w-[1px] bg-border mx-1" />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("bullet", "list item")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
+                          title="Bullet List (- item)"
+                          aria-label="Bullet List (- item)"
+                        >
+                          <List size={13} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("ordered", "list item")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
+                          title="Numbered List (1. item)"
+                          aria-label="Numbered List (1. item)"
+                        >
+                          <ListOrdered size={13} />
+                        </Button>
+                        <span className="h-4 w-[1px] bg-border mx-1" />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("link", "Link Title")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
+                          title="Hyperlink ([title](url))"
+                          aria-label="Hyperlink ([title](url))"
+                        >
+                          <Link2 size={13} />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => insertMarkdown("image", "Image alt caption")}
+                          onMouseDown={(e) => e.preventDefault()}
+                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
+                          title="Image ([caption](url))"
+                          aria-label="Image ([caption](url))"
+                        >
+                          <ImageIcon size={13} />
+                        </Button>
+                      </div>
+
+                      {/* Text editor and preview side-by-side */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Editor */}
+                        <div className="space-y-1.5 flex flex-col">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Markdown Composer</Label>
+                          <textarea
+                            ref={textareaRef}
+                            value={markdown}
+                            onChange={(e) => setMarkdown(e.target.value)}
+                            placeholder="# Product Overview..."
+                            className="w-full flex-1 min-h-[300px] p-3 text-xs font-mono border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-zinc-400 resize-y rounded-lg dark:border-zinc-800"
+                          />
+                        </div>
+
+                        {/* Live parsing HTML render preview */}
+                        <div className="flex flex-col">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Live Formatted Output Preview</Label>
+                          <div className="w-full flex-1 min-h-[300px] p-4 border border-border bg-muted/10 overflow-y-auto rounded-lg dark:border-zinc-800 max-h-[420px]">
+                            {markdown ? (
+                              <div
+                                className="prose prose-sm max-w-none text-foreground break-words dark:prose-invert"
+                                dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(markdown) }}
+                              />
+                            ) : (
+                              <span className="text-xs text-muted-foreground italic">No description composed. HTML preview is empty.</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* SUB-TAB 2: SEO & Layout Options */}
+                <TabsContent value="seo-layout" className="space-y-6 mt-0">
+                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                        <Globe size={18} className="text-amber-500" />
+                        <span>Search Engine Optimization (SEO) Metadata</span>
+                      </CardTitle>
+                      <CardDescription>
+                        Define fields to configure browser tab metadata, search crawler descriptions, and social media sharing previews.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="seo-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">SEO Meta Title</Label>
+                        <Input
+                          id="seo-title"
+                          value={seo.title}
+                          onChange={(e) => setSeo({ ...seo, title: e.target.value })}
+                          placeholder="Tab Title & Search Engines Headline"
+                          className="rounded bg-background border-border"
+                        />
+                        <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                          <span>Recommended: 50-60 characters.</span>
+                          <span className={seo.title.length > 60 ? "text-amber-500 font-semibold" : "text-green-500"}>
+                            Current: {seo.title.length} chars
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="seo-desc" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">SEO Meta Description</Label>
+                        <Textarea
+                          id="seo-desc"
+                          value={seo.description}
+                          onChange={(e) => setSeo({ ...seo, description: e.target.value })}
+                          placeholder="Short summary paragraph displayed beneath the heading on Google results"
+                          className="min-h-20 rounded bg-background border-border"
+                        />
+                        <div className="flex justify-between items-center text-[10px] text-muted-foreground">
+                          <span>Recommended: 120-160 characters.</span>
+                          <span className={seo.description.length > 160 ? "text-amber-500 font-semibold" : "text-green-500"}>
+                            Current: {seo.description.length} chars
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label htmlFor="seo-keywords" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Meta Keywords (Comma separated)</Label>
+                        <Input
+                          id="seo-keywords"
+                          value={seo.keywords}
+                          onChange={(e) => setSeo({ ...seo, keywords: e.target.value })}
+                          placeholder="e.g. sports shoes, lightweight boots, athletic gear"
+                          className="rounded bg-background border-border"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                        <Settings size={18} className="text-amber-500" />
+                        <span>E-commerce Layout & Preview Themes</span>
+                      </CardTitle>
+                      <CardDescription>
+                        Customize page template designs and modify storefront live previews instantly.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="cms-template" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Product Layout Style</Label>
+                        <Select
+                          value={layoutTemplate}
+                          onValueChange={setLayoutTemplate}
+                        >
+                          <SelectTrigger id="cms-template" className="rounded bg-background border-border">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-lg">
+                            <SelectItem value="Default Grid">Default Grid Showcase</SelectItem>
+                            <SelectItem value="Elegant Editorial">Elegant Editorial Profile</SelectItem>
+                            <SelectItem value="Minimalist Modern">Minimalist Modern Single-Focus</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <span className="text-[10px] text-muted-foreground">Dictates the page structures on client-facing storefronts.</span>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Preview Theme Toggle</Label>
+                        <div className="flex items-center gap-3 border p-2 bg-muted/20 rounded-lg dark:border-zinc-800 h-9">
+                          <button
+                            type="button"
+                            onClick={() => setPreviewTheme("light")}
+                            className={cn(
+                              "flex-1 flex items-center justify-center gap-1.5 py-1 text-xs rounded transition-all font-semibold",
+                              previewTheme === "light" ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            <Sun size={13} />
+                            <span>Light mode</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewTheme("dark")}
+                            className={cn(
+                              "flex-1 flex items-center justify-center gap-1.5 py-1 text-xs rounded transition-all font-semibold",
+                              previewTheme === "dark" ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            <Moon size={13} />
+                            <span>Dark mode</span>
+                          </button>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">Toggle colors inside the simulated live preview card.</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* SUB-TAB 3: Publishing & Advanced Settings */}
+                <TabsContent value="publishing" className="space-y-6 mt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Status selection */}
+                    <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                      <CardHeader>
+                        <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                          <CheckCircle2 size={18} className="text-amber-500" />
+                          <span>Publishing Status</span>
+                        </CardTitle>
+                        <CardDescription>Configure storefront listings status parameters.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-1.5">
+                        <Label htmlFor="cms-status" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Listing Status</Label>
+                        <Select
+                          value={publishStatus}
+                          onValueChange={setPublishStatus}
+                        >
+                          <SelectTrigger id="cms-status" className="rounded bg-background border-border">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-lg">
+                            <SelectItem value="Draft">Draft (Internal Only)</SelectItem>
+                            <SelectItem value="Published">Published (Publicly Searchable)</SelectItem>
+                            <SelectItem value="Scheduled">Scheduled (Auto live / Archive)</SelectItem>
+                            <SelectItem value="Archived">Archived (De-listed)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <span className="text-[10px] text-muted-foreground">Draft mode prevents checkout access in active shopping carts.</span>
+                      </CardContent>
+                    </Card>
+
+                    {/* Schedule times */}
+                    <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                      <CardHeader>
+                        <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                          <Calendar size={18} className="text-amber-500" />
+                          <span>Publication Schedule</span>
+                        </CardTitle>
+                        <CardDescription>Optional automatic publishing timelines.</CardDescription>
+                      </CardHeader>
+                      <CardContent className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <Label htmlFor="published-at" className="text-[10px] font-bold uppercase text-muted-foreground">Scheduled Live</Label>
+                          <input
+                            id="published-at"
+                            type="datetime-local"
+                            value={publishedAt}
+                            onChange={(e) => setPublishedAt(e.target.value)}
+                            className="w-full text-xs p-2 border border-border rounded bg-background text-foreground dark:border-zinc-800 focus:outline-none"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor="archived-at" className="text-[10px] font-bold uppercase text-muted-foreground">Scheduled Archive</Label>
+                          <input
+                            id="archived-at"
+                            type="datetime-local"
+                            value={archivedAt}
+                            onChange={(e) => setArchivedAt(e.target.value)}
+                            className="w-full text-xs p-2 border border-border rounded bg-background text-foreground dark:border-zinc-800 focus:outline-none"
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Slug Override */}
+                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                        <ExternalLink size={18} className="text-amber-500" />
+                        <span>SEO Customized URL Override</span>
+                      </CardTitle>
+                      <CardDescription>Overwrites default products slug path to yield highly optimized clean marketing URLs.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="space-y-1">
+                        <Label htmlFor="cms-slug-override" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Custom Marketing Slug Override</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="cms-slug-override"
+                            value={customSlugOverride}
+                            onChange={(e) => setCustomSlugOverride(e.target.value)}
+                            className="rounded bg-background border-border"
+                            placeholder="e.g. premium-sneakers-seasonal-deal"
+                          />
+                          <Button
+                            variant="outline"
+                            onClick={() => setCustomSlugOverride(product.slug || "")}
+                            title="Reset to default slug"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          Output path: https://scryme.store/products/{customSlugOverride || product.slug || "unnamed"}
+                        </span>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Dynamic Custom Metadata attributes */}
+                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
+                        <Layers size={18} className="text-amber-500" />
+                        <span>Dynamic Product Metadata Parameters</span>
+                      </CardTitle>
+                      <CardDescription>Configure custom tag properties filterable inside search indices and shopping catalog selectors.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Grid attributes table */}
+                      <div className="border rounded-lg overflow-hidden dark:border-zinc-800">
+                        <div className="grid grid-cols-3 bg-muted/60 font-bold border-b text-[10px] uppercase text-muted-foreground tracking-wider p-2.5 dark:border-zinc-800">
+                          <div>Parameter Key</div>
+                          <div>Value Settings</div>
+                          <div className="text-right">Remove</div>
+                        </div>
+
+                        {customAttrs.length === 0 ? (
+                          <div className="p-4 text-center text-xs text-muted-foreground italic">No parameters registered. Use inputs below.</div>
+                        ) : (
+                          customAttrs.map((attr: any, idx: number) => (
+                            <div key={attr.id} className="grid grid-cols-3 items-center p-2 border-b text-xs text-foreground font-mono dark:border-zinc-800">
+                              <div className="font-semibold text-foreground pl-1">{attr.key}</div>
+                              <div>
+                                <Input
+                                  value={attr.value}
+                                  onChange={(e) => {
+                                    const updated = [...customAttrs];
+                                    updated[idx].value = e.target.value;
+                                    setCustomAttrs(updated);
+                                  }}
+                                  className="h-7 text-xs rounded border-border bg-background font-sans"
+                                />
+                              </div>
+                              <div className="text-right pr-1">
+                                <Button
+                                  onClick={() => handleRemoveCustomAttr(attr.id)}
+                                  variant="ghost"
+                                  className="h-7 px-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded"
+                                >
+                                  <Trash2 size={13} />
+                                </Button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+
+                      {/* Add attribute forms */}
+                      <div className="border p-4 bg-muted/10 space-y-3 rounded-lg dark:border-zinc-800">
+                        <span className="text-xs font-bold text-foreground">Add Custom Parameter</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label htmlFor="attr-key" className="text-[10px] font-bold uppercase text-muted-foreground font-mono">Key Name (alphanumeric & underscore)</Label>
+                            <Input
+                              id="attr-key"
+                              placeholder="e.g. fabric_rating"
+                              value={newAttrKey}
+                              onChange={(e) => setNewAttrKey(e.target.value)}
+                              className="text-xs h-8 rounded bg-background border-border font-mono"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="attr-val" className="text-[10px] font-bold uppercase text-muted-foreground">Value Content</Label>
+                            <Input
+                              id="attr-val"
+                              placeholder="e.g. Waterproof Gore-Tex"
+                              value={newAttrValue}
+                              onChange={(e) => setNewAttrValue(e.target.value)}
+                              className="text-xs h-8 rounded bg-background border-border"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleAddCustomAttr();
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex justify-end">
+                          <Button
+                            onClick={handleAddCustomAttr}
+                            variant="outline"
+                            className="h-8 rounded text-xs border-border hover:bg-muted flex items-center gap-1"
+                          >
+                            <Plus size={13} />
+                            <span>Register Attribute</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
             </TabsContent>
 
             {/* VARIANTS TAB */}
@@ -1752,125 +2893,131 @@ export function ProductPageClient({
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800 overflow-hidden">
-            <div className="aspect-square relative bg-muted">
-              {product.imageUrls?.[0] ? (
-                <Image
-                  src={product.imageUrls[0]}
-                  alt={product.name}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Package className="w-16 h-16 text-muted-foreground/30" />
-                </div>
-              )}
-            </div>
-            <CardContent className="pt-6">
-              <div className="flex flex-col gap-4">
-                <div className="flex justify-between items-center pb-4 border-b dark:border-zinc-800">
-                  <span className="text-sm text-muted-foreground font-medium">
-                    Global Stock
-                  </span>
-                  <span className="text-lg font-black text-foreground">
-                    {product.variants?.reduce(
-                      (acc: number, v: any) =>
-                        acc +
-                        (v.variantStocks?.reduce(
-                          (sa: number, s: any) => sa + Number(s.currentStock),
-                          0,
-                        ) || 0),
-                      0,
-                    )}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                    Quick Actions
-                  </h4>
-                  <Button
-                    className="w-full justify-start gap-2 h-11"
-                    variant="outline">
-                    <ExternalLink className="w-4 h-4" /> View Storefront
-                  </Button>
-                  <Button
-                    className="w-full justify-start gap-2 h-11"
-                    variant="outline">
-                    <History className="w-4 h-4" /> Audit History
-                  </Button>
-                  <Button
-                    className="w-full justify-start gap-2 h-11"
-                    variant="outline">
-                    <Layers className="w-4 h-4" /> Duplicate Product
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-            <CardHeader>
-              <CardTitle className="text-base">Tags & Organization</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="tags">Tags</Label>
-                <Input
-                  id="tags"
-                  placeholder="Add tag and press Enter..."
-                  onKeyDown={(e: any) => {
-                    if (e.key === "Enter") {
-                      const val = e.currentTarget.value.trim();
-                      if (val && !product.tags?.includes(val)) {
-                        setProduct({
-                          ...product,
-                          tags: [...(product.tags || []), val],
-                        });
-                        e.currentTarget.value = "";
-                      }
-                    }
-                  }}
-                />
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {product.tags?.map((tag: string) => (
-                    <Badge
-                      key={tag}
-                      variant="secondary"
-                      className="bg-muted border-border hover:bg-muted/80 transition-colors cursor-pointer flex items-center gap-1"
-                      onClick={() => {
-                        setProduct({
-                          ...product,
-                          tags: product.tags.filter((t: string) => t !== tag),
-                        });
-                      }}>
-                      {tag} <XCircle className="w-3 h-3" />
-                    </Badge>
-                  )) || (
-                    <span className="text-xs text-muted-foreground italic">
-                      No tags added
-                    </span>
+          {activeTab === "cms" ? (
+            <StorefrontCardPreview />
+          ) : (
+            <>
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800 overflow-hidden">
+                <div className="aspect-square relative bg-muted">
+                  {product.imageUrls?.[0] ? (
+                    <Image
+                      src={product.imageUrls[0]}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Package className="w-16 h-16 text-muted-foreground/30" />
+                    </div>
                   )}
                 </div>
-              </div>
-              <div className="grid gap-2 pt-4 border-t dark:border-zinc-800">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">
-                  Created At
-                </Label>
-                <p className="text-sm font-medium text-foreground">
-                  {new Date(product.createdAt).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="grid gap-2">
-                <Label className="text-xs font-bold uppercase text-muted-foreground">
-                  Last Updated
-                </Label>
-                <p className="text-sm font-medium text-foreground">
-                  {new Date(product.updatedAt).toLocaleDateString()}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                <CardContent className="pt-6">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-between items-center pb-4 border-b dark:border-zinc-800">
+                      <span className="text-sm text-muted-foreground font-medium">
+                        Global Stock
+                      </span>
+                      <span className="text-lg font-black text-foreground">
+                        {product.variants?.reduce(
+                          (acc: number, v: any) =>
+                            acc +
+                            (v.variantStocks?.reduce(
+                              (sa: number, s: any) => sa + Number(s.currentStock),
+                              0,
+                            ) || 0),
+                          0,
+                        )}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                        Quick Actions
+                      </h4>
+                      <Button
+                        className="w-full justify-start gap-2 h-11"
+                        variant="outline">
+                        <ExternalLink className="w-4 h-4" /> View Storefront
+                      </Button>
+                      <Button
+                        className="w-full justify-start gap-2 h-11"
+                        variant="outline">
+                        <History className="w-4 h-4" /> Audit History
+                      </Button>
+                      <Button
+                        className="w-full justify-start gap-2 h-11"
+                        variant="outline">
+                        <Layers className="w-4 h-4" /> Duplicate Product
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                <CardHeader>
+                  <CardTitle className="text-base">Tags & Organization</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="tags">Tags</Label>
+                    <Input
+                      id="tags"
+                      placeholder="Add tag and press Enter..."
+                      onKeyDown={(e: any) => {
+                        if (e.key === "Enter") {
+                          const val = e.currentTarget.value.trim();
+                          if (val && !product.tags?.includes(val)) {
+                            setProduct({
+                              ...product,
+                              tags: [...(product.tags || []), val],
+                            });
+                            e.currentTarget.value = "";
+                          }
+                        }
+                      }}
+                    />
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {product.tags?.map((tag: string) => (
+                        <Badge
+                          key={tag}
+                          variant="secondary"
+                          className="bg-muted border-border hover:bg-muted/80 transition-colors cursor-pointer flex items-center gap-1"
+                          onClick={() => {
+                            setProduct({
+                              ...product,
+                              tags: product.tags.filter((t: string) => t !== tag),
+                            });
+                          }}>
+                          {tag} <XCircle className="w-3 h-3" />
+                        </Badge>
+                      )) || (
+                        <span className="text-xs text-muted-foreground italic">
+                          No tags added
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid gap-2 pt-4 border-t dark:border-zinc-800">
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">
+                      Created At
+                    </Label>
+                    <p className="text-sm font-medium text-foreground">
+                      {new Date(product.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label className="text-xs font-bold uppercase text-muted-foreground">
+                      Last Updated
+                    </Label>
+                    <p className="text-sm font-medium text-foreground">
+                      {new Date(product.updatedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
         </div>
       </div>
 
@@ -2318,4 +3465,88 @@ export function ProductPageClient({
       </Dialog>
     </div>
   );
+}
+
+// Inline Markdown Parser to render HTML
+function parseMarkdownToHtml(markdown: string): string {
+  if (!markdown) return "";
+
+  let html = markdown
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Headings
+  html = html.replace(/^### (.*$)/gim, '<h3 class="text-sm font-bold mt-3 mb-1.5 text-inherit font-sans">$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2 class="text-base font-bold mt-4 mb-2 text-inherit font-sans">$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1 class="text-lg font-extrabold mt-5 mb-2.5 text-inherit font-sans">$1</h1>');
+
+  // Blockquotes
+  html = html.replace(/^\s*&gt;\s+(.*$)/gim, '<blockquote class="border-l-4 border-amber-500 pl-3 italic my-3 text-muted-foreground">$1</blockquote>');
+
+  // Bold
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-inherit">$1</strong>');
+  html = html.replace(/__(.*?)__/g, '<strong class="font-bold text-inherit">$1</strong>');
+
+  // Italics
+  html = html.replace(/\*(.*?)\*/g, '<em class="italic text-inherit">$1</em>');
+  html = html.replace(/_(.*?)_/g, '<em class="italic text-inherit">$1</em>');
+
+  // Inline Code
+  html = html.replace(/`(.*?)`/g, '<code class="bg-muted text-amber-500 px-1 py-0.5 rounded font-mono text-xs border">$1</code>');
+
+  // Links
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-amber-500 font-medium underline hover:text-amber-600">$1</a>');
+
+  // Images
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full h-auto rounded my-3 border shadow-sm inline-block" />');
+
+  const lines = html.split("\n");
+  let inList = false;
+  let inOrderedList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith("- ") || line.startsWith("* ")) {
+      const content = line.substring(2);
+      if (!inList) {
+        lines[i] = '<ul class="list-disc pl-4 my-1.5 space-y-0.5 text-inherit text-xs">\n<li>' + content + '</li>';
+        inList = true;
+      } else {
+        lines[i] = '<li>' + content + '</li>';
+      }
+    } else if (/^\d+\.\s+/.test(line)) {
+      const content = line.replace(/^\d+\.\s+/, "");
+      if (!inOrderedList) {
+        lines[i] = '<ol class="list-decimal pl-4 my-1.5 space-y-0.5 text-inherit text-xs">\n<li>' + content + '</li>';
+        inOrderedList = true;
+      } else {
+        lines[i] = '<li>' + content + '</li>';
+      }
+    } else {
+      if (inList) {
+        lines[i] = '</ul>\n' + lines[i];
+        inList = false;
+      }
+      if (inOrderedList) {
+        lines[i] = '</ol>\n' + lines[i];
+        inOrderedList = false;
+      }
+      if (
+        lines[i].trim() &&
+        !lines[i].trim().startsWith("<h") &&
+        !lines[i].trim().startsWith("<blockquote") &&
+        !lines[i].trim().startsWith("<ul") &&
+        !lines[i].trim().startsWith("<ol") &&
+        !lines[i].trim().startsWith("<li")
+      ) {
+        lines[i] = '<p class="my-1.5 leading-relaxed text-inherit text-xs">' + lines[i] + '</p>';
+      }
+    }
+  }
+
+  if (inList) lines.push("</ul>");
+  if (inOrderedList) lines.push("</ol>");
+
+  return lines.join("\n");
 }

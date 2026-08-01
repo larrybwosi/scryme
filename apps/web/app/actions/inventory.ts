@@ -176,6 +176,7 @@ export async function createProduct(data: {
   retailPrice: number;
   initialStock: number;
   imageUrls: string[];
+  type?: any;
 }): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId)
@@ -193,7 +194,7 @@ export async function createProduct(data: {
         categoryId: data.categoryId,
         organizationId: context.organizationId,
         imageUrls: data.imageUrls,
-        type: "FINISHED_GOOD",
+        type: data.type || "FINISHED_GOOD",
       },
     });
 
@@ -335,6 +336,7 @@ export async function updateProduct(
     isActive?: boolean;
     pointsOnPurchase?: number;
     loyaltyPointsOverride?: number;
+    customFields?: any;
   },
 ): Promise<any> {
   const context = await getServerAuth();
@@ -361,6 +363,7 @@ export async function updateProduct(
         isActive: data.isActive,
         pointsOnPurchase: data.pointsOnPurchase,
         loyaltyPointsOverride: data.loyaltyPointsOverride,
+        customFields: data.customFields !== undefined ? data.customFields : undefined,
       },
     });
 
@@ -833,6 +836,7 @@ export async function getInventoryProducts(params: {
         minPrice,
         maxPrice,
         image: product.imageUrls[0],
+        type: product.type,
       };
     });
   } else {
@@ -868,6 +872,7 @@ export async function getInventoryProducts(params: {
           status,
           unitPrice: Number(variant.retailPrice) || Number(variant.buyingPrice),
           image: product.imageUrls[0],
+          type: product.type,
         };
       }),
     );
@@ -1328,6 +1333,7 @@ export type InventoryProduct = {
   maxPrice?: number;
   image?: string;
   variantName?: string;
+  type?: string;
 };
 
 export async function bulkDeleteVariants(

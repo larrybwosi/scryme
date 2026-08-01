@@ -106,7 +106,8 @@ const sidebarConfig: SidebarSection[] = [
         icon: Package,
         href: "/inventory",
         items: [
-          { title: "Product List", href: "/inventory" },
+          { title: "Items", href: "/inventory" },
+          { title: "Services", href: "/inventory/services" },
           { title: "Suppliers", href: "/inventory/supplier" },
           { title: "Units", href: "/inventory/units" },
         ],

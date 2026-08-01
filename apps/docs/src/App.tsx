@@ -54,6 +54,9 @@ export default function App() {
   const [copiedMap, setCopiedMap] = useState<Record<string, boolean>>({});
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
+  // CMS Guide Pinned Navigation State
+  const [selectedCmsTarget, setSelectedCmsTarget] = useState<"service" | "product">("service");
+
   // Parse OpenAPI JSON Spec dynamically
   const endpoints = useMemo(() => {
     const list: Endpoint[] = [];
@@ -104,9 +107,8 @@ export default function App() {
       setExpandedGroups(
         tags.reduce((acc, t) => ({ ...acc, [t]: true }), {})
       );
-      if (tagGroups[tags[0]] && tagGroups[tags[0]].length > 0) {
-        setActiveEndpointId(tagGroups[tags[0]][0].operationId);
-      }
+      // Initialize with CMS customization guide to show it off first, or fall back to first endpoint if needed
+      setActiveEndpointId("cms-customization-guide");
     }
   }, [tagGroups]);
 
@@ -131,6 +133,20 @@ export default function App() {
     }
     return filtered;
   }, [tagGroups, searchQuery]);
+
+  // Show guide in search list if matched
+  const showGuideInSearch = useMemo(() => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      "cms customization guide".includes(query) ||
+      "customfields".includes(query) ||
+      "markdown".includes(query) ||
+      "seo metadata".includes(query) ||
+      "image gallery".includes(query) ||
+      "customattributes".includes(query)
+    );
+  }, [searchQuery]);
 
   const activeEndpoint = useMemo(() => {
     return endpoints.find((ep) => ep.operationId === activeEndpointId) || endpoints[0];
@@ -251,6 +267,83 @@ export default function App() {
 
   // Generate dynamic Code Snippets
   const codeSnippets = useMemo(() => {
+    if (activeEndpointId === "cms-customization-guide") {
+      const baseUrl = "https://api.scryme.tech/v3";
+
+      const servicePayload = {
+        name: "Artisan Sourdough Masterclass",
+        sku: "SRV-BKA-001",
+        price: 120.00,
+        customFields: {
+          markdownDescription: "# Sourdough Masterclass 🌾\nLearn fermentation secrets from our master bakers.\n\n### Outline\n- Wild yeast starter cultivation\n- High-hydration mixing\n- Bulk proofing & scoring",
+          images: [
+            {
+              id: "img_srv_cover",
+              url: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800",
+              caption: "Baker scoring proofed sourdough loaf"
+            }
+          ],
+          seo: {
+            title: "Artisan Sourdough Masterclass | Scryme Bakery",
+            description: "Learn organic sourdough artisan baking techniques in a 4-hour hands-on class.",
+            keywords: "baking masterclass, sourdough baking"
+          },
+          customAttributes: {
+            maximum_participants: "12 students",
+            skill_level: "Intermediate"
+          }
+        }
+      };
+
+      const productPayload = {
+        name: "Premium Round Proofing Banneton",
+        sku: "PROD-BKA-BANN-02",
+        price: 24.99,
+        customFields: {
+          markdownDescription: "# Round Cane Proofing Banneton 🧺\nHand-crafted from 100% natural organic Indonesian rattan cane.\n\n## Features\n- Draws moisture away for crisper crust\n- Flour leaves beautiful spiral designs",
+          images: [
+            {
+              id: "img_bann_cover",
+              url: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800",
+              caption: "Organic rattan cane banneton baskets"
+            }
+          ],
+          seo: {
+            title: "Premium Indonesian Cane Banneton | Scryme Shop",
+            description: "Buy premium Indonesian cane rattan proofing banneton baskets with linen liners.",
+            keywords: "proofing basket, banneton"
+          },
+          customAttributes: {
+            material: "100% Cane Rattan",
+            origin: "Hand-woven in Indonesia"
+          },
+          publishStatus: "Published",
+          publishedAt: new Date().toISOString(),
+          layoutTemplate: "eCommerce Grid",
+          customSlugOverride: "premium-rattan-proofing-banneton"
+        }
+      };
+
+      const targetPayload = selectedCmsTarget === "service" ? servicePayload : productPayload;
+      const targetUrl = selectedCmsTarget === "service"
+        ? `${baseUrl}/bakery-co/services/srv_sourdough_101`
+        : `${baseUrl}/bakery-co/catalog/products/prod_proofing_basket`;
+      const targetMethod = "PATCH";
+
+      const bodyStr = JSON.stringify(targetPayload, null, 2);
+
+      // cURL
+      let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json" \\\n  -d '${bodyStr.replace(/'/g, "'\\''")}'`;
+
+      // Node
+      let node = `// Node.js Fetch Code\nconst url = "${targetUrl}";\nconst options = {\n  method: "${targetMethod}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  },\n  body: JSON.stringify(${JSON.stringify(targetPayload, null, 2)})\n};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+
+      // Python
+      let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\npayload = ${JSON.stringify(targetPayload, null, 4).replace(/true/g, "True").replace(/false/g, "False").replace(/null/g, "None")}\n\nresponse = requests.patch(url, json=payload, headers=headers)\nprint(response.json())`;
+
+      return { curl, node, python };
+    }
+
     if (!activeEndpoint) return { curl: "", node: "", python: "" };
 
     const baseUrl = "https://api.scryme.tech";
@@ -291,7 +384,7 @@ export default function App() {
     python += `print(response.json())\n`;
 
     return { curl, node, python };
-  }, [activeEndpoint, mockRequestPayload]);
+  }, [activeEndpoint, mockRequestPayload, activeEndpointId, selectedCmsTarget]);
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -352,6 +445,13 @@ export default function App() {
     });
   };
 
+  // Guide Simulator State
+  const [simName, setSimName] = useState("Artisan Sourdough Masterclass");
+  const [simMarkdown, setSimMarkdown] = useState("# Sourdough Masterclass 🌾\nLearn organic sourdough baking.\n\n- Organic ingredients\n- Stone-hearth oven");
+  const [simSeoTitle, setSimSeoTitle] = useState("Artisan Sourdough Baking Masterclass");
+  const [simImageUrl, setSimImageUrl] = useState("https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600");
+  const [simAttrValue, setSimAttrValue] = useState("Marie Dubois");
+
   return (
     <div className="min-h-screen bg-[#0B1220] text-[#F1E9D8] flex flex-col font-sans">
       {/* Mobile Header */}
@@ -394,7 +494,7 @@ export default function App() {
               <Search className="absolute left-3 top-2.5 text-[#94A3B8]" size={16} />
               <input
                 type="text"
-                placeholder="Search endpoints..."
+                placeholder="Search specs & guides..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-[#111A2E] text-white pl-9 pr-4 py-2 rounded-lg border border-[#1E293B] focus:outline-none focus:border-[#C89A4B] text-xs transition-colors placeholder-[#94A3B8]/60"
@@ -404,6 +504,31 @@ export default function App() {
 
           {/* Navigation Items */}
           <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+            {/* Core Pinned Customization Guide */}
+            {showGuideInSearch && (
+              <div className="space-y-1">
+                <span className="text-[10px] text-[#C89A4B] uppercase tracking-widest font-black px-2 block mb-1">Guides</span>
+                <button
+                  onClick={() => {
+                    setActiveEndpointId("cms-customization-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-3 rounded-lg text-left text-xs transition-all duration-200 ${
+                    activeEndpointId === "cms-customization-guide"
+                      ? "bg-[#C89A4B]/20 text-white font-semibold border-l-2 border-[#C89A4B]"
+                      : "text-[#94A3B8] hover:text-[#F1E9D8] hover:bg-[#111A2E]"
+                  }`}
+                >
+                  <BookOpen size={14} className="text-[#C89A4B]" />
+                  <span className="font-bold truncate">CMS Customization Engine</span>
+                </button>
+              </div>
+            )}
+
+            <div className="border-t border-[#1E293B]/40 my-2" />
+
+            <span className="text-[10px] text-[#C89A4B] uppercase tracking-widest font-black px-2 block">API References</span>
+
             {Object.entries(filteredTagGroups).map(([tag, eps]) => {
               const isExpanded = !!expandedGroups[tag];
               return (
@@ -466,9 +591,243 @@ export default function App() {
 
         {/* Content Wrapper (Middle + Right columns) */}
         <main className="flex-1 lg:grid lg:grid-cols-12 min-h-screen">
-          {/* Middle Column (Documentation Text) */}
+
+          {/* MIDDLE COLUMN */}
           <section className="col-span-7 p-6 lg:p-12 overflow-y-auto space-y-10 border-r border-[#1E293B]/60 max-w-4xl">
-            {activeEndpoint ? (
+            {activeEndpointId === "cms-customization-guide" ? (
+              // --- GORGEOUS HIGH-FIDELITY CMS CUSTOMIZATION ENGINE RENDER VIEW ---
+              <div className="space-y-8">
+                <div>
+                  <div className="flex items-center gap-3 text-xs text-[#C89A4B] uppercase tracking-wider font-semibold mb-2">
+                    <span>Developer Guide</span>
+                    <span>&bull;</span>
+                    <span>Storefront & Catalog CMS</span>
+                  </div>
+                  <h1 className="text-3xl font-extrabold text-white leading-tight">
+                    CMS Customization Engine
+                  </h1>
+                  <p className="text-[#94A3B8] text-sm mt-2 leading-relaxed">
+                    Scryme V3 powers highly customizable, media-rich catalogs using a flexible database column structure. This guide explains how third-party and headless storefront developers utilize the dynamic <code className="text-white bg-[#111A2E] px-1 py-0.5 border border-[#1E293B] font-mono text-xs">customFields</code> JSON payload to build exceptional storefront and booking experiences.
+                  </p>
+                </div>
+
+                {/* Conceptual Card */}
+                <div className="bg-[#111A2E]/50 rounded-xl border border-[#1E293B] p-5 space-y-3">
+                  <div className="flex items-center gap-2 text-[#C89A4B] font-bold text-sm">
+                    <Layers size={16} />
+                    <span>Prisma JSON Column Mapping</span>
+                  </div>
+                  <p className="text-xs text-[#94A3B8] leading-relaxed">
+                    The <code className="text-white">Product</code> and <code className="text-white">Service</code> schemas each contain a schema-free nullable <code className="text-[#C89A4B] font-mono font-semibold">customFields</code> field. This layout completely bypasses rigid database structures, permitting organizations to serialize rich-media elements, Markdown descriptions, SEO details, and custom technical specification attributes without database schema migrations.
+                  </p>
+                </div>
+
+                {/* Main Customize Parameters Section */}
+                <div className="space-y-6">
+                  <h2 className="text-lg font-bold text-white border-b border-[#1E293B] pb-2">CMS Payload Specifications</h2>
+
+                  {/* 1. markdownDescription */}
+                  <div className="border border-[#1E293B] rounded-xl bg-[#080d17] p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[#F1E9D8] font-black text-sm">markdownDescription</span>
+                      <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">string</span>
+                    </div>
+                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                      Accepts GitHub Flavored Markdown (GFM) formatting. Headless storefronts parse this dynamically to output formatted guides, rich tables, blockquotes, and lists for services or product details.
+                    </p>
+                  </div>
+
+                  {/* 2. images */}
+                  <div className="border border-[#1E293B] rounded-xl bg-[#080d17] p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[#F1E9D8] font-black text-sm">images</span>
+                      <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">array of objects</span>
+                    </div>
+                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                      Ordered gallery of uploaded image assets. The primary image is defined at index <code className="text-white font-mono">0</code>.
+                    </p>
+                    <div className="bg-[#111A2E] rounded-lg border border-[#1E293B] p-3 text-xs font-mono space-y-1.5">
+                      <div className="text-white font-bold pb-1 border-b border-[#1E293B]/60 text-[10px] uppercase text-[#C89A4B]">ImageItem Schema:</div>
+                      <div>• <span className="text-[#F1E9D8] font-bold">id</span> (string): Unique image ID (crucial for react rendering keys).</div>
+                      <div>• <span className="text-[#F1E9D8] font-bold">url</span> (string): Absolute URL to CDN image asset.</div>
+                      <div>• <span className="text-[#F1E9D8] font-bold">caption</span> (string): Alt text for accessibility and crawl performance.</div>
+                    </div>
+                  </div>
+
+                  {/* 3. seo */}
+                  <div className="border border-[#1E293B] rounded-xl bg-[#080d17] p-5 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[#F1E9D8] font-black text-sm">seo</span>
+                      <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">object</span>
+                    </div>
+                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                      Custom HTML page headers to override default metadata tags dynamically.
+                    </p>
+                    <div className="bg-[#111A2E] rounded-lg border border-[#1E293B] p-3 text-xs font-mono space-y-1.5">
+                      <div className="text-white font-bold pb-1 border-b border-[#1E293B]/60 text-[10px] uppercase text-[#C89A4B]">Seo Schema:</div>
+                      <div>• <span className="text-[#F1E9D8] font-bold">title</span> (string): Custom browser tab title. Max 60 chars.</div>
+                      <div>• <span className="text-[#F1E9D8] font-bold">description</span> (string): Search card snippet. Max 160 chars.</div>
+                      <div>• <span className="text-[#F1E9D8] font-bold">keywords</span> (string): Comma-separated tag phrases.</div>
+                    </div>
+                  </div>
+
+                  {/* 4. customAttributes */}
+                  <div className="border border-[#1E293B] rounded-xl bg-[#080d17] p-5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[#F1E9D8] font-black text-sm">customAttributes</span>
+                      <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">object (dictionary)</span>
+                    </div>
+                    <p className="text-xs text-[#94A3B8] leading-relaxed">
+                      Key-value map representing dynamic parameters. This supports advanced faceted filters in storefront lists (e.g. searching items filtered by <code className="text-white">difficulty</code> or <code className="text-white">material</code>) without rigid database specifications. Keys must be strictly <code className="text-white">snake_case</code> or <code className="text-white">lowercase</code>.
+                    </p>
+                  </div>
+
+                  {/* eCommerce Controls */}
+                  <div className="border border-[#1E293B] rounded-xl bg-[#080d17] p-5 space-y-4">
+                    <div className="flex items-center gap-2 font-bold text-white text-sm pb-1.5 border-b border-[#1E293B]/40">
+                      <Workflow size={16} className="text-[#C89A4B]" />
+                      <span>Product Specific eCommerce Lifecycle Options</span>
+                    </div>
+                    <div className="divide-y divide-[#1E293B]/60 text-xs">
+                      <div className="py-2.5 flex items-baseline justify-between gap-2">
+                        <div>
+                          <code className="text-[#F1E9D8] font-bold">publishStatus</code>
+                          <span className="text-[#94A3B8] block text-[10px]">Values: Draft | Published | Scheduled | Archived</span>
+                        </div>
+                        <span className="text-[#C89A4B] font-semibold text-[10px] font-mono">string</span>
+                      </div>
+                      <div className="py-2.5 flex items-baseline justify-between gap-2">
+                        <div>
+                          <code className="text-[#F1E9D8] font-bold">publishedAt</code>
+                          <span className="text-[#94A3B8] block text-[10px]">ISO timestamp of release schedule</span>
+                        </div>
+                        <span className="text-[#C89A4B] font-semibold text-[10px] font-mono">ISO8601 string / null</span>
+                      </div>
+                      <div className="py-2.5 flex items-baseline justify-between gap-2">
+                        <div>
+                          <code className="text-[#F1E9D8] font-bold">layoutTemplate</code>
+                          <span className="text-[#94A3B8] block text-[10px]">Visual layout style token for the headless portal</span>
+                        </div>
+                        <span className="text-[#C89A4B] font-semibold text-[10px] font-mono">string</span>
+                      </div>
+                      <div className="py-2.5 flex items-baseline justify-between gap-2">
+                        <div>
+                          <code className="text-[#F1E9D8] font-bold">customSlugOverride</code>
+                          <span className="text-[#94A3B8] block text-[10px]">Targeted override of SEO friendly URL slugs</span>
+                        </div>
+                        <span className="text-[#C89A4B] font-semibold text-[10px] font-mono">string</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dynamic Storefront Live Simulator */}
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold text-white border-b border-[#1E293B] pb-2">Dynamic Storefront Live Simulator</h2>
+                  <p className="text-xs text-[#94A3B8]">
+                    Modify the live mock parameters below and watch the simulated storefront resolve the raw CMS payload in real-time.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#111A2E]/30 border border-[#1E293B] rounded-xl p-4">
+                    {/* Simulator Controls */}
+                    <div className="space-y-3.5">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#C89A4B]">Service Name</label>
+                        <input
+                          type="text"
+                          value={simName}
+                          onChange={(e) => setSimName(e.target.value)}
+                          className="w-full bg-[#0B1220] border border-[#1E293B] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#C89A4B]"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#C89A4B]">markdownDescription</label>
+                        <textarea
+                          value={simMarkdown}
+                          onChange={(e) => setSimMarkdown(e.target.value)}
+                          className="w-full h-20 bg-[#0B1220] border border-[#1E293B] rounded px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-[#C89A4B] resize-none"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#C89A4B]">Primary Image URL</label>
+                        <input
+                          type="text"
+                          value={simImageUrl}
+                          onChange={(e) => setSimImageUrl(e.target.value)}
+                          className="w-full bg-[#0B1220] border border-[#1E293B] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#C89A4B]"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#C89A4B]">SEO Title Tag</label>
+                        <input
+                          type="text"
+                          value={simSeoTitle}
+                          onChange={(e) => setSimSeoTitle(e.target.value)}
+                          className="w-full bg-[#0B1220] border border-[#1E293B] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#C89A4B]"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-[#C89A4B]">Attribute: instructor_name</label>
+                        <input
+                          type="text"
+                          value={simAttrValue}
+                          onChange={(e) => setSimAttrValue(e.target.value)}
+                          className="w-full bg-[#0B1220] border border-[#1E293B] rounded px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-[#C89A4B]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Simulated Storefront Card */}
+                    <div className="bg-[#0B1220] border border-[#1E293B] rounded-xl overflow-hidden flex flex-col justify-between shadow-xl">
+                      {/* Browser tab bar preview */}
+                      <div className="bg-[#111A2E] border-b border-[#1E293B] px-3 py-2 flex items-center gap-1.5 text-[10px] text-[#94A3B8] font-mono">
+                        <Globe size={11} className="text-[#C89A4B]" />
+                        <span className="truncate">{simSeoTitle || "Storefront Browser Tab"}</span>
+                      </div>
+
+                      <div className="relative aspect-video bg-[#111A2E]">
+                        <img
+                          src={simImageUrl}
+                          alt="Simulated storefront cover"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as any).src = "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600";
+                          }}
+                        />
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 pt-6 text-left">
+                          <span className="text-[8px] font-black uppercase tracking-widest text-[#C89A4B]">Premium Sourdough</span>
+                          <h4 className="text-sm font-bold text-white truncate">{simName || "Unnamed Service"}</h4>
+                        </div>
+                      </div>
+
+                      <div className="p-4 space-y-3 text-left">
+                        {/* Custom attributes tag */}
+                        <div className="flex flex-wrap gap-1">
+                          <span className="bg-[#111A2E] border border-[#1E293B] text-[#94A3B8] px-2 py-0.5 rounded text-[10px] font-mono">
+                            instructor: <span className="text-[#F1E9D8] font-semibold">{simAttrValue}</span>
+                          </span>
+                        </div>
+
+                        {/* Parsed markdown */}
+                        <div className="border border-[#1E293B]/60 p-2 rounded bg-[#111A2E]/40 text-[11px] leading-relaxed text-[#94A3B8] max-h-24 overflow-y-auto font-sans scrollbar-thin">
+                          <strong className="text-white block font-bold text-xs mb-1">Storefront About / Specifications</strong>
+                          <p className="whitespace-pre-line">{simMarkdown}</p>
+                        </div>
+
+                        <button className="w-full bg-[#C89A4B] text-[#0B1220] font-black uppercase text-[10px] py-2 tracking-widest hover:bg-white transition-colors duration-200">
+                          Secure Spot
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : activeEndpoint ? (
+              // --- STANDARD ENDPOINT DETAILED VIEW ---
               <div className="space-y-8">
                 {/* Header Information */}
                 <div>
@@ -581,11 +940,41 @@ export default function App() {
             )}
           </section>
 
-          {/* Right Column (Code blocks & Mock responses) */}
+          {/* RIGHT COLUMN */}
           <section className="col-span-5 bg-[#080d17] p-6 lg:p-12 overflow-y-auto space-y-8 sticky top-0 lg:h-screen flex flex-col justify-between border-t lg:border-t-0 border-[#1E293B]">
             <div className="space-y-6 flex-1">
-              {/* Code Snippet Block */}
+
+              {/* Target / Target Language Selector */}
               <div className="space-y-3">
+
+                {/* CMS Target selector (only shown when the Guide is active) */}
+                {activeEndpointId === "cms-customization-guide" && (
+                  <div className="flex items-center justify-between border-b border-[#1E293B] pb-3">
+                    <span className="text-[10px] font-black uppercase text-[#94A3B8] tracking-widest flex items-center gap-1">
+                      <Fingerprint size={12} className="text-[#C89A4B]" />
+                      <span>CMS Schema Mode</span>
+                    </span>
+                    <div className="bg-[#111A2E] p-0.5 border border-[#1E293B] rounded flex gap-1">
+                      <button
+                        onClick={() => setSelectedCmsTarget("service")}
+                        className={`text-[9px] font-mono font-bold uppercase px-2 py-1 transition-colors ${
+                          selectedCmsTarget === "service" ? "bg-[#C89A4B] text-[#0B1220]" : "text-[#94A3B8]"
+                        }`}
+                      >
+                        Service Schema
+                      </button>
+                      <button
+                        onClick={() => setSelectedCmsTarget("product")}
+                        className={`text-[9px] font-mono font-bold uppercase px-2 py-1 transition-colors ${
+                          selectedCmsTarget === "product" ? "bg-[#C89A4B] text-[#0B1220]" : "text-[#94A3B8]"
+                        }`}
+                      >
+                        Product Schema
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-black text-[#C89A4B]">
                     <Code size={14} />
@@ -637,14 +1026,23 @@ export default function App() {
                 <div className="relative group rounded-xl overflow-hidden bg-[#0B1220] border border-[#1E293B] p-4 text-xs font-mono shadow-xl">
                   {/* Copy Button */}
                   <button
-                    onClick={() => handleCopy(JSON.stringify(mockResponsePayload, null, 2), "response")}
+                    onClick={() => {
+                      const text = activeEndpointId === "cms-customization-guide"
+                        ? JSON.stringify({ success: true, message: "CMS options updated successfully" }, null, 2)
+                        : JSON.stringify(mockResponsePayload, null, 2);
+                      handleCopy(text, "response");
+                    }}
                     className="absolute right-3 top-3 p-1.5 rounded-lg bg-[#111A2E] text-[#94A3B8] hover:text-white border border-[#1E293B] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                   >
                     {copiedMap["response"] ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
                   </button>
 
                   <pre className="overflow-x-auto text-green-300 whitespace-pre leading-relaxed no-scrollbar max-h-[350px]">
-                    <code>{JSON.stringify(mockResponsePayload, null, 2)}</code>
+                    <code>
+                      {activeEndpointId === "cms-customization-guide"
+                        ? JSON.stringify({ success: true, message: `${selectedCmsTarget === "service" ? "Service" : "Product"} CMS options persisted successfully` }, null, 2)
+                        : JSON.stringify(mockResponsePayload, null, 2)}
+                    </code>
                   </pre>
                 </div>
               </div>
