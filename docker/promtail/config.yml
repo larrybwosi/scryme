@@ -1,6 +1,7 @@
 server:
   http_listen_port: 9080
   grpc_listen_port: 0
+  health_check_target: false
 
 positions:
   filename: /tmp/positions.yaml
