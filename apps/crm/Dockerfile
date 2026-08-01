@@ -1,7 +1,7 @@
 # ---------------------------------------------------------
 # Stage 1: Base Image & Package Manager Setup
 # ---------------------------------------------------------
-FROM node:22-slim AS base
+FROM node:24-slim AS base
 
 # Prisma needs openssl, and ca-certificates.
 RUN apt-get update && apt-get install -y --no-install-recommends \
