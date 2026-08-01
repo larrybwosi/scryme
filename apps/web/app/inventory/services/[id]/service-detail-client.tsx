@@ -74,7 +74,7 @@ export function ServiceDetailPageClient({
   const [isSaving, setIsSaving] = useState(false);
 
   // Active workspace tab
-  const [activeTab, setActiveTab] = useState<"core" | "rich" | "seo" | "preview">("core");
+  const [activeTab, setActiveTab] = useState<"core" | "rich" | "preview">("core");
 
   // 1. Core Attributes Form State
   const [coreForm, setCoreForm] = useState({
@@ -562,14 +562,7 @@ export function ServiceDetailPageClient({
                   className="px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent data-[state=active]:border-[#c89a4b] data-[state=active]:text-slate-900 rounded-none shadow-none bg-transparent flex items-center gap-2"
                 >
                   <Sparkles size={15} className="text-slate-500" />
-                  <span>Rich Description & Images</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="seo"
-                  className="px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent data-[state=active]:border-[#c89a4b] data-[state=active]:text-slate-900 rounded-none shadow-none bg-transparent flex items-center gap-2"
-                >
-                  <Globe size={15} className="text-slate-500" />
-                  <span>SEO & Metadata Attributes</span>
+                  <span>Enterprise CMS Studio</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="preview"
@@ -590,42 +583,25 @@ export function ServiceDetailPageClient({
               />
             </TabsContent>
 
-            {/* TAB 2: Rich CMS Description & Multiple Images */}
+            {/* TAB 2: Direct to Hybrid CMS Studio */}
             <TabsContent value="rich" className="m-0">
-              <RichTab
-                images={images}
-                setImages={setImages}
-                newImageUrl={newImageUrl}
-                setNewImageUrl={setNewImageUrl}
-                newImageCaption={newImageCaption}
-                setNewImageCaption={setNewImageCaption}
-                markdown={markdown}
-                setMarkdown={setMarkdown}
-                isUploading={isUploading}
-                setIsUploading={setIsUploading}
-                textareaRef={textareaRef}
-                fileInputRef={fileInputRef}
-                handleAddImage={handleAddImage}
-                handleRemoveImage={handleRemoveImage}
-                handleMoveImage={handleMoveImage}
-                insertMarkdown={insertMarkdown}
-              />
-            </TabsContent>
-
-            {/* TAB 3: SEO Configuration & Custom Metadata fields */}
-            <TabsContent value="seo" className="m-0">
-              <SEOTab
-                seo={seo}
-                setSeo={setSeo}
-                customAttrs={customAttrs}
-                setCustomAttrs={setCustomAttrs}
-                newAttrKey={newAttrKey}
-                setNewAttrKey={setNewAttrKey}
-                newAttrValue={newAttrValue}
-                setNewAttrValue={setNewAttrValue}
-                handleAddCustomAttr={handleAddCustomAttr}
-                handleRemoveCustomAttr={handleRemoveCustomAttr}
-              />
+              <div className="space-y-6">
+                <div className="border border-slate-200 shadow-sm p-6 bg-white">
+                  <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-[#c89a4b]" />
+                    <span>Enterprise Hybrid CMS Studio</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-1 max-w-xl">
+                    To customize high-fidelity typography, launch AI copywriting tools, optimize showcase asset sizes, and manage multi-channel layouts, proceed to the unified Enterprise Studio.
+                  </p>
+                  <Button
+                    onClick={() => router.push(`/inventory/cms/${service.id}?type=service`)}
+                    className="mt-6 bg-[#c89a4b] hover:bg-[#b0843a] text-white text-xs font-semibold px-6 py-2"
+                  >
+                    Open Hybrid CMS Studio
+                  </Button>
+                </div>
+              </div>
             </TabsContent>
 
             {/* TAB 4: Mobile-only live preview trigger */}
