@@ -42,7 +42,7 @@ class AuthViewModelTest {
         val password = "password"
         val mockResponse = BetterAuthSessionResponse(
             user = SessionUser("id", email, "Admin Name", "ADMIN", "org_id_123"),
-            session = SessionDto("sess_id", "id", "token_xyz", "", "org_id_123")
+            token = "token_xyz"
         )
 
         coEvery { repository.signInWithEmail(email, password) } coAnswers {
@@ -89,7 +89,7 @@ class AuthViewModelTest {
         val idToken = "google_token_123"
         val mockResponse = BetterAuthSessionResponse(
             user = SessionUser("id", "google_user@scryme.tech", "Google Name", "MEMBER", "org_id_456"),
-            session = SessionDto("sess_id", "id", "token_google_xyz", "", "org_id_456")
+            token = "token_google_xyz"
         )
 
         coEvery { repository.signInWithGoogle(idToken) } coAnswers {
@@ -133,7 +133,7 @@ class AuthViewModelTest {
         val email = "admin@scryme.tech"
         val mockResponse = BetterAuthSessionResponse(
             user = SessionUser("id", email, "Admin Name", "ADMIN", "org_id_123"),
-            session = SessionDto("sess_id", "id", "token_xyz", "", "org_id_123")
+            token = "token_xyz"
         )
 
         every { sessionManager.token } returns MutableStateFlow("valid_token")

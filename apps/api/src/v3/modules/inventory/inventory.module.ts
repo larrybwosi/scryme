@@ -72,6 +72,9 @@ import { ScrymeModule } from "../../../v2/scryme/scryme.module";
     InventoryMovementService,
     StockMovementReportService,
     InventoryIntegrityService,
+    ApproveStockAdjustmentUseCase,
+    GetStockAdjustmentsUseCase,
+    RejectStockAdjustmentUseCase,
   ],
 })
 export class InventoryModule {}
