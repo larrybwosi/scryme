@@ -242,3 +242,8 @@
 **Vulnerability:** The Scryme module queried `Department`, `InventoryLocation`, `Transaction`, and `ApprovalRequest` using `findUnique` by global record ID only, ignoring the tenant's `organizationId` or querying without it entirely.
 **Learning:** In a multi-tenant application, referencing linked entity IDs without scoping the lookups to the authenticated tenant's `organizationId` introduces IDOR vectors. Even with global authorization guards active, individual handler or helper queries must enforce strict multi-tenant boundaries.
 **Prevention:** Always utilize `findFirst` instead of `findUnique` when performing database lookups on tables lacking composite unique indices, explicitly including `{ id, organizationId }` in the query's `where` filter to guarantee isolation.
+
+## 2026-08-01 - IDOR Prevention via Strict Mandatory Tenant-Scoping in Serialization
+**Vulnerability:** The private `toResponse` serialization helper inside `StrapiConnectionUseCase` allowed `organizationId` to be an optional parameter, which when omitted, fetched connection details from the database by `id` only, risking IDOR/BOLA bypass during create/update flows if not pre-validated.
+**Learning:** Helper methods that serialize or query records must never allow "fail-open" optional parameters for tenant-scoping. Enforcing mandatory scoping parameters at the lowest possible layer of the use-case prevents accidental developer omissions.
+**Prevention:** Always make the tenant identification parameter (e.g. `organizationId`) strictly mandatory in internal query/serialization helpers, and avoid fallback ternary patterns in Prisma `where` clauses.
