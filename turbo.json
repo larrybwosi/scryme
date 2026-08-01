@@ -56,7 +56,7 @@
       "cache": false
     },
     "generate:sdk": {
-      "dependsOn": ["api#generate:openapi"],
+      "dependsOn": ["^generate:openapi"],
       "outputs": ["packages/v3-sdk/src/generated/**"],
       "cache": false
     },

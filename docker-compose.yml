@@ -72,37 +72,6 @@ services:
     networks:
       - scryme-network
 
-  # --- OBJECT STORAGE (S3) ---
-  rustfs:
-    image: rustfs/rustfs:latest
-    restart: always
-    env_file:
-      - .env.example
-      - path: .env
-        required: false
-    environment:
-      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-your-access-key}
-      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-your-secret-key}
-      - RUSTFS_CONSOLE_ENABLE=true
-    volumes:
-      - rustfs_data:/data
-    depends_on:
-      vol-perms:
-        condition: service_healthy
-    networks:
-      - scryme-network
-      - proxy-network
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "curl -fsS --max-time 3 http://localhost:9000/health || nc -z localhost 9000",
-        ]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 45s
-
   # --- LOGGING INFRASTRUCTURE ---
   loki:
     image: grafana/loki:latest
@@ -159,7 +128,7 @@ services:
 
   # --- APPLICATIONS ---
   api:
-    image: ghcr.io/larrybwosi/scryme/api:9.48.0
+    image: ghcr.io/larrybwosi/scryme/api:9.51.0
     restart: always
     deploy:
       resources:
@@ -212,7 +181,7 @@ services:
       start_period: 60s
 
   web:
-    image: ghcr.io/larrybwosi/scryme/web:9.48.0
+    image: ghcr.io/larrybwosi/scryme/web:9.51.0
     restart: always
     deploy:
       resources:
@@ -256,7 +225,7 @@ services:
       start_period: 60s
 
   crm:
-    image: ghcr.io/larrybwosi/scryme/crm:9.48.0
+    image: ghcr.io/larrybwosi/scryme/crm:9.51.0
     restart: always
     deploy:
       resources:
