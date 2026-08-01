@@ -75,19 +75,26 @@ export class StrapiProductSyncUseCase {
 
       const totalItems = products.length;
 
+      // ⚡ Bolt Optimization: Batch pre-fetch all product mappings to eliminate N+1 queries.
+      const productIds = products.map((p) => p.id);
+      const mappings = await this.prisma.client.ecommerceProductMapping.findMany({
+        where: {
+          connectionId,
+          productId: { in: productIds },
+          variantId: null, // top-level product mapping
+        },
+      });
+      const mappingMap = new Map<string, any>(
+        mappings.map((m) => [m.productId, m]),
+      );
+
       for (const product of products) {
         try {
           // Build location stock map across all variants
           const locationStock = this.buildLocationStockMap((product as any).variants as any[]);
 
-          // Check for existing mapping
-          const mapping = await this.prisma.client.ecommerceProductMapping.findFirst({
-            where: {
-              connectionId,
-              productId: product.id,
-              variantId: null, // top-level product mapping
-            },
-          });
+          // Check for existing mapping using pre-fetched cache
+          const mapping = mappingMap.get(product.id);
 
           const strapiPayload: Partial<StrapiProductAttributes> = {
             name: product.name,
@@ -210,6 +217,18 @@ export class StrapiProductSyncUseCase {
         hasMore = page < strapiProducts.meta.pagination.pageCount;
         page++;
 
+        // ⚡ Bolt Optimization: Batch pre-fetch product mappings for the current page of entries to avoid N+1 queries.
+        const externalProductIds = strapiProducts.data.map((entry) => String(entry.id));
+        const currentMappings = await this.prisma.client.ecommerceProductMapping.findMany({
+          where: {
+            connectionId,
+            externalProductId: { in: externalProductIds },
+          },
+        });
+        const currentMappingMap = new Map<string, any>(
+          currentMappings.map((m) => [m.externalProductId, m]),
+        );
+
         for (const entry of strapiProducts.data) {
           try {
             const attrs = entry.attributes;
@@ -220,13 +239,8 @@ export class StrapiProductSyncUseCase {
               attrs.categories?.data?.[0]?.attributes?.name ?? "Imported",
             );
 
-            // Check for existing mapping
-            const mapping = await this.prisma.client.ecommerceProductMapping.findFirst({
-              where: {
-                connectionId,
-                externalProductId: String(entry.id),
-              },
-            });
+            // Check for existing mapping using pre-fetched cache
+            const mapping = currentMappingMap.get(String(entry.id));
 
             if (mapping) {
               // Update existing local product

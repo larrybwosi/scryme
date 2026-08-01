@@ -1,3 +1,7 @@
+## 2026-07-31 - [N+1 Query Bottlenecks in Strapi E-Commerce Integration]
+**Learning:** Sequential `findFirst` database requests on mapping tables (like `ecommerceProductMapping` and `ecommerceCustomerMapping`) within bulk outbound/inbound loops during e-commerce synchronization processes degrade throughput heavily. Batch pre-fetching all relevant mappings using single `findMany` queries with the `in` operator, and constructing in-memory Map caches, reduces database transaction pressure and query latency from $O(N)$ down to a flat $O(1)$ roundtrips.
+**Action:** Always pre-fetch integration mapping tables for bulk processing batches and use constant-time Map lookups inside iterative sync flows.
+
 ## 2026-07-30 - [Pre-fetching Product Variants in Bakery GRN]
 **Learning:** Sequential database queries (like `findFirst` on `productVariant`) inside bulk inventory receiving loops (such as GRNs) create critical N+1 query bottlenecks within database transactions. Aggregating requested variant IDs up-front and using a single scoped `findMany` query preserves multi-tenant isolation while reducing transaction hold times and query overhead from $O(N)$ down to $O(1)$.
 **Action:** Always pre-fetch and map validation records before entering bulk transactional loops, ensuring all tenant-scoping fields (`organizationId`) are strictly applied to the batch query.
