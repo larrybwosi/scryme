@@ -35,13 +35,25 @@ export default async function HomePage() {
           multiBranchTitle: content.multiBranchTitle,
           multiBranchSubtitle: content.multiBranchSubtitle,
           multiBranchImage: content.multiBranchImage,
-          stockManagementTitle: content.stockManagementTitle,
-          stockManagementSubtitle: content.stockManagementSubtitle,
-          stockManagementImage: content.stockManagementImage,
+          cmsTitle: content.cmsTitle,
+          cmsSubtitle: content.cmsSubtitle,
+          cmsImage: content.cmsImage,
         }}
       />
-      <CRMTeaser />
-      <POSTeaser />
+      <CRMTeaser
+        data={{
+          crmTeaserTitle: content.crmTeaserTitle,
+          crmTeaserSubtitle: content.crmTeaserSubtitle,
+          crmTeaserImage: content.crmTeaserImage,
+        }}
+      />
+      <POSTeaser
+        data={{
+          posTeaserTitle: content.posTeaserTitle,
+          posTeaserSubtitle: content.posTeaserSubtitle,
+          posTeaserImage: content.posTeaserImage,
+        }}
+      />
       <Testimonials testimonials={content.testimonials} />
       <PricingCTA />
     </main>

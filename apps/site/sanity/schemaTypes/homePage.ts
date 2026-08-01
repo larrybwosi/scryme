@@ -168,18 +168,68 @@ export const homePageType = defineType({
       ],
     }),
     defineField({
-      name: 'stockManagementTitle',
-      title: 'Stock Management Title',
+      name: 'cmsTitle',
+      title: 'CMS Management Title',
       type: 'string',
     }),
     defineField({
-      name: 'stockManagementSubtitle',
-      title: 'Stock Management Subtitle',
+      name: 'cmsSubtitle',
+      title: 'CMS Management Subtitle',
       type: 'text',
     }),
     defineField({
-      name: 'stockManagementImage',
-      title: 'Stock Management Image',
+      name: 'cmsImage',
+      title: 'CMS Management Image',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'crmTeaserTitle',
+      title: 'CRM Teaser Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'crmTeaserSubtitle',
+      title: 'CRM Teaser Subtitle',
+      type: 'text',
+    }),
+    defineField({
+      name: 'crmTeaserImage',
+      title: 'CRM Teaser Image',
+      type: 'image',
+      options: {
+        hotspot: true,
+      },
+      fields: [
+        defineField({
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+        }),
+      ],
+    }),
+    defineField({
+      name: 'posTeaserTitle',
+      title: 'POS Teaser Title',
+      type: 'string',
+    }),
+    defineField({
+      name: 'posTeaserSubtitle',
+      title: 'POS Teaser Subtitle',
+      type: 'text',
+    }),
+    defineField({
+      name: 'posTeaserImage',
+      title: 'POS Teaser Image',
       type: 'image',
       options: {
         hotspot: true,

@@ -1,6 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { colors, fonts, modules } from "@/lib/scryme-tokens";
+import { urlFor } from "@/sanity/lib/image";
 
 const accent = modules.find((m) => m.code === "CRM")!.accent;
 
@@ -12,171 +14,21 @@ const highlights = [
   "Every order posts directly to central inventory and billing ledgers",
 ];
 
-function CRMKanban() {
-  const columns = [
-    {
-      title: "Store Drafts",
-      intensity: 0.25,
-      cards: [
-        { name: "Westfield Storefront", company: "Premium Theme", value: "Active" },
-        { name: "TerraLogix B2B Portal", company: "Wholesale Layout", value: "Review" },
-      ],
-    },
-    {
-      title: "Syncing Catalog",
-      intensity: 0.48,
-      cards: [
-        { name: "Meridian Storefront", company: "Modern Dark", value: "Syncing" },
-      ],
-    },
-    {
-      title: "Live Storefronts",
-      intensity: 0.72,
-      cards: [
-        { name: "Argent Direct", company: "Clean Light", value: "Live" },
-        { name: "Kestrel Outlet", company: "Sleek Mono", value: "Live" },
-      ],
-    },
-    {
-      title: "Orders Flowing",
-      intensity: 1,
-      cards: [{ name: "Solis Shop", company: "Classic Theme", value: "1.4k Orders" }],
-    },
-  ];
-
-  return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{
-        border: `1px solid ${colors.inkLine}`,
-        background: colors.inkPanelAlt,
-      }}
-    >
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{
-          background: "#080D18",
-          borderBottom: `1px solid ${colors.inkLine}`,
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{ background: accent }}
-          />
-          <span
-            className="text-xs font-semibold"
-            style={{ color: colors.textPrimary, fontFamily: fonts.body }}
-          >
-            Storefront & Website Management
-          </span>
-        </div>
-        <span
-          className="text-xs"
-          style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-        >
-          Centralized
-        </span>
-      </div>
-
-      <div className="flex gap-3 p-4 overflow-x-auto scrollbar-none">
-        {columns.map((col) => (
-          <div key={col.title} className="flex-1 min-w-[130px]">
-            <div className="flex items-center gap-1.5 mb-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ background: `rgba(200,154,75,${col.intensity})` }}
-              />
-              <span
-                className="text-xs font-semibold"
-                style={{ color: colors.textPrimary, fontFamily: fonts.body }}
-              >
-                {col.title}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {col.cards.map((card) => (
-                <div
-                  key={card.name}
-                  className="rounded-lg p-2.5"
-                  style={{
-                    background: colors.inkPanel,
-                    border: `1px solid ${colors.inkLine}`,
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                      style={{
-                        background: `rgba(200,154,75,${col.intensity})`,
-                        color:
-                          col.intensity > 0.6
-                            ? colors.inkBg
-                            : colors.textPrimary,
-                        fontFamily: fonts.body,
-                      }}
-                    >
-                      {card.name[0]}
-                    </div>
-                    <span
-                      className="text-xs font-medium truncate"
-                      style={{
-                        color: colors.textPrimary,
-                        fontFamily: fonts.body,
-                      }}
-                    >
-                      {card.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span
-                      className="text-xs truncate"
-                      style={{
-                        color: colors.textFaint,
-                        fontFamily: fonts.body,
-                      }}
-                    >
-                      {card.company}
-                    </span>
-                    <span
-                      className="text-xs font-semibold shrink-0 ml-1"
-                      style={{
-                        color: colors.ledgerGreen,
-                        fontFamily: fonts.mono,
-                      }}
-                    >
-                      {card.value}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{ borderTop: `1px solid ${colors.inkLine}` }}
-      >
-        <span
-          className="text-xs"
-          style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-        >
-          Total Live Storefronts
-        </span>
-        <span
-          className="text-sm font-bold"
-          style={{ color: colors.ledgerGreen, fontFamily: fonts.mono }}
-        >
-          2,548 Stores
-        </span>
-      </div>
-    </div>
-  );
+interface CRMTeaserProps {
+  data: {
+    crmTeaserTitle?: string;
+    crmTeaserSubtitle?: string;
+    crmTeaserImage?: any;
+  };
 }
 
-export function CRMTeaser() {
+export function CRMTeaser({ data }: CRMTeaserProps) {
+  const title = data.crmTeaserTitle || "Launch beautiful, high-converting customer storefronts";
+  const subtitle = data.crmTeaserSubtitle || "Scryme enables you to create and manage stunning customer-facing storefront websites instantly. Build robust digital layouts for your clients, fully synchronized in real-time with your central stock levels, integrated POS registers, and consolidated customer data.";
+  const imgUrl = data.crmTeaserImage
+    ? (data.crmTeaserImage.url || urlFor(data.crmTeaserImage).width(800).height(500).url())
+    : "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80";
+
   return (
     <section
       className="py-24"
@@ -206,13 +58,13 @@ export function CRMTeaser() {
               className="text-3xl sm:text-4xl font-medium text-balance"
               style={{ color: colors.textPrimary, fontFamily: fonts.display }}
             >
-              Launch beautiful, high-converting customer storefronts
+              {title}
             </h2>
             <p
               className="mt-4 text-base leading-relaxed"
               style={{ color: colors.textMuted, fontFamily: fonts.body }}
             >
-              Scryme enables you to create and manage stunning customer-facing storefront websites instantly. Build robust digital layouts for your clients, fully synchronized in real-time with your central stock levels, integrated POS registers, and consolidated customer data.
+              {subtitle}
             </p>
 
             <ul className="mt-7 space-y-3">
@@ -250,9 +102,21 @@ export function CRMTeaser() {
             </Link>
           </div>
 
-          {/* Kanban right */}
+          {/* Sanity-managed Image right */}
           <div className="flex-1 w-full max-w-xl">
-            <CRMKanban />
+            <div
+              className="relative w-full h-[300px] sm:h-[400px] rounded-2xl overflow-hidden border"
+              style={{ borderColor: colors.inkLine }}
+            >
+              <Image
+                src={imgUrl}
+                alt={title}
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover transition-transform duration-500 hover:scale-[1.02]"
+                priority
+              />
+            </div>
           </div>
         </div>
       </div>
