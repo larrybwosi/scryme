@@ -15,20 +15,29 @@ class AuthRepositoryImpl(
 ) : AuthRepository {
 
     override suspend fun signInWithEmail(email: String, password: String): Result<BetterAuthSessionResponse> {
-        return safeApiCall {
+        val result = safeApiCall {
             api.signInWithEmail(mapOf("email" to email, "password" to password))
-        }.onSuccess { response ->
-            val token = response.session?.token
-            if (!token.isNullOrBlank()) {
-                sessionManager.saveSession(
-                    token = token,
-                    orgSlug = response.user?.activeOrganizationId, // slug fallback
-                    orgId = response.user?.activeOrganizationId,
-                    userEmail = response.user?.email,
-                    userName = response.user?.name
-                )
-            }
         }
+        return result.fold(
+            onSuccess = { response ->
+                val token = response.session?.token
+                if (!token.isNullOrBlank()) {
+                    sessionManager.saveSession(
+                        token = token,
+                        orgSlug = response.user?.activeOrganizationId,
+                        orgId = response.user?.activeOrganizationId,
+                        userEmail = response.user?.email,
+                        userName = response.user?.name
+                    )
+                    Result.success(response)
+                } else {
+                    Result.failure(Exception("Authentication failed: No session token returned from server"))
+                }
+            },
+            onFailure = { error ->
+                Result.failure(error)
+            }
+        )
     }
 
     override suspend fun getSession(): Result<BetterAuthSessionResponse> {
@@ -66,20 +75,29 @@ class AuthRepositoryImpl(
     }
 
     override suspend fun signInWithGoogle(idToken: String): Result<BetterAuthSessionResponse> {
-        return safeApiCall {
+        val result = safeApiCall {
             api.signInWithGoogle(mapOf("idToken" to idToken))
-        }.onSuccess { response ->
-            val token = response.session?.token
-            if (!token.isNullOrBlank()) {
-                sessionManager.saveSession(
-                    token = token,
-                    orgSlug = response.user?.activeOrganizationId,
-                    orgId = response.user?.activeOrganizationId,
-                    userEmail = response.user?.email,
-                    userName = response.user?.name
-                )
-            }
         }
+        return result.fold(
+            onSuccess = { response ->
+                val token = response.session?.token
+                if (!token.isNullOrBlank()) {
+                    sessionManager.saveSession(
+                        token = token,
+                        orgSlug = response.user?.activeOrganizationId,
+                        orgId = response.user?.activeOrganizationId,
+                        userEmail = response.user?.email,
+                        userName = response.user?.name
+                    )
+                    Result.success(response)
+                } else {
+                    Result.failure(Exception("Authentication failed: No session token returned from server"))
+                }
+            },
+            onFailure = { error ->
+                Result.failure(error)
+            }
+        )
     }
 }
 
