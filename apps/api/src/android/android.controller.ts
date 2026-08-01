@@ -322,7 +322,7 @@ export class AndroidController {
     const skip = query.offset ? parseInt(query.offset, 10) : 0;
     const data = await this.prisma.client.priceChangeRequest.findMany({
       where: { organizationId: req.v3Context.organizationId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { requestedAt: "desc" },
       take: limit,
       skip,
     });
@@ -366,7 +366,11 @@ export class AndroidController {
 
   @Patch(":orgSlug/inventory/adjustments/:id/approve")
   async approveInventoryAdjustment(@Req() req: any, @Param("id") id: string) {
-    await this.approveStockAdjustmentUseCase.execute(req.v3Context, id);
+    await this.approveStockAdjustmentUseCase.execute(
+      req.v3Context.organizationId,
+      req.v3Context.memberId,
+      id,
+    );
     return {
       success: true,
       data: null,
@@ -379,7 +383,12 @@ export class AndroidController {
     @Param("id") id: string,
     @Body() dto: { reason?: string },
   ) {
-    await this.rejectStockAdjustmentUseCase.execute(req.v3Context, id, dto.reason);
+    await this.rejectStockAdjustmentUseCase.execute(
+      req.v3Context.organizationId,
+      req.v3Context.memberId,
+      id,
+      dto.reason,
+    );
     return {
       success: true,
       data: null,
@@ -481,7 +490,7 @@ export class AndroidController {
 
   @Get("finance/expenses/categories")
   async getExpenseCategories(@Req() req: any) {
-    const data = await this.expenseUseCase.getCategories(req.v3Context.organizationId);
+    const data = await this.expenseUseCase.getExpenseCategories(req.v3Context.organizationId);
     return {
       success: true,
       data,
