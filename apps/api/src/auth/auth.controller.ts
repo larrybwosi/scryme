@@ -69,6 +69,16 @@ export class AuthController {
                 }
               }
             }
+            if (!token && typeof response.headers.getSetCookie === "function") {
+              const cookies = response.headers.getSetCookie();
+              for (const cookie of cookies) {
+                const match = cookie.match(/better-auth\.session_token=([^;]+)/);
+                if (match) {
+                  token = match[1];
+                  break;
+                }
+              }
+            }
             if (!token) {
               const authHeader = req.headers["authorization"] || req.headers["Authorization"];
               if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
