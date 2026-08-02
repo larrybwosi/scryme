@@ -33,10 +33,3 @@ services:
     networks:
       - scryme-network
       - proxy-network
-
-networks:
-  scryme-network:
-    external: true
-  proxy-network:
-    name: ${PROXY_NETWORK_NAME:-dokploy-network}
-    external: true
