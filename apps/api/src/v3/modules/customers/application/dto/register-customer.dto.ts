@@ -88,3 +88,13 @@ export class RegisterCustomerDto {
   @Type(() => AddressDto)
   address?: AddressDto;
 }
+
+export class ProvisionZitadelDto {
+  @ApiProperty({ example: ["http://localhost:3000/api/auth/callback/zitadel"], required: false })
+  @IsOptional()
+  redirectUris?: string[];
+
+  @ApiProperty({ example: ["http://localhost:3000"], required: false })
+  @IsOptional()
+  postLogoutRedirectUris?: string[];
+}
