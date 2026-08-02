@@ -76,7 +76,7 @@ export class AuthController {
   })
   async handleOAuth2(@Req() req: any, @Res() res: any) {
     const protocol = req.protocol;
-    const host = req.hostname;
+    const host = req.headers.host || req.hostname;
     // Map /v3/auth/oauth2/* to /auth/oauth2/* as expected by better-auth
     const path = req.raw.url.replace("/v3/auth/oauth2", "/auth/oauth2");
     const url = `${protocol}://${host}${path}`;
