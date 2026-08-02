@@ -54,7 +54,7 @@ export class AndroidController {
   @Post("auth/sign-in/email")
   async signInWithEmail(@Req() req: any, @Res() res: any) {
     const protocol = req.protocol;
-    const host = req.hostname;
+    const host = req.headers.host || req.hostname;
     const url = `${protocol}://${host}/api/auth/sign-in/email`;
 
     const headers = new Headers(req.headers as HeadersInit);
@@ -177,7 +177,7 @@ export class AndroidController {
   @Post("auth/login/social/google")
   async signInWithGoogle(@Req() req: any, @Res() res: any) {
     const protocol = req.protocol;
-    const host = req.hostname;
+    const host = req.headers.host || req.hostname;
     const url = `${protocol}://${host}/api/auth/login/social/google`;
 
     const headers = new Headers(req.headers as HeadersInit);

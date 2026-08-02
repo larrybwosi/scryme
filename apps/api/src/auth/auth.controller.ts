@@ -12,7 +12,7 @@ export class AuthController {
   @All("*")
   async handleAuth(@Req() req: any, @Res() res: any) {
     const protocol = req.protocol;
-    const host = req.hostname;
+    const host = req.headers.host || req.hostname;
     const url = `${protocol}://${host}${req.raw.url}`;
 
     const headers = new Headers(req.headers as HeadersInit);
