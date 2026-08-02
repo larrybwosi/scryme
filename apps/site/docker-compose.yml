@@ -1,13 +1,21 @@
 services:
   site:
-    image: ghcr.io/larrybwosi/scryme/site:${SITE_VERSION:-9.57.0}
+    image: ghcr.io/larrybwosi/scryme/site:${SITE_VERSION:-9.58.0}
     restart: always
     deploy:
       resources:
         limits:
           memory: 512M
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${SITE_PORT:-3005}"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:${SITE_PORT:-3005}",
+        ]
       interval: 60s
       timeout: 10s
       retries: 3
