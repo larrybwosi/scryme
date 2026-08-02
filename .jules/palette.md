@@ -29,3 +29,7 @@
 ## 2026-07-30 - [W3C WAI-ARIA Accessible Breadcrumb Trails]
 **Learning:** Icon-only breadcrumb navigation links (like Home) and their parent layout containers are often overlooked in accessibility styling and semantic structure. Applying `aria-label="Breadcrumb"` to the outer `<nav>` container conforms to W3C ARIA landmarks, while adding focus outline offset/ring utilities alongside consistent `aria-label` and `title` attributes on icon-only links guarantees visual clarity, screen-reader discoverability, and clean keyboard tab highlights.
 **Action:** Always wrap breadcrumb navigation inside an `<nav aria-label="Breadcrumb">` tag, supplement icon-only trail links with synchronized `aria-label` and `title` labels, and apply focus-visible ring styles.
+
+## 2026-08-02 - [Synchronized Quantity Adjustment Tooltips]
+**Learning:** Compact, icon-only increment (`+`) and decrement (`-`) quantity buttons used inside dialogs (like item edit or unit selection dialogs) often lack immediate hover context for sighted desktop pointer users if they only carry `aria-label` screen reader attributes. Supplying matching `title` attributes on these sub-controls provides a synchronized, native browser tooltip on hover without cluttering or duplicate overlay rendering.
+**Action:** When designing icon-only quantity increase/decrease buttons in dialog components, always synchronize the `aria-label` and the `title` attributes with identical values.

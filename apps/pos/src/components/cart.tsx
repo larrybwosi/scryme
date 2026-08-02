@@ -822,6 +822,7 @@ export function Cart() {
                   size="icon"
                   className="h-8 w-8"
                   aria-label="Decrease quantity"
+                  title="Decrease quantity"
                   onClick={() => setEditQuantity(prev => Math.max(1, prev - 1))}
                 >
                   <Minus className="h-4 w-4" />
@@ -838,6 +839,7 @@ export function Cart() {
                   size="icon"
                   className="h-8 w-8"
                   aria-label="Increase quantity"
+                  title="Increase quantity"
                   onClick={() => setEditQuantity(prev => prev + 1)}
                 >
                   <Plus className="h-4 w-4" />
