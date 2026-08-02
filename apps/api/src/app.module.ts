@@ -15,6 +15,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { RedisModule } from "./redis/redis.module";
 import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
 import { V3Module, V3_SUB_MODULES } from "./v3/v3.module";
+import { AndroidModule } from "./android/android.module";
 
 import { UploadModule } from "./common/upload/upload.module";
 import { ImageModule } from "./common/images/image.module";
@@ -67,6 +68,7 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
     AuthModule,
     V2Module,
     V3Module,
+    AndroidModule,
     UploadModule,
     ImageModule,
     WindmillModule,

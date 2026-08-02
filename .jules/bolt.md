@@ -177,3 +177,7 @@
 ## 2026-07-31 - [Delta Category Sync in V2 POS Path]
 **Learning:** Fetching and returning all organization categories during POS sync requests is a scalability bottleneck and defeats the purpose of delta sync protocols. Adding conditional `updatedAt` filtering scoped by `lastSync` converts category sync to a true incremental/delta sync, eliminating redundant database I/O, serialization overhead, and network footprint under heavy client request load.
 **Action:** Always scope reference and catalog list fetches with `lastSync` filtering where applicable in sync endpoints to enforce strict delta sync standards.
+
+## 2026-08-02 - [Dual Database Parallelization and Map Grouping in Android Analytics]
+**Learning:** Sequential database queries (like `findMany` and `count` executed one after another) in listing or dashboard paths significantly multiply API latency by a factor of the queries' count. Additionally, running nested linear searches (like `.filter()`) inside loops of relational records leads to $O(N \times M)$ CPU hotspots. Parallelizing independent database calls using `Promise.all` and grouping list payloads into an in-memory `Map` prior to loop execution collapses execution time to $O(T)$ database wait and $O(N + M)$ processing time.
+**Action:** Always parallelize independent lookup queries in dashboards/list views, and pre-group relational arrays into Map-based indices to avoid nested array filter scans.

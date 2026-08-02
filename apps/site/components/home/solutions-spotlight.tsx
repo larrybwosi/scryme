@@ -13,9 +13,9 @@ interface SolutionsSpotlightProps {
     multiBranchTitle?: string;
     multiBranchSubtitle?: string;
     multiBranchImage?: any;
-    stockManagementTitle?: string;
-    stockManagementSubtitle?: string;
-    stockManagementImage?: any;
+    cmsTitle?: string;
+    cmsSubtitle?: string;
+    cmsImage?: any;
   };
 }
 
@@ -28,14 +28,14 @@ export function SolutionsSpotlight({ data }: SolutionsSpotlightProps) {
   const mbSubtitle = data.multiBranchSubtitle || "Scale across several branches with ease. Oversee location-specific pricing, staff shift rosters, live drawer reconciliations, and inter-branch inventory transfers from a unified cloud console.";
   const mbImgUrl = data.multiBranchImage ? (data.multiBranchImage.url || urlFor(data.multiBranchImage).width(800).height(500).url()) : "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80";
 
-  const smTitle = data.stockManagementTitle || "Advanced Stock & Inventory Control";
-  const smSubtitle = data.stockManagementSubtitle || "Optimize cash flow with intelligent stock level monitoring. Prevent stockouts using multi-warehouse replenishment workflows and automated trigger thresholds synchronized with online and offline channels.";
-  const smImgUrl = data.stockManagementImage ? (data.stockManagementImage.url || urlFor(data.stockManagementImage).width(800).height(500).url()) : "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80";
+  const cmsTitle = data.cmsTitle || "Customizable Storefront CMS & SEO";
+  const cmsSubtitle = data.cmsSubtitle || "Take complete control of your digital storefront. Customize layouts, optimize meta tags, manage SEO settings, and publish content seamlessly with built-in enterprise CMS tools.";
+  const cmsImgUrl = data.cmsImage ? (data.cmsImage.url || urlFor(data.cmsImage).width(800).height(500).url()) : "https://images.unsplash.com/photo-1542744095-2a483a7b9fd8?auto=format&fit=crop&w=800&q=80";
 
   const items = [
     { title: sfTitle, subtitle: sfSubtitle, imgUrl: sfImgUrl, label: "Storefronts" },
     { title: mbTitle, subtitle: mbSubtitle, imgUrl: mbImgUrl, label: "Multi-Branch" },
-    { title: smTitle, subtitle: smSubtitle, imgUrl: smImgUrl, label: "Stock & Inventory" },
+    { title: cmsTitle, subtitle: cmsSubtitle, imgUrl: cmsImgUrl, label: "CMS Management" },
   ];
 
   return (

@@ -20,7 +20,7 @@ class AuthRepositoryImpl(
         }
         return result.fold(
             onSuccess = { response ->
-                val token = response.session?.token
+                val token = response.token
                 if (!token.isNullOrBlank()) {
                     sessionManager.saveSession(
                         token = token,
@@ -44,7 +44,7 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.getSession()
         }.onSuccess { response ->
-            val token = response.session?.token
+            val token = response.token
             if (!token.isNullOrBlank()) {
                 sessionManager.saveSession(
                     token = token,
@@ -80,7 +80,7 @@ class AuthRepositoryImpl(
         }
         return result.fold(
             onSuccess = { response ->
-                val token = response.session?.token
+                val token = response.token
                 if (!token.isNullOrBlank()) {
                     sessionManager.saveSession(
                         token = token,

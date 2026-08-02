@@ -108,13 +108,7 @@ class AuthViewModel(
                             name = response.member.user.name,
                             activeOrganizationId = sessionManager.activeOrgId.value
                         ),
-                        session = SessionDto(
-                            id = "terminal_sess",
-                            userId = response.member.user.id,
-                            token = response.token,
-                            expiresAt = "",
-                            activeOrganizationId = sessionManager.activeOrgId.value
-                        )
+                        token = response.token
                     )
                     _loginState.value = UiState.Success(fakeSession)
                 }

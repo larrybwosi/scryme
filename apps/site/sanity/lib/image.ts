@@ -6,42 +6,44 @@ import { dataset, projectId } from '../env'
 const builder = createImageUrlBuilder({ projectId, dataset })
 
 export const urlFor = (source: any) => {
-  if (!source) {
-    const fallback = "https://images.unsplash.com/photo-1551434678-e076c223a692";
-    return {
-      width: () => ({ height: () => ({ url: () => fallback }), url: () => fallback }),
-      height: () => ({ width: () => ({ url: () => fallback }), url: () => fallback }),
-      url: () => fallback,
+  const createMockBuilder = (urlStr: string): any => {
+    const builderObj: any = {
+      url: () => urlStr,
     };
+    // Make it chainable for common methods
+    const methods = ['width', 'height', 'format', 'fit', 'quality', 'auto', 'blur'];
+    for (const m of methods) {
+      builderObj[m] = () => builderObj;
+    }
+    return builderObj;
+  };
+
+  if (!source) {
+    return createMockBuilder("https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&fm=webp");
   }
 
   // If source is a direct URL string
   if (typeof source === 'string') {
-    return {
-      width: () => ({ height: () => ({ url: () => source }), url: () => source }),
-      height: () => ({ width: () => ({ url: () => source }), url: () => source }),
-      url: () => source,
-    };
+    let optimizedUrl = source;
+    if (source.includes('unsplash.com') && !source.includes('fm=')) {
+      optimizedUrl = source.includes('?') ? `${source}&fm=webp` : `${source}?fm=webp`;
+    }
+    return createMockBuilder(optimizedUrl);
   }
 
   // If source has a direct url property
   if (source && typeof source === 'object' && 'url' in source && source.url) {
-    return {
-      width: () => ({ height: () => ({ url: () => source.url }), url: () => source.url }),
-      height: () => ({ width: () => ({ url: () => source.url }), url: () => source.url }),
-      url: () => source.url,
-    };
+    let optimizedUrl = source.url;
+    if (source.url.includes('unsplash.com') && !source.url.includes('fm=')) {
+      optimizedUrl = source.url.includes('?') ? `${source.url}&fm=webp` : `${source.url}?fm=webp`;
+    }
+    return createMockBuilder(optimizedUrl);
   }
 
   // Standard builder behavior
   try {
-    return builder.image(source)
+    return builder.image(source).format('webp')
   } catch (err) {
-    const fallback = "https://images.unsplash.com/photo-1551434678-e076c223a692";
-    return {
-      width: () => ({ height: () => ({ url: () => fallback }), url: () => fallback }),
-      height: () => ({ width: () => ({ url: () => fallback }), url: () => fallback }),
-      url: () => fallback,
-    };
+    return createMockBuilder("https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&fm=webp");
   }
 }

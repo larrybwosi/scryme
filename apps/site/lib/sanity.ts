@@ -420,9 +420,29 @@ export interface HomePageContent {
     url?: string;
     alt?: string;
   };
-  stockManagementTitle?: string;
-  stockManagementSubtitle?: string;
-  stockManagementImage?: {
+  cmsTitle?: string;
+  cmsSubtitle?: string;
+  cmsImage?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+    };
+    url?: string;
+    alt?: string;
+  };
+  crmTeaserTitle?: string;
+  crmTeaserSubtitle?: string;
+  crmTeaserImage?: {
+    asset?: {
+      _ref: string;
+      _type: "reference";
+    };
+    url?: string;
+    alt?: string;
+  };
+  posTeaserTitle?: string;
+  posTeaserSubtitle?: string;
+  posTeaserImage?: {
     asset?: {
       _ref: string;
       _type: "reference";
@@ -523,7 +543,7 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
       name: 'Storefronts & CRM',
       description: 'Create and manage customer-facing storefront websites for your clients, beautifully synced with inventory and central operations.',
       image: {
-        url: "https://images.unsplash.com/photo-1552581234-2612b75dc679?auto=format&fit=crop&w=600&q=80",
+        url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&q=80",
         alt: "Customer Storefront website management and automated setup builder"
       },
       connectsTo: ['FIN', 'INV'],
@@ -651,11 +671,23 @@ export const DEFAULT_HOME_CONTENT: HomePageContent = {
     url: "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80",
     alt: "Multi-branch retail synchronization and operational hub"
   },
-  stockManagementTitle: 'Advanced Stock & Inventory Control',
-  stockManagementSubtitle: 'Optimize cash flow with intelligent stock level monitoring. Prevent stockouts using multi-warehouse replenishment workflows and automated trigger thresholds synchronized with online and offline channels.',
-  stockManagementImage: {
-    url: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&q=80",
-    alt: "Advanced stock management tracking and warehouse organization"
+  cmsTitle: 'Customizable Storefront CMS & SEO',
+  cmsSubtitle: 'Take complete control of your digital storefront. Customize layouts, optimize meta tags, manage SEO settings, and publish content seamlessly with built-in enterprise CMS tools.',
+  cmsImage: {
+    url: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80",
+    alt: "Enterprise Storefront CMS and SEO Customization Console"
+  },
+  crmTeaserTitle: 'Launch beautiful, high-converting customer storefronts',
+  crmTeaserSubtitle: 'Scryme enables you to create and manage stunning customer-facing storefront websites instantly. Build robust digital layouts for your clients, fully synchronized in real-time with your central stock levels, integrated POS registers, and consolidated customer data.',
+  crmTeaserImage: {
+    url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
+    alt: "Storefront Website and customer portal analytics"
+  },
+  posTeaserTitle: 'An integrated POS system built for high-performance retail',
+  posTeaserSubtitle: 'Whether you manage a single warehouse store, or scale several branches across various regions, every purchase made offline or online updates your stock levels instantly. Zero lag, zero human error, maximum operational speed.',
+  posTeaserImage: {
+    url: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80",
+    alt: "Integrated high-performance point of sale checkout device"
   },
 };
 
@@ -937,9 +969,15 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       multiBranchTitle,
       multiBranchSubtitle,
       multiBranchImage,
-      stockManagementTitle,
-      stockManagementSubtitle,
-      stockManagementImage
+      cmsTitle,
+      cmsSubtitle,
+      cmsImage,
+      crmTeaserTitle,
+      crmTeaserSubtitle,
+      crmTeaserImage,
+      posTeaserTitle,
+      posTeaserSubtitle,
+      posTeaserImage
     }`);
     if (!data) return DEFAULT_HOME_CONTENT;
     return {
@@ -957,9 +995,15 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       multiBranchTitle: data.multiBranchTitle || DEFAULT_HOME_CONTENT.multiBranchTitle,
       multiBranchSubtitle: data.multiBranchSubtitle || DEFAULT_HOME_CONTENT.multiBranchSubtitle,
       multiBranchImage: data.multiBranchImage || DEFAULT_HOME_CONTENT.multiBranchImage,
-      stockManagementTitle: data.stockManagementTitle || DEFAULT_HOME_CONTENT.stockManagementTitle,
-      stockManagementSubtitle: data.stockManagementSubtitle || DEFAULT_HOME_CONTENT.stockManagementSubtitle,
-      stockManagementImage: data.stockManagementImage || DEFAULT_HOME_CONTENT.stockManagementImage,
+      cmsTitle: data.cmsTitle || DEFAULT_HOME_CONTENT.cmsTitle,
+      cmsSubtitle: data.cmsSubtitle || DEFAULT_HOME_CONTENT.cmsSubtitle,
+      cmsImage: data.cmsImage || DEFAULT_HOME_CONTENT.cmsImage,
+      crmTeaserTitle: data.crmTeaserTitle || DEFAULT_HOME_CONTENT.crmTeaserTitle,
+      crmTeaserSubtitle: data.crmTeaserSubtitle || DEFAULT_HOME_CONTENT.crmTeaserSubtitle,
+      crmTeaserImage: data.crmTeaserImage || DEFAULT_HOME_CONTENT.crmTeaserImage,
+      posTeaserTitle: data.posTeaserTitle || DEFAULT_HOME_CONTENT.posTeaserTitle,
+      posTeaserSubtitle: data.posTeaserSubtitle || DEFAULT_HOME_CONTENT.posTeaserSubtitle,
+      posTeaserImage: data.posTeaserImage || DEFAULT_HOME_CONTENT.posTeaserImage,
     };
   } catch (error) {
     console.warn("Sanity fetch error for homePage, falling back to default:", error);
