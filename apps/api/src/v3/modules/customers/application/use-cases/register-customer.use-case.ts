@@ -33,7 +33,7 @@ export class RegisterCustomerUseCase {
     );
 
     if (dto.zitadelUserId) {
-      await this.verifyZitadelUser(dto.zitadelUserId);
+      await this.verifyZitadelUser(organizationId, dto.zitadelUserId);
     }
 
     const result = await this.prisma.client.$transaction(async (tx) => {
@@ -116,7 +116,19 @@ export class RegisterCustomerUseCase {
     );
   }
 
-  private async verifyZitadelUser(zitadelUserId: string) {
+  private async verifyZitadelUser(organizationId: string, zitadelUserId: string) {
+    // 1. Check if Zitadel is provisioned/connected for this organization
+    const config = await this.prisma.client.zitadelConfiguration.findUnique({
+      where: { organizationId },
+    });
+
+    if (!config || config.connectionStatus !== "CONNECTED") {
+      this.logger.warn(
+        `Zitadel is not connected/provisioned for organization ${organizationId}. Proceeding with local registration fallback.`
+      );
+      return;
+    }
+
     const zitadelSvc = new ZitadelService();
     try {
       const user = await zitadelSvc.getUser(zitadelUserId);
@@ -126,8 +138,8 @@ export class RegisterCustomerUseCase {
         );
       }
     } catch (e) {
-      throw new NotFoundException(
-        `Zitadel user with ID ${zitadelUserId} not found`,
+      this.logger.warn(
+        `Failed to verify Zitadel user ${zitadelUserId} for organization ${organizationId}: ${e instanceof Error ? e.message : String(e)}. Falling back to local registration.`
       );
     }
   }

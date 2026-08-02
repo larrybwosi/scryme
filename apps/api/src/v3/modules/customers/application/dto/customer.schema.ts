@@ -31,3 +31,8 @@ export const CreateBusinessAccountSchema = z.object({
   taxId: z.string().optional(),
   defaultLocationId: z.string().optional(),
 });
+
+export const ProvisionZitadelSchema = z.object({
+  redirectUris: z.array(z.string()).optional(),
+  postLogoutRedirectUris: z.array(z.string()).optional(),
+});

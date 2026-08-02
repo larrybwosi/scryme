@@ -5,46 +5,18 @@ import {
   ArrowLeft,
   Save,
   Trash2,
-  Plus,
-  MoreHorizontal,
   Package,
-  Tag,
   Layers,
   DollarSign,
   History,
   Truck,
-  Image as ImageIcon,
   ChevronRight,
   Loader2,
-  Upload,
-  X,
   ExternalLink,
-  Edit,
-  Scale,
-  RefreshCw,
-  PlusCircle,
-  XCircle,
-  AlertCircle,
-  CheckCircle2,
   Sparkles,
-  Bold,
-  Italic,
-  Heading1,
-  Heading2,
-  Quote,
-  List,
-  ListOrdered,
-  Link2,
-  Globe,
-  Clock,
   Check,
-  Sun,
-  Moon,
-  Calendar,
-  Settings,
-  Eye,
-  ChevronUp,
-  ChevronDown,
+  Scale,
+  Image as ImageIcon,
   Star,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -62,32 +34,13 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@repo/ui/components/ui/table";
-import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
@@ -95,16 +48,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
-import { ImageUpload } from "../../../../components/image-upload";
 import {
   updateProduct,
   bulkDeleteVariants,
   updateVariantStatus,
   createVariant,
   updateVariant,
-  updateVariantUnits,
   generateProductSlug,
-  updateReorderRule,
 } from "../../../actions/inventory";
 import {
   Dialog,
@@ -129,6 +79,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@repo/ui/components/ui/alert-dialog";
+
+// Subcomponents
+import { OverviewTab } from "./_components/overview-tab";
+import { CMSTab } from "./_components/cms-tab";
+import { VariantsTab } from "./_components/variants-tab";
+import { PricingTab } from "./_components/pricing-tab";
+import { UnitsTab } from "./_components/units-tab";
+import { InventoryTab } from "./_components/inventory-tab";
+import { SuppliersTab } from "./_components/suppliers-tab";
 
 export function ProductPageClient({
   product: initialProduct,
@@ -366,7 +325,6 @@ export function ProductPageClient({
     let lastKeyTime = Date.now();
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore keys like Shift, Control, Alt, CapsLock, Arrow keys, Tab, Escape etc.
       if (e.key.length > 1 && e.key !== "Enter") {
         return;
       }
@@ -375,21 +333,18 @@ export function ProductPageClient({
       const timeDiff = currentTime - lastKeyTime;
       lastKeyTime = currentTime;
 
-      // Reset buffer if character input takes longer than 45ms, meaning it's likely manual typing
       if (timeDiff > 45 && e.key !== "Enter") {
         buffer = "";
       }
 
       if (e.key === "Enter") {
         if (buffer.length >= 3) {
-          // Scanner finished. Intercept and prevent form submit / click handlers
           e.preventDefault();
           e.stopPropagation();
 
           setVariantForm((prev: any) => ({ ...prev, barcode: buffer }));
           toast.success(`Barcode scanned: ${buffer}`);
 
-          // Remove the first leaked character from the currently focused element, if applicable.
           if (
             document.activeElement instanceof HTMLInputElement ||
             document.activeElement instanceof HTMLTextAreaElement
@@ -397,12 +352,10 @@ export function ProductPageClient({
             const activeInput = document.activeElement;
             if (activeInput.id !== "v-barcode") {
               const val = activeInput.value;
-              // Check if the input value ends with the first character of our buffer
               if (buffer.length > 0 && val.endsWith(buffer[0])) {
                 const newVal = val.slice(0, -1);
                 activeInput.value = newVal;
 
-                // Dispatch event to inform React/controlled component of the updated value
                 const tracker = (activeInput as any)._valueTracker;
                 if (tracker) {
                   tracker.setValue(newVal);
@@ -421,7 +374,6 @@ export function ProductPageClient({
 
       buffer += e.key;
 
-      // If we are gathering keys with scanner speed, prevent those keys from leaking into focused text inputs
       if (buffer.length > 1) {
         e.preventDefault();
         e.stopPropagation();
@@ -502,7 +454,6 @@ export function ProductPageClient({
     try {
       await updateVariantStatus(selectedVariants, isActive);
       toast.success("Variants updated");
-      // Refresh logic would go here
     } catch (e) {
       toast.error("Failed to update variants");
     }
@@ -539,7 +490,6 @@ export function ProductPageClient({
     const mainImgCaption = cmsImages[storefrontMainImageIdx]?.caption || "Product preview";
     const selectedCategory = categories.find((c: any) => c.id === product.categoryId);
 
-    // Calculate retail price range
     const prices = product.variants?.map((v: any) => Number(v.retailPrice || 0)) || [];
     const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
     const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
@@ -551,7 +501,6 @@ export function ProductPageClient({
         "border shadow-xl rounded-xl overflow-hidden flex flex-col font-sans transition-all duration-300",
         isDark ? "bg-[#0f1115] border-zinc-800 text-white" : "bg-white border-zinc-200 text-zinc-900"
       )}>
-        {/* Preview header info */}
         <div className={cn(
           "border-b px-4 py-3 flex items-center justify-between transition-colors",
           isDark ? "bg-[#16181d] border-zinc-800" : "bg-zinc-50 border-zinc-200"
@@ -574,7 +523,6 @@ export function ProductPageClient({
           </div>
         </div>
 
-        {/* Gallery main image display */}
         <div className="aspect-video w-full bg-zinc-900 relative flex items-center justify-center">
           {mainImgUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -597,7 +545,6 @@ export function ProductPageClient({
           </div>
         </div>
 
-        {/* Gallery thumbnails strip */}
         {cmsImages.length > 0 && (
           <div className={cn(
             "p-2 flex gap-1.5 overflow-x-auto border-b transition-colors",
@@ -627,7 +574,6 @@ export function ProductPageClient({
           </div>
         )}
 
-        {/* Card pricing and brief context */}
         <div className="p-4 space-y-4">
           <div className={cn(
             "flex items-center justify-between gap-2 border-b pb-3 transition-colors",
@@ -654,7 +600,6 @@ export function ProductPageClient({
             )}
           </div>
 
-          {/* Schedule status disclaimer */}
           {publishStatus === "Scheduled" && publishedAt && (
             <div className="bg-amber-500/10 border border-amber-500/20 p-2 text-[10px] text-amber-500 flex items-center justify-between rounded-lg">
               <span className="font-semibold">Auto-publishing active:</span>
@@ -664,13 +609,11 @@ export function ProductPageClient({
             </div>
           )}
 
-          {/* Layout Template badge */}
           <div className="flex items-center justify-between text-[10px] text-muted-foreground border-b pb-2 dark:border-zinc-800">
             <span>Template Style:</span>
             <span className="font-bold text-amber-500 font-mono">{layoutTemplate}</span>
           </div>
 
-          {/* Dynamic attributes preview (only shows first 4 keys for nice sizing) */}
           {customAttrs.length > 0 && (
             <div className={cn(
               "space-y-1.5 border-b pb-3 transition-colors",
@@ -691,7 +634,6 @@ export function ProductPageClient({
             </div>
           )}
 
-          {/* Rating stars & storefront review simulation */}
           <div className={cn(
             "flex items-center gap-2 border-b pb-3 transition-colors",
             isDark ? "border-zinc-800" : "border-zinc-200"
@@ -706,7 +648,6 @@ export function ProductPageClient({
             <span className="text-[10px] text-muted-foreground font-semibold">(4.8 out of 5 &bull; 246 reviews)</span>
           </div>
 
-          {/* Markdown text preview container */}
           <div className="space-y-1.5">
             <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-bold font-mono">Storefront About / Story</span>
             <div className={cn(
@@ -724,7 +665,6 @@ export function ProductPageClient({
             </div>
           </div>
 
-          {/* CTA preview button */}
           <Button
             type="button"
             className="w-full bg-amber-500 hover:bg-amber-600 text-white py-2 font-bold uppercase tracking-widest text-xs h-9 rounded-lg border-none mt-2 flex items-center justify-center gap-1"
@@ -855,173 +795,12 @@ export function ProductPageClient({
 
             {/* OVERVIEW TAB */}
             <TabsContent value="overview" className="space-y-6 mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                  <CardHeader>
-                    <CardTitle>General Information</CardTitle>
-                    <CardDescription>
-                      Update your product details and attributes.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="name">Product Name</Label>
-                      <Input
-                        id="name"
-                        value={product.name}
-                        onChange={e =>
-                          setProduct({ ...product, name: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="sku">Base SKU</Label>
-                        <Input
-                          id="sku"
-                          value={product.sku}
-                          onChange={e =>
-                            setProduct({ ...product, sku: e.target.value })
-                          }
-                        />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="type">Product Type</Label>
-                        <Select
-                          value={product.type}
-                          onValueChange={value =>
-                            setProduct({ ...product, type: value })
-                          }>
-                          <SelectTrigger id="type">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="FINISHED_GOOD">
-                              Finished Good
-                            </SelectItem>
-                            <SelectItem value="RAW_MATERIAL">
-                              Raw Material
-                            </SelectItem>
-                            <SelectItem value="MERCHANDISE">
-                              Merchandise
-                            </SelectItem>
-                            <SelectItem value="OTHER">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="slug">Product Slug</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          id="slug"
-                          value={product.slug || ""}
-                          onChange={e =>
-                            setProduct({ ...product, slug: e.target.value })
-                          }
-                        />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={handleGenerateSlug}
-                          title="Generate slug"
-                          aria-label="Generate slug">
-                          <RefreshCw className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="category">Category</Label>
-                        <Select
-                          value={product.categoryId}
-                          onValueChange={value =>
-                            setProduct({
-                              ...product,
-                              categoryId: value,
-                            })
-                          }>
-                          <SelectTrigger id="category">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((c: any) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="brand">Brand</Label>
-                        <Input
-                          id="brand"
-                          value={product.brand || ""}
-                          onChange={e =>
-                            setProduct({ ...product, brand: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="rating">Product Rating (0-5)</Label>
-                      <Input
-                        id="rating"
-                        type="number"
-                        step="0.1"
-                        min="0"
-                        max="5"
-                        value={product.rating || 0}
-                        onChange={e =>
-                          setProduct({
-                            ...product,
-                            rating: Number(e.target.value),
-                          })
-                        }
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="description">Short Description</Label>
-                      <Textarea
-                        id="description"
-                        value={product.description || ""}
-                        onChange={e =>
-                          setProduct({
-                            ...product,
-                            description: e.target.value,
-                          })
-                        }
-                        className="min-h-25"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                  <CardHeader>
-                    <CardTitle>Media & Assets</CardTitle>
-                    <CardDescription>
-                      Product images and gallery.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ImageUpload
-                      value={product.imageUrls || []}
-                      onChange={urls =>
-                        setProduct({ ...product, imageUrls: urls })
-                      }
-                      maxImages={5}
-                    />
-                  </CardContent>
-                  <CardFooter className="bg-muted/50 border-t py-3 dark:border-zinc-800">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                      Recommended: 1000x1000px JPG/PNG
-                    </p>
-                  </CardFooter>
-                </Card>
-              </div>
-
+              <OverviewTab
+                product={product}
+                setProduct={setProduct}
+                categories={categories}
+                handleGenerateSlug={handleGenerateSlug}
+              />
               <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
                 <CardHeader>
                   <CardTitle>Detailed Description</CardTitle>
@@ -1047,1846 +826,72 @@ export function ProductPageClient({
 
             {/* CMS STUDIO TAB */}
             <TabsContent value="cms" className="space-y-6 mt-0">
-              <div className="bg-white dark:bg-zinc-950 p-6 border shadow-sm rounded-xl dark:border-zinc-800">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-amber-500" />
-                  <h3 className="text-lg font-bold text-foreground">Enterprise CMS Studio</h3>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Manage high-fidelity storefront presentation, rich markdown guides, SEO target parameters, layouts, and scheduled publishing options.
-                </p>
-              </div>
-
-              <Tabs defaultValue="rich-images" className="w-full">
-                <div className="bg-background dark:bg-zinc-950 rounded-xl p-1 border shadow-sm mb-6 inline-flex dark:border-zinc-800">
-                  <TabsList className="bg-transparent border-none p-0 h-auto gap-1">
-                    <TabsTrigger
-                      value="rich-images"
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
-                    >
-                      <Sparkles className="w-4 h-4" />
-                      <span>Rich Content & Gallery</span>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="seo-layout"
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
-                    >
-                      <Globe className="w-4 h-4" />
-                      <span>SEO & Theme Settings</span>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="publishing"
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-zinc-900 data-[state=active]:text-white dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900"
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Publishing & Attributes</span>
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-
-                {/* SUB-TAB 1: Rich Description & Images */}
-                <TabsContent value="rich-images" className="space-y-6 mt-0">
-                  {/* Image Manager Section */}
-                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                        <ImageIcon size={18} className="text-amber-500" />
-                        <span>Showcase Gallery (Unified Images)</span>
-                      </CardTitle>
-                      <CardDescription>
-                        Reorder gallery items, define captions/alt text, and manage direct image links. Keep standard assets fully unified.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Grid list of current images */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border p-4 bg-muted/30 rounded-lg dark:border-zinc-800">
-                        {cmsImages.length === 0 ? (
-                          <div className="col-span-full py-8 text-center text-xs text-muted-foreground italic">
-                            No images added yet. Storefront will use fallback placeholders.
-                          </div>
-                        ) : (
-                          cmsImages.map((img, idx) => (
-                            <div key={img.id} className="bg-background border p-3 flex flex-col gap-2 relative shadow-xs rounded-lg dark:border-zinc-800">
-                              <div className="aspect-video w-full bg-muted overflow-hidden relative rounded-md">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                  src={img.url}
-                                  alt={img.caption || "Product Image"}
-                                  className="w-full h-full object-cover"
-                                />
-                                <div className="absolute top-2 left-2 bg-zinc-900/90 px-2 py-0.5 text-[10px] font-mono text-white tracking-widest font-bold rounded">
-                                  #{idx + 1} {idx === 0 && "(MAIN)"}
-                                </div>
-                              </div>
-
-                              {/* Caption input */}
-                              <div className="space-y-1">
-                                <Label className="text-[10px] font-bold uppercase text-muted-foreground">Caption / Alternative Text</Label>
-                                <Input
-                                  value={img.caption}
-                                  onChange={(e) => {
-                                    const updated = [...cmsImages];
-                                    updated[idx].caption = e.target.value;
-                                    setCmsImages(updated);
-                                  }}
-                                  className="text-xs h-7 rounded border-border"
-                                  placeholder="e.g. Ergonomic sole close up"
-                                />
-                              </div>
-
-                              {/* Reordering and removal controls */}
-                              <div className="flex items-center justify-between border-t pt-2 mt-1 dark:border-zinc-800">
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    onClick={() => handleMoveImage(idx, "up")}
-                                    disabled={idx === 0}
-                                    variant="outline"
-                                    className="h-6 w-6 p-0 rounded border-border bg-background"
-                                    title="Move main image forward"
-                                    aria-label="Move main image forward"
-                                  >
-                                    <ChevronUp size={12} />
-                                  </Button>
-                                  <Button
-                                    onClick={() => handleMoveImage(idx, "down")}
-                                    disabled={idx === cmsImages.length - 1}
-                                    variant="outline"
-                                    className="h-6 w-6 p-0 rounded border-border bg-background"
-                                    title="Move back"
-                                    aria-label="Move back"
-                                  >
-                                    <ChevronDown size={12} />
-                                  </Button>
-                                </div>
-
-                                <Button
-                                  onClick={() => handleRemoveImage(img.id)}
-                                  variant="ghost"
-                                  className="h-6 px-2 hover:bg-red-50 dark:hover:bg-red-950 text-red-600 dark:text-red-400 text-xs rounded"
-                                  title="Remove image"
-                                  aria-label="Remove image"
-                                >
-                                  <Trash2 size={12} className="mr-1 inline" />
-                                  <span>Remove</span>
-                                </Button>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Add new image form */}
-                      <div className="border p-4 bg-muted/10 space-y-3 rounded-lg dark:border-zinc-800">
-                        <span className="text-xs font-bold text-foreground">Add New Showcase Image</span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Upload Image</Label>
-                            <div
-                              onClick={() => !isUploading && fileInputRef.current?.click()}
-                              className="relative border-2 border-dashed border-border dark:border-zinc-800 bg-background p-4 text-center rounded-lg hover:border-muted-foreground/30 transition-colors cursor-pointer flex flex-col items-center justify-center gap-1 min-h-[90px]"
-                            >
-                              {isUploading ? (
-                                <div className="flex flex-col items-center gap-1">
-                                  <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
-                                  <span className="text-[10px] text-muted-foreground font-semibold">Uploading to storage...</span>
-                                </div>
-                              ) : newImageUrl ? (
-                                <div className="flex items-center gap-2 w-full justify-between">
-                                  <div className="flex items-center gap-2 overflow-hidden">
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={newImageUrl} className="h-10 w-10 object-cover rounded" alt="Upload preview" />
-                                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold truncate">Uploaded successfully</span>
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    className="h-6 w-6 p-0 hover:bg-muted rounded text-muted-foreground"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setNewImageUrl("");
-                                    }}
-                                  >
-                                    <X size={14} />
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div className="w-full h-full flex flex-col items-center justify-center">
-                                  <Upload className="h-5 w-5 text-muted-foreground mb-1" />
-                                  <span className="text-[10px] text-muted-foreground font-semibold">Click or Drag to Upload</span>
-                                </div>
-                              )}
-                              <input
-                                type="file"
-                                ref={fileInputRef}
-                                className="hidden"
-                                accept="image/*"
-                                onChange={async (e) => {
-                                  const file = e.target.files?.[0];
-                                  if (!file) return;
-                                  setIsUploading(true);
-                                  try {
-                                    const formData = new FormData();
-                                    formData.append("file", file);
-                                    const res = await fetch("/api/upload", {
-                                      method: "POST",
-                                      body: formData,
-                                    });
-                                    if (!res.ok) throw new Error("Upload failed");
-                                    const resData = await res.json();
-                                    const url = resData.data?.url || resData.url;
-                                    if (!url) throw new Error("No URL returned");
-                                    setNewImageUrl(url);
-                                    toast.success("Image uploaded successfully!");
-                                  } catch (err) {
-                                    console.error(err);
-                                    toast.error("Failed to upload image");
-                                  } finally {
-                                    setIsUploading(false);
-                                  }
-                                }}
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-1.5">
-                            <Label htmlFor="new-img-caption" className="text-[10px] font-bold uppercase text-muted-foreground">Caption / Alt text</Label>
-                            <Input
-                              id="new-img-caption"
-                              placeholder="e.g. Back view of the product"
-                              value={newImageCaption}
-                              onChange={(e) => setNewImageCaption(e.target.value)}
-                              className="text-xs h-8 rounded bg-background border-border"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleAddImage();
-                                }
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            onClick={handleAddImage}
-                            variant="outline"
-                            className="h-8 rounded text-xs border-border hover:bg-muted flex items-center gap-1"
-                          >
-                            <Plus size={13} />
-                            <span>Insert Image</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Split-pane Markdown Editor */}
-                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                        <Sparkles size={18} className="text-amber-500" />
-                        <span>Storefront Rich Content Composer</span>
-                      </CardTitle>
-                      <CardDescription>
-                        Compose detailed Markdown stories, manuals, or guides that render as high-fidelity HTML on public listings.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Formatting Helper Tools */}
-                      <div className="flex items-center gap-1.5 flex-wrap bg-muted/60 p-2 border border-border rounded-lg dark:border-zinc-800">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("bold", "bold text")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
-                          title="Bold (**text**)"
-                          aria-label="Bold (**text**)"
-                        >
-                          <Bold size={13} />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("italic", "italic text")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
-                          title="Italic (*text*)"
-                          aria-label="Italic (*text*)"
-                        >
-                          <Italic size={13} />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("h1", "Heading 1")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
-                          title="H1 heading (# Heading)"
-                          aria-label="H1 heading (# Heading)"
-                        >
-                          <Heading1 size={13} />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("h2", "Heading 2")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs font-bold hover:bg-muted rounded text-foreground"
-                          title="H2 heading (## Heading)"
-                          aria-label="H2 heading (## Heading)"
-                        >
-                          <Heading2 size={13} />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("quote", "blockquote citation")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
-                          title="Blockquote (> citation)"
-                          aria-label="Blockquote (> citation)"
-                        >
-                          <Quote size={13} />
-                        </Button>
-                        <span className="h-4 w-[1px] bg-border mx-1" />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("bullet", "list item")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
-                          title="Bullet List (- item)"
-                          aria-label="Bullet List (- item)"
-                        >
-                          <List size={13} />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("ordered", "list item")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
-                          title="Numbered List (1. item)"
-                          aria-label="Numbered List (1. item)"
-                        >
-                          <ListOrdered size={13} />
-                        </Button>
-                        <span className="h-4 w-[1px] bg-border mx-1" />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("link", "Link Title")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
-                          title="Hyperlink ([title](url))"
-                          aria-label="Hyperlink ([title](url))"
-                        >
-                          <Link2 size={13} />
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => insertMarkdown("image", "Image alt caption")}
-                          onMouseDown={(e) => e.preventDefault()}
-                          className="h-7 px-2 text-xs hover:bg-muted rounded text-foreground"
-                          title="Image ([caption](url))"
-                          aria-label="Image ([caption](url))"
-                        >
-                          <ImageIcon size={13} />
-                        </Button>
-                      </div>
-
-                      {/* Text editor and preview side-by-side */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Editor */}
-                        <div className="space-y-1.5 flex flex-col">
-                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Markdown Composer</Label>
-                          <textarea
-                            ref={textareaRef}
-                            value={markdown}
-                            onChange={(e) => setMarkdown(e.target.value)}
-                            placeholder="# Product Overview..."
-                            className="w-full flex-1 min-h-[300px] p-3 text-xs font-mono border border-border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-zinc-400 resize-y rounded-lg dark:border-zinc-800"
-                          />
-                        </div>
-
-                        {/* Live parsing HTML render preview */}
-                        <div className="flex flex-col">
-                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Live Formatted Output Preview</Label>
-                          <div className="w-full flex-1 min-h-[300px] p-4 border border-border bg-muted/10 overflow-y-auto rounded-lg dark:border-zinc-800 max-h-[420px]">
-                            {markdown ? (
-                              <div
-                                className="prose prose-sm max-w-none text-foreground break-words dark:prose-invert"
-                                dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(markdown) }}
-                              />
-                            ) : (
-                              <span className="text-xs text-muted-foreground italic">No description composed. HTML preview is empty.</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* SUB-TAB 2: SEO & Layout Options */}
-                <TabsContent value="seo-layout" className="space-y-6 mt-0">
-                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                        <Globe size={18} className="text-amber-500" />
-                        <span>Search Engine Optimization (SEO) Metadata</span>
-                      </CardTitle>
-                      <CardDescription>
-                        Define fields to configure browser tab metadata, search crawler descriptions, and social media sharing previews.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="seo-title" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">SEO Meta Title</Label>
-                        <Input
-                          id="seo-title"
-                          value={seo.title}
-                          onChange={(e) => setSeo({ ...seo, title: e.target.value })}
-                          placeholder="Tab Title & Search Engines Headline"
-                          className="rounded bg-background border-border"
-                        />
-                        <div className="flex justify-between items-center text-[10px] text-muted-foreground">
-                          <span>Recommended: 50-60 characters.</span>
-                          <span className={seo.title.length > 60 ? "text-amber-500 font-semibold" : "text-green-500"}>
-                            Current: {seo.title.length} chars
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label htmlFor="seo-desc" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">SEO Meta Description</Label>
-                        <Textarea
-                          id="seo-desc"
-                          value={seo.description}
-                          onChange={(e) => setSeo({ ...seo, description: e.target.value })}
-                          placeholder="Short summary paragraph displayed beneath the heading on Google results"
-                          className="min-h-20 rounded bg-background border-border"
-                        />
-                        <div className="flex justify-between items-center text-[10px] text-muted-foreground">
-                          <span>Recommended: 120-160 characters.</span>
-                          <span className={seo.description.length > 160 ? "text-amber-500 font-semibold" : "text-green-500"}>
-                            Current: {seo.description.length} chars
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label htmlFor="seo-keywords" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Meta Keywords (Comma separated)</Label>
-                        <Input
-                          id="seo-keywords"
-                          value={seo.keywords}
-                          onChange={(e) => setSeo({ ...seo, keywords: e.target.value })}
-                          placeholder="e.g. sports shoes, lightweight boots, athletic gear"
-                          className="rounded bg-background border-border"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                        <Settings size={18} className="text-amber-500" />
-                        <span>E-commerce Layout & Preview Themes</span>
-                      </CardTitle>
-                      <CardDescription>
-                        Customize page template designs and modify storefront live previews instantly.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="cms-template" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Product Layout Style</Label>
-                        <Select
-                          value={layoutTemplate}
-                          onValueChange={setLayoutTemplate}
-                        >
-                          <SelectTrigger id="cms-template" className="rounded bg-background border-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-lg">
-                            <SelectItem value="Default Grid">Default Grid Showcase</SelectItem>
-                            <SelectItem value="Elegant Editorial">Elegant Editorial Profile</SelectItem>
-                            <SelectItem value="Minimalist Modern">Minimalist Modern Single-Focus</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <span className="text-[10px] text-muted-foreground">Dictates the page structures on client-facing storefronts.</span>
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Preview Theme Toggle</Label>
-                        <div className="flex items-center gap-3 border p-2 bg-muted/20 rounded-lg dark:border-zinc-800 h-9">
-                          <button
-                            type="button"
-                            onClick={() => setPreviewTheme("light")}
-                            className={cn(
-                              "flex-1 flex items-center justify-center gap-1.5 py-1 text-xs rounded transition-all font-semibold",
-                              previewTheme === "light" ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground"
-                            )}
-                          >
-                            <Sun size={13} />
-                            <span>Light mode</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPreviewTheme("dark")}
-                            className={cn(
-                              "flex-1 flex items-center justify-center gap-1.5 py-1 text-xs rounded transition-all font-semibold",
-                              previewTheme === "dark" ? "bg-background shadow-xs text-foreground" : "text-muted-foreground hover:text-foreground"
-                            )}
-                          >
-                            <Moon size={13} />
-                            <span>Dark mode</span>
-                          </button>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground">Toggle colors inside the simulated live preview card.</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* SUB-TAB 3: Publishing & Advanced Settings */}
-                <TabsContent value="publishing" className="space-y-6 mt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Status selection */}
-                    <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                      <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                          <CheckCircle2 size={18} className="text-amber-500" />
-                          <span>Publishing Status</span>
-                        </CardTitle>
-                        <CardDescription>Configure storefront listings status parameters.</CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-1.5">
-                        <Label htmlFor="cms-status" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Listing Status</Label>
-                        <Select
-                          value={publishStatus}
-                          onValueChange={setPublishStatus}
-                        >
-                          <SelectTrigger id="cms-status" className="rounded bg-background border-border">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-lg">
-                            <SelectItem value="Draft">Draft (Internal Only)</SelectItem>
-                            <SelectItem value="Published">Published (Publicly Searchable)</SelectItem>
-                            <SelectItem value="Scheduled">Scheduled (Auto live / Archive)</SelectItem>
-                            <SelectItem value="Archived">Archived (De-listed)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <span className="text-[10px] text-muted-foreground">Draft mode prevents checkout access in active shopping carts.</span>
-                      </CardContent>
-                    </Card>
-
-                    {/* Schedule times */}
-                    <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                      <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                          <Calendar size={18} className="text-amber-500" />
-                          <span>Publication Schedule</span>
-                        </CardTitle>
-                        <CardDescription>Optional automatic publishing timelines.</CardDescription>
-                      </CardHeader>
-                      <CardContent className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <Label htmlFor="published-at" className="text-[10px] font-bold uppercase text-muted-foreground">Scheduled Live</Label>
-                          <input
-                            id="published-at"
-                            type="datetime-local"
-                            value={publishedAt}
-                            onChange={(e) => setPublishedAt(e.target.value)}
-                            className="w-full text-xs p-2 border border-border rounded bg-background text-foreground dark:border-zinc-800 focus:outline-none"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label htmlFor="archived-at" className="text-[10px] font-bold uppercase text-muted-foreground">Scheduled Archive</Label>
-                          <input
-                            id="archived-at"
-                            type="datetime-local"
-                            value={archivedAt}
-                            onChange={(e) => setArchivedAt(e.target.value)}
-                            className="w-full text-xs p-2 border border-border rounded bg-background text-foreground dark:border-zinc-800 focus:outline-none"
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-
-                  {/* Slug Override */}
-                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                        <ExternalLink size={18} className="text-amber-500" />
-                        <span>SEO Customized URL Override</span>
-                      </CardTitle>
-                      <CardDescription>Overwrites default products slug path to yield highly optimized clean marketing URLs.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="space-y-1">
-                        <Label htmlFor="cms-slug-override" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Custom Marketing Slug Override</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="cms-slug-override"
-                            value={customSlugOverride}
-                            onChange={(e) => setCustomSlugOverride(e.target.value)}
-                            className="rounded bg-background border-border"
-                            placeholder="e.g. premium-sneakers-seasonal-deal"
-                          />
-                          <Button
-                            variant="outline"
-                            onClick={() => setCustomSlugOverride(product.slug || "")}
-                            title="Reset to default slug"
-                          >
-                            <RefreshCw className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          Output path: https://scryme.store/products/{customSlugOverride || product.slug || "unnamed"}
-                        </span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Dynamic Custom Metadata attributes */}
-                  <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2 text-foreground">
-                        <Layers size={18} className="text-amber-500" />
-                        <span>Dynamic Product Metadata Parameters</span>
-                      </CardTitle>
-                      <CardDescription>Configure custom tag properties filterable inside search indices and shopping catalog selectors.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      {/* Grid attributes table */}
-                      <div className="border rounded-lg overflow-hidden dark:border-zinc-800">
-                        <div className="grid grid-cols-3 bg-muted/60 font-bold border-b text-[10px] uppercase text-muted-foreground tracking-wider p-2.5 dark:border-zinc-800">
-                          <div>Parameter Key</div>
-                          <div>Value Settings</div>
-                          <div className="text-right">Remove</div>
-                        </div>
-
-                        {customAttrs.length === 0 ? (
-                          <div className="p-4 text-center text-xs text-muted-foreground italic">No parameters registered. Use inputs below.</div>
-                        ) : (
-                          customAttrs.map((attr: any, idx: number) => (
-                            <div key={attr.id} className="grid grid-cols-3 items-center p-2 border-b text-xs text-foreground font-mono dark:border-zinc-800">
-                              <div className="font-semibold text-foreground pl-1">{attr.key}</div>
-                              <div>
-                                <Input
-                                  value={attr.value}
-                                  onChange={(e) => {
-                                    const updated = [...customAttrs];
-                                    updated[idx].value = e.target.value;
-                                    setCustomAttrs(updated);
-                                  }}
-                                  className="h-7 text-xs rounded border-border bg-background font-sans"
-                                />
-                              </div>
-                              <div className="text-right pr-1">
-                                <Button
-                                  onClick={() => handleRemoveCustomAttr(attr.id)}
-                                  variant="ghost"
-                                  className="h-7 px-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-950 rounded"
-                                >
-                                  <Trash2 size={13} />
-                                </Button>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Add attribute forms */}
-                      <div className="border p-4 bg-muted/10 space-y-3 rounded-lg dark:border-zinc-800">
-                        <span className="text-xs font-bold text-foreground">Add Custom Parameter</span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <Label htmlFor="attr-key" className="text-[10px] font-bold uppercase text-muted-foreground font-mono">Key Name (alphanumeric & underscore)</Label>
-                            <Input
-                              id="attr-key"
-                              placeholder="e.g. fabric_rating"
-                              value={newAttrKey}
-                              onChange={(e) => setNewAttrKey(e.target.value)}
-                              className="text-xs h-8 rounded bg-background border-border font-mono"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label htmlFor="attr-val" className="text-[10px] font-bold uppercase text-muted-foreground">Value Content</Label>
-                            <Input
-                              id="attr-val"
-                              placeholder="e.g. Waterproof Gore-Tex"
-                              value={newAttrValue}
-                              onChange={(e) => setNewAttrValue(e.target.value)}
-                              className="text-xs h-8 rounded bg-background border-border"
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleAddCustomAttr();
-                                }
-                              }}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            onClick={handleAddCustomAttr}
-                            variant="outline"
-                            className="h-8 rounded text-xs border-border hover:bg-muted flex items-center gap-1"
-                          >
-                            <Plus size={13} />
-                            <span>Register Attribute</span>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-amber-500" />
+                    <span>Enterprise Hybrid CMS Studio</span>
+                  </CardTitle>
+                  <CardDescription>
+                    To configure stunning multi-channel layouts, run AI copywriting engines, optimize visual assets, and inspect rich metadata indexings, please proceed to the unified Enterprise Studio.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-2 pb-6">
+                  <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2">
+                    <Link href={`/inventory/cms/${product.id}?type=product`}>
+                      Open Hybrid CMS Studio
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             {/* VARIANTS TAB */}
             <TabsContent value="variants" className="mt-0">
-              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Product Variants</CardTitle>
-                    <CardDescription>
-                      Manage different sizes, colors, or materials.
-                    </CardDescription>
-                  </div>
-                  <Button
-                    className="gap-2 bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-                    onClick={() => {
-                      setEditingVariant(null);
-                      setVariantForm({
-                        name: "",
-                        sku: `${product.sku}-${(product.variants?.length || 0) + 1}`,
-                        buyingPrice: Number(
-                          product.variants?.[0]?.buyingPrice || 0,
-                        ),
-                        retailPrice: Number(
-                          product.variants?.[0]?.retailPrice || 0,
-                        ),
-                        initialStock: 0,
-                      });
-                      setIsVariantDialogOpen(true);
-                    }}>
-                    <Plus className="w-4 h-4" /> Add Variant
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-12"></TableHead>
-                          <TableHead>Variant Name</TableHead>
-                          <TableHead>SKU</TableHead>
-                          <TableHead>Barcode</TableHead>
-                          <TableHead className="text-right">Price</TableHead>
-                          <TableHead className="text-right">Stock</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="w-12"></TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {product.variants?.map((v: any) => (
-                          <TableRow key={v.id}>
-                            <TableCell>
-                              <input
-                                type="checkbox"
-                                className="rounded"
-                                checked={selectedVariants.includes(v.id)}
-                                onChange={e => {
-                                  if (e.target.checked) {
-                                    setSelectedVariants([
-                                      ...selectedVariants,
-                                      v.id,
-                                    ]);
-                                  } else {
-                                    setSelectedVariants(
-                                      selectedVariants.filter(
-                                        id => id !== v.id,
-                                      ),
-                                    );
-                                  }
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell className="font-medium text-foreground">
-                              {v.name}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {v.sku}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {v.barcode || "-"}
-                            </TableCell>
-                            <TableCell className="text-right font-bold">
-                              ${Number(v.retailPrice || 0).toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Badge variant="outline" className="font-bold">
-                                {v.variantStocks?.reduce(
-                                  (acc: number, s: any) =>
-                                    acc + Number(s.currentStock),
-                                  0,
-                                ) || 0}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {v.isActive ? (
-                                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800 text-[10px] uppercase font-bold">
-                                  Active
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="secondary"
-                                  className="text-[10px] uppercase font-bold">
-                                  Inactive
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label="More options">
-                                        <MoreHorizontal className="w-4 h-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                  </TooltipTrigger>
-                                  <TooltipContent>More options</TooltipContent>
-                                </Tooltip>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setEditingVariant(v);
-                                      setVariantForm({
-                                        name: v.name,
-                                        sku: v.sku,
-                                        barcode: v.barcode || "",
-                                        buyingPrice: Number(v.buyingPrice),
-                                        retailPrice: Number(v.retailPrice),
-                                        initialStock: 0,
-                                        isActive: v.isActive,
-                                        attributes: v.attributes || {},
-                                        pointsOnPurchase:
-                                          v.pointsOnPurchase || 0,
-                                        loyaltyPointsOverride:
-                                          v.loyaltyPointsOverride || 0,
-                                        requiresExpiryTracking:
-                                          v.requiresExpiryTracking ?? true,
-                                        expiryWarningDays:
-                                          v.expiryWarningDays || 2,
-                                        defaultShelfLifeDays:
-                                          v.defaultShelfLifeDays || 0,
-                                        requiresSerialNumber:
-                                          v.requiresSerialNumber ?? false,
-                                        wholesalePrice: Number(
-                                          v.wholesalePrice || 0,
-                                        ),
-                                        promotionalPrice: Number(
-                                          v.promotionalPrice || 0,
-                                        ),
-                                        isPopular: v.isPopular ?? false,
-                                        isNew: v.isNew ?? false,
-                                      });
-                                      setIsVariantDialogOpen(true);
-                                    }}>
-                                    <Edit className="w-4 h-4 mr-2" /> Edit
-                                    Details
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    <ImageIcon className="w-4 h-4 mr-2" />{" "}
-                                    Manage Media
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    className="text-red-600 dark:text-red-400"
-                                    disabled={product.variants?.length <= 1}
-                                    onClick={() => setVariantsToDelete([v.id])}>
-                                    <Trash2 className="w-4 h-4 mr-2" /> Delete
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-                <CardFooter className="py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-muted-foreground">
-                      Bulk Actions ({selectedVariants.length}):
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={selectedVariants.length === 0}
-                      onClick={() => handleBulkStatusUpdate(true)}>
-                      Mark Active
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 dark:text-red-400"
-                      disabled={
-                        selectedVariants.length === 0 ||
-                        selectedVariants.length >=
-                          (product.variants?.length || 0)
-                      }
-                      onClick={() => setVariantsToDelete(selectedVariants)}>
-                      Delete Selected
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+              <VariantsTab
+                product={product}
+                setProduct={setProduct}
+                selectedVariants={selectedVariants}
+                setSelectedVariants={setSelectedVariants}
+                setIsVariantDialogOpen={setIsVariantDialogOpen}
+                setEditingVariant={setEditingVariant}
+                setVariantForm={setVariantForm}
+                setVariantsToDelete={setVariantsToDelete}
+                handleBulkStatusUpdate={handleBulkStatusUpdate}
+              />
             </TabsContent>
 
             {/* UNITS TAB */}
             <TabsContent value="units" className="space-y-6 mt-0">
-              {product.variants?.map((variant: any) => (
-                <Card
-                  key={variant.id}
-                  className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                  <CardHeader>
-                    <CardTitle>Units for Variant: {variant.name}</CardTitle>
-                    <CardDescription>
-                      Configure primary and selling units.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-4">
-                        <Label>Base Unit (Primary Inventory Unit)</Label>
-                        <Select
-                          value={
-                            variant.baseUnitId || variant.baseOrgUnitId || ""
-                          }
-                          onValueChange={async val => {
-                            const isOrg = organizationUnits.some(
-                              (u: any) => u.id === val,
-                            );
-                            const updatedVariant = {
-                              ...variant,
-                              baseUnitId: isOrg ? null : val,
-                              baseOrgUnitId: isOrg ? val : null,
-                            };
-                            await updateVariantUnits(
-                              variant.id,
-                              updatedVariant,
-                            );
-                            setProduct({
-                              ...product,
-                              variants: product.variants.map((v: any) =>
-                                v.id === variant.id ? updatedVariant : v,
-                              ),
-                            });
-                            toast.success("Units updated");
-                          }}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Unit..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>System Units</SelectLabel>
-                              {systemUnits.map((u: any) => (
-                                <SelectItem key={u.id} value={u.id}>
-                                  {u.name} ({u.symbol})
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                            <SelectGroup>
-                              <SelectLabel>Organization Units</SelectLabel>
-                              {organizationUnits.map((u: any) => (
-                                <SelectItem key={u.id} value={u.id}>
-                                  {u.name} ({u.symbol})
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-4">
-                        <Label>Stocking Unit (Purchasing Unit)</Label>
-                        <Select
-                          value={
-                            variant.stockingUnitId ||
-                            variant.stockingOrgUnitId ||
-                            ""
-                          }
-                          onValueChange={async val => {
-                            const isOrg = organizationUnits.some(
-                              (u: any) => u.id === val,
-                            );
-                            const updatedVariant = {
-                              ...variant,
-                              stockingUnitId: isOrg ? null : val,
-                              stockingOrgUnitId: isOrg ? val : null,
-                            };
-                            await updateVariantUnits(
-                              variant.id,
-                              updatedVariant,
-                            );
-                            setProduct({
-                              ...product,
-                              variants: product.variants.map((v: any) =>
-                                v.id === variant.id ? updatedVariant : v,
-                              ),
-                            });
-                            toast.success("Units updated");
-                          }}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select Unit..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectGroup>
-                              <SelectLabel>System Units</SelectLabel>
-                              {systemUnits.map((u: any) => (
-                                <SelectItem key={u.id} value={u.id}>
-                                  {u.name} ({u.symbol})
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                            <SelectGroup>
-                              <SelectLabel>Organization Units</SelectLabel>
-                              {organizationUnits.map((u: any) => (
-                                <SelectItem key={u.id} value={u.id}>
-                                  {u.name} ({u.symbol})
-                                </SelectItem>
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-base font-bold">
-                          Selling Units
-                        </Label>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-2"
-                          onClick={async () => {
-                            const newSellingUnits = [
-                              ...(variant.sellingUnits || []),
-                              {
-                                systemUnitId: null,
-                                orgUnitId: null,
-                                retailPrice: Number(variant.retailPrice),
-                                conversionMultiplier: 1,
-                                isActive: true,
-                              },
-                            ];
-                            await updateVariantUnits(variant.id, {
-                              ...variant,
-                              sellingUnits: newSellingUnits,
-                            });
-                            setProduct({
-                              ...product,
-                              variants: product.variants.map((v: any) =>
-                                v.id === variant.id
-                                  ? { ...v, sellingUnits: newSellingUnits }
-                                  : v,
-                              ),
-                            });
-                            toast.success("Selling unit added");
-                          }}>
-                          <PlusCircle className="w-4 h-4" /> Add Selling Unit
-                        </Button>
-                      </div>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Unit</TableHead>
-                            <TableHead>Conversion Multiplier</TableHead>
-                            <TableHead>Retail Price</TableHead>
-                            <TableHead>Wholesale Price</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="w-12"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {variant.sellingUnits?.map((su: any, idx: number) => (
-                            <TableRow key={su.id || idx}>
-                              <TableCell>
-                                <Select
-                                  value={su.systemUnitId || su.orgUnitId || ""}
-                                  onValueChange={async val => {
-                                    const isOrg = organizationUnits.some(
-                                      (u: any) => u.id === val,
-                                    );
-                                    const updated = [...variant.sellingUnits];
-                                    updated[idx] = {
-                                      ...su,
-                                      systemUnitId: isOrg ? null : val,
-                                      orgUnitId: isOrg ? val : null,
-                                    };
-                                    await updateVariantUnits(variant.id, {
-                                      ...variant,
-                                      sellingUnits: updated,
-                                    });
-                                    setProduct({
-                                      ...product,
-                                      variants: product.variants.map(
-                                        (v: any) =>
-                                          v.id === variant.id
-                                            ? { ...v, sellingUnits: updated }
-                                            : v,
-                                      ),
-                                    });
-                                  }}>
-                                  <SelectTrigger className="h-9">
-                                    <SelectValue placeholder="Select..." />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectGroup>
-                                      <SelectLabel>System Units</SelectLabel>
-                                      {systemUnits.map((u: any) => (
-                                        <SelectItem key={u.id} value={u.id}>
-                                          {u.symbol}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                    <SelectGroup>
-                                      <SelectLabel>
-                                        Organization Units
-                                      </SelectLabel>
-                                      {organizationUnits.map((u: any) => (
-                                        <SelectItem key={u.id} value={u.id}>
-                                          {u.symbol}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectGroup>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  className="h-9"
-                                  value={su.conversionMultiplier}
-                                  onChange={e => {
-                                    const val = Number(e.target.value);
-                                    const updated = [...variant.sellingUnits];
-                                    updated[idx] = {
-                                      ...su,
-                                      conversionMultiplier: val,
-                                    };
-                                    setProduct({
-                                      ...product,
-                                      variants: product.variants.map(
-                                        (v: any) =>
-                                          v.id === variant.id
-                                            ? { ...v, sellingUnits: updated }
-                                            : v,
-                                      ),
-                                    });
-                                  }}
-                                  onBlur={() => {
-                                    updateVariantUnits(variant.id, {
-                                      ...variant,
-                                      sellingUnits: variant.sellingUnits,
-                                    });
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  className="h-9"
-                                  value={su.wholesalePrice || ""}
-                                  onChange={e => {
-                                    const val = Number(e.target.value);
-                                    const updated = [...variant.sellingUnits];
-                                    updated[idx] = {
-                                      ...su,
-                                      wholesalePrice: val,
-                                    };
-                                    setProduct({
-                                      ...product,
-                                      variants: product.variants.map(
-                                        (v: any) =>
-                                          v.id === variant.id
-                                            ? { ...v, sellingUnits: updated }
-                                            : v,
-                                      ),
-                                    });
-                                  }}
-                                  onBlur={() => {
-                                    updateVariantUnits(variant.id, {
-                                      ...variant,
-                                      sellingUnits: variant.sellingUnits,
-                                    });
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Input
-                                  type="number"
-                                  className="h-9"
-                                  value={su.retailPrice}
-                                  onChange={e => {
-                                    const val = Number(e.target.value);
-                                    const updated = [...variant.sellingUnits];
-                                    updated[idx] = { ...su, retailPrice: val };
-                                    setProduct({
-                                      ...product,
-                                      variants: product.variants.map(
-                                        (v: any) =>
-                                          v.id === variant.id
-                                            ? { ...v, sellingUnits: updated }
-                                            : v,
-                                      ),
-                                    });
-                                  }}
-                                  onBlur={() => {
-                                    updateVariantUnits(variant.id, {
-                                      ...variant,
-                                      sellingUnits: variant.sellingUnits,
-                                    });
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Badge
-                                  variant={
-                                    su.isActive ? "default" : "secondary"
-                                  }>
-                                  {su.isActive ? "Active" : "Inactive"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={async () => {
-                                    const updated = variant.sellingUnits.filter(
-                                      (_: any, i: number) => i !== idx,
-                                    );
-                                    await updateVariantUnits(variant.id, {
-                                      ...variant,
-                                      sellingUnits: updated,
-                                    });
-                                    setProduct({
-                                      ...product,
-                                      variants: product.variants.map(
-                                        (v: any) =>
-                                          v.id === variant.id
-                                            ? { ...v, sellingUnits: updated }
-                                            : v,
-                                      ),
-                                    });
-                                    toast.success("Selling unit removed");
-                                  }}>
-                                  <Trash2 className="w-4 h-4 text-red-500" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              <UnitsTab
+                product={product}
+                setProduct={setProduct}
+                systemUnits={systemUnits}
+                organizationUnits={organizationUnits}
+              />
             </TabsContent>
 
             {/* PRICING TAB */}
             <TabsContent value="pricing" className="space-y-6 mt-0">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Retail Price</CardTitle>
-                    <CardDescription>Default selling price.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                      <Input
-                        className="pl-9 text-2xl font-bold h-14"
-                        value={Number(product.variants?.[0]?.retailPrice || 0)}
-                        onChange={e => {
-                          const updatedVariants = [...product.variants];
-                          updatedVariants[0] = {
-                            ...updatedVariants[0],
-                            retailPrice: Number(e.target.value),
-                          };
-                          setProduct({ ...product, variants: updatedVariants });
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Cost Price</CardTitle>
-                    <CardDescription>
-                      Base manufacturing/buying cost.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                      <Input
-                        className="pl-9 text-2xl font-bold h-14"
-                        value={Number(product.variants?.[0]?.buyingPrice || 0)}
-                        onChange={e => {
-                          const updatedVariants = [...product.variants];
-                          updatedVariants[0] = {
-                            ...updatedVariants[0],
-                            buyingPrice: Number(e.target.value),
-                          };
-                          setProduct({ ...product, variants: updatedVariants });
-                        }}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Margin</CardTitle>
-                    <CardDescription>
-                      Estimated profit percentage.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-14 flex items-center">
-                    <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-                      {(
-                        (1 -
-                          Number(product.variants?.[0]?.buyingPrice || 0) /
-                            Number(product.variants?.[0]?.retailPrice || 1)) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </span>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                <CardHeader>
-                  <CardTitle>Loyalty & Points</CardTitle>
-                  <CardDescription>
-                    Configure points earned on purchase.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label>Base Points (Product Level)</Label>
-                    <Input
-                      type="number"
-                      value={product.pointsOnPurchase || 0}
-                      onChange={e =>
-                        setProduct({
-                          ...product,
-                          pointsOnPurchase: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Points Override</Label>
-                    <Input
-                      type="number"
-                      value={product.loyaltyPointsOverride || 0}
-                      onChange={e =>
-                        setProduct({
-                          ...product,
-                          loyaltyPointsOverride: Number(e.target.value),
-                        })
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Price Lists & Rules</CardTitle>
-                    <CardDescription>
-                      Assign special pricing for customer segments or events.
-                    </CardDescription>
-                  </div>
-                  <Button variant="outline" className="gap-2">
-                    <Plus className="w-4 h-4" /> Create Rule
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="bg-muted rounded-xl p-6 border border-dashed border-border flex flex-col items-center justify-center text-center">
-                      <Tag className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                      <h4 className="font-bold text-foreground mb-1">
-                        No custom pricing rules found
-                      </h4>
-                      <p className="text-sm text-muted-foreground max-w-[300px]">
-                        Create rules to offer discounts for bulk orders,
-                        specific seasons or VIP customers.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <PricingTab
+                product={product}
+                setProduct={setProduct}
+              />
             </TabsContent>
 
             {/* INVENTORY TAB */}
             <TabsContent value="inventory" className="space-y-6 mt-0">
-              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Automated Reorder Rules</CardTitle>
-                    <CardDescription>
-                      Manage thresholds and auto-replenishment settings.
-                    </CardDescription>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    onClick={async () => {
-                      const newRule = {
-                        productId: product.id,
-                        locationId: locations[0]?.id,
-                        minQuantity: 5,
-                        maxQuantity: 20,
-                        reorderQuantity: 15,
-                        isActive: true,
-                        autoGenerate: false,
-                      };
-                      const rule = await updateReorderRule(newRule);
-                      setProduct({
-                        ...product,
-                        reorderRules: [
-                          ...(product.reorderRules || []),
-                          { ...rule, location: locations[0] },
-                        ],
-                      });
-                      toast.success("Reorder rule added");
-                    }}>
-                    <PlusCircle className="w-4 h-4" /> Add Rule
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Threshold (Min/Max)</TableHead>
-                        <TableHead>Order Qty</TableHead>
-                        <TableHead>Preferred Supplier</TableHead>
-                        <TableHead>Auto</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {product.reorderRules?.map((rule: any) => (
-                        <TableRow key={rule.id}>
-                          <TableCell className="font-medium">
-                            {rule.location?.name}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                className="w-16 h-8 text-xs"
-                                value={Number(rule.minQuantity)}
-                                onChange={async e => {
-                                  const val = Number(e.target.value);
-                                  await updateReorderRule({
-                                    ...rule,
-                                    minQuantity: val,
-                                  });
-                                  setProduct({
-                                    ...product,
-                                    reorderRules: product.reorderRules.map(
-                                      (r: any) =>
-                                        r.id === rule.id
-                                          ? { ...r, minQuantity: val }
-                                          : r,
-                                    ),
-                                  });
-                                }}
-                              />
-                              <span className="text-muted-foreground">/</span>
-                              <Input
-                                type="number"
-                                className="w-16 h-8 text-xs"
-                                value={Number(rule.maxQuantity)}
-                                onChange={async e => {
-                                  const val = Number(e.target.value);
-                                  await updateReorderRule({
-                                    ...rule,
-                                    maxQuantity: val,
-                                  });
-                                  setProduct({
-                                    ...product,
-                                    reorderRules: product.reorderRules.map(
-                                      (r: any) =>
-                                        r.id === rule.id
-                                          ? { ...r, maxQuantity: val }
-                                          : r,
-                                    ),
-                                  });
-                                }}
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              className="w-16 h-8 text-xs"
-                              value={Number(rule.reorderQuantity)}
-                              onChange={async e => {
-                                const val = Number(e.target.value);
-                                await updateReorderRule({
-                                  ...rule,
-                                  reorderQuantity: val,
-                                });
-                                setProduct({
-                                  ...product,
-                                  reorderRules: product.reorderRules.map(
-                                    (r: any) =>
-                                      r.id === rule.id
-                                        ? { ...r, reorderQuantity: val }
-                                        : r,
-                                  ),
-                                });
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Select
-                              value={rule.preferredSupplierId || ""}
-                              onValueChange={async val => {
-                                await updateReorderRule({
-                                  ...rule,
-                                  preferredSupplierId: val || null,
-                                });
-                                setProduct({
-                                  ...product,
-                                  reorderRules: product.reorderRules.map(
-                                    (r: any) =>
-                                      r.id === rule.id
-                                        ? {
-                                            ...r,
-                                            preferredSupplierId: val || null,
-                                          }
-                                        : r,
-                                  ),
-                                });
-                              }}>
-                              <SelectTrigger className="h-8 text-xs">
-                                <SelectValue placeholder="None" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="">None</SelectItem>
-                                {suppliers.map((s: any) => (
-                                  <SelectItem key={s.id} value={s.id}>
-                                    {s.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <input
-                              type="checkbox"
-                              checked={rule.autoGenerate}
-                              onChange={async e => {
-                                const val = e.target.checked;
-                                await updateReorderRule({
-                                  ...rule,
-                                  autoGenerate: val,
-                                });
-                                setProduct({
-                                  ...product,
-                                  reorderRules: product.reorderRules.map(
-                                    (r: any) =>
-                                      r.id === rule.id
-                                        ? { ...r, autoGenerate: val }
-                                        : r,
-                                  ),
-                                });
-                              }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={rule.isActive ? "default" : "secondary"}>
-                              {rule.isActive ? "Active" : "Inactive"}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {(!product.reorderRules ||
-                        product.reorderRules.length === 0) && (
-                        <TableRow>
-                          <TableCell
-                            colSpan={6}
-                            className="h-24 text-center text-muted-foreground italic">
-                            No reorder rules configured.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                <CardHeader>
-                  <CardTitle>Stock by Location</CardTitle>
-                  <CardDescription>
-                    Real-time inventory levels across your warehouses and
-                    stores.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Location</TableHead>
-                        <TableHead>Variant</TableHead>
-                        <TableHead className="text-right">Available</TableHead>
-                        <TableHead className="text-right">Reserved</TableHead>
-                        <TableHead className="text-right">On Hand</TableHead>
-                        <TableHead className="w-12"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {locations.map((loc: any) => {
-                        const variantStocks =
-                          product.variants?.[0]?.variantStocks?.filter(
-                            (s: any) => s.locationId === loc.id,
-                          ) || [];
-                        return (
-                          <TableRow key={loc.id}>
-                            <TableCell className="font-bold">
-                              {loc.name}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              Default
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              {variantStocks[0]?.availableStock
-                                ? Number(variantStocks[0].availableStock)
-                                : 0}
-                            </TableCell>
-                            <TableCell className="text-right text-muted-foreground">
-                              0
-                            </TableCell>
-                            <TableCell className="text-right font-bold text-foreground">
-                              {variantStocks[0]?.currentStock
-                                ? Number(variantStocks[0].currentStock)
-                                : 0}
-                            </TableCell>
-                            <TableCell>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    aria-label="View location details">
-                                    <ChevronRight className="w-4 h-4" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  View location details
-                                </TooltipContent>
-                              </Tooltip>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-
-              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                <CardHeader>
-                  <CardTitle>Inventory Settings</CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base font-bold">
-                          Low Stock Threshold
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Global threshold for stock alerts.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="threshold">Alert Threshold</Label>
-                      <Input
-                        id="threshold"
-                        type="number"
-                        value={product.lowStockThreshold || 0}
-                        onChange={e =>
-                          setProduct({
-                            ...product,
-                            lowStockThreshold: Number(e.target.value),
-                          })
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label className="text-base font-bold">
-                          Product Rating & Visibility
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Manage featured status and ratings.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="isFeatured"
-                          checked={product.isFeatured}
-                          onChange={e =>
-                            setProduct({
-                              ...product,
-                              isFeatured: e.target.checked,
-                            })
-                          }
-                        />
-                        <Label htmlFor="isFeatured">Featured</Label>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          id="isNew"
-                          checked={product.isNew}
-                          onChange={e =>
-                            setProduct({ ...product, isNew: e.target.checked })
-                          }
-                        />
-                        <Label htmlFor="isNew">New Arrival</Label>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <InventoryTab
+                product={product}
+                setProduct={setProduct}
+                locations={locations}
+                suppliers={suppliers}
+              />
             </TabsContent>
 
             {/* SUPPLIERS TAB */}
             <TabsContent value="suppliers" className="mt-0">
-              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Assigned Suppliers</CardTitle>
-                    <CardDescription>
-                      Who you buy this product from.
-                    </CardDescription>
-                  </div>
-                  <Button variant="outline" className="gap-2">
-                    <Plus className="w-4 h-4" /> Link Supplier
-                  </Button>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Supplier Name</TableHead>
-                        <TableHead>Supplier SKU</TableHead>
-                        <TableHead className="text-right">Cost Price</TableHead>
-                        <TableHead className="text-right">Lead Time</TableHead>
-                        <TableHead>Preferred</TableHead>
-                        <TableHead className="w-12"></TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {product.suppliers?.length > 0 ? (
-                        product.suppliers.map((s: any) => (
-                          <TableRow key={s.id}>
-                            <TableCell className="font-bold text-foreground">
-                              {s.supplier.name}
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {s.supplierSku || "-"}
-                            </TableCell>
-                            <TableCell className="text-right font-medium">
-                              ${Number(s.costPrice).toFixed(2)}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {s.leadTimeDays || "7"} days
-                            </TableCell>
-                            <TableCell>
-                              {s.isPreferred ? (
-                                <Badge className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
-                                  YES
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary">NO</Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        aria-label="More options">
-                                        <MoreHorizontal className="w-4 h-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                  </TooltipTrigger>
-                                  <TooltipContent>More options</TooltipContent>
-                                </Tooltip>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem>
-                                    View Supplier
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem>
-                                    Update Pricing
-                                  </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-red-600 dark:text-red-400">
-                                    Unlink Supplier
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={6} className="h-40 text-center">
-                            <div className="flex flex-col items-center justify-center gap-2 text-muted-foreground">
-                              <Truck className="w-8 h-8" />
-                              <p className="text-sm font-medium">
-                                No suppliers linked to this product.
-                              </p>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <SuppliersTab product={product} />
             </TabsContent>
           </Tabs>
         </div>
@@ -3409,7 +1414,6 @@ export function ProductPageClient({
                       isNew: variantForm.isNew,
                     });
                     toast.success("Variant updated");
-                    // Manually update local state for better UX
                     setProduct({
                       ...product,
                       variants: product.variants.map((v: any) =>
@@ -3439,7 +1443,6 @@ export function ProductPageClient({
                       isNew: variantForm.isNew,
                     });
                     toast.success("Variant created");
-                    // Add to local state
                     setProduct({
                       ...product,
                       variants: [
@@ -3448,7 +1451,7 @@ export function ProductPageClient({
                           ...newVariant,
                           variantStocks: [
                             { currentStock: variantForm.initialStock },
-                          ], // Mock for display
+                          ],
                         },
                       ],
                     });
@@ -3464,6 +1467,52 @@ export function ProductPageClient({
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// PlusCircle component
+function PlusCircle(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("lucide lucide-plus-circle", props.className)}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="M8 12h8" />
+      <path d="M12 8v8" />
+    </svg>
+  );
+}
+
+// XCircle component
+function XCircle(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("lucide lucide-x-circle", props.className)}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="m15 9-6 6" />
+      <path d="m9 9 6 6" />
+    </svg>
   );
 }
 

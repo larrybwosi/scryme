@@ -239,6 +239,7 @@ export function UnitSelectionDialog({
                   size="icon"
                   className="h-10 w-10 rounded-md"
                   aria-label="Decrease quantity"
+                  title="Decrease quantity"
                   onClick={() => handleQtyChange(quantity - 1)}
                   disabled={quantity <= 1}
                 >
@@ -255,6 +256,7 @@ export function UnitSelectionDialog({
                   size="icon"
                   className="h-10 w-10 rounded-md"
                   aria-label="Increase quantity"
+                  title="Increase quantity"
                   onClick={() => handleQtyChange(quantity + 1)}
                   disabled={stock > 0 && quantity >= stock}
                 >

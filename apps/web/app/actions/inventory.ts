@@ -1,5 +1,6 @@
 "use server";
 
+import * as crypto from "crypto";
 import {
   db,
   StockAdjustmentReason,
@@ -1497,7 +1498,8 @@ export async function importProducts(
             .substring(0, 3)
             .toUpperCase()
             .padEnd(3, "X");
-          const random = Math.floor(10000 + Math.random() * 90000);
+          // SECURITY (Sentinel): Use cryptographically secure random integers instead of Math.random() to prevent predictable base SKUs
+          const random = crypto.randomInt(10000, 100000);
           baseSku = `${prefix}-${random}`;
         }
 
@@ -1546,7 +1548,8 @@ export async function importProducts(
         for (const variantData of productData.variants) {
           let variantSku = variantData.sku;
           if (!variantSku || variantSku.trim() === "") {
-            const random = Math.floor(1000 + Math.random() * 9000);
+            // SECURITY (Sentinel): Use cryptographically secure random integers instead of Math.random() to prevent predictable variant SKUs
+            const random = crypto.randomInt(1000, 10000);
             variantSku = `${baseSku}-${variantData.variantName.substring(0, 3).toUpperCase()}-${random}`;
           }
 

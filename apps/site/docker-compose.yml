@@ -1,0 +1,34 @@
+services:
+  site:
+    image: ghcr.io/larrybwosi/scryme/site:${SITE_VERSION:-9.57.0}
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${SITE_PORT:-3005}"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    environment:
+      - PORT=${SITE_PORT:-3005}
+      - NEXT_PUBLIC_SANITY_PROJECT_ID=${NEXT_PUBLIC_SANITY_PROJECT_ID}
+      - NEXT_PUBLIC_SANITY_DATASET=${NEXT_PUBLIC_SANITY_DATASET}
+      - SANITY_API_TOKEN=${SANITY_API_TOKEN}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+      - NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL:-https://scryme.tech}
+      - NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN}
+      - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-https://eu.i.posthog.com}
+      - NODE_ENV=production
+    networks:
+      - scryme-network
+      - proxy-network
+
+networks:
+  scryme-network:
+    external: true
+  proxy-network:
+    name: ${PROXY_NETWORK_NAME:-dokploy-network}
+    external: true
