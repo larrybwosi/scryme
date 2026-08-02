@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start --port 3005",
     "lint": "eslint . --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "sanity:seed": "tsx sanity/run-seed.ts"
   },
   "dependencies": {
     "@portabletext/react": "^6.2.0",
@@ -37,6 +38,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "tsx": "^4.21.0",
     "typescript": "5.7.3"
   },
   "engines": {
