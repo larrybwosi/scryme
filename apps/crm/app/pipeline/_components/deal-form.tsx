@@ -124,7 +124,7 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Deal Name</FormLabel>
+              <FormLabel>Deal Name <span className="text-destructive">*</span></FormLabel>
               <FormControl>
                 <Input placeholder="e.g. Q4 Software License" {...field} />
               </FormControl>
@@ -167,7 +167,7 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
           name="stage"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Stage</FormLabel>
+              <FormLabel>Stage <span className="text-destructive">*</span></FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
