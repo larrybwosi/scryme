@@ -4,7 +4,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 // import { ZitadelService } from "@repo/zitadel/server";
 import { CrmSyncService } from "../../../../crm/infrastructure/services/crm-sync.service";
 
-vi.mock("@repo/zitadel/server", () => {
+vi.mock("@repo/zitadel", () => {
   return {
     ZitadelService: vi.fn().mockImplementation(function () {
       return {
@@ -42,6 +42,9 @@ describe("RegisterCustomerUseCase", () => {
           findFirst: vi.fn(),
           create: vi.fn(),
         },
+        zitadelConfiguration: {
+          findUnique: vi.fn(),
+        },
       },
     } as any;
 
@@ -62,7 +65,7 @@ describe("RegisterCustomerUseCase", () => {
     );
   });
 
-  it("should register a customer successfully", async () => {
+  it("should register a customer successfully with Zitadel CONNECTED", async () => {
     const organizationId = "org-123";
     const dto = {
       zitadelUserId: "zit-123",
@@ -70,6 +73,11 @@ describe("RegisterCustomerUseCase", () => {
       email: "john@example.com",
     };
 
+    vi.mocked(prisma.client.zitadelConfiguration.findUnique).mockResolvedValue({
+      id: "config-123",
+      organizationId,
+      connectionStatus: "CONNECTED",
+    } as any);
     vi.mocked(prisma.client.externalMapping.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.client.customer.upsert).mockResolvedValue({
       id: "cust-123",
@@ -84,12 +92,40 @@ describe("RegisterCustomerUseCase", () => {
     const result = await useCase.execute(organizationId, dto);
 
     expect(result.name).toBe("John Doe");
+    expect(prisma.client.zitadelConfiguration.findUnique).toHaveBeenCalledWith({
+      where: { organizationId },
+    });
     expect(prisma.client.customer.upsert).toHaveBeenCalled();
     expect(crmSyncService.enqueueSyncCustomer).toHaveBeenCalled();
     expect(loyaltyService.handleCustomerSignup).toHaveBeenCalledWith(
       organizationId,
       expect.any(String),
     );
+  });
+
+  it("should gracefully proceed with local registration when Zitadel is disconnected or unprovisioned", async () => {
+    const organizationId = "org-123";
+    const dto = {
+      zitadelUserId: "zit-123",
+      name: "John Doe Fallback",
+      email: "john_fallback@example.com",
+    };
+
+    vi.mocked(prisma.client.zitadelConfiguration.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.client.externalMapping.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.client.customer.upsert).mockResolvedValue({
+      id: "cust-123",
+      name: "John Doe Fallback",
+      email: "john_fallback@example.com",
+      organizationId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+
+    const result = await useCase.execute(organizationId, dto);
+
+    expect(result.name).toBe("John Doe Fallback");
+    expect(prisma.client.customer.upsert).toHaveBeenCalled();
   });
 
   it("should register a customer successfully without a zitadelUserId", async () => {
