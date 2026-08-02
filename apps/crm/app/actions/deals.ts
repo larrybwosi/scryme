@@ -5,16 +5,32 @@ import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+async function getOrCreateDealDefinition(organizationId: string) {
+  let dealDef = await db.crmObjectDefinition.findUnique({
+    where: { organizationId_name: { organizationId, name: "deal" } },
+  });
+
+  if (!dealDef) {
+    dealDef = await db.crmObjectDefinition.create({
+      data: {
+        organizationId,
+        name: "deal",
+        label: "Deal",
+        labelPlural: "Deals",
+        isSystem: true,
+      },
+    });
+  }
+
+  return dealDef;
+}
+
 export async function getDeals() {
   try {
     const auth = await getServerAuth();
     if (!auth?.organizationId) redirect("/login");
     const organizationId = auth.organizationId;
-    const dealDef = await db.crmObjectDefinition.findUnique({
-      where: { organizationId_name: { organizationId, name: "deal" } },
-    });
-
-    if (!dealDef) return [];
+    const dealDef = await getOrCreateDealDefinition(organizationId);
 
     return await db.crmRecord.findMany({
       where: {
@@ -76,11 +92,7 @@ export async function createDeal(input: any) {
     const organizationId = auth.organizationId;
     const { associatedCustomerId, associatedCompanyId, ...data } = input;
 
-    const dealDef = await db.crmObjectDefinition.findUnique({
-      where: { organizationId_name: { organizationId, name: "deal" } },
-    });
-
-    if (!dealDef) throw new Error("Deal definition not found");
+    const dealDef = await getOrCreateDealDefinition(organizationId);
 
     const deal = await db.crmRecord.create({
       data: {
@@ -126,19 +138,91 @@ async function createAssociation(
   if (!auth?.organizationId) return;
   const organizationId = auth.organizationId;
 
-  const rel = await db.crmRelationshipDefinition.findUnique({
+  let rel = await db.crmRelationshipDefinition.findUnique({
     where: { organizationId_name: { organizationId, name: relationshipName } },
   });
 
+  if (!rel) {
+    let sourceName = "";
+    let targetName = "deal";
+    let sourceLabel = "";
+    let targetLabel = "Deal";
+
+    if (relationshipName === "contact_deals" || relationshipName === "person_deals") {
+      sourceName = "customer";
+      sourceLabel = "Customer";
+    } else if (relationshipName === "company_deals" || relationshipName === "business_account_deals") {
+      sourceName = "business_account";
+      sourceLabel = "Business Account";
+    }
+
+    if (sourceName) {
+      let sourceDef = await db.crmObjectDefinition.findUnique({
+        where: { organizationId_name: { organizationId, name: sourceName } },
+      });
+      if (!sourceDef) {
+        sourceDef = await db.crmObjectDefinition.create({
+          data: {
+            organizationId,
+            name: sourceName,
+            label: sourceLabel,
+            labelPlural: sourceLabel + "s",
+            isSystem: true,
+          },
+        });
+      }
+
+      let targetDef = await db.crmObjectDefinition.findUnique({
+        where: { organizationId_name: { organizationId, name: targetName } },
+      });
+      if (!targetDef) {
+        targetDef = await db.crmObjectDefinition.create({
+          data: {
+            organizationId,
+            name: targetName,
+            label: targetLabel,
+            labelPlural: targetLabel + "s",
+            isSystem: true,
+          },
+        });
+      }
+
+      rel = await db.crmRelationshipDefinition.create({
+        data: {
+          organizationId,
+          name: relationshipName,
+          type: "ONE_TO_MANY",
+          sourceObjectId: sourceDef.id,
+          targetObjectId: targetDef.id,
+          sourceLabel: "Deals",
+          targetLabel: sourceLabel,
+        },
+      });
+    }
+  }
+
   if (!rel) return;
 
-  await db.crmAssociation.create({
-    data: {
-      relationshipId: rel.id,
-      sourceRecordId: sourceId,
-      targetRecordId: targetId,
+  // Check if association already exists to prevent unique constraints errors
+  const existing = await db.crmAssociation.findUnique({
+    where: {
+      relationshipId_sourceRecordId_targetRecordId: {
+        relationshipId: rel.id,
+        sourceRecordId: sourceId,
+        targetRecordId: targetId,
+      },
     },
   });
+
+  if (!existing) {
+    await db.crmAssociation.create({
+      data: {
+        relationshipId: rel.id,
+        sourceRecordId: sourceId,
+        targetRecordId: targetId,
+      },
+    });
+  }
 }
 
 export async function updateDeal(dealId: string, input: any) {
