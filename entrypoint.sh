@@ -104,7 +104,37 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
 fi
 
 # ---------------------------------------------------------
-# 3. Running Frontend or API App CMD
+# 3. Site App (Next.js) Sanity Environment Variable Injection & Seeding
+# ---------------------------------------------------------
+if [ -f "apps/site/server.js" ]; then
+  echo "Detected Site App (Next.js) environment..."
+
+  if [ -n "$NEXT_PUBLIC_SANITY_PROJECT_ID" ] && [ "$NEXT_PUBLIC_SANITY_PROJECT_ID" != "NEXT_PUBLIC_SANITY_PROJECT_ID_PLACEHOLDER" ]; then
+    echo "Injecting runtime NEXT_PUBLIC_SANITY_PROJECT_ID..."
+    escaped_val=$(echo "$NEXT_PUBLIC_SANITY_PROJECT_ID" | sed 's/[/&\]/\\&/g')
+    find . -type f \( -name "*.js" -o -name "*.html" -o -name "*.json" -o -name "*.mjs" \) -exec sed -i "s/NEXT_PUBLIC_SANITY_PROJECT_ID_PLACEHOLDER/$escaped_val/g" {} +
+  fi
+
+  if [ -n "$NEXT_PUBLIC_SANITY_DATASET" ] && [ "$NEXT_PUBLIC_SANITY_DATASET" != "NEXT_PUBLIC_SANITY_DATASET_PLACEHOLDER" ]; then
+    echo "Injecting runtime NEXT_PUBLIC_SANITY_DATASET..."
+    escaped_val=$(echo "$NEXT_PUBLIC_SANITY_DATASET" | sed 's/[/&\]/\\&/g')
+    find . -type f \( -name "*.js" -o -name "*.html" -o -name "*.json" -o -name "*.mjs" \) -exec sed -i "s/NEXT_PUBLIC_SANITY_DATASET_PLACEHOLDER/$escaped_val/g" {} +
+  fi
+
+  if [ -n "$SANITY_API_TOKEN" ]; then
+    echo "Running Sanity seeding..."
+    if [ -f "apps/site/sanity/run-seed.mjs" ]; then
+      node apps/site/sanity/run-seed.mjs || echo "⚠️ Sanity seeding failed, continuing anyway."
+    else
+      echo "⚠️ Sanity seed script not found at apps/site/sanity/run-seed.mjs"
+    fi
+  else
+    echo "ℹ️ SANITY_API_TOKEN not set, skipping Sanity seeding."
+  fi
+fi
+
+# ---------------------------------------------------------
+# 4. Running Frontend or API App CMD
 # ---------------------------------------------------------
 echo "Executing: $@"
 exec "$@"
