@@ -401,15 +401,34 @@ export class AndroidController {
   async getDashboardAnalytics(@Req() req: any) {
     const organizationId = req.v3Context.organizationId;
 
-    const totalCheckedInNow = await this.prisma.client.member.count({
-      where: { organizationId, isCheckedIn: true, deletedAt: null },
-    });
+    // ⚡ Bolt Optimization: Parallelize all independent database queries.
+    // Executing independent count, findMany, and select queries concurrently using Promise.all
+    // shrinks total database API wait time from O(4T) down to O(T).
+    const [totalCheckedInNow, logs, locations, completedLogs] = await Promise.all([
+      this.prisma.client.member.count({
+        where: { organizationId, isCheckedIn: true, deletedAt: null },
+      }),
+      this.prisma.client.attendanceLog.findMany({
+        where: { organizationId },
+        select: { checkInTime: true },
+        take: 1000,
+      }),
+      this.prisma.client.inventoryLocation.findMany({
+        where: { organizationId, isActive: true },
+        include: {
+          checkInAttendanceLogs: {
+            where: { checkOutTime: null },
+            select: { id: true },
+          },
+        },
+      }),
+      this.prisma.client.attendanceLog.findMany({
+        where: { organizationId, NOT: { checkOutTime: null } },
+        select: { checkInLocationId: true, durationMinutes: true },
+        take: 500,
+      }),
+    ]);
 
-    const logs = await this.prisma.client.attendanceLog.findMany({
-      where: { organizationId },
-      select: { checkInTime: true },
-      take: 1000,
-    });
     const hourCounts: { [hour: number]: number } = {};
     for (const log of logs) {
       const hr = new Date(log.checkInTime).getHours();
@@ -420,25 +439,22 @@ export class AndroidController {
       count: hourCounts[hr],
     })).sort((a, b) => b.count - a.count);
 
-    const locations = await this.prisma.client.inventoryLocation.findMany({
-      where: { organizationId, isActive: true },
-      include: {
-        checkInAttendanceLogs: {
-          where: { checkOutTime: null },
-          select: { id: true },
-        },
-      },
-    });
-
-    const completedLogs = await this.prisma.client.attendanceLog.findMany({
-      where: { organizationId, NOT: { checkOutTime: null } },
-      select: { checkInLocationId: true, durationMinutes: true },
-      take: 500,
-    });
+    // ⚡ Bolt Optimization: Group completed logs by locationId in-memory using a Map.
+    // Indexing items into a Map prior to mapping avoids a nested array search (O(N * M) down to O(N + M)),
+    // yielding an optimal execution profile for branch statistics calculation.
+    const completedLogsByLocation = new Map<string, any[]>();
+    for (const log of completedLogs) {
+      if (log.checkInLocationId) {
+        if (!completedLogsByLocation.has(log.checkInLocationId)) {
+          completedLogsByLocation.set(log.checkInLocationId, []);
+        }
+        completedLogsByLocation.get(log.checkInLocationId)!.push(log);
+      }
+    }
 
     const branchStats = locations.map((loc) => {
       const activePresenceCount = loc.checkInAttendanceLogs.length;
-      const locCompletedLogs = completedLogs.filter((l) => l.checkInLocationId === loc.id);
+      const locCompletedLogs = completedLogsByLocation.get(loc.id) || [];
       const totalDuration = locCompletedLogs.reduce((sum, log) => sum + (log.durationMinutes || 0), 0);
       const averageDurationMinutes = locCompletedLogs.length > 0 ? totalDuration / locCompletedLogs.length : 0.0;
       return {
