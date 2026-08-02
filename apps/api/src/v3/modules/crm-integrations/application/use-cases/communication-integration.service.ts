@@ -27,20 +27,46 @@ export class CommunicationIntegrationService {
 
     if (!messages) return { ok: true };
 
+    // ⚡ Bolt Optimization: Use in-memory Map caches to prevent N+1 queries.
+    // - integrationCache caches organizationIntegration records by teamId to prevent redundant queries
+    //   when multiple messages in a batch belong to the same integration/team.
+    // - personDefCache caches "person" crmObjectDefinition records by organizationId.
+    const integrationCache = new Map<string, any>();
+    const personDefCache = new Map<string, any>();
+
     for (const msg of messages) {
+      const teamId = msg.metadata?.team;
+      let integration: any = null;
+
       // 1. Identify Organization
-      const integration =
-        await this.prisma.client.organizationIntegration.findFirst({
+      if (teamId) {
+        if (integrationCache.has(teamId)) {
+          integration = integrationCache.get(teamId);
+        } else {
+          integration = await this.prisma.client.organizationIntegration.findFirst({
+            where: {
+              integrationDefinition: { slug: providerSlug },
+              credentials: { path: ["teamId"], equals: teamId },
+            },
+            include: { organization: true },
+          });
+          if (integration) {
+            integrationCache.set(teamId, integration);
+          }
+        }
+      } else {
+        // Fallback if teamId is not present
+        integration = await this.prisma.client.organizationIntegration.findFirst({
           where: {
             integrationDefinition: { slug: providerSlug },
-            credentials: { path: ["teamId"], equals: msg.metadata?.team },
           },
           include: { organization: true },
         });
+      }
 
       if (!integration) {
         this.logger.warn(
-          `No integration found for ${providerSlug} team ${msg.metadata?.team}`,
+          `No integration found for ${providerSlug} team ${teamId}`,
         );
         continue;
       }
@@ -67,18 +93,27 @@ export class CommunicationIntegrationService {
         if (record) {
           recordId = record.id;
         } else {
-          const personDef =
-            await this.prisma.client.crmObjectDefinition.findFirst({
+          let personDef: any = null;
+          const orgId = integration.organizationId;
+
+          if (personDefCache.has(orgId)) {
+            personDef = personDefCache.get(orgId);
+          } else {
+            personDef = await this.prisma.client.crmObjectDefinition.findFirst({
               where: {
-                organizationId: integration.organizationId,
+                organizationId: orgId,
                 name: "person",
               },
             });
+            if (personDef) {
+              personDefCache.set(orgId, personDef);
+            }
+          }
 
           if (personDef) {
             const newRecord = await this.prisma.client.crmRecord.create({
               data: {
-                organizationId: integration.organizationId,
+                organizationId: orgId,
                 objectId: personDef.id,
                 data: { email: email, name: email.split("@")[0] },
               },
