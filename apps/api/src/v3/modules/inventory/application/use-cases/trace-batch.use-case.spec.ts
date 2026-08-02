@@ -16,7 +16,22 @@ describe("TraceBatchUseCase", () => {
     useCase = new TraceBatchUseCase(repository);
   });
 
-  it("should return traceability for a valid batch ID", async () => {
+  it("should return traceability directly for a valid batch CUID (Fast-Path Optimization)", async () => {
+    // A valid CUID identifier starting with 'c' and >= 24 chars
+    const mockCuid = "clj8zksc0000008mi3z3403g6";
+    const mockBatch = { id: mockCuid, organizationId: "org-1" };
+    repository.getTraceability.mockResolvedValue(mockBatch);
+
+    const result = await useCase.execute("org-1", mockCuid);
+
+    // Should call getTraceability directly without calling findById or findByBatchNumber first
+    expect(repository.getTraceability).toHaveBeenCalledWith(mockCuid);
+    expect(repository.findById).not.toHaveBeenCalled();
+    expect(repository.findByBatchNumber).not.toHaveBeenCalled();
+    expect(result.id).toBe(mockCuid);
+  });
+
+  it("should return traceability for a valid batch ID (when not CUID-like or if direct lookup falls back)", async () => {
     const mockBatch = { id: "batch-1", organizationId: "org-1" };
     repository.findById.mockResolvedValue(mockBatch);
     repository.getTraceability.mockResolvedValue({
