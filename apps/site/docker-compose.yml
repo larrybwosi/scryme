@@ -30,6 +30,3 @@ services:
       - NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN}
       - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-https://eu.i.posthog.com}
       - NODE_ENV=production
-    networks:
-      - scryme-network
-      - proxy-network
