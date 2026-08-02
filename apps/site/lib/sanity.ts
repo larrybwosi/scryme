@@ -10,7 +10,9 @@ const isConfigured =
   dataset &&
   projectId !== "your-project-id" &&
   dataset !== "production-mock-stub" &&
-  projectId !== "your-sanity-project-id";
+  projectId !== "your-sanity-project-id" &&
+  projectId !== "NEXT_PUBLIC_SANITY_PROJECT_ID_PLACEHOLDER" &&
+  dataset !== "NEXT_PUBLIC_SANITY_DATASET_PLACEHOLDER";
 
 export const client = isConfigured
   ? createClient({
