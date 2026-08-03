@@ -247,3 +247,8 @@
 **Vulnerability:** The private `toResponse` serialization helper inside `StrapiConnectionUseCase` allowed `organizationId` to be an optional parameter, which when omitted, fetched connection details from the database by `id` only, risking IDOR/BOLA bypass during create/update flows if not pre-validated.
 **Learning:** Helper methods that serialize or query records must never allow "fail-open" optional parameters for tenant-scoping. Enforcing mandatory scoping parameters at the lowest possible layer of the use-case prevents accidental developer omissions.
 **Prevention:** Always make the tenant identification parameter (e.g. `organizationId`) strictly mandatory in internal query/serialization helpers, and avoid fallback ternary patterns in Prisma `where` clauses.
+
+## 2026-08-03 - IDOR Prevention via Strict Product Ownership Checks in Favorites and Reviews
+**Vulnerability:** Endpoints for creating reviews or adding favorites accepted a user-provided `productId` and associated it with the caller's tenant without verifying that the product actually belonged to the active `organizationId`. This allowed users to make cross-tenant data associations and pollute resources.
+**Learning:** Standard multi-tenant guards on endpoints only establish context for the primary mutated entity. Any linked entity ID (foreign key) provided in request parameters or body remains untrusted and must be verified against the tenant context.
+**Prevention:** Always perform an explicit existence/ownership check on linked entity IDs (e.g. using `findFirst` with `{ id, organizationId }`) before associating them or performing writes in service layers.
