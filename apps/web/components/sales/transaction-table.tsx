@@ -40,6 +40,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { TransactionDetailsSheet } from "./transaction-details-sheet";
 import { ManageDeliveryModal } from "./manage-delivery-modal";
 import { generateDocumentAction } from "../../app/actions/sales";
+import { TransactionInsightsGrid } from "./transaction-insights-grid";
 import { toast } from "sonner";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -269,6 +270,8 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
 
   return (
     <>
+      <TransactionInsightsGrid transactions={filtered} />
+
       <div className="overflow-hidden rounded-md border border-border bg-card dark:border-zinc-800">
         {/* ── Toolbar ─────────────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center gap-2.5 border-b border-border bg-muted/50 px-4 py-2.5 dark:border-zinc-800">

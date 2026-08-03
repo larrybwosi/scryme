@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useTransition } from "react";
+import React, { useState, useEffect, useCallback, useTransition, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Zap,
   ZapOff,
+  Clock,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -122,6 +123,117 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
     [searchParams, pathname, router],
   );
 
+  const currentPreset = useMemo(() => {
+    if (!currentStartDate && !currentEndDate) return "all";
+
+    const todayStr = format(new Date(), "yyyy-MM-dd");
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = format(yesterday, "yyyy-MM-dd");
+
+    const last7Days = new Date();
+    last7Days.setDate(last7Days.getDate() - 7);
+    const last7DaysStr = format(last7Days, "yyyy-MM-dd");
+
+    const startOfMonthDate = new Date();
+    startOfMonthDate.setDate(1);
+    const startOfMonthStr = format(startOfMonthDate, "yyyy-MM-dd");
+
+    const lastMonthStart = new Date();
+    lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
+    lastMonthStart.setDate(1);
+    const lastMonthStartStr = format(lastMonthStart, "yyyy-MM-dd");
+
+    const lastMonthEnd = new Date();
+    lastMonthEnd.setDate(0);
+    const lastMonthEndStr = format(lastMonthEnd, "yyyy-MM-dd");
+
+    if (currentStartDate === todayStr && currentEndDate === todayStr) {
+      return "today";
+    }
+    if (currentStartDate === yesterdayStr && currentEndDate === yesterdayStr) {
+      return "yesterday";
+    }
+    if (currentStartDate === last7DaysStr && currentEndDate === todayStr) {
+      return "last_week";
+    }
+    if (currentStartDate === startOfMonthStr && currentEndDate === todayStr) {
+      return "this_month";
+    }
+    if (currentStartDate === lastMonthStartStr && currentEndDate === lastMonthEndStr) {
+      return "last_month";
+    }
+
+    return "custom";
+  }, [currentStartDate, currentEndDate]);
+
+  const handlePresetChange = (presetValue: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (presetValue === "all") {
+      setDateRange(undefined);
+      params.delete("startDate");
+      params.delete("endDate");
+      startTransition(() => {
+        router.push(`${pathname}?${params.toString()}`);
+      });
+      return;
+    }
+
+    if (presetValue === "custom") {
+      return;
+    }
+
+    let from: Date | undefined;
+    let to: Date | undefined = new Date();
+
+    switch (presetValue) {
+      case "today":
+        from = new Date();
+        break;
+      case "yesterday":
+        from = new Date();
+        from.setDate(from.getDate() - 1);
+        to = new Date();
+        to.setDate(to.getDate() - 1);
+        break;
+      case "last_week":
+        from = new Date();
+        from.setDate(from.getDate() - 7);
+        break;
+      case "this_month":
+        from = new Date();
+        from.setDate(1);
+        break;
+      case "last_month":
+        from = new Date();
+        from.setMonth(from.getMonth() - 1);
+        from.setDate(1);
+        to = new Date();
+        to.setDate(0);
+        break;
+    }
+
+    if (from) {
+      setDateRange({ from, to });
+      params.set("startDate", format(from, "yyyy-MM-dd"));
+      if (to) {
+        params.set("endDate", format(to, "yyyy-MM-dd"));
+      } else {
+        params.delete("endDate");
+      }
+    } else {
+      setDateRange(undefined);
+      params.delete("startDate");
+      params.delete("endDate");
+    }
+
+    startTransition(() => {
+      router.push(`${pathname}?${params.toString()}`);
+    });
+  };
+
   const toggleRealtime = () => {
     updateQueryParam("realtime", currentRealtime ? "" : "true");
   };
@@ -190,6 +302,29 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
             value={localSearch}
             onChange={e => setLocalSearch(e.target.value)}
           />
+        </div>
+
+        {/* Time Range Preset Dropdown */}
+        <div className="w-full md:w-auto min-w-[150px]">
+          <Select
+            value={currentPreset}
+            onValueChange={handlePresetChange}>
+            <SelectTrigger className="w-full text-xs h-9 bg-background border-border text-foreground hover:bg-accent transition-colors">
+              <span className="flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                <SelectValue placeholder="Time Range" />
+              </span>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="today">Today</SelectItem>
+              <SelectItem value="yesterday">Yesterday</SelectItem>
+              <SelectItem value="last_week">Last Week</SelectItem>
+              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="last_month">Last Month</SelectItem>
+              <SelectItem value="custom">Custom Range</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Date Range Picker */}
