@@ -366,6 +366,8 @@ export default function GeneralSettings({
   setEnableAutoStart: (enable: boolean) => void;
   autoPrintEnabled: boolean;
   setAutoPrintEnabled: (enable: boolean) => void;
+  enableAutoUpdate: boolean;
+  setEnableAutoUpdate: (enable: boolean) => void;
 }) {
   const { currentLocation, allowNegativeStock, setAllowNegativeStock } = useAuthStore();
   const [isLocationDialogOpen, setIsLocationDialogOpen] = useState(false);
