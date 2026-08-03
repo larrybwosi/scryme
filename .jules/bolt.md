@@ -1,3 +1,7 @@
+## 2026-08-02 - [Function-Scoped In-Memory Map Caching in Webhook Payloads]
+**Learning:** Batch webhook integration flows that process multiple nested payloads (such as Slack/communication logs) sequentially query mappings like `organizationIntegration` and configurations like `crmObjectDefinition` inside loops. Because payloads are processed concurrently or sequentially within a single request, introducing transient, function-scoped Map caches for lookups eliminates N+1 database roundtrips completely and prevents stale cache data risks.
+**Action:** Always introduce function-scoped Map caches for metadata or configuration lookups inside webhook execution loops where batch records might share identical identifiers.
+
 ## 2026-07-31 - [N+1 Query Bottlenecks in Strapi E-Commerce Integration]
 **Learning:** Sequential `findFirst` database requests on mapping tables (like `ecommerceProductMapping` and `ecommerceCustomerMapping`) within bulk outbound/inbound loops during e-commerce synchronization processes degrade throughput heavily. Batch pre-fetching all relevant mappings using single `findMany` queries with the `in` operator, and constructing in-memory Map caches, reduces database transaction pressure and query latency from $O(N)$ down to a flat $O(1)$ roundtrips.
 **Action:** Always pre-fetch integration mapping tables for bulk processing batches and use constant-time Map lookups inside iterative sync flows.
