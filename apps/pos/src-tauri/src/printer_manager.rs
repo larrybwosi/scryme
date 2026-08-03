@@ -350,13 +350,20 @@ pub async fn print_job(
             }
         },
         "bill" => {
-            if let Some(pdf_bytes) = order.get("pdfBytes").and_then(|v| v.as_array()) {
-                let bytes: Vec<u8> = pdf_bytes.iter().filter_map(|v| v.as_u64().map(|b| b as u8)).collect();
-                let printer_config = get_printer_config(app.clone()).await?;
-                let target = printer_config.bill_printer.or(printer_config.receipt_printer).ok_or("Bill printer not configured")?.target;
-                print_pdf_to_system_printer(&app, target, bytes).await
-            } else {
-                print_bill_native(app, order, settings, branch_name).await
+            #[cfg(feature = "restaurant")]
+            {
+                if let Some(pdf_bytes) = order.get("pdfBytes").and_then(|v| v.as_array()) {
+                    let bytes: Vec<u8> = pdf_bytes.iter().filter_map(|v| v.as_u64().map(|b| b as u8)).collect();
+                    let printer_config = get_printer_config(app.clone()).await?;
+                    let target = printer_config.bill_printer.or(printer_config.receipt_printer).ok_or("Bill printer not configured")?.target;
+                    print_pdf_to_system_printer(&app, target, bytes).await
+                } else {
+                    print_bill_native(app, order, settings, branch_name).await
+                }
+            }
+            #[cfg(not(feature = "restaurant"))]
+            {
+                Err("Bill printing is only supported in restaurant mode".into())
             }
         },
         "label" => print_generic_labels(app, order, settings).await,
@@ -1424,6 +1431,7 @@ pub async fn print_bar_native(
     print_raw_to_printer(&app, printer_config.bar_printer, bytes_to_print).await
 }
 
+#[cfg(feature = "restaurant")]
 #[tauri::command]
 pub async fn print_bill_native(
     app: tauri::AppHandle,

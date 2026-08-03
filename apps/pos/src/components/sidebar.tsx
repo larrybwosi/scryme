@@ -210,7 +210,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
 
           {deviceType === 'MAIN_HUB' &&
             import.meta.env.MODE !== 'standalone' &&
-            (import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'restaurant' && (
+            import.meta.env.VITE_BUSINESS_MODE === 'restaurant' && (
               <Button
                 asChild
                 variant={isRouteActive('/hub-overview') ? 'secondary' : 'ghost'}

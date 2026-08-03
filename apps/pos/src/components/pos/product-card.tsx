@@ -147,13 +147,13 @@ export const ProductCard = memo(({ product, onAddToCart, onSelectProduct, pricin
     setQty(val);
   };
 
-  const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
+  const isPharmacy = import.meta.env.VITE_BUSINESS_MODE === 'pharmacy';
 
   return (
     <>
       <Card
         onClick={() => {
-          if (businessMode === 'pharmacy' && onSelectProduct) {
+          if (isPharmacy && onSelectProduct) {
             onSelectProduct(product);
           }
           if (hasMultipleUnits) setShowUnitSelection(true);

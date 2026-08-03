@@ -6,6 +6,8 @@ import { sendOrderToKitchen } from '@/lib/kds';
 import { type BusinessType, getBusinessConfig, getDefaultSidebarItems } from '../lib/business-configs';
 import { AutoPrintConfig, DEFAULT_AUTO_PRINT_CONFIG } from '../types/print-types';
 
+const initialBusinessType: BusinessType = (import.meta.env.VITE_BUSINESS_MODE as BusinessType) || 'retail';
+
 export type OrderType = 'takeaway' | 'delivery' | 'dine-in' | 'pickup' | 'online';
 export type OrderStatus = 'waiting' | 'ready' | 'canceled' | 'completed';
 
@@ -964,10 +966,10 @@ export const usePosStore = create<PosStore>()(
       lastCompletedOrder: null,
       settings: {
         businessName: 'Scryme',
-        businessType: 'restaurant',
+        businessType: initialBusinessType,
         currency: 'KSH',
         taxRate: 2,
-        sidebarItems: getDefaultSidebarItems('restaurant'),
+        sidebarItems: getDefaultSidebarItems(initialBusinessType),
         receiptConfig: getDefaultReceiptConfig(),
         allowSaveUnpaidOrders: true,
         enableCustomerManagement: true,
@@ -1246,7 +1248,7 @@ export const usePosStore = create<PosStore>()(
           products: [],
           settings: {
             businessName: 'Scryme',
-            businessType: 'retail' as BusinessType,
+            businessType: initialBusinessType,
             currency: 'USD',
             taxRate: 16,
             // address: '',
@@ -1259,7 +1261,7 @@ export const usePosStore = create<PosStore>()(
             enableEmployeeManagement: true,
             enableLowStockAlerts: true,
             requireHoldReason: false,
-            sidebarItems: getDefaultSidebarItems('retail'),
+            sidebarItems: getDefaultSidebarItems(initialBusinessType),
             lowStockThreshold: 10,
             enableCashDrawer: true,
             requireEmployeePin: false,
