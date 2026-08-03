@@ -3,6 +3,7 @@ import { FavoritesService } from "../favorites.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { V2ApiContext } from "@repo/shared/api/v2";
 import { vi, describe, it, expect, beforeEach } from "vitest";
+import { NotFoundException, BadRequestException } from "@nestjs/common";
 
 describe("FavoritesService", () => {
   let service: FavoritesService;
@@ -21,6 +22,9 @@ describe("FavoritesService", () => {
                 upsert: vi.fn(),
                 delete: vi.fn(),
                 findUnique: vi.fn(),
+              },
+              product: {
+                findFirst: vi.fn(),
               },
             },
           },
@@ -76,6 +80,52 @@ describe("FavoritesService", () => {
         }),
       );
       expect(result).toEqual(mockFavorites);
+    });
+  });
+
+  describe("addFavorite", () => {
+    it("should throw BadRequestException if customerId is missing", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1" } as any;
+      await expect(service.addFavorite(ctx, "prod1")).rejects.toThrow(BadRequestException);
+    });
+
+    it("should throw NotFoundException if the product does not exist or does not belong to the organization", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1", customerId: "cust1" } as any;
+      vi.spyOn(prisma.client.product, "findFirst").mockResolvedValue(null);
+
+      await expect(service.addFavorite(ctx, "prod1")).rejects.toThrow(NotFoundException);
+      expect(prisma.client.product.findFirst).toHaveBeenCalledWith({
+        where: { id: "prod1", organizationId: "org1" },
+        select: { id: true },
+      });
+    });
+
+    it("should call upsert on favorite if product exists and belongs to organization", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1", customerId: "cust1" } as any;
+      vi.spyOn(prisma.client.product, "findFirst").mockResolvedValue({ id: "prod1" } as any);
+      vi.spyOn(prisma.client.favorite, "upsert").mockResolvedValue({ id: "fav1" } as any);
+
+      const result = await service.addFavorite(ctx, "prod1");
+
+      expect(prisma.client.product.findFirst).toHaveBeenCalledWith({
+        where: { id: "prod1", organizationId: "org1" },
+        select: { id: true },
+      });
+      expect(prisma.client.favorite.upsert).toHaveBeenCalledWith({
+        where: {
+          customerId_productId: {
+            customerId: "cust1",
+            productId: "prod1",
+          },
+        },
+        create: {
+          organizationId: "org1",
+          customerId: "cust1",
+          productId: "prod1",
+        },
+        update: {},
+      });
+      expect(result).toEqual({ id: "fav1" });
     });
   });
 });

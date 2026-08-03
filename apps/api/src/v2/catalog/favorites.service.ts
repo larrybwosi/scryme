@@ -57,6 +57,16 @@ export class FavoritesService {
     const { organizationId, customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying that the product exists and belongs to this organization
+    const product = await this.prisma.client.product.findFirst({
+      where: { id: productId, organizationId },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+
     return this.prisma.client.favorite.upsert({
       where: {
         customerId_productId: {
