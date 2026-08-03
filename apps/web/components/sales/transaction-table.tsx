@@ -64,6 +64,8 @@ interface Transaction {
 
 interface TransactionTableProps {
   transactions: Transaction[];
+  invoiceConfigUpdatedAt?: string;
+  receiptConfigUpdatedAt?: string;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -163,7 +165,11 @@ function PaymentStatusBadge({ status }: { status: string }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function TransactionTable({ transactions }: TransactionTableProps) {
+export function TransactionTable({
+  transactions,
+  invoiceConfigUpdatedAt,
+  receiptConfigUpdatedAt,
+}: TransactionTableProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [paymentTrx, setPaymentTrx] = useState<Transaction | null>(null);
   const [viewTransactionId, setViewTransactionId] = useState<string | null>(
@@ -175,6 +181,33 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
   const selectAllRef = useRef<HTMLInputElement>(null);
+
+  const handleExport = async () => {
+    try {
+      const XLSX = await import("xlsx");
+      const data = filtered.map(trx => ({
+        "Order Number": trx.number,
+        "Type": trx.type.replace(/_/g, " "),
+        "Date": format(new Date(trx.createdAt), "yyyy-MM-dd HH:mm:ss"),
+        "Customer": trx.customer?.name ?? "Walk-in Customer",
+        "Customer Email": trx.customer?.email ?? "—",
+        "Location": trx.location?.name ?? "—",
+        "Amount": trx.finalTotal,
+        "Currency": trx.currencyCode ?? "KES",
+        "Status": trx.status.replace(/_/g, " "),
+        "Payment Status": trx.paymentStatus.replace(/_/g, " ")
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+      XLSX.writeFile(workbook, `transactions_${format(new Date(), "yyyyMMdd_HHmmss")}.xlsx`);
+      toast.success("Transactions exported successfully!");
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast.error("Failed to export transactions");
+    }
+  };
 
   // ── Filtering ──────────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
@@ -307,6 +340,7 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
           <Button
             variant="outline"
             size="sm"
+            onClick={handleExport}
             className="h-7 gap-1.5 text-[11px]">
             <Download className="h-3 w-3" />
             Export
@@ -477,11 +511,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             {(() => {
+                              const invoiceConfigDate = invoiceConfigUpdatedAt ? new Date(invoiceConfigUpdatedAt) : null;
+                              const trxUpdateDate = new Date(trx.updatedAt);
+                              const referenceDate = invoiceConfigDate && invoiceConfigDate > trxUpdateDate ? invoiceConfigDate : trxUpdateDate;
+
                               const invoice = trx.attachments?.find(
                                 a =>
                                   a.description === "Invoice" &&
-                                  new Date(a.uploadedAt) >=
-                                    new Date(trx.updatedAt),
+                                  new Date(a.uploadedAt) >= referenceDate,
                               );
                               const isGenerating =
                                 isGeneratingDoc === `${trx.id}-invoice`;
@@ -515,11 +552,14 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
                             })()}
 
                             {(() => {
+                              const receiptConfigDate = receiptConfigUpdatedAt ? new Date(receiptConfigUpdatedAt) : null;
+                              const trxUpdateDate = new Date(trx.updatedAt);
+                              const referenceDate = receiptConfigDate && receiptConfigDate > trxUpdateDate ? receiptConfigDate : trxUpdateDate;
+
                               const receipt = trx.attachments?.find(
                                 a =>
                                   a.description === "Receipt" &&
-                                  new Date(a.uploadedAt) >=
-                                    new Date(trx.updatedAt),
+                                  new Date(a.uploadedAt) >= referenceDate,
                               );
                               const isGenerating =
                                 isGeneratingDoc === `${trx.id}-receipt`;

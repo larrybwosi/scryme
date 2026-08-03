@@ -12,10 +12,13 @@ import { getOrganizationContext } from "@/app/actions/auth";
 import { RealtimeTransactionWrapper } from "@/components/sales/realtime-transaction-wrapper";
 import { Suspense } from "react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { db } from "@repo/db";
 
 async function TransactionList({
   searchParams,
   organizationId,
+  invoiceConfigUpdatedAt,
+  receiptConfigUpdatedAt,
 }: {
   searchParams: {
     q?: string;
@@ -28,6 +31,8 @@ async function TransactionList({
     endDate?: string;
   };
   organizationId?: string;
+  invoiceConfigUpdatedAt?: string;
+  receiptConfigUpdatedAt?: string;
 }) {
   const transactions = await getTransactions({
     search: searchParams.q,
@@ -44,6 +49,8 @@ async function TransactionList({
     <RealtimeTransactionWrapper
       initialTransactions={transactions}
       organizationId={organizationId}
+      invoiceConfigUpdatedAt={invoiceConfigUpdatedAt}
+      receiptConfigUpdatedAt={receiptConfigUpdatedAt}
     />
   );
 }
@@ -77,6 +84,20 @@ export default async function TransactionsPage(props: {
 
   const locations = await getLocations();
 
+  const invoiceConfig = context?.organizationId
+    ? await db.invoiceConfig.findUnique({
+        where: { organizationId: context.organizationId },
+        select: { updatedAt: true },
+      })
+    : null;
+
+  const receiptConfig = context?.organizationId
+    ? await db.receiptConfig.findUnique({
+        where: { organizationId: context.organizationId },
+        select: { updatedAt: true },
+      })
+    : null;
+
   return (
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <Suspense>
@@ -97,6 +118,8 @@ export default async function TransactionsPage(props: {
         <TransactionList
           searchParams={searchParams}
           organizationId={context?.organizationId}
+          invoiceConfigUpdatedAt={invoiceConfig?.updatedAt?.toISOString()}
+          receiptConfigUpdatedAt={receiptConfig?.updatedAt?.toISOString()}
         />
       </Suspense>
     </div>
