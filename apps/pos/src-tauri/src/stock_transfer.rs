@@ -62,7 +62,8 @@ pub struct TransferItem {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TransferRequest {
-    pub to_location_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to_location_id: Option<String>,
     pub items: Vec<TransferItem>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub notes: Option<String>,
@@ -75,7 +76,8 @@ pub struct TransferRequest {
 #[serde(rename_all = "camelCase")]
 pub struct TransferApiPayload {
     pub from_location_id: String,
-    pub to_location_id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub to_location_id: Option<String>,
     pub items: Vec<TransferItem>,
 
     // UPDATED: Added skip_serializing_if to ensure these are omitted if None
@@ -226,7 +228,7 @@ pub async fn submit_stock_transfer(
     };
 
     info!(
-        "[StockTransfer] Submitting transfer from {} to {}",
+        "[StockTransfer] Submitting transfer from {} to {:?}",
         current_location_id, api_payload.to_location_id
     );
 
@@ -269,7 +271,7 @@ pub async fn submit_stock_request(
     };
 
     info!(
-        "[StockRequest] Submitting request from {} to {}",
+        "[StockRequest] Submitting request from {} to {:?}",
         current_location_id, api_payload.to_location_id
     );
 
