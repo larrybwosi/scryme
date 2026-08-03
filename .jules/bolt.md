@@ -1,3 +1,7 @@
+## 2026-08-03 - [Parallelized Database Queries and Map Grouping in V3 Analytics Dashboard]
+**Learning:** Sequential database queries (such as counting, finding multiple relations, or completed logs) in REST dashboard paths multiply database connection hold times and network roundtrips. Additionally, linear nested array filters (e.g., `completedLogs.filter(...)`) inside loops create $O(N \times M)$ CPU hotspots. Parallelizing independent queries with `Promise.all` and grouping relation lists into a Map beforehand converts execution profiles to constant-time $O(1)$ database latency and optimal $O(N + M)$ processing time.
+**Action:** Always parallelize independent query blocks in read-heavy endpoints and pre-group related array results into Map structures before iterating parent entities.
+
 ## 2026-07-31 - [N+1 Query Bottlenecks in Strapi E-Commerce Integration]
 **Learning:** Sequential `findFirst` database requests on mapping tables (like `ecommerceProductMapping` and `ecommerceCustomerMapping`) within bulk outbound/inbound loops during e-commerce synchronization processes degrade throughput heavily. Batch pre-fetching all relevant mappings using single `findMany` queries with the `in` operator, and constructing in-memory Map caches, reduces database transaction pressure and query latency from $O(N)$ down to a flat $O(1)$ roundtrips.
 **Action:** Always pre-fetch integration mapping tables for bulk processing batches and use constant-time Map lookups inside iterative sync flows.
