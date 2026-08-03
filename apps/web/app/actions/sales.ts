@@ -146,6 +146,16 @@ export async function getTransactions(params: {
       _count: {
         select: { items: true },
       },
+      items: {
+        select: {
+          quantity: true,
+        },
+      },
+      serviceItems: {
+        select: {
+          quantity: true,
+        },
+      },
     },
     orderBy,
   });
@@ -155,6 +165,8 @@ export async function getTransactions(params: {
     ...transaction,
     finalTotal: Number(transaction.finalTotal),
     totalPaid: Number(transaction.totalPaid),
+    items: transaction.items,
+    serviceItems: transaction.serviceItems,
   }));
 
   return formattedTransactions;
