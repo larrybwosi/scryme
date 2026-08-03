@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -85,7 +85,7 @@
 */
 @layer base {
   html {
-    font-size: 14px; /* Standard ERP size for data density */
+    font-size: 14px; /* Density standard */
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -93,7 +93,7 @@
 
   @media (min-width: 2000px) {
     html {
-      font-size: 15px; /* Slight scale up for 4k monitors */
+      font-size: 15px;
     }
   }
 
@@ -111,158 +111,172 @@
 }
 
 /* ========================================
-   COLOR PALETTE (OKLCH)
+   COLOR PALETTE (STUDIO + SUPABASE GREEN)
    ========================================
 */
 :root {
-  /* LIGHT MODE:
-     Uses a subtle cool-gray background to make white "Cards" pop.
-     This creates depth essential for complex dashboards.
-  */
-  --background: oklch(0.985 0.005 265); /* Very subtle cool gray, not harsh white */
-  --foreground: oklch(0.2 0.02 265); /* Deep Gunmetal for high readability */
+  /* ── Light Studio Canvas ─────────────────────────────────────────────── */
+  --background: oklch(0.965 0.003 250); /* #f2f3f5 */
+  --foreground: oklch(0.16 0.005 250); /* #101112 */
 
-  --card: oklch(1 0 0); /* Pure white surfaces for data */
-  --card-foreground: oklch(0.2 0.02 265);
+  /* ── Surface Hierarchy ───────────────────────────────────────────────── */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.005 250);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.02 265);
+  --popover-foreground: oklch(0.16 0.005 250);
 
-  /* Enterprise Indigo - Trustworthy & Professional */
-  --primary: oklch(0.55 0.18 265);
-  --primary-foreground: oklch(1 0 0);
+  /* ── Primary Accent — Supabase Emerald Green (#3ECF8E) ──────────────── */
+  --primary: oklch(0.74 0.17 160);
+  --primary-foreground: oklch(
+    0.12 0.005 260
+  ); /* Dark text for contrast on bright green */
 
-  --secondary: oklch(0.96 0.01 265); /* Light gray for secondary actions */
-  --secondary-foreground: oklch(0.25 0.02 265);
+  --secondary: oklch(0.93 0.003 250);
+  --secondary-foreground: oklch(0.16 0.005 250);
 
-  --muted: oklch(0.96 0.01 265); /* Muted backgrounds for table headers */
-  --muted-foreground: oklch(0.5 0.02 265);
+  --muted: oklch(0.94 0.003 250);
+  --muted-foreground: oklch(0.52 0.01 250);
 
-  --accent: oklch(0.95 0.02 265);
-  --accent-foreground: oklch(0.25 0.02 265);
+  --accent: oklch(0.92 0.005 250);
+  --accent-foreground: oklch(0.16 0.005 250);
 
-  --destructive: oklch(0.6 0.18 25);
+  --destructive: oklch(0.58 0.22 25); /* Standard Danger Red */
   --destructive-foreground: oklch(1 0 0);
 
-  --border: oklch(0.92 0.01 265); /* Distinct enough for data grids */
-  --input: oklch(0.92 0.01 265);
-  --ring: oklch(0.55 0.18 265);
+  --border: oklch(0.89 0.005 250);
+  --input: oklch(0.89 0.005 250);
+  --ring: oklch(0.74 0.17 160);
 
-  /* Professional Data Visualization Palette */
-  --chart-1: oklch(0.55 0.18 265); /* Primary Indigo */
-  --chart-2: oklch(0.6 0.15 180); /* Teal */
-  --chart-3: oklch(0.6 0.15 230); /* Blue */
-  --chart-4: oklch(0.65 0.15 50); /* Amber/Orange */
-  --chart-5: oklch(0.6 0.15 330); /* Rose */
+  /* ── Data Visualization ────────────────────────────────────────────── */
+  --chart-1: oklch(0.74 0.17 160); /* Supabase Emerald */
+  --chart-2: oklch(0.62 0.16 240); /* Studio Blue */
+  --chart-3: oklch(0.7 0.17 65); /* Studio Amber */
+  --chart-4: oklch(0.58 0.18 310); /* Studio Purple */
+  --chart-5: oklch(0.58 0.22 25); /* Studio Red */
 
-  /* Production Status Colors */
-  --status-success: oklch(0.65 0.15 145); /* Green for completed/available */
-  --status-warning: oklch(0.7 0.15 70); /* Amber for low stock/pending */
-  --status-error: oklch(0.6 0.18 25); /* Red for errors/unavailable */
-  --status-info: oklch(0.6 0.15 230); /* Blue for information */
-  --status-in-progress: oklch(0.6 0.15 265); /* Indigo for in-progress */
+  /* ── Content Status Indicators ──────────────────────────────────────── */
+  --status-success: oklch(0.74 0.17 160); /* Emerald Green */
+  --status-warning: oklch(0.7 0.17 65); /* Draft Amber */
+  --status-error: oklch(0.58 0.22 25); /* Validation Error Red */
+  --status-info: oklch(0.62 0.16 240); /* Info Blue */
+  --status-in-progress: oklch(0.65 0.18 290); /* Syncing Violet */
 
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.25 0.02 265);
-  --sidebar-primary: oklch(0.55 0.18 265);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.97 0.01 265);
-  --sidebar-accent-foreground: oklch(0.25 0.02 265);
-  --sidebar-border: oklch(0.92 0.01 265);
-  --sidebar-ring: oklch(0.55 0.18 265);
+  /* ── Sidebar ─────────────────────────────────────────────────────────── */
+  --sidebar: oklch(0.94 0.003 250);
+  --sidebar-foreground: oklch(0.16 0.005 250);
+  --sidebar-primary: oklch(0.74 0.17 160);
+  --sidebar-primary-foreground: oklch(0.12 0.005 260);
+  --sidebar-accent: oklch(0.89 0.005 250);
+  --sidebar-accent-foreground: oklch(0.16 0.005 250);
+  --sidebar-border: oklch(0.89 0.005 250);
+  --sidebar-ring: oklch(0.74 0.17 160);
 
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: 'Source Serif 4', serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Source Serif 4", serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
+  /* ── Strict 0px Corners ────────────────────────────────────────────── */
   --radius: 0px;
 
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  --shadow-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.03);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
 
-  --gradient-hero: linear-gradient(135deg, var(--primary) 0%, oklch(0.45 0.15 265) 100%);
-  --gradient-subtle: linear-gradient(180deg, var(--background) 0%, var(--muted) 100%);
-  --shadow-hover: 0 8px 30px -4px oklch(0.55 0.18 265 / 0.15);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --gradient-hero: linear-gradient(
+    135deg,
+    oklch(0.74 0.17 160 / 0.15) 0%,
+    var(--background) 100%
+  );
+  --gradient-subtle: linear-gradient(
+    180deg,
+    var(--background) 0%,
+    var(--muted) 100%
+  );
+  --shadow-hover: 0 6px 20px -4px oklch(0.74 0.17 160 / 0.25);
+  --ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
 
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
 
 /* ========================================
-   DARK MODE — ENTERPRISE SLATE-STEEL
+   DARK MODE — STUDIO OBSIDIAN + SUPABASE GREEN
    ========================================
-   Philosophy: Cold, authoritative neutrals drawn from hue ~220 (blue-steel).
-   No warm purple tint. Surfaces use tightly stepped luminance so every layer
-   of the UI has a clear visual weight. Primary accent is a refined steel-blue
-   that reads as "system" rather than "brand" — ideal for dense dashboards,
-   admin panels, and data-heavy enterprise UIs.
 */
 .dark {
-  /* ── Backgrounds ─────────────────────────────────────────────────────── */
-  /* Discord-inspired cohesive dark mode color scheme */
-  --background: oklch(0.3211 0.0093 268.3768); /* #313338 equivalent */
-  --foreground: oklch(0.9640 0.0029 264.5419); /* #f2f3f5 equivalent */
+  /* ── Canvases ───────────────────────────────────────────────────────── */
+  --background: oklch(0.15 0.005 260); /* #101112 */
+  --foreground: oklch(0.96 0.003 260); /* #f1f2f4 */
 
-  /* ── Surface hierarchy ───────────────────────────────────────────────── */
-  --card: oklch(0.2967 0.0078 264.4494); /* #2b2d31 equivalent */
-  --card-foreground: oklch(0.9640 0.0029 264.5419);
+  /* ── Surface Hierarchy ───────────────────────────────────────────────── */
+  --card: oklch(0.2 0.005 260); /* #181a1c */
+  --card-foreground: oklch(0.96 0.003 260);
 
-  --popover: oklch(0.2395 0.0059 271.1652); /* #1e1f22 equivalent */
-  --popover-foreground: oklch(0.9640 0.0029 264.5419);
+  --popover: oklch(0.24 0.005 260); /* #222528 */
+  --popover-foreground: oklch(0.96 0.003 260);
 
-  /* ── Primary accent — Discord Blurple ─────────────────── */
-  --primary: oklch(0.5774 0.2091 273.8504); /* #5865f2 equivalent */
-  --primary-foreground: oklch(1 0 0);
+  /* ── Primary Accent — Supabase Emerald Green (#3ECF8E) ──────────────── */
+  --primary: oklch(0.74 0.17 160);
+  --primary-foreground: oklch(0.12 0.005 260);
 
-  /* ── Secondary & interactive surfaces ───────────────────────────────── */
-  --secondary: oklch(0.2967 0.0078 264.4494); /* #2b2d31 equivalent */
-  --secondary-foreground: oklch(0.9640 0.0029 264.5419);
+  /* ── Interactive & Muted Surfaces ───────────────────────────────────── */
+  --secondary: oklch(0.22 0.005 260);
+  --secondary-foreground: oklch(0.96 0.003 260);
 
-  --muted: oklch(0.3488 0.0108 271.0979); /* #383a40 equivalent */
-  --muted-foreground: oklch(0.6867 0.0155 254.6429); /* #949ba4 equivalent */
+  --muted: oklch(0.22 0.005 260);
+  --muted-foreground: oklch(0.65 0.01 260);
 
-  --accent: oklch(0.3368 0.0092 268.3912); /* #35373c equivalent */
-  --accent-foreground: oklch(0.9640 0.0029 264.5419);
+  --accent: oklch(0.26 0.006 260);
+  --accent-foreground: oklch(0.96 0.003 260);
 
   /* ── Semantic ────────────────────────────────────────────────────────── */
-  --destructive: oklch(0.58 0.19 22);
+  --destructive: oklch(0.6 0.2 25);
   --destructive-foreground: oklch(1 0 0);
 
-  /* ── Structural ──────────────────────────────────────────────────────── */
-  --border: oklch(0.2437 0.0059 271.1709); /* #1f2023 equivalent */
-  --input: oklch(0.2395 0.0059 271.1652); /* #1e1f22 equivalent */
-  --ring: oklch(0.5774 0.2091 273.8504);
+  /* ── Structural Borders ─────────────────────────────────────────────── */
+  --border: oklch(0.26 0.005 260);
+  --input: oklch(0.24 0.005 260);
+  --ring: oklch(0.74 0.17 160);
 
-  /* ── Data visualization ──────────────────────────────────────────────── */
-  --chart-1: oklch(0.5774 0.2091 273.8504);
-  --chart-2: oklch(0.58 0.13 175);
-  --chart-3: oklch(0.62 0.13 52);
-  --chart-4: oklch(0.55 0.12 295);
-  --chart-5: oklch(0.58 0.13 355);
+  /* ── Data Visualization ──────────────────────────────────────────────── */
+  --chart-1: oklch(0.74 0.17 160); /* Supabase Emerald */
+  --chart-2: oklch(0.65 0.16 240); /* Studio Blue */
+  --chart-3: oklch(0.72 0.17 65); /* Studio Amber */
+  --chart-4: oklch(0.62 0.18 310); /* Studio Purple */
+  --chart-5: oklch(0.6 0.2 25); /* Studio Red */
 
-  /* ── Status indicators ───────────────────────────────────────────────── */
-  --status-success: oklch(0.62 0.14 148);
-  --status-warning: oklch(0.67 0.15 72);
-  --status-error: oklch(0.6 0.18 25);
-  --status-info: oklch(0.58 0.13 230);
-  --status-in-progress: oklch(0.5774 0.2091 273.8504);
+  /* ── Status Indicators ───────────────────────────────────────────────── */
+  --status-success: oklch(0.74 0.17 160);
+  --status-warning: oklch(0.72 0.17 65);
+  --status-error: oklch(0.6 0.2 25);
+  --status-info: oklch(0.65 0.16 240);
+  --status-in-progress: oklch(0.62 0.18 310);
 
-  /* ── Sidebar — deepest surface in the hierarchy ──────────────────────── */
-  --sidebar: oklch(0.2395 0.0059 271.1652); /* #1e1f22 equivalent */
-  --sidebar-foreground: oklch(0.9640 0.0029 264.5419);
-  --sidebar-primary: oklch(0.5774 0.2091 273.8504);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.2967 0.0078 264.4494); /* #2b2d31 equivalent */
-  --sidebar-accent-foreground: oklch(0.9640 0.0029 264.5419);
-  --sidebar-border: oklch(0.2437 0.0059 271.1709);
-  --sidebar-ring: oklch(0.5774 0.2091 273.8504);
+  /* ── Navigation Sidebar ─────────────────────────────────────────────── */
+  --sidebar: oklch(0.12 0.005 260);
+  --sidebar-foreground: oklch(0.96 0.003 260);
+  --sidebar-primary: oklch(0.74 0.17 160);
+  --sidebar-primary-foreground: oklch(0.12 0.005 260);
+  --sidebar-accent: oklch(0.2 0.005 260);
+  --sidebar-accent-foreground: oklch(0.96 0.003 260);
+  --sidebar-border: oklch(0.22 0.005 260);
+  --sidebar-ring: oklch(0.74 0.17 160);
 
   /* ── Effects ─────────────────────────────────────────────────────────── */
-  --gradient-hero: linear-gradient(135deg, oklch(0.5774 0.2091 273.8504 / 0.25) 0%, var(--background) 100%);
-  --gradient-subtle: linear-gradient(180deg, var(--background) 0%, var(--card) 100%);
-  --shadow-hover: 0 8px 30px -4px oklch(0.5774 0.2091 273.8504 / 0.15);
+  --gradient-hero: linear-gradient(
+    135deg,
+    oklch(0.74 0.17 160 / 0.2) 0%,
+    var(--background) 100%
+  );
+  --gradient-subtle: linear-gradient(
+    180deg,
+    var(--background) 0%,
+    var(--card) 100%
+  );
+  --shadow-hover: 0 8px 24px -4px oklch(0.74 0.17 160 / 0.25);
 }

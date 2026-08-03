@@ -7,15 +7,10 @@ import {
   Shield,
   Layout,
   Terminal,
-  ExternalLink,
   CheckCircle2,
-  XCircle,
   Settings,
   ChevronRight,
   Globe,
-  Key,
-  Webhook,
-  Monitor,
   ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
@@ -24,26 +19,19 @@ import { PageHeader } from "../../components/page-header";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@repo/ui/components/ui/sheet";
-import { Input } from "@repo/ui/components/ui/input";
-import { Label } from "@repo/ui/components/ui/label";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@repo/ui/components/ui/dialog";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import {
   getIntegrationsStatus,
-  updateWindmillConfig,
   provisionWindmill,
-  updateHulyConfig,
-  updateZitadelConfig,
-  updatePlaneConfig,
-  updateScrymeConfig,
   provisionZitadel,
   provisionScryme,
 } from "../actions/integrations";
@@ -54,7 +42,7 @@ const INTEGRATIONS = [
     title: "Developer Tools",
     description:
       "API Clients, Webhooks, and Device provisioning for developers.",
-    icon: <Terminal className="w-8 h-8 text-indigo-600" />,
+    icon: <Terminal className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />,
     href: "/integrations/apps-api",
     category: "Infrastructure",
     isExternal: false,
@@ -64,7 +52,7 @@ const INTEGRATIONS = [
     title: "Windmill",
     description:
       "Headless automation engine for complex workflows and scripts.",
-    icon: <Zap className="w-8 h-8 text-yellow-500" />,
+    icon: <Zap className="w-8 h-8 text-yellow-500 dark:text-yellow-400" />,
     category: "Automation",
     isExternal: true,
   },
@@ -73,7 +61,7 @@ const INTEGRATIONS = [
     title: "Huly",
     description:
       "Enterprise project management and team collaboration platform.",
-    icon: <Layout className="w-8 h-8 text-blue-600" />,
+    icon: <Layout className="w-8 h-8 text-blue-600 dark:text-blue-400" />,
     category: "Management",
     isExternal: true,
   },
@@ -82,7 +70,7 @@ const INTEGRATIONS = [
     title: "Zitadel",
     description:
       "Identity management and authentication for your applications.",
-    icon: <Shield className="w-8 h-8 text-orange-500" />,
+    icon: <Shield className="w-8 h-8 text-orange-500 dark:text-orange-400" />,
     category: "Security",
     isExternal: true,
   },
@@ -90,7 +78,7 @@ const INTEGRATIONS = [
     id: "plane",
     title: "Plane",
     description: "Open-source project management to track issues and epics.",
-    icon: <Globe className="w-8 h-8 text-cyan-600" />,
+    icon: <Globe className="w-8 h-8 text-cyan-600 dark:text-cyan-400" />,
     category: "Management",
     isExternal: true,
   },
@@ -98,7 +86,7 @@ const INTEGRATIONS = [
     id: "scryme",
     title: "Scryme",
     description: "Advanced analytics and reporting for enterprise operations.",
-    icon: <Boxes className="w-8 h-8 text-purple-600" />,
+    icon: <Boxes className="w-8 h-8 text-purple-600 dark:text-purple-400" />,
     category: "Analytics",
     isExternal: true,
   },
@@ -108,14 +96,29 @@ export default function IntegrationsPage() {
   const [statuses, setStatuses] = useState<Record<string, any>>({});
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [isScrymeProvisioning, setIsScrymeProvisioning] = useState(false);
-  const [configValues, setConfigValues] = useState<Record<string, any>>({});
 
   useEffect(() => {
     loadStatuses();
   }, []);
+
+  const loadStatuses = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getIntegrationsStatus();
+      setStatuses(data);
+    } catch (error) {
+      toast.error("Failed to load integration statuses");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenConfig = (integration: any) => {
+    if (!integration.isExternal) return;
+    setSelectedIntegration(integration);
+  };
 
   const handleOneClickProvision = async () => {
     setIsProvisioning(true);
@@ -127,11 +130,6 @@ export default function IntegrationsPage() {
       if (res.success) {
         toast.success("Zitadel workspace successfully provisioned!", {
           id: toastId,
-        });
-        setConfigValues({
-          zitadelOrgId: res.config.zitadelOrgId,
-          zitadelProjectId: res.config.zitadelProjectId,
-          zitadelAppId: res.config.zitadelAppId,
         });
         setSelectedIntegration(null);
         loadStatuses();
@@ -187,67 +185,18 @@ export default function IntegrationsPage() {
     }
   };
 
-  const loadStatuses = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getIntegrationsStatus();
-      setStatuses(data);
-    } catch (error) {
-      toast.error("Failed to load integration statuses");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOpenConfig = (integration: any) => {
-    if (!integration.isExternal) return;
-    setSelectedIntegration(integration);
-    const config = statuses[integration.id]?.config || {};
-    setConfigValues(config);
-  };
-
-  const handleSaveConfig = async () => {
-    setIsSaving(true);
-    try {
-      switch (selectedIntegration.id) {
-        case "windmill":
-          await updateWindmillConfig(configValues as any);
-          break;
-        case "huly":
-          await updateHulyConfig(configValues as any);
-          break;
-        case "zitadel":
-          await updateZitadelConfig(configValues as any);
-          break;
-        case "plane":
-          await updatePlaneConfig(configValues as any);
-          break;
-        case "scryme":
-          await updateScrymeConfig(configValues as any);
-          break;
-      }
-      toast.success(`${selectedIntegration.title} configuration updated`);
-      setSelectedIntegration(null);
-      loadStatuses();
-    } catch (error) {
-      toast.error("Failed to update configuration");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const renderConfigForm = () => {
+  const renderDialogBody = () => {
     if (!selectedIntegration) return null;
 
     switch (selectedIntegration.id) {
       case "windmill":
         return (
-          <div className="space-y-4 py-4">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
-              <h4 className="font-semibold text-amber-900 text-sm mb-1">
+          <div className="py-4">
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-4">
+              <h4 className="font-semibold text-amber-900 dark:text-amber-300 text-sm mb-1">
                 One-Click Automatic Provisioning
               </h4>
-              <p className="text-amber-700 text-xs mb-3">
+              <p className="text-amber-700 dark:text-amber-400/80 text-xs mb-3">
                 Let Scryme automatically spin up a dedicated Windmill tenant
                 workspace and deploy all automation templates for your
                 organization using global credentials.
@@ -260,97 +209,20 @@ export default function IntegrationsPage() {
                 {isProvisioning ? "Provisioning..." : "Provision Automatically"}
               </Button>
             </div>
-
-            <div className="relative flex py-2 items-center">
-              <div className="grow border-t border-gray-200"></div>
-              <span className="shrink mx-4 text-gray-400 text-xs uppercase font-medium">
-                Or Configure Manually
-              </span>
-              <div className="grow border-t border-gray-200"></div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Windmill Base URL</Label>
-              <Input
-                value={configValues.windmillBaseUrl || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    windmillBaseUrl: e.target.value,
-                  })
-                }
-                placeholder="https://windmill.internal"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>API Key</Label>
-              <Input
-                type="password"
-                value={configValues.windmillApiKey || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    windmillApiKey: e.target.value,
-                  })
-                }
-                placeholder="••••••••••••••••"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Webhook Secret</Label>
-              <Input
-                type="password"
-                value={configValues.webhookSecret || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    webhookSecret: e.target.value,
-                  })
-                }
-                placeholder="Optional"
-              />
-            </div>
           </div>
         );
       case "huly":
         return (
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Workspace Slug</Label>
-              <Input
-                value={configValues.workspaceSlug || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    workspaceSlug: e.target.value,
-                  })
-                }
-                placeholder="my-workspace"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Workspace URL</Label>
-              <Input
-                value={configValues.workspaceUrl || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    workspaceUrl: e.target.value,
-                  })
-                }
-                placeholder="https://huly.app"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>API Key</Label>
-              <Input
-                type="password"
-                value={configValues.apiKey || ""}
-                onChange={e =>
-                  setConfigValues({ ...configValues, apiKey: e.target.value })
-                }
-                placeholder="••••••••••••••••"
-              />
+          <div className="py-4">
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900 rounded-xl p-4">
+              <h4 className="font-semibold text-blue-900 dark:text-blue-300 text-sm mb-1">
+                Connect Huly
+              </h4>
+              <p className="text-blue-700 dark:text-blue-400/80 text-xs">
+                Huly integration setup is managed by your workspace
+                administrator. Reach out to your admin team to enable this
+                connection.
+              </p>
             </div>
           </div>
         );
@@ -358,15 +230,15 @@ export default function IntegrationsPage() {
         const isGlobalAdminConfigured =
           statuses.zitadel?.isGlobalAdminConfigured;
         return (
-          <div className="space-y-6 py-4">
+          <div className="py-4">
             <div className="p-4 rounded-xl border border-dashed border-primary/20 bg-primary/5 flex flex-col gap-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h4 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                  <h4 className="text-sm font-bold text-foreground flex items-center gap-1.5">
                     <Zap className="w-4 h-4 text-primary animate-pulse" />
                     One-Click Auto-Provisioning
                   </h4>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     Automatically create a dedicated organization, project, and
                     OIDC client credentials for your store.
                   </p>
@@ -377,7 +249,7 @@ export default function IntegrationsPage() {
                     "text-[9px] font-bold uppercase shrink-0",
                     isGlobalAdminConfigured
                       ? "bg-green-500 hover:bg-green-600 text-white border-transparent"
-                      : "bg-amber-50 text-amber-700 border-amber-200",
+                      : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900",
                   )}>
                   {isGlobalAdminConfigured
                     ? "Production Ready"
@@ -387,7 +259,7 @@ export default function IntegrationsPage() {
 
               <Button
                 type="button"
-                className="w-full bg-primary hover:bg-primary/90 text-white font-semibold gap-2 mt-2"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2 mt-2"
                 onClick={handleOneClickProvision}
                 disabled={isProvisioning}>
                 {isProvisioning
@@ -396,121 +268,31 @@ export default function IntegrationsPage() {
                 <Zap className="w-4 h-4" />
               </Button>
             </div>
-
-            <div className="relative flex py-2 items-center">
-              <div className="grow border-t border-gray-100"></div>
-              <span className="shrink mx-4 text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                or configure manually
-              </span>
-              <div className="grow border-t border-gray-100"></div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Zitadel Org ID</Label>
-                <Input
-                  value={configValues.zitadelOrgId || ""}
-                  onChange={e =>
-                    setConfigValues({
-                      ...configValues,
-                      zitadelOrgId: e.target.value,
-                    })
-                  }
-                  placeholder="123456789"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Project ID</Label>
-                <Input
-                  value={configValues.zitadelProjectId || ""}
-                  onChange={e =>
-                    setConfigValues({
-                      ...configValues,
-                      zitadelProjectId: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>App ID (OIDC)</Label>
-                <Input
-                  value={configValues.zitadelAppId || ""}
-                  onChange={e =>
-                    setConfigValues({
-                      ...configValues,
-                      zitadelAppId: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            </div>
           </div>
         );
       case "plane":
         return (
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Workspace ID</Label>
-              <Input
-                value={configValues.workspaceId || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    workspaceId: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Workspace Slug</Label>
-              <Input
-                value={configValues.workspaceSlug || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    workspaceSlug: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Access Token</Label>
-              <Input
-                type="password"
-                value={configValues.accessToken || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    accessToken: e.target.value,
-                  })
-                }
-                placeholder="••••••••••••••••"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Refresh Token</Label>
-              <Input
-                type="password"
-                value={configValues.refreshToken || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    refreshToken: e.target.value,
-                  })
-                }
-                placeholder="••••••••••••••••"
-              />
+          <div className="py-4">
+            <div className="bg-cyan-50 dark:bg-cyan-950/30 border border-cyan-200 dark:border-cyan-900 rounded-xl p-4">
+              <h4 className="font-semibold text-cyan-900 dark:text-cyan-300 text-sm mb-1">
+                Connect Plane
+              </h4>
+              <p className="text-cyan-700 dark:text-cyan-400/80 text-xs">
+                Plane integration setup is managed by your workspace
+                administrator. Reach out to your admin team to enable this
+                connection.
+              </p>
             </div>
           </div>
         );
       case "scryme":
         return (
-          <div className="space-y-4 py-4">
-            <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4">
-              <h4 className="font-semibold text-purple-900 text-sm mb-1">
+          <div className="py-4">
+            <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 rounded-xl p-4">
+              <h4 className="font-semibold text-purple-900 dark:text-purple-300 text-sm mb-1">
                 One-Click Automatic Provisioning
               </h4>
-              <p className="text-purple-700 text-xs mb-3">
+              <p className="text-purple-700 dark:text-purple-400/80 text-xs mb-3">
                 Let Scryme automatically spin up a dedicated Chat workspace and
                 configure default channels (Announcements, Alerts, General) for
                 your organization.
@@ -525,39 +307,6 @@ export default function IntegrationsPage() {
                   : "Provision Automatically"}
               </Button>
             </div>
-
-            <div className="relative flex py-2 items-center">
-              <div className="grow border-t border-gray-200"></div>
-              <span className="shrink mx-4 text-gray-400 text-xs uppercase font-medium">
-                Or Configure Manually
-              </span>
-              <div className="grow border-t border-gray-200"></div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Workspace ID</Label>
-              <Input
-                value={configValues.workspaceId || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    workspaceId: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Workspace Slug</Label>
-              <Input
-                value={configValues.workspaceSlug || ""}
-                onChange={e =>
-                  setConfigValues({
-                    ...configValues,
-                    workspaceSlug: e.target.value,
-                  })
-                }
-              />
-            </div>
           </div>
         );
       default:
@@ -566,7 +315,7 @@ export default function IntegrationsPage() {
   };
 
   return (
-    <div className="p-8 max-w-350 mx-auto min-h-screen bg-[#F9FAFB]">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-350 mx-auto min-h-screen bg-background">
       <Breadcrumbs
         items={[
           { label: "Settings", href: "/settings" },
@@ -574,20 +323,20 @@ export default function IntegrationsPage() {
         ]}
       />
 
-      <div className="flex justify-between items-end mb-10 mt-6">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-10 mt-6">
         <PageHeader
           title="Integrations Marketplace"
           subtitle="Connect your favorite tools and automate your enterprise operations."
           icon={<Boxes className="w-8 h-8 text-primary" />}
         />
-        <div className="bg-white px-4 py-2 rounded-lg border border-gray-100 flex items-center gap-4 shadow-sm">
+        <div className="bg-card px-4 py-2 rounded-lg border border-border flex items-center gap-4 shadow-sm w-fit">
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-bold text-gray-400 uppercase">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase">
               Status
             </span>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-xs font-semibold text-gray-700">
+              <span className="text-xs font-semibold text-foreground">
                 All Systems Operational
               </span>
             </div>
@@ -595,7 +344,7 @@ export default function IntegrationsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
         {INTEGRATIONS.map(integration => {
           const isConnected = statuses[integration.id]?.connected;
           const statusLabel = isConnected ? "Connected" : "Not Configured";
@@ -604,11 +353,10 @@ export default function IntegrationsPage() {
             <div
               onClick={() => handleOpenConfig(integration)}
               className={cn(
-                "group relative bg-white rounded-2xl border border-gray-100 p-8 shadow-sm transition-all hover:shadow-xl hover:border-primary/20 cursor-pointer flex flex-col h-full",
-                !integration.isExternal && "hover:border-indigo-200",
+                "group relative bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-sm transition-all hover:shadow-xl hover:border-primary/20 cursor-pointer flex flex-col h-full",
               )}>
               <div className="flex justify-between items-start mb-6">
-                <div className="p-4 bg-gray-50 rounded-2xl group-hover:bg-primary/5 transition-colors">
+                <div className="p-4 bg-muted rounded-2xl group-hover:bg-primary/5 transition-colors">
                   {integration.icon}
                 </div>
                 {integration.isExternal ? (
@@ -617,8 +365,8 @@ export default function IntegrationsPage() {
                     className={cn(
                       "px-3 py-1 text-[10px] font-bold uppercase tracking-wider border-none",
                       isConnected
-                        ? "bg-green-50 text-green-700"
-                        : "bg-gray-50 text-gray-400",
+                        ? "bg-green-50 dark:bg-green-950/40 text-green-700 dark:text-green-400"
+                        : "bg-muted text-muted-foreground",
                     )}>
                     {isConnected ? (
                       <span className="flex items-center gap-1.5">
@@ -631,7 +379,7 @@ export default function IntegrationsPage() {
                     )}
                   </Badge>
                 ) : (
-                  <ArrowUpRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-600 transition-colors" />
+                  <ArrowUpRight className="w-5 h-5 text-muted-foreground/50 group-hover:text-primary transition-colors" />
                 )}
               </div>
 
@@ -639,19 +387,19 @@ export default function IntegrationsPage() {
                 <div className="text-[10px] font-bold text-primary/60 uppercase tracking-widest mb-1.5">
                   {integration.category}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors">
+                <h3 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
                   {integration.title}
                 </h3>
-                <p className="text-sm text-gray-500 leading-relaxed">
+                <p className="text-sm text-muted-foreground leading-relaxed">
                   {integration.description}
                 </p>
               </div>
 
-              <div className="mt-auto flex items-center justify-between pt-6 border-t border-gray-50">
-                <span className="text-xs font-semibold text-gray-400 group-hover:text-primary transition-colors">
+              <div className="mt-auto flex items-center justify-between pt-6 border-t border-border">
+                <span className="text-xs font-semibold text-muted-foreground group-hover:text-primary transition-colors">
                   {integration.isExternal ? "Manage Integration" : "View Tools"}
                 </span>
-                <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-1 transition-all" />
               </div>
             </div>
           );
@@ -671,45 +419,38 @@ export default function IntegrationsPage() {
         })}
       </div>
 
-      <Sheet
+      <Dialog
         open={!!selectedIntegration}
         onOpenChange={open => !open && setSelectedIntegration(null)}>
-        <SheetContent className="sm:max-w-md">
-          <SheetHeader className="pb-8">
-            <div className="p-4 bg-gray-50 rounded-2xl w-fit mb-4">
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="p-4 bg-muted rounded-2xl w-fit mb-4">
               {selectedIntegration?.icon}
             </div>
-            <SheetTitle className="text-2xl font-bold">
+            <DialogTitle className="text-2xl font-bold">
               {selectedIntegration?.title} Configuration
-            </SheetTitle>
-            <SheetDescription>
+            </DialogTitle>
+            <DialogDescription>
               Configure the connection settings for {selectedIntegration?.title}
               . These settings are used to authenticate and sync data with your
               workspace.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <Separator />
 
-          {renderConfigForm()}
+          {renderDialogBody()}
 
-          <SheetFooter className="mt-10 gap-3">
+          <DialogFooter className="mt-4 gap-3">
             <Button
               variant="outline"
               className="flex-1 h-12"
               onClick={() => setSelectedIntegration(null)}>
-              Cancel
+              Close
             </Button>
-            <Button
-              className="flex-1 h-12 gap-2"
-              onClick={handleSaveConfig}
-              disabled={isSaving}>
-              {isSaving ? "Saving..." : "Save Configuration"}
-              <CheckCircle2 className="w-4 h-4" />
-            </Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
