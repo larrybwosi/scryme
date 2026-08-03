@@ -455,7 +455,7 @@ export function POS() {
           {/* Quick Actions (Mode & Sync) */}
           <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto no-scrollbar">
             {/* Pharmacy Specific: Alternatives Button */}
-            {(import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'pharmacy' && (
+            {import.meta.env.VITE_BUSINESS_MODE === 'pharmacy' && (
               <div className="flex items-center gap-2">
                 <Button
                   variant={showAlternatives ? 'default' : 'outline'}
@@ -543,7 +543,7 @@ export function POS() {
             )}
 
             {/* Pricing Toggle */}
-            {(import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'restaurant' && (
+            {import.meta.env.VITE_BUSINESS_MODE === 'restaurant' && (
               <div className="bg-muted/40 p-0.5 rounded-lg flex items-center border border-border/60">
                 <button
                   onClick={() => setPricingMode('retail')}
@@ -711,7 +711,7 @@ export function POS() {
                       : 'flex flex-col gap-1.5 w-full'
                   )}
                 >
-                  {(showAlternatives && (import.meta.env.VITE_BUSINESS_MODE || 'retail') === 'pharmacy' && selectedProductForAlternatives
+                  {(showAlternatives && import.meta.env.VITE_BUSINESS_MODE === 'pharmacy' && selectedProductForAlternatives
                     ? alternativeProducts
                     : products
                   ).map(product =>

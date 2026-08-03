@@ -96,7 +96,7 @@ const AppRoutes = () => {
   }
 
   // Supermarket mode: bypass layout and show dedicated POS
-  if (businessMode === 'supermarket') {
+  if ((import.meta.env.VITE_BUSINESS_MODE === 'supermarket' || !import.meta.env.VITE_BUSINESS_MODE) && businessMode === 'supermarket') {
     console.log('Rendering SupermarketPOS', { isAuthenticated, currentMember });
     return (
       <Suspense fallback={<PageLoader />}>
