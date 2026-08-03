@@ -33,3 +33,7 @@
 ## 2026-08-02 - [Synchronized Quantity Adjustment Tooltips]
 **Learning:** Compact, icon-only increment (`+`) and decrement (`-`) quantity buttons used inside dialogs (like item edit or unit selection dialogs) often lack immediate hover context for sighted desktop pointer users if they only carry `aria-label` screen reader attributes. Supplying matching `title` attributes on these sub-controls provides a synchronized, native browser tooltip on hover without cluttering or duplicate overlay rendering.
 **Action:** When designing icon-only quantity increase/decrease buttons in dialog components, always synchronize the `aria-label` and the `title` attributes with identical values.
+
+## 2026-08-04 - [Keyboard-Accessible Selection Buttons on Modal Dialogs]
+**Learning:** Rendering interactive selection lists (such as quick reasons or tagging list triggers) using non-interactive display badges (like `Badge` components compiling to simple `div` or `span` tags) prevents keyboard users from focusing or selecting those options via keyboard or screen readers.
+**Action:** Always utilize native, styled `<button type="button">` elements for interactive item selectors, and supply active `aria-pressed` states so screen-reader users receive clear auditory confirmation of their active selection.
