@@ -94,6 +94,7 @@ export class ZitadelService {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${adminToken}`,
+          "Connect-Protocol-Version": "1",
         },
         body: JSON.stringify({
           name: orgName,
@@ -119,6 +120,7 @@ export class ZitadelService {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${adminToken}`,
+          "Connect-Protocol-Version": "1",
           "x-zitadel-orgid": organizationId,
         },
         body: JSON.stringify({
@@ -127,6 +129,8 @@ export class ZitadelService {
           projectRoleAssertion: true,
           projectRoleCheck: false,
           hasProjectCheck: false,
+          authorizationRequired: false,
+          projectAccessRequired: false,
         }),
       });
 
@@ -149,6 +153,7 @@ export class ZitadelService {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${adminToken}`,
+          "Connect-Protocol-Version": "1",
           "x-zitadel-orgid": organizationId,
         },
         body: JSON.stringify({
