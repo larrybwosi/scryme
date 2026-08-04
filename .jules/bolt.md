@@ -195,3 +195,7 @@
 ## 2026-08-02 - [Dual Database Parallelization and Map Grouping in Android Analytics]
 **Learning:** Sequential database queries (like `findMany` and `count` executed one after another) in listing or dashboard paths significantly multiply API latency by a factor of the queries' count. Additionally, running nested linear searches (like `.filter()`) inside loops of relational records leads to $O(N \times M)$ CPU hotspots. Parallelizing independent database calls using `Promise.all` and grouping list payloads into an in-memory `Map` prior to loop execution collapses execution time to $O(T)$ database wait and $O(N + M)$ processing time.
 **Action:** Always parallelize independent lookup queries in dashboards/list views, and pre-group relational arrays into Map-based indices to avoid nested array filter scans.
+
+## 2026-08-04 - [Parallelized Pre-fetching to Eliminate N+1 Queries in POS receiveTransfer]
+**Learning:** Inside transactional loops where items are iterated to adjust stocks, sequentially calling `findUnique` database queries inside the loop for each item (such as querying `ProductVariantStock` and `ProductVariant`) causes N+1 query roundtrips under active database transactions. Gathering all item variant IDs up-front, parallel pre-fetching them via `Promise.all` of `findMany` queries, and grouping them in-memory via Map data structures, cuts transaction times from $O(N)$ down to a flat $O(1)$ database execution.
+**Action:** Always batch pre-fetch and index relational lookup records into Maps before entering loops within database transactions.

@@ -10,14 +10,8 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { type V2ApiContext } from "@repo/shared/api/v2";
 import { ably } from "@repo/shared/ably";
 import { createMemberToken } from "@repo/shared/api/v2";
-import {
-  verifyQRToken,
-  getDocumentUrl,
-} from "@repo/shared/api/v2";
-import {
-  getPosProducts,
-  getPosProductsDelta,
-} from "@repo/shared/api/v2";
+import { verifyQRToken, getDocumentUrl } from "@repo/shared/api/v2";
+import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v2";
 import {
   performDeliveryDispatch,
   performReconciliation,
@@ -885,7 +879,9 @@ export class PosService {
         const requestNumber = `SR-${(lastNumber + 1).toString().padStart(5, "0")}`;
 
         const fromLocationId = validated.toLocationId ? locationId : null;
-        const toLocationId = validated.toLocationId ? validated.toLocationId : locationId;
+        const toLocationId = validated.toLocationId
+          ? validated.toLocationId
+          : locationId;
 
         request = await this.prisma.client.stockRequest.create({
           data: {
@@ -1214,7 +1210,30 @@ export class PosService {
        * This reduces item lookup to constant-time O(1) complexity, resulting in O(N + M) complexity overall.
        */
       const receivedItemMap = new Map<string, any>(
-        (body.items || []).map((i: any) => [i.variantId, i])
+        (body.items || []).map((i: any) => [i.variantId, i]),
+      );
+
+      // ⚡ Bolt Optimization: Batch fetch variant stocks and product variants up-front to eliminate N+1 database queries.
+      const variantIds = transfer.items.map(item => item.variantId);
+      const [variantStocks, productVariants] = await Promise.all([
+        tx.productVariantStock.findMany({
+          where: {
+            variantId: { in: variantIds },
+            locationId: transfer.toLocationId,
+          },
+        }),
+        tx.productVariant.findMany({
+          where: {
+            id: { in: variantIds },
+          },
+        }),
+      ]);
+
+      const stockMap = new Map<string, any>(
+        variantStocks.map(s => [s.variantId, s]),
+      );
+      const variantMap = new Map<string, any>(
+        productVariants.map(v => [v.id, v]),
       );
 
       const variantIds = transfer.items.map((i) => i.variantId);
@@ -1243,7 +1262,11 @@ export class PosService {
       // 2. Adjust inventory for each item
       for (const item of transfer.items) {
         const receivedItem = receivedItemMap.get(item.variantId);
-        const qtyToReceive = receivedItem ? new Decimal(receivedItem.acceptedQuantity ?? receivedItem.receivedQuantity) : item.requestedQuantity;
+        const qtyToReceive = receivedItem
+          ? new Decimal(
+              receivedItem.acceptedQuantity ?? receivedItem.receivedQuantity,
+            )
+          : item.requestedQuantity;
 
         if (qtyToReceive.lte(0)) continue;
 
@@ -1260,7 +1283,8 @@ export class PosService {
         } else {
           const variant = variantMap.get(item.variantId);
 
-          if (!variant) throw new NotFoundException(`Variant ${item.variantId} not found`);
+          if (!variant)
+            throw new NotFoundException(`Variant ${item.variantId} not found`);
 
           await tx.productVariantStock.create({
             data: {
@@ -1326,7 +1350,9 @@ export class PosService {
     const validated = this.validate<any>(CreateStockTransferSchema, body);
 
     if (validated.fromLocationId === validated.toLocationId) {
-      throw new BadRequestException("Source and destination locations cannot be the same");
+      throw new BadRequestException(
+        "Source and destination locations cannot be the same",
+      );
     }
 
     const variantIds = validated.items.map((i: any) => i.variantId);
@@ -1423,7 +1449,9 @@ export class PosService {
     const { organizationId, memberId, locationId } = ctx;
 
     if (!memberId) {
-      throw new UnauthorizedException("Member authentication required to register petty cash.");
+      throw new UnauthorizedException(
+        "Member authentication required to register petty cash.",
+      );
     }
 
     const validated = this.validate<any>(RegisterPettyCashSchema, body);
@@ -1484,7 +1512,9 @@ export class PosService {
 
     if (
       org.expenseReceiptThreshold &&
-      amountDecimal.gte(new Prisma.Decimal(org.expenseReceiptThreshold.toString())) &&
+      amountDecimal.gte(
+        new Prisma.Decimal(org.expenseReceiptThreshold.toString()),
+      ) &&
       !validated.receiptUrl
     ) {
       throw new BadRequestException(
@@ -1636,7 +1666,9 @@ export class PosService {
     });
 
     if (existing) {
-      throw new BadRequestException("Barcode is already in use by another product");
+      throw new BadRequestException(
+        "Barcode is already in use by another product",
+      );
     }
 
     const updated = await this.prisma.client.productVariant.update({
