@@ -1217,6 +1217,29 @@ export class PosService {
         (body.items || []).map((i: any) => [i.variantId, i])
       );
 
+      const variantIds = transfer.items.map((i) => i.variantId);
+
+      /**
+       * ⚡ Bolt Optimization: Batch pre-fetch all matching productVariantStock records at transfer.toLocationId
+       * and productVariant records for the requested variantIds to eliminate sequential N+1 database queries
+       * (findUnique) inside the line item loop.
+       */
+      const [existingStocks, variants] = await Promise.all([
+        tx.productVariantStock.findMany({
+          where: {
+            locationId: transfer.toLocationId,
+            variantId: { in: variantIds },
+          },
+        }),
+        tx.productVariant.findMany({
+          where: { id: { in: variantIds } },
+          select: { id: true, productId: true },
+        }),
+      ]);
+
+      const stockMap = new Map<string, any>(existingStocks.map((s: any) => [s.variantId, s]));
+      const variantMap = new Map<string, any>(variants.map((v: any) => [v.id, v]));
+
       // 2. Adjust inventory for each item
       for (const item of transfer.items) {
         const receivedItem = receivedItemMap.get(item.variantId);
@@ -1224,14 +1247,7 @@ export class PosService {
 
         if (qtyToReceive.lte(0)) continue;
 
-        const stock = await tx.productVariantStock.findUnique({
-          where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId: transfer.toLocationId,
-            },
-          },
-        });
+        const stock = stockMap.get(item.variantId);
 
         if (stock) {
           await tx.productVariantStock.update({
@@ -1242,9 +1258,7 @@ export class PosService {
             },
           });
         } else {
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-          });
+          const variant = variantMap.get(item.variantId);
 
           if (!variant) throw new NotFoundException(`Variant ${item.variantId} not found`);
 
