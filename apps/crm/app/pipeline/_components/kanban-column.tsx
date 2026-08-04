@@ -127,8 +127,9 @@ export function KanbanColumn({
           {onAddDeal && (
             <button
               onClick={onAddDeal}
-              className="w-6 h-6 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="w-6 h-6 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 rounded-sm"
               aria-label={`Add deal to ${title}`}
+              title={`Add deal to ${title}`}
             >
               <Plus size={13} />
             </button>

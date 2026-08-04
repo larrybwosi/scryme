@@ -238,6 +238,62 @@ export function HybridCmsClient({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Keyboard shortcuts
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Tab switching with numbers
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === "s") {
+          e.preventDefault();
+          handleSaveAll();
+        } else if (e.key === "b" && activeTab === "rich-images") {
+          e.preventDefault();
+          insertMarkdown("bold", "bold text");
+        } else if (e.key === "i" && activeTab === "rich-images") {
+          e.preventDefault();
+          insertMarkdown("italic", "italic text");
+        }
+        return;
+      }
+
+      // Tab switching
+      const tabIndex = TABS.findIndex(t => t.shortcut === e.key);
+      if (
+        tabIndex !== -1 &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        document.activeElement?.tagName !== "INPUT" &&
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        e.preventDefault();
+        setActiveTab(TABS[tabIndex].id);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, markdown]);
+
+  // Auto-save functionality
+  React.useEffect(() => {
+    if (!autoSaveEnabled) return;
+
+    const timer = setTimeout(() => {
+      const hasChanges =
+        markdown !==
+        (customFieldsData.markdownDescription ||
+          item.detailedDescription ||
+          "");
+      if (hasChanges && markdown.length > 0) {
+        handleSaveAll(true);
+      }
+    }, 30000); // Auto-save every 30 seconds
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markdown, autoSaveEnabled]);
+
   const recordRevision = (label: string) => {
     const newRev: Revision = {
       id: `rev-${Date.now()}`,
