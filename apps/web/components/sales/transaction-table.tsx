@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   MoreHorizontal,
   Eye,
@@ -37,7 +38,6 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { cn } from "@repo/ui/lib/utils";
-import { TransactionDetailsSheet } from "./transaction-details-sheet";
 import { ManageDeliveryModal } from "./manage-delivery-modal";
 import { generateDocumentAction } from "../../app/actions/sales";
 import { TransactionInsightsGrid } from "./transaction-insights-grid";
@@ -170,11 +170,9 @@ export function TransactionTable({
   invoiceConfigUpdatedAt,
   receiptConfigUpdatedAt,
 }: TransactionTableProps) {
+  const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [paymentTrx, setPaymentTrx] = useState<Transaction | null>(null);
-  const [viewTransactionId, setViewTransactionId] = useState<string | null>(
-    null,
-  );
   const [manageDeliveryTrx, setManageDeliveryTrx] =
     useState<Transaction | null>(null);
   const [isGeneratingDoc, setIsGeneratingDoc] = useState<string | null>(null);
@@ -428,7 +426,7 @@ export function TransactionTable({
                       {/* Order */}
                       <td
                         className="cursor-pointer border-r border-border px-3 py-1.5 whitespace-nowrap dark:border-zinc-800"
-                        onClick={() => setViewTransactionId(trx.id)}>
+                        onClick={() => router.push(`/sales/transactions/${trx.id}`)}>
                         <span className="font-mono text-[12.5px] font-medium text-foreground hover:underline">
                           {trx.number}
                         </span>
@@ -495,7 +493,7 @@ export function TransactionTable({
                               Actions
                             </DropdownMenuLabel>
                             <DropdownMenuItem
-                              onClick={() => setViewTransactionId(trx.id)}>
+                              onClick={() => router.push(`/sales/transactions/${trx.id}`)}>
                               <Eye className="mr-2 h-4 w-4" /> View details
                             </DropdownMenuItem>
                             {canPay && (
@@ -681,11 +679,6 @@ export function TransactionTable({
         transaction={paymentTrx}
         isOpen={!!paymentTrx}
         onClose={() => setPaymentTrx(null)}
-      />
-      <TransactionDetailsSheet
-        transactionId={viewTransactionId}
-        isOpen={!!viewTransactionId}
-        onClose={() => setViewTransactionId(null)}
       />
       <ManageDeliveryModal
         transaction={manageDeliveryTrx}
