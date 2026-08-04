@@ -1210,19 +1210,6 @@ export class PosService {
       );
 
       const variantIds = transfer.items.map(item => item.variantId);
-      const [variantStocks, productVariants] = await Promise.all([
-        tx.productVariantStock.findMany({
-          where: {
-            variantId: { in: variantIds },
-            locationId: transfer.toLocationId,
-          },
-        }),
-        tx.productVariant.findMany({
-          where: {
-            id: { in: variantIds },
-          },
-        }),
-      ]);
 
       const [existingStocks, variants] = await Promise.all([
         tx.productVariantStock.findMany({
