@@ -491,11 +491,30 @@ export async function generateDocumentAction(
 
   if (!transaction) throw new Error("Transaction not found");
 
+  // Fetch the configuration to check its updatedAt timestamp for cache invalidation
+  let configUpdatedAt: Date | null = null;
+  if (type === "invoice") {
+    const config = await db.invoiceConfig.findUnique({
+      where: { organizationId: auth.organizationId },
+      select: { updatedAt: true },
+    });
+    configUpdatedAt = config?.updatedAt || null;
+  } else {
+    const config = await db.receiptConfig.findUnique({
+      where: { organizationId: auth.organizationId },
+      select: { updatedAt: true },
+    });
+    configUpdatedAt = config?.updatedAt || null;
+  }
+
+  const transactionUpdatedAt = new Date(transaction.updatedAt);
+  const referenceDate = configUpdatedAt && configUpdatedAt > transactionUpdatedAt ? configUpdatedAt : transactionUpdatedAt;
+
   // Check if an up-to-date document already exists
   const existingDoc = transaction.attachments?.find(
     a =>
       a.description === (type === "invoice" ? "Invoice" : "Receipt") &&
-      new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+      new Date(a.uploadedAt) >= referenceDate,
   );
 
   if (existingDoc) {
@@ -540,7 +559,7 @@ export async function generateDocumentAction(
   const newDoc = updatedTransaction?.attachments?.find(
     a =>
       a.description === (type === "invoice" ? "Invoice" : "Receipt") &&
-      new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+      new Date(a.uploadedAt) >= referenceDate,
   );
 
   revalidatePath("/sales/transactions");
