@@ -272,6 +272,7 @@ export function HybridCmsClient({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, markdown]);
 
   // Auto-save functionality
@@ -290,6 +291,7 @@ export function HybridCmsClient({
     }, 30000); // Auto-save every 30 seconds
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [markdown, autoSaveEnabled]);
 
   const recordRevision = (label: string) => {
