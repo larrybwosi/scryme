@@ -1,5 +1,5 @@
 import React from "react";
-import { PageHeader } from "../../../components/page-header";
+import { PageHeader } from "@/components/page-header";
 import { getStockLevels } from "../../actions/stock-management";
 import {
   getInventoryLocations,
@@ -7,8 +7,8 @@ import {
   getSuppliers,
 } from "../../actions/inventory";
 import { TrendingUp } from "lucide-react";
-import { StockingListTable } from "../../../components/stocking/list/stocking-list-table";
-import { StockingListFilters } from "../../../components/stocking/list/stocking-list-filters";
+import { StockingListTable } from "@/components/stocking/list/stocking-list-table";
+import { StockingListFilters } from "@/components/stocking/list/stocking-list-filters";
 
 export default async function StockingListPage({
   searchParams,
@@ -41,7 +41,7 @@ export default async function StockingListPage({
   ]);
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <PageHeader
         title="Stocking List"
         description="View and manage stock levels across all products and locations."

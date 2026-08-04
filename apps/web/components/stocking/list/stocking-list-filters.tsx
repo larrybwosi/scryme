@@ -54,11 +54,11 @@ export function StockingListFilters({
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 border-b w-fit pb-1">
-          <button className="px-4 py-2 text-sm font-medium border-b-2 border-black mb-[-6px]">
+          <button className="px-4 py-2 text-sm font-medium border-b-2 border-foreground mb-[-6px] text-foreground">
             All products
           </button>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Filter size={14} />
           <span>View Settings</span>
         </div>
@@ -66,10 +66,10 @@ export function StockingListFilters({
 
       <div className="flex items-center gap-3 flex-wrap">
         <div className="relative w-72">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search products or SKU..."
-            className="pl-9 bg-white"
+            className="pl-9 bg-card"
             defaultValue={searchParams.get("search") || ""}
             onChange={e => handleSearch(e.target.value)}
           />
@@ -78,7 +78,7 @@ export function StockingListFilters({
         <Select
           defaultValue={searchParams.get("locationId") || "all"}
           onValueChange={v => handleFilterChange("locationId", v)}>
-          <SelectTrigger className="w-[180px] bg-white">
+          <SelectTrigger className="w-[180px] bg-card">
             <SelectValue placeholder="Location" />
           </SelectTrigger>
           <SelectContent>
@@ -94,7 +94,7 @@ export function StockingListFilters({
         <Select
           defaultValue={searchParams.get("categoryId") || "all"}
           onValueChange={v => handleFilterChange("categoryId", v)}>
-          <SelectTrigger className="w-[180px] bg-white">
+          <SelectTrigger className="w-[180px] bg-card">
             <SelectValue placeholder="Category" />
           </SelectTrigger>
           <SelectContent>
@@ -110,7 +110,7 @@ export function StockingListFilters({
         <Select
           defaultValue={searchParams.get("supplierId") || "all"}
           onValueChange={v => handleFilterChange("supplierId", v)}>
-          <SelectTrigger className="w-[180px] bg-white">
+          <SelectTrigger className="w-[180px] bg-card">
             <SelectValue placeholder="Supplier" />
           </SelectTrigger>
           <SelectContent>
@@ -124,11 +124,13 @@ export function StockingListFilters({
         </Select>
 
         <div className="flex items-center gap-2 ml-auto">
-          <span className="text-sm font-medium text-gray-500">Group by:</span>
+          <span className="text-sm font-medium text-muted-foreground">
+            Group by:
+          </span>
           <Select
             defaultValue={searchParams.get("groupBy") || "none"}
             onValueChange={v => handleFilterChange("groupBy", v)}>
-            <SelectTrigger className="w-[140px] bg-white">
+            <SelectTrigger className="w-[140px] bg-card">
               <SelectValue placeholder="None" />
             </SelectTrigger>
             <SelectContent>

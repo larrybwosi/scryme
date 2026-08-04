@@ -55,7 +55,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-blue-50 text-blue-700 border-blue-200">
+            className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
             Pending Approval
           </Badge>
         );
@@ -63,7 +63,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-indigo-50 text-indigo-700 border-indigo-200">
+            className="bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800">
             Approved
           </Badge>
         );
@@ -71,7 +71,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-amber-50 text-amber-700 border-amber-200">
+            className="bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
             Shipped
           </Badge>
         );
@@ -79,7 +79,7 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-orange-50 text-orange-700 border-orange-200">
+            className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800">
             In Transit
           </Badge>
         );
@@ -87,21 +87,33 @@ export default function TransfersPage() {
         return (
           <Badge
             variant="secondary"
-            className="bg-green-50 text-green-700 border-green-200">
+            className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800">
             Completed
           </Badge>
         );
       case "REJECTED":
-        return <Badge variant="destructive">Rejected</Badge>;
+        return (
+          <Badge
+            variant="destructive"
+            className="bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800">
+            Rejected
+          </Badge>
+        );
       case "CANCELLED":
-        return <Badge variant="secondary">Cancelled</Badge>;
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-muted text-muted-foreground border-border">
+            Cancelled
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <div className="flex items-center justify-between">
         <PageHeader
           title="Stock Transfers"
@@ -122,17 +134,17 @@ export default function TransfersPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border">
+      <div className="bg-card rounded-xl border shadow-sm">
         <div className="p-4 border-b flex items-center gap-4">
           <div className="relative flex-1 max-w-sm">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               size={16}
             />
             <Input
               type="text"
               placeholder="Search transfers..."
-              className="pl-10 bg-white"
+              className="pl-10 bg-card"
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -156,7 +168,7 @@ export default function TransfersPage() {
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="h-32 text-center text-gray-500">
+                  className="h-32 text-center text-muted-foreground">
                   Loading...
                 </TableCell>
               </TableRow>
@@ -164,7 +176,7 @@ export default function TransfersPage() {
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="h-32 text-center text-gray-500">
+                  className="h-32 text-center text-muted-foreground">
                   No stock transfers found.
                 </TableCell>
               </TableRow>

@@ -28,7 +28,7 @@ This server uses the V3 SDK of the Scryme Monorepo, implementing rigorous multi-
 
 1. Build all required monorepo dependency packages first:
    ```bash
-   pnpm --filter "@repo/v3-sdk" build
+   pnpm --filter "@scryme/sdk" build
    ```
 2. Build the MCP Server application:
    ```bash

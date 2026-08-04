@@ -1,5 +1,5 @@
 import React from "react";
-import { PageHeader } from "../../../../../components/page-header";
+import { PageHeader } from "@/components/page-header";
 import {
   getInventoryLocations,
   getInventoryProducts,
@@ -12,7 +12,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { ArrowLeft, Edit } from "lucide-react";
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { EditTransferForm } from "../../../../../components/stocking/edit-transfer-form";
+import { EditTransferForm } from "@/components/stocking/edit-transfer-form";
 
 export default async function EditTransferPage({
   params,
@@ -74,7 +74,7 @@ export default async function EditTransferPage({
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <div className="flex items-center gap-4">
         <Link href={`/stocking/transfers/${id}`}>
           <Button variant="ghost" size="icon">

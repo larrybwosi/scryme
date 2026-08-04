@@ -111,7 +111,7 @@ Retrieves a paginated list of all active services for the resolved organization.
 These endpoints are fully annotated with `@nestjs/swagger` decorators. Re-compiling the OpenAPI schema automatically registers them inside the Swagger UI at:
 - **Swagger Documentation URL**: `http://localhost:3000/api/v3/docs`
 
-Client SDK code is automatically synchronized inside `@repo/v3-sdk` via the central OpenAPI JSON builder command:
+Client SDK code is automatically synchronized inside `@scryme/sdk` via the central OpenAPI JSON builder command:
 ```bash
 pnpm run openapi:generate
 ```

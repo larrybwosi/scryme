@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.4.1",
-    "@repo/v3-sdk": "workspace:*",
+    "@scryme/sdk": "workspace:*",
     "axios": "^1.18.1",
     "express": "^4.21.2",
     "zod": "^4.4.3"
