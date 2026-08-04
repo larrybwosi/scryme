@@ -25,7 +25,7 @@ The official TypeScript SDK for the **Scryme V3 API**—engineered for scalabili
 To use the Scryme V3 SDK in your project, install it from the workspace repository:
 
 ```bash
-pnpm add @repo/v3-sdk
+pnpm add @scryme/sdk
 ```
 
 ---
@@ -39,7 +39,7 @@ To retrieve an access token, pass your `clientId` and `clientSecret` (generated 
 
 ```typescript
 import axios from "axios";
-import { authExchangeToken } from "@repo/v3-sdk";
+import { authExchangeToken } from "@scryme/sdk";
 
 // Initialize the global axios configuration if needed
 axios.defaults.baseURL = "https://api.scryme.tech";
@@ -90,7 +90,7 @@ import {
   inventoryVerifyIntegrity,
   inventoryMergeBatches,
   inventorySplitBatch
-} from "@repo/v3-sdk";
+} from "@scryme/sdk";
 
 const orgSlug = "scryme-hq";
 const locationId = "loc_nairobi_001";
@@ -128,7 +128,7 @@ import {
   ordersRequestB2BQuote,
   ordersConvertQuoteToOrder,
   ordersGetOrders
-} from "@repo/v3-sdk";
+} from "@scryme/sdk";
 
 // 1. Request a pricing and availability quote for B2B items
 async function createQuote() {
@@ -160,7 +160,7 @@ import {
   crmControllerCreateRecord,
   crmControllerCreateNote,
   crmControllerGetTimeline
-} from "@repo/v3-sdk";
+} from "@scryme/sdk";
 
 // 1. Fetch organization-scoped customers
 async function listCustomers() {
@@ -205,7 +205,7 @@ import {
   loyaltyGetCustomerStatus,
   loyaltyRedeemReward,
   loyaltyValidateVoucher
-} from "@repo/v3-sdk";
+} from "@scryme/sdk";
 
 // 1. Get customer points balance, tier level, and available rewards
 async function checkLoyalty(customerId: string) {
@@ -236,7 +236,7 @@ import {
   pettyCashControllerCreateFund,
   pettyCashControllerTopUpFund,
   utilityAccountControllerCreateAccount
-} from "@repo/v3-sdk";
+} from "@scryme/sdk";
 
 // 1. Create a physical utility tracking account
 async function setupElectricityMeter() {
@@ -273,7 +273,7 @@ import {
   attendanceControllerCheckOut,
   roleManagementControllerCreateCustomRole,
   membersControllerGetMembers
-} from "@repo/v3-sdk";
+} from "@scryme/sdk";
 
 // 1. Employee Clock-In with notes and location validation
 async function clockIn(memberId: string) {
@@ -306,7 +306,7 @@ import {
   servicesControllerCompleteBooking,
   publicServicesControllerRequestOtp,
   publicServicesControllerVerifyOtp
-} from "@repo/v3-sdk";
+} from "@scryme/sdk";
 
 // 1. Book an appointment for a customer with specific staff/resources
 async function bookAppointment() {
@@ -339,7 +339,7 @@ async function checkoutBooking(bookingId: string) {
 Subscribe to system events and safely verify incoming signatures.
 
 ```typescript
-import { webhooksCreate } from "@repo/v3-sdk";
+import { webhooksCreate } from "@scryme/sdk";
 
 // 1. Register a webhook callback to sync orders to an external ERP
 async function setupWebhook() {

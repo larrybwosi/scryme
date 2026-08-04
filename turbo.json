@@ -12,7 +12,7 @@
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
-    "@repo/v3-sdk#build": {
+    "@scryme/sdk#build": {
       "dependsOn": ["^build", "generate", "generate:sdk"],
       "outputs": ["dist/**"]
     },

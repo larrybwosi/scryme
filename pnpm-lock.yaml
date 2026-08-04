@@ -622,7 +622,7 @@ importers:
         specifier: 19.2.6
         version: 19.2.6(react@19.2.6)
     devDependencies:
-      '@repo/v3-sdk':
+      '@scryme/sdk':
         specifier: workspace:*
         version: link:../../packages/v3-sdk
       '@tailwindcss/vite':
@@ -652,7 +652,7 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.4.1
         version: 1.29.0(zod@4.4.3)
-      '@repo/v3-sdk':
+      '@scryme/sdk':
         specifier: workspace:*
         version: link:../../packages/v3-sdk
       axios:
