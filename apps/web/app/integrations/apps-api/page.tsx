@@ -312,7 +312,7 @@ function AppsApiContent() {
                 ) : (
                   <div className="space-y-3 py-3">
                     <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-xs border border-destructive/20 font-medium">
-                      Copy the client secret now — it will not be shown again.
+                      Copy the client secret now &mdash; it will not be shown again.
                     </div>
                     <div className="grid gap-1.5">
                       <Label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
@@ -367,7 +367,7 @@ function AppsApiContent() {
                         setV3Result(null);
                       }}
                       className="text-xs rounded-lg">
-                      I've saved the secret
+                      I&apos;ve saved the secret
                     </Button>
                   )}
                 </DialogFooter>
