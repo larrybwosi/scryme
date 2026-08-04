@@ -42,7 +42,7 @@ export function DocumentsTab({
           </h3>
         </div>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Create a secure public link to this order's invoice or receipt
+          Create a secure public link to this order&apos;s invoice or receipt
           so you can send it directly to the customer.
         </p>
 
