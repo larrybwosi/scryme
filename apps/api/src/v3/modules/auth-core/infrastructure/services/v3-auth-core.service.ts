@@ -7,6 +7,7 @@ import { decrypt } from "@repo/shared/api/v2";
 import { timingSafeMatch } from "@repo/shared/api/v2";
 import { provisionDeviceV3 } from "@repo/shared/lib";
 import { RedisService } from "@/redis/redis.service";
+import { validateV3ApiSecret } from "@repo/shared/actions";
 
 @Injectable()
 export class V3AuthCoreService {
@@ -33,19 +34,13 @@ export class V3AuthCoreService {
 
     if (!client || !client.isActive)
       throw new UnauthorizedException("Invalid client");
-
     try {
-      const decryptedSecret = decrypt(client.clientSecret);
-      const isSecretValid = timingSafeMatch(clientSecret, decryptedSecret);
+      const isSecretValid = await validateV3ApiSecret(clientId, clientSecret);
       if (!isSecretValid)
         throw new UnauthorizedException("Invalid client secret");
     } catch (error) {
-      const isSecretValid = await bcrypt.compare(
-        clientSecret,
-        client.clientSecret,
-      );
-      if (!isSecretValid)
-        throw new UnauthorizedException("Invalid client secret");
+      console.log("error", error);
+      throw new UnauthorizedException("Invalid client secret");
     }
 
     return client;

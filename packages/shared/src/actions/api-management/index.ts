@@ -32,6 +32,34 @@ export async function createV3ApiClient(data: {
   return { ...client, clientSecret: rawSecret }; // Return raw secret once for the user
 }
 
+export async function validateV3ApiSecret(
+  clientId: string,
+  rawSecret: string,
+): Promise<boolean> {
+  const client = await db.v3ApiClient.findUnique({
+    where: { clientId },
+  });
+
+  if (!client || !client.isActive) {
+    return false;
+  }
+
+  const hashedSecret = crypto
+    .createHash("sha256")
+    .update(rawSecret)
+    .digest("hex");
+
+  // Constant-time comparison to avoid timing attacks
+  const hashedBuffer = Buffer.from(hashedSecret, "hex");
+  const storedBuffer = Buffer.from(client.clientSecret, "hex");
+
+  if (hashedBuffer.length !== storedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(hashedBuffer, storedBuffer);
+}
+
 export async function getV3ApiClients(organizationId: string) {
   return db.v3ApiClient.findMany({
     where: { organizationId },

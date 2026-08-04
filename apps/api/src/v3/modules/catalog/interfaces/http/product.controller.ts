@@ -81,7 +81,7 @@ export class ProductController {
       paginationQuery,
     );
 
-    return products.map((p) => {
+    return products.map(p => {
       const firstVariant = p.variants?.[0];
       const retailPrice = firstVariant?.retailPrice ?? null;
 
@@ -137,7 +137,7 @@ export class ProductController {
     const offset = paginationQuery.offset || 0;
     const paginatedItems = items.slice(offset, offset + limit);
 
-    return paginatedItems.map((s) => {
+    return paginatedItems.map(s => {
       const customFieldsObj =
         s.customFields && typeof s.customFields === "object"
           ? (s.customFields as any)
@@ -224,7 +224,7 @@ export class ProductController {
   ) {
     const organizationId = req.organization.id;
 
-    const result = await this.prisma.client.$transaction(async (tx) => {
+    const result = await this.prisma.client.$transaction(async tx => {
       // SECURITY (Sentinel): Validate ownership before update to prevent IDOR.
       // ProductSupplier doesn't have organizationId directly, so we check via Product relation.
       const exists = await tx.productSupplier.findFirst({
