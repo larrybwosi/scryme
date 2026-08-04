@@ -222,7 +222,9 @@ function AppsApiContent() {
 
   const [storefrontEnabled, setStorefrontEnabled] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState("default");
-  const [allowedOrigins, setAllowedOrigins] = useState("https://store.scryme.tech");
+  const [allowedOrigins, setAllowedOrigins] = useState(
+    "https://store.scryme.tech",
+  );
 
   return (
     <div className="space-y-8">
@@ -233,13 +235,13 @@ function AppsApiContent() {
         ]}
       />
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 border-b border-slate-200/70 pb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 border-b border-border pb-6">
         <PageHeader
           title="Developer Tools"
           subtitle="Manage API credentials, webhooks, and hardware provisioning for your organization."
-          icon={<Terminal className="w-6 h-6 text-slate-700" />}
+          icon={<Terminal className="w-6 h-6 text-foreground" />}
         />
-        <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-xl p-1 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
+        <div className="flex items-center gap-1 bg-card border border-border rounded-xl p-1 shadow-sm">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -247,8 +249,8 @@ function AppsApiContent() {
               className={cn(
                 "flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all",
                 activeTab === tab.id
-                  ? "bg-slate-900 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50",
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
               )}>
               <tab.icon size={14} />
               {tab.label}
@@ -261,10 +263,10 @@ function AppsApiContent() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+              <h2 className="text-lg font-bold text-foreground tracking-tight">
                 API Clients
               </h2>
-              <p className="text-[13px] text-slate-500">
+              <p className="text-[13px] text-muted-foreground">
                 OAuth2 clients for building integrations against the platform
                 API.
               </p>
@@ -276,7 +278,7 @@ function AppsApiContent() {
                 if (!open) setV3Result(null);
               }}>
               <DialogTrigger asChild>
-                <Button className="bg-slate-900 hover:bg-slate-800 gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
+                <Button className="gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
                   <Plus size={16} />
                   New client
                 </Button>
@@ -286,7 +288,7 @@ function AppsApiContent() {
                   <DialogTitle className="text-base font-bold tracking-tight">
                     Create API client
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-500">
+                  <DialogDescription className="text-xs text-muted-foreground">
                     Create a new OAuth2 client for accessing the platform API.
                   </DialogDescription>
                 </DialogHeader>
@@ -295,7 +297,7 @@ function AppsApiContent() {
                     <div className="grid gap-1.5">
                       <Label
                         htmlFor="client-name"
-                        className="text-xs font-semibold text-slate-600">
+                        className="text-xs font-semibold">
                         Client name
                       </Label>
                       <Input
@@ -309,15 +311,15 @@ function AppsApiContent() {
                   </div>
                 ) : (
                   <div className="space-y-3 py-3">
-                    <div className="p-3 bg-amber-50 text-amber-800 rounded-lg text-xs border border-amber-200/80 font-medium">
-                      Copy the client secret now — it will not be shown again.
+                    <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-xs border border-destructive/20 font-medium">
+                      Copy the client secret now &mdash; it will not be shown again.
                     </div>
                     <div className="grid gap-1.5">
-                      <Label className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                      <Label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                         Client ID
                       </Label>
                       <div className="flex gap-2">
-                        <code className="flex-1 bg-slate-50 p-2.5 rounded-lg text-xs break-all border border-slate-200 font-mono text-slate-700">
+                        <code className="flex-1 bg-muted p-2.5 rounded-lg text-xs break-all border border-border font-mono text-foreground">
                           {v3Result.clientId}
                         </code>
                         <Button
@@ -330,11 +332,11 @@ function AppsApiContent() {
                       </div>
                     </div>
                     <div className="grid gap-1.5">
-                      <Label className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                      <Label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                         Client secret
                       </Label>
                       <div className="flex gap-2">
-                        <code className="flex-1 bg-slate-50 p-2.5 rounded-lg text-xs break-all border border-slate-200 font-mono text-slate-700">
+                        <code className="flex-1 bg-muted p-2.5 rounded-lg text-xs break-all border border-border font-mono text-foreground">
                           {v3Result.clientSecret}
                         </code>
                         <Button
@@ -355,7 +357,7 @@ function AppsApiContent() {
                     <Button
                       onClick={handleCreateV3}
                       disabled={!newClientName}
-                      className="bg-slate-900 hover:bg-slate-800 text-xs rounded-lg">
+                      className="text-xs rounded-lg">
                       Create client
                     </Button>
                   ) : (
@@ -364,8 +366,8 @@ function AppsApiContent() {
                         setShowV3Dialog(false);
                         setV3Result(null);
                       }}
-                      className="bg-slate-900 hover:bg-slate-800 text-xs rounded-lg">
-                      I&#39ve saved the secret
+                      className="text-xs rounded-lg">
+                      I&apos;ve saved the secret
                     </Button>
                   )}
                 </DialogFooter>
@@ -375,14 +377,14 @@ function AppsApiContent() {
 
           <div className="grid gap-4">
             {v3Clients.length === 0 ? (
-              <div className="bg-white p-14 rounded-xl border border-dashed border-slate-200 flex flex-col items-center text-center">
-                <div className="p-3 bg-slate-50 rounded-lg mb-3 border border-slate-100">
-                  <Key className="w-7 h-7 text-slate-400" />
+              <div className="bg-card p-14 rounded-xl border border-dashed border-border flex flex-col items-center text-center">
+                <div className="p-3 bg-muted rounded-lg mb-3 border border-border">
+                  <Key className="w-7 h-7 text-muted-foreground" />
                 </div>
-                <h3 className="text-base font-bold text-slate-900 mb-1 tracking-tight">
+                <h3 className="text-base font-bold text-foreground mb-1 tracking-tight">
                   No API clients yet
                 </h3>
-                <p className="text-[13px] text-slate-500 max-w-sm">
+                <p className="text-[13px] text-muted-foreground max-w-sm">
                   Create your first OAuth2 client to start building custom
                   integrations with the platform API.
                 </p>
@@ -391,28 +393,28 @@ function AppsApiContent() {
               v3Clients.map(client => (
                 <div
                   key={client.id}
-                  className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all group">
+                  className="bg-card p-5 rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent transition-all group">
                   <div className="flex justify-between items-start">
                     <div className="space-y-2.5">
                       <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 bg-slate-900 rounded-lg text-white">
+                        <div className="p-1.5 bg-foreground rounded-lg text-background">
                           <Code2 size={15} />
                         </div>
-                        <h3 className="font-bold text-sm text-slate-900 tracking-tight">
+                        <h3 className="font-bold text-sm text-foreground tracking-tight">
                           {client.name}
                         </h3>
                       </div>
                       <div className="flex flex-wrap items-center gap-4 text-xs">
-                        <span className="flex items-center gap-1.5 text-slate-500">
-                          <span className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">
+                        <span className="flex items-center gap-1.5 text-muted-foreground">
+                          <span className="font-semibold text-[10px] uppercase tracking-wider">
                             Client ID
                           </span>
-                          <code className="bg-slate-50 px-1.5 py-0.5 rounded text-xs border border-slate-200 font-mono text-slate-600">
+                          <code className="bg-muted px-1.5 py-0.5 rounded text-xs border border-border font-mono">
                             {client.clientId}
                           </code>
                         </span>
                         <span className="flex items-center gap-1.5">
-                          <span className="font-semibold text-slate-400 text-[10px] uppercase tracking-wider">
+                          <span className="font-semibold text-muted-foreground text-[10px] uppercase tracking-wider">
                             Status
                           </span>
                           <Badge
@@ -422,8 +424,8 @@ function AppsApiContent() {
                             className={cn(
                               "cursor-pointer px-2 py-0.5 border-none text-[10px] font-bold",
                               client.isActive
-                                ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                                : "bg-rose-50 text-rose-700 hover:bg-rose-100",
+                                ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400",
                             )}
                             onClick={() =>
                               updateV3ApiClientAction(client.id, {
@@ -439,7 +441,7 @@ function AppsApiContent() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
                         onClick={() => setEditingV3Client(client)}
                         title="Settings">
                         <Settings2 size={16} />
@@ -449,7 +451,7 @@ function AppsApiContent() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100">
+                            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted">
                             <MoreVertical size={16} />
                           </Button>
                         </DropdownMenuTrigger>
@@ -480,9 +482,9 @@ function AppsApiContent() {
                     </div>
                   </div>
 
-                  <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
                         Scopes & permissions
                       </span>
                       <div className="flex flex-wrap gap-1.5">
@@ -490,14 +492,14 @@ function AppsApiContent() {
                           <Badge
                             key={s}
                             variant="secondary"
-                            className="bg-slate-100 text-slate-600 border-none font-semibold px-2 py-0.5 text-[10px] rounded-md">
+                            className="bg-muted text-muted-foreground border-none font-semibold px-2 py-0.5 text-[10px] rounded-md">
                             {s}
                           </Badge>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1.5">
                         CORS allowed origins
                       </span>
                       <div className="flex flex-wrap gap-1.5">
@@ -506,12 +508,12 @@ function AppsApiContent() {
                             <Badge
                               key={o}
                               variant="outline"
-                              className="font-mono text-[10px] bg-slate-50/50 border-slate-200 text-slate-600 rounded-md">
+                              className="font-mono text-[10px] bg-muted/50 border-border text-muted-foreground rounded-md">
                               {o}
                             </Badge>
                           ))
                         ) : (
-                          <span className="text-xs text-slate-400 italic">
+                          <span className="text-xs text-muted-foreground italic">
                             No origins configured
                           </span>
                         )}
@@ -529,10 +531,10 @@ function AppsApiContent() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+              <h2 className="text-lg font-bold text-foreground tracking-tight">
                 Hardware & devices
               </h2>
-              <p className="text-[13px] text-slate-500">
+              <p className="text-[13px] text-muted-foreground">
                 Provision and manage POS terminals, kiosks, and tablets across
                 your locations.
               </p>
@@ -544,7 +546,7 @@ function AppsApiContent() {
                 if (!open) setDeviceTokenResult(null);
               }}>
               <DialogTrigger asChild>
-                <Button className="bg-slate-900 hover:bg-slate-800 gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
+                <Button className="gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
                   <Plus size={16} />
                   Provision device
                 </Button>
@@ -554,7 +556,7 @@ function AppsApiContent() {
                   <DialogTitle className="text-base font-bold tracking-tight">
                     Provision device
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-500">
+                  <DialogDescription className="text-xs text-muted-foreground">
                     Generate a setup token to provision a new POS device.
                   </DialogDescription>
                 </DialogHeader>
@@ -563,7 +565,7 @@ function AppsApiContent() {
                     <div className="grid gap-1.5">
                       <Label
                         htmlFor="device-name"
-                        className="text-xs font-semibold text-slate-600">
+                        className="text-xs font-semibold">
                         Device name
                       </Label>
                       <Input
@@ -583,7 +585,7 @@ function AppsApiContent() {
                       <div className="grid gap-1.5">
                         <Label
                           htmlFor="device-type"
-                          className="text-xs font-semibold text-slate-600">
+                          className="text-xs font-semibold">
                           Device type
                         </Label>
                         <Select
@@ -641,7 +643,7 @@ function AppsApiContent() {
                       <div className="grid gap-1.5">
                         <Label
                           htmlFor="location-id"
-                          className="text-xs font-semibold text-slate-600">
+                          className="text-xs font-semibold">
                           Location
                         </Label>
                         <Select
@@ -666,7 +668,7 @@ function AppsApiContent() {
                     </div>
 
                     <div className="grid gap-1.5">
-                      <Label className="text-xs font-semibold text-slate-600">
+                      <Label className="text-xs font-semibold">
                         Environment
                       </Label>
                       <Select
@@ -690,10 +692,10 @@ function AppsApiContent() {
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                         Permissions
                       </Label>
-                      <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4 bg-slate-50 rounded-xl border border-slate-100 max-h-48 overflow-y-auto">
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-3 p-4 bg-muted rounded-xl border border-border max-h-48 overflow-y-auto">
                         {[
                           "pos:auth",
                           "pos:location:read",
@@ -731,7 +733,7 @@ function AppsApiContent() {
                             />
                             <label
                               htmlFor={`perm-${perm}`}
-                              className="text-[9px] font-bold uppercase tracking-tight text-slate-600 cursor-pointer">
+                              className="text-[9px] font-bold uppercase tracking-tight text-foreground cursor-pointer">
                               {perm.replace(":", " ")}
                             </label>
                           </div>
@@ -741,26 +743,28 @@ function AppsApiContent() {
                   </div>
                 ) : (
                   <div className="space-y-4 py-3">
-                    <div className="p-3 bg-emerald-50 text-emerald-700 rounded-lg text-xs border border-emerald-200/80 font-semibold text-center">
+                    <div className="p-3 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-lg text-xs border border-emerald-500/20 font-semibold text-center">
                       Setup token generated
                     </div>
 
                     <div className="flex flex-col items-center gap-4">
-                      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                      <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
                         <QRCodeSVG
                           value={deviceTokenResult.rawToken}
                           size={160}
                           level="H"
                           includeMargin={false}
+                          bgColor="transparent"
+                          fgColor="currentColor"
                         />
                       </div>
 
                       <div className="w-full space-y-2">
-                        <div className="text-center p-4 bg-slate-50 rounded-xl border border-slate-100 relative group">
-                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                        <div className="text-center p-4 bg-muted rounded-xl border border-border relative group">
+                          <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
                             Provisioning token
                           </div>
-                          <div className="text-xl font-mono font-bold tracking-[0.15em] text-slate-900 break-all px-2">
+                          <div className="text-xl font-mono font-bold tracking-[0.15em] text-foreground break-all px-2">
                             {deviceTokenResult.rawToken}
                           </div>
                           <Button
@@ -776,7 +780,7 @@ function AppsApiContent() {
                       </div>
                     </div>
 
-                    <p className="text-[10px] text-center text-slate-400 italic">
+                    <p className="text-[10px] text-center text-muted-foreground italic">
                       Scan the QR code on your device or enter the token
                       manually to provision. Valid for 24 hours.
                     </p>
@@ -787,7 +791,7 @@ function AppsApiContent() {
                     <Button
                       onClick={handleProvisionDevice}
                       disabled={!newDevice.deviceName}
-                      className="bg-slate-900 hover:bg-slate-800 w-full text-xs rounded-lg">
+                      className="w-full text-xs rounded-lg">
                       Generate token
                     </Button>
                   ) : (
@@ -796,7 +800,7 @@ function AppsApiContent() {
                         setShowDeviceDialog(false);
                         setDeviceTokenResult(null);
                       }}
-                      className="bg-slate-900 hover:bg-slate-800 w-full text-xs rounded-lg">
+                      className="w-full text-xs rounded-lg">
                       Done
                     </Button>
                   )}
@@ -809,11 +813,11 @@ function AppsApiContent() {
             {registries.length === 0 &&
               deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length ===
                 0 && (
-                <div className="bg-white h-[200px] rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center p-6">
-                  <div className="p-3 bg-slate-50 rounded-lg mb-2 border border-slate-100">
-                    <Cpu className="w-7 h-7 text-slate-300" />
+                <div className="bg-card h-[200px] rounded-xl border border-dashed border-border flex flex-col items-center justify-center text-center p-6">
+                  <div className="p-3 bg-muted rounded-lg mb-2 border border-border">
+                    <Cpu className="w-7 h-7 text-muted-foreground" />
                   </div>
-                  <p className="text-[13px] text-slate-500 font-medium max-w-xs">
+                  <p className="text-[13px] text-muted-foreground font-medium max-w-xs">
                     No hardware devices connected to this organization yet.
                   </p>
                 </div>
@@ -824,16 +828,16 @@ function AppsApiContent() {
               .map(token => (
                 <div
                   key={token.id}
-                  className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/70 flex justify-between items-center">
+                  className="bg-amber-500/10 p-4 rounded-xl border border-amber-500/20 flex justify-between items-center">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
                       <Lock size={18} />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-900">
+                      <div className="font-bold text-xs text-foreground">
                         Pending setup: {token.deviceName}
                       </div>
-                      <div className="text-[10px] text-amber-700/80 mt-0.5 font-semibold">
+                      <div className="text-[10px] text-amber-600/80 dark:text-amber-400/80 mt-0.5 font-semibold">
                         EXPIRES: {new Date(token.expiresAt).toLocaleString()}
                       </div>
                     </div>
@@ -841,7 +845,7 @@ function AppsApiContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-amber-700 hover:bg-amber-100 h-8 w-8 rounded-lg"
+                    className="text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 h-8 w-8 rounded-lg"
                     onClick={() => copyToClipboard(token.rawToken)}>
                     <Copy size={14} />
                   </Button>
@@ -852,20 +856,20 @@ function AppsApiContent() {
               {registries.map(reg => (
                 <div
                   key={reg.id}
-                  className="bg-white p-4 rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] hover:border-slate-300 transition-all flex justify-between items-center group">
+                  className="bg-card p-4 rounded-xl border border-border shadow-sm hover:shadow-md hover:border-accent transition-all flex justify-between items-center group">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-foreground group-hover:text-background transition-colors">
                       <Monitor size={18} />
                     </div>
                     <div>
-                      <div className="font-bold text-xs text-slate-900">
+                      <div className="font-bold text-xs text-foreground">
                         {reg.deviceName}
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5">
+                      <div className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1.5">
                         <span className="font-semibold text-[9px] uppercase tracking-wider">
                           {reg.deviceType}
                         </span>
-                        <span className="w-1 h-1 rounded-full bg-slate-300" />
+                        <span className="w-1 h-1 rounded-full bg-muted-foreground" />
                         <span>{reg.location?.name || "Main Location"}</span>
                       </div>
                     </div>
@@ -878,12 +882,12 @@ function AppsApiContent() {
                       className={cn(
                         "px-2 py-0.2 border-none text-[9px] font-bold",
                         reg.status === "ACTIVE"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-slate-100 text-slate-500",
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                          : "bg-muted text-muted-foreground",
                       )}>
                       {reg.status}
                     </Badge>
-                    <div className="text-[9px] text-slate-400 mt-1 font-bold uppercase tracking-tighter flex items-center justify-end gap-1">
+                    <div className="text-[9px] text-muted-foreground mt-1 font-bold uppercase tracking-tighter flex items-center justify-end gap-1">
                       <History size={10} />
                       {reg.lastSeenAt
                         ? new Date(reg.lastSeenAt).toLocaleString()
@@ -901,10 +905,10 @@ function AppsApiContent() {
         <div className="space-y-6">
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+              <h2 className="text-lg font-bold text-foreground tracking-tight">
                 Webhook subscriptions
               </h2>
-              <p className="text-[13px] text-slate-500">
+              <p className="text-[13px] text-muted-foreground">
                 Receive real-time notifications when events happen in your
                 organization.
               </p>
@@ -913,7 +917,7 @@ function AppsApiContent() {
               open={showWebhookDialog}
               onOpenChange={setShowWebhookDialog}>
               <DialogTrigger asChild>
-                <Button className="bg-slate-900 hover:bg-slate-800 gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
+                <Button className="gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
                   <Plus size={16} />
                   Add webhook
                 </Button>
@@ -923,7 +927,7 @@ function AppsApiContent() {
                   <DialogTitle className="text-base font-bold tracking-tight">
                     Add webhook subscription
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-500">
+                  <DialogDescription className="text-xs text-muted-foreground">
                     Configure a new endpoint to receive real-time notifications.
                   </DialogDescription>
                 </DialogHeader>
@@ -931,7 +935,7 @@ function AppsApiContent() {
                   <div className="grid gap-1.5">
                     <Label
                       htmlFor="webhook-name"
-                      className="text-xs font-semibold text-slate-600">
+                      className="text-xs font-semibold">
                       Friendly name
                     </Label>
                     <Input
@@ -947,7 +951,7 @@ function AppsApiContent() {
                   <div className="grid gap-1.5">
                     <Label
                       htmlFor="webhook-url"
-                      className="text-xs font-semibold text-slate-600">
+                      className="text-xs font-semibold">
                       Payload URL
                     </Label>
                     <Input
@@ -961,10 +965,10 @@ function AppsApiContent() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       Events to subscribe
                     </Label>
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                    <div className="grid grid-cols-2 gap-3 p-3 bg-muted rounded-lg border border-border">
                       {availableEvents.map(ev => (
                         <div key={ev} className="flex items-center space-x-2">
                           <Checkbox
@@ -979,7 +983,7 @@ function AppsApiContent() {
                           />
                           <label
                             htmlFor={`event-${ev}`}
-                            className="text-xs font-semibold text-slate-600 uppercase cursor-pointer">
+                            className="text-xs font-semibold text-foreground uppercase cursor-pointer">
                             {ev.replace(".", " ")}
                           </label>
                         </div>
@@ -997,7 +1001,7 @@ function AppsApiContent() {
                   <Button
                     onClick={handleCreateWebhook}
                     disabled={!newWebhook.url || newWebhook.events.length === 0}
-                    className="bg-slate-900 hover:bg-slate-800 h-9 text-xs rounded-lg">
+                    className="h-9 text-xs rounded-lg">
                     Create subscription
                   </Button>
                 </DialogFooter>
@@ -1006,14 +1010,14 @@ function AppsApiContent() {
           </div>
 
           {webhooks.length === 0 ? (
-            <div className="bg-white p-14 rounded-xl border border-dashed border-slate-200 flex flex-col items-center text-center">
-              <div className="p-3 bg-slate-50 rounded-lg mb-3 border border-slate-100">
-                <Webhook className="w-7 h-7 text-slate-400" />
+            <div className="bg-card p-14 rounded-xl border border-dashed border-border flex flex-col items-center text-center">
+              <div className="p-3 bg-muted rounded-lg mb-3 border border-border">
+                <Webhook className="w-7 h-7 text-muted-foreground" />
               </div>
-              <h3 className="text-base font-bold text-slate-900 mb-1 tracking-tight">
+              <h3 className="text-base font-bold text-foreground mb-1 tracking-tight">
                 No webhooks configured
               </h3>
-              <p className="text-[13px] text-slate-500 max-w-sm">
+              <p className="text-[13px] text-muted-foreground max-w-sm">
                 Listen to real-time events from the API and trigger external
                 workflows in your own stack.
               </p>
@@ -1023,15 +1027,15 @@ function AppsApiContent() {
               {webhooks.map(wh => (
                 <div
                   key={wh.id}
-                  className="bg-white p-5 rounded-xl border border-slate-200 shadow-[0_1px_2px_rgba(15,23,42,0.04)] flex justify-between items-center group hover:border-slate-300 hover:shadow-[0_4px_16px_rgba(15,23,42,0.06)] transition-all">
+                  className="bg-card p-5 rounded-xl border border-border shadow-sm flex justify-between items-center group hover:border-accent hover:shadow-md transition-all">
                   <div className="space-y-3">
                     <div>
-                      <div className="font-bold text-sm text-slate-900 tracking-tight">
+                      <div className="font-bold text-sm text-foreground tracking-tight">
                         {wh.name || "Untitled webhook"}
                       </div>
-                      <div className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
-                        <Globe size={12} className="text-slate-400" />
-                        <code className="bg-slate-50 px-1 py-0.2 rounded border border-slate-200 font-mono text-xs text-slate-600">
+                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
+                        <Globe size={12} className="text-muted-foreground" />
+                        <code className="bg-muted px-1 py-0.2 rounded border border-border font-mono text-xs text-foreground">
                           {wh.url}
                         </code>
                       </div>
@@ -1041,7 +1045,7 @@ function AppsApiContent() {
                         <Badge
                           key={e}
                           variant="secondary"
-                          className="bg-slate-100 text-slate-600 border-none font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
+                          className="bg-muted text-muted-foreground border-none font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
                           {e}
                         </Badge>
                       ))}
@@ -1050,7 +1054,7 @@ function AppsApiContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-slate-400 hover:text-destructive hover:bg-destructive/5 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-lg"
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-lg"
                     onClick={() =>
                       deleteWebhookSubscriptionAction(wh.id).then(loadData)
                     }>
@@ -1067,11 +1071,12 @@ function AppsApiContent() {
         <div className="space-y-8">
           <div className="flex justify-between items-center">
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">
+              <h2 className="text-lg font-bold text-foreground tracking-tight">
                 Storefront & SPA Integration
               </h2>
-              <p className="text-[13px] text-slate-500">
-                Connect external client web storefronts, booking systems, or custom hybrid applications.
+              <p className="text-[13px] text-muted-foreground">
+                Connect external client web storefronts, booking systems, or
+                custom hybrid applications.
               </p>
             </div>
           </div>
@@ -1079,15 +1084,19 @@ function AppsApiContent() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               {/* Settings Card */}
-              <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-6">
-                <h3 className="text-sm font-bold text-slate-900 tracking-tight uppercase tracking-wider text-slate-400">
+              <div className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-6">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   Connection Settings
                 </h3>
 
-                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+                <div className="flex items-center justify-between p-4 bg-muted rounded-xl border border-border">
                   <div className="space-y-0.5">
-                    <div className="font-bold text-sm text-slate-900">Enable Client Storefront API</div>
-                    <div className="text-xs text-slate-500">Allow public SPA clients to communicate with your V3 APIs.</div>
+                    <div className="font-bold text-sm text-foreground">
+                      Enable Client Storefront API
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Allow public SPA clients to communicate with your V3 APIs.
+                    </div>
                   </div>
                   <Switch
                     checked={storefrontEnabled}
@@ -1097,11 +1106,12 @@ function AppsApiContent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-slate-700">Default Inventory Location</Label>
+                    <Label className="text-xs font-semibold">
+                      Default Inventory Location
+                    </Label>
                     <Select
                       value={selectedLocation}
-                      onValueChange={setSelectedLocation}
-                    >
+                      onValueChange={setSelectedLocation}>
                       <SelectTrigger className="h-10 text-sm rounded-lg">
                         <SelectValue placeholder="Select location" />
                       </SelectTrigger>
@@ -1116,7 +1126,9 @@ function AppsApiContent() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold text-slate-700">Allowed Origin CORS</Label>
+                    <Label className="text-xs font-semibold">
+                      Allowed Origin CORS
+                    </Label>
                     <Input
                       value={allowedOrigins}
                       onChange={e => setAllowedOrigins(e.target.value)}
@@ -1127,34 +1139,34 @@ function AppsApiContent() {
                 </div>
 
                 <Button
-                  onClick={() => toast.success("Storefront settings updated successfully!")}
-                  className="bg-slate-900 hover:bg-slate-800 text-xs font-semibold h-9 rounded-lg"
-                >
+                  onClick={() =>
+                    toast.success("Storefront settings updated successfully!")
+                  }
+                  className="text-xs font-semibold h-9 rounded-lg">
                   Save Storefront Settings
                 </Button>
               </div>
 
               {/* Developer Integration Code Card */}
-              <div className="bg-slate-900 text-slate-100 p-6 rounded-xl border border-slate-800 shadow-lg space-y-4 font-mono text-xs">
+              <div className="bg-card border shadow-lg p-6 rounded-xl space-y-4 font-mono text-xs">
                 <div className="flex justify-between items-center">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
                     Quick-Start Setup Code
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-slate-400 hover:text-white h-7 px-2 font-sans font-bold text-[10px]"
+                    className="text-muted-foreground hover:text-foreground h-7 px-2 font-sans font-bold text-[10px]"
                     onClick={() => {
                       copyToClipboard(
-                        `import { getSDK } from "@repo/sdk";\n\nconst scryme = getSDK({\n  baseURL: "https://api.scryme.tech/api/v3"\n});\n\n// 1. Fetch available timeslots\nconst slots = await scryme.services.getServiceAvailability("scryme-hq", "srv_123", "2026-10-15");\n\n// 2. Perform checkout with both items and bookings\nawait scryme.b2b.createOrder("scryme-hq", {\n  locationId: "loc_nairobi_001",\n  items: [{ variantId: "var_01", quantity: 2 }],\n  services: [{\n    serviceId: "srv_123",\n    scheduledStartTime: "2026-10-15T10:00:00Z"\n  }]\n});`
+                        `import { getSDK } from "@repo/sdk";\n\nconst scryme = getSDK({\n  baseURL: "https://api.scryme.tech/api/v3"\n});\n\n// 1. Fetch available timeslots\nconst slots = await scryme.services.getServiceAvailability("scryme-hq", "srv_123", "2026-10-15");\n\n// 2. Perform checkout with both items and bookings\nawait scryme.b2b.createOrder("scryme-hq", {\n  locationId: "loc_nairobi_001",\n  items: [{ variantId: "var_01", quantity: 2 }],\n  services: [{\n    serviceId: "srv_123",\n    scheduledStartTime: "2026-10-15T10:00:00Z"\n  }]\n});`,
                       );
-                    }}
-                  >
+                    }}>
                     <Copy size={11} className="mr-1" /> Copy Code
                   </Button>
                 </div>
-                <div className="bg-slate-950 p-4 rounded-lg overflow-x-auto text-[11px] leading-relaxed max-h-72 text-emerald-400">
-                  <pre>{`// Setup Scryme SPA client
+                <div className="bg-muted p-4 rounded-lg overflow-x-auto text-[11px] leading-relaxed max-h-72">
+                  <pre className="text-emerald-600 dark:text-emerald-400">{`// Setup Scryme SPA client
 import { getSDK } from "@repo/sdk";
 
 const scryme = getSDK({
@@ -1194,37 +1206,49 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
 
             {/* Sidebar Overview */}
             <div className="space-y-6">
-              <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider text-slate-400">
+              <div className="bg-card p-5 rounded-xl border border-border shadow-sm space-y-4">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Storefront Status
                 </h4>
                 <div className="space-y-3 text-xs">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500">API Connection</span>
-                    <Badge className="bg-emerald-50 text-emerald-700 border-none font-bold text-[9px] uppercase">
+                    <span className="text-muted-foreground">
+                      API Connection
+                    </span>
+                    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-none font-bold text-[9px] uppercase">
                       Operational
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500">CORS Restrictions</span>
-                    <span className="font-semibold text-slate-700">{storefrontEnabled ? "Active" : "Disabled"}</span>
+                    <span className="text-muted-foreground">
+                      CORS Restrictions
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {storefrontEnabled ? "Active" : "Disabled"}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500">Hybrid Orders</span>
-                    <Badge className="bg-blue-50 text-blue-700 border-none font-bold text-[9px] uppercase">
+                    <span className="text-muted-foreground">Hybrid Orders</span>
+                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-none font-bold text-[9px] uppercase">
                       Supported
                     </Badge>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-amber-50/60 p-5 rounded-xl border border-amber-200/50 space-y-2">
-                <h4 className="text-xs font-bold text-amber-900 tracking-tight flex items-center gap-1.5">
+              <div className="bg-primary/5 p-5 rounded-xl border border-primary/20 space-y-2">
+                <h4 className="text-xs font-bold text-foreground tracking-tight flex items-center gap-1.5">
                   <Key size={14} />
                   SPA Authentication Key
                 </h4>
-                <p className="text-xs text-amber-800/80 leading-relaxed">
-                  Storefront websites connect securely to Scryme using OAuth V3 API Clients. Generate a client with scope <code className="bg-amber-100/80 px-1 rounded text-[11px] font-mono text-amber-900">customer</code> and register the client-side SPA origin for smooth cross-origin lookups.
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Storefront websites connect securely to Scryme using OAuth V3
+                  API Clients. Generate a client with scope{" "}
+                  <code className="bg-muted px-1 rounded text-[11px] font-mono text-foreground">
+                    customer
+                  </code>{" "}
+                  and register the client-side SPA origin for smooth
+                  cross-origin lookups.
                 </p>
               </div>
             </div>
@@ -1241,9 +1265,9 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
             <SheetTitle className="text-lg font-bold tracking-tight">
               Client advanced settings
             </SheetTitle>
-            <SheetDescription className="text-xs text-slate-500">
+            <SheetDescription className="text-xs text-muted-foreground">
               Modify security settings and permissions for{" "}
-              <strong className="text-slate-700">
+              <strong className="text-foreground">
                 {editingV3Client?.name}
               </strong>
               .
@@ -1252,7 +1276,7 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
           {editingV3Client && (
             <div className="py-4 space-y-6">
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                   Scopes & permissions
                 </Label>
                 <div className="flex flex-wrap gap-1.5">
@@ -1266,8 +1290,8 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
                           className={cn(
                             "cursor-pointer py-1.5 px-3 h-auto text-[10px] font-bold transition-all border-none rounded-lg",
                             isSelected
-                              ? "bg-slate-900 text-white shadow-sm"
-                              : "bg-slate-50 text-slate-500 hover:bg-slate-100 border border-slate-200",
+                              ? "bg-foreground text-background shadow-sm"
+                              : "bg-muted text-muted-foreground hover:bg-accent border border-border",
                           )}
                           onClick={() => {
                             const scopes = isSelected
@@ -1287,7 +1311,7 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                   CORS origins
                 </Label>
                 <div className="space-y-2">
@@ -1305,19 +1329,19 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
                       })
                     }
                   />
-                  <p className="text-[10px] text-slate-400 leading-relaxed">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
                     Comma-separated list of browser origins allowed to make
                     authenticated requests.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-xl border border-border">
                 <div className="space-y-0.5">
-                  <div className="font-bold text-xs text-slate-900">
+                  <div className="font-bold text-xs text-foreground">
                     Active status
                   </div>
-                  <div className="text-[9px] text-slate-400 uppercase font-bold tracking-tight">
+                  <div className="text-[9px] text-muted-foreground uppercase font-bold tracking-tight">
                     Access control toggle
                   </div>
                 </div>
@@ -1341,7 +1365,7 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
               Cancel
             </Button>
             <Button
-              className="flex-1 h-10 text-xs bg-slate-900 hover:bg-slate-800 rounded-lg"
+              className="flex-1 h-10 text-xs rounded-lg"
               onClick={handleUpdateV3}>
               Save changes
             </Button>
@@ -1354,11 +1378,11 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
 
 export default function AppsApiPage() {
   return (
-    <div className="p-6 max-w-350 mx-auto min-h-screen bg-[#F8F9FB]">
+    <div className="p-6 max-w-350 mx-auto min-h-screen bg-background">
       <Suspense
         fallback={
           <div className="flex items-center justify-center h-[50vh]">
-            <RefreshCw className="w-6 h-6 animate-spin text-slate-400" />
+            <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         }>
         <AppsApiContent />

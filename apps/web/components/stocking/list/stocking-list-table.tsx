@@ -80,11 +80,11 @@ export function StockingListTable({ data }: StockingListTableProps) {
     className?: string;
   }) => (
     <TableHead
-      className={`cursor-pointer hover:bg-gray-50 transition-colors ${className}`}
+      className={`cursor-pointer hover:bg-muted/50 transition-colors ${className}`}
       onClick={() => handleSort(column)}>
       <div className="flex items-center gap-2">
         {title}
-        <ArrowUpDown size={12} className="text-gray-400" />
+        <ArrowUpDown size={12} className="text-muted-foreground" />
       </div>
     </TableHead>
   );
@@ -107,22 +107,24 @@ export function StockingListTable({ data }: StockingListTableProps) {
     items.map((item, index) => (
       <TableRow
         key={`${item.variantId}-${item.locationId || index}`}
-        className="hover:bg-gray-50/50">
+        className="hover:bg-muted/50">
         <TableCell>
           <div className="flex flex-col">
-            <span className="font-medium text-sm text-[#1D1D1F]">
+            <span className="font-medium text-sm text-foreground">
               {item.name}{" "}
               {item.variantName !== "Default" && ` - ${item.variantName}`}
             </span>
           </div>
         </TableCell>
         <TableCell>
-          <span className="text-[10px] text-gray-400 font-mono tracking-tighter uppercase">
+          <span className="text-[10px] text-muted-foreground font-mono tracking-tighter uppercase">
             {item.sku}
           </span>
         </TableCell>
         <TableCell className="text-center">
-          <span className="font-semibold text-sm">{item.currentStock}</span>
+          <span className="font-semibold text-sm text-foreground">
+            {item.currentStock}
+          </span>
         </TableCell>
         <TableCell className="text-center">
           <Badge
@@ -131,24 +133,24 @@ export function StockingListTable({ data }: StockingListTableProps) {
             {item.availableStock}
           </Badge>
         </TableCell>
-        <TableCell className="text-center text-gray-500 text-sm">
+        <TableCell className="text-center text-muted-foreground text-sm">
           {item.reservedStock}
         </TableCell>
         <TableCell className="text-center">
           {item.incomingStock > 0 ? (
-            <div className="flex items-center justify-center gap-1 text-blue-600 font-medium text-sm">
+            <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 font-medium text-sm">
               <Package size={12} />
               {item.incomingStock}
             </div>
           ) : (
-            <span className="text-gray-300">-</span>
+            <span className="text-muted-foreground/50">-</span>
           )}
         </TableCell>
         <TableCell>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -177,10 +179,10 @@ export function StockingListTable({ data }: StockingListTableProps) {
     ));
 
   return (
-    <div className="rounded-md border bg-white overflow-hidden">
+    <div className="rounded-md border bg-card overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="bg-gray-50/50">
+          <TableRow className="bg-muted/50">
             <SortableHeader title="Product" column="name" />
             <SortableHeader title="SKU" column="sku" />
             <TableHead className="font-bold text-center">Current</TableHead>
@@ -193,7 +195,9 @@ export function StockingListTable({ data }: StockingListTableProps) {
         <TableBody>
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="h-32 text-center text-gray-500">
+              <TableCell
+                colSpan={7}
+                className="h-32 text-center text-muted-foreground">
                 No stock data found.
               </TableCell>
             </TableRow>
@@ -202,10 +206,10 @@ export function StockingListTable({ data }: StockingListTableProps) {
           ) : (
             Object.entries(groupedData).map(([group, items]) => (
               <React.Fragment key={group}>
-                <TableRow className="bg-gray-100/50">
+                <TableRow className="bg-muted/30">
                   <TableCell
                     colSpan={7}
-                    className="py-2 font-bold text-sm sticky top-0 bg-gray-100/50 z-10">
+                    className="py-2 font-bold text-sm sticky top-0 bg-muted/30 z-10 text-foreground">
                     {group} ({items.length})
                   </TableCell>
                 </TableRow>

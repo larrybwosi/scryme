@@ -35,7 +35,7 @@ Our core logic, database client, configurations, and utilities are modularized i
 - **[`@repo/notifications`](./packages/notifications)**: Multi-channel messaging gateway orchestrating SMTP/Nodemailer HTML emails, handlebars template compiles, and SMS services.
 - **[`@repo/scryme`](./packages/scryme)**: Developer-centric API client mapping token exchange and message publishing against the Scryme Chat API.
 - **[`@repo/sdk`](./packages/sdk)**: Central client SDK containing shared HTTP wrappers and pre-configured request interceptors.
-- **[`@repo/v3-sdk`](./packages/v3-sdk)**: Rigorous TypeScript API client compiler generated directly from our core OpenAPI 3.0 specification.
+- **[`@scryme/sdk`](./packages/v3-sdk)**: Rigorous TypeScript API client compiler generated directly from our core OpenAPI 3.0 specification.
 - **[`@repo/windmill`](./packages/windmill)**: Secondary Handlebars compiler and Nodemailer client helper designed for background mail queues.
 - **[`@repo/zitadel`](./packages/zitadel)**: Specialized proxy utilities wrapping Zitadel IAM configurations and token introspection.
 - **[`@repo/env`](./packages/env)**: Type-safe runtime environment schema validation powered by Zod.

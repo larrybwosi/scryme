@@ -4,7 +4,7 @@ import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { z } from "zod";
 import express from "express";
 import axios, { type AxiosResponse } from "axios";
-import { getScrymeV3API } from "@repo/v3-sdk";
+import { getScrymeV3API } from "@scryme/sdk";
 
 // Initialize the MCP Server with metadata
 export const server = new McpServer({
