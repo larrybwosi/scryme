@@ -47,6 +47,7 @@ type DealFormValues = z.infer<typeof dealFormSchema>;
 
 interface DealFormProps {
   onSuccess: () => void;
+  onCancel?: () => void;
   initialData?: any;
 }
 
@@ -59,7 +60,7 @@ const STAGES = [
   { id: "closed_lost", title: "Closed Lost" },
 ];
 
-export function DealForm({ onSuccess, initialData }: DealFormProps) {
+export function DealForm({ onSuccess, onCancel, initialData }: DealFormProps) {
   const [loading, setLoading] = useState(false);
 
   // Fetching data using SWR hooks
@@ -282,6 +283,16 @@ export function DealForm({ onSuccess, initialData }: DealFormProps) {
         />
 
         <div className="flex justify-end gap-3 pt-4">
+          {onCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              onClick={onCancel}
+            >
+              Cancel
+            </Button>
+          )}
           <Button type="submit" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {initialData?.id ? "Update Deal" : "Create Deal"}
