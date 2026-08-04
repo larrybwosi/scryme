@@ -234,7 +234,10 @@ export default function App() {
       "markdown".includes(query) ||
       "seo metadata".includes(query) ||
       "image gallery".includes(query) ||
-      "customattributes".includes(query)
+      "customattributes".includes(query) ||
+      "global response".includes(query) ||
+      "response structure".includes(query) ||
+      "v3 global".includes(query)
     );
   }, [searchQuery]);
 
@@ -244,7 +247,7 @@ export default function App() {
 
   // Initialize playground fields when active endpoint changes
   useEffect(() => {
-    if (activeEndpoint && activeEndpointId !== "cms-customization-guide") {
+    if (activeEndpoint && activeEndpointId !== "cms-customization-guide" && activeEndpointId !== "v3-global-response-guide") {
       const defaultParams: Record<string, string> = {};
       activeEndpoint.parameters?.forEach((p) => {
         if (p.name === "orgSlug") {
@@ -358,7 +361,7 @@ export default function App() {
 
   // Extract Mock Request payload
   const mockRequestPayload = useMemo(() => {
-    if (activeEndpointId === "cms-customization-guide") return null;
+    if (activeEndpointId === "cms-customization-guide" || activeEndpointId === "v3-global-response-guide") return null;
     if (activeDocTab === "playground") {
       return playgroundBody;
     }
@@ -425,8 +428,27 @@ export default function App() {
 
   // Generate dynamic Code Snippets
   const codeSnippets = useMemo(() => {
+    const rawApiUrl = import.meta.env.VITE_API_URL || "https://api.scryme.tech";
+    const normalizedApiUrl = rawApiUrl.endsWith("/") ? rawApiUrl.slice(0, -1) : rawApiUrl;
+
+    if (activeEndpointId === "v3-global-response-guide") {
+      const targetUrl = `${normalizedApiUrl}/v3/bakery-co/inventory?locationId=loc_main`;
+      const targetMethod = "GET";
+
+      // cURL
+      let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json"`;
+
+      // Node
+      let node = `// Node.js Fetch Code\nconst url = "${targetUrl}";\nconst options = {\n  method: "${targetMethod}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  }\n};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data); // Expect wrapped global response structure!\n} catch (error) {\n  console.error("Error:", error);\n}`;
+
+      // Python
+      let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\n\nresponse = requests.get(url, headers=headers)\nprint(response.json()) # Expect wrapped global response structure!`;
+
+      return { curl, node, python };
+    }
+
     if (activeEndpointId === "cms-customization-guide") {
-      const baseUrl = "https://api.scryme.tech/v3";
+      const baseUrl = `${normalizedApiUrl}/v3`;
 
       const targetPayload = {
         name: simName,
@@ -473,7 +495,7 @@ export default function App() {
 
     if (!activeEndpoint) return { curl: "", node: "", python: "" };
 
-    const baseUrl = "https://api.scryme.tech";
+    const baseUrl = normalizedApiUrl;
     const path = getDynamicUrl(activeEndpoint.path);
     const method = activeEndpoint.method;
     const fullUrl = `${baseUrl}${path}`;
@@ -553,7 +575,8 @@ export default function App() {
   // Next and Previous pagination logic
   const chronologicalList = useMemo(() => {
     const list: { id: string; type: "guide" | "api"; name: string }[] = [
-      { id: "cms-customization-guide", type: "guide", name: "CMS Customization Engine" }
+      { id: "cms-customization-guide", type: "guide", name: "CMS Customization Engine" },
+      { id: "v3-global-response-guide", type: "guide", name: "Global Response Structure" }
     ];
     endpoints.forEach((ep) => {
       list.push({ id: ep.operationId, type: "api", name: ep.summary || ep.path });
@@ -767,6 +790,20 @@ export default function App() {
                   <BookOpen size={14} className="text-brass animate-pulse" />
                   <span className="font-bold truncate">CMS Customization Engine</span>
                 </button>
+                <button
+                  onClick={() => {
+                    setActiveEndpointId("v3-global-response-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-3 rounded-lg text-left text-xs transition-all duration-200 cursor-pointer ${
+                    activeEndpointId === "v3-global-response-guide"
+                      ? "bg-brass/20 text-paper font-semibold border-l-2 border-brass"
+                      : "text-light-text hover:text-paper hover:bg-ink-card"
+                  }`}
+                >
+                  <Workflow size={14} className="text-brass" />
+                  <span className="font-bold truncate">Global Response Structure</span>
+                </button>
               </div>
             )}
 
@@ -844,7 +881,104 @@ export default function App() {
           {/* MIDDLE COLUMN */}
           <section className="col-span-7 p-6 lg:p-12 overflow-y-auto space-y-10 border-r border-ink-border/60 max-w-4xl flex flex-col justify-between transition-colors duration-200">
             <div className="space-y-10 flex-1">
-              {activeEndpointId === "cms-customization-guide" ? (
+              {activeEndpointId === "v3-global-response-guide" ? (
+                // --- GORGEOUS HIGH-FIDELITY V3 GLOBAL RESPONSE STRUCTURE RENDER VIEW ---
+                <div className="space-y-8">
+                  <div>
+                    <div className="flex items-center gap-3 text-xs text-brass uppercase tracking-wider font-semibold mb-2">
+                      <span>Developer Guide</span>
+                      <span>&bull;</span>
+                      <span>API Design & Standards</span>
+                    </div>
+                    <h1 className="text-3xl font-extrabold text-paper leading-tight">
+                      V3 Global Response Structure
+                    </h1>
+                    <p className="text-light-text text-sm mt-2 leading-relaxed">
+                      All REST API endpoints in Scryme V3 wrap responses inside a standardized global envelope. This architecture guarantees a highly consistent data integration contract for custom frontends, headless portals, and internal workflows.
+                    </p>
+                  </div>
+
+                  {/* Standard Response Conceptual Card */}
+                  <div className="bg-ink-card/50 rounded-xl border border-ink-border p-5 space-y-3">
+                    <div className="flex items-center gap-2 text-brass font-bold text-sm">
+                      <Workflow size={16} />
+                      <span>Consistent Response Wrapping</span>
+                    </div>
+                    <p className="text-xs text-light-text leading-relaxed">
+                      Whether you are querying products, updating customer details, or submitting point-of-sale transactions, successful responses (HTTP 2xx) are wrapped in a generic envelope. This prevents client crash states on unexpected nulls, standardizes analytics parsing, and automates server response validation.
+                    </p>
+                  </div>
+
+                  {/* Envelope Properties Details */}
+                  <div className="space-y-6">
+                    <h2 className="text-lg font-bold text-paper border-b border-ink-border pb-2">Successful Envelope envelope</h2>
+
+                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-paper font-black text-sm">success</span>
+                        <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">boolean</span>
+                      </div>
+                      <p className="text-xs text-light-text leading-relaxed">
+                        Always returns <code className="text-paper">true</code> for successful operations. Allows fast frontend branching and exception handling without inspecting response status codes.
+                      </p>
+                    </div>
+
+                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-paper font-black text-sm">data</span>
+                        <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">any / generics (T)</span>
+                      </div>
+                      <p className="text-xs text-light-text leading-relaxed">
+                        The requested database or operation payload. Represents the actual model DTO schemas defined in the endpoint specifications (e.g. <code className="text-paper font-mono">ProductResponseDto</code>, <code className="text-paper font-mono">CustomerResponseDto</code>).
+                      </p>
+                    </div>
+
+                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-paper font-black text-sm">timestamp</span>
+                        <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">string (ISO8601)</span>
+                      </div>
+                      <p className="text-xs text-light-text leading-relaxed">
+                        The precise server-side execution ISO-8601 timestamp (UTC) for automatic drift alignment and offline transaction reconciliations.
+                      </p>
+                    </div>
+
+                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-paper font-black text-sm">meta (optional)</span>
+                        <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">object</span>
+                      </div>
+                      <p className="text-xs text-light-text leading-relaxed">
+                        Optional metadata wrapper used primarily for collection pagination offsets, filter cursors, or server transaction tracing.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Standard Error Conceptual Card */}
+                  <div className="space-y-6">
+                    <h2 className="text-lg font-bold text-paper border-b border-ink-border pb-2">Error Response Envelope</h2>
+                    <p className="text-xs text-light-text">
+                      When requests fail due to server conditions, validation blocks (HTTP 400), or credential failures (HTTP 401), the API returns a structured error body instead of raw text.
+                    </p>
+
+                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-paper font-black text-sm">error</span>
+                        <span className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">object</span>
+                      </div>
+                      <p className="text-xs text-light-text leading-relaxed">
+                        Contains detailed error specifications:
+                      </p>
+                      <div className="bg-ink-card rounded-lg border border-ink-border p-3 text-xs font-mono space-y-1.5">
+                        <div>• <span className="text-paper font-bold">success</span> (boolean): Always <code className="text-red-400">false</code> in error conditions.</div>
+                        <div>• <span className="text-paper font-bold">error.message</span> (string): Human readable high-level reason description.</div>
+                        <div>• <span className="text-paper font-bold">error.code</span> (string): Technical machine-parsable error identifier.</div>
+                        <div>• <span className="text-paper font-bold">error.details</span> (array of strings): Validation breakdowns or nested validation error messages.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : activeEndpointId === "cms-customization-guide" ? (
                 // --- GORGEOUS HIGH-FIDELITY CMS CUSTOMIZATION ENGINE RENDER VIEW ---
                 <div className="space-y-8">
                   <div>
@@ -1430,7 +1564,53 @@ export default function App() {
             <div className="space-y-6 flex-1">
 
               {/* CMS Target / Tabs Selector (Only for Guide) */}
-              {activeEndpointId === "cms-customization-guide" ? (
+              {activeEndpointId === "v3-global-response-guide" ? (
+                <div className="space-y-6">
+                  <span className="text-xs uppercase tracking-widest font-black text-brass">Global Spec Examples</span>
+
+                  <div className="space-y-2 text-left">
+                    <span className="text-[10px] font-bold text-light-text block">STANDARD SUCCESS ENVELOPE:</span>
+                    <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl">
+                      <pre className="overflow-x-auto text-green-300 whitespace-pre leading-relaxed scrollbar-thin">
+                        <code>
+                          {renderHighlightedCode(JSON.stringify({
+                            success: true,
+                            timestamp: new Date().toISOString(),
+                            data: {
+                              id: "prod_123",
+                              name: "Artisan Sourdough",
+                              sku: "SRV-BKA-001",
+                              price: 12.50
+                            }
+                          }, null, 2), "json")}
+                        </code>
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-left">
+                    <span className="text-[10px] font-bold text-light-text block">STANDARDIZED ERROR ENVELOPE:</span>
+                    <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl">
+                      <pre className="overflow-x-auto text-red-300 whitespace-pre leading-relaxed scrollbar-thin">
+                        <code>
+                          {renderHighlightedCode(JSON.stringify({
+                            success: false,
+                            timestamp: new Date().toISOString(),
+                            error: {
+                              message: "Invalid request parameters",
+                              code: "BAD_REQUEST",
+                              details: [
+                                "email must be a valid email address",
+                                "phone number must follow international E.164 formats"
+                              ]
+                            }
+                          }, null, 2), "json")}
+                        </code>
+                      </pre>
+                    </div>
+                  </div>
+                </div>
+              ) : activeEndpointId === "cms-customization-guide" ? (
                 <div className="space-y-6">
                   {/* Service vs Product Schema Toggle */}
                   <div className="space-y-2">
@@ -1624,7 +1804,7 @@ export default function App() {
               </div>
 
               {/* Response Block (Only for non-guide/standard endpoints reference view) */}
-              {activeEndpointId !== "cms-customization-guide" && activeDocTab === "reference" && (
+              {activeEndpointId !== "cms-customization-guide" && activeEndpointId !== "v3-global-response-guide" && activeDocTab === "reference" && (
                 <div className="space-y-3 animate-fade-in">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-black text-brass">
