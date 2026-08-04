@@ -42,6 +42,7 @@ import { ItemsTab } from "./components/items-tab";
 import { PaymentsTab } from "./components/payments-tab";
 import { DocumentsTab } from "./components/documents-tab";
 import { DeliveriesTab } from "./components/deliveries-tab";
+import { cn } from "@repo/ui/lib/utils";
 
 interface TransactionDetailClientProps {
   transaction: any;
