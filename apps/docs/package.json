@@ -23,6 +23,6 @@
     "tailwindcss": "^4.1.18",
     "typescript": "5.7.3",
     "vite": "^8.0.2",
-    "@repo/v3-sdk": "workspace:*"
+    "@scryme/sdk": "workspace:*"
   }
 }

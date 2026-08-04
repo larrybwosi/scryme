@@ -5,7 +5,7 @@
 ## 🚀 Key Features
 
 - **Static OpenAPI Spec Rendering**: Fast, single-page application rendering.
-- **Auto-Syncing Specs**: Pre-build/pre-development hooks automatically synchronize the JSON specification directly from the `@repo/v3-sdk` OpenAPI definition.
+- **Auto-Syncing Specs**: Pre-build/pre-development hooks automatically synchronize the JSON specification directly from the `@scryme/sdk` OpenAPI definition.
 - **Responsive Navigation**: Clear side-by-side split view of endpoint descriptions, schemas, parameters, and interactive request structures.
 
 ---
@@ -35,7 +35,7 @@
 2. **Pre-requisite Build**
    Ensure the core SDK specification is built first:
    ```bash
-   pnpm --filter "@repo/v3-sdk" build
+   pnpm --filter "@scryme/sdk" build
    ```
 
 3. **Start Development Server**

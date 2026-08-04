@@ -1,7 +1,9 @@
 {
-  "name": "@repo/v3-sdk",
+  "name": "@scryme/sdk",
   "version": "0.1.0",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
