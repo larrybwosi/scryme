@@ -26,11 +26,13 @@ describe("PosService.receiveTransfer", () => {
     },
     productVariantStock: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
     },
     productVariant: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     stockMovement: {
       create: vi.fn(),
@@ -48,7 +50,7 @@ describe("PosService.receiveTransfer", () => {
               stockTransfer: {
                 findFirst: vi.fn(),
               },
-              $transaction: vi.fn((cb) => cb(mockTx)),
+              $transaction: vi.fn(cb => cb(mockTx)),
             },
           },
         },
@@ -79,10 +81,17 @@ describe("PosService.receiveTransfer", () => {
       items: [],
     };
 
-    vi.mocked(prisma.client.stockTransfer.findFirst).mockResolvedValue(mockTransfer as any);
+    vi.mocked(prisma.client.stockTransfer.findFirst).mockResolvedValue(
+      mockTransfer as any,
+    );
 
-    const result = await service.receiveTransfer(mockCtx, "transfer_123", { items: [] });
-    expect(result).toEqual({ success: true, message: "Transfer already completed" });
+    const result = await service.receiveTransfer(mockCtx, "transfer_123", {
+      items: [],
+    });
+    expect(result).toEqual({
+      success: true,
+      message: "Transfer already completed",
+    });
     expect(prisma.client.$transaction).not.toHaveBeenCalled();
   });
 
@@ -116,23 +125,26 @@ describe("PosService.receiveTransfer", () => {
       ],
     };
 
-    vi.mocked(prisma.client.stockTransfer.findFirst).mockResolvedValue(mockTransfer as any);
+    vi.mocked(prisma.client.stockTransfer.findFirst).mockResolvedValue(
+      mockTransfer as any,
+    );
 
-    // Mock stock exist for var_1, doesn't exist for var_2
-    mockTx.productVariantStock.findUnique.mockImplementation(({ where }) => {
-      if (where.variantId_locationId.variantId === "var_1") {
-        return Promise.resolve({ id: "stock_1", currentStock: new Decimal(20) });
-      }
-      return Promise.resolve(null);
-    });
+    // Mock stock findMany
+    mockTx.productVariantStock.findMany.mockResolvedValue([
+      { id: "stock_1", variantId: "var_1", currentStock: new Decimal(20) },
+    ]);
 
-    // Mock variant findUnique for var_2 which needs to be created
-    mockTx.productVariant.findUnique.mockResolvedValue({
-      id: "var_2",
-      productId: "prod_2",
-    } as any);
+    // Mock variant findMany
+    mockTx.productVariant.findMany.mockResolvedValue([
+      { id: "var_1", productId: "prod_1" },
+      { id: "var_2", productId: "prod_2" },
+    ]);
 
-    const result = await service.receiveTransfer(mockCtx, "transfer_123", mockBody);
+    const result = await service.receiveTransfer(
+      mockCtx,
+      "transfer_123",
+      mockBody,
+    );
 
     expect(result).toEqual({ success: true });
 
@@ -148,8 +160,18 @@ describe("PosService.receiveTransfer", () => {
       },
     });
 
-    // Verify stock checks & adjustments
-    expect(mockTx.productVariantStock.findUnique).toHaveBeenCalledTimes(2);
+    // Verify batch findMany checks
+    expect(mockTx.productVariantStock.findMany).toHaveBeenCalledWith({
+      where: {
+        variantId: { in: ["var_1", "var_2"] },
+        locationId: "loc_to",
+      },
+    });
+    expect(mockTx.productVariant.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["var_1", "var_2"] },
+      },
+    });
 
     // var_1 has stock -> incremented by acceptedQuantity (8)
     expect(mockTx.productVariantStock.update).toHaveBeenCalledWith({
@@ -243,7 +265,9 @@ describe("PosService.sync", () => {
       pagination: {},
     } as any);
 
-    vi.mocked(prisma.client.category.findMany).mockResolvedValue(mockCategories as any);
+    vi.mocked(prisma.client.category.findMany).mockResolvedValue(
+      mockCategories as any,
+    );
 
     const result = await service.sync(mockCtx, { locationId: "loc_123" });
 
@@ -268,9 +292,14 @@ describe("PosService.sync", () => {
       pagination: {},
     } as any);
 
-    vi.mocked(prisma.client.category.findMany).mockResolvedValue(mockCategories as any);
+    vi.mocked(prisma.client.category.findMany).mockResolvedValue(
+      mockCategories as any,
+    );
 
-    const result = await service.sync(mockCtx, { locationId: "loc_123", lastSync: lastSyncStr });
+    const result = await service.sync(mockCtx, {
+      locationId: "loc_123",
+      lastSync: lastSyncStr,
+    });
 
     expect(prisma.client.category.findMany).toHaveBeenCalledWith({
       where: {
