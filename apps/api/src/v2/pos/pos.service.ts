@@ -1205,15 +1205,10 @@ export class PosService {
         },
       });
 
-      /**
-       * ⚡ Bolt Optimization: Index body.items into a Map to avoid O(N*M) nested array searches.
-       * This reduces item lookup to constant-time O(1) complexity, resulting in O(N + M) complexity overall.
-       */
       const receivedItemMap = new Map<string, any>(
         (body.items || []).map((i: any) => [i.variantId, i]),
       );
 
-      // ⚡ Bolt Optimization: Batch fetch variant stocks and product variants up-front to eliminate N+1 database queries.
       const variantIds = transfer.items.map(item => item.variantId);
       const [variantStocks, productVariants] = await Promise.all([
         tx.productVariantStock.findMany({
@@ -1229,20 +1224,6 @@ export class PosService {
         }),
       ]);
 
-      const stockMap = new Map<string, any>(
-        variantStocks.map(s => [s.variantId, s]),
-      );
-      const variantMap = new Map<string, any>(
-        productVariants.map(v => [v.id, v]),
-      );
-
-      const variantIds = transfer.items.map((i) => i.variantId);
-
-      /**
-       * ⚡ Bolt Optimization: Batch pre-fetch all matching productVariantStock records at transfer.toLocationId
-       * and productVariant records for the requested variantIds to eliminate sequential N+1 database queries
-       * (findUnique) inside the line item loop.
-       */
       const [existingStocks, variants] = await Promise.all([
         tx.productVariantStock.findMany({
           where: {
@@ -1256,8 +1237,12 @@ export class PosService {
         }),
       ]);
 
-      const stockMap = new Map<string, any>(existingStocks.map((s: any) => [s.variantId, s]));
-      const variantMap = new Map<string, any>(variants.map((v: any) => [v.id, v]));
+      const stockMap = new Map<string, any>(
+        existingStocks.map((s: any) => [s.variantId, s]),
+      );
+      const variantMap = new Map<string, any>(
+        variants.map((v: any) => [v.id, v]),
+      );
 
       // 2. Adjust inventory for each item
       for (const item of transfer.items) {
