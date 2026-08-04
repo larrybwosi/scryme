@@ -437,9 +437,12 @@ export class InvoiceUseCase {
 
     // If it's linked to a transaction, check if an up-to-date invoice attachment exists
     if (invoice.transactionId) {
-      const referenceDate = invoice.transaction?.updatedAt
+      const config = invoice.organization?.invoiceConfig;
+      const configUpdatedAt = config?.updatedAt ? new Date(config.updatedAt) : null;
+      const transactionUpdatedAt = invoice.transaction?.updatedAt
         ? new Date(invoice.transaction.updatedAt)
         : new Date(invoice.updatedAt);
+      const referenceDate = configUpdatedAt && configUpdatedAt > transactionUpdatedAt ? configUpdatedAt : transactionUpdatedAt;
 
       const existingDoc = invoice.transaction?.attachments?.find(
         (a) =>
@@ -517,10 +520,15 @@ export class InvoiceUseCase {
       );
     }
 
+    const config = transaction.organization?.invoiceConfig;
+    const configUpdatedAt = config?.updatedAt ? new Date(config.updatedAt) : null;
+    const transactionUpdatedAt = new Date(transaction.updatedAt);
+    const referenceDate = configUpdatedAt && configUpdatedAt > transactionUpdatedAt ? configUpdatedAt : transactionUpdatedAt;
+
     const existingDoc = transaction.attachments?.find(
       (a) =>
         a.description === "Invoice" &&
-        new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+        new Date(a.uploadedAt) >= referenceDate,
     );
 
     if (existingDoc?.fileUrl) {
@@ -587,10 +595,15 @@ export class InvoiceUseCase {
       );
     }
 
+    const config = transaction.organization?.receiptConfig;
+    const configUpdatedAt = config?.updatedAt ? new Date(config.updatedAt) : null;
+    const transactionUpdatedAt = new Date(transaction.updatedAt);
+    const referenceDate = configUpdatedAt && configUpdatedAt > transactionUpdatedAt ? configUpdatedAt : transactionUpdatedAt;
+
     const existingDoc = transaction.attachments?.find(
       (a) =>
         a.description === "Receipt" &&
-        new Date(a.uploadedAt) >= new Date(transaction.updatedAt),
+        new Date(a.uploadedAt) >= referenceDate,
     );
 
     if (existingDoc?.fileUrl) {
@@ -684,7 +697,15 @@ export class InvoiceUseCase {
   ) {
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: transactionId, organizationId },
-      include: { attachments: true },
+      include: {
+        attachments: true,
+        organization: {
+          include: {
+            invoiceConfig: true,
+            receiptConfig: true,
+          },
+        },
+      },
     });
 
     if (!transaction) {
@@ -692,10 +713,15 @@ export class InvoiceUseCase {
     }
 
     const descPattern = type === "invoice" ? "Invoice" : "Receipt";
+    const config = type === "invoice" ? transaction.organization?.invoiceConfig : transaction.organization?.receiptConfig;
+    const configUpdatedAt = config?.updatedAt ? new Date(config.updatedAt) : null;
+    const transactionUpdatedAt = new Date(transaction.updatedAt);
+    const referenceDate = configUpdatedAt && configUpdatedAt > transactionUpdatedAt ? configUpdatedAt : transactionUpdatedAt;
+
     let existingDoc = transaction.attachments?.find(
       (a) =>
         a.description === descPattern &&
-        new Date(a.uploadedAt) >= new Date(transaction.updatedAt) &&
+        new Date(a.uploadedAt) >= referenceDate &&
         !a.expiresAt,
     );
 

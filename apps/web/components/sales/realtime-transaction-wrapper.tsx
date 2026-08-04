@@ -9,9 +9,13 @@ import { toast } from "sonner";
 export function RealtimeTransactionWrapper({
   initialTransactions,
   organizationId,
+  invoiceConfigUpdatedAt,
+  receiptConfigUpdatedAt,
 }: {
   initialTransactions: any[];
   organizationId?: string;
+  invoiceConfigUpdatedAt?: string;
+  receiptConfigUpdatedAt?: string;
 }) {
   const [transactions, setTransactions] = useState(initialTransactions);
   const searchParams = useSearchParams();
@@ -61,7 +65,11 @@ export function RealtimeTransactionWrapper({
 
   return (
     <div className="space-y-4">
-      <TransactionTable transactions={transactions} />
+      <TransactionTable
+        transactions={transactions}
+        invoiceConfigUpdatedAt={invoiceConfigUpdatedAt}
+        receiptConfigUpdatedAt={receiptConfigUpdatedAt}
+      />
     </div>
   );
 }
