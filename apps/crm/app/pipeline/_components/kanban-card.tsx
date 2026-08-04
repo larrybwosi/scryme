@@ -92,8 +92,9 @@ export function KanbanCard({ deal, isOverlay, stageConfig }: KanbanCardProps) {
         <div className="flex items-start gap-2 px-3 pt-3 pb-2">
           <button
             {...listeners}
-            className="mt-0.5 p-0.5 rounded text-muted-foreground/30 hover:text-muted-foreground/60 cursor-grab active:cursor-grabbing transition-colors shrink-0 focus:outline-none"
+            className="mt-0.5 p-0.5 text-muted-foreground/30 hover:text-muted-foreground/60 cursor-grab active:cursor-grabbing transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 rounded-sm"
             aria-label="Drag to reorder"
+            title="Drag to reorder"
           >
             <GripVertical size={13} />
           </button>
