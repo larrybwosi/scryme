@@ -708,7 +708,7 @@ export function Cart() {
                 </TooltipProvider>
               )}
 
-              {businessConfig.type === 'restaurant' && (
+              {import.meta.env.VITE_BUSINESS_MODE === 'restaurant' && (
                 <Button
                   variant="outline"
                   className="col-span-1 h-12 flex-col gap-0.5"
@@ -731,8 +731,8 @@ export function Cart() {
                     <Button
                       className={cn(
                         'h-12 shadow-md text-sm font-bold uppercase tracking-wide relative group/btn',
-                        (enableHoldSale && businessConfig.type === 'restaurant') ? 'col-span-3' :
-                        (enableHoldSale || businessConfig.type === 'restaurant') ? 'col-span-4' : 'col-span-5'
+                        (enableHoldSale && import.meta.env.VITE_BUSINESS_MODE === 'restaurant') ? 'col-span-3' :
+                        (enableHoldSale || import.meta.env.VITE_BUSINESS_MODE === 'restaurant') ? 'col-span-4' : 'col-span-5'
                       )}
                       onClick={handleConfirmPayment}
                       disabled={currentOrder.items.length === 0}

@@ -1675,7 +1675,9 @@ export default function ReceiptSettingsPage() {
   // Determine if kitchen ticket is applicable for this business type
   const businessConfig = getBusinessConfig(settings.businessType);
   const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
+  const isRestaurantOrBarBuild = ['restaurant', 'bar'].includes(import.meta.env.VITE_BUSINESS_MODE || 'retail');
   const hasKitchenDisplay =
+    isRestaurantOrBarBuild &&
     businessConfig.features.kitchenDisplay &&
     (['restaurant', 'bar'].includes(businessMode) ||
       ['restaurant', 'bar'].includes(settings.businessType));

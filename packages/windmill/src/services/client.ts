@@ -235,7 +235,7 @@ export class WindmillApiClient {
         "Content-Type": "application/json",
         Authorization: `Bearer ${adminApiKey}`,
       },
-      body: JSON.stringify({ name, slug }),
+      body: JSON.stringify({ id: slug, name, username: "admin" }),
     });
 
     if (!res.ok) {

@@ -14,7 +14,6 @@ import {
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
-import { Badge } from '@repo/ui/components/ui/badge';
 import { Separator } from '@repo/ui/components/ui/separator';
 import { Pause, Clock, AlertTriangle, AlertCircle, ShoppingBag, User, MessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -182,19 +181,21 @@ export function HoldOrderDialog({ open, onOpenChange, onHoldComplete }: HoldOrde
 
           <div className="flex flex-wrap gap-1.5">
             {QUICK_REASONS.map(quickReason => (
-              <Badge
+              <button
                 key={quickReason}
-                variant="secondary"
+                type="button"
+                aria-pressed={reason === quickReason}
                 className={cn(
-                  'cursor-pointer transition-colors text-xs font-normal border-transparent',
+                  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+                  'cursor-pointer font-normal border-transparent',
                   reason === quickReason
-                    ? 'bg-primary text-primary-foreground hover:bg-primary'
-                    : 'hover:bg-accent text-muted-foreground'
+                    ? 'bg-primary text-primary-foreground hover:bg-primary/95'
+                    : 'bg-secondary hover:bg-accent text-muted-foreground hover:text-foreground'
                 )}
                 onClick={() => setReason(quickReason)}
               >
                 {quickReason}
-              </Badge>
+              </button>
             ))}
           </div>
         </div>
@@ -209,6 +210,7 @@ export function HoldOrderDialog({ open, onOpenChange, onHoldComplete }: HoldOrde
               <button
                 key={option.value}
                 type="button"
+                aria-pressed={priority === option.value}
                 onClick={() => setPriority(option.value)}
                 className={cn(
                   'p-3 rounded-lg border text-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',

@@ -153,18 +153,18 @@ export default function CustomerForm({
     return formData.dateOfBirth ? new Date(formData.dateOfBirth) : undefined;
   };
 
-  const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
+  const isPharmacy = import.meta.env.VITE_BUSINESS_MODE === 'pharmacy';
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col h-full bg-background text-foreground mb-6">
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 overflow-hidden">
         <div className="px-6 pt-4 border-b border-border bg-background/50 backdrop-blur-sm z-10">
-          <TabsList className={cn('w-full grid', businessMode === 'pharmacy' ? 'grid-cols-2' : 'grid-cols-1')}>
+          <TabsList className={cn('w-full grid', isPharmacy ? 'grid-cols-2' : 'grid-cols-1')}>
             <TabsTrigger value="details" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary">
               <User className="w-4 h-4 mr-2" /> Customer Details
             </TabsTrigger>
-            {businessMode === 'pharmacy' && (
+            {isPharmacy && (
               <TabsTrigger
                 value="medical"
                 className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary"
@@ -256,7 +256,7 @@ export default function CustomerForm({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {businessMode === 'pharmacy' && (
+              {isPharmacy && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="gender">Gender</Label>
@@ -337,7 +337,7 @@ export default function CustomerForm({
         </TabsContent>
 
         {/* Section 2: Pharmacy Profile (Medical Tab) */}
-        {businessMode === 'pharmacy' && (
+        {isPharmacy && (
           <TabsContent value="medical" className="flex-1 overflow-y-auto p-6 space-y-8 mt-0">
             <section className="space-y-4">
               <div className="flex items-center space-x-2 border-b pb-2 border-border">

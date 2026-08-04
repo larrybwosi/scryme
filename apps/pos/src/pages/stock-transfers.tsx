@@ -262,8 +262,8 @@ export default function StockTransferCreate() {
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const availableDestinations = locations.filter(loc => loc.id !== currentLocation?.id);
-  const selectedToBranch = locations.find(b => b.id === toBranch);
+  const availableDestinations = locations.filter((loc: any) => loc.id !== currentLocation?.id);
+  const selectedToBranch = locations.find((b: any) => b.id === toBranch);
   const getTotalItems = () => items.reduce((sum, i) => sum + i.quantity, 0);
   const isFormReady = toBranch && items.length > 0 && !isSubmitting;
 
@@ -337,7 +337,7 @@ export default function StockTransferCreate() {
   };
 
   const updateQuantity = (id: string, quantity: number) =>
-    setItems(prev => prev.map(i => (i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i)));
+    setItems(prev => prev.map(i => (i.id === id ? { ...i, quantity: Math.max(0, quantity) } : i)));
 
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
@@ -528,7 +528,7 @@ export default function StockTransferCreate() {
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        {availableDestinations.map(loc => (
+                        {availableDestinations.map((loc: any) => (
                           <SelectItem key={loc.id} value={loc.id}>
                             <div className="flex items-center gap-2">
                               <div className="h-2 w-2 rounded-full bg-sky-500" />
@@ -754,17 +754,30 @@ export default function StockTransferCreate() {
                             <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-background overflow-hidden w-28">
                               <button
                                 className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-30"
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                                 disabled={item.quantity <= 1}
                               >
                                 −
                               </button>
-                              <div className="flex-1 text-center text-sm font-semibold text-slate-800 dark:text-slate-200 select-none">
-                                {item.quantity}
-                              </div>
+                              <input
+                                type="number"
+                                className="w-12 h-8 border-0 p-0 text-center text-sm font-semibold bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                value={item.quantity || ''}
+                                onChange={e => {
+                                  const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                  if (!isNaN(val)) {
+                                    updateQuantity(item.id, Math.min(item.currentStock, Math.max(0, val)));
+                                  }
+                                }}
+                                onBlur={() => {
+                                  if (!item.quantity || item.quantity < 1) {
+                                    updateQuantity(item.id, 1);
+                                  }
+                                }}
+                              />
                               <button
                                 className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-30"
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                onClick={() => updateQuantity(item.id, Math.min(item.currentStock, item.quantity + 1))}
                                 disabled={item.quantity >= item.currentStock}
                               >
                                 +

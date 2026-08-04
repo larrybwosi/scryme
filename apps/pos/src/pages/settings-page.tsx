@@ -31,7 +31,6 @@ import {
   Check,
   LayoutGrid,
   Save,
-  Building2,
   Bell,
   HardDrive,
   FileText,
@@ -154,12 +153,12 @@ export default function SettingsPage() {
   const [currency, setCurrency] = useState(settings?.currency || 'USD');
   const [taxRate, setTaxRate] = useState((settings?.taxRate ?? 0).toString());
   const [allowSaveUnpaidOrders, setAllowSaveUnpaidOrders] = useState(settings?.allowSaveUnpaidOrders ?? false);
-  const [enableCustomerManagement, setEnableCustomerManagement] = useState(settings?.enableCustomerManagement ?? false);
-  const [enableEmployeeManagement, setEnableEmployeeManagement] = useState(settings?.enableEmployeeManagement ?? false);
-  const [enableLowStockAlerts, setEnableLowStockAlerts] = useState(settings?.enableLowStockAlerts ?? false);
-  const [lowStockThreshold, setLowStockThreshold] = useState((settings?.lowStockThreshold ?? 10).toString());
+  const enableCustomerManagement = settings?.enableCustomerManagement ?? false;
+  const enableEmployeeManagement = settings?.enableEmployeeManagement ?? false;
+  const enableLowStockAlerts = settings?.enableLowStockAlerts ?? false;
+  const lowStockThreshold = (settings?.lowStockThreshold ?? 10).toString();
   const [enableCashDrawer, setEnableCashDrawer] = useState(settings?.enableCashDrawer ?? false);
-  const [requireEmployeePin, setRequireEmployeePin] = useState(settings?.requireEmployeePin ?? false);
+  const requireEmployeePin = settings?.requireEmployeePin ?? false;
   const [printerName] = useState(settings?.printerName || '');
   const [enableEmailReceipts] = useState(settings?.enableEmailReceipts ?? false);
   const [paybillNumber, setPaybillNumber] = useState(settings?.paybillNumber || '');
@@ -171,20 +170,20 @@ export default function SettingsPage() {
   const [enableAutoUpdate, setEnableAutoUpdate] = useState(settings?.enableAutoUpdate ?? true);
 
   // Multi-user / Shift Settings
-  const [shareCartBetweenUsers, setShareCartBetweenUsers] = useState(settings?.shareCartBetweenUsers ?? true);
-  const [shareShiftBetweenUsers, setShareShiftBetweenUsers] = useState(settings?.shareShiftBetweenUsers ?? true);
-  const [enableAutoShiftPrompt, setEnableAutoShiftPrompt] = useState(settings?.enableAutoShiftPrompt ?? false);
-  const [enforceShiftForCashPayments, setEnforceShiftForCashPayments] = useState(settings?.enforceShiftForCashPayments ?? false);
+  const shareCartBetweenUsers = settings?.shareCartBetweenUsers ?? true;
+  const shareShiftBetweenUsers = settings?.shareShiftBetweenUsers ?? true;
+  const enableAutoShiftPrompt = settings?.enableAutoShiftPrompt ?? false;
+  const enforceShiftForCashPayments = settings?.enforceShiftForCashPayments ?? false;
   const [forcedImmediateSyncThreshold, setForcedImmediateSyncThreshold] = useState((settings?.forcedImmediateSyncThreshold ?? 1000).toString());
 
   // KDS Settings
-  const [enableKdsSystem, setEnableKdsSystem] = useState(settings?.enableKdsSystem ?? false);
+  const enableKdsSystem = settings?.enableKdsSystem ?? false;
 
   // Hold Sale Settings
-  const [enableHoldSale, setEnableHoldSale] = useState(settings?.enableHoldSale ?? true);
-  const [maxHeldOrders, setMaxHeldOrders] = useState((settings?.maxHeldOrders ?? 20).toString());
-  const [heldOrderExpiryHours, setHeldOrderExpiryHours] = useState((settings?.heldOrderExpiryHours ?? 24).toString());
-  const [requireHoldReason, setRequireHoldReason] = useState(settings?.requireHoldReason ?? false);
+  const enableHoldSale = settings?.enableHoldSale ?? true;
+  const maxHeldOrders = (settings?.maxHeldOrders ?? 20).toString();
+  const heldOrderExpiryHours = (settings?.heldOrderExpiryHours ?? 24).toString();
+  const requireHoldReason = settings?.requireHoldReason ?? false;
   const currentConfig = getBusinessConfig();
 
   // Sync auto-start local state with OS setting on mount
@@ -321,14 +320,6 @@ export default function SettingsPage() {
               >
                 <Palette className="h-4 w-4 mr-2" /> Theme
               </TabsTrigger>
-              {import.meta.env.MODE !== 'standalone' && (
-                <TabsTrigger
-                  value="enterprise"
-                  className="flex-1 min-w-[100px] h-10 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
-                >
-                  <Building2 className="h-4 w-4 mr-2" /> Enterprise
-                </TabsTrigger>
-              )}
               <TabsTrigger
                 value="notifications"
                 className="flex-1 min-w-[100px] h-10 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
@@ -637,224 +628,6 @@ export default function SettingsPage() {
                 </div>
               </Card>
             </div>
-          </TabsContent>
-
-          <TabsContent value="enterprise" className="space-y-6">
-            {import.meta.env.MODE !== 'standalone' && (
-              <Card className="p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Customer Management</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Enable Customer Management</div>
-                      <p className="text-sm text-muted-foreground">
-                        Track customer information, purchase history, and loyalty points
-                      </p>
-                    </div>
-                    <Switch checked={enableCustomerManagement} onCheckedChange={setEnableCustomerManagement} />
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {import.meta.env.MODE !== 'standalone' && (
-              <Card className="p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Employee Management</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Enable Employee Management</div>
-                      <p className="text-sm text-muted-foreground">
-                        Manage employee accounts, roles, and access permissions
-                      </p>
-                    </div>
-                    <Switch checked={enableEmployeeManagement} onCheckedChange={setEnableEmployeeManagement} />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Require Employee PIN</div>
-                      <p className="text-sm text-muted-foreground">Employees must enter PIN to process transactions</p>
-                    </div>
-                    <Switch
-                      checked={requireEmployeePin}
-                      onCheckedChange={setRequireEmployeePin}
-                      disabled={!enableEmployeeManagement}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Share Cart Between Users</div>
-                      <p className="text-sm text-muted-foreground">If disabled, each user will have their own independent shopping cart</p>
-                    </div>
-                    <Switch
-                      checked={shareCartBetweenUsers}
-                      onCheckedChange={setShareCartBetweenUsers}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Share Shift Between Users</div>
-                      <p className="text-sm text-muted-foreground">If disabled, each user must open and manage their own shift session</p>
-                    </div>
-                    <Switch
-                      checked={shareShiftBetweenUsers}
-                      onCheckedChange={setShareShiftBetweenUsers}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Auto-Prompt for Shift</div>
-                      <p className="text-sm text-muted-foreground">Automatically prompt for a new shift opening after login if none is active</p>
-                    </div>
-                    <Switch
-                      checked={enableAutoShiftPrompt}
-                      onCheckedChange={setEnableAutoShiftPrompt}
-                    />
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Enforce Shift for Cash</div>
-                      <p className="text-sm text-muted-foreground">Block cash payments if no active shift is found</p>
-                    </div>
-                    <Switch
-                      checked={enforceShiftForCashPayments}
-                      onCheckedChange={setEnforceShiftForCashPayments}
-                    />
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {import.meta.env.MODE !== 'standalone' && (
-              <Card className="p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Inventory Management</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Enable Low Stock Alerts</div>
-                      <p className="text-sm text-muted-foreground">Get notifications when products are running low</p>
-                    </div>
-                    <Switch checked={enableLowStockAlerts} onCheckedChange={setEnableLowStockAlerts} />
-                  </div>
-
-                  {enableLowStockAlerts && (
-                    <div className="grid gap-2 pl-6">
-                      <Label htmlFor="lowStockThreshold">Low Stock Threshold</Label>
-                      <Input
-                        id="lowStockThreshold"
-                        type="number"
-                        min="0"
-                        value={lowStockThreshold}
-                        onChange={e => setLowStockThreshold(e.target.value)}
-                        placeholder="10"
-                      />
-                      <p className="text-xs text-muted-foreground">Alert when stock falls below this number</p>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            )}
-
-            {import.meta.env.MODE !== 'standalone' && (
-              <Card className="p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Cash Management</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Enable Cash Drawer</div>
-                      <p className="text-sm text-muted-foreground">Track cash drawer sessions and reconciliation</p>
-                    </div>
-                    <Switch checked={enableCashDrawer} onCheckedChange={setEnableCashDrawer} />
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {import.meta.env.MODE !== 'standalone' && (
-              <Card className="p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Kitchen Display System (KDS)</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Enable Kitchen Display System</div>
-                      <p className="text-sm text-muted-foreground">Send orders to the KDS app automatically</p>
-                    </div>
-                    <Switch checked={enableKdsSystem} onCheckedChange={setEnableKdsSystem} />
-                  </div>
-                </div>
-              </Card>
-            )}
-
-            {import.meta.env.MODE !== 'standalone' && (
-              <Card className="p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Hold Sale</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-2">
-                    <div className="flex-1">
-                      <div className="font-medium">Enable Hold Sale</div>
-                      <p className="text-sm text-muted-foreground">Allow cashiers to temporarily hold transactions</p>
-                    </div>
-                    <Switch checked={enableHoldSale} onCheckedChange={setEnableHoldSale} />
-                  </div>
-
-                  {enableHoldSale && (
-                    <>
-                      <div className="grid grid-cols-2 gap-4 pl-6">
-                        <div className="grid gap-2">
-                          <Label htmlFor="maxHeldOrders">Max Held Orders</Label>
-                          <Input
-                            id="maxHeldOrders"
-                            type="number"
-                            min="1"
-                            max="100"
-                            value={maxHeldOrders}
-                            onChange={e => setMaxHeldOrders(e.target.value)}
-                          />
-                          <p className="text-xs text-muted-foreground">Limit concurrent held orders</p>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="heldOrderExpiryHours">Auto-Expire (Hours)</Label>
-                          <Input
-                            id="heldOrderExpiryHours"
-                            type="number"
-                            min="1"
-                            value={heldOrderExpiryHours}
-                            onChange={e => setHeldOrderExpiryHours(e.target.value)}
-                            placeholder="Never"
-                          />
-                          <p className="text-xs text-muted-foreground">Time before orders auto-expire</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between py-2 pl-6">
-                        <div className="flex-1">
-                          <div className="font-medium">Require Hold Reason</div>
-                          <p className="text-sm text-muted-foreground">
-                            Force cashiers to enter a reason when holding an order
-                          </p>
-                        </div>
-                        <Switch checked={requireHoldReason} onCheckedChange={setRequireHoldReason} />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </Card>
-            )}
           </TabsContent>
 
           <TabsContent value="notifications" className="space-y-6">

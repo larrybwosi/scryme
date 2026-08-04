@@ -51,6 +51,16 @@ export class ReviewsService {
     const { organizationId, customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying that the product exists and belongs to this organization
+    const product = await this.prisma.client.product.findFirst({
+      where: { id: productId, organizationId },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+
     const { rating, comment } = data;
 
     return this.prisma.client.productReview.create({
