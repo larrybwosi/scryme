@@ -194,6 +194,7 @@ function DetailViewInner({ deal }: DealDetailViewProps) {
               setIsEditOpen(false);
               router.refresh();
             }}
+            onCancel={() => setIsEditOpen(false)}
             initialData={deal}
           />
         </SheetContent>

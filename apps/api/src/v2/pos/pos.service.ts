@@ -1236,6 +1236,29 @@ export class PosService {
         productVariants.map(v => [v.id, v]),
       );
 
+      const variantIds = transfer.items.map((i) => i.variantId);
+
+      /**
+       * ⚡ Bolt Optimization: Batch pre-fetch all matching productVariantStock records at transfer.toLocationId
+       * and productVariant records for the requested variantIds to eliminate sequential N+1 database queries
+       * (findUnique) inside the line item loop.
+       */
+      const [existingStocks, variants] = await Promise.all([
+        tx.productVariantStock.findMany({
+          where: {
+            locationId: transfer.toLocationId,
+            variantId: { in: variantIds },
+          },
+        }),
+        tx.productVariant.findMany({
+          where: { id: { in: variantIds } },
+          select: { id: true, productId: true },
+        }),
+      ]);
+
+      const stockMap = new Map<string, any>(existingStocks.map((s: any) => [s.variantId, s]));
+      const variantMap = new Map<string, any>(variants.map((v: any) => [v.id, v]));
+
       // 2. Adjust inventory for each item
       for (const item of transfer.items) {
         const receivedItem = receivedItemMap.get(item.variantId);

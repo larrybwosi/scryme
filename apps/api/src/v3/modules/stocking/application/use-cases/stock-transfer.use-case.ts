@@ -355,63 +355,108 @@ export class StockTransferUseCase {
       // ⚡ Bolt Optimization: Pre-index transfer items into a Map to avoid O(N*M) nested loop search
       const transferItemsMap = new Map(transfer.items.map((i) => [i.id, i]));
 
+      // ⚡ Bolt Optimization: Consolidate ProductVariantStock upserts by unique variantId.
+      // Running exactly one upsert query per unique variantId prevents database row lock contention,
+      // deadlocks, and reduces transactional roundtrips from O(N) down to O(U) unique keys.
+      const variantStockUpdates = new Map<
+        string,
+        {
+          productId: string;
+          totalQuantity: number;
+        }
+      >();
+
       for (const itemDto of dto.items) {
         const item = transferItemsMap.get(itemDto.transferItemId);
-        if (!item)
+        if (!item) {
           throw new NotFoundException(
             `Item ${itemDto.transferItemId} not found`,
           );
+        }
 
-        await tx.productVariantStock.upsert({
-          where: {
-            variantId_locationId: {
+        const existingUpdate = variantStockUpdates.get(item.variantId);
+        if (existingUpdate) {
+          existingUpdate.totalQuantity += itemDto.receivedQuantity;
+        } else {
+          variantStockUpdates.set(item.variantId, {
+            productId: item.variant.productId,
+            totalQuantity: itemDto.receivedQuantity,
+          });
+        }
+      }
+
+      // Run upserts concurrently
+      await Promise.all(
+        Array.from(variantStockUpdates.entries()).map(([variantId, updateInfo]) =>
+          tx.productVariantStock.upsert({
+            where: {
+              variantId_locationId: {
+                variantId,
+                locationId: transfer.toLocationId,
+              },
+            },
+            update: {
+              currentStock: { increment: updateInfo.totalQuantity },
+              availableStock: { increment: updateInfo.totalQuantity },
+            },
+            create: {
+              organizationId,
+              productId: updateInfo.productId,
+              variantId,
+              locationId: transfer.toLocationId,
+              currentStock: updateInfo.totalQuantity,
+              availableStock: updateInfo.totalQuantity,
+            },
+          }),
+        ),
+      );
+
+      // ⚡ Bolt Optimization: Create stock batches and update items concurrently using Promise.all.
+      // This collapses individual sequential database roundtrips to concurrent operations.
+      const itemFulfillments = await Promise.all(
+        dto.items.map(async (itemDto) => {
+          const item = transferItemsMap.get(itemDto.transferItemId)!;
+
+          const newBatch = await tx.stockBatch.create({
+            data: {
+              organizationId,
               variantId: item.variantId,
               locationId: transfer.toLocationId,
+              initialQuantity: itemDto.receivedQuantity,
+              currentQuantity: itemDto.receivedQuantity,
+              purchasePrice: item.unitCost,
+              receivedDate: new Date(),
+              batchNumber: `TR-${transfer.transferNumber}-${item.id.slice(-4)}`,
             },
-          },
-          update: {
-            currentStock: { increment: itemDto.receivedQuantity },
-            availableStock: { increment: itemDto.receivedQuantity },
-          },
-          create: {
-            organizationId,
-            productId: item.variant.productId,
-            variantId: item.variantId,
-            locationId: transfer.toLocationId,
-            currentStock: itemDto.receivedQuantity,
-            availableStock: itemDto.receivedQuantity,
-          },
-        });
+          });
 
-        const newBatch = await tx.stockBatch.create({
-          data: {
-            organizationId,
-            variantId: item.variantId,
-            locationId: transfer.toLocationId,
-            initialQuantity: itemDto.receivedQuantity,
-            currentQuantity: itemDto.receivedQuantity,
-            purchasePrice: item.unitCost,
-            receivedDate: new Date(),
-            batchNumber: `TR-${transfer.transferNumber}-${item.id.slice(-4)}`,
-          },
-        });
+          await tx.stockTransferItem.update({
+            where: { id: item.id },
+            data: { receivedQuantity: itemDto.receivedQuantity },
+          });
 
+          return {
+            variantId: item.variantId,
+            batchId: newBatch.id,
+            quantity: itemDto.receivedQuantity,
+          };
+        }),
+      );
+
+      // ⚡ Bolt Optimization: Record movements now that productVariantStock and stockBatch are fully synchronized.
+      // This ensures that the integrity check in InventoryMovementService passes perfectly.
+      for (const fulfillment of itemFulfillments) {
         await this.inventoryMovementService.recordMovement(tx, {
           organizationId,
           memberId,
-          variantId: item.variantId,
-          stockBatchId: newBatch.id,
-          quantity: itemDto.receivedQuantity,
+          variantId: fulfillment.variantId,
+          stockBatchId: fulfillment.batchId,
+          quantity: fulfillment.quantity,
           toLocationId: transfer.toLocationId,
           movementType: MovementType.TRANSFER,
           referenceId: transfer.id,
           referenceType: "StockTransfer",
           notes: `Received via Transfer #${transfer.transferNumber}`,
-        });
-
-        await tx.stockTransferItem.update({
-          where: { id: item.id },
-          data: { receivedQuantity: itemDto.receivedQuantity },
         });
       }
 
