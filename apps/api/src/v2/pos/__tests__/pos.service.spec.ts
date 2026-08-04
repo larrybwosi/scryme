@@ -25,12 +25,12 @@ describe("PosService.receiveTransfer", () => {
       update: vi.fn(),
     },
     productVariantStock: {
-      findUnique: vi.fn(),
+      findMany: vi.fn(),
       update: vi.fn(),
       create: vi.fn(),
     },
     productVariant: {
-      findUnique: vi.fn(),
+      findMany: vi.fn(),
     },
     stockMovement: {
       create: vi.fn(),
@@ -119,18 +119,19 @@ describe("PosService.receiveTransfer", () => {
     vi.mocked(prisma.client.stockTransfer.findFirst).mockResolvedValue(mockTransfer as any);
 
     // Mock stock exist for var_1, doesn't exist for var_2
-    mockTx.productVariantStock.findUnique.mockImplementation(({ where }) => {
-      if (where.variantId_locationId.variantId === "var_1") {
-        return Promise.resolve({ id: "stock_1", currentStock: new Decimal(20) });
+    mockTx.productVariantStock.findMany.mockImplementation(({ where }) => {
+      const results = [];
+      if (where.variantId.in.includes("var_1")) {
+        results.push({ id: "stock_1", variantId: "var_1", currentStock: new Decimal(20) });
       }
-      return Promise.resolve(null);
+      return Promise.resolve(results);
     });
 
-    // Mock variant findUnique for var_2 which needs to be created
-    mockTx.productVariant.findUnique.mockResolvedValue({
-      id: "var_2",
-      productId: "prod_2",
-    } as any);
+    // Mock variant findMany for variants
+    mockTx.productVariant.findMany.mockResolvedValue([
+      { id: "var_1", productId: "prod_1" },
+      { id: "var_2", productId: "prod_2" },
+    ] as any);
 
     const result = await service.receiveTransfer(mockCtx, "transfer_123", mockBody);
 
@@ -149,7 +150,8 @@ describe("PosService.receiveTransfer", () => {
     });
 
     // Verify stock checks & adjustments
-    expect(mockTx.productVariantStock.findUnique).toHaveBeenCalledTimes(2);
+    expect(mockTx.productVariantStock.findMany).toHaveBeenCalledTimes(1);
+    expect(mockTx.productVariant.findMany).toHaveBeenCalledTimes(1);
 
     // var_1 has stock -> incremented by acceptedQuantity (8)
     expect(mockTx.productVariantStock.update).toHaveBeenCalledWith({

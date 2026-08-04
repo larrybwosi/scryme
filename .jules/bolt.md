@@ -1,3 +1,7 @@
+## 2026-08-03 - [N+1 Transactional Stock and Variant Lookups in POS Receive Transfer]
+**Learning:** Sequential database lookups inside transactional loops (like `tx.productVariantStock.findUnique` and `tx.productVariant.findUnique` during stock transfers) create a critical N+1 latency bottleneck. Gathering target identifiers before the loop, pre-fetching matching records with standard `findMany` queries, and mapping them in-memory provides O(1) constant-time lookup complexity, drastically accelerating bulk transfer receipts.
+**Action:** Always pre-fetch stock and variant records in parallel using batch queries prior to entering iterative transaction loops, and use memory Map lookups inside the processing block.
+
 ## 2026-08-03 - [Parallelized Database Queries and Map Grouping in V3 Analytics Dashboard]
 **Learning:** Sequential database queries (such as counting, finding multiple relations, or completed logs) in REST dashboard paths multiply database connection hold times and network roundtrips. Additionally, linear nested array filters (e.g., `completedLogs.filter(...)`) inside loops create $O(N \times M)$ CPU hotspots. Parallelizing independent queries with `Promise.all` and grouping relation lists into a Map beforehand converts execution profiles to constant-time $O(1)$ database latency and optimal $O(N + M)$ processing time.
 **Action:** Always parallelize independent query blocks in read-heavy endpoints and pre-group related array results into Map structures before iterating parent entities.
@@ -25,7 +29,7 @@
 **Learning:** Fetching full relation arrays (e.g., all invoices) just to calculate a total in-memory is a major performance anti-pattern. Using Prisma's `aggregate` (`_sum`) reduces network traffic and memory usage from $O(n)$ to $O(1)$.
 **Action:** Always use database-level aggregation for totals and apply `take` limits to nested relations in "GetById" service methods to maintain consistent response times as data grows.
 ## 2026-06-08 - [Prisma Select vs Explicit Mapping]
-**Learning:** When optimizing Prisma queries with `select` in a service that explicitly shapes its response (e.g., via `.map()`), the `select` block must be synchronized with the mapping logic. Even if the underlying model has more fields (like `name` or `description` in `PriceList`), if the mapping logic doesn't use them, they can be safely omitted from the `select` block to reduce database load and serialization overhead.
+**Learning:** When optimizing Prisma's queries with `select` in a service that explicitly shapes its response (e.g., via `.map()`), the `select` block must be synchronized with the mapping logic. Even if the underlying model has more fields (like `name` or `description` in `PriceList`), if the mapping logic doesn't use them, they can be safely omitted from the `select` block to reduce database load and serialization overhead.
 **Action:** Always verify the `select` fields against the explicit mapping code to ensure all consumed fields are included, while avoiding over-fetching of unused scalar or relational data.
 
 ## 2026-06-12 - [Select Optimization vs Downstream Consumers]
