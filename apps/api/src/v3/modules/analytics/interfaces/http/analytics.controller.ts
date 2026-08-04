@@ -33,49 +33,78 @@ export class AnalyticsController {
   async getDashboardAnalytics(@Request() req: any) {
     const organizationId = req.v3Context.organizationId;
 
-    // 1. totalCheckedInNow
-    const totalCheckedInNow = await this.prisma.client.member.count({
-      where: { organizationId, isCheckedIn: true, deletedAt: null },
-    });
+    /**
+     * OPTIMIZATION (Bolt ⚡): Parallelized database queries via Promise.all and pre-grouped
+     * completed logs using an in-memory Map. This collapses 4 sequential database queries
+     * into a single parallelized roundtrip, and optimizes the loop's nested search
+     * complexity from O(N * M) down to O(N + M) constant-time lookups.
+     */
+    const [totalCheckedInNow, logs, locations, completedLogs] = await Promise.all([
+      // 1. totalCheckedInNow
+      this.prisma.client.member.count({
+        where: { organizationId, isCheckedIn: true, deletedAt: null },
+      }),
 
-    // 2. peakHours (based on the last 1000 logs)
-    const logs = await this.prisma.client.attendanceLog.findMany({
-      where: { organizationId },
-      select: { checkInTime: true },
-      take: 1000,
-    });
+      // 2. peakHours (based on the last 1000 logs)
+      this.prisma.client.attendanceLog.findMany({
+        where: { organizationId },
+        select: { checkInTime: true },
+        take: 1000,
+      }),
+
+      // 3. branchStats: locations
+      this.prisma.client.inventoryLocation.findMany({
+        where: { organizationId, isActive: true },
+        include: {
+          checkInAttendanceLogs: {
+            where: { checkOutTime: null },
+            select: { id: true },
+          },
+        },
+      }),
+
+      // 4. branchStats: completedLogs
+      this.prisma.client.attendanceLog.findMany({
+        where: { organizationId, NOT: { checkOutTime: null } },
+        select: { checkInLocationId: true, durationMinutes: true },
+        take: 500,
+      }),
+    ]);
+
     const hourCounts: { [hour: number]: number } = {};
     for (const log of logs) {
       const hr = new Date(log.checkInTime).getHours();
       hourCounts[hr] = (hourCounts[hr] || 0) + 1;
     }
-    const peakHours = Object.keys(hourCounts).map((hr) => ({
-      hour: parseInt(hr),
-      count: hourCounts[hr],
-    })).sort((a, b) => b.count - a.count);
+    const peakHours = Object.keys(hourCounts)
+      .map((hr) => ({
+        hour: parseInt(hr),
+        count: hourCounts[hr],
+      }))
+      .sort((a, b) => b.count - a.count);
 
-    // 3. branchStats
-    const locations = await this.prisma.client.inventoryLocation.findMany({
-      where: { organizationId, isActive: true },
-      include: {
-        checkInAttendanceLogs: {
-          where: { checkOutTime: null },
-          select: { id: true },
-        },
+    // Pre-group completedLogs by checkInLocationId for O(1) lookup
+    const completedLogsByLocation = new Map<string, typeof completedLogs>();
+    for (const log of completedLogs) {
+      if (log.checkInLocationId) {
+        let list = completedLogsByLocation.get(log.checkInLocationId);
+        if (!list) {
+          list = [];
+          completedLogsByLocation.set(log.checkInLocationId, list);
+        }
+        list.push(log);
       }
-    });
-
-    const completedLogs = await this.prisma.client.attendanceLog.findMany({
-      where: { organizationId, NOT: { checkOutTime: null } },
-      select: { checkInLocationId: true, durationMinutes: true },
-      take: 500,
-    });
+    }
 
     const branchStats = locations.map((loc) => {
       const activePresenceCount = loc.checkInAttendanceLogs.length;
-      const locCompletedLogs = completedLogs.filter(l => l.checkInLocationId === loc.id);
-      const totalDuration = locCompletedLogs.reduce((sum, log) => sum + (log.durationMinutes || 0), 0);
-      const averageDurationMinutes = locCompletedLogs.length > 0 ? (totalDuration / locCompletedLogs.length) : 0.0;
+      const locCompletedLogs = completedLogsByLocation.get(loc.id) || [];
+      const totalDuration = locCompletedLogs.reduce(
+        (sum, log) => sum + (log.durationMinutes || 0),
+        0,
+      );
+      const averageDurationMinutes =
+        locCompletedLogs.length > 0 ? totalDuration / locCompletedLogs.length : 0.0;
       return {
         locationId: loc.id,
         locationName: loc.name,

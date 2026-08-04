@@ -36,9 +36,9 @@ interface StaffMember {
 
 export function StaffTable({ data }: { data: StaffMember[] }) {
   return (
-    <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+    <div className="bg-card rounded-xl border shadow-sm overflow-hidden">
       <Table>
-        <TableHeader className="bg-gray-50/50">
+        <TableHeader className="bg-muted/50">
           <TableRow>
             <TableHead className="w-[300px]">Staff Member</TableHead>
             <TableHead>Role</TableHead>
@@ -53,7 +53,7 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
             <TableRow>
               <TableCell
                 colSpan={6}
-                className="text-center py-10 text-gray-500">
+                className="text-center py-10 text-muted-foreground">
                 No staff members found.
               </TableCell>
             </TableRow>
@@ -61,12 +61,12 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
             data.map(member => (
               <TableRow
                 key={member.id}
-                className="group hover:bg-gray-50/50 transition-colors">
+                className="group hover:bg-muted/50 transition-colors">
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-9 w-9 border-2 border-white shadow-sm">
+                    <Avatar className="h-9 w-9 border-2 border-background shadow-sm">
                       <AvatarImage src={member.user.image || ""} />
-                      <AvatarFallback className="bg-gray-100 text-gray-500 font-medium">
+                      <AvatarFallback className="bg-muted text-muted-foreground font-medium">
                         {member.user.name?.charAt(0) ||
                           member.user.email.charAt(0).toUpperCase()}
                       </AvatarFallback>
@@ -74,10 +74,10 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
                     <Link
                       href={`/staff/${member.id}`}
                       className="flex flex-col hover:opacity-70 transition-opacity">
-                      <span className="font-semibold text-sm text-[#1D1D1F]">
+                      <span className="font-semibold text-sm text-foreground">
                         {member.user.name || "Unnamed User"}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {member.user.email}
                       </span>
                     </Link>
@@ -86,7 +86,7 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
                 <TableCell>
                   <Badge
                     variant="outline"
-                    className="font-medium bg-gray-50 capitalize">
+                    className="font-medium bg-muted capitalize">
                     {member.role.toLowerCase()}
                   </Badge>
                 </TableCell>
@@ -102,7 +102,7 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
                         </Badge>
                       ))
                     ) : (
-                      <span className="text-xs text-gray-400">—</span>
+                      <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </div>
                 </TableCell>
@@ -111,23 +111,23 @@ export function StaffTable({ data }: { data: StaffMember[] }) {
                     <Badge
                       className={
                         member.membershipStatus === "ACTIVE"
-                          ? "bg-green-100 text-green-700 hover:bg-green-100"
+                          ? "bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400"
                           : member.membershipStatus === "SUSPENDED"
-                            ? "bg-red-100 text-red-700 hover:bg-red-100"
-                            : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
+                            ? "bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400"
+                            : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400"
                       }>
                       {member.membershipStatus}
                     </Badge>
                     {member.banReason && (
                       <span
-                        className="text-[10px] text-red-500 font-medium max-w-[150px] truncate"
+                        className="text-[10px] text-destructive font-medium max-w-[150px] truncate"
                         title={member.banReason}>
                         Reason: {member.banReason}
                       </span>
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-sm text-gray-500">
+                <TableCell className="text-sm text-muted-foreground">
                   {format(new Date(member.createdAt), "MMM d, yyyy")}
                 </TableCell>
                 <TableCell className="text-right">

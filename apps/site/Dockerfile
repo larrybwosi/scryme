@@ -53,6 +53,11 @@ ENV BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-fallback-secret-for-build}
 # Provide a dummy DATABASE_URL for build time validation
 ENV DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
 
+ARG NEXT_PUBLIC_SANITY_PROJECT_ID
+ENV NEXT_PUBLIC_SANITY_PROJECT_ID=${NEXT_PUBLIC_SANITY_PROJECT_ID:-NEXT_PUBLIC_SANITY_PROJECT_ID_PLACEHOLDER}
+ARG NEXT_PUBLIC_SANITY_DATASET
+ENV NEXT_PUBLIC_SANITY_DATASET=${NEXT_PUBLIC_SANITY_DATASET:-NEXT_PUBLIC_SANITY_DATASET_PLACEHOLDER}
+
 # Generate Prisma Client (if needed by site/dependencies)
 RUN pnpm turbo run generate
 
@@ -64,6 +69,9 @@ RUN mkdir -p apps/site/public
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN --mount=type=cache,id=turbo,target=/app/.turbo \
     pnpm turbo build --filter=site... --concurrency=1
+
+# Compile Sanity Seed script for production runtime execution
+RUN npx -p tsup -p typescript tsup apps/site/sanity/run-seed.ts --out-dir apps/site/.next/standalone/apps/site/sanity --format esm --target node22 --external next-sanity
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)

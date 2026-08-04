@@ -137,6 +137,58 @@ describe("redactSensitiveData", () => {
     expect(redacted.safe).toBe("public");
   });
 
+  it("should redact expanded list of common sensitive keys and their casing variations", () => {
+    const data = {
+      secretKey: "key-123",
+      accessKey: "key-456",
+      passkey: "pass-789",
+      pass_key: "pass-012",
+      encryptionKey: "enc-345",
+      encryption_key: "enc-678",
+      signingKey: "sign-901",
+      signing_key: "sign-234",
+      databaseUrl: "db://usr:pwd@host",
+      database_url: "db://usr:pwd@host2",
+      dbUrl: "db://usr:pwd@host3",
+      db_url: "db://usr:pwd@host4",
+      jwt: "jwt-token-val",
+      jwtToken: "jwt-token-val2",
+      jwt_token: "jwt-token-val3",
+      sessionId: "sess-123",
+      session_id: "sess-456",
+      passphrase: "secretphrase",
+      credential: "mycredential",
+      auth: "auth-info",
+      authToken: "auth-token-val",
+      auth_token: "auth_token_val",
+      safe: "public-info",
+    };
+    const redacted = redactSensitiveData(data);
+    expect(redacted.secretKey).toBe("[REDACTED]");
+    expect(redacted.accessKey).toBe("[REDACTED]");
+    expect(redacted.passkey).toBe("[REDACTED]");
+    expect(redacted.pass_key).toBe("[REDACTED]");
+    expect(redacted.encryptionKey).toBe("[REDACTED]");
+    expect(redacted.encryption_key).toBe("[REDACTED]");
+    expect(redacted.signingKey).toBe("[REDACTED]");
+    expect(redacted.signing_key).toBe("[REDACTED]");
+    expect(redacted.databaseUrl).toBe("[REDACTED]");
+    expect(redacted.database_url).toBe("[REDACTED]");
+    expect(redacted.dbUrl).toBe("[REDACTED]");
+    expect(redacted.db_url).toBe("[REDACTED]");
+    expect(redacted.jwt).toBe("[REDACTED]");
+    expect(redacted.jwtToken).toBe("[REDACTED]");
+    expect(redacted.jwt_token).toBe("[REDACTED]");
+    expect(redacted.sessionId).toBe("[REDACTED]");
+    expect(redacted.session_id).toBe("[REDACTED]");
+    expect(redacted.passphrase).toBe("[REDACTED]");
+    expect(redacted.credential).toBe("[REDACTED]");
+    expect(redacted.auth).toBe("[REDACTED]");
+    expect(redacted.authToken).toBe("[REDACTED]");
+    expect(redacted.auth_token).toBe("[REDACTED]");
+    expect(redacted.safe).toBe("public-info");
+  });
+
   it("should redact sensitive properties on Error objects", () => {
     const error = new Error("Database connection failed") as any;
     error.secret_key = "sensitive-db-key";

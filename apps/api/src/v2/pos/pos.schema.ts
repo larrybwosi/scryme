@@ -80,7 +80,7 @@ export const StockRequestItemSchema = z.object({
 });
 
 export const CreateStockRequestSchema = z.object({
-  toLocationId: z.string().min(1, "Target location ID is required"),
+  toLocationId: z.string().optional().nullable(),
   priority: z
     .nativeEnum(StockRequestPriority)
     .default(StockRequestPriority.MEDIUM),

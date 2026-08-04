@@ -23,6 +23,9 @@ describe("ReviewsService", () => {
                 update: vi.fn(),
                 delete: vi.fn(),
               },
+              product: {
+                findFirst: vi.fn(),
+              },
             },
           },
         },
@@ -35,6 +38,60 @@ describe("ReviewsService", () => {
 
   it("should be defined", () => {
     expect(service).toBeDefined();
+  });
+
+  describe("createReview", () => {
+    it("should throw BadRequestException if customerId is missing", async () => {
+      const ctx: V2ApiContext = { organizationId: "org-1" } as any;
+      await expect(service.createReview(ctx, "prod-1", {})).rejects.toThrow(BadRequestException);
+    });
+
+    it("should throw NotFoundException if product does not exist or does not belong to the organization", async () => {
+      const ctx: V2ApiContext = { organizationId: "org-1", customerId: "cust-1" } as any;
+      vi.spyOn(prisma.client.product, "findFirst").mockResolvedValue(null);
+
+      await expect(service.createReview(ctx, "prod-1", { rating: 5, comment: "Nice" })).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.client.product.findFirst).toHaveBeenCalledWith({
+        where: { id: "prod-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+    });
+
+    it("should successfully create review if product exists and belongs to the organization", async () => {
+      const ctx: V2ApiContext = { organizationId: "org-1", customerId: "cust-1" } as any;
+      const mockProduct = { id: "prod-1", organizationId: "org-1" };
+      const mockReview = { id: "review-1", rating: 5, comment: "Nice", customer: { id: "cust-1", name: "John" } };
+
+      vi.spyOn(prisma.client.product, "findFirst").mockResolvedValue(mockProduct as any);
+      vi.spyOn(prisma.client.productReview, "create").mockResolvedValue(mockReview as any);
+
+      const result = await service.createReview(ctx, "prod-1", { rating: 5, comment: "Nice" });
+
+      expect(prisma.client.product.findFirst).toHaveBeenCalledWith({
+        where: { id: "prod-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(prisma.client.productReview.create).toHaveBeenCalledWith({
+        data: {
+          organizationId: "org-1",
+          customerId: "cust-1",
+          productId: "prod-1",
+          rating: 5,
+          comment: "Nice",
+        },
+        include: {
+          customer: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(mockReview);
+    });
   });
 
   describe("updateReview", () => {
@@ -145,6 +202,60 @@ describe("ReviewsService", () => {
         where: { id: "review-1" },
       });
       expect(result).toEqual({ id: "review-1" });
+    });
+  });
+
+  describe("createReview", () => {
+    it("should throw BadRequestException if customerId is missing", async () => {
+      const ctx: V2ApiContext = { organizationId: "org-1" } as any;
+      await expect(service.createReview(ctx, "prod-1", {})).rejects.toThrow(BadRequestException);
+    });
+
+    it("should throw NotFoundException if product does not exist or does not belong to the organization", async () => {
+      const ctx: V2ApiContext = { organizationId: "org-1", customerId: "cust-1" } as any;
+      vi.spyOn(prisma.client.product, "findFirst").mockResolvedValue(null);
+
+      await expect(service.createReview(ctx, "prod-1", { rating: 5, comment: "Nice" })).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prisma.client.product.findFirst).toHaveBeenCalledWith({
+        where: { id: "prod-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+    });
+
+    it("should successfully create review if product exists and belongs to the organization", async () => {
+      const ctx: V2ApiContext = { organizationId: "org-1", customerId: "cust-1" } as any;
+      const mockProduct = { id: "prod-1", organizationId: "org-1" };
+      const mockReview = { id: "review-1", rating: 5, comment: "Nice", customer: { id: "cust-1", name: "John" } };
+
+      vi.spyOn(prisma.client.product, "findFirst").mockResolvedValue(mockProduct as any);
+      vi.spyOn(prisma.client.productReview, "create").mockResolvedValue(mockReview as any);
+
+      const result = await service.createReview(ctx, "prod-1", { rating: 5, comment: "Nice" });
+
+      expect(prisma.client.product.findFirst).toHaveBeenCalledWith({
+        where: { id: "prod-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(prisma.client.productReview.create).toHaveBeenCalledWith({
+        data: {
+          organizationId: "org-1",
+          customerId: "cust-1",
+          productId: "prod-1",
+          rating: 5,
+          comment: "Nice",
+        },
+        include: {
+          customer: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      });
+      expect(result).toEqual(mockReview);
     });
   });
 });

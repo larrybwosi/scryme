@@ -92,39 +92,43 @@ export class ScrymeNotificationService {
     ];
 
     // 3. Send to all identified channels
-    for (const channelSlug of channels) {
-      try {
-        const message = await this.scrymeClient.sendMessage(
-          workspaceSlug,
-          channelSlug,
-          {
-            content,
-            actions,
-          },
-        );
-
-        // Log the message for tracking
-        await this.prisma.client.scrymeMessage.create({
-          data: {
-            organizationId,
+    // OPTIMIZATION (Bolt ⚡): Parallelized notification sending and database logging using Promise.all.
+    // This reduces the execution time from O(N) sequential HTTP/DB calls to a flat O(1) concurrent round-trip block.
+    await Promise.all(
+      Array.from(channels).map(async (channelSlug) => {
+        try {
+          const message = await this.scrymeClient.sendMessage(
             workspaceSlug,
             channelSlug,
-            messageId: message.id,
-            content,
-            eventType: "ORDER_CREATED",
-            relatedId: orderId,
-            metadata: {
-              orderNumber: order.number,
-              customerName,
-              total: order.finalTotal.toString(),
+            {
+              content,
+              actions,
             },
-          },
-        });
-      } catch (error: any) {
-        this.logger.error(
-          `Failed to send order notification to Scryme channel ${channelSlug}: ${error.message}`,
-        );
-      }
-    }
+          );
+
+          // Log the message for tracking
+          await this.prisma.client.scrymeMessage.create({
+            data: {
+              organizationId,
+              workspaceSlug,
+              channelSlug,
+              messageId: message.id,
+              content,
+              eventType: "ORDER_CREATED",
+              relatedId: orderId,
+              metadata: {
+                orderNumber: order.number,
+                customerName,
+                total: order.finalTotal.toString(),
+              },
+            },
+          });
+        } catch (error: any) {
+          this.logger.error(
+            `Failed to send order notification to Scryme channel ${channelSlug}: ${error.message}`,
+          );
+        }
+      })
+    );
   }
 }

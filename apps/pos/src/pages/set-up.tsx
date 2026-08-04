@@ -383,8 +383,7 @@ export default function SetupPage() {
     setSetupData(prev => ({ ...prev, setupToken: token }));
 
     // Hub and Spoke options are strictly for restaurant mode
-    const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
-    if (businessMode === 'restaurant') {
+    if (import.meta.env.VITE_BUSINESS_MODE === 'restaurant') {
       setStep(2); // Go to Device Type selection
     } else {
       setDeviceConfig({ type: 'MAIN_HUB', hubIp: null });

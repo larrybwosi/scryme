@@ -29,12 +29,16 @@ export class V2AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<any>();
+    const url = request.raw?.url || request.url || "";
+    if (url.includes("/v3/") || url.includes("/android/")) {
+      return true;
+    }
+
     const isPublic = this.reflector.getAllAndOverride<boolean>(
       ALLOW_PUBLIC_KEY,
       [context.getHandler(), context.getClass()],
     );
-
-    const request = context.switchToHttp().getRequest<any>();
     const correlationId =
       (request.headers["x-correlation-id"] as string) || "unknown";
     const ipAddress = (

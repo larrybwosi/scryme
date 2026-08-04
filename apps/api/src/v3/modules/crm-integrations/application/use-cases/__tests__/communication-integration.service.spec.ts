@@ -16,6 +16,13 @@ describe("CommunicationIntegrationService - Security Tests", () => {
     organizationIntegration: {
       findFirst: vi.fn(),
     },
+    crmRecord: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+    },
+    crmObjectDefinition: {
+      findFirst: vi.fn(),
+    },
   };
 
   const mockSlackProvider = {
@@ -122,6 +129,124 @@ describe("CommunicationIntegrationService - Security Tests", () => {
       });
 
       expect(result).toEqual({ id: "reply-activity-1" });
+    });
+  });
+
+  describe("handleWebhook (N+1 Query Optimization with Caching)", () => {
+    it("should process multiple messages from the same team and only query organizationIntegration once", async () => {
+      const mockMessages = [
+        {
+          senderEmail: "user1@example.com",
+          text: "Message 1",
+          externalId: "msg-1",
+          metadata: { team: "team-123" },
+        },
+        {
+          senderEmail: "user2@example.com",
+          text: "Message 2",
+          externalId: "msg-2",
+          metadata: { team: "team-123" },
+        },
+      ];
+
+      const mockIntegration = {
+        id: "integration-123",
+        organizationId: "org-123",
+        credentials: { teamId: "team-123" },
+      };
+
+      const mockRecord1 = { id: "record-1" };
+      const mockRecord2 = { id: "record-2" };
+
+      mockSlackProvider.parseWebhookEvent.mockResolvedValue(mockMessages);
+      mockPrisma.organizationIntegration.findFirst.mockResolvedValue(mockIntegration);
+      mockPrisma.crmRecord.findFirst
+        .mockResolvedValueOnce(mockRecord1)
+        .mockResolvedValueOnce(mockRecord2);
+
+      const result = await service.handleWebhook("slack", {}, {});
+
+      expect(result).toEqual({ ok: true });
+
+      // organizationIntegration.findFirst should only be called ONCE due to caching
+      expect(mockPrisma.organizationIntegration.findFirst).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.organizationIntegration.findFirst).toHaveBeenCalledWith({
+        where: {
+          integrationDefinition: { slug: "slack" },
+          credentials: { path: ["teamId"], equals: "team-123" },
+        },
+        include: { organization: true },
+      });
+
+      // crmActivity.create should be called twice, once for each message
+      expect(mockPrisma.crmActivity.create).toHaveBeenCalledTimes(2);
+    });
+
+    it("should process multiple new records and only query crmObjectDefinition once per organization", async () => {
+      const mockMessages = [
+        {
+          senderEmail: "new1@example.com",
+          text: "Message 1",
+          externalId: "msg-1",
+          metadata: { team: "team-123" },
+        },
+        {
+          senderEmail: "new2@example.com",
+          text: "Message 2",
+          externalId: "msg-2",
+          metadata: { team: "team-123" },
+        },
+      ];
+
+      const mockIntegration = {
+        id: "integration-123",
+        organizationId: "org-123",
+        credentials: { teamId: "team-123" },
+      };
+
+      const mockPersonDef = {
+        id: "person-def-123",
+        name: "person",
+      };
+
+      mockSlackProvider.parseWebhookEvent.mockResolvedValue(mockMessages);
+      mockPrisma.organizationIntegration.findFirst.mockResolvedValue(mockIntegration);
+      // Both records do not exist initially
+      mockPrisma.crmRecord.findFirst.mockResolvedValue(null);
+      mockPrisma.crmObjectDefinition.findFirst.mockResolvedValue(mockPersonDef);
+      mockPrisma.crmRecord.create
+        .mockResolvedValueOnce({ id: "record-new-1" })
+        .mockResolvedValueOnce({ id: "record-new-2" });
+
+      const result = await service.handleWebhook("slack", {}, {});
+
+      expect(result).toEqual({ ok: true });
+
+      // crmObjectDefinition.findFirst should only be called ONCE due to caching
+      expect(mockPrisma.crmObjectDefinition.findFirst).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.crmObjectDefinition.findFirst).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org-123",
+          name: "person",
+        },
+      });
+
+      // crmRecord.create should be called for each new email
+      expect(mockPrisma.crmRecord.create).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.crmRecord.create).toHaveBeenNthCalledWith(1, {
+        data: {
+          organizationId: "org-123",
+          objectId: "person-def-123",
+          data: { email: "new1@example.com", name: "new1" },
+        },
+      });
+      expect(mockPrisma.crmRecord.create).toHaveBeenNthCalledWith(2, {
+        data: {
+          organizationId: "org-123",
+          objectId: "person-def-123",
+          data: { email: "new2@example.com", name: "new2" },
+        },
+      });
     });
   });
 });

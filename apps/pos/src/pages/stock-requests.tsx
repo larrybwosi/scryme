@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Button } from '@repo/ui/components/ui/button';
 import { Label } from '@repo/ui/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import { Textarea } from '@repo/ui/components/ui/textarea';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Separator } from '@repo/ui/components/ui/separator';
@@ -13,26 +12,21 @@ import {
   Package,
   Trash2,
   Send,
-  Building2,
   Loader2,
   X,
   Search,
   PackageSearch,
-  Store,
   Layers,
   Upload,
   CheckCircle2,
   AlertCircle,
   ChevronRight,
   ClipboardList,
-  ArrowDownToLine,
 } from 'lucide-react';
-import { useAuthStore } from '@/store/pos-auth-store';
 import { invoke } from '@tauri-apps/api/core';
 import { toast } from 'sonner';
 import posthog from 'posthog-js';
 
-import { usePosLocations } from '@/hooks/locations';
 import { FileReceiveDialog } from '@/components/file-receive';
 import { PosProduct, usePosProducts } from '@/hooks/products';
 
@@ -245,9 +239,6 @@ function DocumentUploadZone({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function StockRequestCreate() {
-  const { currentLocation } = useAuthStore();
-  const { locations, isLoading: isLoadingLocations } = usePosLocations();
-
   const [searchTerm, setSearchTerm] = useState('');
   const [showResults, setShowResults] = useState(false);
   const { products: searchResults, isLoading: isLoadingProducts } = usePosProducts({
@@ -256,19 +247,16 @@ export default function StockRequestCreate() {
     enabled: searchTerm.length >= 2,
   });
 
-  const [fromBranch, setFromBranch] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<RequestItem[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const availableSources = locations.filter(loc => loc.id !== currentLocation?.id);
-  const selectedFromBranch = locations.find(b => b.id === fromBranch);
   const getTotalItems = () => items.reduce((sum, i) => sum + i.quantity, 0);
-  const isFormReady = fromBranch && items.length > 0 && !isSubmitting;
+  const isFormReady = items.length > 0 && !isSubmitting;
 
   // Determine wizard step progress
-  const currentStep = !fromBranch ? 1 : items.length === 0 ? 2 : 3;
+  const currentStep = items.length === 0 ? 1 : 2;
 
   // ── Variant helpers ─────────────────────────────────────────────────────────
 
@@ -337,7 +325,7 @@ export default function StockRequestCreate() {
   };
 
   const updateQuantity = (id: string, quantity: number) =>
-    setItems(prev => prev.map(i => (i.id === id ? { ...i, quantity: Math.max(1, quantity) } : i)));
+    setItems(prev => prev.map(i => (i.id === id ? { ...i, quantity: Math.max(0, quantity) } : i)));
 
   const removeItem = (id: string) => setItems(prev => prev.filter(i => i.id !== id));
 
@@ -370,11 +358,11 @@ export default function StockRequestCreate() {
   // ── Submit ───────────────────────────────────────────────────────────────────
 
   const handleSubmit = async () => {
-    if (!fromBranch || items.length === 0) return;
+    if (items.length === 0) return;
     try {
       setIsSubmitting(true);
       const payload = {
-        toLocationId: fromBranch, // toLocationId is the source in the API context for requests
+        toLocationId: null, // toLocationId is the source in the API context for requests (optional/null if not specifying a source)
         items: items.map(({ variantId, quantity }) => ({ variantId, quantity })),
         notes: notes || undefined,
         documents: attachedFiles.map(f => f.path || f.name),
@@ -384,7 +372,6 @@ export default function StockRequestCreate() {
       toast.success('Stock request submitted successfully');
       setItems([]);
       setNotes('');
-      setFromBranch('');
       setAttachedFiles([]);
       setSearchTerm('');
       setShowResults(false);
@@ -411,28 +398,6 @@ export default function StockRequestCreate() {
             <span className="font-semibold text-slate-800 dark:text-slate-200">New Request</span>
           </div>
 
-          {/* Route indicator */}
-          <div className="hidden md:flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 select-none">
-            <div className="flex items-center gap-1.5">
-              <Store className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {currentLocation?.name || 'Destination'}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 text-slate-300 dark:text-slate-600">
-              <div className="h-px w-4 bg-slate-300 dark:bg-slate-600" />
-              <ArrowDownToLine className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
-              <div className="h-px w-4 bg-slate-300 dark:bg-slate-600" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Building2 className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400" />
-              <span
-                className={`text-sm font-medium ${selectedFromBranch ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}
-              >
-                {selectedFromBranch?.name || 'Source Branch'}
-              </span>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -458,9 +423,8 @@ export default function StockRequestCreate() {
           {/* Step progress */}
           <div className="mt-6 flex items-center gap-0 select-none">
             {[
-              { n: 1, label: 'Select Source' },
-              { n: 2, label: 'Add Products' },
-              { n: 3, label: 'Review & Submit' },
+              { n: 1, label: 'Add Products' },
+              { n: 2, label: 'Review & Submit' },
             ].map((s, i, arr) => (
               <div key={s.n} className="flex items-center">
                 <div className="flex items-center gap-2.5">
@@ -485,58 +449,6 @@ export default function StockRequestCreate() {
         <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           {/* ── LEFT COLUMN ────────────────────────────────────────────────── */}
           <div className="space-y-5">
-            {/* Step 1 — Source */}
-            <div className="bg-white dark:bg-background rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
-              <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 dark:border-slate-800 select-none">
-                <div className="w-7 h-7 rounded-lg bg-slate-900 dark:bg-slate-50 flex items-center justify-center flex-shrink-0">
-                  <Building2 className="h-3.5 w-3.5 text-white dark:text-slate-900" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Source Location</p>
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
-                    Select the branch you are requesting stock from
-                  </p>
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="grid sm:grid-cols-2 gap-4 items-end">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider select-none">
-                      Requesting Branch
-                    </Label>
-                    <div className="flex items-center gap-2.5 h-10 px-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
-                      <div className="h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
-                        {currentLocation?.name || 'Current Location'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider select-none">
-                      From (Source) <span className="text-red-400 dark:text-red-500 ml-0.5">*</span>
-                    </Label>
-                    <Select value={fromBranch} onValueChange={setFromBranch} disabled={isSubmitting}>
-                      <SelectTrigger className="h-10 text-sm border-slate-200 dark:border-slate-700 focus:ring-slate-900 dark:focus:ring-slate-50 dark:bg-background">
-                        <SelectValue
-                          placeholder={isLoadingLocations ? 'Loading locations…' : 'Select source branch'}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {availableSources.map(loc => (
-                          <SelectItem key={loc.id} value={loc.id}>
-                            <div className="flex items-center gap-2">
-                              <div className="h-2 w-2 rounded-full bg-sky-500" />
-                              {loc.name}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Step 2 — Products */}
             <div className="bg-white dark:bg-background rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden transition-colors">
               <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100 dark:border-slate-800 select-none">
@@ -731,14 +643,27 @@ export default function StockRequestCreate() {
                             <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-background overflow-hidden w-28">
                               <button
                                 className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-30"
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                                 disabled={item.quantity <= 1}
                               >
                                 −
                               </button>
-                              <div className="flex-1 text-center text-sm font-semibold text-slate-800 dark:text-slate-200 select-none">
-                                {item.quantity}
-                              </div>
+                              <input
+                                type="number"
+                                className="w-12 h-8 border-0 p-0 text-center text-sm font-semibold bg-transparent focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                value={item.quantity || ''}
+                                onChange={e => {
+                                  const val = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
+                                  if (!isNaN(val)) {
+                                    updateQuantity(item.id, Math.max(0, val));
+                                  }
+                                }}
+                                onBlur={() => {
+                                  if (!item.quantity || item.quantity < 1) {
+                                    updateQuantity(item.id, 1);
+                                  }
+                                }}
+                              />
                               <button
                                 className="w-8 h-8 flex items-center justify-center text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
@@ -791,29 +716,6 @@ export default function StockRequestCreate() {
                   </div>
                 </div>
 
-                {/* Route summary */}
-                {(currentLocation || selectedFromBranch) && (
-                  <div className="rounded-lg border border-slate-100 dark:border-slate-800 p-3 space-y-2 select-none">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                      Request Flow
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-lg bg-sky-500 flex-shrink-0" />
-                      <span
-                        className={`text-xs font-medium truncate ${selectedFromBranch ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}
-                      >
-                        Source: {selectedFromBranch?.name || 'Not selected'}
-                      </span>
-                    </div>
-                    <div className="ml-[3px] h-3 w-px bg-slate-200 dark:bg-slate-700" />
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-1.5 rounded-lg bg-emerald-500 flex-shrink-0" />
-                      <span className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate">
-                        Dest: {currentLocation?.name || 'Destination'}
-                      </span>
-                    </div>
-                  </div>
-                )}
 
                 {/* Notes */}
                 <div className="space-y-1.5">
@@ -857,7 +759,7 @@ export default function StockRequestCreate() {
                   <div className="flex items-start gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 rounded-lg px-3 py-2.5 border border-amber-100 dark:border-amber-900/50 select-none">
                     <AlertCircle className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
                     <span>
-                      {!fromBranch ? 'Select a source to continue.' : 'Add at least one product to submit.'}
+                      Add at least one product to submit.
                     </span>
                   </div>
                 )}

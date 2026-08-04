@@ -185,6 +185,7 @@ export function KanbanBoardView() {
               setIsCreateOpen(false);
               mutate();
             }}
+            onCancel={() => setIsCreateOpen(false)}
             initialData={{ data: { stage: defaultStage } }}
           />
         </SheetContent>
