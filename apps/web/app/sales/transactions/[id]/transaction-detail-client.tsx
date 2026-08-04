@@ -1,33 +1,47 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
-import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Separator } from "@repo/ui/components/ui/separator";
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 import { format } from "date-fns";
 import {
   Package,
   Truck,
   CreditCard,
   Clock,
+  Calendar,
   User,
   MapPin,
   FileText,
+  FileEdit,
+  ShoppingCart,
   CheckCircle2,
+  PackageCheck,
+  XCircle,
   Download,
   Receipt,
   Building2,
-  Calendar,
   Paperclip,
   Plus,
   ExternalLink,
@@ -50,7 +64,7 @@ import {
 } from "../../../actions/sales";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
-import { AddPaymentModal } from "../../../../components/sales/add-payment-modal";
+import { AddPaymentModal } from "@/components/sales/add-payment-modal";
 
 interface TransactionDetailClientProps {
   transaction: any;
@@ -105,35 +119,34 @@ function getCleanUrl(url: string | null | undefined): string {
 
 export function TransactionDetailClient({
   transaction: initialTransaction,
-  invoiceConfigUpdatedAt,
-  receiptConfigUpdatedAt,
-  organization,
 }: TransactionDetailClientProps) {
   const router = useRouter();
   const [transaction, setTransaction] = useState<any>(initialTransaction);
-  const [isLoading, setIsLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
   const [isGeneratingReceipt, setIsGeneratingReceipt] = useState(false);
   const [isLoadingPublicLink, setIsLoadingPublicLink] = useState(false);
   const [copiedNumber, setCopiedNumber] = useState(false);
+  const [publicLinkType, setPublicLinkType] = useState<"invoice" | "receipt">(
+    "invoice",
+  );
+  const [publicLinkExpiry, setPublicLinkExpiry] = useState("7");
 
   const fetchTransaction = useCallback(async () => {
-    setIsLoading(true);
     try {
       const data = await getTransactionById(initialTransaction.id);
       setTransaction(data);
     } catch (error) {
       toast.error("Failed to refresh transaction details");
-    } finally {
-      setIsLoading(false);
     }
   }, [initialTransaction.id]);
 
   const handleStatusUpdate = async (status: string) => {
     try {
       await updateTransactionStatus(transaction.id, status as any);
-      toast.success(`Status updated to ${status}`);
+      toast.success(
+        `Status updated to ${status.replace(/_/g, " ").toLowerCase()}`,
+      );
       fetchTransaction();
     } catch (error) {
       toast.error("Failed to update status");
@@ -153,24 +166,23 @@ export function TransactionDetailClient({
         toast.success(
           <div className="flex flex-col gap-1 text-xs text-left pointer-events-auto">
             <span className="font-semibold text-foreground">
-              {type.charAt(0).toUpperCase() + type.slice(1)} generated successfully
+              {type.charAt(0).toUpperCase() + type.slice(1)} generated
             </span>
             <a
               href={cleanDownloadUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="text-muted-foreground underline font-medium hover:text-foreground flex items-center gap-1 mt-0.5 cursor-pointer z-10">
-              Click here to download/view <ExternalLink className="w-3 h-3 inline" />
+              Open document <ExternalLink className="w-3 h-3 inline" />
             </a>
           </div>,
-          {
-            duration: 15000,
-          }
+          { duration: 15000 },
         );
       } else {
-        toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} generated successfully`, {
-          duration: 15000,
-        });
+        toast.success(
+          `${type.charAt(0).toUpperCase() + type.slice(1)} generated`,
+          { duration: 15000 },
+        );
       }
       fetchTransaction();
     } catch (error) {
@@ -183,7 +195,7 @@ export function TransactionDetailClient({
 
   const handleAddAttachment = async (
     paymentId: string,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -199,7 +211,7 @@ export function TransactionDetailClient({
         mimeType: uploadResult.mimeType,
         sizeBytes: uploadResult.sizeBytes,
       });
-      toast.success("Attachment added to payment");
+      toast.success("Attachment added");
       fetchTransaction();
     } catch (error) {
       toast.error("Failed to add attachment");
@@ -216,7 +228,7 @@ export function TransactionDetailClient({
 
   const handleCopyLink = (url: string) => {
     navigator.clipboard.writeText(url);
-    toast.success("Link copied to clipboard!");
+    toast.success("Link copied");
   };
 
   const handleCopyNumber = () => {
@@ -226,8 +238,8 @@ export function TransactionDetailClient({
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8 rounded-none">
-      {/* Breadcrumb / Top Navigation Bar */}
+    <div className="mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 rounded-none">
+      {/* Top Navigation Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-5 rounded-none">
         <div className="flex items-center gap-3">
           <Button
@@ -241,7 +253,7 @@ export function TransactionDetailClient({
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Sales Ledger
+                Sales
               </span>
               <span className="text-muted-foreground/40">/</span>
               <span className="text-xs font-semibold text-foreground font-mono">
@@ -265,7 +277,6 @@ export function TransactionDetailClient({
           </div>
         </div>
 
-        {/* Action button grouping */}
         <div className="flex items-center gap-2 bg-muted/60 p-1.5 border border-border rounded-none">
           <Button
             variant="ghost"
@@ -278,7 +289,7 @@ export function TransactionDetailClient({
             ) : (
               <FileText className="w-3.5 h-3.5 text-muted-foreground" />
             )}
-            Download Invoice
+            Invoice
           </Button>
           <Separator orientation="vertical" className="h-4 bg-border" />
           <Button
@@ -292,7 +303,7 @@ export function TransactionDetailClient({
             ) : (
               <Receipt className="w-3.5 h-3.5 text-muted-foreground" />
             )}
-            Download Receipt
+            Receipt
           </Button>
         </div>
       </div>
@@ -301,10 +312,15 @@ export function TransactionDetailClient({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 rounded-none">
         <Card className="p-5 border-border bg-card rounded-none shadow-sm dark:shadow-none">
           <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block mb-2">
-            Fulfillment Stage
+            Status
           </span>
           <div className="flex items-center gap-2">
-            <div className={cn("h-2.5 w-2.5 rounded-full shrink-0", STATUS_ACCENT[transaction.status] || "bg-muted")} />
+            <div
+              className={cn(
+                "h-2.5 w-2.5 rounded-full shrink-0",
+                STATUS_ACCENT[transaction.status] || "bg-muted",
+              )}
+            />
             <span className="text-sm font-bold uppercase tracking-wider text-foreground">
               {transaction.status.replace(/_/g, " ")}
             </span>
@@ -313,14 +329,14 @@ export function TransactionDetailClient({
 
         <Card className="p-5 border-border bg-card rounded-none shadow-sm dark:shadow-none">
           <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block mb-2">
-            Financial Ledger Status
+            Payment
           </span>
           <PaymentStatusBadge status={transaction.paymentStatus} />
         </Card>
 
         <Card className="p-5 border-border bg-card rounded-none shadow-sm dark:shadow-none">
           <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block mb-1">
-            Total Paid Received
+            Paid to date
           </span>
           <span className="text-xl font-bold font-mono tracking-tight tabular-nums text-foreground">
             {formatCurrency(Number(transaction.totalPaid || 0))}
@@ -329,7 +345,7 @@ export function TransactionDetailClient({
 
         <Card className="p-5 border-border bg-card rounded-none shadow-sm dark:shadow-none">
           <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block mb-1">
-            Total Statement Gross
+            Order total
           </span>
           <span className="text-xl font-bold font-mono tracking-tight tabular-nums text-foreground">
             {formatCurrency(Number(transaction.finalTotal))}
@@ -337,33 +353,15 @@ export function TransactionDetailClient({
         </Card>
       </div>
 
-      {/* Prominent Wide Timeline Block */}
-      <Card className="p-6 border-border bg-card rounded-none shadow-sm dark:shadow-none space-y-6">
-        <div className="flex items-center justify-between border-b border-border pb-3 rounded-none">
-          <h3 className="text-xs font-bold text-foreground uppercase tracking-widest flex items-center gap-2">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            Interactive Transaction Journey Timeline
-          </h3>
-          <span className="text-[11px] text-muted-foreground font-medium">
-            Timeline synchronizes dynamically with backend state machine changes
-          </span>
-        </div>
-        <div className="py-4">
-          <TransactionTimeline currentStatus={transaction.status} />
-        </div>
-      </Card>
-
       {/* Main Split Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start rounded-none">
-
-        {/* Left Columns (Detailed content tabs) */}
         <div className="lg:col-span-2 space-y-6 rounded-none">
           <Tabs defaultValue="items" className="w-full rounded-none">
             <TabsList className="w-full grid grid-cols-4 bg-muted p-1 border border-border/80 rounded-none h-11">
               <TabsTrigger
                 value="items"
                 className="text-xs font-semibold uppercase tracking-wider rounded-none data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-foreground transition-all">
-                Ordered Items ({transaction.items?.length || 0})
+                Items ({transaction.items?.length || 0})
               </TabsTrigger>
               <TabsTrigger
                 value="payments"
@@ -373,47 +371,53 @@ export function TransactionDetailClient({
               <TabsTrigger
                 value="documents"
                 className="text-xs font-semibold uppercase tracking-wider rounded-none data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-foreground transition-all">
-                Client Documents
+                Documents
               </TabsTrigger>
               <TabsTrigger
                 value="deliveries"
                 className="text-xs font-semibold uppercase tracking-wider rounded-none data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-foreground transition-all">
-                Logistics & Deliveries
+                Deliveries
               </TabsTrigger>
             </TabsList>
 
             {/* Items Content */}
-            <TabsContent value="items" className="mt-6 outline-none rounded-none">
+            <TabsContent
+              value="items"
+              className="mt-6 outline-none rounded-none">
               <Card className="overflow-hidden border-border bg-card rounded-none shadow-sm dark:shadow-none py-0">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-muted border-b border-border">
                         <th className="px-5 py-4 font-bold text-muted-foreground uppercase tracking-widest">
-                          Item Description / SKU
+                          Item
                         </th>
                         <th className="px-5 py-4 font-bold text-muted-foreground uppercase tracking-widest text-center w-20">
                           Qty
                         </th>
                         <th className="px-5 py-4 font-bold text-muted-foreground uppercase tracking-widest text-right w-36">
-                          Unit Cost
+                          Unit price
                         </th>
                         <th className="px-5 py-4 font-bold text-muted-foreground uppercase tracking-widest text-right w-36">
-                          Line Total
+                          Line total
                         </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {transaction.items && transaction.items.length > 0 ? (
                         transaction.items.map((item: any) => (
-                          <tr key={item.id} className="hover:bg-muted/40 transition-colors">
+                          <tr
+                            key={item.id}
+                            className="hover:bg-muted/40 transition-colors">
                             <td className="px-5 py-4">
                               <div className="flex flex-col gap-1">
                                 <span className="font-semibold text-foreground text-sm">
                                   {item.productName || "Product"}
                                 </span>
                                 <span className="text-[11px] font-mono text-muted-foreground font-normal">
-                                  {item.variantName ? `${item.variantName} • ` : ""}
+                                  {item.variantName
+                                    ? `${item.variantName} • `
+                                    : ""}
                                   {item.sku || "N/A"}
                                 </span>
                               </div>
@@ -431,8 +435,10 @@ export function TransactionDetailClient({
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={4} className="p-8 text-center text-muted-foreground italic">
-                            No active items are registered in this transaction ledger statement.
+                          <td
+                            colSpan={4}
+                            className="p-8 text-center text-muted-foreground italic">
+                            No items on this order.
                           </td>
                         </tr>
                       )}
@@ -440,26 +446,33 @@ export function TransactionDetailClient({
                   </table>
                 </div>
 
-                {/* Pricing summary breakdown alignment */}
                 <div className="border-t border-border p-6 bg-muted/20 flex justify-end rounded-none">
                   <div className="w-full sm:max-w-md space-y-3 font-medium text-xs text-foreground">
                     <div className="flex justify-between items-center text-muted-foreground">
-                      <span>Statement Subtotal</span>
-                      <span className="font-mono font-bold text-foreground text-sm">{formatCurrency(Number(transaction.subtotal))}</span>
+                      <span>Subtotal</span>
+                      <span className="font-mono font-bold text-foreground text-sm">
+                        {formatCurrency(Number(transaction.subtotal))}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center text-muted-foreground">
-                      <span>Tax Ledger Total</span>
-                      <span className="font-mono font-bold text-foreground text-sm">{formatCurrency(Number(transaction.taxTotal || 0))}</span>
+                      <span>Tax</span>
+                      <span className="font-mono font-bold text-foreground text-sm">
+                        {formatCurrency(Number(transaction.taxTotal || 0))}
+                      </span>
                     </div>
                     {Number(transaction.discountTotal) > 0 && (
                       <div className="flex justify-between items-center text-red-500">
-                        <span>Discounts Deductions</span>
-                        <span className="font-mono font-bold text-red-500 text-sm">-{formatCurrency(Number(transaction.discountTotal))}</span>
+                        <span>Discount</span>
+                        <span className="font-mono font-bold text-red-500 text-sm">
+                          -{formatCurrency(Number(transaction.discountTotal))}
+                        </span>
                       </div>
                     )}
                     <Separator className="bg-border my-2" />
                     <div className="flex justify-between items-baseline text-foreground">
-                      <span className="font-bold text-sm uppercase tracking-wider">Grand statement total</span>
+                      <span className="font-bold text-sm uppercase tracking-wider">
+                        Total
+                      </span>
                       <span className="font-mono text-xl font-black text-foreground tracking-tight">
                         {formatCurrency(Number(transaction.finalTotal))}
                       </span>
@@ -470,26 +483,31 @@ export function TransactionDetailClient({
             </TabsContent>
 
             {/* Payments Content */}
-            <TabsContent value="payments" className="mt-6 outline-none rounded-none space-y-4">
+            <TabsContent
+              value="payments"
+              className="mt-6 outline-none rounded-none space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-3 rounded-none">
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-muted-foreground" />
-                  Payments Ledger
+                  Payments
                 </h3>
-                {transaction.type !== "POS_SALE" && transaction.paymentStatus !== "PAID" && (
-                  <Button
-                    size="sm"
-                    className="gap-1.5 h-8 text-[11px] font-bold bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-sm rounded-none"
-                    onClick={() => setIsPaymentModalOpen(true)}>
-                    <Plus className="w-3.5 h-3.5" /> Register Payment
-                  </Button>
-                )}
+                {transaction.type !== "POS_SALE" &&
+                  transaction.paymentStatus !== "PAID" && (
+                    <Button
+                      size="sm"
+                      className="gap-1.5 h-8 text-[11px] font-bold bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-sm rounded-none"
+                      onClick={() => setIsPaymentModalOpen(true)}>
+                      <Plus className="w-3.5 h-3.5" /> Record payment
+                    </Button>
+                  )}
               </div>
 
               {transaction.payments && transaction.payments.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 rounded-none">
                   {transaction.payments.map((payment: any) => (
-                    <Card key={payment.id} className="p-5 border-border bg-card rounded-none shadow-sm dark:shadow-none space-y-4">
+                    <Card
+                      key={payment.id}
+                      className="p-5 border-border bg-card rounded-none shadow-sm dark:shadow-none space-y-4">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div className="flex items-center gap-3.5">
                           <div className="w-10 h-10 rounded-none bg-muted border border-border flex items-center justify-center text-muted-foreground shadow-inner">
@@ -500,7 +518,11 @@ export function TransactionDetailClient({
                               {formatCurrency(Number(payment.amount))}
                             </span>
                             <span className="text-xs text-muted-foreground block font-medium">
-                              Method: <strong className="text-foreground">{payment.method.replace(/_/g, " ")}</strong> • {format(new Date(payment.createdAt), "MMM d, yyyy 'at' hh:mm a")}
+                              {payment.method.replace(/_/g, " ")} •{" "}
+                              {format(
+                                new Date(payment.createdAt),
+                                "MMM d, yyyy 'at' hh:mm a",
+                              )}
                             </span>
                           </div>
                         </div>
@@ -511,14 +533,13 @@ export function TransactionDetailClient({
                         </Badge>
                       </div>
 
-                      {/* Cheque & Bank Information details */}
                       {(payment.method === "CHEQUE" || payment.notes) && (
                         <div className="bg-muted p-4 border border-border text-xs space-y-2 rounded-none">
                           {payment.method === "CHEQUE" && (
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               <div>
                                 <span className="text-muted-foreground uppercase font-bold tracking-widest text-[9px] block">
-                                  Bank Reference Ledger Name
+                                  Bank
                                 </span>
                                 <span className="text-foreground font-semibold text-sm">
                                   {payment.bankName || "N/A"}
@@ -526,10 +547,15 @@ export function TransactionDetailClient({
                               </div>
                               <div>
                                 <span className="text-muted-foreground uppercase font-bold tracking-widest text-[9px] block">
-                                  Cheque Expiry / Post Date
+                                  Cheque date
                                 </span>
                                 <span className="text-foreground font-semibold text-sm">
-                                  {payment.chequeDate ? format(new Date(payment.chequeDate), "MMM d, yyyy") : "N/A"}
+                                  {payment.chequeDate
+                                    ? format(
+                                        new Date(payment.chequeDate),
+                                        "MMM d, yyyy",
+                                      )
+                                    : "N/A"}
                                 </span>
                               </div>
                             </div>
@@ -537,7 +563,7 @@ export function TransactionDetailClient({
                           {payment.notes && (
                             <div>
                               <span className="text-muted-foreground uppercase font-bold tracking-widest text-[9px] block">
-                                Payment Administrative Memo Notes
+                                Note
                               </span>
                               <p className="text-muted-foreground italic leading-relaxed text-sm">
                                 {payment.notes}
@@ -547,19 +573,24 @@ export function TransactionDetailClient({
                         </div>
                       )}
 
-                      {/* Payment-level Proof files attachments */}
                       <div className="space-y-2 pt-2 border-t border-border rounded-none">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                             <Paperclip className="w-3.5 h-3.5 text-muted-foreground" />
-                            Proof Of Payment Attachments
+                            Proof of payment
                           </span>
                           <Button
                             variant="ghost"
                             size="sm"
                             className="h-7 px-2 text-[10px] font-bold text-muted-foreground hover:text-foreground gap-1 border border-transparent hover:border-border rounded-none"
-                            onClick={() => document.getElementById(`payment-att-dedicated-${payment.id}`)?.click()}>
-                            <Plus className="w-3 h-3" /> Upload Proof Attachment
+                            onClick={() =>
+                              document
+                                .getElementById(
+                                  `payment-att-dedicated-${payment.id}`,
+                                )
+                                ?.click()
+                            }>
+                            <Plus className="w-3 h-3" /> Upload
                           </Button>
                           <input
                             id={`payment-att-dedicated-${payment.id}`}
@@ -569,7 +600,8 @@ export function TransactionDetailClient({
                           />
                         </div>
 
-                        {payment.attachments && payment.attachments.length > 0 ? (
+                        {payment.attachments &&
+                        payment.attachments.length > 0 ? (
                           <div className="flex flex-wrap gap-2 pt-1">
                             {payment.attachments.map((att: any) => (
                               <a
@@ -588,7 +620,7 @@ export function TransactionDetailClient({
                         ) : (
                           <div className="flex items-center gap-1 text-[11px] text-muted-foreground italic pt-1">
                             <AlertCircle className="w-3.5 h-3.5 text-muted-foreground/50" />
-                            No digital proof statement/images uploaded for this transaction.
+                            No files uploaded for this payment.
                           </div>
                         )}
                       </div>
@@ -598,54 +630,68 @@ export function TransactionDetailClient({
               ) : (
                 <Card className="border-dashed p-10 text-center shadow-none border-border rounded-none bg-muted/10 space-y-2">
                   <p className="text-muted-foreground text-sm font-medium">
-                    No payment logs recorded.
+                    No payments recorded yet.
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    This order statement is currently unbilled or waiting for financial reconciliations.
+                    This order is unbilled or waiting on reconciliation.
                   </p>
                 </Card>
               )}
             </TabsContent>
 
             {/* Documents Content */}
-            <TabsContent value="documents" className="mt-6 outline-none rounded-none space-y-6">
-              {/* Generate Public Link Card */}
+            <TabsContent
+              value="documents"
+              className="mt-6 outline-none rounded-none space-y-6">
               <Card className="p-6 shadow-sm dark:shadow-none border-border bg-card rounded-none space-y-4">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-500" />
                   <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                    Generate Secured Ephemeral Document Share Links
+                    Share a document link
                   </h3>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Generate secure, cryptographically unguessable public URLs for this transaction's PDF files to easily forward or email directly to external buyers.
+                  Create a secure public link to this order's invoice or receipt
+                  so you can send it directly to the customer.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label htmlFor="public-doc-type-dec" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block">
-                      Target Document Category
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block">
+                      Document
                     </label>
-                    <select
-                      id="public-doc-type-dec"
-                      className="w-full text-xs bg-background border border-border text-foreground rounded-none px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring">
-                      <option value="invoice">Customer Invoice Document</option>
-                      <option value="receipt">Customer Receipt Document</option>
-                    </select>
+                    <Select
+                      value={publicLinkType}
+                      onValueChange={v =>
+                        setPublicLinkType(v as "invoice" | "receipt")
+                      }>
+                      <SelectTrigger className="w-full text-xs bg-background border-border text-foreground rounded-none h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none">
+                        <SelectItem value="invoice">Invoice</SelectItem>
+                        <SelectItem value="receipt">Receipt</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label htmlFor="public-doc-expiry-dec" className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block">
-                      Authorization Lifespan Expiration
+                    <label className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground block">
+                      Expires
                     </label>
-                    <select
-                      id="public-doc-expiry-dec"
-                      className="w-full text-xs bg-background border border-border text-foreground rounded-none px-3 py-2 focus:outline-none focus:ring-1 focus:ring-ring">
-                      <option value="7">7 Working Days (Standard)</option>
-                      <option value="1">1 Day (Highly Confidential)</option>
-                      <option value="30">30 Calendar Days (Extended)</option>
-                      <option value="0">Indefinite (No Expiry)</option>
-                    </select>
+                    <Select
+                      value={publicLinkExpiry}
+                      onValueChange={setPublicLinkExpiry}>
+                      <SelectTrigger className="w-full text-xs bg-background border-border text-foreground rounded-none h-9">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-none">
+                        <SelectItem value="1">In 1 day</SelectItem>
+                        <SelectItem value="7">In 7 days</SelectItem>
+                        <SelectItem value="30">In 30 days</SelectItem>
+                        <SelectItem value="0">Never</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -653,21 +699,20 @@ export function TransactionDetailClient({
                   size="sm"
                   className="w-full h-9 text-xs font-bold uppercase tracking-wider bg-zinc-900 dark:bg-zinc-100 dark:text-zinc-950 hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-none shadow-sm"
                   onClick={async () => {
-                    const typeSelect = document.getElementById("public-doc-type-dec") as HTMLSelectElement;
-                    const expirySelect = document.getElementById("public-doc-expiry-dec") as HTMLSelectElement;
-                    if (!typeSelect || !expirySelect) return;
-
-                    const type = typeSelect.value as "invoice" | "receipt";
-                    const daysVal = parseInt(expirySelect.value, 10);
+                    const daysVal = parseInt(publicLinkExpiry, 10);
                     const customExpiryDays = daysVal === 0 ? null : daysVal;
 
                     setIsLoadingPublicLink(true);
                     try {
-                      await generatePublicLinkAction(transaction.id, type, customExpiryDays);
-                      toast.success("Secured public document link created!");
+                      await generatePublicLinkAction(
+                        transaction.id,
+                        publicLinkType,
+                        customExpiryDays,
+                      );
+                      toast.success("Link created");
                       fetchTransaction();
                     } catch (err) {
-                      toast.error("Failed to generate secure public link");
+                      toast.error("Failed to create link");
                     } finally {
                       setIsLoadingPublicLink(false);
                     }
@@ -676,40 +721,48 @@ export function TransactionDetailClient({
                   {isLoadingPublicLink ? (
                     <>
                       <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
-                      Signing links...
+                      Creating link...
                     </>
                   ) : (
-                    "Authorize & Generate Share Link"
+                    "Create link"
                   )}
                 </Button>
               </Card>
 
-              {/* Grouped listing of documents */}
               {transaction.attachments && transaction.attachments.length > 0 ? (
                 (() => {
                   const sortedAttachments = [...transaction.attachments].sort(
-                    (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+                    (a, b) =>
+                      new Date(b.uploadedAt).getTime() -
+                      new Date(a.uploadedAt).getTime(),
                   );
 
-                  const groups = sortedAttachments.reduce((acc: any, att: any) => {
-                    const desc = att.description?.toLowerCase() || "";
-                    let group = "Operational Attachments";
-                    if (desc.includes("public")) group = "Authorized Public Sharing Links";
-                    else if (desc.includes("invoice")) group = "Generated Invoices";
-                    else if (desc.includes("receipt")) group = "Generated Receipts";
-                    else if (desc.includes("proof") || desc.includes("delivery")) group = "Fulfillment Proof Documents";
+                  const groups = sortedAttachments.reduce(
+                    (acc: any, att: any) => {
+                      const desc = att.description?.toLowerCase() || "";
+                      let group = "Other files";
+                      if (desc.includes("public")) group = "Shared links";
+                      else if (desc.includes("invoice")) group = "Invoices";
+                      else if (desc.includes("receipt")) group = "Receipts";
+                      else if (
+                        desc.includes("proof") ||
+                        desc.includes("delivery")
+                      )
+                        group = "Delivery proof";
 
-                    if (!acc[group]) acc[group] = [];
-                    acc[group].push(att);
-                    return acc;
-                  }, {});
+                      if (!acc[group]) acc[group] = [];
+                      acc[group].push(att);
+                      return acc;
+                    },
+                    {},
+                  );
 
                   const order = [
-                    "Authorized Public Sharing Links",
-                    "Generated Invoices",
-                    "Generated Receipts",
-                    "Fulfillment Proof Documents",
-                    "Operational Attachments",
+                    "Shared links",
+                    "Invoices",
+                    "Receipts",
+                    "Delivery proof",
+                    "Other files",
                   ];
 
                   return (
@@ -719,7 +772,9 @@ export function TransactionDetailClient({
                         if (!docs) return null;
 
                         return (
-                          <Card key={groupName} className="overflow-hidden border-border bg-card rounded-none shadow-sm dark:shadow-none">
+                          <Card
+                            key={groupName}
+                            className="overflow-hidden border-border bg-card rounded-none shadow-sm dark:shadow-none">
                             <div className="px-4 py-3 bg-muted border-b border-border">
                               <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                                 <FileText className="w-3.5 h-3.5 text-muted-foreground/60" />
@@ -728,18 +783,29 @@ export function TransactionDetailClient({
                             </div>
                             <div className="divide-y divide-border">
                               {docs.map((att: any) => {
-                                const isPublicLink = groupName === "Authorized Public Sharing Links";
+                                const isPublicLink =
+                                  groupName === "Shared links";
                                 return (
-                                  <div key={att.id} className="p-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 hover:bg-muted/30 transition-colors">
+                                  <div
+                                    key={att.id}
+                                    className="p-4 flex flex-wrap sm:flex-nowrap items-center justify-between gap-4 hover:bg-muted/30 transition-colors">
                                     <div className="flex items-center gap-3">
-                                      <div className={cn(
-                                        "w-9 h-9 rounded-none flex items-center justify-center border",
-                                        isPublicLink
-                                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
-                                          : "bg-muted border-border text-muted-foreground/80"
-                                      )}>
+                                      <div
+                                        className={cn(
+                                          "w-9 h-9 rounded-none flex items-center justify-center border",
+                                          isPublicLink
+                                            ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500"
+                                            : "bg-muted border-border text-muted-foreground/80",
+                                        )}>
                                         {att.mimeType === "application/pdf" ? (
-                                          <FileText className={cn("w-4 h-4", isPublicLink ? "text-emerald-500" : "text-red-500")} />
+                                          <FileText
+                                            className={cn(
+                                              "w-4 h-4",
+                                              isPublicLink
+                                                ? "text-emerald-500"
+                                                : "text-red-500",
+                                            )}
+                                          />
                                         ) : (
                                           <Paperclip className="w-4 h-4" />
                                         )}
@@ -750,18 +816,29 @@ export function TransactionDetailClient({
                                             <>
                                               {att.description}
                                               {att.expiresAt ? (
-                                                new Date(att.expiresAt) < new Date() ? (
-                                                  <Badge variant="outline" className="text-[9px] text-red-600 border-red-200 bg-red-50/50 py-0 px-1 rounded-none font-bold uppercase">
+                                                new Date(att.expiresAt) <
+                                                new Date() ? (
+                                                  <Badge
+                                                    variant="outline"
+                                                    className="text-[9px] text-red-600 border-red-200 bg-red-50/50 py-0 px-1 rounded-none font-bold uppercase">
                                                     Expired
                                                   </Badge>
                                                 ) : (
-                                                  <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-200 bg-emerald-50/50 py-0 px-1 rounded-none font-bold uppercase">
-                                                    Active • Exp. {format(new Date(att.expiresAt), "MMM d")}
+                                                  <Badge
+                                                    variant="outline"
+                                                    className="text-[9px] text-emerald-600 border-emerald-200 bg-emerald-50/50 py-0 px-1 rounded-none font-bold uppercase">
+                                                    Active • Exp.{" "}
+                                                    {format(
+                                                      new Date(att.expiresAt),
+                                                      "MMM d",
+                                                    )}
                                                   </Badge>
                                                 )
                                               ) : (
-                                                <Badge variant="outline" className="text-[9px] text-blue-600 border-blue-200 bg-blue-50/50 py-0 px-1 rounded-none font-bold uppercase">
-                                                  Never Expires
+                                                <Badge
+                                                  variant="outline"
+                                                  className="text-[9px] text-blue-600 border-blue-200 bg-blue-50/50 py-0 px-1 rounded-none font-bold uppercase">
+                                                  Never expires
                                                 </Badge>
                                               )}
                                             </>
@@ -771,13 +848,21 @@ export function TransactionDetailClient({
                                         </p>
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                           <span className="text-[10px] text-muted-foreground font-mono truncate max-w-[250px] block">
-                                            {isPublicLink ? getCleanUrl(att.shortUrl || att.fileUrl) : (att.description || "No description")}
+                                            {isPublicLink
+                                              ? getCleanUrl(
+                                                  att.shortUrl || att.fileUrl,
+                                                )
+                                              : att.description ||
+                                                "No description"}
                                           </span>
                                           {!isPublicLink && (
                                             <>
                                               <span className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                                               <span className="text-[10px] text-muted-foreground">
-                                                Created: {format(new Date(att.uploadedAt), "MMM d, yyyy")}
+                                                {format(
+                                                  new Date(att.uploadedAt),
+                                                  "MMM d, yyyy",
+                                                )}
                                               </span>
                                             </>
                                           )}
@@ -791,7 +876,13 @@ export function TransactionDetailClient({
                                           variant="ghost"
                                           size="icon"
                                           className="h-8 w-8 text-muted-foreground hover:text-foreground border border-transparent hover:border-border rounded-none"
-                                          onClick={() => handleCopyLink(getCleanUrl(att.shortUrl || att.fileUrl!))}
+                                          onClick={() =>
+                                            handleCopyLink(
+                                              getCleanUrl(
+                                                att.shortUrl || att.fileUrl!,
+                                              ),
+                                            )
+                                          }
                                           aria-label="Copy document link">
                                           <Copy className="w-3.5 h-3.5" />
                                         </Button>
@@ -801,8 +892,13 @@ export function TransactionDetailClient({
                                         size="icon"
                                         className="h-8 w-8 text-muted-foreground hover:text-foreground border border-transparent hover:border-border rounded-none"
                                         asChild
-                                        aria-label="View document in new tab">
-                                        <a href={getCleanUrl(att.shortUrl || att.fileUrl!)} target="_blank" rel="noopener noreferrer">
+                                        aria-label="Open document in new tab">
+                                        <a
+                                          href={getCleanUrl(
+                                            att.shortUrl || att.fileUrl!,
+                                          )}
+                                          target="_blank"
+                                          rel="noopener noreferrer">
                                           <ExternalLink className="w-3.5 h-3.5" />
                                         </a>
                                       </Button>
@@ -813,7 +909,11 @@ export function TransactionDetailClient({
                                           className="h-8 w-8 text-muted-foreground hover:text-foreground border border-transparent hover:border-border rounded-none"
                                           asChild
                                           aria-label="Download document file">
-                                          <a href={getCleanUrl(att.shortUrl || att.fileUrl!)} download={att.fileName!}>
+                                          <a
+                                            href={getCleanUrl(
+                                              att.shortUrl || att.fileUrl!,
+                                            )}
+                                            download={att.fileName!}>
                                             <Download className="w-3.5 h-3.5" />
                                           </a>
                                         </Button>
@@ -835,28 +935,33 @@ export function TransactionDetailClient({
                     <FileText className="w-5 h-5" />
                   </div>
                   <p className="text-sm font-semibold text-muted-foreground">
-                    No generated document archives found.
+                    No documents yet.
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Invoices and receipts will show up here as soon as they are compiled or downloaded.
+                    Invoices and receipts will show up here once generated.
                   </p>
                 </Card>
               )}
             </TabsContent>
 
             {/* Deliveries Content */}
-            <TabsContent value="deliveries" className="mt-6 outline-none rounded-none space-y-4">
+            <TabsContent
+              value="deliveries"
+              className="mt-6 outline-none rounded-none space-y-4">
               <div className="border-b border-border pb-3 rounded-none">
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                   <Truck className="w-4 h-4 text-muted-foreground" />
-                  Logistics & Fulfillment Registries
+                  Deliveries
                 </h3>
               </div>
 
-              {transaction.fulfillments && transaction.fulfillments.length > 0 ? (
+              {transaction.fulfillments &&
+              transaction.fulfillments.length > 0 ? (
                 <div className="grid grid-cols-1 gap-4 rounded-none">
                   {transaction.fulfillments.map((f: any) => (
-                    <Card key={f.id} className="p-5 border-border bg-card rounded-none shadow-sm dark:shadow-none space-y-4">
+                    <Card
+                      key={f.id}
+                      className="p-5 border-border bg-card rounded-none shadow-sm dark:shadow-none space-y-4">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
                           <div className="p-2 bg-muted border border-border rounded-none text-muted-foreground shadow-inner">
@@ -864,10 +969,13 @@ export function TransactionDetailClient({
                           </div>
                           <div>
                             <span className="font-bold text-sm text-foreground block">
-                              Logistics Waybill: {f.type} Dispatched
+                              {f.type}
                             </span>
                             <span className="text-xs text-muted-foreground block">
-                              Provider Carrier: <strong className="text-foreground">{f.carrier || "Internal Staff Courier"}</strong>
+                              Carrier:{" "}
+                              <strong className="text-foreground">
+                                {f.carrier || "Internal courier"}
+                              </strong>
                             </span>
                           </div>
                         </div>
@@ -881,10 +989,10 @@ export function TransactionDetailClient({
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted p-4 border border-border text-xs rounded-none">
                         <div>
                           <span className="text-muted-foreground uppercase font-bold tracking-widest text-[9px] block">
-                            Courier Representative
+                            Driver
                           </span>
                           <span className="text-foreground font-semibold text-sm">
-                            {f.driver?.name || "No Driver Assigned"}
+                            {f.driver?.name || "Not assigned"}
                           </span>
                           {f.driver?.email && (
                             <span className="text-muted-foreground block text-[11px] font-mono mt-0.5">
@@ -895,10 +1003,10 @@ export function TransactionDetailClient({
 
                         <div>
                           <span className="text-muted-foreground uppercase font-bold tracking-widest text-[9px] block">
-                            Waypoint Reference Tracking Code
+                            Tracking number
                           </span>
                           <span className="text-foreground font-semibold text-sm font-mono block mt-1 bg-background border border-border px-2 py-0.5 w-fit">
-                            {f.trackingNumber || "No tracking initialized"}
+                            {f.trackingNumber || "Not assigned"}
                           </span>
                         </div>
                       </div>
@@ -907,7 +1015,10 @@ export function TransactionDetailClient({
                         <div className="flex items-center gap-2 text-xs border-t border-border pt-3 rounded-none">
                           <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                           <span className="text-muted-foreground">
-                            Delivered safely. Received and signed by: <strong className="text-foreground">{f.receivedBy}</strong>
+                            Received and signed by:{" "}
+                            <strong className="text-foreground">
+                              {f.receivedBy}
+                            </strong>
                           </span>
                         </div>
                       )}
@@ -917,10 +1028,11 @@ export function TransactionDetailClient({
               ) : (
                 <Card className="p-10 text-center border-dashed border-border bg-muted/10 rounded-none space-y-2">
                   <p className="text-sm font-medium text-muted-foreground">
-                    No active logistical dispatch or fulfillment records yet.
+                    No deliveries scheduled yet.
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    This order may be fully digitised, picked-up instantly, or waiting for fulfillment scheduling.
+                    This order may be digital, picked up on-site, or waiting to
+                    be scheduled.
                   </p>
                 </Card>
               )}
@@ -928,19 +1040,31 @@ export function TransactionDetailClient({
           </Tabs>
         </div>
 
-        {/* Right Column (Sidebar metadata and administrative actions) */}
+        {/* Right Column */}
         <div className="space-y-6 rounded-none">
-          {/* Administrative controls card */}
+          <Card className="border-border bg-card rounded-none shadow-sm dark:shadow-none overflow-hidden">
+            <div className="flex items-center gap-2 px-5 py-4 border-b border-border bg-muted">
+              <Clock className="w-4 h-4 text-muted-foreground" />
+              <h3 className="text-xs font-black text-foreground uppercase tracking-widest">
+                Order progress
+              </h3>
+            </div>
+            <div className="px-5 py-6">
+              <OrderTimeline transaction={transaction} />
+            </div>
+          </Card>
+
           <Card className="border-border bg-card rounded-none shadow-sm dark:shadow-none overflow-hidden">
             <CardHeader className="bg-muted px-5 py-4 border-b border-border">
               <CardTitle className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-muted-foreground" />
-                Administrative Controls
+                Order actions
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-4">
               <div className="text-xs text-muted-foreground leading-relaxed">
-                Update the logistical/order status of this transaction manually in real-time. Action states are contextual to current fulfillment status.
+                Move this order to the next stage, or cancel it. Only the
+                actions available for the current status are shown.
               </div>
 
               <div className="space-y-2 pt-2">
@@ -948,21 +1072,21 @@ export function TransactionDetailClient({
                   <Button
                     className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 rounded-none shadow"
                     onClick={() => handleStatusUpdate("CONFIRMED")}>
-                    Approve Statement
+                    Confirm order
                   </Button>
                 )}
                 {transaction.status === "CONFIRMED" && (
                   <Button
                     className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 rounded-none shadow"
                     onClick={() => handleStatusUpdate("PROCESSING")}>
-                    Release to Processing
+                    Start processing
                   </Button>
                 )}
                 {transaction.status === "PROCESSING" && (
                   <Button
                     className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 rounded-none shadow"
                     onClick={() => handleStatusUpdate("COMPLETED")}>
-                    Mark Dispatch Completed
+                    Mark as delivered
                   </Button>
                 )}
 
@@ -970,19 +1094,20 @@ export function TransactionDetailClient({
                   variant="outline"
                   className="w-full h-10 text-xs font-bold uppercase tracking-wider text-red-600 border-border hover:bg-red-500/10 hover:border-red-500/30 dark:hover:bg-red-950/20 rounded-none transition-colors"
                   onClick={() => handleStatusUpdate("CANCELLED")}
-                  disabled={["COMPLETED", "CANCELLED"].includes(transaction.status)}>
-                  Cancel Order
+                  disabled={["COMPLETED", "CANCELLED"].includes(
+                    transaction.status,
+                  )}>
+                  Cancel order
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Customer profile sidebar block */}
           <Card className="border-border bg-card rounded-none shadow-sm dark:shadow-none overflow-hidden">
             <CardHeader className="bg-muted px-5 py-4 border-b border-border">
               <CardTitle className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
                 <User className="w-4 h-4 text-muted-foreground" />
-                Customer Identity
+                Customer
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-4">
@@ -993,10 +1118,10 @@ export function TransactionDetailClient({
                   </div>
                   <div>
                     <h4 className="text-sm font-bold text-foreground">
-                      {transaction.customer?.name || "Anonymous Customer"}
+                      {transaction.customer?.name || "Anonymous customer"}
                     </h4>
                     <span className="text-[10px] text-muted-foreground uppercase font-black tracking-widest block mt-0.5">
-                      Account Profile Holder
+                      Buyer
                     </span>
                   </div>
                 </div>
@@ -1006,14 +1131,16 @@ export function TransactionDetailClient({
                 <div className="space-y-3 text-xs">
                   <div className="flex items-center gap-2.5 text-muted-foreground">
                     <Mail className="w-4 h-4 text-muted-foreground/60 shrink-0" />
-                    <span className="font-mono text-foreground font-medium truncate max-w-[200px]" title={transaction.customer?.email || "No email"}>
-                      {transaction.customer?.email || "No electronic mailing list"}
+                    <span
+                      className="font-mono text-foreground font-medium truncate max-w-[200px]"
+                      title={transaction.customer?.email || "No email"}>
+                      {transaction.customer?.email || "No email on file"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2.5 text-muted-foreground">
                     <Phone className="w-4 h-4 text-muted-foreground/60 shrink-0" />
                     <span className="font-mono text-foreground font-medium">
-                      {transaction.customer?.phone || "No listed contact telephone"}
+                      {transaction.customer?.phone || "No phone on file"}
                     </span>
                   </div>
                 </div>
@@ -1021,25 +1148,24 @@ export function TransactionDetailClient({
             </CardContent>
           </Card>
 
-          {/* Hub management team block */}
           <Card className="border-border bg-card rounded-none shadow-sm dark:shadow-none overflow-hidden">
             <CardHeader className="bg-muted px-5 py-4 border-b border-border">
               <CardTitle className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-muted-foreground" />
-                Hub & Management Team
+                Location & team
               </CardTitle>
             </CardHeader>
             <CardContent className="p-5 space-y-3">
               <div className="flex items-center gap-2.5 text-xs text-foreground font-bold">
                 <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span>Origin Branch: <strong className="font-black underline decoration-2">{transaction.location?.name || "Corporate Head Office"}</strong></span>
+                <span>{transaction.location?.name || "Head office"}</span>
               </div>
               {transaction.member?.user && (
                 <>
                   <Separator className="bg-border my-2" />
                   <div className="space-y-1.5 text-xs text-muted-foreground">
                     <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground block">
-                      Account Operations Manager
+                      Handled by
                     </span>
                     <p className="font-bold text-foreground">
                       {transaction.member.user.name}
@@ -1053,11 +1179,10 @@ export function TransactionDetailClient({
             </CardContent>
           </Card>
 
-          {/* Operations Memo notes if they exist */}
           {transaction.notes && (
             <Card className="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400 p-5 rounded-none space-y-2">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                Operations Internal Note Memo
+                Internal note
               </h4>
               <p className="text-xs font-medium leading-relaxed">
                 {transaction.notes}
@@ -1079,70 +1204,183 @@ export function TransactionDetailClient({
   );
 }
 
-function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
-  const stages = [
-    { key: "DRAFT", label: "Draft" },
-    { key: "PENDING_CONFIRMATION", label: "Placed" },
-    { key: "CONFIRMED", label: "Confirmed" },
-    { key: "PROCESSING", label: "Processing" },
-    { key: "READY", label: "Staged" },
-    { key: "COMPLETED", label: "Delivered" },
-  ];
+/* ------------------------------------------------------------------ */
+/* Order timeline                                                      */
+/* ------------------------------------------------------------------ */
 
-  const statusOrder = stages.map(s => s.key);
-  const currentIndex = statusOrder.indexOf(currentStatus);
+const TIMELINE_STAGES = [
+  { key: "DRAFT", label: "Draft", icon: FileEdit },
+  { key: "PENDING_CONFIRMATION", label: "Placed", icon: ShoppingCart },
+  { key: "CONFIRMED", label: "Confirmed", icon: CheckCircle2 },
+  { key: "PROCESSING", label: "Processing", icon: Package },
+  { key: "COMPLETED", label: "Delivered", icon: PackageCheck },
+] as const;
+
+const TIMELINE_STAGE_DESCRIPTIONS: Record<string, string> = {
+  DRAFT: "Order created but not yet submitted.",
+  PENDING_CONFIRMATION: "Waiting for review and approval.",
+  CONFIRMED: "Approved and queued for fulfillment.",
+  PROCESSING: "Being picked, packed, or prepared.",
+  COMPLETED: "Delivered and closed out.",
+};
+
+/**
+ * Looks up when a stage was reached. Checks a `statusHistory` array first
+ * (expected shape: [{ status, createdAt }]) and falls back to direct
+ * timestamp fields on the transaction. Adjust the field names below to
+ * match your API once stage timestamps are available.
+ */
+function getStageTimestamp(transaction: any, key: string): string | null {
+  const history = transaction?.statusHistory;
+  if (Array.isArray(history)) {
+    const entry = history.find((h: any) => h.status === key);
+    const value = entry?.createdAt || entry?.timestamp;
+    if (value) return value;
+  }
+
+  const fieldsByStage: Record<string, string[]> = {
+    DRAFT: ["createdAt"],
+    PENDING_CONFIRMATION: ["placedAt", "submittedAt", "createdAt"],
+    CONFIRMED: ["confirmedAt"],
+    PROCESSING: ["processingAt", "processedAt"],
+    COMPLETED: ["completedAt", "deliveredAt"],
+    CANCELLED: ["cancelledAt", "canceledAt"],
+  };
+
+  for (const field of fieldsByStage[key] || []) {
+    if (transaction?.[field]) return transaction[field];
+  }
+  return null;
+}
+
+function OrderTimeline({ transaction }: { transaction: any }) {
+  const currentStatus = transaction.status;
+  const isCancelled = currentStatus === "CANCELLED";
+  const statusOrder = TIMELINE_STAGES.map(s => s.key);
+  const currentIndex = statusOrder.indexOf(currentStatus as any);
+  const lastIndex = TIMELINE_STAGES.length - 1;
+
+  if (isCancelled) {
+    const cancelledAt = getStageTimestamp(transaction, "CANCELLED");
+    return (
+      <div className="flex items-start gap-3.5">
+        <div className="w-9 h-9 shrink-0 rounded-none bg-red-500/10 border-2 border-red-500/40 flex items-center justify-center">
+          <XCircle className="w-4 h-4 text-red-500" />
+        </div>
+        <div className="pt-1">
+          <p className="text-xs font-bold text-foreground uppercase tracking-widest">
+            Order cancelled
+          </p>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            This order will not continue through fulfillment.
+          </p>
+          {cancelledAt && (
+            <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80 font-mono mt-2">
+              <Calendar className="w-3 h-3" />
+              {format(new Date(cancelledAt), "MMM d, yyyy 'at' hh:mm a")}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="relative flex justify-between items-center w-full px-4 pt-2 pb-6">
-      {/* Visual Line connector background */}
-      <div className="absolute top-[23px] left-6 right-6 h-[4px] bg-muted z-0" />
-
-      {/* Progress filled line */}
-      <div
-        className="absolute top-[23px] left-6 h-[4px] bg-emerald-600 transition-all duration-500 z-0"
-        style={{
-          width: `${currentIndex >= 0 ? (currentIndex / (stages.length - 1)) * 96 : 0}%`,
-        }}
-      />
-
-      {stages.map((stage, idx) => {
-        const isCompleted =
+    <div className="flex flex-col">
+      {TIMELINE_STAGES.map((stage, idx) => {
+        const isComplete =
           idx < currentIndex ||
           (currentStatus === "COMPLETED" && idx <= currentIndex);
-        const isCurrent = idx === currentIndex;
+        const isCurrent = idx === currentIndex && currentStatus !== "COMPLETED";
+        const isFinalComplete =
+          currentStatus === "COMPLETED" && idx === lastIndex;
+        const isReached = isComplete || isCurrent || isFinalComplete;
+        const isLast = idx === lastIndex;
+        const Icon = stage.icon;
+        const timestamp = isReached
+          ? getStageTimestamp(transaction, stage.key)
+          : null;
 
         return (
-          <div key={stage.key} className="relative z-10 flex flex-col items-center gap-3">
-            <div
-              className={cn(
-                "w-7 h-7 rounded-none flex items-center justify-center transition-all duration-300 border-2",
-                isCompleted
-                  ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
-                  : isCurrent
-                    ? "bg-background border-zinc-900 dark:border-zinc-100 ring-4 ring-muted shadow"
-                    : "bg-background border-border text-muted-foreground/30"
-              )}>
-              {isCompleted ? (
-                <CheckCircle2 className="w-4 h-4 text-white stroke-[3px]" />
-              ) : isCurrent ? (
-                <div className="w-2.5 h-2.5 bg-zinc-900 dark:bg-zinc-100" />
-              ) : (
-                <div className="w-1.5 h-1.5 bg-border rounded-full" />
+          <div key={stage.key} className="flex gap-3.5">
+            {/* Rail: icon + connecting line */}
+            <div className="flex flex-col items-center">
+              <div
+                className={cn(
+                  "w-9 h-9 shrink-0 rounded-none flex items-center justify-center border-2 transition-colors duration-300 bg-card",
+                  (isComplete || isFinalComplete) &&
+                    "bg-emerald-600 border-emerald-600 text-white",
+                  isCurrent &&
+                    "border-zinc-900 dark:border-zinc-100 ring-4 ring-muted text-foreground",
+                  !isComplete &&
+                    !isCurrent &&
+                    !isFinalComplete &&
+                    "border-border text-muted-foreground/40",
+                )}>
+                <Icon
+                  className={cn("w-4 h-4", isCurrent && "animate-pulse")}
+                  strokeWidth={2.25}
+                />
+              </div>
+              {!isLast && (
+                <div
+                  className={cn(
+                    "w-[2px] flex-1 my-1 transition-colors duration-500",
+                    isComplete || isFinalComplete
+                      ? "bg-emerald-600"
+                      : "bg-border",
+                  )}
+                />
               )}
             </div>
 
-            <div className="absolute top-9 flex flex-col items-center min-w-[85px] text-center">
-              <span
+            {/* Content */}
+            <div className={cn("flex-1 min-w-0", !isLast && "pb-7")}>
+              <div className="flex items-center justify-between gap-2 pt-1.5">
+                <span
+                  className={cn(
+                    "text-xs font-bold uppercase tracking-widest",
+                    (isComplete || isFinalComplete) &&
+                      "text-emerald-600 dark:text-emerald-400",
+                    isCurrent && "text-foreground",
+                    !isComplete &&
+                      !isCurrent &&
+                      !isFinalComplete &&
+                      "text-muted-foreground/50",
+                  )}>
+                  {stage.label}
+                </span>
+                {isCurrent && (
+                  <Badge
+                    variant="outline"
+                    className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0 rounded-none border-zinc-900 dark:border-zinc-100 text-foreground shrink-0">
+                    In progress
+                  </Badge>
+                )}
+              </div>
+
+              <p
                 className={cn(
-                  "text-[10px] font-bold uppercase tracking-widest whitespace-nowrap",
-                  isCompleted
-                    ? "text-emerald-600 dark:text-emerald-400 font-extrabold"
-                    : isCurrent
-                      ? "text-foreground font-black"
-                      : "text-muted-foreground"
+                  "text-[11px] mt-1 leading-relaxed",
+                  isReached
+                    ? "text-muted-foreground"
+                    : "text-muted-foreground/40",
                 )}>
-                {stage.label}
-              </span>
+                {TIMELINE_STAGE_DESCRIPTIONS[stage.key]}
+              </p>
+
+              {timestamp ? (
+                <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80 font-mono mt-1.5">
+                  <Calendar className="w-3 h-3" />
+                  {format(new Date(timestamp), "MMM d, yyyy 'at' hh:mm a")}
+                </span>
+              ) : (
+                isReached === false && (
+                  <span className="text-[10px] text-muted-foreground/40 uppercase font-semibold tracking-wider mt-1.5 block">
+                    Pending
+                  </span>
+                )
+              )}
             </div>
           </div>
         );
@@ -1154,8 +1392,10 @@ function TransactionTimeline({ currentStatus }: { currentStatus: string }) {
 function PaymentStatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     PAID: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30",
-    UNPAID: "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30",
-    PARTIALLY_PAID: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30",
+    UNPAID:
+      "bg-red-500/10 text-red-600 border-red-500/20 dark:bg-red-500/20 dark:text-red-400 dark:border-red-500/30",
+    PARTIALLY_PAID:
+      "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-500/20 dark:text-amber-400 dark:border-amber-500/30",
   };
 
   return (
@@ -1163,7 +1403,7 @@ function PaymentStatusBadge({ status }: { status: string }) {
       variant="outline"
       className={cn(
         "font-bold text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-none",
-        styles[status] || "bg-muted text-muted-foreground border-border"
+        styles[status] || "bg-muted text-muted-foreground border-border",
       )}>
       {status.replace(/_/g, " ")}
     </Badge>

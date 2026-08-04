@@ -217,7 +217,7 @@ export function EditTransferForm({
           <CardContent className="space-y-4">
             <div className="grid grid-cols-12 gap-4 items-end">
               <div className="col-span-7">
-                <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+                <Label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">
                   Product
                 </Label>
                 <ProductVariantSelect
@@ -229,7 +229,7 @@ export function EditTransferForm({
                 />
               </div>
               <div className="col-span-3">
-                <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+                <Label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">
                   Quantity
                 </Label>
                 <Input
@@ -243,7 +243,7 @@ export function EditTransferForm({
                       handleAddItem();
                     }
                   }}
-                  className="bg-white"
+                  className="bg-card"
                   placeholder="0"
                 />
               </div>
@@ -260,15 +260,15 @@ export function EditTransferForm({
             </div>
 
             {itemError && (
-              <p className="text-sm text-red-600 flex items-center gap-1.5">
+              <p className="text-sm text-destructive flex items-center gap-1.5">
                 <AlertTriangle size={14} /> {itemError}
               </p>
             )}
 
             <div className="pt-2 border-t">
               {items.length === 0 ? (
-                <div className="text-sm text-gray-500 text-center py-10 bg-gray-50 rounded-lg border border-dashed flex flex-col items-center gap-2">
-                  <PackageSearch size={22} className="text-gray-400" />
+                <div className="text-sm text-muted-foreground text-center py-10 bg-muted/30 rounded-lg border border-dashed flex flex-col items-center gap-2">
+                  <PackageSearch size={22} className="text-muted-foreground" />
                   <span>No items added yet.</span>
                   <span className="text-xs font-medium">
                     Select a product and quantity above, then click Add.
@@ -278,7 +278,7 @@ export function EditTransferForm({
                 <div className="overflow-hidden rounded-lg border">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="bg-gray-50 text-xs font-bold text-gray-500 uppercase">
+                      <tr className="bg-muted/50 text-xs font-bold text-muted-foreground uppercase">
                         <th className="text-left px-4 py-2">Product</th>
                         <th className="text-left px-4 py-2">SKU</th>
                         <th className="text-right px-4 py-2">Available</th>
@@ -292,14 +292,16 @@ export function EditTransferForm({
                         return (
                           <tr
                             key={item.id}
-                            className={overStock ? "bg-red-50/50" : undefined}>
-                            <td className="px-4 py-2.5 font-medium text-gray-900">
+                            className={
+                              overStock ? "bg-destructive/5" : undefined
+                            }>
+                            <td className="px-4 py-2.5 font-medium text-foreground">
                               {item.productName}
                             </td>
-                            <td className="px-4 py-2.5 text-gray-500">
+                            <td className="px-4 py-2.5 text-muted-foreground">
                               {item.sku}
                             </td>
-                            <td className="px-4 py-2.5 text-right text-gray-500">
+                            <td className="px-4 py-2.5 text-right text-muted-foreground">
                               {item.availableStock}
                             </td>
                             <td className="px-4 py-2.5">
@@ -310,8 +312,8 @@ export function EditTransferForm({
                                 onChange={e =>
                                   handleQuantityChange(item.id, e.target.value)
                                 }
-                                className={`bg-white h-8 text-right ${
-                                  overStock ? "border-red-400" : ""
+                                className={`bg-card h-8 text-right ${
+                                  overStock ? "border-destructive" : ""
                                 }`}
                               />
                             </td>
@@ -321,7 +323,7 @@ export function EditTransferForm({
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleRemoveItem(item.id)}
-                                className="h-8 w-8 text-gray-400 hover:text-red-600">
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive">
                                 <Trash2 size={14} />
                               </Button>
                             </td>
@@ -333,7 +335,7 @@ export function EditTransferForm({
                 </div>
               )}
               {overStockCount > 0 && (
-                <p className="text-xs text-red-600 flex items-center gap-1.5 mt-2">
+                <p className="text-xs text-destructive flex items-center gap-1.5 mt-2">
                   <AlertTriangle size={13} />
                   {overStockCount === 1
                     ? "1 item exceeds available stock at the source location."
@@ -356,7 +358,7 @@ export function EditTransferForm({
             <Textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              className="bg-white min-h-[100px]"
+              className="bg-card min-h-[100px]"
               placeholder="e.g. Rebalancing stock ahead of the Q3 promotion..."
             />
           </CardContent>
@@ -370,11 +372,11 @@ export function EditTransferForm({
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+              <Label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">
                 Source Location
               </Label>
               <Select value={fromLocationId} onValueChange={setFromLocationId}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-card">
                   <SelectValue placeholder="Select source..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -394,18 +396,18 @@ export function EditTransferForm({
                 size="icon"
                 onClick={swapLocations}
                 disabled={!fromLocationId && !toLocationId}
-                className="h-7 w-7 text-gray-400 hover:text-gray-700"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
                 aria-label="Swap source and destination">
                 <ArrowRightLeft size={14} />
               </Button>
             </div>
 
             <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+              <Label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">
                 Destination Location
               </Label>
               <Select value={toLocationId} onValueChange={setToLocationId}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-card">
                   <SelectValue placeholder="Select destination..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -418,7 +420,7 @@ export function EditTransferForm({
               </Select>
             </div>
             {locationsMismatch && (
-              <p className="text-xs text-red-600 flex items-center gap-1.5">
+              <p className="text-xs text-destructive flex items-center gap-1.5">
                 <AlertTriangle size={13} /> Source and destination must be
                 different.
               </p>
@@ -427,11 +429,11 @@ export function EditTransferForm({
             <Separator />
 
             <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+              <Label className="text-xs font-bold text-muted-foreground uppercase mb-1 block">
                 Priority
               </Label>
               <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger className="bg-white">
+                <SelectTrigger className="bg-card">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -452,15 +454,17 @@ export function EditTransferForm({
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Line items</span>
-              <span className="font-medium text-gray-900">{items.length}</span>
+              <span className="text-muted-foreground">Line items</span>
+              <span className="font-medium text-foreground">
+                {items.length}
+              </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Total units</span>
-              <span className="font-medium text-gray-900">{totalUnits}</span>
+              <span className="text-muted-foreground">Total units</span>
+              <span className="font-medium text-foreground">{totalUnits}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Priority</span>
+              <span className="text-muted-foreground">Priority</span>
               <Badge
                 variant={priority === "urgent" ? "destructive" : "secondary"}>
                 {PRIORITIES.find(p => p.value === priority)?.label}
@@ -484,7 +488,7 @@ export function EditTransferForm({
               )}
             </Button>
             {!canSubmit && !isPending && (
-              <p className="text-xs text-gray-400 text-center">
+              <p className="text-xs text-muted-foreground text-center">
                 Add at least one item and choose both locations to continue.
               </p>
             )}

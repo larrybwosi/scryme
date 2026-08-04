@@ -1,5 +1,5 @@
 import React from "react";
-import { PageHeader } from "../../../../components/page-header";
+import { PageHeader } from "@/components/page-header";
 import {
   getStockTransferDetails,
   updateStockTransferStatus,
@@ -52,7 +52,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-blue-50 text-blue-700 border-blue-200">
+            className="bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
             Pending Approval
           </Badge>
         );
@@ -60,7 +60,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-indigo-50 text-indigo-700 border-indigo-200">
+            className="bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800">
             Approved
           </Badge>
         );
@@ -68,7 +68,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-amber-50 text-amber-700 border-amber-200">
+            className="bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800">
             Shipped
           </Badge>
         );
@@ -76,7 +76,7 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-orange-50 text-orange-700 border-orange-200">
+            className="bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800">
             In Transit
           </Badge>
         );
@@ -84,14 +84,26 @@ export default async function TransferDetailsPage({
         return (
           <Badge
             variant="secondary"
-            className="bg-green-50 text-green-700 border-green-200">
+            className="bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800">
             Completed
           </Badge>
         );
       case "REJECTED":
-        return <Badge variant="destructive">Rejected</Badge>;
+        return (
+          <Badge
+            variant="destructive"
+            className="bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800">
+            Rejected
+          </Badge>
+        );
       case "CANCELLED":
-        return <Badge variant="secondary">Cancelled</Badge>;
+        return (
+          <Badge
+            variant="secondary"
+            className="bg-muted text-muted-foreground border-border">
+            Cancelled
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -105,7 +117,7 @@ export default async function TransferDetailsPage({
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <div className="flex items-center gap-4">
         <Link href="/stocking/transfers">
           <Button variant="ghost" size="icon">
@@ -114,10 +126,12 @@ export default async function TransferDetailsPage({
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{transfer.transferNumber}</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              {transfer.transferNumber}
+            </h1>
             {getStatusBadge(transfer.status)}
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Requested on{" "}
             {format(new Date(transfer.requestedDate), "MMMM dd, yyyy")}
           </p>
@@ -131,7 +145,9 @@ export default async function TransferDetailsPage({
             </Button>
           </Link>
 
-          {!["COMPLETED", "CANCELLED", "REJECTED"].includes(transfer.status) && (
+          {!["COMPLETED", "CANCELLED", "REJECTED"].includes(
+            transfer.status,
+          ) && (
             <Link href={`/stocking/transfers/${transfer.id}/edit`}>
               <Button variant="outline" className="gap-2">
                 <Edit size={16} />
@@ -146,7 +162,7 @@ export default async function TransferDetailsPage({
               <input type="hidden" name="status" value="APPROVED" />
               <Button
                 type="submit"
-                className="gap-2 bg-green-600 hover:bg-green-700">
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600">
                 <CheckCircle2 size={16} />
                 Approve
               </Button>
@@ -159,7 +175,7 @@ export default async function TransferDetailsPage({
               <input type="hidden" name="status" value="SHIPPED" />
               <Button
                 type="submit"
-                className="gap-2 bg-amber-600 hover:bg-amber-700">
+                className="gap-2 bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600">
                 <Truck size={16} />
                 Mark as Shipped
               </Button>
@@ -173,7 +189,7 @@ export default async function TransferDetailsPage({
               <input type="hidden" name="status" value="COMPLETED" />
               <Button
                 type="submit"
-                className="gap-2 bg-green-600 hover:bg-green-700">
+                className="gap-2 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600">
                 <PackageCheck size={16} />
                 Receive Stock
               </Button>
@@ -188,7 +204,7 @@ export default async function TransferDetailsPage({
               <Button
                 type="submit"
                 variant="outline"
-                className="gap-2 text-red-600 hover:text-red-700">
+                className="gap-2 text-destructive hover:text-destructive border-destructive hover:bg-destructive/10">
                 <XCircle size={16} />
                 Reject
               </Button>
@@ -219,21 +235,23 @@ export default async function TransferDetailsPage({
                   {(transfer.items as any[]).map(item => (
                     <TableRow key={item.id}>
                       <TableCell>
-                        <div className="font-medium">
+                        <div className="font-medium text-foreground">
                           {item.variant.product.name}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-muted-foreground">
                           {item.variant.name}
                         </div>
                       </TableCell>
-                      <TableCell>{item.variant.sku}</TableCell>
-                      <TableCell className="text-right font-medium">
+                      <TableCell className="text-muted-foreground">
+                        {item.variant.sku}
+                      </TableCell>
+                      <TableCell className="text-right font-medium text-foreground">
                         {item.requestedQuantity.toNumber()}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right text-muted-foreground">
                         ${item.unitCost.toNumber().toFixed(2)}
                       </TableCell>
-                      <TableCell className="text-right font-medium">
+                      <TableCell className="text-right font-medium text-foreground">
                         $
                         {(
                           item.requestedQuantity.toNumber() *
@@ -242,11 +260,13 @@ export default async function TransferDetailsPage({
                       </TableCell>
                     </TableRow>
                   ))}
-                  <TableRow className="bg-gray-50/50 font-bold">
-                    <TableCell colSpan={4} className="text-right">
+                  <TableRow className="bg-muted/50 font-bold">
+                    <TableCell
+                      colSpan={4}
+                      className="text-right text-foreground">
                       Total Estimated Value
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right text-foreground">
                       $
                       {(transfer.items as any[])
                         .reduce(
@@ -271,12 +291,12 @@ export default async function TransferDetailsPage({
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-start gap-4">
-                <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                   <Calendar size={16} />
                 </div>
                 <div>
-                  <div className="font-medium">Requested</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="font-medium text-foreground">Requested</div>
+                  <div className="text-sm text-muted-foreground">
                     By {transfer.requestedBy.user.name} on{" "}
                     {format(new Date(transfer.requestedDate), "PPP p")}
                   </div>
@@ -285,12 +305,12 @@ export default async function TransferDetailsPage({
 
               {transfer.approvedBy && (
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
+                  <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
                     <CheckCircle2 size={16} />
                   </div>
                   <div>
-                    <div className="font-medium">Approved</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-medium text-foreground">Approved</div>
+                    <div className="text-sm text-muted-foreground">
                       By {transfer.approvedBy.user.name}
                     </div>
                   </div>
@@ -299,12 +319,12 @@ export default async function TransferDetailsPage({
 
               {transfer.shippedDate && (
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                  <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
                     <Truck size={16} />
                   </div>
                   <div>
-                    <div className="font-medium">Shipped</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-medium text-foreground">Shipped</div>
+                    <div className="text-sm text-muted-foreground">
                       By {transfer.shippedBy?.user.name} on{" "}
                       {format(new Date(transfer.shippedDate), "PPP p")}
                     </div>
@@ -314,12 +334,14 @@ export default async function TransferDetailsPage({
 
               {transfer.completedDate && (
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-green-100 text-green-600">
+                  <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
                     <PackageCheck size={16} />
                   </div>
                   <div>
-                    <div className="font-medium">Received & Completed</div>
-                    <div className="text-sm text-gray-500">
+                    <div className="font-medium text-foreground">
+                      Received & Completed
+                    </div>
+                    <div className="text-sm text-muted-foreground">
                       By {transfer.receivedBy?.user.name} on{" "}
                       {format(new Date(transfer.completedDate), "PPP p")}
                     </div>
@@ -333,29 +355,29 @@ export default async function TransferDetailsPage({
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm uppercase tracking-wider text-gray-500">
+              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">
                 Route Info
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-start gap-3">
-                <MapPin className="text-gray-400 mt-1" size={18} />
+                <MapPin className="text-muted-foreground mt-1" size={18} />
                 <div>
-                  <div className="text-xs text-gray-400 uppercase font-bold">
+                  <div className="text-xs text-muted-foreground uppercase font-bold">
                     From Location
                   </div>
-                  <div className="font-bold text-gray-900">
+                  <div className="font-bold text-foreground">
                     {transfer.fromLocation.name}
                   </div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <MapPin className="text-gray-400 mt-1" size={18} />
+                <MapPin className="text-muted-foreground mt-1" size={18} />
                 <div>
-                  <div className="text-xs text-gray-400 uppercase font-bold">
+                  <div className="text-xs text-muted-foreground uppercase font-bold">
                     To Location
                   </div>
-                  <div className="font-bold text-gray-900">
+                  <div className="font-bold text-foreground">
                     {transfer.toLocation.name}
                   </div>
                 </div>
@@ -365,14 +387,14 @@ export default async function TransferDetailsPage({
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm uppercase tracking-wider text-gray-500">
+              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">
                 Notes
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-start gap-3">
-                <FileText className="text-gray-400 mt-1" size={18} />
-                <p className="text-sm text-gray-600">
+                <FileText className="text-muted-foreground mt-1" size={18} />
+                <p className="text-sm text-muted-foreground">
                   {transfer.notes || "No notes provided."}
                 </p>
               </div>
