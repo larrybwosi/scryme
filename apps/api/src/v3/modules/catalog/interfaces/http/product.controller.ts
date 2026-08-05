@@ -43,7 +43,7 @@ import { ServiceManagementService } from "../../../services/application/services
 @ApiTags("V3 Catalog")
 @ApiBearerAuth()
 @Controller(":orgSlug/catalog")
-@ApiParam({ name: "orgSlug", type: "string" })
+@ApiParam({ name: "orgSlug", type: "string", description: "The unique organization slug" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class ProductController {
@@ -60,6 +60,7 @@ export class ProductController {
   @Permissions("catalog:product:read")
   @ApiOperation({
     summary: "Get all products for an organization",
+    description: "Retrieves a paginated list of all physical catalog products registered under the organization, complete with their first-level variants, cost history, pricing tables, categories, and images.",
     operationId: "Catalog_GetProducts",
   })
   @ApiResponse({
@@ -111,6 +112,7 @@ export class ProductController {
   @Permissions("services:read")
   @ApiOperation({
     summary: "Get all services for an organization",
+    description: "Retrieves a unified paginated catalog of all services belonging to the organization. Loads categories, pricing details, duration metrics, active statuses, and custom field structures seamlessly.",
     operationId: "Catalog_GetServices",
   })
   @ApiResponse({
@@ -175,17 +177,23 @@ export class ProductController {
   @Permissions("catalog:product:create")
   @ApiOperation({
     summary: "Create a new product",
+    description: "Registers a new physical product under the organization's catalog. Supports setting name, description, SKU, and base catalog price.",
     operationId: "Catalog_CreateProduct",
   })
   @ApiResponse({
     status: 201,
     type: ProductResponseDto,
-    description: "Product created",
+    description: "Product created successfully",
   })
   @ApiResponse({
     status: 400,
     type: ApiErrorResponseDto,
-    description: "Invalid input",
+    description: "Invalid input data",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Unauthorized",
   })
   async createProduct(@Req() req: any, @Body() body: CreateProductDto) {
     const product = await this.createProductUseCase.execute({
@@ -213,9 +221,15 @@ export class ProductController {
   @Permissions("catalog:product:update")
   @ApiOperation({
     summary: "Update supplier variant details and trigger price recalculation",
+    description: "Updates specific partner-supplier specifications for a product variant (such as cost price, preferred flag, or lead times) and automatically recalibrates retail price structures accordingly. Prevents unauthorized IDOR by validating variant-supplier tenancy.",
     operationId: "Catalog_UpdateSupplierVariant",
   })
-  @ApiResponse({ status: 200, description: "Supplier variant updated" })
+  @ApiParam({ name: "supplierId", type: "string", description: "The ID of the supplier partner" })
+  @ApiParam({ name: "variantId", type: "string", description: "The ID of the product variant" })
+  @ApiResponse({ status: 200, description: "Supplier variant details updated successfully and margins recomputed" })
+  @ApiResponse({ status: 400, type: ApiErrorResponseDto, description: "Invalid update data" })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
+  @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: "Supplier variant mapping not found" })
   async updateSupplierVariant(
     @Req() req: any,
     @Param("supplierId") supplierId: string,
@@ -287,8 +301,11 @@ export class ProductController {
   @Permissions("catalog:product:read")
   @ApiOperation({
     summary: "Get all pending price change requests",
+    description: "Returns a paginated list of catalog price adjustments requiring review. Utilizes highly optimized targeted selects to load variants, products, base pricing tables, and audit details with minimal DB network payload.",
     operationId: "Catalog_GetPriceChangeRequests",
   })
+  @ApiResponse({ status: 200, description: "Successfully retrieved price change requests" })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
   async getPriceChangeRequests(
     @Req() req: any,
     @Query() pagination: PaginationQueryDto,
@@ -376,8 +393,14 @@ export class ProductController {
   @Permissions("catalog:product:update")
   @ApiOperation({
     summary: "Approve or reject a price change request",
+    description: "Reviews and applies a price change request. If approved, the target price list item is updated instantly, dispatching updates to connected POS and digital channels. If rejected, stores rejection rationale for audit logs.",
     operationId: "Catalog_ReviewPriceChangeRequest",
   })
+  @ApiParam({ name: "id", type: "string", description: "The ID of the price change request" })
+  @ApiResponse({ status: 200, description: "Price change request successfully reviewed and applied/rejected" })
+  @ApiResponse({ status: 400, type: ApiErrorResponseDto, description: "Invalid review parameters or illegal status transition" })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
+  @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: "Price change request not found" })
   async reviewPriceChangeRequest(
     @Req() req: any,
     @Param("id") id: string,

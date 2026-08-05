@@ -1054,7 +1054,7 @@ export default function App() {
     const tags = Object.keys(tagGroups);
     if (tags.length > 0) {
       setSelectedTag(tags[0]);
-      setExpandedGroups(tags.reduce((acc, t) => ({ ...acc, [t]: true }), {}));
+      setExpandedGroups(tags.reduce((acc, t) => ({ ...acc, [t]: false }), {}));
       setActiveEndpointId("cms-customization-guide");
     }
   }, [tagGroups]);
