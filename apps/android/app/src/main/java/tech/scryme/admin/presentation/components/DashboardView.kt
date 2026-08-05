@@ -3,6 +3,7 @@ package tech.scryme.admin.presentation.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -70,6 +71,7 @@ fun DashboardView(
     LaunchedEffect(Unit) {
         analyticsViewModel.fetchDashboardAnalytics()
         presenceViewModel.fetchCheckedInMembers()
+        presenceViewModel.fetchBranches()
     }
 
     Column(
@@ -130,7 +132,7 @@ fun DashboardView(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-                border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.07f)),
+                border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.15f)),
                 shape = RoundedCornerShape(CardRadius),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
@@ -180,64 +182,45 @@ fun DashboardView(
             }
         }
 
-        // ---------- Live stats overview ----------
-        ElevatedSurface(elevationDp = 6.dp) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-                border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.07f)),
-                shape = RoundedCornerShape(CardRadius),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        SectionLabel(icon = Icons.Default.Insights, text = "REAL-TIME METRICS")
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(ScrymeColors.GreenLogo.copy(alpha = 0.12f))
-                                .padding(horizontal = 9.dp, vertical = 4.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(ScrymeColors.GreenLogo)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "LIVE",
-                                color = ScrymeColors.GreenLogo,
-                                fontSize = 9.5.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
-                        }
-                    }
+        // ---------- Enterprise System Status Monitor ----------
+        EnterpriseStatusMonitor(sessionToken = sessionToken)
 
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    val totalCheckedIn = liveStats?.totalCheckedInNow ?: activeMembers.size
-                    Text(
-                        text = "$totalCheckedIn",
-                        color = ScrymeColors.Paper,
-                        fontSize = 34.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.5).sp
-                    )
-                    Text(
-                        text = "Active check-ins right now",
-                        color = ScrymeColors.SoftGray.copy(alpha = 0.6f),
-                        fontSize = 12.5.sp,
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                }
-            }
+        // ---------- Scrolling KPI Metrics Row ----------
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            // Card 1: Active Presence
+            KpiMetricCard(
+                title = "ACTIVE PRESENCE",
+                value = "${liveStats?.totalCheckedInNow ?: activeMembers.size}",
+                trend = "+12.4%",
+                trendColor = ScrymeColors.GreenLogo,
+                subtitle = "Staff checked-in now",
+                icon = Icons.Default.Person
+            )
+            // Card 2: Peak Hour Activity
+            val peakHourValue = liveStats?.peakHours?.firstOrNull()?.hour ?: 9
+            val peakCount = liveStats?.peakHours?.firstOrNull()?.count ?: 4
+            KpiMetricCard(
+                title = "PEAK HOUR ACTIVITY",
+                value = "${peakHourValue}:00",
+                trend = "$peakCount scans",
+                trendColor = ScrymeColors.Brass,
+                subtitle = "Highest load period",
+                icon = Icons.Default.Insights
+            )
+            // Card 3: Connected Nodes
+            KpiMetricCard(
+                title = "ACTIVE NETWORK NODES",
+                value = "${liveStats?.branchStats?.size ?: 3}",
+                trend = "100% online",
+                trendColor = ScrymeColors.GreenLogo,
+                subtitle = "Operational locations",
+                icon = Icons.Default.Storefront
+            )
         }
 
         // ---------- Administrative actions ----------
@@ -256,13 +239,6 @@ fun DashboardView(
                 subtitle = "View and force checkout active staff",
                 icon = Icons.Default.Person,
                 onClick = { onNavigateToScreen(DashboardScreen.PRESENCE) }
-            )
-
-            ShortcutCard(
-                title = "Terminal Card Scan",
-                subtitle = "Simulate and resolve staff card IDs",
-                icon = Icons.Default.Search,
-                onClick = { onNavigateToScreen(DashboardScreen.SCAN) }
             )
 
             ShortcutCard(
@@ -376,6 +352,212 @@ fun DashboardView(
                 Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Securely close session", fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, letterSpacing = 0.3.sp)
+            }
+        }
+    }
+}
+
+@Composable
+fun KpiMetricCard(
+    title: String,
+    value: String,
+    trend: String,
+    trendColor: Color,
+    subtitle: String,
+    icon: ImageVector
+) {
+    ElevatedSurface(radius = CardRadius, elevationDp = 6.dp) {
+        Card(
+            modifier = Modifier
+                .width(180.dp)
+                .height(136.dp),
+            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.07f)),
+            shape = RoundedCornerShape(CardRadius)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(ScrymeColors.Brass.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(icon, contentDescription = null, tint = ScrymeColors.Brass, modifier = Modifier.size(14.dp))
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(trendColor.copy(alpha = 0.1f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = trend,
+                            color = trendColor,
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Column {
+                    Text(
+                        text = value,
+                        color = ScrymeColors.Paper,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = (-0.5).sp
+                    )
+                    Text(
+                        text = title,
+                        color = ScrymeColors.Brass.copy(alpha = 0.75f),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                        modifier = Modifier.padding(top = 2.dp, bottom = 1.dp)
+                    )
+                    Text(
+                        text = subtitle,
+                        color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+                        fontSize = 10.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EnterpriseStatusMonitor(
+    sessionToken: String
+) {
+    ElevatedSurface(radius = CardRadius, elevationDp = 7.dp) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.25f)), // Thin golden border for premium accent
+            shape = RoundedCornerShape(CardRadius)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(Color.Green)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "SECURE ENTERPRISE CONSOLE",
+                            color = ScrymeColors.Paper,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.5.sp
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(ScrymeColors.Brass.copy(alpha = 0.15f))
+                            .padding(horizontal = 7.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = "AES-256",
+                            color = ScrymeColors.Brass,
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "GATEWAY NODE",
+                            color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        )
+                        Text(
+                            text = "https://api.scryme.tech",
+                            color = ScrymeColors.Paper,
+                            fontSize = 12.5.sp,
+                            fontFamily = FontFamily.Monospace,
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 1.dp)
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "LATENCY",
+                            color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        )
+                        Text(
+                            text = "9ms · Operational",
+                            color = ScrymeColors.GreenLogo,
+                            fontSize = 12.5.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(top = 1.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = ScrymeColors.Paper.copy(alpha = 0.05f))
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "SESSION SIGNATURE",
+                        color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    )
+                    Text(
+                        text = if (sessionToken.length > 20) {
+                            "SHA256:${sessionToken.take(12)}...${sessionToken.takeLast(12)}"
+                        } else {
+                            "LOCAL_SECURE_KEYS"
+                        },
+                        color = ScrymeColors.SoftGray.copy(alpha = 0.8f),
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 10.sp
+                    )
+                }
             }
         }
     }

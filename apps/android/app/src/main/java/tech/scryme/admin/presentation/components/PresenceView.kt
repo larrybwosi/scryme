@@ -42,6 +42,10 @@ fun PresenceView(
     var searchQuery by remember { mutableStateOf("") }
     var showBranchDropdown by remember { mutableStateOf(false) }
 
+    LaunchedEffect(Unit) {
+        presenceViewModel.fetchBranches()
+    }
+
     LaunchedEffect(searchQuery, selectedLocationId) {
         presenceViewModel.fetchCheckedInMembers(search = searchQuery.ifBlank { null })
     }

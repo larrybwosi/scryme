@@ -142,14 +142,20 @@ class PresenceViewModel(
     private val _selectedLocationId = MutableStateFlow<String?>(null)
     val selectedLocationId: StateFlow<String?> = _selectedLocationId.asStateFlow()
 
-    private val _branches = MutableStateFlow<List<LocationDto>>(
-        listOf(
-            LocationDto("loc_1", "North Branch", "org_1", true),
-            LocationDto("loc_2", "Downtown Bakery", "org_1", true),
-            LocationDto("loc_3", "Express Counter", "org_1", true)
-        )
-    )
+    private val _branches = MutableStateFlow<List<LocationDto>>(emptyList())
     val branches: StateFlow<List<LocationDto>> = _branches.asStateFlow()
+
+    fun fetchBranches() {
+        viewModelScope.launch {
+            repository.getLocations()
+                .onSuccess { list ->
+                    _branches.value = list
+                }
+                .onFailure {
+                    _branches.value = emptyList()
+                }
+        }
+    }
 
     // Real-time presence updates, automatically filtered by branch if selected
     val activeMembers: StateFlow<List<MemberResponseDto>> = repository.monitorActivePresence(pollIntervalMs = 5000L)
@@ -231,41 +237,30 @@ class PresenceViewModel(
             repository.getAttendanceLogs(page = 1, limit = 50, locationId = branchId)
                 .onSuccess { response ->
                     val logs = response.items.filter { it.checkInLocationId == branchId || it.checkOutLocationId == branchId }
-                    if (logs.isNotEmpty()) {
-                        _branchAttendanceLogs.value = UiState.Success(logs)
-                    } else {
-                        // Fallback logs generator
-                        _branchAttendanceLogs.value = UiState.Success(generateFallbackLogs(branchId))
-                    }
+                    _branchAttendanceLogs.value = UiState.Success(logs)
                 }
-                .onFailure {
-                    // Fallback logs generator on failure
-                    _branchAttendanceLogs.value = UiState.Success(generateFallbackLogs(branchId))
+                .onFailure { error ->
+                    _branchAttendanceLogs.value = UiState.Error(error.message ?: "Failed to fetch logs")
                 }
 
             // 2. Fetch Petty Cash Transactions
             repository.getPettyCashTransactions(limit = 20)
                 .onSuccess { response ->
-                    // Filter or use as is
-                    val filtered = response.filter { it.fundId.contains(branchId, ignoreCase = true) || branchId == "loc_1" }
-                    if (filtered.isNotEmpty()) {
-                        _pettyCashTransactions.value = UiState.Success(filtered)
-                    } else {
-                        _pettyCashTransactions.value = UiState.Success(generateFallbackPettyCash(branchId))
-                    }
+                    val filtered = response.filter { it.fundId.contains(branchId, ignoreCase = true) }
+                    _pettyCashTransactions.value = UiState.Success(filtered)
                 }
-                .onFailure {
-                    _pettyCashTransactions.value = UiState.Success(generateFallbackPettyCash(branchId))
+                .onFailure { error ->
+                    _pettyCashTransactions.value = UiState.Error(error.message ?: "Failed to fetch petty cash")
                 }
 
             // 3. Fetch POS transactions to compute sales & member breakdown
             repository.getTransactions(locationId = branchId)
                 .onSuccess { txns ->
                     val total = txns.sumOf { it.amount ?: 0.0 }
-                    _branchSales.value = if (total > 0) total else generateFallbackSalesTotal(branchId)
+                    _branchSales.value = total
 
                     val breakdown = txns.groupBy { it.memberId ?: "unknown" }.map { (memberId, memberTxns) ->
-                        val memberName = "Staff member" // Usually lookup in database
+                        val memberName = "Staff member ($memberId)"
                         MemberSalesDto(
                             memberId = memberId,
                             memberName = memberName,
@@ -273,113 +268,13 @@ class PresenceViewModel(
                             totalAmount = memberTxns.sumOf { it.amount ?: 0.0 }
                         )
                     }
-                    if (breakdown.isNotEmpty()) {
-                        _memberSalesList.value = breakdown
-                    } else {
-                        _memberSalesList.value = generateFallbackMemberSales(branchId)
-                    }
+                    _memberSalesList.value = breakdown
                 }
                 .onFailure {
-                    _branchSales.value = generateFallbackSalesTotal(branchId)
-                    _memberSalesList.value = generateFallbackMemberSales(branchId)
+                    _branchSales.value = 0.0
+                    _memberSalesList.value = emptyList()
                 }
         }
-    }
-
-    private fun generateFallbackLogs(branchId: String): List<AttendanceLogDto> {
-        val branchName = branches.value.firstOrNull { it.id == branchId }?.name ?: "Branch"
-        return listOf(
-            AttendanceLogDto(
-                id = "log_a",
-                memberId = "mem_1",
-                checkInTime = "2026-03-30T08:15:00Z",
-                checkOutTime = "2026-03-30T17:05:00Z",
-                checkInLocationId = branchId,
-                checkInLocation = LocationSummary(branchName),
-                checkOutLocation = LocationSummary(branchName),
-                createdAt = "2026-03-30T08:15:00Z",
-                updatedAt = "2026-03-30T17:05:00Z",
-                member = MemberResponseSummary("mem_1", UserSummaryNameOnly("Sarah Connor")),
-                notes = "Morning shift started smoothly"
-            ),
-            AttendanceLogDto(
-                id = "log_b",
-                memberId = "mem_2",
-                checkInTime = "2026-03-30T09:00:00Z",
-                checkOutTime = null,
-                checkInLocationId = branchId,
-                checkInLocation = LocationSummary(branchName),
-                createdAt = "2026-03-30T09:00:00Z",
-                updatedAt = "2026-03-30T09:00:00Z",
-                member = MemberResponseSummary("mem_2", UserSummaryNameOnly("James Carter")),
-                notes = "Arrived for mid-day cover"
-            ),
-            AttendanceLogDto(
-                id = "log_c",
-                memberId = "mem_3",
-                checkInTime = "2026-03-30T12:30:00Z",
-                checkOutTime = "2026-03-30T15:45:00Z",
-                checkInLocationId = branchId,
-                checkInLocation = LocationSummary(branchName),
-                checkOutLocation = LocationSummary(branchName),
-                createdAt = "2026-03-30T12:30:00Z",
-                updatedAt = "2026-03-30T15:45:00Z",
-                member = MemberResponseSummary("mem_3", UserSummaryNameOnly("John Doe")),
-                notes = "Short break coverage check-in"
-            )
-        )
-    }
-
-    private fun generateFallbackPettyCash(branchId: String): List<PettyCashTransactionDto> {
-        return listOf(
-            PettyCashTransactionDto(
-                id = "pc_1",
-                fundId = "fund_$branchId",
-                type = "EXPENSE",
-                amount = 45.50,
-                description = "Office cleaning detergents and spray",
-                memberId = "mem_1",
-                createdAt = "2026-03-30T10:14:00Z",
-                member = MemberResponseSummary("mem_1", UserSummaryNameOnly("Sarah Connor"))
-            ),
-            PettyCashTransactionDto(
-                id = "pc_2",
-                fundId = "fund_$branchId",
-                type = "EXPENSE",
-                amount = 18.00,
-                description = "Envelopes and courier stamp fees",
-                memberId = "mem_2",
-                createdAt = "2026-03-30T14:45:00Z",
-                member = MemberResponseSummary("mem_2", UserSummaryNameOnly("James Carter"))
-            ),
-            PettyCashTransactionDto(
-                id = "pc_3",
-                fundId = "fund_$branchId",
-                type = "TOP_UP",
-                amount = 200.00,
-                description = "Weekly fund replenishment",
-                memberId = "mem_admin",
-                createdAt = "2026-03-29T09:00:00Z",
-                member = MemberResponseSummary("mem_admin", UserSummaryNameOnly("Admin"))
-            )
-        )
-    }
-
-    private fun generateFallbackSalesTotal(branchId: String): Double {
-        return when (branchId) {
-            "loc_1" -> 1845.50
-            "loc_2" -> 920.00
-            "loc_3" -> 350.25
-            else -> 650.00
-        }
-    }
-
-    private fun generateFallbackMemberSales(branchId: String): List<MemberSalesDto> {
-        return listOf(
-            MemberSalesDto("mem_1", "Sarah Connor", 12, generateFallbackSalesTotal(branchId) * 0.55),
-            MemberSalesDto("mem_2", "James Carter", 8, generateFallbackSalesTotal(branchId) * 0.35),
-            MemberSalesDto("mem_3", "John Doe", 3, generateFallbackSalesTotal(branchId) * 0.10)
-        )
     }
 
     fun addBranch(name: String, code: String? = null, type: String = "RETAIL_SHOP") {
@@ -392,39 +287,6 @@ class PresenceViewModel(
         _branches.value = _branches.value.map {
             if (it.id == id) it.copy(isActive = !it.isActive) else it
         }
-    }
-}
-
-// --- ScanViewModel ---
-
-class ScanViewModel(
-    private val repository: PresenceRepository
-) : ViewModel() {
-
-    private val _scanState = MutableStateFlow<UiState<MemberResponseDto>>(UiState.Idle)
-    val scanState: StateFlow<UiState<MemberResponseDto>> = _scanState.asStateFlow()
-
-    fun processCardScan(cardId: String) {
-        viewModelScope.launch {
-            _scanState.value = UiState.Loading
-            // Look up the member with matching Card ID
-            repository.getMembers(search = cardId)
-                .onSuccess { members ->
-                    val member = members.firstOrNull { it.cardId == cardId }
-                    if (member != null) {
-                        _scanState.value = UiState.Success(member)
-                    } else {
-                        _scanState.value = UiState.Error("No member registered with Card ID: $cardId")
-                    }
-                }
-                .onFailure { error ->
-                    _scanState.value = UiState.Error(error.message ?: "Failed to resolve card scan")
-                }
-        }
-    }
-
-    fun resetScan() {
-        _scanState.value = UiState.Idle
     }
 }
 

@@ -35,7 +35,6 @@ import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
 import tech.scryme.admin.presentation.viewmodel.ApprovalsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnalyticsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnnouncementViewModel
-import tech.scryme.admin.presentation.viewmodel.ScanViewModel
 import tech.scryme.admin.presentation.viewmodel.ExpenseViewModel
 import tech.scryme.admin.presentation.theme.ScrymeTheme
 import tech.scryme.admin.presentation.components.LoginScreen
@@ -48,7 +47,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var approvalsViewModel: ApprovalsViewModel
     private lateinit var analyticsViewModel: AnalyticsViewModel
     private lateinit var announcementViewModel: AnnouncementViewModel
-    private lateinit var scanViewModel: ScanViewModel
     private lateinit var expenseViewModel: ExpenseViewModel
     private lateinit var sessionManager: SessionManagerImpl
 
@@ -90,8 +88,6 @@ class MainActivity : ComponentActivity() {
         val announcementRepository = AnnouncementRepositoryImpl(announcementApiService, sessionManager)
         announcementViewModel = AnnouncementViewModel(announcementRepository)
 
-        scanViewModel = ScanViewModel(presenceRepository)
-
         val expenseApiService = retrofit.create(ExpenseApiService::class.java)
         val expenseRepository = ExpenseRepositoryImpl(expenseApiService)
         expenseViewModel = ExpenseViewModel(expenseRepository)
@@ -109,7 +105,6 @@ class MainActivity : ComponentActivity() {
                         approvalsViewModel = approvalsViewModel,
                         analyticsViewModel = analyticsViewModel,
                         announcementViewModel = announcementViewModel,
-                        scanViewModel = scanViewModel,
                         expenseViewModel = expenseViewModel,
                         sessionManager = sessionManager
                     )
@@ -126,7 +121,6 @@ fun AppNavigation(
     approvalsViewModel: ApprovalsViewModel,
     analyticsViewModel: AnalyticsViewModel,
     announcementViewModel: AnnouncementViewModel,
-    scanViewModel: ScanViewModel,
     expenseViewModel: ExpenseViewModel,
     sessionManager: SessionManagerImpl
 ) {
@@ -160,7 +154,6 @@ fun AppNavigation(
             approvalsViewModel = approvalsViewModel,
             analyticsViewModel = analyticsViewModel,
             announcementViewModel = announcementViewModel,
-            scanViewModel = scanViewModel,
             expenseViewModel = expenseViewModel,
             sessionManager = sessionManager,
             onSignOut = { authViewModel.logout() }

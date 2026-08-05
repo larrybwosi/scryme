@@ -25,6 +25,11 @@ interface AuthApiService {
 }
 
 interface PresenceApiService {
+    @GET("/api/android/{orgSlug}/locations")
+    suspend fun getLocations(
+        @Path("orgSlug") orgSlug: String
+    ): Response<ApiEnvelope<List<LocationDto>>>
+
     @GET("/api/android/{orgSlug}/members")
     suspend fun getMembers(
         @Path("orgSlug") orgSlug: String,
