@@ -1355,7 +1355,7 @@ export default function App() {
 
       let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json"`;
 
-      let node = `// Node.js Fetch Code\nconst url = "${targetUrl}";\nconst options = {\n  method: "${targetMethod}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  }\n};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data); // Expect wrapped global response structure!\n} catch (error) {\n  console.error("Error:", error);\n}`;
+      let node = `// Node.js SDK Code\nimport { getScrymeV3API } from '@scryme/sdk';\nimport axios from 'axios';\n\n// Initialize API client. SCRYME_ORG_SLUG can be configured via environment variables.\nconst scryme = getScrymeV3API(\n  axios.create({\n    baseURL: "${normalizedApiUrl}",\n    headers: {\n      Authorization: "Bearer <YOUR_ACCESS_TOKEN>"\n    }\n  })\n);\n\ntry {\n  // Calling inventoryGetInventory. orgSlug is automatically loaded from environment variables!\n  const response = await scryme.inventoryGetInventory({\n    locationId: "loc_main"\n  });\n  console.log(response.data); // Standardized enveloped response!\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\n\nresponse = requests.get(url, headers=headers)\nprint(response.json()) # Expect wrapped global response structure!`;
 
@@ -1399,7 +1399,11 @@ export default function App() {
 
       let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json" \\\n  -d '${bodyStr.replace(/'/g, "'\\''")}'`;
 
-      let node = `// Node.js Fetch Code\nconst url = "${targetUrl}";\nconst options = {\n  method: "${targetMethod}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  },\n  body: JSON.stringify(${JSON.stringify(targetPayload, null, 2)})\n};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+      const targetMethodCall = selectedCmsTarget === "service"
+        ? `servicesUpdateService("srv_sourdough_101", ${JSON.stringify(targetPayload, null, 2)})`
+        : `catalogUpdateProduct("prod_proofing_basket", ${JSON.stringify(targetPayload, null, 2)})`;
+
+      let node = `// Node.js SDK Code\nimport { getScrymeV3API } from '@scryme/sdk';\nimport axios from 'axios';\n\nconst scryme = getScrymeV3API(\n  axios.create({\n    baseURL: "${normalizedApiUrl}",\n    headers: {\n      Authorization: "Bearer <YOUR_ACCESS_TOKEN>"\n    }\n  })\n);\n\ntry {\n  // The SDK automatically loads orgSlug from the environment!\n  const response = await scryme.${targetMethodCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\npayload = ${JSON.stringify(targetPayload, null, 4).replace(/true/g, "True").replace(/false/g, "False").replace(/null/g, "None")}\n\nresponse = requests.patch(url, json=payload, headers=headers)\nprint(response.json())`;
 
@@ -1422,15 +1426,32 @@ export default function App() {
       curl += ` \\\n  -d '${bodyStr.replace(/'/g, "'\\''")}'`;
     }
 
-    let node = `// Node.js Fetch Code\n`;
-    node += `const url = "${fullUrl}";\n`;
-    node += `const options = {\n  method: "${method}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  }`;
-    if (bodyStr) {
-      node += `,\n  body: JSON.stringify(${JSON.stringify(mockRequestPayload, null, 2)})\n`;
-    } else {
-      node += `\n`;
+    const sdkArgs: string[] = [];
+    activeEndpoint.parameters?.forEach((param) => {
+      if (param.in === "path" && param.name !== "orgSlug") {
+        const val = playgroundParams[param.name] || param.schema?.default || "string_value";
+        sdkArgs.push(`"${val}"`);
+      }
+    });
+
+    if (mockRequestPayload && Object.keys(mockRequestPayload).length > 0) {
+      sdkArgs.push(JSON.stringify(mockRequestPayload, null, 2));
     }
-    node += `};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+
+    const queryParams: Record<string, any> = {};
+    activeEndpoint.parameters?.forEach((param) => {
+      if (param.in === "query" && param.name !== "orgSlug") {
+        const val = playgroundParams[param.name];
+        if (val !== undefined && val !== "") {
+          queryParams[param.name] = val;
+        }
+      }
+    });
+    if (Object.keys(queryParams).length > 0) {
+      sdkArgs.push(JSON.stringify(queryParams, null, 2));
+    }
+
+    let node = `// Node.js SDK Code\nimport { getScrymeV3API } from '@scryme/sdk';\nimport axios from 'axios';\n\n// Initialize API client\nconst scryme = getScrymeV3API(\n  axios.create({\n    baseURL: "${normalizedApiUrl}",\n    headers: {\n      Authorization: "Bearer <YOUR_ACCESS_TOKEN>"\n    }\n  })\n);\n\ntry {\n  // The SDK automatically resolves the orgSlug from the environment variables!\n  const response = await scryme.${activeEndpoint.operationId}(${sdkArgs.join(", ")});\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
     let python = `import requests\n\n`;
     python += `url = "${fullUrl}"\n`;
