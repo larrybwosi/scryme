@@ -55,6 +55,639 @@ const methodStyles: Record<string, string> = {
 const methodBadge = (method: string) =>
   methodStyles[method] || "bg-slate-500/10 text-slate-400 border-slate-500/25";
 
+function getFallbackDataForPath(path: string, method: string, operationId: string, summary: string): any {
+  const cleanPath = path.toLowerCase();
+
+  // Webhooks
+  if (cleanPath.includes("/webhooks")) {
+    if (method === "GET") {
+      return [
+        {
+          id: "wh_1",
+          name: "ERP Inventory Sync",
+          url: "https://api.merchant.com/v3/webhooks/inventory",
+          events: ["inventory.updated", "inventory.low_stock"],
+          isActive: true,
+          createdAt: new Date().toISOString()
+        }
+      ];
+    }
+    if (method === "POST") {
+      return {
+        id: "wh_" + Math.random().toString(36).substr(2, 5),
+        name: summary || "New Webhook Subscription",
+        url: "https://api.merchant.com/v3/webhooks/callback",
+        events: ["transaction.created", "customer.registered"],
+        isActive: true,
+        createdAt: new Date().toISOString()
+      };
+    }
+    return { success: true, message: "Webhook action completed successfully" };
+  }
+
+  // Inventory Integrity & Trace
+  if (cleanPath.includes("/inventory/integrity/verify")) {
+    return {
+      verified: true,
+      integrityScore: 100,
+      checkedAt: new Date().toISOString(),
+      issuesFound: 0,
+      corruptedRecords: []
+    };
+  }
+  if (cleanPath.includes("/inventory/integrity/fix/")) {
+    return {
+      fixed: true,
+      variantId: path.split("/").pop() || "var_123",
+      reconciledQuantity: 250,
+      resolvedAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/inventory/trace/")) {
+    return {
+      identifier: path.split("/").pop() || "BATCH-999",
+      batchId: "bat_trace_888",
+      originSupplierId: "sup_acme_001",
+      traceTimeline: [
+        { action: "RECEIVE", date: "2026-02-15T08:00:00Z", location: "Warehouse North", member: "mem_john_01", quantity: 1000 },
+        { action: "QUALITY_CHECK", date: "2026-02-15T11:30:00Z", status: "PASSED", inspector: "mem_inspector_02" },
+        { action: "DISPATCH", date: "2026-02-20T14:15:00Z", targetLocation: "Store Branch B", quantity: 300 }
+      ]
+    };
+  }
+  if (cleanPath.includes("/inventory/batches/") && cleanPath.includes("/split")) {
+    return {
+      parentBatchId: path.split("/").slice(-2, -1)[0] || "bat_parent",
+      childBatches: [
+        { id: "bat_child_001", batchNumber: "B-SPLIT-01", quantity: 150, unit: "kg" },
+        { id: "bat_child_002", batchNumber: "B-SPLIT-02", quantity: 150, unit: "kg" }
+      ]
+    };
+  }
+  if (cleanPath.includes("/inventory/batches/merge")) {
+    return {
+      mergedBatchId: "bat_merged_abc",
+      mergedBatchNumber: "B-MERGE-2026",
+      sourceBatchIds: ["bat_source_1", "bat_source_2"],
+      totalQuantity: 500,
+      unit: "pcs"
+    };
+  }
+  if (cleanPath.includes("/inventory/assemblies") && cleanPath.includes("/complete")) {
+    return {
+      assemblyId: path.split("/").slice(-2, -1)[0] || "asm_123",
+      status: "COMPLETED",
+      completedAt: new Date().toISOString(),
+      producedVariantId: "var_final_product",
+      quantityProduced: 50,
+      materialsConsumed: [
+        { variantId: "var_raw_material_1", quantity: 100 },
+        { variantId: "var_raw_material_2", quantity: 50 }
+      ]
+    };
+  }
+  if (cleanPath.includes("/inventory/assemblies")) {
+    return {
+      assemblyId: "asm_plan_999",
+      name: "Standard Packaging Bundle",
+      status: "PENDING_PRODUCTION",
+      scheduledDate: "2026-03-10T10:00:00Z",
+      components: [
+        { variantId: "var_box_large", quantity: 1 },
+        { variantId: "var_tape_premium", quantity: 0.1 }
+      ]
+    };
+  }
+  if (cleanPath.includes("/inventory/adjustments/request")) {
+    return {
+      adjustmentRequestId: "adj_req_777",
+      status: "PENDING_APPROVAL",
+      requestedBy: "mem_cashier_05",
+      variantId: "var_bagel_sesame",
+      requestedAdjustment: -12,
+      reason: "Damaged during morning delivery setup"
+    };
+  }
+  if (cleanPath.includes("/inventory/adjustments") && cleanPath.includes("/approve")) {
+    return {
+      adjustmentId: path.split("/").slice(-2, -1)[0] || "adj_123",
+      status: "APPROVED",
+      approvedBy: "mem_manager_01",
+      approvedAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/inventory/adjustments") && cleanPath.includes("/reject")) {
+    return {
+      adjustmentId: path.split("/").slice(-2, -1)[0] || "adj_123",
+      status: "REJECTED",
+      rejectedBy: "mem_manager_01",
+      rejectionReason: "Insufficient physical evidence or photo provided",
+      rejectedAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/inventory/adjustments")) {
+    return [
+      {
+        id: "adj_01",
+        variantId: "var_flour_all_purpose",
+        quantityChanged: -25,
+        reason: "Sack spillage / water damage",
+        status: "APPROVED",
+        createdAt: "2026-03-01T14:20:00Z"
+      }
+    ];
+  }
+  if (cleanPath.includes("/inventory/analytics/supplier-lead-time")) {
+    return {
+      supplierId: "sup_flour_co",
+      averageLeadTimeDays: 3.2,
+      totalOrdersProcessed: 48,
+      reliabilityScore: 0.98,
+      onTimeDeliveryRate: 0.96
+    };
+  }
+  if (cleanPath.includes("/inventory/analytics/waste")) {
+    return {
+      totalWasteQuantity: 145.5,
+      totalWasteValueAmount: 580.0,
+      shrinkageRatePercentage: 1.4,
+      byReasonCode: {
+        "DAMAGED": 85.0,
+        "EXPIRED": 45.5,
+        "THEFT": 15.0
+      },
+      computedAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/inventory/batches/") && cleanPath.includes("/unpack")) {
+    return {
+      unpackedBatchId: "bat_unpacked_999",
+      baseUnitQuantity: 1000,
+      baseUnitId: "unit_grams",
+      unpackedBy: "mem_baker_01",
+      unpackedAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/inventory/batches/scan-unpack")) {
+    return {
+      unpackedBatchId: "bat_scanned_888",
+      scannedQrCode: "QR-BATCH-WHEAT-50KG",
+      status: "SUCCESS_UNPACKED",
+      baseUnitQuantity: 50,
+      baseUnitId: "unit_kg"
+    };
+  }
+  if (cleanPath.includes("/inventory/b2b/availability") || cleanPath.includes("/inventory/b2b/quick-inquiry")) {
+    return {
+      available: true,
+      requestedVariants: [
+        { variantId: "var_croissant_butter", requestedQuantity: 100, availableQuantity: 120, hasSufficientStock: true }
+      ],
+      defaultLocationId: "loc_central_bakery"
+    };
+  }
+
+  // CRM
+  if (cleanPath.includes("/crm/records") && cleanPath.includes("/notes")) {
+    return [
+      {
+        id: "crm_note_1",
+        content: "Followed up with corporate client regarding custom baking event. Highly interested in organic options.",
+        createdById: "mem_sales_01",
+        createdAt: "2026-03-01T12:00:00Z"
+      }
+    ];
+  }
+  if (cleanPath.includes("/crm/records") && cleanPath.includes("/timeline")) {
+    return {
+      recordId: path.split("/").slice(-2, -1)[0] || "rec_123",
+      timeline: [
+        { type: "NOTE", id: "note_1", content: "Created account profile", date: "2026-02-10T10:00:00Z", author: "mem_system" },
+        { type: "ACTIVITY", id: "act_1", activityType: "CALL", description: "Intro call", date: "2026-02-12T15:30:00Z", outcome: "Interested" }
+      ]
+    };
+  }
+  if (cleanPath.includes("/crm/records") && cleanPath.includes("/associations")) {
+    return [
+      {
+        associationId: "crm_assoc_1",
+        relationshipId: "rel_company_to_contacts",
+        sourceRecordId: "rec_company_acme",
+        targetRecordId: "rec_contact_john_doe",
+        associatedAt: "2026-02-10T10:15:00Z"
+      }
+    ];
+  }
+  if (cleanPath.includes("/crm/records")) {
+    return {
+      id: "crm_rec_" + Math.random().toString(36).substr(2, 5),
+      objectId: "crm_obj_deals",
+      data: {
+        deal_value: 5000,
+        deal_stage: "PROPOSAL",
+        deal_title: "Acme Corp Bakery Catering"
+      },
+      ownerId: "mem_sales_mgr",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/crm/notes")) {
+    return {
+      id: "crm_note_new",
+      recordId: "rec_123",
+      content: "Client updated preferred delivery schedule.",
+      timelineDate: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/crm/activities")) {
+    return {
+      id: "crm_activity_new",
+      recordId: "rec_123",
+      type: "EMAIL",
+      description: "Sent pricing sheet proposal for review.",
+      metadata: { recipient: "purchasing@acme.com", status: "SENT" },
+      createdAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/crm/objects") && cleanPath.includes("/fields")) {
+    return [
+      { name: "deal_value", label: "Deal Value ($)", type: "NUMBER", isRequired: true }
+    ];
+  }
+  if (cleanPath.includes("/crm/objects")) {
+    return [
+      { id: "obj_deals", name: "deal", label: "Deal", labelPlural: "Deals", description: "Sales opportunities" }
+    ];
+  }
+  if (cleanPath.includes("/crm/relationships")) {
+    return [
+      { id: "rel_1", name: "company_employees", type: "ONE_TO_MANY", sourceObjectId: "obj_companies", targetObjectId: "obj_contacts" }
+    ];
+  }
+  if (cleanPath.includes("/crm/associations")) {
+    return {
+      id: "assoc_new",
+      relationshipId: "rel_1",
+      sourceRecordId: "rec_company_1",
+      targetRecordId: "rec_contact_1",
+      associatedAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/crm-integrations")) {
+    if (cleanPath.includes("/auth")) {
+      return {
+        authUrl: "https://login.hubspot.com/oauth/authorize?client_id=scryme_hubspot_id&redirect_uri=https://api.scryme.tech/v3/hubspot/callback"
+      };
+    }
+    if (cleanPath.includes("/webhook")) {
+      return { status: "WEBHOOK_PROCESSED_SUCCESSFULLY" };
+    }
+    if (cleanPath.includes("/reply")) {
+      return { success: true, message: "Response successfully dispatched to integrated CRM provider" };
+    }
+    return { success: true };
+  }
+
+  // Finance / Accounting Reports
+  if (cleanPath.includes("/finance/accounting/reports/profit-loss")) {
+    return {
+      revenue: 1250000.0,
+      costOfGoodsSold: 450000.0,
+      grossProfit: 800000.0,
+      operatingExpenses: 350000.0,
+      netProfit: 450000.0,
+      currencyCode: "KES",
+      startDate: "2026-01-01",
+      endDate: "2026-01-31"
+    };
+  }
+  if (cleanPath.includes("/finance/accounting/reports/balance-sheet")) {
+    return {
+      assets: {
+        currentAssets: { cash: 250000.0, inventory: 150000.0, accountsReceivable: 50000.0 },
+        fixedAssets: { equipment: 500000.0, property: 1200000.0 },
+        totalAssets: 2150000.0
+      },
+      liabilities: {
+        currentLiabilities: { accountsPayable: 75000.0, salesTaxPayable: 25000.0 },
+        longTermLiabilities: { bankLoan: 400000.0 },
+        totalLiabilities: 500000.0
+      },
+      equity: {
+        retainedEarnings: 650000.0,
+        shareCapital: 1000000.0,
+        totalEquity: 1650000.0
+      },
+      asOfDate: "2026-01-31"
+    };
+  }
+  if (cleanPath.includes("/finance/accounting/reports/cash-flow")) {
+    return {
+      operatingActivities: 180000.0,
+      investingActivities: -120000.0,
+      financingActivities: -20000.0,
+      netCashFlow: 40000.0,
+      cashAtBeginning: 210000.0,
+      cashAtEnd: 250000.0,
+      currencyCode: "KES"
+    };
+  }
+  if (cleanPath.includes("/finance/accounting/reports/tax-summary")) {
+    return {
+      jurisdiction: "Kenya Revenue Authority",
+      taxPeriod: "2026-Q1",
+      salesVatRate: 0.16,
+      taxableSalesAmount: 1250000.0,
+      outputVatCollected: 200000.0,
+      inputVatClaimable: 72000.0,
+      netVatPayable: 128000.0,
+      currencyCode: "KES"
+    };
+  }
+  if (cleanPath.includes("/finance/accounting/initialize")) {
+    return {
+      status: "SUCCESSFULLY_INITIALIZED",
+      chartOfAccountsCreated: true,
+      defaultAccountsCount: 45,
+      initializedAt: new Date().toISOString()
+    };
+  }
+
+  // Petty cash
+  if (cleanPath.includes("/finance/petty-cash") && cleanPath.includes("/transactions")) {
+    return [
+      { id: "petty_tx_1", amount: -250.0, description: "Bought office milk and coffee", date: "2026-03-02T10:00:00Z", operatorMemberId: "mem_cashier_1" }
+    ];
+  }
+  if (cleanPath.includes("/finance/petty-cash") && cleanPath.includes("/top-up")) {
+    return {
+      fundId: path.split("/").slice(-2, -1)[0] || "fund_123",
+      topUpAmount: 5000.0,
+      newFloatBalance: 7500.0,
+      toppedUpAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/finance/petty-cash")) {
+    if (method === "GET") {
+      return [
+        { id: "pc_fund_1", name: "Bakery Register 1 Float", floatAmount: 5000.0, currentBalance: 4850.0, currency: "KES", responsibleMemberId: "mem_cashier_1" }
+      ];
+    }
+    return {
+      id: "pc_fund_new",
+      name: "Office Petty Cash",
+      floatAmount: 10000.0,
+      currencyCode: "KES",
+      responsibleMemberId: "mem_admin_01",
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  // Expenses
+  if (cleanPath.includes("/finance/expenses/categories")) {
+    return [
+      { id: "cat_utilities", name: "Utilities", code: "EXP-UTI" },
+      { id: "cat_raw_materials", name: "Raw Materials", code: "EXP-RAW" },
+      { id: "cat_rent", name: "Rent & Leases", code: "EXP-RNT" }
+    ];
+  }
+  if (cleanPath.includes("/finance/expenses")) {
+    if (method === "GET") {
+      return [
+        { id: "exp_1", description: "Water bill January", amount: 1200.0, expenseDate: "2026-01-25", categoryId: "cat_utilities", status: "PAID" }
+      ];
+    }
+    return {
+      id: "exp_new",
+      description: "Flour delivery supply invoice",
+      amount: 45000.0,
+      expenseDate: new Date().toISOString(),
+      categoryId: "cat_raw_materials",
+      status: "PENDING_APPROVAL"
+    };
+  }
+
+  // Utility accounts
+  if (cleanPath.includes("/finance/utility-accounts")) {
+    if (method === "GET") {
+      return [
+        { id: "util_elec_01", name: "KPLC Electricity Meter 1", provider: "Kenya Power", accountNumber: "331200921-01", type: "ELECTRICITY" }
+      ];
+    }
+    return {
+      id: "util_new",
+      name: "Nairobi Water Metre 2",
+      provider: "Nairobi Water",
+      accountNumber: "WAT-99211",
+      type: "WATER"
+    };
+  }
+
+  // Public Invoices & Downloads
+  if (cleanPath.includes("/public-invoices/")) {
+    if (cleanPath.includes("/download")) {
+      return {
+        downloadUrl: "https://storage.scryme.tech/secure-invoices/inv_pdf_hash_2026.pdf?token=valid_download_token",
+        fileName: "scryme-invoice-download.pdf",
+        expiresAt: "2026-03-05T12:00:00Z"
+      };
+    }
+    if (cleanPath.includes("/generate-public-link")) {
+      return {
+        publicLinkUrl: "https://api.scryme.tech/v3/public-invoices/tx_abc_123?token=public_view_token",
+        expirySeconds: 2592000,
+        expiresAt: "2026-04-02T12:00:00Z"
+      };
+    }
+  }
+
+  // Business accounts
+  if (cleanPath.includes("/business-accounts")) {
+    return {
+      id: "biz_acc_" + Math.random().toString(36).substr(2, 5),
+      name: "Grand Hotel Group",
+      taxId: "PIN-KRA-009121",
+      defaultLocationId: "loc_main_bakery",
+      creditLimit: 500000.0,
+      outstandingBalance: 125000.0,
+      crmTimeline: []
+    };
+  }
+
+  // Admin
+  if (cleanPath.includes("/admin/stats")) {
+    return {
+      activeOrganizationsCount: 142,
+      totalUsersCount: 2561,
+      systemUptimePercentage: 99.98,
+      dailyTransactionsProcessed: 38400,
+      apiRequestsCount24h: 1250320
+    };
+  }
+  if (cleanPath.includes("/admin/organizations") || cleanPath.includes("/admin/organizations/")) {
+    if (cleanPath.includes("/subscription")) {
+      return {
+        tierSlug: "enterprise-growth",
+        status: "ACTIVE",
+        billingInterval: "MONTHLY",
+        dodoSubscriptionId: "sub_dodo_xyz_123",
+        currentPeriodEnd: "2026-04-01T00:00:00Z"
+      };
+    }
+    if (method === "GET") {
+      return [
+        { id: "org_bakery_co", name: "The French Bakery Co.", slug: "bakery-co", isActive: true }
+      ];
+    }
+    return {
+      id: "org_" + Math.random().toString(36).substr(2, 5),
+      name: summary || "New Organization",
+      slug: "new-org-slug",
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/admin/members")) {
+    return [
+      { id: "mem_admin_01", userEmail: "owner@scryme.tech", role: "OWNER", isActive: true }
+    ];
+  }
+  if (cleanPath.includes("/admin/users")) {
+    if (cleanPath.includes("/ban")) {
+      return { status: "BANNED", bannedUserId: path.split("/").slice(-2, -1)[0] || "usr_123", banReason: "Violation of enterprise terms of service" };
+    }
+    if (cleanPath.includes("/unban")) {
+      return { status: "ACTIVE", unbannedUserId: path.split("/").slice(-2, -1)[0] || "usr_123", unbannedAt: new Date().toISOString() };
+    }
+    return [
+      { id: "usr_123", email: "admin@scryme.tech", name: "Admin User", status: "ACTIVE" }
+    ];
+  }
+  if (cleanPath.includes("/admin/connected-apps")) {
+    return [
+      { clientId: "client_id_crm_01", clientName: "Salesforce CRM Link", isActive: true, scopes: ["inventory.read", "customers.read_write"] }
+    ];
+  }
+  if (cleanPath.includes("/admin/system-logs")) {
+    return [
+      { eventId: "log_9921", action: "ORG_CREATE", ipAddress: "192.168.1.50", timestamp: new Date().toISOString(), details: "Organization bakery-co created" }
+    ];
+  }
+  if (cleanPath.includes("/admin/settings")) {
+    return [
+      { key: "allow_public_registrations", value: "false" },
+      { key: "default_currency", value: "KES" }
+    ];
+  }
+  if (cleanPath.includes("/admin/tiers")) {
+    return [
+      { slug: "starter", name: "Starter Tier", price: 29.0, memberLimit: 5, features: ["pos", "basic_analytics"] }
+    ];
+  }
+  if (cleanPath.includes("/admin/payments")) {
+    if (cleanPath.includes("/record")) {
+      return { paymentRecordId: "pay_recorded_0091", status: "VERIFIED", organizationId: "org_1", tierUpgraded: "growth" };
+    }
+    return [
+      { paymentId: "pay_1", amount: 299.0, reference: "MPESA-QRE9129A", date: "2026-03-01", status: "COMPLETED" }
+    ];
+  }
+  if (cleanPath.includes("/admin/integrations/definitions")) {
+    return [
+      { id: "int_shopify", name: "Shopify", slug: "shopify", category: "E_COMMERCE", isActive: true }
+    ];
+  }
+  if (cleanPath.includes("/admin/integrations/active")) {
+    return [
+      { id: "active_int_01", orgId: "org_bakery_co", definitionId: "int_shopify", connectedAt: "2026-02-14" }
+    ];
+  }
+
+  // Loyalty
+  if (cleanPath.includes("/loyalty/vouchers/redeem")) {
+    return {
+      redeemed: true,
+      voucherCode: "VCH-DISC-10",
+      discountAmount: 15.5,
+      customerId: "cust_123",
+      redeemedAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/loyalty/vouchers/validate")) {
+    return {
+      valid: true,
+      voucherCode: "SAVE10",
+      discountType: "PERCENTAGE",
+      discountValue: 10,
+      description: "10% off overall purchase"
+    };
+  }
+  if (cleanPath.includes("/loyalty/status")) {
+    return {
+      customerId: "cust_123",
+      pointsBalance: 420,
+      loyaltyTier: "SILVER",
+      availableRewards: [
+        { rewardId: "rew_coffee_free", name: "Free Espresso", pointsCost: 100 }
+      ]
+    };
+  }
+
+  // Stocking
+  if (cleanPath.includes("/stocking/physical-reconciliations") && cleanPath.includes("/report")) {
+    return {
+      reconciliationId: path.split("/").slice(-2, -1)[0] || "rec_123",
+      totalDiscrepanciesCount: 3,
+      totalAdjustedValueAmount: -45.2,
+      detailedItems: [
+        { variantId: "var_flour", systemStock: 50, physicalStock: 48, discrepancy: -2 }
+      ]
+    };
+  }
+  if (cleanPath.includes("/stocking/physical-reconciliations")) {
+    if (method === "GET") {
+      return [
+        { id: "rec_1", locationId: "loc_main", status: "COMPLETED", createdAt: "2026-02-28T18:00:00Z" }
+      ];
+    }
+    return {
+      reconciliationId: "rec_new_9921",
+      status: "SUBMITTED_SUCCESSFULLY",
+      reconciledAt: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/stocking/partners") && cleanPath.includes("/wallet/adjust")) {
+    return {
+      partnerId: path.split("/").slice(-3, -2)[0] || "partner_123",
+      adjustedAmount: 1500.0,
+      newWalletBalance: 12500.0,
+      action: "TOP_UP",
+      timestamp: new Date().toISOString()
+    };
+  }
+  if (cleanPath.includes("/stocking/partners")) {
+    if (method === "GET") {
+      return [
+        { id: "partner_fargo", name: "Fargo Courier Services", email: "fargo@scryme-delivery.com", isActive: true }
+      ];
+    }
+    return {
+      id: "partner_" + Math.random().toString(36).substr(2, 5),
+      name: summary || "New Delivery Partner",
+      isActive: true,
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  // Default fallback for any other GET/POST/etc
+  if (method === "GET") {
+    return [];
+  }
+  return { success: true };
+}
+
 export default function App() {
   // Theme state
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -150,7 +783,21 @@ export default function App() {
         const tags = methodObj.tags || ["General"];
         const primaryTag = tags[0];
 
-        if (primaryTag && primaryTag.toLowerCase().includes("finance")) {
+        // Exclude Strapi, Standalone POS, and finance
+        if (
+          primaryTag &&
+          (primaryTag.toLowerCase().includes("strapi") ||
+            primaryTag.toLowerCase().includes("standalone pos") ||
+            primaryTag.toLowerCase().includes("standalone-pos") ||
+            primaryTag.toLowerCase().includes("finance"))
+        ) {
+          continue;
+        }
+
+        if (
+          pathKey.toLowerCase().includes("/strapi") ||
+          pathKey.toLowerCase().includes("/standalone-pos")
+        ) {
           continue;
         }
 
@@ -423,12 +1070,36 @@ export default function App() {
     if (!activeEndpoint) return null;
     const successResponse =
       activeEndpoint.responses?.["200"] || activeEndpoint.responses?.["201"];
-    if (!successResponse) return { success: true };
-    const content = successResponse.content;
+    const content = successResponse?.content;
     const jsonContent = content?.["application/json"];
-    return jsonContent?.schema
+    let rawMock = jsonContent?.schema
       ? generateMockFromSchema(jsonContent.schema)
-      : { success: true };
+      : null;
+
+    if (!rawMock) {
+      rawMock = getFallbackDataForPath(
+        activeEndpoint.path,
+        activeEndpoint.method,
+        activeEndpoint.operationId,
+        activeEndpoint.summary
+      );
+    }
+
+    const isAlreadyWrapped = rawMock &&
+      typeof rawMock === "object" &&
+      !Array.isArray(rawMock) &&
+      ("success" in rawMock) &&
+      ("data" in rawMock);
+
+    if (isAlreadyWrapped) {
+      return rawMock;
+    }
+
+    return {
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: rawMock
+    };
   }, [activeEndpoint]);
 
   // Dynamic URL with path variables and query parameters populated
