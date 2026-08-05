@@ -1657,19 +1657,32 @@ export default function App() {
           '<span class="text-emerald-400 font-medium">$1</span>',
         );
     } else if (language === "node" || language === "python") {
-      safe = safe
-        .replace(
-          /(\/\/.*|#.*)/g,
-          '<span class="text-slate-400 italic">$1</span>',
-        )
-        .replace(
-          /\b(const|let|var|await|try|catch|function|import|from|requests|print|json)\b/g,
-          '<span class="text-sky-400 font-semibold">$1</span>',
-        )
-        .replace(
-          /("[^"]*"|'[^']*')/g,
-          '<span class="text-emerald-400">$1</span>',
-        );
+      const placeholders: string[] = [];
+
+      // 1. Extract comments and replace with placeholder
+      safe = safe.replace(/(\/\/.*|#.*)/g, (match) => {
+        const id = placeholders.length;
+        placeholders.push(`<span class="text-slate-400 italic">${match}</span>`);
+        return `___PLACEHOLDER_${id}___`;
+      });
+
+      // 2. Extract strings and replace with placeholder
+      safe = safe.replace(/("[^"]*"|'[^']*')/g, (match) => {
+        const id = placeholders.length;
+        placeholders.push(`<span class="text-emerald-400">${match}</span>`);
+        return `___PLACEHOLDER_${id}___`;
+      });
+
+      // 3. Highlight keywords
+      safe = safe.replace(
+        /\b(const|let|var|await|try|catch|function|import|from|requests|print|json)\b/g,
+        '<span class="text-sky-400 font-semibold">$1</span>',
+      );
+
+      // 4. Restore placeholders in reverse order (to handle any nesting safely)
+      for (let i = placeholders.length - 1; i >= 0; i--) {
+        safe = safe.replace(`___PLACEHOLDER_${i}___`, placeholders[i]);
+      }
     }
     return <span dangerouslySetInnerHTML={{ __html: safe }} />;
   };

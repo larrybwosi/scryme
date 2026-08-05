@@ -2770,6 +2770,70 @@
         ]
       }
     },
+    "/v3/{orgSlug}/catalog/products/{id}": {
+      "patch": {
+        "operationId": "Catalog_UpdateProduct",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update product details and CMS customizations",
+        "tags": [
+          "V3 Catalog"
+        ]
+      }
+    },
     "/v3/{orgSlug}/catalog/suppliers/{supplierId}/variants/{variantId}": {
       "patch": {
         "operationId": "Catalog_UpdateSupplierVariant",
@@ -11004,6 +11068,101 @@
           "retailPrice"
         ]
       },
+      "ImageItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "img_cover_9921",
+            "description": "Unique image ID for reordering and DOM reconciliation keys"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://images.unsplash.com/photo-1509440159596-0249088772ff",
+            "description": "Direct URL of the image asset"
+          },
+          "caption": {
+            "type": "string",
+            "example": "Fresh sourdough cooling on wire rack",
+            "description": "Alt text / caption for image"
+          }
+        },
+        "required": [
+          "id",
+          "url"
+        ]
+      },
+      "SeoMetadataDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Master Sourdough Class",
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "example": "Book a 4-hour sourdough masterclass",
+            "maxLength": 200
+          },
+          "keywords": {
+            "type": "string",
+            "example": "sourdough, baking, learn"
+          }
+        }
+      },
+      "CmsCustomFieldsDto": {
+        "type": "object",
+        "properties": {
+          "markdownDescription": {
+            "type": "string",
+            "example": "# Sourdough Masterclass\nLearn bread baking."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageItemDto"
+            }
+          },
+          "seo": {
+            "$ref": "#/components/schemas/SeoMetadataDto"
+          },
+          "customAttributes": {
+            "type": "object",
+            "example": {
+              "material": "Cane",
+              "origin": "Indonesia"
+            }
+          },
+          "publishStatus": {
+            "type": "string",
+            "enum": [
+              "Draft",
+              "Published",
+              "Scheduled",
+              "Archived"
+            ]
+          },
+          "publishedAt": {
+            "type": "object",
+            "example": "2026-03-01T08:00:00.000Z",
+            "nullable": true
+          },
+          "archivedAt": {
+            "type": "object",
+            "example": "2026-03-01T08:00:00.000Z",
+            "nullable": true
+          },
+          "layoutTemplate": {
+            "type": "string",
+            "example": "Hero Showcase"
+          },
+          "customSlugOverride": {
+            "type": "string",
+            "example": "learn-artisan-sourdough"
+          }
+        }
+      },
       "ProductResponseDto": {
         "type": "object",
         "properties": {
@@ -11051,6 +11210,9 @@
             "items": {
               "$ref": "#/components/schemas/ProductVariantResponseDto"
             }
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           }
         },
         "required": [
@@ -11132,6 +11294,9 @@
           "isActive": {
             "type": "boolean",
             "example": true
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           }
         },
         "required": [
@@ -11170,6 +11335,9 @@
             "type": "string",
             "example": "SKU-123",
             "description": "Stock Keeping Unit"
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           }
         },
         "required": [
@@ -11178,6 +11346,30 @@
           "price",
           "sku"
         ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Espresso Beans"
+          },
+          "description": {
+            "type": "string",
+            "example": "High-quality arabica beans"
+          },
+          "price": {
+            "type": "number",
+            "example": 15.99
+          },
+          "sku": {
+            "type": "string",
+            "example": "SKU-123"
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
+          }
+        }
       },
       "UpdateSupplierProductDto": {
         "type": "object",
@@ -11322,9 +11514,7 @@
             "description": "Buffer time after in minutes"
           },
           "customFields": {
-            "type": "object",
-            "description": "Custom fields (JSON)",
-            "additionalProperties": true
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           },
           "staffIds": {
             "description": "Assigned staff member IDs",
@@ -11416,9 +11606,7 @@
             "description": "Buffer time after in minutes"
           },
           "customFields": {
-            "type": "object",
-            "description": "Custom fields (JSON)",
-            "additionalProperties": true
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           },
           "staffIds": {
             "description": "Assigned staff member IDs",
