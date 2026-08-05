@@ -79,21 +79,35 @@ class PresenceViewModelTest {
     }
 
     @Test
+    fun `fetchBranches success updates branches state`() = runTest(testDispatcher) {
+        val locations = listOf(LocationDto("loc_1", "North Branch", "org_1", true))
+        coEvery { repository.getLocations() } returns Result.success(locations)
+
+        viewModel.fetchBranches()
+        runCurrent()
+
+        assertEquals(locations, viewModel.branches.value)
+    }
+
+    @Test
     fun `addBranch successfully appends the branch to the state-driven list`() = runTest(testDispatcher) {
         val initialSize = viewModel.branches.value.size
-        assertEquals(3, initialSize)
+        assertEquals(0, initialSize)
 
         viewModel.addBranch("West Counter", "WEST_01", "RETAIL_SHOP")
 
         val updatedBranches = viewModel.branches.value
-        assertEquals(4, updatedBranches.size)
+        assertEquals(1, updatedBranches.size)
         assertEquals("West Counter", updatedBranches.last().name)
-        assertEquals("loc_4", updatedBranches.last().id)
+        assertEquals("loc_1", updatedBranches.last().id)
         assertTrue(updatedBranches.last().isActive)
     }
 
     @Test
     fun `toggleBranchStatus correctly updates its active state`() = runTest(testDispatcher) {
+        // Setup initial branch
+        viewModel.addBranch("North Branch", "loc_1", "RETAIL_SHOP")
+
         // Initially active
         val firstBranch = viewModel.branches.value.first { it.id == "loc_1" }
         assertTrue(firstBranch.isActive)
@@ -110,12 +124,41 @@ class PresenceViewModelTest {
     }
 
     @Test
-    fun `selectBranchForDetail updates states and fetches from API or triggers fallbacks`() = runTest(testDispatcher) {
-        coEvery { repository.getAttendanceLogs(any(), any(), any(), eq("loc_1")) } returns Result.success(
-            AttendanceLogsResponse(items = emptyList(), meta = PaginationMeta(0, 1, 10, 0))
+    fun `selectBranchForDetail updates states and fetches from API`() = runTest(testDispatcher) {
+        val testLogs = listOf(
+            AttendanceLogDto(
+                id = "log_a",
+                memberId = "mem_1",
+                checkInTime = "2026-03-30T08:15:00Z",
+                checkInLocationId = "loc_1",
+                createdAt = "2026-03-30T08:15:00Z",
+                updatedAt = "2026-03-30T08:15:00Z"
+            )
         )
-        coEvery { repository.getPettyCashTransactions(any()) } returns Result.success(emptyList())
-        coEvery { repository.getTransactions(eq("loc_1"), any(), any()) } returns Result.success(emptyList())
+        val testPettyCash = listOf(
+            PettyCashTransactionDto(
+                id = "pc_1",
+                fundId = "fund_loc_1",
+                type = "EXPENSE",
+                amount = 45.50,
+                memberId = "mem_1",
+                createdAt = "2026-03-30T10:14:00Z"
+            )
+        )
+        val testTransactions = listOf(
+            TransactionDto(
+                id = "txn_1",
+                amount = 150.0,
+                locationId = "loc_1",
+                memberId = "mem_1"
+            )
+        )
+
+        coEvery { repository.getAttendanceLogs(any(), any(), any(), eq("loc_1")) } returns Result.success(
+            AttendanceLogsResponse(items = testLogs, meta = PaginationMeta(1, 1, 10, 1))
+        )
+        coEvery { repository.getPettyCashTransactions(any()) } returns Result.success(testPettyCash)
+        coEvery { repository.getTransactions(eq("loc_1"), any(), any()) } returns Result.success(testTransactions)
 
         // Initial states
         assertEquals(null, viewModel.selectedBranchId.value)
@@ -135,18 +178,18 @@ class PresenceViewModelTest {
         coVerify { repository.getPettyCashTransactions(any()) }
         coVerify { repository.getTransactions(eq("loc_1"), any(), any()) }
 
-        // Fallbacks should be triggered as we returned empty lists
+        // Verify correct state populations with real mock API data
         assertTrue(viewModel.branchAttendanceLogs.value is UiState.Success)
         val logs = (viewModel.branchAttendanceLogs.value as UiState.Success).data
-        assertTrue(logs.isNotEmpty())
-        assertEquals("Sarah Connor", logs.first().member?.user?.name)
+        assertEquals(1, logs.size)
+        assertEquals("log_a", logs.first().id)
 
         assertTrue(viewModel.pettyCashTransactions.value is UiState.Success)
         val pcTxns = (viewModel.pettyCashTransactions.value as UiState.Success).data
-        assertTrue(pcTxns.isNotEmpty())
+        assertEquals(1, pcTxns.size)
         assertEquals("pc_1", pcTxns.first().id)
 
-        assertEquals(1845.50, viewModel.branchSales.value, 0.01)
-        assertEquals(3, viewModel.memberSalesList.value.size)
+        assertEquals(150.0, viewModel.branchSales.value, 0.01)
+        assertEquals(1, viewModel.memberSalesList.value.size)
     }
 }
