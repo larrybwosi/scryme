@@ -1668,7 +1668,29 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TokenResponseDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2023-10-27T10:00:00.000Z"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "timestamp"
+                  ]
                 }
               }
             }
@@ -2546,6 +2568,7 @@
     },
     "/v3/{orgSlug}/catalog/products": {
       "get": {
+        "description": "Retrieves a paginated list of all physical catalog products registered under the organization, complete with their first-level variants, cost history, pricing tables, categories, and images.",
         "operationId": "Catalog_GetProducts",
         "parameters": [
           {
@@ -2578,6 +2601,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -2619,12 +2643,14 @@
         ]
       },
       "post": {
+        "description": "Registers a new physical product under the organization's catalog. Supports setting name, description, SKU, and base catalog price.",
         "operationId": "Catalog_CreateProduct",
         "parameters": [
           {
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -2642,7 +2668,7 @@
         },
         "responses": {
           "201": {
-            "description": "Product created",
+            "description": "Product created successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -2652,7 +2678,17 @@
             }
           },
           "400": {
-            "description": "Invalid input",
+            "description": "Invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
             "content": {
               "application/json": {
                 "schema": {
@@ -2675,6 +2711,7 @@
     },
     "/v3/{orgSlug}/catalog/services": {
       "get": {
+        "description": "Retrieves a unified paginated catalog of all services belonging to the organization. Loads categories, pricing details, duration metrics, active statuses, and custom field structures seamlessly.",
         "operationId": "Catalog_GetServices",
         "parameters": [
           {
@@ -2707,6 +2744,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -2748,20 +2786,12 @@
         ]
       }
     },
-    "/v3/{orgSlug}/catalog/suppliers/{supplierId}/variants/{variantId}": {
+    "/v3/{orgSlug}/catalog/products/{id}": {
       "patch": {
-        "operationId": "Catalog_UpdateSupplierVariant",
+        "operationId": "Catalog_UpdateProduct",
         "parameters": [
           {
-            "name": "supplierId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "variantId",
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
@@ -2782,6 +2812,82 @@
           "content": {
             "application/json": {
               "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Product updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update product details and CMS customizations",
+        "tags": [
+          "V3 Catalog"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/catalog/suppliers/{supplierId}/variants/{variantId}": {
+      "patch": {
+        "description": "Updates specific partner-supplier specifications for a product variant (such as cost price, preferred flag, or lead times) and automatically recalibrates retail price structures accordingly. Prevents unauthorized IDOR by validating variant-supplier tenancy.",
+        "operationId": "Catalog_UpdateSupplierVariant",
+        "parameters": [
+          {
+            "name": "supplierId",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the supplier partner",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "variantId",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the product variant",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
                 "$ref": "#/components/schemas/UpdateSupplierProductDto"
               }
             }
@@ -2789,7 +2895,37 @@
         },
         "responses": {
           "200": {
-            "description": "Supplier variant updated"
+            "description": "Supplier variant details updated successfully and margins recomputed"
+          },
+          "400": {
+            "description": "Invalid update data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Supplier variant mapping not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2805,6 +2941,7 @@
     },
     "/v3/{orgSlug}/catalog/price-change-requests": {
       "get": {
+        "description": "Returns a paginated list of catalog price adjustments requiring review. Utilizes highly optimized targeted selects to load variants, products, base pricing tables, and audit details with minimal DB network payload.",
         "operationId": "Catalog_GetPriceChangeRequests",
         "parameters": [
           {
@@ -2837,6 +2974,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -2844,7 +2982,17 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Successfully retrieved price change requests"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2860,12 +3008,14 @@
     },
     "/v3/{orgSlug}/catalog/price-change-requests/{id}/review": {
       "post": {
+        "description": "Reviews and applies a price change request. If approved, the target price list item is updated instantly, dispatching updates to connected POS and digital channels. If rejected, stores rejection rationale for audit logs.",
         "operationId": "Catalog_ReviewPriceChangeRequest",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
+            "description": "The ID of the price change request",
             "schema": {
               "type": "string"
             }
@@ -2874,6 +3024,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -2890,8 +3041,38 @@
           }
         },
         "responses": {
-          "201": {
-            "description": ""
+          "200": {
+            "description": "Price change request successfully reviewed and applied/rejected"
+          },
+          "400": {
+            "description": "Invalid review parameters or illegal status transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Price change request not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2907,7 +3088,8 @@
     },
     "/v3/{orgSlug}/services/categories": {
       "post": {
-        "operationId": "ServicesController_createCategory",
+        "description": "Creates a new category for grouping services under the organization. Supports nested hierarchies via parentId.",
+        "operationId": "Services_CreateCategory",
         "parameters": [
           {
             "name": "orgSlug",
@@ -2942,6 +3124,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2955,7 +3147,8 @@
         ]
       },
       "get": {
-        "operationId": "ServicesController_getCategories",
+        "description": "Retrieves all service categories belonging to the organization, including nested subcategories.",
+        "operationId": "Services_GetCategories",
         "parameters": [
           {
             "name": "orgSlug",
@@ -2970,6 +3163,16 @@
         "responses": {
           "200": {
             "description": "Returns a list of all service categories for the organization"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2985,7 +3188,8 @@
     },
     "/v3/{orgSlug}/services/categories/{id}": {
       "patch": {
-        "operationId": "ServicesController_updateCategory",
+        "description": "Updates an existing service category with new name, description, or parent association.",
+        "operationId": "Services_UpdateCategory",
         "parameters": [
           {
             "name": "id",
@@ -3020,6 +3224,26 @@
           "200": {
             "description": "Service category successfully updated"
           },
+          "400": {
+            "description": "Invalid update data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Service category not found",
             "content": {
@@ -3044,7 +3268,8 @@
     },
     "/v3/{orgSlug}/services/categories/{id}/delete": {
       "post": {
-        "operationId": "ServicesController_deleteCategory",
+        "description": "Deletes a service category from the organization. Child items or assigned services will be detached or rejected.",
+        "operationId": "Services_DeleteCategory",
         "parameters": [
           {
             "name": "id",
@@ -3068,6 +3293,16 @@
         "responses": {
           "200": {
             "description": "Service category successfully deleted"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Service category not found",
@@ -3093,7 +3328,8 @@
     },
     "/v3/{orgSlug}/services": {
       "post": {
-        "operationId": "ServicesController_createService",
+        "description": "Registers a new bookable service under the organization. Includes specifications for pricing model, estimated duration, buffer times, assigned staff, and optional Bill of Materials (BOM).",
+        "operationId": "Services_CreateService",
         "parameters": [
           {
             "name": "orgSlug",
@@ -3128,6 +3364,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3141,7 +3387,8 @@
         ]
       },
       "get": {
-        "operationId": "ServicesController_getServices",
+        "description": "Returns a complete list of all services registered under the organization, including their categories, pricing, and configurations.",
+        "operationId": "Services_GetServices",
         "parameters": [
           {
             "name": "orgSlug",
@@ -3156,6 +3403,16 @@
         "responses": {
           "200": {
             "description": "Returns a list of all services for the organization"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3171,7 +3428,8 @@
     },
     "/v3/{orgSlug}/services/shifts/me": {
       "get": {
-        "operationId": "ServicesController_getCurrentMemberShifts",
+        "description": "Retrieves the scheduled shifts, working days, and break timelines for the currently authenticated staff member.",
+        "operationId": "Services_GetCurrentMemberShifts",
         "parameters": [
           {
             "name": "orgSlug",
@@ -3186,6 +3444,16 @@
         "responses": {
           "200": {
             "description": "Successfully retrieved shifts of the currently logged-in member"
+          },
+          "401": {
+            "description": "Unauthorized or no active member session found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3201,7 +3469,8 @@
     },
     "/v3/{orgSlug}/services/shifts": {
       "get": {
-        "operationId": "ServicesController_getShifts",
+        "description": "Lists scheduled staff shifts across the entire organization. Can be filtered by date ranges, branches, or active status.",
+        "operationId": "Services_GetShifts",
         "parameters": [
           {
             "name": "memberId",
@@ -3245,6 +3514,16 @@
         "responses": {
           "200": {
             "description": "Successfully retrieved list of staff shifts matching filters"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3252,7 +3531,7 @@
             "bearer": []
           }
         ],
-        "summary": "Get all staff shifts for the organization (useful for connected apps)",
+        "summary": "Get all staff shifts for the organization",
         "tags": [
           "V3 Services"
         ]
@@ -3260,7 +3539,8 @@
     },
     "/v3/{orgSlug}/services/{id}": {
       "get": {
-        "operationId": "ServicesController_getService",
+        "description": "Fetches detailed information about a specific service, including its full category details, pricing models, assigned staff/resources, and Bill of Materials.",
+        "operationId": "Services_GetService",
         "parameters": [
           {
             "name": "id",
@@ -3285,6 +3565,16 @@
           "200": {
             "description": "Returns details of the specified service"
           },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Service not found",
             "content": {
@@ -3307,7 +3597,8 @@
         ]
       },
       "patch": {
-        "operationId": "ServicesController_updateService",
+        "description": "Updates service details like price, duration, active status, assigned staff, resources, or Bill of Materials.",
+        "operationId": "Services_UpdateService",
         "parameters": [
           {
             "name": "id",
@@ -3342,6 +3633,26 @@
           "200": {
             "description": "Service successfully updated"
           },
+          "400": {
+            "description": "Invalid update payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Service not found",
             "content": {
@@ -3366,7 +3677,8 @@
     },
     "/v3/{orgSlug}/services/{id}/delete": {
       "post": {
-        "operationId": "ServicesController_deleteService",
+        "description": "Deletes a service from the catalog. Associated future bookings will be cancelled or locked.",
+        "operationId": "Services_DeleteService",
         "parameters": [
           {
             "name": "id",
@@ -3390,6 +3702,16 @@
         "responses": {
           "200": {
             "description": "Service successfully deleted"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Service not found",
@@ -3415,7 +3737,8 @@
     },
     "/v3/{orgSlug}/services/resources": {
       "post": {
-        "operationId": "ServicesController_createResource",
+        "description": "Registers a reusable asset or room (e.g. baking oven, massage table, treatment room) required to complete specific services.",
+        "operationId": "Services_CreateResource",
         "parameters": [
           {
             "name": "orgSlug",
@@ -3440,6 +3763,26 @@
         "responses": {
           "201": {
             "description": "Service resource successfully created"
+          },
+          "400": {
+            "description": "Invalid resource payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3453,7 +3796,8 @@
         ]
       },
       "get": {
-        "operationId": "ServicesController_getResources",
+        "description": "Fetches all reusable service resources and physical rooms/assets registered under the organization.",
+        "operationId": "Services_GetResources",
         "parameters": [
           {
             "name": "orgSlug",
@@ -3468,6 +3812,16 @@
         "responses": {
           "200": {
             "description": "Returns a list of all service resources for the organization"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3483,7 +3837,8 @@
     },
     "/v3/{orgSlug}/services/resources/{id}": {
       "patch": {
-        "operationId": "ServicesController_updateResource",
+        "description": "Modifies the parameters or active status of a registered service resource.",
+        "operationId": "Services_UpdateResource",
         "parameters": [
           {
             "name": "id",
@@ -3518,6 +3873,26 @@
           "200": {
             "description": "Service resource successfully updated"
           },
+          "400": {
+            "description": "Invalid update payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Service resource not found",
             "content": {
@@ -3542,7 +3917,8 @@
     },
     "/v3/{orgSlug}/services/resources/{id}/delete": {
       "post": {
-        "operationId": "ServicesController_deleteResource",
+        "description": "Permanently removes a service resource from the organization. Cannot be deleted if assigned to active, uncompleted bookings.",
+        "operationId": "Services_DeleteResource",
         "parameters": [
           {
             "name": "id",
@@ -3566,6 +3942,16 @@
         "responses": {
           "200": {
             "description": "Service resource successfully deleted"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Service resource not found",
@@ -3591,7 +3977,8 @@
     },
     "/v3/{orgSlug}/services/bookings": {
       "post": {
-        "operationId": "ServicesController_createBooking",
+        "description": "Schedules a new booking for a specific service. Automatically verifies availability, checking for double-bookings on assigned staff shifts and required resources.",
+        "operationId": "Services_CreateBooking",
         "parameters": [
           {
             "name": "orgSlug",
@@ -3626,6 +4013,16 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3639,7 +4036,8 @@
         ]
       },
       "get": {
-        "operationId": "ServicesController_getBookings",
+        "description": "Returns all service bookings scheduled for the organization. Supports filtering by date and state.",
+        "operationId": "Services_GetBookings",
         "parameters": [
           {
             "name": "orgSlug",
@@ -3654,6 +4052,16 @@
         "responses": {
           "200": {
             "description": "Returns all service bookings for the organization"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3669,7 +4077,8 @@
     },
     "/v3/{orgSlug}/services/bookings/{id}": {
       "get": {
-        "operationId": "ServicesController_getBooking",
+        "description": "Retrieves complete, detailed information for a single booking, including customer profile, scheduled timeline, assigned staff/resources, and required materials.",
+        "operationId": "Services_GetBooking",
         "parameters": [
           {
             "name": "id",
@@ -3693,6 +4102,16 @@
         "responses": {
           "200": {
             "description": "Returns detailed information of the service booking"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           },
           "404": {
             "description": "Booking not found",
@@ -3718,7 +4137,8 @@
     },
     "/v3/{orgSlug}/services/bookings/{id}/status": {
       "patch": {
-        "operationId": "ServicesController_updateBookingStatus",
+        "description": "Updates the workflow status of a booking (e.g. PENDING, CONFIRMED, IN_PROGRESS, CANCELLED).",
+        "operationId": "Services_UpdateBookingStatus",
         "parameters": [
           {
             "name": "id",
@@ -3770,6 +4190,26 @@
           "200": {
             "description": "Booking status updated successfully"
           },
+          "400": {
+            "description": "Invalid status transition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Booking not found",
             "content": {
@@ -3794,7 +4234,8 @@
     },
     "/v3/{orgSlug}/services/bookings/{id}/complete": {
       "patch": {
-        "operationId": "ServicesController_completeBooking",
+        "description": "Completes an active booking, records actual duration, and triggers material stock deduction from inventory based on the Bill of Materials (BOM).",
+        "operationId": "Services_CompleteBooking",
         "parameters": [
           {
             "name": "id",
@@ -3829,6 +4270,26 @@
           "200": {
             "description": "Booking completed successfully and inventory stock deducted"
           },
+          "400": {
+            "description": "Invalid completion payload or insufficient inventory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Booking not found",
             "content": {
@@ -3853,7 +4314,8 @@
     },
     "/v3/{orgSlug}/services/staff/{memberId}/shifts": {
       "post": {
-        "operationId": "ServicesController_createShift",
+        "description": "Schedules a regular or one-off work shift for a staff member, defining working days and daily duration boundaries.",
+        "operationId": "Services_CreateShift",
         "parameters": [
           {
             "name": "memberId",
@@ -3911,6 +4373,26 @@
         "responses": {
           "201": {
             "description": "Staff shift successfully created"
+          },
+          "400": {
+            "description": "Invalid shift boundaries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3924,7 +4406,8 @@
         ]
       },
       "get": {
-        "operationId": "ServicesController_getStaffShifts",
+        "description": "Returns all scheduled shifts, active days, and regular working timelines configured for a specific staff member.",
+        "operationId": "Services_GetStaffShifts",
         "parameters": [
           {
             "name": "memberId",
@@ -3948,6 +4431,26 @@
         "responses": {
           "200": {
             "description": "Returns all scheduled shifts for the staff member"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Staff member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3963,7 +4466,8 @@
     },
     "/v3/{orgSlug}/services/shifts/{shiftId}/breaks": {
       "post": {
-        "operationId": "ServicesController_addBreak",
+        "description": "Defines a non-working rest window (e.g. lunch break) within an existing staff shift, blocking bookings during this interval.",
+        "operationId": "Services_AddBreak",
         "parameters": [
           {
             "name": "shiftId",
@@ -4018,6 +4522,36 @@
         "responses": {
           "201": {
             "description": "Break successfully added to shift"
+          },
+          "400": {
+            "description": "Break time falls outside shift range",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Shift not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4033,7 +4567,8 @@
     },
     "/v3/{orgSlug}/services/register-customer-app": {
       "post": {
-        "operationId": "ServicesController_registerCustomerApp",
+        "description": "Registers a customer-facing external app or portal, returning credentials to support customer-driven bookings.",
+        "operationId": "Services_RegisterCustomerApp",
         "parameters": [
           {
             "name": "orgSlug",
@@ -4068,6 +4603,26 @@
         "responses": {
           "201": {
             "description": "Customer-facing application registered successfully"
+          },
+          "400": {
+            "description": "Invalid application details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4083,7 +4638,8 @@
     },
     "/v3/{orgSlug}/services/analytics/utilization": {
       "get": {
-        "operationId": "ServicesController_getUtilization",
+        "description": "Calculates the booking density and utilization ratios for physical rooms and resources over a specified date range.",
+        "operationId": "Services_GetUtilization",
         "parameters": [
           {
             "name": "startDate",
@@ -4118,6 +4674,16 @@
         "responses": {
           "200": {
             "description": "Returns resource utilization statistics over the specified date range"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4133,7 +4699,8 @@
     },
     "/v3/{orgSlug}/services/analytics/performance": {
       "get": {
-        "operationId": "ServicesController_getPerformance",
+        "description": "Analyzes booking completion rates, average booking duration, and overall rating/reputation of staff members.",
+        "operationId": "Services_GetPerformance",
         "parameters": [
           {
             "name": "startDate",
@@ -4168,6 +4735,16 @@
         "responses": {
           "200": {
             "description": "Returns staff performance analytics over the specified date range"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4183,7 +4760,8 @@
     },
     "/v3/{orgSlug}/services/analytics/funnel": {
       "get": {
-        "operationId": "ServicesController_getFunnel",
+        "description": "Provides granular data showing user journeys from search -> selection -> scheduling -> payment completion inside booking portals.",
+        "operationId": "Services_GetFunnel",
         "parameters": [
           {
             "name": "startDate",
@@ -4218,6 +4796,16 @@
         "responses": {
           "200": {
             "description": "Returns booking conversion funnel over the specified date range"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4228,6 +4816,65 @@
         "summary": "Get booking conversion funnel analytics",
         "tags": [
           "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/zitadel/provision": {
+      "post": {
+        "operationId": "Customers_ProvisionZitadel",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvisionZitadelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zitadel provisioned and connected successfully"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Provision Zitadel connection with one click for this organization",
+        "tags": [
+          "V3 Customers"
         ]
       }
     },
@@ -10471,6 +11118,52 @@
         "type": "object",
         "properties": {}
       },
+      "ApiResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2023-10-27T10:00:00.000Z"
+          },
+          "meta": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "timestamp"
+        ]
+      },
+      "TokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "number",
+            "example": 3600
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in"
+        ]
+      },
       "TokenRequestDto": {
         "type": "object",
         "properties": {
@@ -10488,28 +11181,6 @@
         "required": [
           "clientId",
           "clientSecret"
-        ]
-      },
-      "TokenResponseDto": {
-        "type": "object",
-        "properties": {
-          "accessToken": {
-            "type": "string",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          },
-          "tokenType": {
-            "type": "string",
-            "example": "Bearer"
-          },
-          "expiresIn": {
-            "type": "number",
-            "example": 3600
-          }
-        },
-        "required": [
-          "accessToken",
-          "tokenType",
-          "expiresIn"
         ]
       },
       "CreateOrganizationDto": {
@@ -10899,6 +11570,101 @@
           "retailPrice"
         ]
       },
+      "ImageItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "img_cover_9921",
+            "description": "Unique image ID for reordering and DOM reconciliation keys"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://images.unsplash.com/photo-1509440159596-0249088772ff",
+            "description": "Direct URL of the image asset"
+          },
+          "caption": {
+            "type": "string",
+            "example": "Fresh sourdough cooling on wire rack",
+            "description": "Alt text / caption for image"
+          }
+        },
+        "required": [
+          "id",
+          "url"
+        ]
+      },
+      "SeoMetadataDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Master Sourdough Class",
+            "maxLength": 80
+          },
+          "description": {
+            "type": "string",
+            "example": "Book a 4-hour sourdough masterclass",
+            "maxLength": 200
+          },
+          "keywords": {
+            "type": "string",
+            "example": "sourdough, baking, learn"
+          }
+        }
+      },
+      "CmsCustomFieldsDto": {
+        "type": "object",
+        "properties": {
+          "markdownDescription": {
+            "type": "string",
+            "example": "# Sourdough Masterclass\nLearn bread baking."
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImageItemDto"
+            }
+          },
+          "seo": {
+            "$ref": "#/components/schemas/SeoMetadataDto"
+          },
+          "customAttributes": {
+            "type": "object",
+            "example": {
+              "material": "Cane",
+              "origin": "Indonesia"
+            }
+          },
+          "publishStatus": {
+            "type": "string",
+            "enum": [
+              "Draft",
+              "Published",
+              "Scheduled",
+              "Archived"
+            ]
+          },
+          "publishedAt": {
+            "type": "object",
+            "example": "2026-03-01T08:00:00.000Z",
+            "nullable": true
+          },
+          "archivedAt": {
+            "type": "object",
+            "example": "2026-03-01T08:00:00.000Z",
+            "nullable": true
+          },
+          "layoutTemplate": {
+            "type": "string",
+            "example": "Hero Showcase"
+          },
+          "customSlugOverride": {
+            "type": "string",
+            "example": "learn-artisan-sourdough"
+          }
+        }
+      },
       "ProductResponseDto": {
         "type": "object",
         "properties": {
@@ -10946,6 +11712,9 @@
             "items": {
               "$ref": "#/components/schemas/ProductVariantResponseDto"
             }
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           }
         },
         "required": [
@@ -11027,6 +11796,9 @@
           "isActive": {
             "type": "boolean",
             "example": true
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           }
         },
         "required": [
@@ -11065,6 +11837,9 @@
             "type": "string",
             "example": "SKU-123",
             "description": "Stock Keeping Unit"
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           }
         },
         "required": [
@@ -11073,6 +11848,30 @@
           "price",
           "sku"
         ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Espresso Beans"
+          },
+          "description": {
+            "type": "string",
+            "example": "High-quality arabica beans"
+          },
+          "price": {
+            "type": "number",
+            "example": 15.99
+          },
+          "sku": {
+            "type": "string",
+            "example": "SKU-123"
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
+          }
+        }
       },
       "UpdateSupplierProductDto": {
         "type": "object",
@@ -11217,9 +12016,7 @@
             "description": "Buffer time after in minutes"
           },
           "customFields": {
-            "type": "object",
-            "description": "Custom fields (JSON)",
-            "additionalProperties": true
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           },
           "staffIds": {
             "description": "Assigned staff member IDs",
@@ -11311,9 +12108,7 @@
             "description": "Buffer time after in minutes"
           },
           "customFields": {
-            "type": "object",
-            "description": "Custom fields (JSON)",
-            "additionalProperties": true
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
           },
           "staffIds": {
             "description": "Assigned staff member IDs",
@@ -11459,6 +12254,29 @@
           "actualEndTime": {
             "type": "string",
             "description": "Actual end time"
+          }
+        }
+      },
+      "ProvisionZitadelDto": {
+        "type": "object",
+        "properties": {
+          "redirectUris": {
+            "example": [
+              "http://localhost:3000/api/auth/callback/zitadel"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "postLogoutRedirectUris": {
+            "example": [
+              "http://localhost:3000"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

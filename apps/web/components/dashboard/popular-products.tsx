@@ -33,7 +33,7 @@ export function PopularProducts({ products }: PopularProductsProps) {
     val >= 1000 ? (val / 1000).toFixed(0) + "K" : val;
 
   return (
-    <Card className="p-6 bg-white border-none shadow-sm h-full flex flex-col">
+    <Card className="p-6 bg-card border-border shadow-sm h-full flex flex-col">
       <div className="flex justify-between items-start mb-6">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
@@ -56,7 +56,7 @@ export function PopularProducts({ products }: PopularProductsProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="Maximize popular products chart">
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -68,7 +68,7 @@ export function PopularProducts({ products }: PopularProductsProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="More options for popular products">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -82,14 +82,14 @@ export function PopularProducts({ products }: PopularProductsProps) {
         {products.map(product => (
           <div key={product.id} className="space-y-1.5">
             <div className="flex justify-between items-center text-sm">
-              <span className="font-medium text-xs truncate max-w-[200px]">
+              <span className="font-medium text-xs text-foreground truncate max-w-[200px]">
                 {product.name}
               </span>
               <span className="text-muted-foreground text-xs">
                 {product.sales.toLocaleString()} Sales
               </span>
             </div>
-            <div className="relative h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="relative h-2 w-full bg-muted rounded-full overflow-hidden">
               <div
                 className="absolute top-0 left-0 h-full rounded-full transition-all duration-500"
                 style={{
@@ -115,7 +115,7 @@ export function PopularProducts({ products }: PopularProductsProps) {
         </div>
         <Button
           variant="link"
-          className="text-xs font-semibold text-black p-0 h-auto">
+          className="text-xs font-semibold text-primary p-0 h-auto hover:text-primary/80">
           View More
         </Button>
       </div>

@@ -40,21 +40,23 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
   const router = useRouter();
 
   return (
-    <div className="rounded-md border bg-white overflow-hidden shadow-sm">
+    <div className="rounded-md border bg-card overflow-hidden shadow-sm">
       <Table>
-        <TableHeader className="bg-gray-50">
+        <TableHeader className="bg-muted/50">
           <TableRow>
-            <TableHead className="font-semibold text-gray-700">
+            <TableHead className="font-semibold text-foreground">
               Supplier Name
             </TableHead>
-            <TableHead className="font-semibold text-gray-700">Code</TableHead>
-            <TableHead className="font-semibold text-gray-700">
+            <TableHead className="font-semibold text-foreground">
+              Code
+            </TableHead>
+            <TableHead className="font-semibold text-foreground">
               Products
             </TableHead>
-            <TableHead className="font-semibold text-gray-700">
+            <TableHead className="font-semibold text-foreground">
               Total Purchases
             </TableHead>
-            <TableHead className="font-semibold text-gray-700">
+            <TableHead className="font-semibold text-foreground">
               Risk Level
             </TableHead>
             <TableHead className="w-[50px]"></TableHead>
@@ -73,13 +75,13 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
             data.map(supplier => (
               <TableRow
                 key={supplier.id}
-                className="cursor-pointer hover:bg-gray-50 transition-colors"
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() =>
                   router.push(`/inventory/supplier/${supplier.id}`)
                 }>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-sm border bg-gray-50 flex items-center justify-center text-gray-500 font-semibold relative overflow-hidden">
+                    <div className="w-9 h-9 rounded-sm border bg-muted flex items-center justify-center text-muted-foreground font-semibold relative overflow-hidden">
                       {supplier.logo ? (
                         <Image
                           src={supplier.logo}
@@ -92,7 +94,7 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                       )}
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-semibold text-sm text-[#1D1D1F]">
+                      <span className="font-semibold text-sm text-foreground">
                         {supplier.name}
                       </span>
                       <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -115,12 +117,12 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-foreground">
                     {supplier._count?.products || 0}
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-foreground">
                     {supplier._count?.purchases || 0}
                   </span>
                 </TableCell>
@@ -130,11 +132,11 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                     className={cn(
                       "rounded-sm text-[10px] px-2 py-0 h-5 font-semibold uppercase tracking-wide",
                       supplier.riskLevel === "low" &&
-                        "bg-emerald-50 text-emerald-700 border border-emerald-200",
+                        "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
                       supplier.riskLevel === "medium" &&
-                        "bg-amber-50 text-amber-700 border border-amber-200",
+                        "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
                       supplier.riskLevel === "high" &&
-                        "bg-red-50 text-red-700 border border-red-200",
+                        "bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800",
                     )}>
                     {supplier.riskLevel}
                   </Badge>
@@ -163,7 +165,7 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                         <span>Edit Supplier</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600"
+                        className="text-destructive focus:text-destructive"
                         onClick={() => onDelete?.(supplier)}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         <span>Delete</span>

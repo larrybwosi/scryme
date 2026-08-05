@@ -108,10 +108,10 @@ function NoteCard({
           <span className="text-[11px] text-muted-foreground">
             {getDisplayTime(note.createdAt, note.updatedAt)}
           </span>
-          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
             <button
               onClick={() => setIsEditing(true)}
-              className="text-[11px] text-primary hover:underline font-medium"
+              className="text-[11px] text-primary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-sm"
             >
               Edit
             </button>
@@ -122,7 +122,7 @@ function NoteCard({
                   onDelete(note.id);
                 }
               }}
-              className="text-[11px] text-destructive hover:underline font-medium"
+              className="text-[11px] text-destructive hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/60 rounded-sm"
             >
               Delete
             </button>

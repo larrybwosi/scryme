@@ -38,14 +38,13 @@ export default async function ShiftsPage() {
   const members = (membersResult.success ? membersResult.data : []) || [];
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       {/* Header */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
           <Link
             href="/staff"
-            className="text-xs text-gray-500 hover:text-gray-900 flex items-center gap-1 transition-colors"
-          >
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
             <ChevronLeft size={14} />
             <span>Back to Staff</span>
           </Link>
@@ -53,15 +52,16 @@ export default async function ShiftsPage() {
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#1D1D1F]/10 rounded-xl flex items-center justify-center text-[#1D1D1F]">
+            <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
               <Clock size={20} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-[#1D1D1F]">
+              <h1 className="text-2xl font-bold text-foreground">
                 Shifts & Scheduling
               </h1>
-              <p className="text-sm text-gray-500 font-normal">
-                Define and schedule weekly recurring shifts and break times for your team.
+              <p className="text-sm text-muted-foreground font-normal">
+                Define and schedule weekly recurring shifts and break times for
+                your team.
               </p>
             </div>
           </div>

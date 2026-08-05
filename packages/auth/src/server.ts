@@ -3,7 +3,43 @@ import { auth } from "./auth";
 import { redirect } from "next/navigation";
 import { hasMemberPermission } from "./logic/has-member-permission";
 
-export async function getServerAuth(permission?: string) {
+export interface GetServerAuthOptions {
+  permission?: string;
+  allowNoOrg?: boolean;
+}
+
+type SessionResult = Awaited<ReturnType<typeof auth.api.getSession>>;
+type SessionUser = NonNullable<SessionResult>["user"];
+type SessionSession = NonNullable<SessionResult>["session"];
+
+export async function getServerAuth(
+  options: { allowNoOrg: true; permission?: string }
+): Promise<{
+  user: SessionUser;
+  session: SessionSession;
+  organizationId: string | null | undefined;
+  memberId: string | undefined;
+  role: string | undefined;
+} | null>;
+
+export async function getServerAuth(
+  permissionOrOptions?: string | { allowNoOrg?: false | undefined; permission?: string }
+): Promise<{
+  user: SessionUser;
+  session: SessionSession;
+  organizationId: string;
+  memberId: string;
+  role: string | undefined;
+} | null>;
+
+export async function getServerAuth(
+  permissionOrOptions?: string | GetServerAuthOptions,
+): Promise<any> {
+  const options: GetServerAuthOptions =
+    typeof permissionOrOptions === "string"
+      ? { permission: permissionOrOptions }
+      : permissionOrOptions || {};
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -18,14 +54,14 @@ export async function getServerAuth(permission?: string) {
 
   const memberId = user.memberId;
   // Ensure organizationId is present before proceeding
-  if (!organizationId || !memberId) {
+  if (!options.allowNoOrg && (!organizationId || !memberId)) {
     redirect("/create-org");
   }
 
   const role = user.role;
 
-  if (permission) {
-    if (!role || !hasMemberPermission(role, permission)) {
+  if (options.permission) {
+    if (!role || !hasMemberPermission(role, options.permission)) {
       redirect("/unauthorized");
     }
   }
@@ -33,8 +69,8 @@ export async function getServerAuth(permission?: string) {
   return {
     user: session.user,
     session: session.session,
-    organizationId,
-    memberId,
+    organizationId: organizationId as any,
+    memberId: memberId as any,
     role,
   };
 }

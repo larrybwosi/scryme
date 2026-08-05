@@ -206,6 +206,14 @@ export class StrapiProductSyncUseCase {
       let page = 1;
       let hasMore = true;
 
+      // ⚡ Bolt Optimization: Pre-fetch all categories for the organization to eliminate N+1 queries.
+      const existingCategories = await this.prisma.client.category.findMany({
+        where: { organizationId },
+      });
+      const categoryMap = new Map<string, string>(
+        existingCategories.map((c) => [c.name.toLowerCase(), c.id]),
+      );
+
       while (hasMore) {
         const strapiProducts = await this.strapiProvider.getProducts(config, {
           page,
@@ -237,6 +245,7 @@ export class StrapiProductSyncUseCase {
             const categoryId = await this.resolveCategory(
               organizationId,
               attrs.categories?.data?.[0]?.attributes?.name ?? "Imported",
+              categoryMap,
             );
 
             // Check for existing mapping using pre-fetched cache
@@ -412,7 +421,20 @@ export class StrapiProductSyncUseCase {
     return Math.min(...prices);
   }
 
-  private async resolveCategory(organizationId: string, name: string): Promise<string> {
+  /**
+   * Resolves or creates a category, using an in-memory Map cache to avoid N+1 database queries.
+   */
+  private async resolveCategory(
+    organizationId: string,
+    name: string,
+    categoryMap: Map<string, string>,
+  ): Promise<string> {
+    const key = name.toLowerCase();
+    const cachedId = categoryMap.get(key);
+    if (cachedId) {
+      return cachedId;
+    }
+
     let cat = await this.prisma.client.category.findFirst({
       where: { organizationId, name },
     });
@@ -421,6 +443,7 @@ export class StrapiProductSyncUseCase {
         data: { organizationId, name, code: name.toUpperCase() },
       });
     }
+    categoryMap.set(key, cat.id);
     return cat.id;
   }
 

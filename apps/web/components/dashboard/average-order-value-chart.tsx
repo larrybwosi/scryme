@@ -39,7 +39,7 @@ interface AverageOrderValueChartProps {
 const chartConfig = {
   current: {
     label: "Order Value",
-    color: "#F97316",
+    color: "hsl(var(--primary))",
   },
 } satisfies ChartConfig;
 
@@ -60,7 +60,7 @@ export function AverageOrderValueChart({
   const isPositive = change >= 0;
 
   return (
-    <Card className="p-6 bg-white border-none shadow-sm h-full">
+    <Card className="p-6 bg-card border-border shadow-sm h-full">
       <div className="flex justify-between items-start mb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -81,9 +81,13 @@ export function AverageOrderValueChart({
             </Tooltip>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{value}</span>
+            <span className="text-2xl font-bold text-foreground">{value}</span>
             <div
-              className={`flex items-center text-xs font-medium ${isPositive ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"} px-1.5 py-0.5 rounded-full`}>
+              className={`flex items-center text-xs font-medium ${
+                isPositive
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                  : "text-red-600 dark:text-red-400 bg-red-500/10"
+              } px-1.5 py-0.5 rounded-full`}>
               <TrendingUp
                 className={`h-3 w-3 mr-1 ${!isPositive && "rotate-180"}`}
               />
@@ -100,7 +104,7 @@ export function AverageOrderValueChart({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="Maximize average order value chart">
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -112,7 +116,7 @@ export function AverageOrderValueChart({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="More options for average order value">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -128,7 +132,7 @@ export function AverageOrderValueChart({
             <CartesianGrid
               vertical={false}
               strokeDasharray="3 3"
-              stroke="#f0f0f0"
+              stroke="hsl(var(--border))"
             />
             <XAxis
               dataKey="date"
@@ -139,7 +143,7 @@ export function AverageOrderValueChart({
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: "#9ca3af" }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               orientation="right"
               tickFormatter={val =>
                 `${symbol}${val >= 1000 ? (val / 1000).toFixed(1) + "k" : val}`
@@ -154,15 +158,15 @@ export function AverageOrderValueChart({
             />
             <ReferenceLine
               y={averageValue}
-              stroke="#000"
+              stroke="hsl(var(--foreground))"
               strokeDasharray="3 3"
               label={{
                 value: "Avg",
                 position: "left",
-                fill: "#fff",
+                fill: "hsl(var(--foreground))",
                 fontSize: 10,
                 offset: -20,
-                className: "bg-black rounded px-1",
+                className: "bg-background rounded px-1",
               }}
             />
           </BarChart>

@@ -39,8 +39,13 @@ export default async function DashboardPage(props: {
     }).format(val);
 
   return (
-    <div className="p-8 max-w-(--breakpoint-2xl) mx-auto">
-      <Suspense fallback={<div>Loading dashboard...</div>}>
+    <div className="p-8 max-w-(--breakpoint-2xl) mx-auto bg-background min-h-screen">
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-muted-foreground">Loading dashboard...</div>
+          </div>
+        }>
         <DashboardHeader userName={auth.user.name} date={today} />
 
         {/* Top Stats */}

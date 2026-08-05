@@ -214,6 +214,26 @@ export class AndroidController {
 
   // --- MEMBERS & PRESENCE ENDPOINTS ---
 
+  @Get(":orgSlug/locations")
+  async getLocations(@Req() req: any) {
+    const data = await this.prisma.client.inventoryLocation.findMany({
+      where: {
+        organizationId: req.v3Context.organizationId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        organizationId: true,
+        isActive: true,
+      },
+    });
+    return {
+      success: true,
+      data,
+    };
+  }
+
   @Get(":orgSlug/members")
   async getMembers(@Req() req: any, @Query() query: any) {
     const data = await this.memberUseCase.getMembers(req.v3Context.organizationId, {

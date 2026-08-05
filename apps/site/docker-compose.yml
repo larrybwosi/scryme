@@ -1,6 +1,6 @@
 services:
   site:
-    image: ghcr.io/larrybwosi/scryme/site:${SITE_VERSION:-9.58.0}
+    image: ghcr.io/larrybwosi/scryme/site:${SITE_VERSION:-latest}
     restart: always
     deploy:
       resources:

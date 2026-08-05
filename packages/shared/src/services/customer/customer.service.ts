@@ -406,7 +406,10 @@ export class CustomerService {
     customerId: string,
   ): Promise<ActionResponse<{ id: string }>> {
     try {
-      const customer = await this.prisma.customer.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // Customer lacks a composite unique index on [id, organizationId].
+      // Using findUnique with non-unique filters risks ignoring the filter or IDOR.
+      const customer = await this.prisma.customer.findFirst({
         where: { id: customerId, organizationId },
       });
 

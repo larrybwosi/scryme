@@ -35,7 +35,7 @@ export function DashboardHeader({ userName, date }: DashboardHeaderProps) {
   return (
     <div className="flex justify-between items-end mb-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Hey, {userName}</h1>
+        <h1 className="text-2xl font-bold text-foreground">Hey, {userName}</h1>
         <p className="text-sm text-muted-foreground">{date}</p>
       </div>
 
@@ -45,7 +45,7 @@ export function DashboardHeader({ userName, date }: DashboardHeaderProps) {
             <Button
               variant="outline"
               size="sm"
-              className="bg-black text-white hover:bg-black/90 hover:text-white border-none h-9">
+              className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground border-none h-9">
               <Calendar className="mr-2 h-4 w-4" />
               {timeframeLabels[timeframe]}
             </Button>
@@ -68,17 +68,17 @@ export function DashboardHeader({ userName, date }: DashboardHeaderProps) {
             <Button
               variant="outline"
               size="sm"
-              className="bg-white border-slate-200 h-9">
+              className="bg-background border-border hover:bg-accent hover:text-accent-foreground h-9">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-1">
-                  <div className="h-4 w-4 rounded-full border border-white bg-slate-100 flex items-center justify-center">
-                    <div className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  <div className="h-4 w-4 rounded-full border border-background bg-muted flex items-center justify-center">
+                    <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60" />
                   </div>
-                  <div className="h-4 w-4 rounded-full border border-white bg-slate-800 flex items-center justify-center">
-                    <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                  <div className="h-4 w-4 rounded-full border border-background bg-primary flex items-center justify-center">
+                    <div className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
                   </div>
                 </div>
-                <span>
+                <span className="text-foreground">
                   Compare: Last {timeframe === "year" ? "Year" : "Month"}
                 </span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -94,7 +94,7 @@ export function DashboardHeader({ userName, date }: DashboardHeaderProps) {
         <Button
           variant="outline"
           size="sm"
-          className="bg-white border-slate-200 h-9">
+          className="bg-background border-border hover:bg-accent hover:text-accent-foreground h-9">
           <Settings2 className="mr-2 h-4 w-4" />
           Edit Widget
         </Button>

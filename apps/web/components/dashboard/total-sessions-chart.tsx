@@ -31,11 +31,11 @@ interface TotalSessionsChartProps {
 const chartConfig = {
   current: {
     label: "Current",
-    color: "#64748b",
+    color: "hsl(var(--primary))",
   },
   previous: {
     label: "Previous",
-    color: "#e2e8f0",
+    color: "hsl(var(--muted))",
   },
 } satisfies ChartConfig;
 
@@ -47,7 +47,7 @@ export function TotalSessionsChart({
 }: TotalSessionsChartProps) {
   const isPositive = change >= 0;
   return (
-    <Card className="p-6 bg-white border-none shadow-sm h-full">
+    <Card className="p-6 bg-card border-border shadow-sm h-full">
       <div className="flex justify-between items-start mb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -66,9 +66,13 @@ export function TotalSessionsChart({
             </Tooltip>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{value}</span>
+            <span className="text-2xl font-bold text-foreground">{value}</span>
             <div
-              className={`flex items-center text-xs font-medium ${isPositive ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"} px-1.5 py-0.5 rounded-full`}>
+              className={`flex items-center text-xs font-medium ${
+                isPositive
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                  : "text-red-600 dark:text-red-400 bg-red-500/10"
+              } px-1.5 py-0.5 rounded-full`}>
               <TrendingUp
                 className={`h-3 w-3 mr-1 ${!isPositive && "rotate-180"}`}
               />
@@ -85,7 +89,7 @@ export function TotalSessionsChart({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="Maximize total sessions chart">
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -97,7 +101,7 @@ export function TotalSessionsChart({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="More options for total sessions">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -109,12 +113,12 @@ export function TotalSessionsChart({
 
       <div className="flex items-center justify-end gap-4 mb-4 text-[10px]">
         <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-slate-500" />
-          <span>Current</span>
+          <div className="h-2 w-2 rounded-full bg-primary" />
+          <span className="text-muted-foreground">Current</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-slate-200" />
-          <span>Previous</span>
+          <div className="h-2 w-2 rounded-full bg-muted" />
+          <span className="text-muted-foreground">Previous</span>
         </div>
       </div>
 
@@ -124,7 +128,7 @@ export function TotalSessionsChart({
             <CartesianGrid
               vertical={false}
               strokeDasharray="3 3"
-              stroke="#f0f0f0"
+              stroke="hsl(var(--border))"
             />
             <XAxis
               dataKey="date"

@@ -1,5 +1,93 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsNotEmpty, IsNumber, IsOptional } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsString, IsNotEmpty, IsNumber, IsOptional, ValidateNested, IsArray, IsObject, IsEnum, IsUrl, MaxLength } from "class-validator";
+import { Type } from "class-transformer";
+
+export class ImageItemDto {
+  @ApiProperty({ example: "img_cover_9921", description: "Unique image ID for reordering and DOM reconciliation keys" })
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiProperty({ example: "https://images.unsplash.com/photo-1509440159596-0249088772ff", description: "Direct URL of the image asset" })
+  @IsString()
+  @IsNotEmpty()
+  @IsUrl()
+  url: string;
+
+  @ApiPropertyOptional({ example: "Fresh sourdough cooling on wire rack", description: "Alt text / caption for image" })
+  @IsString()
+  @IsOptional()
+  caption?: string;
+}
+
+export class SeoMetadataDto {
+  @ApiPropertyOptional({ example: "Master Sourdough Class", maxLength: 80 })
+  @IsString()
+  @IsOptional()
+  @MaxLength(80)
+  title?: string;
+
+  @ApiPropertyOptional({ example: "Book a 4-hour sourdough masterclass", maxLength: 200 })
+  @IsString()
+  @IsOptional()
+  @MaxLength(200)
+  description?: string;
+
+  @ApiPropertyOptional({ example: "sourdough, baking, learn" })
+  @IsString()
+  @IsOptional()
+  keywords?: string;
+}
+
+export class CmsCustomFieldsDto {
+  @ApiPropertyOptional({ example: "# Sourdough Masterclass\nLearn bread baking." })
+  @IsString()
+  @IsOptional()
+  markdownDescription?: string;
+
+  @ApiPropertyOptional({ type: [ImageItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ImageItemDto)
+  images?: ImageItemDto[];
+
+  @ApiPropertyOptional({ type: SeoMetadataDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => SeoMetadataDto)
+  seo?: SeoMetadataDto;
+
+  @ApiPropertyOptional({ example: { material: "Cane", origin: "Indonesia" } })
+  @IsOptional()
+  @IsObject()
+  customAttributes?: Record<string, string>;
+
+  @ApiPropertyOptional({ enum: ["Draft", "Published", "Scheduled", "Archived"] })
+  @IsOptional()
+  @IsEnum(["Draft", "Published", "Scheduled", "Archived"])
+  publishStatus?: "Draft" | "Published" | "Scheduled" | "Archived";
+
+  @ApiPropertyOptional({ example: "2026-03-01T08:00:00.000Z", nullable: true })
+  @IsString()
+  @IsOptional()
+  publishedAt?: string | null;
+
+  @ApiPropertyOptional({ example: "2026-03-01T08:00:00.000Z", nullable: true })
+  @IsString()
+  @IsOptional()
+  archivedAt?: string | null;
+
+  @ApiPropertyOptional({ example: "Hero Showcase" })
+  @IsString()
+  @IsOptional()
+  layoutTemplate?: string;
+
+  @ApiPropertyOptional({ example: "learn-artisan-sourdough" })
+  @IsString()
+  @IsOptional()
+  customSlugOverride?: string;
+}
 
 export class CreateProductDto {
   @ApiProperty({
@@ -26,6 +114,40 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   sku?: string;
+
+  @ApiPropertyOptional({ type: () => CmsCustomFieldsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CmsCustomFieldsDto)
+  customFields?: CmsCustomFieldsDto;
+}
+
+export class UpdateProductDto {
+  @ApiPropertyOptional({ example: "Espresso Beans" })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({ example: "High-quality arabica beans" })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiPropertyOptional({ example: 15.99 })
+  @IsNumber()
+  @IsOptional()
+  price?: number;
+
+  @ApiPropertyOptional({ example: "SKU-123" })
+  @IsString()
+  @IsOptional()
+  sku?: string;
+
+  @ApiPropertyOptional({ type: () => CmsCustomFieldsDto })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CmsCustomFieldsDto)
+  customFields?: CmsCustomFieldsDto;
 }
 
 export class ProductVariantResponseDto {
@@ -77,6 +199,9 @@ export class ProductResponseDto {
 
   @ApiProperty({ type: [ProductVariantResponseDto], required: false })
   variants?: ProductVariantResponseDto[];
+
+  @ApiPropertyOptional({ type: () => CmsCustomFieldsDto })
+  customFields?: CmsCustomFieldsDto;
 }
 
 export class ServiceCategoryResponseDto {
@@ -120,4 +245,7 @@ export class ServiceCatalogResponseDto {
 
   @ApiProperty({ example: true })
   isActive: boolean;
+
+  @ApiPropertyOptional({ type: () => CmsCustomFieldsDto })
+  customFields?: CmsCustomFieldsDto;
 }

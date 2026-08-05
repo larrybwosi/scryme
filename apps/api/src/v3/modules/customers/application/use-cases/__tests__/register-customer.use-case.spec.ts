@@ -155,4 +155,50 @@ describe("RegisterCustomerUseCase", () => {
       expect.any(String),
     );
   });
+
+  it("should register a customer successfully with optional custom fields (company, taxId, customerType, DOB)", async () => {
+    const organizationId = "org-123";
+    const dto = {
+      name: "Corporate Customer",
+      email: "corporate@acme.com",
+      company: "Acme Corp",
+      customerType: "Premium B2B",
+      dateOfBirth: "1985-05-15",
+      taxId: "KRA-999888",
+    };
+
+    vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.client.customer.upsert).mockResolvedValue({
+      id: "cust-corporate",
+      name: "Corporate Customer",
+      email: "corporate@acme.com",
+      phone: null,
+      company: "Acme Corp",
+      customerType: "Premium B2B",
+      dateOfBirth: "1985-05-15",
+      taxId: "KRA-999888",
+      organizationId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+
+    const result = await useCase.execute(organizationId, dto);
+
+    expect(result.name).toBe("Corporate Customer");
+    expect(result.company).toBe("Acme Corp");
+    expect(result.customerType).toBe("Premium B2B");
+    expect(result.dateOfBirth).toBe("1985-05-15");
+    expect(result.taxId).toBe("KRA-999888");
+
+    expect(prisma.client.customer.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({
+          company: "Acme Corp",
+          customerType: "Premium B2B",
+          dateOfBirth: "1985-05-15",
+          taxId: "KRA-999888",
+        }),
+      })
+    );
+  });
 });
