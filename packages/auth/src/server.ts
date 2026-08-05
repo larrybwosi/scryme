@@ -8,9 +8,33 @@ export interface GetServerAuthOptions {
   allowNoOrg?: boolean;
 }
 
+type SessionResult = Awaited<ReturnType<typeof auth.api.getSession>>;
+type SessionUser = NonNullable<SessionResult>["user"];
+type SessionSession = NonNullable<SessionResult>["session"];
+
+export async function getServerAuth(
+  options: { allowNoOrg: true; permission?: string }
+): Promise<{
+  user: SessionUser;
+  session: SessionSession;
+  organizationId: string | null | undefined;
+  memberId: string | undefined;
+  role: string | undefined;
+} | null>;
+
+export async function getServerAuth(
+  permissionOrOptions?: string | { allowNoOrg?: false | undefined; permission?: string }
+): Promise<{
+  user: SessionUser;
+  session: SessionSession;
+  organizationId: string;
+  memberId: string;
+  role: string | undefined;
+} | null>;
+
 export async function getServerAuth(
   permissionOrOptions?: string | GetServerAuthOptions,
-) {
+): Promise<any> {
   const options: GetServerAuthOptions =
     typeof permissionOrOptions === "string"
       ? { permission: permissionOrOptions }
@@ -45,8 +69,8 @@ export async function getServerAuth(
   return {
     user: session.user,
     session: session.session,
-    organizationId,
-    memberId,
+    organizationId: organizationId as any,
+    memberId: memberId as any,
     role,
   };
 }
