@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { MemberRole } from "@repo/db";
 
 export async function getPendingInvitations() {
-  const auth = await getServerAuth();
+  const auth = await getServerAuth({ allowNoOrg: true });
   if (!auth) return { success: false, error: "Unauthorized" };
 
   const invitations = await db.invitation.findMany({
@@ -38,7 +38,7 @@ export async function getPendingInvitations() {
 }
 
 export async function acceptInvitationByToken(token: string) {
-  const auth = await getServerAuth();
+  const auth = await getServerAuth({ allowNoOrg: true });
   if (!auth) return { success: false, error: "Unauthorized" };
 
   const invitation = await db.invitation.findUnique({

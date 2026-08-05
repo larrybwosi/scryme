@@ -16,7 +16,7 @@ export async function createOrganization(data: {
   industry: string;
   size: string;
 }): Promise<any> {
-  const auth = await getServerAuth();
+  const auth = await getServerAuth({ allowNoOrg: true });
   if (!auth) throw new Error("Unauthorized");
 
   const organization = await db.$transaction(async tx => {
