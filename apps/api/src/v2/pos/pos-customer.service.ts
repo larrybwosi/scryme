@@ -12,9 +12,10 @@ export class PosCustomerService {
   }
 
   async getCustomer(ctx: V2ApiContext, id: string) {
-    // We don't have a direct getCustomer in SharedPosCustomerService yet,
-    // so we use CustomerService for now or just fetch directly.
-    return this.prisma.client.customer.findUnique({
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Customer lacks a composite unique index on [id, organizationId].
+    // Using findUnique with non-unique filters risks ignoring the filter or IDOR.
+    return this.prisma.client.customer.findFirst({
       where: { id, organizationId: ctx.organizationId },
     });
   }
