@@ -335,10 +335,10 @@ function FollowUpCard({
       )}
     >
       {/* Actions */}
-      <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute top-4 right-4 flex items-center gap-2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
         <button
           onClick={() => setIsEditing(true)}
-          className="text-[11px] text-primary hover:underline font-medium"
+          className="text-[11px] text-primary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-sm"
         >
           Edit
         </button>
