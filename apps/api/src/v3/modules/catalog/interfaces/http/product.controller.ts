@@ -248,13 +248,13 @@ export class ProductController {
       throw new NotFoundException("Product not found");
     }
 
-    const updated = await this.prisma.client.product.update({
+    const updated = (await this.prisma.client.product.update({
       where: { id },
       data: {
         name: body.name,
         description: body.description,
         sku: body.sku,
-        customFields: body.customFields !== undefined ? body.customFields : undefined,
+        customFields: body.customFields !== undefined ? (body.customFields as any) : undefined,
       },
       include: {
         category: true,
@@ -267,7 +267,7 @@ export class ProductController {
           },
         },
       },
-    });
+    })) as any;
 
     const firstVariant = updated.variants?.[0];
     const retailPrice = firstVariant?.retailPrice ? Number(firstVariant.retailPrice) : null;
