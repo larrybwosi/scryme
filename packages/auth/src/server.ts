@@ -3,7 +3,19 @@ import { auth } from "./auth";
 import { redirect } from "next/navigation";
 import { hasMemberPermission } from "./logic/has-member-permission";
 
-export async function getServerAuth(permission?: string) {
+export interface GetServerAuthOptions {
+  permission?: string;
+  allowNoOrg?: boolean;
+}
+
+export async function getServerAuth(
+  permissionOrOptions?: string | GetServerAuthOptions,
+) {
+  const options: GetServerAuthOptions =
+    typeof permissionOrOptions === "string"
+      ? { permission: permissionOrOptions }
+      : permissionOrOptions || {};
+
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -18,14 +30,14 @@ export async function getServerAuth(permission?: string) {
 
   const memberId = user.memberId;
   // Ensure organizationId is present before proceeding
-  if (!organizationId || !memberId) {
+  if (!options.allowNoOrg && (!organizationId || !memberId)) {
     redirect("/create-org");
   }
 
   const role = user.role;
 
-  if (permission) {
-    if (!role || !hasMemberPermission(role, permission)) {
+  if (options.permission) {
+    if (!role || !hasMemberPermission(role, options.permission)) {
       redirect("/unauthorized");
     }
   }
