@@ -142,7 +142,8 @@ export function ShiftsManager({
 
   // Breaks Modal State
   const [isBreaksModalOpen, setIsBreaksModalOpen] = useState(false);
-  const [activeShiftForBreaks, setActiveShiftForBreaks] = useState<StaffShift | null>(null);
+  const [activeShiftForBreaks, setActiveShiftForBreaks] =
+    useState<StaffShift | null>(null);
   const [breakFormData, setBreakFormData] = useState({
     startTime: "12:00",
     endTime: "13:00",
@@ -150,14 +151,16 @@ export function ShiftsManager({
   });
 
   // Filter logic
-  const filteredShifts = shifts.filter((shift) => {
+  const filteredShifts = shifts.filter(shift => {
     const matchesMember =
       filterMemberId === "all" || shift.memberId === filterMemberId;
     const matchesDay =
       filterDay === "all" || shift.dayOfWeek.toString() === filterDay;
     const matchesSearch =
       !searchQuery ||
-      shift.member.user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      shift.member.user.name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
       shift.member.user.email.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesMember && matchesDay && matchesSearch;
   });
@@ -212,11 +215,9 @@ export function ShiftsManager({
       }
 
       if (result.success) {
-        // Optimistically update or fetch again.
-        // We can reconstruct the client state cleanly
         if (editingShift) {
-          setShifts((prev) =>
-            prev.map((s) =>
+          setShifts(prev =>
+            prev.map(s =>
               s.id === editingShift.id
                 ? {
                     ...s,
@@ -225,13 +226,14 @@ export function ShiftsManager({
                     endTime: shiftFormData.endTime,
                     isActive: shiftFormData.isActive,
                   }
-                : s
-            )
+                : s,
+            ),
           );
         } else {
           const addedShift = result.data as any;
-          // Hydrate member details
-          const memberDetails = allMembers.find((m) => m.id === shiftFormData.memberId);
+          const memberDetails = allMembers.find(
+            m => m.id === shiftFormData.memberId,
+          );
           const newShift: StaffShift = {
             ...addedShift,
             breaks: [],
@@ -245,7 +247,7 @@ export function ShiftsManager({
               },
             },
           };
-          setShifts((prev) => [...prev, newShift]);
+          setShifts(prev => [...prev, newShift]);
         }
         setIsShiftModalOpen(false);
       } else {
@@ -260,7 +262,7 @@ export function ShiftsManager({
     startTransition(async () => {
       const result = await deleteStaffShift(shiftId);
       if (result.success) {
-        setShifts((prev) => prev.filter((s) => s.id !== shiftId));
+        setShifts(prev => prev.filter(s => s.id !== shiftId));
       } else {
         alert(result.error || "Failed to delete shift");
       }
@@ -284,25 +286,23 @@ export function ShiftsManager({
     setError(null);
 
     startTransition(async () => {
-      const result = await addStaffBreak(activeShiftForBreaks.id, {
+      const result = (await addStaffBreak(activeShiftForBreaks.id, {
         startTime: breakFormData.startTime,
         endTime: breakFormData.endTime,
         description: breakFormData.description,
-      }) as any;
+      })) as any;
 
       if (result.success) {
         const newBreak = result.data as ShiftBreak;
-        // Update local state
-        setShifts((prev) =>
-          prev.map((s) =>
+        setShifts(prev =>
+          prev.map(s =>
             s.id === activeShiftForBreaks.id
               ? { ...s, breaks: [...s.breaks, newBreak] }
-              : s
-          )
+              : s,
+          ),
         );
-        // Update modal state to show immediate result
-        setActiveShiftForBreaks((prev) =>
-          prev ? { ...prev, breaks: [...prev.breaks, newBreak] } : null
+        setActiveShiftForBreaks(prev =>
+          prev ? { ...prev, breaks: [...prev.breaks, newBreak] } : null,
         );
       } else {
         setError(result.error || "Failed to add break");
@@ -316,17 +316,17 @@ export function ShiftsManager({
     startTransition(async () => {
       const result = await deleteStaffBreak(breakId);
       if (result.success) {
-        setShifts((prev) =>
-          prev.map((s) =>
+        setShifts(prev =>
+          prev.map(s =>
             s.id === activeShiftForBreaks.id
-              ? { ...s, breaks: s.breaks.filter((b) => b.id !== breakId) }
-              : s
-          )
+              ? { ...s, breaks: s.breaks.filter(b => b.id !== breakId) }
+              : s,
+          ),
         );
-        setActiveShiftForBreaks((prev) =>
+        setActiveShiftForBreaks(prev =>
           prev
-            ? { ...prev, breaks: prev.breaks.filter((b) => b.id !== breakId) }
-            : null
+            ? { ...prev, breaks: prev.breaks.filter(b => b.id !== breakId) }
+            : null,
         );
       } else {
         alert(result.error || "Failed to delete break");
@@ -337,32 +337,32 @@ export function ShiftsManager({
   return (
     <div className="space-y-6">
       {/* Filters Card */}
-      <Card className="border-none shadow-sm bg-white">
+      <Card>
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full md:w-auto flex-1">
               {/* Search */}
               <div className="relative">
                 <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                   size={16}
                 />
                 <Input
                   placeholder="Search staff..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 border-gray-200"
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-10 h-10"
                 />
               </div>
 
               {/* Filter Member */}
               <Select value={filterMemberId} onValueChange={setFilterMemberId}>
-                <SelectTrigger className="h-10 border-gray-200">
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="All Members" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Members</SelectItem>
-                  {allMembers.map((m) => (
+                  {allMembers.map(m => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.user.name || m.user.email}
                     </SelectItem>
@@ -372,12 +372,12 @@ export function ShiftsManager({
 
               {/* Filter Day */}
               <Select value={filterDay} onValueChange={setFilterDay}>
-                <SelectTrigger className="h-10 border-gray-200">
+                <SelectTrigger className="h-10">
                   <SelectValue placeholder="All Days" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Days</SelectItem>
-                  {DAYS_OF_WEEK.map((d) => (
+                  {DAYS_OF_WEEK.map(d => (
                     <SelectItem key={d.value} value={d.value.toString()}>
                       {d.label}
                     </SelectItem>
@@ -389,8 +389,7 @@ export function ShiftsManager({
             {canManage && (
               <Button
                 onClick={handleOpenAddShift}
-                className="gap-2 bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white h-10 w-full md:w-auto shrink-0"
-              >
+                className="gap-2 h-10 w-full md:w-auto shrink-0">
                 <Plus size={16} />
                 <span>Add Staff Shift</span>
               </Button>
@@ -402,72 +401,80 @@ export function ShiftsManager({
       {/* Shifts Views */}
       <Tabs defaultValue="list" className="w-full space-y-4">
         <div className="flex justify-between items-center">
-          <TabsList className="bg-white border p-1 h-auto gap-1">
+          <TabsList className="bg-card border p-1 h-auto gap-1">
             <TabsTrigger
               value="list"
-              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]"
-            >
+              className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-foreground">
               <Activity size={16} />
               List By Staff
             </TabsTrigger>
             <TabsTrigger
               value="calendar"
-              className="gap-2 px-4 py-2 data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]"
-            >
+              className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-foreground">
               <Calendar size={16} />
               Schedule Grid
             </TabsTrigger>
           </TabsList>
-          <Badge variant="outline" className="text-xs text-gray-500 font-normal py-1 px-3">
-            Showing {filteredShifts.length} Shift{filteredShifts.length !== 1 ? "s" : ""}
+          <Badge variant="outline" className="text-xs font-normal py-1 px-3">
+            Showing {filteredShifts.length} Shift
+            {filteredShifts.length !== 1 ? "s" : ""}
           </Badge>
         </div>
 
         {/* LIST VIEW */}
         <TabsContent value="list">
-          <Card className="border-none shadow-sm bg-white overflow-hidden">
+          <Card className="overflow-hidden">
             <Table>
-              <TableHeader className="bg-gray-50/50">
+              <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead className="w-[240px]">Staff Member</TableHead>
                   <TableHead>Day of Week</TableHead>
                   <TableHead>Shift Hours</TableHead>
                   <TableHead>Breaks</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right w-[180px]">Actions</TableHead>
+                  <TableHead className="text-right w-[180px]">
+                    Actions
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredShifts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                    <TableCell
+                      colSpan={6}
+                      className="text-center py-12 text-muted-foreground">
                       <div className="flex flex-col items-center justify-center gap-2">
-                        <Clock className="h-8 w-8 text-gray-300" />
+                        <Clock className="h-8 w-8 text-muted-foreground/50" />
                         <span>No shifts assigned matching filters.</span>
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredShifts.map((shift) => (
-                    <TableRow key={shift.id} className="group hover:bg-gray-50/50">
+                  filteredShifts.map(shift => (
+                    <TableRow
+                      key={shift.id}
+                      className="group hover:bg-muted/50">
                       <TableCell className="font-medium">
                         <div className="flex flex-col">
-                          <span className="text-sm font-semibold text-[#1D1D1F]">
+                          <span className="text-sm font-semibold text-foreground">
                             {shift.member.user.name || "Unnamed User"}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-muted-foreground">
                             {shift.member.user.email}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="font-medium bg-zinc-100">
-                          {DAYS_OF_WEEK.find((d) => d.value === shift.dayOfWeek)?.label}
+                        <Badge variant="secondary" className="font-medium">
+                          {
+                            DAYS_OF_WEEK.find(d => d.value === shift.dayOfWeek)
+                              ?.label
+                          }
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5 text-sm font-medium">
-                          <Clock className="h-3.5 w-3.5 text-gray-400" />
+                          <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                           <span>
                             {shift.startTime} – {shift.endTime}
                           </span>
@@ -475,12 +482,11 @@ export function ShiftsManager({
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1 items-center">
-                          {shift.breaks.map((b) => (
+                          {shift.breaks.map(b => (
                             <Badge
                               key={b.id}
                               variant="outline"
-                              className="bg-orange-50/50 text-orange-700 border-orange-200/60 text-[10px] py-0 px-2 flex items-center gap-1"
-                            >
+                              className="bg-orange-100/50 text-orange-700 border-orange-200/60 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800/60 text-[10px] py-0 px-2 flex items-center gap-1">
                               <Coffee className="h-2.5 w-2.5" />
                               <span>
                                 {b.startTime}-{b.endTime}
@@ -492,8 +498,7 @@ export function ShiftsManager({
                               variant="ghost"
                               size="sm"
                               onClick={() => handleOpenBreaks(shift)}
-                              className="h-6 px-1.5 text-[10px] text-zinc-500 hover:text-orange-600 gap-0.5 hover:bg-orange-50"
-                            >
+                              className="h-6 px-1.5 text-[10px] text-muted-foreground hover:text-orange-600 dark:hover:text-orange-400 gap-0.5 hover:bg-orange-50 dark:hover:bg-orange-900/20">
                               <Plus className="h-3 w-3" />
                               <span>Manage</span>
                             </Button>
@@ -504,10 +509,9 @@ export function ShiftsManager({
                         <Badge
                           className={
                             shift.isActive
-                              ? "bg-green-100 text-green-700 hover:bg-green-100"
-                              : "bg-gray-100 text-gray-500 hover:bg-gray-100"
-                          }
-                        >
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              : "bg-muted text-muted-foreground hover:bg-muted"
+                          }>
                           {shift.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
@@ -519,21 +523,21 @@ export function ShiftsManager({
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleOpenEditShift(shift)}
-                                className="h-8 w-8 p-0 hover:bg-zinc-100"
-                              >
-                                <Edit className="h-4 w-4 text-zinc-600" />
+                                className="h-8 w-8 p-0 hover:bg-muted">
+                                <Edit className="h-4 w-4 text-muted-foreground" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDeleteShift(shift.id)}
-                                className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
-                              >
+                                className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </>
                           ) : (
-                            <span className="text-xs text-gray-400">—</span>
+                            <span className="text-xs text-muted-foreground">
+                              —
+                            </span>
                           )}
                         </div>
                       </TableCell>
@@ -548,37 +552,38 @@ export function ShiftsManager({
         {/* CALENDAR/GRID VIEW */}
         <TabsContent value="calendar">
           <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-            {DAYS_OF_WEEK.map((day) => {
-              const dayShifts = filteredShifts.filter((s) => s.dayOfWeek === day.value);
+            {DAYS_OF_WEEK.map(day => {
+              const dayShifts = filteredShifts.filter(
+                s => s.dayOfWeek === day.value,
+              );
               return (
-                <Card key={day.value} className="border-none shadow-sm bg-white min-h-[300px] flex flex-col">
-                  <CardHeader className="bg-zinc-50/80 p-3 border-b border-zinc-100 flex flex-row justify-between items-center">
-                    <CardTitle className="text-xs font-bold text-zinc-700 uppercase tracking-wide">
+                <Card key={day.value} className="min-h-[300px] flex flex-col">
+                  <CardHeader className="bg-muted/50 p-3 border-b flex flex-row justify-between items-center">
+                    <CardTitle className="text-xs font-bold text-foreground uppercase tracking-wide">
                       {day.label}
                     </CardTitle>
-                    <Badge variant="secondary" className="text-[10px] h-5 bg-zinc-200">
+                    <Badge variant="secondary" className="text-[10px] h-5">
                       {dayShifts.length}
                     </Badge>
                   </CardHeader>
                   <CardContent className="p-3 flex-1 flex flex-col gap-2.5">
                     {dayShifts.length === 0 ? (
-                      <div className="text-center py-10 text-xs text-gray-400 my-auto">
+                      <div className="text-center py-10 text-xs text-muted-foreground my-auto">
                         No shifts scheduled
                       </div>
                     ) : (
-                      dayShifts.map((shift) => (
+                      dayShifts.map(shift => (
                         <div
                           key={shift.id}
                           className={`p-2.5 rounded-lg border text-xs relative group/item transition-all ${
                             shift.isActive
-                              ? "bg-blue-50/50 border-blue-100 hover:border-blue-300"
-                              : "bg-zinc-50/40 border-zinc-200 hover:border-zinc-300"
-                          }`}
-                        >
-                          <div className="font-semibold text-zinc-800 leading-tight">
+                              ? "bg-blue-50/50 border-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:border-blue-800 dark:hover:border-blue-700"
+                              : "bg-muted/30 border-border hover:border-muted-foreground/30"
+                          }`}>
+                          <div className="font-semibold text-foreground leading-tight">
                             {shift.member.user.name || "Unnamed"}
                           </div>
-                          <div className="text-zinc-500 mt-1 flex items-center gap-1 font-medium">
+                          <div className="text-muted-foreground mt-1 flex items-center gap-1 font-medium">
                             <Clock className="h-3 w-3" />
                             <span>
                               {shift.startTime}–{shift.endTime}
@@ -587,12 +592,11 @@ export function ShiftsManager({
 
                           {shift.breaks.length > 0 && (
                             <div className="mt-1.5 flex flex-wrap gap-0.5">
-                              {shift.breaks.map((b) => (
+                              {shift.breaks.map(b => (
                                 <span
                                   key={b.id}
-                                  className="bg-orange-100/60 text-orange-800 text-[8px] px-1 rounded flex items-center gap-0.5"
-                                  title={`Break: ${b.startTime}-${b.endTime} ${b.description || ""}`}
-                                >
+                                  className="bg-orange-100/60 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 text-[8px] px-1 rounded flex items-center gap-0.5"
+                                  title={`Break: ${b.startTime}-${b.endTime} ${b.description || ""}`}>
                                   <Coffee className="h-2 w-2" />
                                   {b.startTime}
                                 </span>
@@ -601,17 +605,15 @@ export function ShiftsManager({
                           )}
 
                           {canManage && (
-                            <div className="absolute right-1 top-1 flex opacity-0 group-hover/item:opacity-100 transition-opacity gap-0.5 bg-white/90 p-0.5 rounded shadow-sm border border-zinc-100">
+                            <div className="absolute right-1 top-1 flex opacity-0 group-hover/item:opacity-100 transition-opacity gap-0.5 bg-card/90 p-0.5 rounded shadow-sm border">
                               <button
                                 onClick={() => handleOpenEditShift(shift)}
-                                className="p-1 hover:bg-zinc-100 rounded text-zinc-600"
-                              >
+                                className="p-1 hover:bg-muted rounded text-muted-foreground">
                                 <Edit className="h-3 w-3" />
                               </button>
                               <button
                                 onClick={() => handleDeleteShift(shift.id)}
-                                className="p-1 hover:bg-red-50 rounded text-red-500"
-                              >
+                                className="p-1 hover:bg-destructive/10 rounded text-destructive">
                                 <Trash2 className="h-3 w-3" />
                               </button>
                             </div>
@@ -629,19 +631,19 @@ export function ShiftsManager({
 
       {/* SHIFT MODAL */}
       <Dialog open={isShiftModalOpen} onOpenChange={setIsShiftModalOpen}>
-        <DialogContent className="max-w-md bg-white">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
               {editingShift ? "Edit Staff Shift" : "Add New Staff Shift"}
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500">
+            <DialogDescription className="text-xs">
               Set up a recurring weekly shift. Shifttimes must not overlap.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSaveShift} className="space-y-4 pt-2">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-xs rounded-lg flex items-center gap-2">
+              <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-lg flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -649,16 +651,19 @@ export function ShiftsManager({
 
             {!editingShift && (
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-700">Staff Member</label>
+                <label className="text-xs font-semibold text-foreground">
+                  Staff Member
+                </label>
                 <Select
                   value={shiftFormData.memberId}
-                  onValueChange={(val) => setShiftFormData((prev) => ({ ...prev, memberId: val }))}
-                >
-                  <SelectTrigger className="border-zinc-200">
+                  onValueChange={val =>
+                    setShiftFormData(prev => ({ ...prev, memberId: val }))
+                  }>
+                  <SelectTrigger>
                     <SelectValue placeholder="Select member" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allMembers.map((m) => (
+                    {allMembers.map(m => (
                       <SelectItem key={m.id} value={m.id}>
                         {m.user.name || m.user.email} ({m.role.toLowerCase()})
                       </SelectItem>
@@ -670,16 +675,19 @@ export function ShiftsManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-700">Day of Week</label>
+                <label className="text-xs font-semibold text-foreground">
+                  Day of Week
+                </label>
                 <Select
                   value={shiftFormData.dayOfWeek}
-                  onValueChange={(val) => setShiftFormData((prev) => ({ ...prev, dayOfWeek: val }))}
-                >
-                  <SelectTrigger className="border-zinc-200">
+                  onValueChange={val =>
+                    setShiftFormData(prev => ({ ...prev, dayOfWeek: val }))
+                  }>
+                  <SelectTrigger>
                     <SelectValue placeholder="Day" />
                   </SelectTrigger>
                   <SelectContent>
-                    {DAYS_OF_WEEK.map((d) => (
+                    {DAYS_OF_WEEK.map(d => (
                       <SelectItem key={d.value} value={d.value.toString()}>
                         {d.label}
                       </SelectItem>
@@ -689,52 +697,62 @@ export function ShiftsManager({
               </div>
 
               <div className="flex items-center justify-between pt-6 px-1">
-                <span className="text-xs font-semibold text-zinc-700">Active Status</span>
+                <span className="text-xs font-semibold text-foreground">
+                  Active Status
+                </span>
                 <Switch
                   checked={shiftFormData.isActive}
-                  onCheckedChange={(val) => setShiftFormData((prev) => ({ ...prev, isActive: val }))}
+                  onCheckedChange={val =>
+                    setShiftFormData(prev => ({ ...prev, isActive: val }))
+                  }
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-700">Start Time</label>
+                <label className="text-xs font-semibold text-foreground">
+                  Start Time
+                </label>
                 <Input
                   type="time"
                   value={shiftFormData.startTime}
-                  onChange={(e) => setShiftFormData((prev) => ({ ...prev, startTime: e.target.value }))}
-                  className="border-zinc-200"
+                  onChange={e =>
+                    setShiftFormData(prev => ({
+                      ...prev,
+                      startTime: e.target.value,
+                    }))
+                  }
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-700">End Time</label>
+                <label className="text-xs font-semibold text-foreground">
+                  End Time
+                </label>
                 <Input
                   type="time"
                   value={shiftFormData.endTime}
-                  onChange={(e) => setShiftFormData((prev) => ({ ...prev, endTime: e.target.value }))}
-                  className="border-zinc-200"
+                  onChange={e =>
+                    setShiftFormData(prev => ({
+                      ...prev,
+                      endTime: e.target.value,
+                    }))
+                  }
                   required
                 />
               </div>
             </div>
 
-            <DialogFooter className="pt-4 border-t border-zinc-100">
+            <DialogFooter className="pt-4 border-t">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setIsShiftModalOpen(false)}
-                className="border-zinc-200"
-              >
+                onClick={() => setIsShiftModalOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white"
-              >
+              <Button type="submit" disabled={isPending}>
                 {isPending ? "Saving..." : "Save Shift"}
               </Button>
             </DialogFooter>
@@ -744,21 +762,22 @@ export function ShiftsManager({
 
       {/* BREAKS MODAL */}
       <Dialog open={isBreaksModalOpen} onOpenChange={setIsBreaksModalOpen}>
-        <DialogContent className="max-w-md bg-white">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Coffee className="h-5 w-5 text-orange-600" />
+              <Coffee className="h-5 w-5 text-orange-600 dark:text-orange-400" />
               <span>Manage Shift Breaks</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500">
+            <DialogDescription className="text-xs">
               Configure scheduled breaks during this shift (
-              {activeShiftForBreaks?.startTime} – {activeShiftForBreaks?.endTime}).
+              {activeShiftForBreaks?.startTime} –{" "}
+              {activeShiftForBreaks?.endTime}).
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-xs rounded-lg flex items-center gap-2">
+              <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-lg flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -766,33 +785,35 @@ export function ShiftsManager({
 
             {/* List of Breaks */}
             <div className="space-y-2">
-              <span className="text-xs font-bold text-zinc-700">Current Breaks</span>
+              <span className="text-xs font-bold text-foreground">
+                Current Breaks
+              </span>
               {activeShiftForBreaks?.breaks.length === 0 ? (
-                <div className="text-center py-6 text-xs text-gray-400 bg-zinc-50 rounded-lg border border-dashed">
+                <div className="text-center py-6 text-xs text-muted-foreground bg-muted/30 rounded-lg border border-dashed">
                   No breaks added yet
                 </div>
               ) : (
                 <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
-                  {activeShiftForBreaks?.breaks.map((b) => (
+                  {activeShiftForBreaks?.breaks.map(b => (
                     <div
                       key={b.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg border border-zinc-100 bg-zinc-50/50 hover:bg-zinc-50"
-                    >
+                      className="flex items-center justify-between p-2.5 rounded-lg border bg-muted/30 hover:bg-muted/50">
                       <div className="flex flex-col">
-                        <span className="text-xs font-semibold text-zinc-800">
+                        <span className="text-xs font-semibold text-foreground">
                           {b.startTime} – {b.endTime}
                         </span>
                         {b.description && (
-                          <span className="text-[10px] text-zinc-500">{b.description}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {b.description}
+                          </span>
                         )}
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteBreak(b.id)}
-                        className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 rounded-full"
-                        disabled={isPending}
-                      >
+                        className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 rounded-full"
+                        disabled={isPending}>
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
@@ -802,48 +823,72 @@ export function ShiftsManager({
             </div>
 
             {/* Add Break Form */}
-            <form onSubmit={handleAddBreak} className="border-t border-zinc-100 pt-4 space-y-3.5">
-              <span className="text-xs font-bold text-zinc-700">Add New Break</span>
+            <form
+              onSubmit={handleAddBreak}
+              className="border-t pt-4 space-y-3.5">
+              <span className="text-xs font-bold text-foreground">
+                Add New Break
+              </span>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-zinc-600">Start Time</label>
+                  <label className="text-[10px] font-semibold text-foreground">
+                    Start Time
+                  </label>
                   <Input
                     type="time"
                     value={breakFormData.startTime}
-                    onChange={(e) => setBreakFormData((prev) => ({ ...prev, startTime: e.target.value }))}
-                    className="border-zinc-200 h-9 text-xs"
+                    onChange={e =>
+                      setBreakFormData(prev => ({
+                        ...prev,
+                        startTime: e.target.value,
+                      }))
+                    }
+                    className="h-9 text-xs"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-zinc-600">End Time</label>
+                  <label className="text-[10px] font-semibold text-foreground">
+                    End Time
+                  </label>
                   <Input
                     type="time"
                     value={breakFormData.endTime}
-                    onChange={(e) => setBreakFormData((prev) => ({ ...prev, endTime: e.target.value }))}
-                    className="border-zinc-200 h-9 text-xs"
+                    onChange={e =>
+                      setBreakFormData(prev => ({
+                        ...prev,
+                        endTime: e.target.value,
+                      }))
+                    }
+                    className="h-9 text-xs"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-zinc-600">Description</label>
+                <label className="text-[10px] font-semibold text-foreground">
+                  Description
+                </label>
                 <Input
                   placeholder="e.g. Lunch Break, Coffee Break"
                   value={breakFormData.description}
-                  onChange={(e) => setBreakFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  className="border-zinc-200 h-9 text-xs"
+                  onChange={e =>
+                    setBreakFormData(prev => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                  className="h-9 text-xs"
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={isPending}
-                className="w-full bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white h-9 text-xs mt-1"
-              >
+                className="w-full h-9 text-xs mt-1">
                 {isPending ? "Adding..." : "Add Break"}
               </Button>
             </form>

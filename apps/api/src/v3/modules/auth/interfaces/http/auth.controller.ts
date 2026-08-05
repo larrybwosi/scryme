@@ -15,7 +15,7 @@ import {
   Options,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
-import { AllowPublic } from "../../../../../common/decorators/auth.decorator";
+import { AllowPublic } from "@/common/decorators/auth.decorator";
 import { ExchangeTokenUseCase } from "../../application/use-cases/exchange-token.use-case";
 import {
   TokenRequestDto,
@@ -28,6 +28,7 @@ import { AuthService } from "@/auth/auth.service";
 import {
   ApiErrorResponseDto,
   ApiResponseDto,
+  ApiStandardResponse,
 } from "@/v3/common/dto/response.dto";
 
 @ApiTags("V3 Auth")
@@ -46,7 +47,7 @@ export class AuthController {
     summary: "Exchange client credentials for an access token",
     operationId: "Auth_ExchangeToken",
   })
-  @ApiResponse({
+  @ApiStandardResponse({
     status: 201,
     type: TokenResponseDto,
     description: "Token successfully exchanged",

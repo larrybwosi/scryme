@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from "@nestjs/swagger";
 import { PricingModel, BookingStatus } from "@repo/db";
-import { IsEnum, IsString, IsNumber, IsOptional, IsArray, IsDateString, IsUUID, Min, IsBoolean } from "class-validator";
+import { IsEnum, IsString, IsNumber, IsOptional, IsArray, IsDateString, IsUUID, Min, IsBoolean, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
+import { CmsCustomFieldsDto } from "../../../catalog/application/dto/product.dto";
 
 export class CreateServiceCategoryDto {
   @ApiProperty({ description: "Category name" })
@@ -79,9 +81,11 @@ export class CreateServiceDto {
   @IsNumber()
   bufferTimeAfter?: number;
 
-  @ApiPropertyOptional({ description: "Custom fields (JSON)", type: 'object', additionalProperties: true })
+  @ApiPropertyOptional({ type: () => CmsCustomFieldsDto })
   @IsOptional()
-  customFields?: Record<string, any>;
+  @ValidateNested()
+  @Type(() => CmsCustomFieldsDto)
+  customFields?: CmsCustomFieldsDto;
 
   @ApiPropertyOptional({ description: "Assigned staff member IDs" })
   @IsOptional()

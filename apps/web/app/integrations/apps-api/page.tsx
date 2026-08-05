@@ -312,7 +312,8 @@ function AppsApiContent() {
                 ) : (
                   <div className="space-y-3 py-3">
                     <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-xs border border-destructive/20 font-medium">
-                      Copy the client secret now &mdash; it will not be shown again.
+                      Copy the client secret now &mdash; it will not be shown
+                      again.
                     </div>
                     <div className="grid gap-1.5">
                       <Label className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
@@ -813,7 +814,7 @@ function AppsApiContent() {
             {registries.length === 0 &&
               deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length ===
                 0 && (
-                <div className="bg-card h-[200px] rounded-xl border border-dashed border-border flex flex-col items-center justify-center text-center p-6">
+                <div className="bg-card h-50 rounded-xl border border-dashed border-border flex flex-col items-center justify-center text-center p-6">
                   <div className="p-3 bg-muted rounded-lg mb-2 border border-border">
                     <Cpu className="w-7 h-7 text-muted-foreground" />
                   </div>

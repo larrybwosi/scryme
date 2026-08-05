@@ -4,12 +4,33 @@ This document covers the **Customer Registration, Management, Addresses**, and *
 
 ---
 
+## 🔐 Customer Authentication & Identity Providers
+
+Scryme V3 supports native and federated self-authentication options using **Zitadel** and standard credential providers. This allows your customers to register, sign-in, and manage their profiles across web, mobile (Android), and headless environments.
+
+### Supported Authentication Methods
+1. **Google Social Sign-In**: Seamless, single-tap OAuth2 federation.
+2. **Email and Password**: Traditional local credential flow.
+
+### How It Works (The Self-Authentication Cycle)
+- **Federated Login (e.g., Google/OIDC)**:
+  The client application coordinates with Zitadel to complete the authorization code flow (with PKCE), yielding an identity ID and a Bearer JWT.
+- **Backend Syncing**:
+  When the customer makes an API call with the Bearer token or accesses the portal callback, the backend:
+  1. Decodes and verifies the token against the Zitadel JWKS keys.
+  2. Extracts claims (such as `sub` as `zitadelUserId`, `email`, `name`).
+  3. Creates or updates the customer’s profile inside the database, mapping the external Zitadel identity to our local database models via `ExternalMapping` (`provider: "ZITADEL"`).
+- **Subsequent Profile Updates**:
+  Once self-registered/logged-in, customers can safely modify their details (such as `company`, `phone`, `dateOfBirth`, or `taxId` KRA PIN) via the secure update profile endpoints.
+
+---
+
 ## 👥 Customer APIs
 
 All customer-related endpoints are grouped under the `:orgSlug/customers` path.
 
 ### 1. Register a Customer
-Allows registering a new customer profile. Connected apps have the option to provide a Zitadel User ID to link the profile, or register a customer purely using standard credentials (email/name/phone/etc.), creating/re-using customer profiles directly in the database.
+Allows registering a new customer profile. Connected apps can provide a `zitadelUserId` to link with an existing Zitadel/social identity, or register a customer using standard credentials.
 
 * **Endpoint**: `POST /v3/:orgSlug/customers/register`
 * **Authentication**: Public (Uses `@AllowPublic()`)
@@ -21,6 +42,10 @@ Allows registering a new customer profile. Connected apps have the option to pro
     "email": "john.doe@example.com",
     "phone": "+254700000000", // Optional
     "location": "Nairobi, Kenya", // Optional
+    "company": "Acme Corporation", // Optional: Business or corporate name
+    "customerType": "B2B_PREMIUM", // Optional: Custom classification tag
+    "dateOfBirth": "1990-05-15", // Optional: ISO string format (YYYY-MM-DD)
+    "taxId": "PIN-KRA-123456", // Optional: Tax PIN (e.g. KRA PIN for Kenya)
     "metadata": {
       "preferences": "premium"
     }, // Optional
@@ -36,10 +61,18 @@ Allows registering a new customer profile. Connected apps have the option to pro
 * **Response** (201 Created):
   ```json
   {
-    "id": "cust_abc123",
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "phone": "+254700000000"
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "id": "cust_abc123",
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "phone": "+254700000000",
+      "company": "Acme Corporation",
+      "customerType": "B2B_PREMIUM",
+      "dateOfBirth": "1990-05-15",
+      "taxId": "PIN-KRA-123456"
+    }
   }
   ```
 
@@ -52,14 +85,22 @@ Retrieves a paginated list of customers registered under the active organization
   - `offset`: number (default: 0)
 * **Response** (200 OK):
   ```json
-  [
-    {
-      "id": "cust_abc123",
-      "name": "John Doe",
-      "email": "john.doe@example.com",
-      "phone": "+254700000000"
-    }
-  ]
+  {
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": [
+      {
+        "id": "cust_abc123",
+        "name": "John Doe",
+        "email": "john.doe@example.com",
+        "phone": "+254700000000",
+        "company": "Acme Corporation",
+        "customerType": "B2B_PREMIUM",
+        "dateOfBirth": "1990-05-15",
+        "taxId": "PIN-KRA-123456"
+      }
+    ]
+  }
   ```
 
 ### 3. Get Customer by ID
@@ -69,31 +110,49 @@ Retrieves details of a single customer profile by their unique ID.
 * **Response** (200 OK):
   ```json
   {
-    "id": "cust_abc123",
-    "name": "John Doe",
-    "email": "john.doe@example.com",
-    "phone": "+254700000000"
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "id": "cust_abc123",
+      "name": "John Doe",
+      "email": "john.doe@example.com",
+      "phone": "+254700000000",
+      "company": "Acme Corporation",
+      "customerType": "B2B_PREMIUM",
+      "dateOfBirth": "1990-05-15",
+      "taxId": "PIN-KRA-123456"
+    }
   }
   ```
 
 ### 4. Update Customer Profile
-Updates details of an existing customer profile.
+Updates details of an existing customer profile. Allows self-authenticated users to add or modify secondary profile fields at any time.
 
 * **Endpoint**: `PATCH /v3/:orgSlug/customers/:id`
 * **Request Body** (`UpdateCustomerDto`):
   ```json
   {
     "name": "John Doe Junior",
-    "phone": "+254711111111"
+    "phone": "+254711111111",
+    "company": "Acme Corporation International",
+    "taxId": "PIN-KRA-99999"
   }
   ```
 * **Response** (200 OK):
   ```json
   {
-    "id": "cust_abc123",
-    "name": "John Doe Junior",
-    "email": "john.doe@example.com",
-    "phone": "+254711111111"
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "id": "cust_abc123",
+      "name": "John Doe Junior",
+      "email": "john.doe@example.com",
+      "phone": "+254711111111",
+      "company": "Acme Corporation International",
+      "customerType": "B2B_PREMIUM",
+      "dateOfBirth": "1990-05-15",
+      "taxId": "PIN-KRA-99999"
+    }
   }
   ```
 
@@ -105,7 +164,11 @@ Deletes or deactivates a customer profile. Uses standard Prisma cascade/foreign-
   ```json
   {
     "success": true,
-    "message": "Customer deleted successfully" // or "Customer deactivated successfully"
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "success": true,
+      "message": "Customer deleted successfully"
+    }
   }
   ```
 
@@ -121,17 +184,21 @@ Retrieves all registered addresses for a customer.
 * **Endpoint**: `GET /v3/:orgSlug/customers/:id/addresses`
 * **Response** (200 OK):
   ```json
-  [
-    {
-      "id": "addr_987",
-      "customerId": "cust_abc123",
-      "label": "Home",
-      "street1": "123 Main St",
-      "city": "Nairobi",
-      "country": "Kenya",
-      "isDefault": true
-    }
-  ]
+  {
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": [
+      {
+        "id": "addr_987",
+        "customerId": "cust_abc123",
+        "label": "Home",
+        "street1": "123 Main St",
+        "city": "Nairobi",
+        "country": "Kenya",
+        "isDefault": true
+      }
+    ]
+  }
   ```
 
 ### 2. Add or Update Customer Address
@@ -151,13 +218,17 @@ Adds a new address for the customer, or updates an existing address if matching 
 * **Response** (201 Created):
   ```json
   {
-    "id": "addr_654",
-    "customerId": "cust_abc123",
-    "label": "Office",
-    "street1": "Westlands Commercial Center",
-    "city": "Nairobi",
-    "country": "Kenya",
-    "isDefault": false
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "id": "addr_654",
+      "customerId": "cust_abc123",
+      "label": "Office",
+      "street1": "Westlands Commercial Center",
+      "city": "Nairobi",
+      "country": "Kenya",
+      "isDefault": false
+    }
   }
   ```
 
@@ -176,19 +247,23 @@ Retrieves the active cart for a customer or a guest session.
 * **Response** (200 OK):
   ```json
   {
-    "id": "cart_xyz",
-    "organizationId": "org_123",
-    "customerId": "cust_abc123",
-    "sessionId": "sess_888",
-    "status": "ACTIVE",
-    "items": [
-      {
-        "id": "item_111",
-        "productId": "prod_456",
-        "variantId": "var_789",
-        "quantity": 2
-      }
-    ]
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "id": "cart_xyz",
+      "organizationId": "org_123",
+      "customerId": "cust_abc123",
+      "sessionId": "sess_888",
+      "status": "ACTIVE",
+      "items": [
+        {
+          "id": "item_111",
+          "productId": "prod_456",
+          "variantId": "var_789",
+          "quantity": 2
+        }
+      ]
+    }
   }
   ```
 
@@ -208,11 +283,15 @@ Adds a product variant or service booking to the cart. If the item already exist
 * **Response** (201 Created):
   ```json
   {
-    "id": "item_111",
-    "cartId": "cart_xyz",
-    "productId": "prod_456",
-    "variantId": "var_789",
-    "quantity": 3
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "id": "item_111",
+      "cartId": "cart_xyz",
+      "productId": "prod_456",
+      "variantId": "var_789",
+      "quantity": 3
+    }
   }
   ```
 
@@ -231,7 +310,11 @@ Removes a specific product/variant/service from the cart.
 * **Response** (200 OK):
   ```json
   {
-    "id": "item_111"
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "id": "item_111"
+    }
   }
   ```
 
@@ -244,7 +327,11 @@ Deletes all items from the active shopping cart, resetting it to an empty state.
 * **Response** (200 OK):
   ```json
   {
-    "count": 1
+    "success": true,
+    "timestamp": "2026-08-05T10:00:00.000Z",
+    "data": {
+      "count": 1
+    }
   }
   ```
 

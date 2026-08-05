@@ -1,3 +1,4 @@
+// App.tsx
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Search,
@@ -6,37 +7,27 @@ import {
   Terminal,
   ChevronRight,
   ChevronDown,
-  Globe,
   BookOpen,
   Code,
   Lock,
   Menu,
   X,
-  FileText,
   Workflow,
-  Shield,
-  Layers,
-  Fingerprint,
   RefreshCw,
   Sun,
   Moon,
   Play,
   Send,
-  Sparkles,
   ArrowLeft,
   ArrowRight,
+  Fingerprint,
 } from "lucide-react";
 import openapiSpec from "./openapi.json";
-
-// --- Design Tokens (Scryme) ---
-const colors = {
-  inkBg: "var(--bg-color)",
-  inkCard: "var(--card-color)",
-  inkBorder: "var(--border-color)",
-  brass: "#C89A4B",
-  paper: "var(--text-color)",
-  lightText: "var(--light-text-color)",
-};
+import CmsCustomizationGuide, {
+  PRESETS,
+  type CmsSimulatorState,
+} from "./components/CmsCustomizationGuide";
+import GlobalResponseGuide from "./components/GlobalResponseGuide";
 
 // --- Type Definitions for parsed schema ---
 interface Endpoint {
@@ -52,39 +43,869 @@ interface Endpoint {
   tag: string;
 }
 
-// Preset definitions for CMS Customization Simulator
-const PRESETS = {
-  sourdough: {
-    name: "Artisan Sourdough Masterclass",
-    sku: "SRV-BKA-001",
-    price: 120.00,
-    markdownDescription: "# Sourdough Masterclass 🌾\nLearn fermentation secrets from our master bakers.\n\n### Outline\n- Wild yeast starter cultivation\n- High-hydration mixing\n- Bulk proofing & scoring",
-    imageUrl: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800",
-    seoTitle: "Artisan Sourdough Masterclass | Scryme Bakery",
-    seoDesc: "Learn organic sourdough artisan baking techniques in a 4-hour hands-on class.",
-    instructor: "Marie Dubois",
-  },
-  banneton: {
-    name: "Premium Round Proofing Banneton",
-    sku: "PROD-BKA-BANN-02",
-    price: 24.99,
-    markdownDescription: "# Round Cane Proofing Banneton 🧺\nHand-crafted from 100% natural organic Indonesian rattan cane.\n\n## Features\n- Draws moisture away for crisper crust\n- Flour leaves beautiful spiral designs",
-    imageUrl: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=800",
-    seoTitle: "Premium Indonesian Cane Banneton | Scryme Shop",
-    seoDesc: "Buy premium Indonesian cane rattan proofing banneton baskets with linen liners.",
-    instructor: "N/A (Product)",
-  },
-  spa: {
-    name: "Traditional Swedish Massage",
-    sku: "SRV-SPA-004",
-    price: 85.00,
-    markdownDescription: "# Traditional Swedish Massage 💆‍♀️\nRestore balance and ease tension with our signature body therapy.\n\n### Benefits\n- Stimulates lymphatic system\n- Relieves chronic muscle tightness\n- Promotes deep full-body relaxation",
-    imageUrl: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800",
-    seoTitle: "Swedish Body Therapy Massage | Scryme Spa",
-    seoDesc: "Relax and rejuvenate with our signature swedish body therapy and hot oils.",
-    instructor: "Sarah Jenkins",
-  }
+// Shared method badge styling — used in sidebar + detail header
+const methodStyles: Record<string, string> = {
+  GET: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25",
+  POST: "bg-blue-500/10 text-blue-400 border-blue-500/25",
+  PATCH: "bg-amber-500/10 text-amber-400 border-amber-500/25",
+  PUT: "bg-amber-500/10 text-amber-400 border-amber-500/25",
+  DELETE: "bg-rose-500/10 text-rose-400 border-rose-500/25",
 };
+
+const methodBadge = (method: string) =>
+  methodStyles[method] || "bg-slate-500/10 text-slate-400 border-slate-500/25";
+
+function getFallbackDataForPath(
+  path: string,
+  method: string,
+  operationId: string,
+  summary: string,
+): any {
+  const cleanPath = path.toLowerCase();
+
+  // Webhooks
+  if (cleanPath.includes("/webhooks")) {
+    if (method === "GET") {
+      return [
+        {
+          id: "wh_1",
+          name: "ERP Inventory Sync",
+          url: "https://api.merchant.com/v3/webhooks/inventory",
+          events: ["inventory.updated", "inventory.low_stock"],
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        },
+      ];
+    }
+    if (method === "POST") {
+      return {
+        id: "wh_" + Math.random().toString(36).substr(2, 5),
+        name: summary || "New Webhook Subscription",
+        url: "https://api.merchant.com/v3/webhooks/callback",
+        events: ["transaction.created", "customer.registered"],
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+    }
+    return { success: true, message: "Webhook action completed successfully" };
+  }
+
+  // Inventory Integrity & Trace
+  if (cleanPath.includes("/inventory/integrity/verify")) {
+    return {
+      verified: true,
+      integrityScore: 100,
+      checkedAt: new Date().toISOString(),
+      issuesFound: 0,
+      corruptedRecords: [],
+    };
+  }
+  if (cleanPath.includes("/inventory/integrity/fix/")) {
+    return {
+      fixed: true,
+      variantId: path.split("/").pop() || "var_123",
+      reconciledQuantity: 250,
+      resolvedAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/inventory/trace/")) {
+    return {
+      identifier: path.split("/").pop() || "BATCH-999",
+      batchId: "bat_trace_888",
+      originSupplierId: "sup_acme_001",
+      traceTimeline: [
+        {
+          action: "RECEIVE",
+          date: "2026-02-15T08:00:00Z",
+          location: "Warehouse North",
+          member: "mem_john_01",
+          quantity: 1000,
+        },
+        {
+          action: "QUALITY_CHECK",
+          date: "2026-02-15T11:30:00Z",
+          status: "PASSED",
+          inspector: "mem_inspector_02",
+        },
+        {
+          action: "DISPATCH",
+          date: "2026-02-20T14:15:00Z",
+          targetLocation: "Store Branch B",
+          quantity: 300,
+        },
+      ],
+    };
+  }
+  if (
+    cleanPath.includes("/inventory/batches/") &&
+    cleanPath.includes("/split")
+  ) {
+    return {
+      parentBatchId: path.split("/").slice(-2, -1)[0] || "bat_parent",
+      childBatches: [
+        {
+          id: "bat_child_001",
+          batchNumber: "B-SPLIT-01",
+          quantity: 150,
+          unit: "kg",
+        },
+        {
+          id: "bat_child_002",
+          batchNumber: "B-SPLIT-02",
+          quantity: 150,
+          unit: "kg",
+        },
+      ],
+    };
+  }
+  if (cleanPath.includes("/inventory/batches/merge")) {
+    return {
+      mergedBatchId: "bat_merged_abc",
+      mergedBatchNumber: "B-MERGE-2026",
+      sourceBatchIds: ["bat_source_1", "bat_source_2"],
+      totalQuantity: 500,
+      unit: "pcs",
+    };
+  }
+  if (
+    cleanPath.includes("/inventory/assemblies") &&
+    cleanPath.includes("/complete")
+  ) {
+    return {
+      assemblyId: path.split("/").slice(-2, -1)[0] || "asm_123",
+      status: "COMPLETED",
+      completedAt: new Date().toISOString(),
+      producedVariantId: "var_final_product",
+      quantityProduced: 50,
+      materialsConsumed: [
+        { variantId: "var_raw_material_1", quantity: 100 },
+        { variantId: "var_raw_material_2", quantity: 50 },
+      ],
+    };
+  }
+  if (cleanPath.includes("/inventory/assemblies")) {
+    return {
+      assemblyId: "asm_plan_999",
+      name: "Standard Packaging Bundle",
+      status: "PENDING_PRODUCTION",
+      scheduledDate: "2026-03-10T10:00:00Z",
+      components: [
+        { variantId: "var_box_large", quantity: 1 },
+        { variantId: "var_tape_premium", quantity: 0.1 },
+      ],
+    };
+  }
+  if (cleanPath.includes("/inventory/adjustments/request")) {
+    return {
+      adjustmentRequestId: "adj_req_777",
+      status: "PENDING_APPROVAL",
+      requestedBy: "mem_cashier_05",
+      variantId: "var_bagel_sesame",
+      requestedAdjustment: -12,
+      reason: "Damaged during morning delivery setup",
+    };
+  }
+  if (
+    cleanPath.includes("/inventory/adjustments") &&
+    cleanPath.includes("/approve")
+  ) {
+    return {
+      adjustmentId: path.split("/").slice(-2, -1)[0] || "adj_123",
+      status: "APPROVED",
+      approvedBy: "mem_manager_01",
+      approvedAt: new Date().toISOString(),
+    };
+  }
+  if (
+    cleanPath.includes("/inventory/adjustments") &&
+    cleanPath.includes("/reject")
+  ) {
+    return {
+      adjustmentId: path.split("/").slice(-2, -1)[0] || "adj_123",
+      status: "REJECTED",
+      rejectedBy: "mem_manager_01",
+      rejectionReason: "Insufficient physical evidence or photo provided",
+      rejectedAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/inventory/adjustments")) {
+    return [
+      {
+        id: "adj_01",
+        variantId: "var_flour_all_purpose",
+        quantityChanged: -25,
+        reason: "Sack spillage / water damage",
+        status: "APPROVED",
+        createdAt: "2026-03-01T14:20:00Z",
+      },
+    ];
+  }
+  if (cleanPath.includes("/inventory/analytics/supplier-lead-time")) {
+    return {
+      supplierId: "sup_flour_co",
+      averageLeadTimeDays: 3.2,
+      totalOrdersProcessed: 48,
+      reliabilityScore: 0.98,
+      onTimeDeliveryRate: 0.96,
+    };
+  }
+  if (cleanPath.includes("/inventory/analytics/waste")) {
+    return {
+      totalWasteQuantity: 145.5,
+      totalWasteValueAmount: 580.0,
+      shrinkageRatePercentage: 1.4,
+      byReasonCode: {
+        DAMAGED: 85.0,
+        EXPIRED: 45.5,
+        THEFT: 15.0,
+      },
+      computedAt: new Date().toISOString(),
+    };
+  }
+  if (
+    cleanPath.includes("/inventory/batches/") &&
+    cleanPath.includes("/unpack")
+  ) {
+    return {
+      unpackedBatchId: "bat_unpacked_999",
+      baseUnitQuantity: 1000,
+      baseUnitId: "unit_grams",
+      unpackedBy: "mem_baker_01",
+      unpackedAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/inventory/batches/scan-unpack")) {
+    return {
+      unpackedBatchId: "bat_scanned_888",
+      scannedQrCode: "QR-BATCH-WHEAT-50KG",
+      status: "SUCCESS_UNPACKED",
+      baseUnitQuantity: 50,
+      baseUnitId: "unit_kg",
+    };
+  }
+  if (
+    cleanPath.includes("/inventory/b2b/availability") ||
+    cleanPath.includes("/inventory/b2b/quick-inquiry")
+  ) {
+    return {
+      available: true,
+      requestedVariants: [
+        {
+          variantId: "var_croissant_butter",
+          requestedQuantity: 100,
+          availableQuantity: 120,
+          hasSufficientStock: true,
+        },
+      ],
+      defaultLocationId: "loc_central_bakery",
+    };
+  }
+
+  // CRM
+  if (cleanPath.includes("/crm/records") && cleanPath.includes("/notes")) {
+    return [
+      {
+        id: "crm_note_1",
+        content:
+          "Followed up with corporate client regarding custom baking event. Highly interested in organic options.",
+        createdById: "mem_sales_01",
+        createdAt: "2026-03-01T12:00:00Z",
+      },
+    ];
+  }
+  if (cleanPath.includes("/crm/records") && cleanPath.includes("/timeline")) {
+    return {
+      recordId: path.split("/").slice(-2, -1)[0] || "rec_123",
+      timeline: [
+        {
+          type: "NOTE",
+          id: "note_1",
+          content: "Created account profile",
+          date: "2026-02-10T10:00:00Z",
+          author: "mem_system",
+        },
+        {
+          type: "ACTIVITY",
+          id: "act_1",
+          activityType: "CALL",
+          description: "Intro call",
+          date: "2026-02-12T15:30:00Z",
+          outcome: "Interested",
+        },
+      ],
+    };
+  }
+  if (
+    cleanPath.includes("/crm/records") &&
+    cleanPath.includes("/associations")
+  ) {
+    return [
+      {
+        associationId: "crm_assoc_1",
+        relationshipId: "rel_company_to_contacts",
+        sourceRecordId: "rec_company_acme",
+        targetRecordId: "rec_contact_john_doe",
+        associatedAt: "2026-02-10T10:15:00Z",
+      },
+    ];
+  }
+  if (cleanPath.includes("/crm/records")) {
+    return {
+      id: "crm_rec_" + Math.random().toString(36).substr(2, 5),
+      objectId: "crm_obj_deals",
+      data: {
+        deal_value: 5000,
+        deal_stage: "PROPOSAL",
+        deal_title: "Acme Corp Bakery Catering",
+      },
+      ownerId: "mem_sales_mgr",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/crm/notes")) {
+    return {
+      id: "crm_note_new",
+      recordId: "rec_123",
+      content: "Client updated preferred delivery schedule.",
+      timelineDate: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/crm/activities")) {
+    return {
+      id: "crm_activity_new",
+      recordId: "rec_123",
+      type: "EMAIL",
+      description: "Sent pricing sheet proposal for review.",
+      metadata: { recipient: "purchasing@acme.com", status: "SENT" },
+      createdAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/crm/objects") && cleanPath.includes("/fields")) {
+    return [
+      {
+        name: "deal_value",
+        label: "Deal Value ($)",
+        type: "NUMBER",
+        isRequired: true,
+      },
+    ];
+  }
+  if (cleanPath.includes("/crm/objects")) {
+    return [
+      {
+        id: "obj_deals",
+        name: "deal",
+        label: "Deal",
+        labelPlural: "Deals",
+        description: "Sales opportunities",
+      },
+    ];
+  }
+  if (cleanPath.includes("/crm/relationships")) {
+    return [
+      {
+        id: "rel_1",
+        name: "company_employees",
+        type: "ONE_TO_MANY",
+        sourceObjectId: "obj_companies",
+        targetObjectId: "obj_contacts",
+      },
+    ];
+  }
+  if (cleanPath.includes("/crm/associations")) {
+    return {
+      id: "assoc_new",
+      relationshipId: "rel_1",
+      sourceRecordId: "rec_company_1",
+      targetRecordId: "rec_contact_1",
+      associatedAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/crm-integrations")) {
+    if (cleanPath.includes("/auth")) {
+      return {
+        authUrl:
+          "https://login.hubspot.com/oauth/authorize?client_id=scryme_hubspot_id&redirect_uri=https://api.scryme.tech/v3/hubspot/callback",
+      };
+    }
+    if (cleanPath.includes("/webhook")) {
+      return { status: "WEBHOOK_PROCESSED_SUCCESSFULLY" };
+    }
+    if (cleanPath.includes("/reply")) {
+      return {
+        success: true,
+        message: "Response successfully dispatched to integrated CRM provider",
+      };
+    }
+    return { success: true };
+  }
+
+  // Finance / Accounting Reports
+  if (cleanPath.includes("/finance/accounting/reports/profit-loss")) {
+    return {
+      revenue: 1250000.0,
+      costOfGoodsSold: 450000.0,
+      grossProfit: 800000.0,
+      operatingExpenses: 350000.0,
+      netProfit: 450000.0,
+      currencyCode: "KES",
+      startDate: "2026-01-01",
+      endDate: "2026-01-31",
+    };
+  }
+  if (cleanPath.includes("/finance/accounting/reports/balance-sheet")) {
+    return {
+      assets: {
+        currentAssets: {
+          cash: 250000.0,
+          inventory: 150000.0,
+          accountsReceivable: 50000.0,
+        },
+        fixedAssets: { equipment: 500000.0, property: 1200000.0 },
+        totalAssets: 2150000.0,
+      },
+      liabilities: {
+        currentLiabilities: {
+          accountsPayable: 75000.0,
+          salesTaxPayable: 25000.0,
+        },
+        longTermLiabilities: { bankLoan: 400000.0 },
+        totalLiabilities: 500000.0,
+      },
+      equity: {
+        retainedEarnings: 650000.0,
+        shareCapital: 1000000.0,
+        totalEquity: 1650000.0,
+      },
+      asOfDate: "2026-01-31",
+    };
+  }
+  if (cleanPath.includes("/finance/accounting/reports/cash-flow")) {
+    return {
+      operatingActivities: 180000.0,
+      investingActivities: -120000.0,
+      financingActivities: -20000.0,
+      netCashFlow: 40000.0,
+      cashAtBeginning: 210000.0,
+      cashAtEnd: 250000.0,
+      currencyCode: "KES",
+    };
+  }
+  if (cleanPath.includes("/finance/accounting/reports/tax-summary")) {
+    return {
+      jurisdiction: "Kenya Revenue Authority",
+      taxPeriod: "2026-Q1",
+      salesVatRate: 0.16,
+      taxableSalesAmount: 1250000.0,
+      outputVatCollected: 200000.0,
+      inputVatClaimable: 72000.0,
+      netVatPayable: 128000.0,
+      currencyCode: "KES",
+    };
+  }
+  if (cleanPath.includes("/finance/accounting/initialize")) {
+    return {
+      status: "SUCCESSFULLY_INITIALIZED",
+      chartOfAccountsCreated: true,
+      defaultAccountsCount: 45,
+      initializedAt: new Date().toISOString(),
+    };
+  }
+
+  // Petty cash
+  if (
+    cleanPath.includes("/finance/petty-cash") &&
+    cleanPath.includes("/transactions")
+  ) {
+    return [
+      {
+        id: "petty_tx_1",
+        amount: -250.0,
+        description: "Bought office milk and coffee",
+        date: "2026-03-02T10:00:00Z",
+        operatorMemberId: "mem_cashier_1",
+      },
+    ];
+  }
+  if (
+    cleanPath.includes("/finance/petty-cash") &&
+    cleanPath.includes("/top-up")
+  ) {
+    return {
+      fundId: path.split("/").slice(-2, -1)[0] || "fund_123",
+      topUpAmount: 5000.0,
+      newFloatBalance: 7500.0,
+      toppedUpAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/finance/petty-cash")) {
+    if (method === "GET") {
+      return [
+        {
+          id: "pc_fund_1",
+          name: "Bakery Register 1 Float",
+          floatAmount: 5000.0,
+          currentBalance: 4850.0,
+          currency: "KES",
+          responsibleMemberId: "mem_cashier_1",
+        },
+      ];
+    }
+    return {
+      id: "pc_fund_new",
+      name: "Office Petty Cash",
+      floatAmount: 10000.0,
+      currencyCode: "KES",
+      responsibleMemberId: "mem_admin_01",
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  // Expenses
+  if (cleanPath.includes("/finance/expenses/categories")) {
+    return [
+      { id: "cat_utilities", name: "Utilities", code: "EXP-UTI" },
+      { id: "cat_raw_materials", name: "Raw Materials", code: "EXP-RAW" },
+      { id: "cat_rent", name: "Rent & Leases", code: "EXP-RNT" },
+    ];
+  }
+  if (cleanPath.includes("/finance/expenses")) {
+    if (method === "GET") {
+      return [
+        {
+          id: "exp_1",
+          description: "Water bill January",
+          amount: 1200.0,
+          expenseDate: "2026-01-25",
+          categoryId: "cat_utilities",
+          status: "PAID",
+        },
+      ];
+    }
+    return {
+      id: "exp_new",
+      description: "Flour delivery supply invoice",
+      amount: 45000.0,
+      expenseDate: new Date().toISOString(),
+      categoryId: "cat_raw_materials",
+      status: "PENDING_APPROVAL",
+    };
+  }
+
+  // Utility accounts
+  if (cleanPath.includes("/finance/utility-accounts")) {
+    if (method === "GET") {
+      return [
+        {
+          id: "util_elec_01",
+          name: "KPLC Electricity Meter 1",
+          provider: "Kenya Power",
+          accountNumber: "331200921-01",
+          type: "ELECTRICITY",
+        },
+      ];
+    }
+    return {
+      id: "util_new",
+      name: "Nairobi Water Metre 2",
+      provider: "Nairobi Water",
+      accountNumber: "WAT-99211",
+      type: "WATER",
+    };
+  }
+
+  // Public Invoices & Downloads
+  if (cleanPath.includes("/public-invoices/")) {
+    if (cleanPath.includes("/download")) {
+      return {
+        downloadUrl:
+          "https://storage.scryme.tech/secure-invoices/inv_pdf_hash_2026.pdf?token=valid_download_token",
+        fileName: "scryme-invoice-download.pdf",
+        expiresAt: "2026-03-05T12:00:00Z",
+      };
+    }
+    if (cleanPath.includes("/generate-public-link")) {
+      return {
+        publicLinkUrl:
+          "https://api.scryme.tech/v3/public-invoices/tx_abc_123?token=public_view_token",
+        expirySeconds: 2592000,
+        expiresAt: "2026-04-02T12:00:00Z",
+      };
+    }
+  }
+
+  // Business accounts
+  if (cleanPath.includes("/business-accounts")) {
+    return {
+      id: "biz_acc_" + Math.random().toString(36).substr(2, 5),
+      name: "Grand Hotel Group",
+      taxId: "PIN-KRA-009121",
+      defaultLocationId: "loc_main_bakery",
+      creditLimit: 500000.0,
+      outstandingBalance: 125000.0,
+      crmTimeline: [],
+    };
+  }
+
+  // Admin
+  if (cleanPath.includes("/admin/stats")) {
+    return {
+      activeOrganizationsCount: 142,
+      totalUsersCount: 2561,
+      systemUptimePercentage: 99.98,
+      dailyTransactionsProcessed: 38400,
+      apiRequestsCount24h: 1250320,
+    };
+  }
+  if (
+    cleanPath.includes("/admin/organizations") ||
+    cleanPath.includes("/admin/organizations/")
+  ) {
+    if (cleanPath.includes("/subscription")) {
+      return {
+        tierSlug: "enterprise-growth",
+        status: "ACTIVE",
+        billingInterval: "MONTHLY",
+        dodoSubscriptionId: "sub_dodo_xyz_123",
+        currentPeriodEnd: "2026-04-01T00:00:00Z",
+      };
+    }
+    if (method === "GET") {
+      return [
+        {
+          id: "org_bakery_co",
+          name: "The French Bakery Co.",
+          slug: "bakery-co",
+          isActive: true,
+        },
+      ];
+    }
+    return {
+      id: "org_" + Math.random().toString(36).substr(2, 5),
+      name: summary || "New Organization",
+      slug: "new-org-slug",
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/admin/members")) {
+    return [
+      {
+        id: "mem_admin_01",
+        userEmail: "owner@scryme.tech",
+        role: "OWNER",
+        isActive: true,
+      },
+    ];
+  }
+  if (cleanPath.includes("/admin/users")) {
+    if (cleanPath.includes("/ban")) {
+      return {
+        status: "BANNED",
+        bannedUserId: path.split("/").slice(-2, -1)[0] || "usr_123",
+        banReason: "Violation of enterprise terms of service",
+      };
+    }
+    if (cleanPath.includes("/unban")) {
+      return {
+        status: "ACTIVE",
+        unbannedUserId: path.split("/").slice(-2, -1)[0] || "usr_123",
+        unbannedAt: new Date().toISOString(),
+      };
+    }
+    return [
+      {
+        id: "usr_123",
+        email: "admin@scryme.tech",
+        name: "Admin User",
+        status: "ACTIVE",
+      },
+    ];
+  }
+  if (cleanPath.includes("/admin/connected-apps")) {
+    return [
+      {
+        clientId: "client_id_crm_01",
+        clientName: "Salesforce CRM Link",
+        isActive: true,
+        scopes: ["inventory.read", "customers.read_write"],
+      },
+    ];
+  }
+  if (cleanPath.includes("/admin/system-logs")) {
+    return [
+      {
+        eventId: "log_9921",
+        action: "ORG_CREATE",
+        ipAddress: "192.168.1.50",
+        timestamp: new Date().toISOString(),
+        details: "Organization bakery-co created",
+      },
+    ];
+  }
+  if (cleanPath.includes("/admin/settings")) {
+    return [
+      { key: "allow_public_registrations", value: "false" },
+      { key: "default_currency", value: "KES" },
+    ];
+  }
+  if (cleanPath.includes("/admin/tiers")) {
+    return [
+      {
+        slug: "starter",
+        name: "Starter Tier",
+        price: 29.0,
+        memberLimit: 5,
+        features: ["pos", "basic_analytics"],
+      },
+    ];
+  }
+  if (cleanPath.includes("/admin/payments")) {
+    if (cleanPath.includes("/record")) {
+      return {
+        paymentRecordId: "pay_recorded_0091",
+        status: "VERIFIED",
+        organizationId: "org_1",
+        tierUpgraded: "growth",
+      };
+    }
+    return [
+      {
+        paymentId: "pay_1",
+        amount: 299.0,
+        reference: "MPESA-QRE9129A",
+        date: "2026-03-01",
+        status: "COMPLETED",
+      },
+    ];
+  }
+  if (cleanPath.includes("/admin/integrations/definitions")) {
+    return [
+      {
+        id: "int_shopify",
+        name: "Shopify",
+        slug: "shopify",
+        category: "E_COMMERCE",
+        isActive: true,
+      },
+    ];
+  }
+  if (cleanPath.includes("/admin/integrations/active")) {
+    return [
+      {
+        id: "active_int_01",
+        orgId: "org_bakery_co",
+        definitionId: "int_shopify",
+        connectedAt: "2026-02-14",
+      },
+    ];
+  }
+
+  // Loyalty
+  if (cleanPath.includes("/loyalty/vouchers/redeem")) {
+    return {
+      redeemed: true,
+      voucherCode: "VCH-DISC-10",
+      discountAmount: 15.5,
+      customerId: "cust_123",
+      redeemedAt: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/loyalty/vouchers/validate")) {
+    return {
+      valid: true,
+      voucherCode: "SAVE10",
+      discountType: "PERCENTAGE",
+      discountValue: 10,
+      description: "10% off overall purchase",
+    };
+  }
+  if (cleanPath.includes("/loyalty/status")) {
+    return {
+      customerId: "cust_123",
+      pointsBalance: 420,
+      loyaltyTier: "SILVER",
+      availableRewards: [
+        { rewardId: "rew_coffee_free", name: "Free Espresso", pointsCost: 100 },
+      ],
+    };
+  }
+
+  // Stocking
+  if (
+    cleanPath.includes("/stocking/physical-reconciliations") &&
+    cleanPath.includes("/report")
+  ) {
+    return {
+      reconciliationId: path.split("/").slice(-2, -1)[0] || "rec_123",
+      totalDiscrepanciesCount: 3,
+      totalAdjustedValueAmount: -45.2,
+      detailedItems: [
+        {
+          variantId: "var_flour",
+          systemStock: 50,
+          physicalStock: 48,
+          discrepancy: -2,
+        },
+      ],
+    };
+  }
+  if (cleanPath.includes("/stocking/physical-reconciliations")) {
+    if (method === "GET") {
+      return [
+        {
+          id: "rec_1",
+          locationId: "loc_main",
+          status: "COMPLETED",
+          createdAt: "2026-02-28T18:00:00Z",
+        },
+      ];
+    }
+    return {
+      reconciliationId: "rec_new_9921",
+      status: "SUBMITTED_SUCCESSFULLY",
+      reconciledAt: new Date().toISOString(),
+    };
+  }
+  if (
+    cleanPath.includes("/stocking/partners") &&
+    cleanPath.includes("/wallet/adjust")
+  ) {
+    return {
+      partnerId: path.split("/").slice(-3, -2)[0] || "partner_123",
+      adjustedAmount: 1500.0,
+      newWalletBalance: 12500.0,
+      action: "TOP_UP",
+      timestamp: new Date().toISOString(),
+    };
+  }
+  if (cleanPath.includes("/stocking/partners")) {
+    if (method === "GET") {
+      return [
+        {
+          id: "partner_fargo",
+          name: "Fargo Courier Services",
+          email: "fargo@scryme-delivery.com",
+          isActive: true,
+        },
+      ];
+    }
+    return {
+      id: "partner_" + Math.random().toString(36).substr(2, 5),
+      name: summary || "New Delivery Partner",
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  // Default fallback for any other GET/POST/etc
+  if (method === "GET") {
+    return [];
+  }
+  return { success: true };
+}
 
 export default function App() {
   // Theme state
@@ -99,20 +920,41 @@ export default function App() {
   const [selectedTag, setSelectedTag] = useState<string>("");
   const [activeEndpointId, setActiveEndpointId] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [codeLanguage, setCodeLanguage] = useState<"curl" | "node" | "python">("curl");
+  const [codeLanguage, setCodeLanguage] = useState<"curl" | "node" | "python">(
+    "node",
+  );
   const [copiedMap, setCopiedMap] = useState<Record<string, boolean>>({});
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(
+    {},
+  );
 
   // Playground & Interactive Tabs State
-  const [activeDocTab, setActiveDocTab] = useState<"reference" | "playground" | "schema">("reference");
-  const [playgroundParams, setPlaygroundParams] = useState<Record<string, string>>({});
+  const [activeDocTab, setActiveDocTab] = useState<
+    "reference" | "playground" | "schema"
+  >("reference");
+  const [playgroundParams, setPlaygroundParams] = useState<
+    Record<string, string>
+  >({});
   const [playgroundBody, setPlaygroundBody] = useState<Record<string, any>>({});
   const [isPlayingLoading, setIsPlayingLoading] = useState(false);
   const [playgroundResponse, setPlaygroundResponse] = useState<any>(null);
 
   // CMS Guide Pinned Navigation State
-  const [selectedCmsTarget, setSelectedCmsTarget] = useState<"service" | "product">("service");
-  const [cmsPreviewTab, setCmsPreviewTab] = useState<"preview" | "payload">("preview");
+  const [selectedCmsTarget, setSelectedCmsTarget] = useState<
+    "service" | "product"
+  >("service");
+
+  // CMS Simulator State (Defaults to sourdough)
+  const [simState, setSimState] = useState<CmsSimulatorState>({
+    name: PRESETS.sourdough.name,
+    sku: PRESETS.sourdough.sku,
+    price: PRESETS.sourdough.price,
+    markdownDescription: PRESETS.sourdough.markdownDescription,
+    imageUrl: PRESETS.sourdough.imageUrl,
+    seoTitle: PRESETS.sourdough.seoTitle,
+    seoDesc: PRESETS.sourdough.seoDesc,
+    instructor: PRESETS.sourdough.instructor,
+  });
 
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -134,7 +976,6 @@ export default function App() {
         e.preventDefault();
         searchInputRef.current?.focus();
       } else if (e.key === "/") {
-        // If not in input or textarea
         if (
           document.activeElement?.tagName !== "INPUT" &&
           document.activeElement?.tagName !== "TEXTAREA"
@@ -156,10 +997,28 @@ export default function App() {
 
     for (const [pathKey, pathObj] of Object.entries(paths)) {
       for (const [methodKey, methodObj] of Object.entries(pathObj)) {
-        if (methodKey === "parameters") continue; // skip path-level params
+        if (methodKey === "parameters") continue;
 
         const tags = methodObj.tags || ["General"];
         const primaryTag = tags[0];
+
+        // Exclude Strapi, Standalone POS, and finance
+        if (
+          primaryTag &&
+          (primaryTag.toLowerCase().includes("strapi") ||
+            primaryTag.toLowerCase().includes("standalone pos") ||
+            primaryTag.toLowerCase().includes("standalone-pos") ||
+            primaryTag.toLowerCase().includes("finance"))
+        ) {
+          continue;
+        }
+
+        if (
+          pathKey.toLowerCase().includes("/strapi") ||
+          pathKey.toLowerCase().includes("/standalone-pos")
+        ) {
+          continue;
+        }
 
         list.push({
           path: pathKey,
@@ -195,9 +1054,7 @@ export default function App() {
     const tags = Object.keys(tagGroups);
     if (tags.length > 0) {
       setSelectedTag(tags[0]);
-      setExpandedGroups(
-        tags.reduce((acc, t) => ({ ...acc, [t]: true }), {})
-      );
+      setExpandedGroups(tags.reduce((acc, t) => ({ ...acc, [t]: false }), {}));
       setActiveEndpointId("cms-customization-guide");
     }
   }, [tagGroups]);
@@ -215,7 +1072,7 @@ export default function App() {
           ep.path.toLowerCase().includes(query) ||
           ep.summary.toLowerCase().includes(query) ||
           ep.description.toLowerCase().includes(query) ||
-          ep.method.toLowerCase().includes(query)
+          ep.method.toLowerCase().includes(query),
       );
       if (matched.length > 0) {
         filtered[tag] = matched;
@@ -234,17 +1091,27 @@ export default function App() {
       "markdown".includes(query) ||
       "seo metadata".includes(query) ||
       "image gallery".includes(query) ||
-      "customattributes".includes(query)
+      "customattributes".includes(query) ||
+      "global response".includes(query) ||
+      "response structure".includes(query) ||
+      "v3 global".includes(query)
     );
   }, [searchQuery]);
 
   const activeEndpoint = useMemo(() => {
-    return endpoints.find((ep) => ep.operationId === activeEndpointId) || endpoints[0];
+    return (
+      endpoints.find((ep) => ep.operationId === activeEndpointId) ||
+      endpoints[0]
+    );
   }, [endpoints, activeEndpointId]);
 
   // Initialize playground fields when active endpoint changes
   useEffect(() => {
-    if (activeEndpoint && activeEndpointId !== "cms-customization-guide") {
+    if (
+      activeEndpoint &&
+      activeEndpointId !== "cms-customization-guide" &&
+      activeEndpointId !== "v3-global-response-guide"
+    ) {
       const defaultParams: Record<string, string> = {};
       activeEndpoint.parameters?.forEach((p) => {
         if (p.name === "orgSlug") {
@@ -255,7 +1122,9 @@ export default function App() {
       });
       setPlaygroundParams(defaultParams);
 
-      const resolved = resolveSchema(activeEndpoint.requestBody?.content?.["application/json"]?.schema);
+      const resolved = resolveSchema(
+        activeEndpoint.requestBody?.content?.["application/json"]?.schema,
+      );
       if (resolved && resolved.properties) {
         const mockBody = generateMockFromSchema(resolved);
         setPlaygroundBody(mockBody || {});
@@ -269,13 +1138,20 @@ export default function App() {
   }, [activeEndpointId]);
 
   // JSON Schema Ref Resolver Helper with cycle detection and depth limit
-  const resolveSchema = (schema: any, visited = new Set<string>(), depth = 0): any => {
+  const resolveSchema = (
+    schema: any,
+    visited = new Set<string>(),
+    depth = 0,
+  ): any => {
     if (!schema || depth > 8) return null;
     if (schema.$ref) {
       const refName = schema.$ref.split("/").pop();
       if (refName) {
         if (visited.has(refName)) {
-          return { type: "object", description: `Circular reference to ${refName}` };
+          return {
+            type: "object",
+            description: `Circular reference to ${refName}`,
+          };
         }
         const resolved = (openapiSpec.components as any)?.schemas?.[refName];
         if (resolved) {
@@ -293,13 +1169,20 @@ export default function App() {
       return { ...schema, properties: resolvedProperties };
     }
     if (schema.type === "array" && schema.items) {
-      return { ...schema, items: resolveSchema(schema.items, visited, depth + 1) };
+      return {
+        ...schema,
+        items: resolveSchema(schema.items, visited, depth + 1),
+      };
     }
     return schema;
   };
 
   // Mock JSON payload builder with recursion limit and cycle detection
-  const generateMockFromSchema = (schema: any, depth = 0, visitedRefs = new Set<string>()): any => {
+  const generateMockFromSchema = (
+    schema: any,
+    depth = 0,
+    visitedRefs = new Set<string>(),
+  ): any => {
     if (!schema || depth > 8) return null;
 
     if (schema.$ref) {
@@ -330,7 +1213,11 @@ export default function App() {
       return obj;
     }
     if (schema.type === "array") {
-      const childMock = generateMockFromSchema(schema.items, depth + 1, visitedRefs);
+      const childMock = generateMockFromSchema(
+        schema.items,
+        depth + 1,
+        visitedRefs,
+      );
       return childMock ? [childMock] : [];
     }
     if (schema.type === "string") {
@@ -348,6 +1235,29 @@ export default function App() {
     return {};
   };
 
+  // Handle CMS simulator field changes
+  const handleSimStateChange = (
+    field: keyof CmsSimulatorState,
+    value: string | number,
+  ) => {
+    setSimState((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Apply simulator presets
+  const applyPreset = (presetKey: keyof typeof PRESETS) => {
+    const data = PRESETS[presetKey];
+    setSimState({
+      name: data.name,
+      sku: data.sku,
+      price: data.price,
+      markdownDescription: data.markdownDescription,
+      seoTitle: data.seoTitle,
+      seoDesc: data.seoDesc,
+      imageUrl: data.imageUrl,
+      instructor: data.instructor,
+    });
+  };
+
   // Extract schema definitions for request body
   const requestBodySchema = useMemo(() => {
     if (!activeEndpoint || !activeEndpoint.requestBody) return null;
@@ -358,24 +1268,58 @@ export default function App() {
 
   // Extract Mock Request payload
   const mockRequestPayload = useMemo(() => {
-    if (activeEndpointId === "cms-customization-guide") return null;
+    if (
+      activeEndpointId === "cms-customization-guide" ||
+      activeEndpointId === "v3-global-response-guide"
+    )
+      return null;
     if (activeDocTab === "playground") {
       return playgroundBody;
     }
     if (!activeEndpoint || !activeEndpoint.requestBody) return null;
     const content = activeEndpoint.requestBody.content;
     const jsonContent = content?.["application/json"];
-    return jsonContent?.schema ? generateMockFromSchema(jsonContent.schema) : null;
+    return jsonContent?.schema
+      ? generateMockFromSchema(jsonContent.schema)
+      : null;
   }, [activeEndpoint, activeDocTab, playgroundBody, activeEndpointId]);
 
   // Extract Mock Response payload
   const mockResponsePayload = useMemo(() => {
     if (!activeEndpoint) return null;
-    const successResponse = activeEndpoint.responses?.["200"] || activeEndpoint.responses?.["201"];
-    if (!successResponse) return { success: true };
-    const content = successResponse.content;
+    const successResponse =
+      activeEndpoint.responses?.["200"] || activeEndpoint.responses?.["201"];
+    const content = successResponse?.content;
     const jsonContent = content?.["application/json"];
-    return jsonContent?.schema ? generateMockFromSchema(jsonContent.schema) : { success: true };
+    let rawMock = jsonContent?.schema
+      ? generateMockFromSchema(jsonContent.schema)
+      : null;
+
+    if (!rawMock) {
+      rawMock = getFallbackDataForPath(
+        activeEndpoint.path,
+        activeEndpoint.method,
+        activeEndpoint.operationId,
+        activeEndpoint.summary,
+      );
+    }
+
+    const isAlreadyWrapped =
+      rawMock &&
+      typeof rawMock === "object" &&
+      !Array.isArray(rawMock) &&
+      "success" in rawMock &&
+      "data" in rawMock;
+
+    if (isAlreadyWrapped) {
+      return rawMock;
+    }
+
+    return {
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: rawMock,
+    };
   }, [activeEndpoint]);
 
   // Dynamic URL with path variables and query parameters populated
@@ -383,13 +1327,11 @@ export default function App() {
     let finalPath = path;
     const queryParams: string[] = [];
 
-    // Replace Path variables with playground states
     Object.entries(playgroundParams).forEach(([key, val]) => {
       const isPath = path.includes(`{${key}}`);
       if (isPath) {
         finalPath = finalPath.replace(`{${key}}`, val || `{${key}}`);
       } else if (val) {
-        // Assume query parameter
         queryParams.push(`${key}=${encodeURIComponent(val)}`);
       }
     });
@@ -400,72 +1342,65 @@ export default function App() {
     return finalPath;
   };
 
-  // Guide Simulator State (Defaults to sourdough)
-  const [simName, setSimName] = useState(PRESETS.sourdough.name);
-  const [simSku, setSimSku] = useState(PRESETS.sourdough.sku);
-  const [simPrice, setSimPrice] = useState(PRESETS.sourdough.price);
-  const [simMarkdown, setSimMarkdown] = useState(PRESETS.sourdough.markdownDescription);
-  const [simSeoTitle, setSimSeoTitle] = useState(PRESETS.sourdough.seoTitle);
-  const [simSeoDesc, setSimSeoDesc] = useState(PRESETS.sourdough.seoDesc);
-  const [simImageUrl, setSimImageUrl] = useState(PRESETS.sourdough.imageUrl);
-  const [simAttrValue, setSimAttrValue] = useState(PRESETS.sourdough.instructor);
-
-  // Apply simulator presets
-  const applyPreset = (presetKey: keyof typeof PRESETS) => {
-    const data = PRESETS[presetKey];
-    setSimName(data.name);
-    setSimSku(data.sku);
-    setSimPrice(data.price);
-    setSimMarkdown(data.markdownDescription);
-    setSimSeoTitle(data.seoTitle);
-    setSimSeoDesc(data.seoDesc);
-    setSimImageUrl(data.imageUrl);
-    setSimAttrValue(data.instructor);
-  };
-
   // Generate dynamic Code Snippets
   const codeSnippets = useMemo(() => {
+    const rawApiUrl = import.meta.env.VITE_API_URL || "https://api.scryme.tech";
+    const normalizedApiUrl = rawApiUrl.endsWith("/")
+      ? rawApiUrl.slice(0, -1)
+      : rawApiUrl;
+
+    if (activeEndpointId === "v3-global-response-guide") {
+      const targetUrl = `${normalizedApiUrl}/v3/bakery-co/inventory?locationId=loc_main`;
+      const targetMethod = "GET";
+
+      let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json"`;
+
+      let node = `// Node.js Fetch Code\nconst url = "${targetUrl}";\nconst options = {\n  method: "${targetMethod}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  }\n};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data); // Expect wrapped global response structure!\n} catch (error) {\n  console.error("Error:", error);\n}`;
+
+      let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\n\nresponse = requests.get(url, headers=headers)\nprint(response.json()) # Expect wrapped global response structure!`;
+
+      return { curl, node, python };
+    }
+
     if (activeEndpointId === "cms-customization-guide") {
-      const baseUrl = "https://api.scryme.tech/v3";
+      const baseUrl = `${normalizedApiUrl}/v3`;
 
       const targetPayload = {
-        name: simName,
-        sku: simSku,
-        price: simPrice,
+        name: simState.name,
+        sku: simState.sku,
+        price: simState.price,
         customFields: {
-          markdownDescription: simMarkdown,
+          markdownDescription: simState.markdownDescription,
           images: [
             {
               id: "img_cms_primary",
-              url: simImageUrl,
-              caption: simName
-            }
+              url: simState.imageUrl,
+              caption: simState.name,
+            },
           ],
           seo: {
-            title: simSeoTitle,
-            description: simSeoDesc,
-            keywords: "baking, premium"
+            title: simState.seoTitle,
+            description: simState.seoDesc,
+            keywords: "baking, premium",
           },
           customAttributes: {
-            instructor_name: simAttrValue
-          }
-        }
+            instructor_name: simState.instructor,
+          },
+        },
       };
 
-      const targetUrl = selectedCmsTarget === "service"
-        ? `${baseUrl}/bakery-co/services/srv_sourdough_101`
-        : `${baseUrl}/bakery-co/catalog/products/prod_proofing_basket`;
+      const targetUrl =
+        selectedCmsTarget === "service"
+          ? `${baseUrl}/bakery-co/services/srv_sourdough_101`
+          : `${baseUrl}/bakery-co/catalog/products/prod_proofing_basket`;
       const targetMethod = "PATCH";
 
       const bodyStr = JSON.stringify(targetPayload, null, 2);
 
-      // cURL
       let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json" \\\n  -d '${bodyStr.replace(/'/g, "'\\''")}'`;
 
-      // Node
       let node = `// Node.js Fetch Code\nconst url = "${targetUrl}";\nconst options = {\n  method: "${targetMethod}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  },\n  body: JSON.stringify(${JSON.stringify(targetPayload, null, 2)})\n};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
-      // Python
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\npayload = ${JSON.stringify(targetPayload, null, 4).replace(/true/g, "True").replace(/false/g, "False").replace(/null/g, "None")}\n\nresponse = requests.patch(url, json=payload, headers=headers)\nprint(response.json())`;
 
       return { curl, node, python };
@@ -473,21 +1408,20 @@ export default function App() {
 
     if (!activeEndpoint) return { curl: "", node: "", python: "" };
 
-    const baseUrl = "https://api.scryme.tech";
+    const baseUrl = normalizedApiUrl;
     const path = getDynamicUrl(activeEndpoint.path);
     const method = activeEndpoint.method;
     const fullUrl = `${baseUrl}${path}`;
 
-    // Compile dynamic payload string
-    const bodyStr = mockRequestPayload ? JSON.stringify(mockRequestPayload, null, 2) : "";
+    const bodyStr = mockRequestPayload
+      ? JSON.stringify(mockRequestPayload, null, 2)
+      : "";
 
-    // cURL Snippet
     let curl = `curl -X ${method} "${fullUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json"`;
     if (bodyStr) {
       curl += ` \\\n  -d '${bodyStr.replace(/'/g, "'\\''")}'`;
     }
 
-    // Node Fetch Snippet
     let node = `// Node.js Fetch Code\n`;
     node += `const url = "${fullUrl}";\n`;
     node += `const options = {\n  method: "${method}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  }`;
@@ -498,7 +1432,6 @@ export default function App() {
     }
     node += `};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
-    // Python Snippet
     let python = `import requests\n\n`;
     python += `url = "${fullUrl}"\n`;
     python += `headers = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\n`;
@@ -511,7 +1444,15 @@ export default function App() {
     python += `print(response.json())\n`;
 
     return { curl, node, python };
-  }, [activeEndpoint, mockRequestPayload, activeEndpointId, selectedCmsTarget, playgroundParams, playgroundBody, simName, simSku, simPrice, simMarkdown, simImageUrl, simSeoTitle, simSeoDesc, simAttrValue]);
+  }, [
+    activeEndpoint,
+    mockRequestPayload,
+    activeEndpointId,
+    selectedCmsTarget,
+    playgroundParams,
+    playgroundBody,
+    simState,
+  ]);
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -553,10 +1494,23 @@ export default function App() {
   // Next and Previous pagination logic
   const chronologicalList = useMemo(() => {
     const list: { id: string; type: "guide" | "api"; name: string }[] = [
-      { id: "cms-customization-guide", type: "guide", name: "CMS Customization Engine" }
+      {
+        id: "cms-customization-guide",
+        type: "guide",
+        name: "CMS Customization Engine",
+      },
+      {
+        id: "v3-global-response-guide",
+        type: "guide",
+        name: "Global Response Structure",
+      },
     ];
     endpoints.forEach((ep) => {
-      list.push({ id: ep.operationId, type: "api", name: ep.summary || ep.path });
+      list.push({
+        id: ep.operationId,
+        type: "api",
+        name: ep.summary || ep.path,
+      });
     });
     return list;
   }, [endpoints]);
@@ -578,7 +1532,11 @@ export default function App() {
   };
 
   // Helper to render schemas in intermediate tabular format
-  const renderSchemaProperties = (properties: any, requiredList: string[] = [], prefix = "") => {
+  const renderSchemaProperties = (
+    properties: any,
+    requiredList: string[] = [],
+    prefix = "",
+  ) => {
     if (!properties) return null;
 
     return Object.entries(properties).map(([key, prop]: [string, any]) => {
@@ -587,36 +1545,62 @@ export default function App() {
       const isArray = prop.type === "array";
 
       return (
-        <div key={prefix + key} className="py-3 border-b border-ink-border/60 text-sm">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="font-mono text-paper font-bold">{prefix + key}</span>
-            <span className="text-brass text-xs font-mono font-semibold">{prop.type || "any"}</span>
+        <div
+          key={prefix + key}
+          className="py-3.5 border-b border-ink-border/50 last:border-b-0 text-sm"
+        >
+          <div className="flex flex-wrap items-baseline gap-2.5">
+            <span className="font-mono text-paper font-semibold text-[13px]">
+              {prefix + key}
+            </span>
+            <span className="text-brass/90 text-[11px] font-mono font-medium tracking-wide">
+              {prop.type || "any"}
+            </span>
             {isRequired && (
-              <span className="text-red-400 text-xs font-mono uppercase tracking-wider font-semibold">
+              <span className="text-rose-400 text-[10px] font-mono uppercase tracking-wider font-semibold">
                 required
               </span>
             )}
           </div>
-          {prop.description && <p className="text-light-text mt-1 text-xs leading-relaxed">{prop.description}</p>}
+          {prop.description && (
+            <p className="text-light-text mt-1.5 text-xs leading-relaxed">
+              {prop.description}
+            </p>
+          )}
           {prop.enum && (
-            <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-              <span className="text-brass/80 text-xs font-mono font-semibold">Allowed values:</span>
+            <div className="mt-2 flex items-center gap-1.5 flex-wrap">
+              <span className="text-brass/70 text-[10px] font-mono font-semibold uppercase tracking-wide">
+                Allowed
+              </span>
               {prop.enum.map((val: string) => (
-                <span key={val} className="bg-ink-bg text-light-text px-1.5 py-0.5 rounded text-xs font-mono border border-ink-border">
+                <span
+                  key={val}
+                  className="bg-ink-bg text-light-text px-1.5 py-0.5 rounded-md text-[11px] font-mono border border-ink-border"
+                >
                   {val}
                 </span>
               ))}
             </div>
           )}
           {isObject && prop.properties && (
-            <div className="pl-4 mt-2 border-l border-brass/20">
-              {renderSchemaProperties(prop.properties, prop.required || [], `${prefix + key}.`)}
+            <div className="pl-4 mt-2.5 border-l-2 border-brass/15">
+              {renderSchemaProperties(
+                prop.properties,
+                prop.required || [],
+                `${prefix + key}.`,
+              )}
             </div>
           )}
           {isArray && prop.items && prop.items.properties && (
-            <div className="pl-4 mt-2 border-l border-brass/20">
-              <div className="text-xs text-brass/60 font-mono mb-2">Array Item properties:</div>
-              {renderSchemaProperties(prop.items.properties, prop.items.required || [], `${prefix + key}[].`)}
+            <div className="pl-4 mt-2.5 border-l-2 border-brass/15">
+              <div className="text-[10px] text-brass/60 font-mono uppercase tracking-wide mb-2">
+                Array item properties
+              </div>
+              {renderSchemaProperties(
+                prop.items.properties,
+                prop.items.required || [],
+                `${prefix + key}[].`,
+              )}
             </div>
           )}
         </div>
@@ -639,7 +1623,7 @@ export default function App() {
           let cls = "text-purple-400";
           if (/^"/.test(match)) {
             if (/:$/.test(match)) {
-              cls = "text-[#C89A4B] font-bold";
+              cls = "text-[#C89A4B] font-semibold";
             } else {
               cls = "text-emerald-400";
             }
@@ -648,57 +1632,119 @@ export default function App() {
           } else if (/null/.test(match)) {
             cls = "text-slate-400 italic";
           }
-          if (cls === "text-[#C89A4B] font-bold") {
+          if (cls === "text-[#C89A4B] font-semibold") {
             return `<span class="${cls}">${match.slice(0, -1)}</span>:`;
           }
           return `<span class="${cls}">${match}</span>`;
-        }
+        },
       );
     } else if (language === "curl") {
       safe = safe
-        .replace(/(curl|-X|-H|-d|\\)/g, '<span class="text-sky-400 font-bold">$1</span>')
-        .replace(/("Authorization: [^"]*")/g, '<span class="text-amber-400 font-semibold">$1</span>')
-        .replace(/("Content-Type: [^"]*")/g, '<span class="text-amber-400 font-semibold">$1</span>')
-        .replace(/("https:\/\/[^"]*")/g, '<span class="text-emerald-400 font-medium">$1</span>');
+        .replace(
+          /(curl|-X|-H|-d|\\)/g,
+          '<span class="text-sky-400 font-semibold">$1</span>',
+        )
+        .replace(
+          /("Authorization: [^"]*")/g,
+          '<span class="text-amber-400 font-medium">$1</span>',
+        )
+        .replace(
+          /("Content-Type: [^"]*")/g,
+          '<span class="text-amber-400 font-medium">$1</span>',
+        )
+        .replace(
+          /("https:\/\/[^"]*")/g,
+          '<span class="text-emerald-400 font-medium">$1</span>',
+        );
     } else if (language === "node" || language === "python") {
-      safe = safe
-        .replace(/(\/\/.*|#.*)/g, '<span class="text-slate-400 italic">$1</span>')
-        .replace(/\b(const|let|var|await|try|catch|function|import|from|requests|print|json)\b/g, '<span class="text-sky-400 font-bold">$1</span>')
-        .replace(/("[^"]*"|'[^']*')/g, '<span class="text-emerald-400">$1</span>');
+      const placeholders: string[] = [];
+
+      // 1. Extract comments and replace with placeholder
+      safe = safe.replace(/(\/\/.*|#.*)/g, (match) => {
+        const id = placeholders.length;
+        placeholders.push(`<span class="text-slate-400 italic">${match}</span>`);
+        return `___PLACEHOLDER_${id}___`;
+      });
+
+      // 2. Extract strings and replace with placeholder
+      safe = safe.replace(/("[^"]*"|'[^']*')/g, (match) => {
+        const id = placeholders.length;
+        placeholders.push(`<span class="text-emerald-400">${match}</span>`);
+        return `___PLACEHOLDER_${id}___`;
+      });
+
+      // 3. Highlight keywords
+      safe = safe.replace(
+        /\b(const|let|var|await|try|catch|function|import|from|requests|print|json)\b/g,
+        '<span class="text-sky-400 font-semibold">$1</span>',
+      );
+
+      // 4. Restore placeholders in reverse order (to handle any nesting safely)
+      for (let i = placeholders.length - 1; i >= 0; i--) {
+        safe = safe.replace(`___PLACEHOLDER_${i}___`, placeholders[i]);
+      }
     }
     return <span dangerouslySetInnerHTML={{ __html: safe }} />;
   };
 
   return (
-    <div className="min-h-screen bg-ink-bg text-paper flex flex-col font-sans transition-colors duration-200">
+    <div className="min-h-screen bg-ink-bg text-paper flex flex-col font-sans antialiased transition-colors duration-200 [font-feature-settings:'ss01','cv01']">
       {/* Universal Header with Brand Logo, Versioning, and Theme Switching */}
-      <header className="h-16 border-b border-ink-border bg-ink-bg/95 backdrop-blur px-6 flex items-center justify-between sticky top-0 z-50 transition-colors duration-200">
+      <header className="h-14 border-b border-ink-border bg-ink-bg/90 backdrop-blur-md px-5 flex items-center justify-between sticky top-0 z-50 transition-colors duration-200">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#34A853] flex items-center justify-center font-extrabold text-white shadow-md shadow-[#34A853]/20">
-            S
-          </div>
-          <div>
-            <span className="font-extrabold tracking-wider text-paper block text-sm">SCRYME LEDGER</span>
-            <span className="text-[10px] text-brass uppercase tracking-widest font-bold">V3 API reference</span>
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-1.5 -ml-1.5 text-paper hover:text-brass transition-colors lg:hidden"
+          >
+            {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-[7px] bg-gradient-to-br from-[#3EBB6B] to-[#2C8F50] flex items-center justify-center font-black text-white text-[13px] shadow-sm shadow-[#34A853]/30 ring-1 ring-white/10">
+              S
+            </div>
+            <div className="leading-none">
+              <span className="font-bold tracking-tight text-paper block text-[13px]">
+                Scryme Ledger
+              </span>
+              <span className="text-[10px] text-brass/90 uppercase tracking-[0.14em] font-semibold">
+                V3 API Reference
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Theme switcher */}
+        {/* Center search affordance (desktop) */}
+        <button
+          onClick={() => searchInputRef.current?.focus()}
+          className="hidden md:flex items-center gap-2.5 w-72 px-3 py-1.5 rounded-lg border border-ink-border bg-ink-card/60 text-light-text/70 text-xs hover:border-brass/40 hover:text-light-text transition-colors cursor-pointer"
+        >
+          <Search size={13} />
+          <span className="flex-1 text-left">Search documentation…</span>
+          <span className="bg-ink-bg border border-ink-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded text-light-text/70">
+            ⌘K
+          </span>
+        </button>
+
+        <div className="flex items-center gap-2">
+          <a
+            href="#"
+            className="hidden sm:inline-flex items-center text-[11px] font-semibold text-light-text hover:text-paper px-2.5 py-1.5 transition-colors"
+          >
+            Changelog
+          </a>
+          <a
+            href="#"
+            className="hidden sm:inline-flex items-center text-[11px] font-bold bg-brass text-ink-bg hover:bg-white px-3 py-1.5 rounded-md transition-colors"
+          >
+            Dashboard
+          </a>
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-2 rounded-lg border border-ink-border bg-ink-card text-light-text hover:text-paper hover:bg-ink-bg transition-all duration-200 cursor-pointer"
+            className="p-2 rounded-lg border border-ink-border bg-ink-card text-light-text hover:text-paper hover:border-brass/40 transition-all duration-200 cursor-pointer"
             aria-label="Toggle theme"
             title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
           >
-            {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 text-paper hover:text-brass transition-colors lg:hidden"
-          >
-            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
           </button>
         </div>
       </header>
@@ -707,30 +1753,33 @@ export default function App() {
       <div className="flex flex-1 relative">
         {/* Sidebar Left Column */}
         <aside
-          className={`fixed inset-y-16 lg:inset-y-0 left-0 w-80 bg-ink-bg border-r border-ink-border overflow-y-auto z-40 transition-transform duration-300 transform
-            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:sticky lg:h-[calc(100vh-64px)] flex flex-col`}
+          className={`fixed inset-y-14 lg:inset-y-0 left-0 w-72 bg-ink-bg border-r border-ink-border overflow-y-auto z-40 transition-transform duration-300 transform
+            ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:sticky lg:h-[calc(100vh-56px)] flex flex-col`}
         >
-          {/* Search Box */}
-          <div className="p-4 border-b border-ink-border/60">
+          {/* Search Box (mobile-visible, always present) */}
+          <div className="p-3.5 border-b border-ink-border/60">
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 text-light-text" size={16} />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-light-text/60"
+                size={14}
+              />
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search specs (Press '/' or '⌘K')..."
+                placeholder="Search specs…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-ink-card text-paper pl-9 pr-8 py-2 rounded-lg border border-ink-border focus:outline-none focus:border-brass text-xs transition-colors placeholder-light-text/60"
+                className="w-full bg-ink-card text-paper pl-8 pr-8 py-2 rounded-lg border border-ink-border focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass text-[13px] transition-all placeholder-light-text/50"
               />
               {searchQuery ? (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-2.5 text-light-text hover:text-paper"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-light-text hover:text-paper"
                 >
-                  <X size={14} />
+                  <X size={13} />
                 </button>
               ) : (
-                <span className="absolute right-2.5 top-2.5 bg-ink-bg border border-ink-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded text-light-text">
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-ink-bg border border-ink-border text-[9px] font-mono font-bold px-1.5 py-0.5 rounded text-light-text/70">
                   /
                 </span>
               )}
@@ -738,499 +1787,302 @@ export default function App() {
           </div>
 
           {/* Expand/Collapse All controls */}
-          <div className="px-4 py-2 flex items-center justify-between text-[10px] font-bold text-light-text uppercase tracking-wider border-b border-ink-border/20">
+          <div className="px-3.5 py-2.5 flex items-center justify-between text-[10px] font-bold text-light-text/70 uppercase tracking-[0.1em] border-b border-ink-border/30">
             <span>Navigation</span>
-            <div className="flex gap-2">
-              <button onClick={expandAllGroups} className="hover:text-brass cursor-pointer">Expand All</button>
-              <span>•</span>
-              <button onClick={collapseAllGroups} className="hover:text-brass cursor-pointer">Collapse All</button>
+            <div className="flex gap-2.5">
+              <button
+                onClick={expandAllGroups}
+                className="hover:text-brass cursor-pointer transition-colors"
+              >
+                Expand
+              </button>
+              <span className="text-ink-border">/</span>
+              <button
+                onClick={collapseAllGroups}
+                className="hover:text-brass cursor-pointer transition-colors"
+              >
+                Collapse
+              </button>
             </div>
           </div>
 
           {/* Navigation Items */}
-          <nav className="flex-1 p-4 space-y-4 overflow-y-auto">
+          <nav className="flex-1 px-3 py-3.5 space-y-5 overflow-y-auto">
             {/* Core Pinned Customization Guide */}
             {showGuideInSearch && (
-              <div className="space-y-1">
-                <span className="text-[10px] text-brass uppercase tracking-widest font-black px-2 block mb-1">Guides</span>
+              <div className="space-y-0.5">
+                <span className="text-[10px] text-brass/80 uppercase tracking-[0.14em] font-bold px-2.5 block mb-1.5">
+                  Guides
+                </span>
                 <button
                   onClick={() => {
                     setActiveEndpointId("cms-customization-guide");
                     setSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center gap-2.5 py-2 px-3 rounded-lg text-left text-xs transition-all duration-200 cursor-pointer ${
+                  className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left text-[13px] transition-all duration-150 cursor-pointer ${
                     activeEndpointId === "cms-customization-guide"
-                      ? "bg-brass/20 text-paper font-semibold border-l-2 border-brass"
-                      : "text-light-text hover:text-paper hover:bg-ink-card"
+                      ? "bg-brass/[0.14] text-paper font-semibold"
+                      : "text-light-text hover:text-paper hover:bg-ink-card/70"
                   }`}
                 >
-                  <BookOpen size={14} className="text-brass animate-pulse" />
-                  <span className="font-bold truncate">CMS Customization Engine</span>
+                  <BookOpen size={14} className="text-brass shrink-0" />
+                  <span className="truncate">CMS Customization Engine</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveEndpointId("v3-global-response-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left text-[13px] transition-all duration-150 cursor-pointer ${
+                    activeEndpointId === "v3-global-response-guide"
+                      ? "bg-brass/[0.14] text-paper font-semibold"
+                      : "text-light-text hover:text-paper hover:bg-ink-card/70"
+                  }`}
+                >
+                  <Workflow size={14} className="text-brass shrink-0" />
+                  <span className="truncate">Global Response Structure</span>
                 </button>
               </div>
             )}
 
-            <div className="border-t border-ink-border/40 my-2" />
+            <div className="space-y-1">
+              <span className="text-[10px] text-brass/80 uppercase tracking-[0.14em] font-bold px-2.5 block">
+                API Reference
+              </span>
 
-            <span className="text-[10px] text-brass uppercase tracking-widest font-black px-2 block">API References</span>
+              {Object.entries(filteredTagGroups).map(([tag, eps]) => {
+                const isExpanded = !!expandedGroups[tag];
+                const epCount = eps.length;
+                return (
+                  <div key={tag}>
+                    <button
+                      onClick={() => toggleGroup(tag)}
+                      className="w-full flex items-center justify-between text-left font-semibold text-[12px] text-light-text/90 py-1.5 px-2.5 hover:text-paper rounded-md transition-colors cursor-pointer"
+                    >
+                      <span className="truncate pr-2">
+                        {tag.replace("V3 ", "")}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-light-text/50 text-[10px] font-mono">
+                          {epCount}
+                        </span>
+                        {isExpanded ? (
+                          <ChevronDown
+                            size={13}
+                            className="text-light-text/60"
+                          />
+                        ) : (
+                          <ChevronRight
+                            size={13}
+                            className="text-light-text/60"
+                          />
+                        )}
+                      </div>
+                    </button>
 
-            {Object.entries(filteredTagGroups).map(([tag, eps]) => {
-              const isExpanded = !!expandedGroups[tag];
-              const epCount = eps.length;
-              return (
-                <div key={tag} className="space-y-1">
-                  <button
-                    onClick={() => toggleGroup(tag)}
-                    className="w-full flex items-center justify-between text-left font-bold text-xs uppercase tracking-wider text-brass py-1 px-2 hover:text-paper rounded-lg transition-colors cursor-pointer"
-                  >
-                    <span className="truncate pr-2">{tag.replace("V3 ", "")}</span>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="bg-ink-card text-light-text text-[9px] px-1.5 py-0.5 rounded-full border border-ink-border font-mono">{epCount}</span>
-                      {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    </div>
-                  </button>
-
-                  {isExpanded && (
-                    <div className="pl-2 space-y-1">
-                      {eps.map((ep) => {
-                        const isActive = activeEndpointId === ep.operationId;
-                        return (
-                          <button
-                            key={ep.operationId}
-                            onClick={() => {
-                              setActiveEndpointId(ep.operationId);
-                              setSidebarOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-2 py-1.5 px-3 rounded-lg text-left text-xs transition-all duration-200 cursor-pointer ${
-                              isActive
-                                ? "bg-brass/15 text-paper font-semibold border-l-2 border-brass"
-                                : "text-light-text hover:text-paper hover:bg-ink-card"
-                            }`}
-                          >
-                            <span
-                              className={`text-[8px] font-extrabold px-1.5 py-0.5 rounded uppercase font-mono shrink-0 ${
-                                ep.method === "GET"
-                                  ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                                  : ep.method === "POST"
-                                  ? "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                                  : ep.method === "DELETE"
-                                  ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                                  : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                    {isExpanded && (
+                      <div className="space-y-0.5 mt-0.5 mb-1">
+                        {eps.map((ep) => {
+                          const isActive = activeEndpointId === ep.operationId;
+                          return (
+                            <button
+                              key={ep.operationId}
+                              onClick={() => {
+                                setActiveEndpointId(ep.operationId);
+                                setSidebarOpen(false);
+                              }}
+                              className={`w-full flex items-center gap-2 py-[7px] pl-4 pr-2.5 rounded-md text-left text-[12.5px] transition-all duration-150 cursor-pointer ${
+                                isActive
+                                  ? "bg-brass/[0.14] text-paper font-semibold"
+                                  : "text-light-text hover:text-paper hover:bg-ink-card/70"
                               }`}
                             >
-                              {ep.method}
-                            </span>
-                            <span className="truncate">{ep.summary || ep.path}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+                              <span
+                                className={`text-[8.5px] font-bold px-1.5 py-[1px] rounded uppercase font-mono shrink-0 border ${methodBadge(ep.method)}`}
+                              >
+                                {ep.method}
+                              </span>
+                              <span className="truncate">
+                                {ep.summary || ep.path}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </nav>
 
           {/* Footer inside Sidebar */}
-          <div className="p-4 border-t border-ink-border text-[10px] text-light-text/60 flex items-center justify-between transition-colors duration-200">
-            <span>Server Status: <span className="text-[#34A853] font-semibold">Online</span></span>
-            <span>v3.0.0</span>
+          <div className="p-3.5 border-t border-ink-border text-[10px] text-light-text/60 flex items-center justify-between transition-colors duration-200">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#34A853] inline-block" />
+              All systems operational
+            </span>
+            <span className="font-mono">v3.0.0</span>
           </div>
         </aside>
 
         {/* Content Wrapper (Middle + Right columns) */}
-        <main className="flex-1 lg:grid lg:grid-cols-12 min-h-[calc(100vh-64px)]">
-
+        <main className="flex-1 lg:grid lg:grid-cols-12 min-h-[calc(100vh-56px)]">
           {/* MIDDLE COLUMN */}
-          <section className="col-span-7 p-6 lg:p-12 overflow-y-auto space-y-10 border-r border-ink-border/60 max-w-4xl flex flex-col justify-between transition-colors duration-200">
+          <section className="col-span-7 p-6 lg:px-14 lg:py-12 overflow-y-auto space-y-10 border-r border-ink-border/60 max-w-4xl flex flex-col justify-between transition-colors duration-200">
             <div className="space-y-10 flex-1">
-              {activeEndpointId === "cms-customization-guide" ? (
-                // --- GORGEOUS HIGH-FIDELITY CMS CUSTOMIZATION ENGINE RENDER VIEW ---
-                <div className="space-y-8">
-                  <div>
-                    <div className="flex items-center gap-3 text-xs text-brass uppercase tracking-wider font-semibold mb-2">
-                      <span>Developer Guide</span>
-                      <span>&bull;</span>
-                      <span>Storefront & Catalog CMS</span>
-                    </div>
-                    <h1 className="text-3xl font-extrabold text-paper leading-tight">
-                      CMS Customization Engine
-                    </h1>
-                    <p className="text-light-text text-sm mt-2 leading-relaxed">
-                      Scryme V3 powers highly customizable, media-rich catalogs using a flexible database column structure. This guide explains how third-party and headless storefront developers utilize the dynamic <code className="text-paper bg-ink-card px-1.5 py-0.5 border border-ink-border font-mono text-xs rounded">customFields</code> JSON payload to build exceptional storefront and booking experiences.
-                    </p>
-                  </div>
-
-                  {/* Preset Selector buttons */}
-                  <div className="bg-ink-card rounded-xl border border-ink-border p-4 space-y-3">
-                    <span className="text-[10px] text-brass uppercase tracking-widest font-bold flex items-center gap-1">
-                      <Sparkles size={12} />
-                      <span>Instant Simulator Presets</span>
-                    </span>
-                    <p className="text-xs text-light-text">
-                      Choose a product or service category preset to instantly populate the live interactive engine and preview how custom metadata structures translate.
-                    </p>
-                    <div className="flex flex-wrap gap-2.5">
-                      <button
-                        onClick={() => applyPreset("sourdough")}
-                        className="bg-ink-bg border border-ink-border text-paper hover:border-brass px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
-                      >
-                        🌾 Sourdough Masterclass
-                      </button>
-                      <button
-                        onClick={() => applyPreset("banneton")}
-                        className="bg-ink-bg border border-ink-border text-paper hover:border-brass px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
-                      >
-                        🧺 Cane Banneton
-                      </button>
-                      <button
-                        onClick={() => applyPreset("spa")}
-                        className="bg-ink-bg border border-ink-border text-paper hover:border-brass px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors"
-                      >
-                        💆‍♀️ Swedish Massage
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Conceptual Card */}
-                  <div className="bg-ink-card/50 rounded-xl border border-ink-border p-5 space-y-3">
-                    <div className="flex items-center gap-2 text-brass font-bold text-sm">
-                      <Layers size={16} />
-                      <span>Prisma JSON Column Mapping</span>
-                    </div>
-                    <p className="text-xs text-light-text leading-relaxed">
-                      The <code className="text-paper">Product</code> and <code className="text-paper">Service</code> schemas each contain a schema-free nullable <code className="text-brass font-mono font-semibold">customFields</code> field. This layout completely bypasses rigid database structures, permitting organizations to serialize rich-media elements, Markdown descriptions, SEO details, and custom technical specification attributes without database schema migrations.
-                    </p>
-                  </div>
-
-                  {/* Main Customize Parameters Section */}
-                  <div className="space-y-6">
-                    <h2 className="text-lg font-bold text-paper border-b border-ink-border pb-2">CMS Payload Specifications</h2>
-
-                    {/* 1. markdownDescription */}
-                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-paper font-black text-sm">markdownDescription</span>
-                        <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">string</span>
-                      </div>
-                      <p className="text-xs text-light-text leading-relaxed">
-                        Accepts GitHub Flavored Markdown (GFM) formatting. Headless storefronts parse this dynamically to output formatted guides, rich tables, blockquotes, and lists for services or product details.
-                      </p>
-                    </div>
-
-                    {/* 2. images */}
-                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-paper font-black text-sm">images</span>
-                        <span className="bg-green-500/10 text-green-400 border border-green-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">array of objects</span>
-                      </div>
-                      <p className="text-xs text-light-text leading-relaxed">
-                        Ordered gallery of uploaded image assets. The primary image is defined at index <code className="text-paper font-mono">0</code>.
-                      </p>
-                      <div className="bg-ink-card rounded-lg border border-ink-border p-3 text-xs font-mono space-y-1.5">
-                        <div className="text-paper font-bold pb-1 border-b border-ink-border/60 text-[10px] uppercase text-brass">ImageItem Schema:</div>
-                        <div>• <span className="text-paper font-bold">id</span> (string): Unique image ID (crucial for react rendering keys).</div>
-                        <div>• <span className="text-paper font-bold">url</span> (string): Absolute URL to CDN image asset.</div>
-                        <div>• <span className="text-paper font-bold">caption</span> (string): Alt text for accessibility and crawl performance.</div>
-                      </div>
-                    </div>
-
-                    {/* 3. seo */}
-                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-paper font-black text-sm">seo</span>
-                        <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">object</span>
-                      </div>
-                      <p className="text-xs text-light-text leading-relaxed">
-                        Custom HTML page headers to override default metadata tags dynamically.
-                      </p>
-                      <div className="bg-ink-card rounded-lg border border-ink-border p-3 text-xs font-mono space-y-1.5">
-                        <div className="text-paper font-bold pb-1 border-b border-ink-border/60 text-[10px] uppercase text-brass">Seo Schema:</div>
-                        <div>• <span className="text-paper font-bold">title</span> (string): Custom browser tab title. Max 60 chars.</div>
-                        <div>• <span className="text-paper font-bold">description</span> (string): Search card snippet. Max 160 chars.</div>
-                        <div>• <span className="text-paper font-bold">keywords</span> (string): Comma-separated tag phrases.</div>
-                      </div>
-                    </div>
-
-                    {/* 4. customAttributes */}
-                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-paper font-black text-sm">customAttributes</span>
-                        <span className="bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">object (dictionary)</span>
-                      </div>
-                      <p className="text-xs text-light-text leading-relaxed">
-                        Key-value map representing dynamic parameters. This supports advanced faceted filters in storefront lists (e.g. searching items filtered by <code className="text-paper">difficulty</code> or <code className="text-paper">material</code>) without rigid database specifications. Keys must be strictly <code className="text-paper">snake_case</code> or <code className="text-paper">lowercase</code>.
-                      </p>
-                    </div>
-
-                    {/* eCommerce Controls */}
-                    <div className="border border-ink-border rounded-xl bg-ink-bg/60 p-5 space-y-4">
-                      <div className="flex items-center gap-2 font-bold text-paper text-sm pb-1.5 border-b border-ink-border/40">
-                        <Workflow size={16} className="text-brass" />
-                        <span>Product Specific eCommerce Lifecycle Options</span>
-                      </div>
-                      <div className="divide-y divide-ink-border/60 text-xs">
-                        <div className="py-2.5 flex items-baseline justify-between gap-2">
-                          <div>
-                            <code className="text-paper font-bold">publishStatus</code>
-                            <span className="text-light-text block text-[10px]">Values: Draft | Published | Scheduled | Archived</span>
-                          </div>
-                          <span className="text-brass font-semibold text-[10px] font-mono">string</span>
-                        </div>
-                        <div className="py-2.5 flex items-baseline justify-between gap-2">
-                          <div>
-                            <code className="text-paper font-bold">publishedAt</code>
-                            <span className="text-light-text block text-[10px]">ISO timestamp of release schedule</span>
-                          </div>
-                          <span className="text-brass font-semibold text-[10px] font-mono">ISO8601 string / null</span>
-                        </div>
-                        <div className="py-2.5 flex items-baseline justify-between gap-2">
-                          <div>
-                            <code className="text-paper font-bold">layoutTemplate</code>
-                            <span className="text-light-text block text-[10px]">Visual layout style token for the headless portal</span>
-                          </div>
-                          <span className="text-brass font-semibold text-[10px] font-mono">string</span>
-                        </div>
-                        <div className="py-2.5 flex items-baseline justify-between gap-2">
-                          <div>
-                            <code className="text-paper font-bold">customSlugOverride</code>
-                            <span className="text-light-text block text-[10px]">Targeted override of SEO friendly URL slugs</span>
-                          </div>
-                          <span className="text-brass font-semibold text-[10px] font-mono">string</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Dynamic Storefront Live Simulator Form */}
-                  <div className="space-y-4">
-                    <h2 className="text-lg font-bold text-paper border-b border-ink-border pb-2">Custom CMS Field Controls</h2>
-                    <p className="text-xs text-light-text">
-                      Modify the CMS fields below dynamically to see how they rebuild the request payload and simulated customer-facing UI card on the right.
-                    </p>
-
-                    <div className="bg-ink-card border border-ink-border rounded-xl p-5 space-y-4 shadow-xl">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-brass">Name</label>
-                          <input
-                            type="text"
-                            value={simName}
-                            onChange={(e) => setSimName(e.target.value)}
-                            className="w-full bg-ink-bg border border-ink-border rounded px-3 py-2 text-xs text-paper focus:outline-none focus:border-brass"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-brass">SKU Code</label>
-                          <input
-                            type="text"
-                            value={simSku}
-                            onChange={(e) => setSimSku(e.target.value)}
-                            className="w-full bg-ink-bg border border-ink-border rounded px-3 py-2 text-xs text-paper focus:outline-none focus:border-brass"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-brass">Price ($)</label>
-                          <input
-                            type="number"
-                            value={simPrice}
-                            onChange={(e) => setSimPrice(Number(e.target.value))}
-                            className="w-full bg-ink-bg border border-ink-border rounded px-3 py-2 text-xs text-paper focus:outline-none focus:border-brass"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-brass">SEO Title Override</label>
-                          <input
-                            type="text"
-                            value={simSeoTitle}
-                            onChange={(e) => setSimSeoTitle(e.target.value)}
-                            className="w-full bg-ink-bg border border-ink-border rounded px-3 py-2 text-xs text-paper focus:outline-none focus:border-brass"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-brass">Primary Image Asset URL</label>
-                        <input
-                          type="text"
-                          value={simImageUrl}
-                          onChange={(e) => setSimImageUrl(e.target.value)}
-                          className="w-full bg-ink-bg border border-ink-border rounded px-3 py-2 text-xs text-paper focus:outline-none focus:border-brass"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-brass">SEO Description</label>
-                          <input
-                            type="text"
-                            value={simSeoDesc}
-                            onChange={(e) => setSimSeoDesc(e.target.value)}
-                            className="w-full bg-ink-bg border border-ink-border rounded px-3 py-2 text-xs text-paper focus:outline-none focus:border-brass"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold uppercase tracking-wider text-brass">Attribute: instructor_name</label>
-                          <input
-                            type="text"
-                            value={simAttrValue}
-                            onChange={(e) => setSimAttrValue(e.target.value)}
-                            className="w-full bg-ink-bg border border-ink-border rounded px-3 py-2 text-xs text-paper focus:outline-none focus:border-brass"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-brass">markdownDescription (supports standard Markdown syntax)</label>
-                        <textarea
-                          value={simMarkdown}
-                          onChange={(e) => setSimMarkdown(e.target.value)}
-                          className="w-full h-28 bg-ink-bg border border-ink-border rounded px-3 py-2 text-xs text-paper font-mono focus:outline-none focus:border-brass resize-y"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              {activeEndpointId === "v3-global-response-guide" ? (
+                <GlobalResponseGuide
+                  renderHighlightedCode={renderHighlightedCode}
+                />
+              ) : activeEndpointId === "cms-customization-guide" ? (
+                <CmsCustomizationGuide
+                  selectedCmsTarget={selectedCmsTarget}
+                  setSelectedCmsTarget={setSelectedCmsTarget}
+                  simState={simState}
+                  onSimStateChange={handleSimStateChange}
+                  onApplyPreset={applyPreset}
+                  copiedMap={copiedMap}
+                  onCopy={handleCopy}
+                  renderHighlightedCode={renderHighlightedCode}
+                />
               ) : activeEndpoint ? (
-                // --- STANDARD ENDPOINT DETAILED VIEW WITH BEAUTIFUL HIGH-END INTERACTIVE TABS ---
+                // --- STANDARD ENDPOINT DETAILED VIEW ---
                 <div className="space-y-8">
-                  {/* Header Information */}
-                  <div>
-                    <div className="flex items-center gap-3 text-xs text-brass uppercase tracking-wider font-semibold mb-2">
-                      <span>API Reference</span>
-                      <span>&bull;</span>
-                      <span>{activeEndpoint.tag}</span>
+                  {/* Breadcrumb + Header */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-1.5 text-[11px] text-light-text/70 font-medium">
+                      <span>Reference</span>
+                      <ChevronRight size={11} className="text-light-text/40" />
+                      <span className="text-brass">
+                        {activeEndpoint.tag.replace("V3 ", "")}
+                      </span>
                     </div>
-                    <h1 className="text-3xl font-extrabold text-paper leading-tight">
+                    <h1 className="text-[28px] font-bold text-paper leading-[1.15] tracking-tight">
                       {activeEndpoint.summary}
                     </h1>
                   </div>
 
-                  {/* Tabs: Reference, Playground, Schema */}
-                  <div className="flex border-b border-ink-border">
-                    <button
-                      onClick={() => setActiveDocTab("reference")}
-                      className={`px-5 py-3 text-xs font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-150 ${
-                        activeDocTab === "reference"
-                          ? "border-brass text-paper font-black"
-                          : "border-transparent text-light-text hover:text-paper"
-                      }`}
-                    >
-                      Reference
-                    </button>
-                    <button
-                      onClick={() => setActiveDocTab("playground")}
-                      className={`px-5 py-3 text-xs font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-150 flex items-center gap-1.5 ${
-                        activeDocTab === "playground"
-                          ? "border-brass text-paper font-black"
-                          : "border-transparent text-light-text hover:text-paper"
-                      }`}
-                    >
-                      <Play size={12} className="text-brass" />
-                      Playground / Try It
-                    </button>
-                    <button
-                      onClick={() => setActiveDocTab("schema")}
-                      className={`px-5 py-3 text-xs font-bold uppercase tracking-wider cursor-pointer border-b-2 transition-all duration-150 ${
-                        activeDocTab === "schema"
-                          ? "border-brass text-paper font-black"
-                          : "border-transparent text-light-text hover:text-paper"
-                      }`}
-                    >
-                      JSON Schema
-                    </button>
+                  {/* Tabs: Reference, Playground, Schema — segmented control */}
+                  <div className="inline-flex items-center gap-1 p-1 bg-ink-card/70 border border-ink-border rounded-lg">
+                    {(
+                      [
+                        { key: "reference", label: "Reference", icon: null },
+                        { key: "playground", label: "Playground", icon: Play },
+                        { key: "schema", label: "Schema", icon: null },
+                      ] as const
+                    ).map((t) => (
+                      <button
+                        key={t.key}
+                        onClick={() => setActiveDocTab(t.key)}
+                        className={`px-3.5 py-1.5 text-[11.5px] font-semibold rounded-md cursor-pointer transition-all duration-150 flex items-center gap-1.5 ${
+                          activeDocTab === t.key
+                            ? "bg-brass text-ink-bg shadow-sm"
+                            : "text-light-text hover:text-paper"
+                        }`}
+                      >
+                        {t.icon && <t.icon size={11} />}
+                        {t.label}
+                      </button>
+                    ))}
                   </div>
 
                   {activeDocTab === "reference" && (
                     <div className="space-y-8 animate-fade-in">
                       {/* HTTP Endpoint Tag & Path */}
-                      <div className="bg-ink-card rounded-xl border border-ink-border p-4 flex flex-wrap items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
+                      <div className="bg-ink-card rounded-xl border border-ink-border p-3.5 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <span
-                            className={`text-xs font-black px-2.5 py-1 rounded-md uppercase font-mono tracking-wider ${
-                              activeEndpoint.method === "GET"
-                                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                                : activeEndpoint.method === "POST"
-                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                                : activeEndpoint.method === "DELETE"
-                                ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                                : "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                            }`}
+                            className={`text-[11px] font-bold px-2 py-1 rounded-md uppercase font-mono tracking-wide border shrink-0 ${methodBadge(activeEndpoint.method)}`}
                           >
                             {activeEndpoint.method}
                           </span>
-                          <code className="text-paper font-mono text-sm break-all font-bold">
+                          <code className="text-paper font-mono text-[13px] break-all font-medium">
                             {getDynamicUrl(activeEndpoint.path)}
                           </code>
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-light-text bg-ink-bg px-3 py-1.5 rounded-lg border border-ink-border">
-                          <Lock size={12} className="text-brass" />
+                        <div className="flex items-center gap-1.5 text-[11px] text-light-text bg-ink-bg px-2.5 py-1 rounded-md border border-ink-border shrink-0">
+                          <Lock size={11} className="text-brass" />
                           <span className="font-mono">Bearer Token</span>
                         </div>
                       </div>
 
                       {/* Description */}
                       {activeEndpoint.description && (
-                        <div className="space-y-2">
-                          <h2 className="text-sm uppercase tracking-widest font-black text-brass">Description</h2>
-                          <p className="text-light-text text-sm leading-relaxed whitespace-pre-line bg-ink-card/30 p-4 rounded-xl border border-ink-border/40">
+                        <div className="space-y-2.5">
+                          <h2 className="text-[11px] uppercase tracking-[0.12em] font-bold text-brass/90">
+                            Description
+                          </h2>
+                          <p className="text-light-text text-[13.5px] leading-[1.7] whitespace-pre-line">
                             {activeEndpoint.description}
                           </p>
                         </div>
                       )}
 
                       {/* Path/Query Parameters */}
-                      {activeEndpoint.parameters && activeEndpoint.parameters.length > 0 && (
-                        <div className="space-y-4">
-                          <h2 className="text-sm uppercase tracking-widest font-black text-brass">Parameters</h2>
-                          <div className="border border-ink-border rounded-xl bg-ink-card/55 p-4 divide-y divide-ink-border/60">
-                            {activeEndpoint.parameters.map((param: any) => (
-                              <div key={param.name} className="py-3 first:pt-0 last:pb-0 text-sm">
-                                <div className="flex flex-wrap items-baseline gap-2">
-                                  <span className="font-mono text-paper font-bold">{param.name}</span>
-                                  <span className="text-brass text-xs font-mono font-semibold">
-                                    {param.schema?.type || "string"}
-                                  </span>
-                                  <span className="bg-ink-bg text-light-text text-[10px] font-mono px-1.5 py-0.5 rounded border border-ink-border uppercase">
-                                    {param.in}
-                                  </span>
-                                  {param.required && (
-                                    <span className="text-red-400 text-[10px] font-mono uppercase font-bold tracking-wider">
-                                      required
+                      {activeEndpoint.parameters &&
+                        activeEndpoint.parameters.length > 0 && (
+                          <div className="space-y-3">
+                            <h2 className="text-[11px] uppercase tracking-[0.12em] font-bold text-brass/90">
+                              Parameters
+                            </h2>
+                            <div className="border border-ink-border rounded-xl bg-ink-card/40 px-4 divide-y divide-ink-border/50">
+                              {activeEndpoint.parameters.map((param: any) => (
+                                <div
+                                  key={param.name}
+                                  className="py-3.5 first:pt-3.5 last:pb-3.5 text-sm"
+                                >
+                                  <div className="flex flex-wrap items-baseline gap-2.5">
+                                    <span className="font-mono text-paper font-semibold text-[13px]">
+                                      {param.name}
                                     </span>
+                                    <span className="text-brass/90 text-[11px] font-mono font-medium">
+                                      {param.schema?.type || "string"}
+                                    </span>
+                                    <span className="bg-ink-bg text-light-text/80 text-[9.5px] font-mono px-1.5 py-0.5 rounded border border-ink-border uppercase tracking-wide">
+                                      {param.in}
+                                    </span>
+                                    {param.required && (
+                                      <span className="text-rose-400 text-[10px] font-mono uppercase font-semibold tracking-wider">
+                                        required
+                                      </span>
+                                    )}
+                                  </div>
+                                  {param.description && (
+                                    <p className="text-light-text mt-1.5 text-xs leading-relaxed">
+                                      {param.description}
+                                    </p>
                                   )}
                                 </div>
-                                {param.description && (
-                                  <p className="text-light-text mt-1 text-xs leading-relaxed">{param.description}</p>
-                                )}
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
                       {/* Request Body Properties */}
                       {requestBodySchema && (
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <h2 className="text-sm uppercase tracking-widest font-black text-brass">
+                            <h2 className="text-[11px] uppercase tracking-[0.12em] font-bold text-brass/90">
                               Request Body
                             </h2>
-                            <span className="bg-blue-500/10 text-blue-400 border border-blue-500/20 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">
+                            <span className="bg-blue-500/10 text-blue-400 border border-blue-500/25 text-[9.5px] font-mono px-1.5 py-0.5 rounded font-bold uppercase">
                               json
                             </span>
                           </div>
 
-                          <div className="border border-ink-border rounded-xl bg-ink-card/55 p-4">
+                          <div className="border border-ink-border rounded-xl bg-ink-card/40 px-4">
                             {requestBodySchema.properties ? (
-                              <div className="divide-y divide-ink-border/60">
-                                {renderSchemaProperties(requestBodySchema.properties, requestBodySchema.required || [])}
+                              <div>
+                                {renderSchemaProperties(
+                                  requestBodySchema.properties,
+                                  requestBodySchema.required || [],
+                                )}
                               </div>
                             ) : (
-                              <p className="text-light-text text-xs font-mono">Any valid JSON object</p>
+                              <p className="text-light-text text-xs font-mono py-3.5">
+                                Any valid JSON object
+                              </p>
                             )}
                           </div>
                         </div>
@@ -1240,88 +2092,154 @@ export default function App() {
 
                   {activeDocTab === "playground" && (
                     <div className="space-y-6 animate-fade-in">
-                      <div className="bg-yellow-500/10 text-yellow-500/90 border border-yellow-500/20 rounded-xl p-4 text-xs leading-relaxed">
-                        💡 <strong>Interactive Sandbox mode:</strong> Fill in parameters below to rebuild headers, query filters, JSON payloads, and dynamic code snippets in real-time. Hit <strong>"Send Request"</strong> to mock real API cycles.
+                      <div className="bg-brass/[0.08] text-paper/90 border border-brass/20 rounded-xl p-3.5 text-[12.5px] leading-relaxed flex gap-2.5">
+                        <Play
+                          size={14}
+                          className="text-brass shrink-0 mt-0.5"
+                        />
+                        <span>
+                          <strong className="text-brass">
+                            Interactive sandbox.
+                          </strong>{" "}
+                          Fill in parameters below to rebuild headers, query
+                          filters, JSON payloads, and code snippets in real
+                          time, then hit <strong>Send Request</strong> to mock a
+                          full cycle.
+                        </span>
                       </div>
 
                       {/* Parameters Form Inputs */}
-                      {activeEndpoint.parameters && activeEndpoint.parameters.length > 0 && (
-                        <div className="space-y-3">
-                          <h3 className="text-xs uppercase tracking-widest font-bold text-brass">Query & Path Params</h3>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-ink-card/40 border border-ink-border p-4 rounded-xl">
-                            {activeEndpoint.parameters.map((param: any) => (
-                              <div key={param.name} className="space-y-1">
-                                <label className="text-[10px] font-bold uppercase text-paper flex items-center justify-between">
-                                  <span>{param.name} {param.required && <span className="text-red-400 font-black">*</span>}</span>
-                                  <span className="text-brass font-mono text-[9px]">{param.in}</span>
-                                </label>
-                                <input
-                                  type="text"
-                                  placeholder={`Enter ${param.name}...`}
-                                  value={playgroundParams[param.name] || ""}
-                                  onChange={(e) => {
-                                    const val = e.target.value;
-                                    setPlaygroundParams((prev) => ({ ...prev, [param.name]: val }));
-                                  }}
-                                  className="w-full bg-ink-bg border border-ink-border rounded px-2.5 py-1.5 text-xs text-paper focus:outline-none focus:border-brass"
-                                />
-                              </div>
-                            ))}
+                      {activeEndpoint.parameters &&
+                        activeEndpoint.parameters.length > 0 && (
+                          <div className="space-y-2.5">
+                            <h3 className="text-[11px] uppercase tracking-[0.12em] font-bold text-brass/90">
+                              Query & Path Params
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-ink-card/40 border border-ink-border p-4 rounded-xl">
+                              {activeEndpoint.parameters.map((param: any) => (
+                                <div key={param.name} className="space-y-1.5">
+                                  <label className="text-[10px] font-bold uppercase tracking-wide text-paper flex items-center justify-between">
+                                    <span>
+                                      {param.name}{" "}
+                                      {param.required && (
+                                        <span className="text-rose-400 font-black">
+                                          *
+                                        </span>
+                                      )}
+                                    </span>
+                                    <span className="text-brass/80 font-mono text-[9px]">
+                                      {param.in}
+                                    </span>
+                                  </label>
+                                  <input
+                                    type="text"
+                                    placeholder={`Enter ${param.name}…`}
+                                    value={playgroundParams[param.name] || ""}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setPlaygroundParams((prev) => ({
+                                        ...prev,
+                                        [param.name]: val,
+                                      }));
+                                    }}
+                                    className="w-full bg-ink-bg border border-ink-border rounded-md px-2.5 py-1.5 text-xs text-paper focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-all"
+                                  />
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        )}
 
                       {/* Request Body Fields Editor */}
                       {requestBodySchema && requestBodySchema.properties && (
-                        <div className="space-y-3">
-                          <h3 className="text-xs uppercase tracking-widest font-bold text-brass">Request Payload Fields</h3>
-                          <div className="bg-ink-card/40 border border-ink-border p-4 rounded-xl space-y-3">
-                            {Object.entries(requestBodySchema.properties).map(([key, prop]: [string, any]) => {
-                              const isRequired = requestBodySchema.required?.includes(key);
-                              const currentVal = playgroundBody[key];
+                        <div className="space-y-2.5">
+                          <h3 className="text-[11px] uppercase tracking-[0.12em] font-bold text-brass/90">
+                            Request Payload Fields
+                          </h3>
+                          <div className="bg-ink-card/40 border border-ink-border p-4 rounded-xl space-y-3.5">
+                            {Object.entries(requestBodySchema.properties).map(
+                              ([key, prop]: [string, any]) => {
+                                const isRequired =
+                                  requestBodySchema.required?.includes(key);
+                                const currentVal = playgroundBody[key];
 
-                              return (
-                                <div key={key} className="space-y-1 text-xs">
-                                  <label className="font-bold text-paper flex items-baseline justify-between">
-                                    <span>{key} {isRequired && <span className="text-red-400">*</span>}</span>
-                                    <span className="text-brass/80 font-mono text-[9px]">{prop.type || "string"}</span>
-                                  </label>
-                                  {prop.type === "boolean" ? (
-                                    <select
-                                      value={String(!!currentVal)}
-                                      onChange={(e) => {
-                                        const boolVal = e.target.value === "true";
-                                        setPlaygroundBody((prev) => ({ ...prev, [key]: boolVal }));
-                                      }}
-                                      className="w-full bg-ink-bg border border-ink-border rounded px-2.5 py-1.5 text-xs text-paper focus:outline-none focus:border-brass"
-                                    >
-                                      <option value="true">true</option>
-                                      <option value="false">false</option>
-                                    </select>
-                                  ) : prop.type === "number" || prop.type === "integer" ? (
-                                    <input
-                                      type="number"
-                                      value={currentVal === undefined ? "" : Number(currentVal)}
-                                      onChange={(e) => {
-                                        const numVal = e.target.value === "" ? "" : Number(e.target.value);
-                                        setPlaygroundBody((prev) => ({ ...prev, [key]: numVal }));
-                                      }}
-                                      className="w-full bg-ink-bg border border-ink-border rounded px-2.5 py-1.5 text-xs text-paper focus:outline-none focus:border-brass"
-                                    />
-                                  ) : (
-                                    <input
-                                      type="text"
-                                      value={currentVal === undefined ? "" : String(currentVal)}
-                                      onChange={(e) => {
-                                        const txtVal = e.target.value;
-                                        setPlaygroundBody((prev) => ({ ...prev, [key]: txtVal }));
-                                      }}
-                                      className="w-full bg-ink-bg border border-ink-border rounded px-2.5 py-1.5 text-xs text-paper focus:outline-none focus:border-brass"
-                                    />
-                                  )}
-                                </div>
-                              );
-                            })}
+                                return (
+                                  <div
+                                    key={key}
+                                    className="space-y-1.5 text-xs"
+                                  >
+                                    <label className="font-semibold text-paper flex items-baseline justify-between">
+                                      <span>
+                                        {key}{" "}
+                                        {isRequired && (
+                                          <span className="text-rose-400">
+                                            *
+                                          </span>
+                                        )}
+                                      </span>
+                                      <span className="text-brass/80 font-mono text-[9px]">
+                                        {prop.type || "string"}
+                                      </span>
+                                    </label>
+                                    {prop.type === "boolean" ? (
+                                      <select
+                                        value={String(!!currentVal)}
+                                        onChange={(e) => {
+                                          const boolVal =
+                                            e.target.value === "true";
+                                          setPlaygroundBody((prev) => ({
+                                            ...prev,
+                                            [key]: boolVal,
+                                          }));
+                                        }}
+                                        className="w-full bg-ink-bg border border-ink-border rounded-md px-2.5 py-1.5 text-xs text-paper focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-all"
+                                      >
+                                        <option value="true">true</option>
+                                        <option value="false">false</option>
+                                      </select>
+                                    ) : prop.type === "number" ||
+                                      prop.type === "integer" ? (
+                                      <input
+                                        type="number"
+                                        value={
+                                          currentVal === undefined
+                                            ? ""
+                                            : Number(currentVal)
+                                        }
+                                        onChange={(e) => {
+                                          const numVal =
+                                            e.target.value === ""
+                                              ? ""
+                                              : Number(e.target.value);
+                                          setPlaygroundBody((prev) => ({
+                                            ...prev,
+                                            [key]: numVal,
+                                          }));
+                                        }}
+                                        className="w-full bg-ink-bg border border-ink-border rounded-md px-2.5 py-1.5 text-xs text-paper focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-all"
+                                      />
+                                    ) : (
+                                      <input
+                                        type="text"
+                                        value={
+                                          currentVal === undefined
+                                            ? ""
+                                            : String(currentVal)
+                                        }
+                                        onChange={(e) => {
+                                          const txtVal = e.target.value;
+                                          setPlaygroundBody((prev) => ({
+                                            ...prev,
+                                            [key]: txtVal,
+                                          }));
+                                        }}
+                                        className="w-full bg-ink-bg border border-ink-border rounded-md px-2.5 py-1.5 text-xs text-paper focus:outline-none focus:ring-2 focus:ring-brass/30 focus:border-brass transition-all"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              },
+                            )}
                           </div>
                         </div>
                       )}
@@ -1331,17 +2249,17 @@ export default function App() {
                         <button
                           onClick={sendSimulatedRequest}
                           disabled={isPlayingLoading}
-                          className="bg-brass hover:bg-white text-ink-bg font-black uppercase text-xs px-5 py-3 tracking-wider rounded-lg flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                          className="bg-brass hover:bg-white hover:shadow-md hover:-translate-y-px text-ink-bg font-bold text-[12px] px-4 py-2.5 tracking-wide rounded-lg flex items-center gap-2 transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:translate-y-0"
                         >
                           {isPlayingLoading ? (
                             <>
-                              <RefreshCw size={14} className="animate-spin" />
-                              Sending...
+                              <RefreshCw size={13} className="animate-spin" />
+                              Sending…
                             </>
                           ) : (
                             <>
-                              <Send size={14} />
-                              Send Simulated Request
+                              <Send size={13} />
+                              Send Request
                             </>
                           )}
                         </button>
@@ -1351,20 +2269,36 @@ export default function App() {
                       {playgroundResponse && (
                         <div className="space-y-2.5 animate-fade-in">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-xs uppercase tracking-widest font-black text-brass">Playground API Response</h4>
-                            <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded">
-                              200 OK (simulated)
+                            <h4 className="text-[11px] uppercase tracking-[0.12em] font-bold text-brass/90">
+                              Response
+                            </h4>
+                            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded">
+                              200 OK · simulated
                             </span>
                           </div>
-                          <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl">
+                          <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-sm">
                             <button
-                              onClick={() => handleCopy(JSON.stringify(playgroundResponse, null, 2), "playground-resp")}
+                              onClick={() =>
+                                handleCopy(
+                                  JSON.stringify(playgroundResponse, null, 2),
+                                  "playground-resp",
+                                )
+                              }
                               className="absolute right-3 top-3 p-1.5 rounded-lg bg-ink-card text-light-text hover:text-paper border border-ink-border transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                             >
-                              {copiedMap["playground-resp"] ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                              {copiedMap["playground-resp"] ? (
+                                <Check size={13} className="text-emerald-400" />
+                              ) : (
+                                <Copy size={13} />
+                              )}
                             </button>
-                            <pre className="overflow-x-auto text-green-400 whitespace-pre leading-relaxed scrollbar-thin max-h-96">
-                              <code>{renderHighlightedCode(JSON.stringify(playgroundResponse, null, 2), "json")}</code>
+                            <pre className="overflow-x-auto text-emerald-300 whitespace-pre leading-relaxed scrollbar-thin max-h-96">
+                              <code>
+                                {renderHighlightedCode(
+                                  JSON.stringify(playgroundResponse, null, 2),
+                                  "json",
+                                )}
+                              </code>
                             </pre>
                           </div>
                         </div>
@@ -1373,18 +2307,37 @@ export default function App() {
                   )}
 
                   {activeDocTab === "schema" && (
-                    <div className="space-y-4 animate-fade-in">
-                      <h3 className="text-xs uppercase tracking-widest font-bold text-brass">Raw OpenAPI Response Schema definition</h3>
-                      <p className="text-xs text-light-text">Below is the complete raw model representation parsed dynamically from our central specification files.</p>
-                      <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl">
+                    <div className="space-y-3.5 animate-fade-in">
+                      <h3 className="text-[11px] uppercase tracking-[0.12em] font-bold text-brass/90">
+                        Raw response schema
+                      </h3>
+                      <p className="text-[13px] text-light-text leading-relaxed">
+                        The complete model representation, parsed dynamically
+                        from the central specification.
+                      </p>
+                      <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-sm">
                         <button
-                          onClick={() => handleCopy(JSON.stringify(activeEndpoint.responses, null, 2), "raw-schema")}
-                          className="absolute right-3 top-3 p-1.5 rounded-lg bg-ink-card text-light-text hover:text-paper border border-ink-border transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 animate-fade-in"
+                          onClick={() =>
+                            handleCopy(
+                              JSON.stringify(activeEndpoint.responses, null, 2),
+                              "raw-schema",
+                            )
+                          }
+                          className="absolute right-3 top-3 p-1.5 rounded-lg bg-ink-card text-light-text hover:text-paper border border-ink-border transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                         >
-                          {copiedMap["raw-schema"] ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                          {copiedMap["raw-schema"] ? (
+                            <Check size={13} className="text-emerald-400" />
+                          ) : (
+                            <Copy size={13} />
+                          )}
                         </button>
                         <pre className="overflow-x-auto text-purple-300 whitespace-pre leading-relaxed scrollbar-thin max-h-[500px]">
-                          <code>{renderHighlightedCode(JSON.stringify(activeEndpoint.responses, null, 2), "json")}</code>
+                          <code>
+                            {renderHighlightedCode(
+                              JSON.stringify(activeEndpoint.responses, null, 2),
+                              "json",
+                            )}
+                          </code>
                         </pre>
                       </div>
                     </div>
@@ -1392,278 +2345,156 @@ export default function App() {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-96 text-center">
-                  <BookOpen size={48} className="text-brass mb-4 animate-pulse" />
-                  <h3 className="text-xl font-bold">Select an API Endpoint</h3>
-                  <p className="text-light-text text-sm mt-2">Explore Scryme Ledger's high-performance endpoints from the left navigation.</p>
+                  <BookOpen size={40} className="text-brass/70 mb-4" />
+                  <h3 className="text-lg font-bold">Select an API endpoint</h3>
+                  <p className="text-light-text text-sm mt-2 max-w-xs">
+                    Explore Scryme Ledger's endpoints from the navigation on the
+                    left.
+                  </p>
                 </div>
               )}
             </div>
 
             {/* Pagination Controls at Bottom */}
-            <div className="mt-12 pt-6 border-t border-ink-border/60 flex items-center justify-between text-xs font-bold text-light-text select-none">
+            <div className="mt-12 pt-5 border-t border-ink-border/60 flex items-center justify-between text-xs font-semibold text-light-text select-none">
               <button
                 onClick={handlePrevPage}
                 disabled={currentChronoIndex === 0}
-                className="flex items-center gap-1.5 bg-ink-card hover:bg-ink-bg px-4 py-2 rounded-lg border border-ink-border cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-paper"
+                className="flex items-center gap-1.5 hover:bg-ink-card px-3 py-1.5 rounded-lg cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-paper"
               >
-                <ArrowLeft size={14} />
-                <span>Prev Page</span>
+                <ArrowLeft size={13} />
+                <span>Previous</span>
               </button>
 
-              <div className="text-[10px] text-light-text/60 font-mono">
+              <div className="text-[10px] text-light-text/50 font-mono">
                 {currentChronoIndex + 1} / {chronologicalList.length}
               </div>
 
               <button
                 onClick={handleNextPage}
                 disabled={currentChronoIndex === chronologicalList.length - 1}
-                className="flex items-center gap-1.5 bg-ink-card hover:bg-ink-bg px-4 py-2 rounded-lg border border-ink-border cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed text-paper"
+                className="flex items-center gap-1.5 hover:bg-ink-card px-3 py-1.5 rounded-lg cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed text-paper"
               >
-                <span>Next Page</span>
-                <ArrowRight size={14} />
+                <span>Next</span>
+                <ArrowRight size={13} />
               </button>
             </div>
           </section>
 
           {/* RIGHT COLUMN */}
-          <section className="col-span-5 bg-[#080d17] p-6 lg:p-12 overflow-y-auto space-y-8 sticky top-0 lg:h-[calc(100vh-64px)] flex flex-col justify-between border-t lg:border-t-0 border-ink-border">
+          <section className="col-span-5 bg-[#080d17] p-6 lg:px-10 lg:py-12 overflow-y-auto space-y-7 sticky top-0 lg:h-[calc(100vh-56px)] flex flex-col justify-between border-t lg:border-t-0 border-ink-border">
             <div className="space-y-6 flex-1">
-
-              {/* CMS Target / Tabs Selector (Only for Guide) */}
-              {activeEndpointId === "cms-customization-guide" ? (
-                <div className="space-y-6">
-                  {/* Service vs Product Schema Toggle */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between border-b border-ink-border pb-3">
-                      <span className="text-[10px] font-black uppercase text-light-text tracking-widest flex items-center gap-1">
-                        <Fingerprint size={12} className="text-brass" />
-                        <span>CMS Target Type</span>
-                      </span>
-                      <div className="bg-ink-card p-0.5 border border-ink-border rounded flex gap-1">
-                        <button
-                          onClick={() => setSelectedCmsTarget("service")}
-                          className={`text-[9px] font-mono font-bold uppercase px-2.5 py-1.5 rounded transition-colors cursor-pointer ${
-                            selectedCmsTarget === "service" ? "bg-brass text-ink-bg" : "text-light-text hover:text-paper"
-                          }`}
-                        >
-                          Service Schema
-                        </button>
-                        <button
-                          onClick={() => setSelectedCmsTarget("product")}
-                          className={`text-[9px] font-mono font-bold uppercase px-2.5 py-1.5 rounded transition-colors cursor-pointer ${
-                            selectedCmsTarget === "product" ? "bg-brass text-ink-bg" : "text-light-text hover:text-paper"
-                          }`}
-                        >
-                          Product Schema
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Simulator Preview Switcher Tabs */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs uppercase tracking-widest font-black text-brass">Storefront Output</span>
-                      <div className="bg-ink-card p-0.5 border border-ink-border rounded flex gap-1">
-                        <button
-                          onClick={() => setCmsPreviewTab("preview")}
-                          className={`text-[9px] font-mono font-bold uppercase px-2 py-1 transition-colors cursor-pointer rounded ${
-                            cmsPreviewTab === "preview" ? "bg-brass text-ink-bg" : "text-light-text"
-                          }`}
-                        >
-                          Live Card Preview
-                        </button>
-                        <button
-                          onClick={() => setCmsPreviewTab("payload")}
-                          className={`text-[9px] font-mono font-bold uppercase px-2 py-1 transition-colors cursor-pointer rounded ${
-                            cmsPreviewTab === "payload" ? "bg-brass text-ink-bg" : "text-light-text"
-                          }`}
-                        >
-                          Serialized JSON
-                        </button>
-                      </div>
-                    </div>
-
-                    {cmsPreviewTab === "preview" ? (
-                      /* Live Simulated Storefront Card Preview */
-                      <div className="bg-ink-bg border border-ink-border rounded-xl overflow-hidden flex flex-col justify-between shadow-xl animate-fade-in text-left">
-                        {/* Browser window top bar */}
-                        <div className="bg-ink-card border-b border-ink-border px-3 py-2 flex items-center gap-1.5 text-[10px] text-light-text font-mono">
-                          <Globe size={11} className="text-brass" />
-                          <span className="truncate">{simSeoTitle || "Storefront Browser Tab"}</span>
-                        </div>
-
-                        <div className="relative aspect-video bg-ink-card">
-                          <img
-                            src={simImageUrl}
-                            alt="Simulated storefront cover"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as any).src = "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600";
-                            }}
-                          />
-                          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 to-transparent p-4 pt-10">
-                            <span className="text-[8px] font-black uppercase tracking-widest text-brass">
-                              {selectedCmsTarget === "service" ? "Premium Service Booking" : "Retail Catalog Item"}
-                            </span>
-                            <h4 className="text-sm font-bold text-white truncate">{simName || "Unnamed Custom Item"}</h4>
-                            <div className="flex items-center justify-between mt-1 text-white">
-                              <span className="text-[10px] text-zinc-400 font-mono">{simSku || "N/A"}</span>
-                              <span className="text-xs font-black text-brass">${simPrice}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="p-4 space-y-3">
-                          {/* Custom attributes tag */}
-                          <div className="flex flex-wrap gap-1">
-                            <span className="bg-ink-card border border-ink-border text-light-text px-2 py-0.5 rounded text-[10px] font-mono">
-                              instructor: <span className="text-paper font-semibold">{simAttrValue}</span>
-                            </span>
-                          </div>
-
-                          {/* SEO Tag information preview snippet */}
-                          <div className="bg-zinc-950/40 p-2.5 rounded border border-ink-border text-[10px] text-light-text space-y-1">
-                            <strong className="text-brass text-[9px] font-bold uppercase block">Google Search Preview:</strong>
-                            <div className="text-blue-400 hover:underline truncate font-semibold">{simSeoTitle}</div>
-                            <div className="line-clamp-2 text-zinc-400 leading-relaxed">{simSeoDesc}</div>
-                          </div>
-
-                          {/* Parsed Markdown block */}
-                          <div className="border border-ink-border/60 p-3 rounded bg-ink-card/45 text-[11px] leading-relaxed text-light-text max-h-24 overflow-y-auto scrollbar-thin">
-                            <strong className="text-white block font-bold text-xs mb-1">Storefront About / Specifications (MD)</strong>
-                            <p className="whitespace-pre-line text-xs font-sans">{simMarkdown}</p>
-                          </div>
-
-                          <button className="w-full bg-brass text-ink-bg font-black uppercase text-[10px] py-2.5 tracking-widest hover:bg-white hover:text-black transition-all cursor-pointer rounded">
-                            {selectedCmsTarget === "service" ? "Reserve Available Slot" : "Add Catalog Item to Cart"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Serialized customFields JSON view */
-                      <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl animate-fade-in text-left">
-                        <button
-                          onClick={() => {
-                            const payload = {
-                              markdownDescription: simMarkdown,
-                              images: [{ id: "img_cms_primary", url: simImageUrl, caption: simName }],
-                              seo: { title: simSeoTitle, description: simSeoDesc, keywords: "baking, premium" },
-                              customAttributes: { instructor_name: simAttrValue }
-                            };
-                            handleCopy(JSON.stringify(payload, null, 2), "cms-raw-payload");
-                          }}
-                          className="absolute right-3 top-3 p-1.5 rounded-lg bg-ink-card text-light-text hover:text-paper border border-ink-border transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                        >
-                          {copiedMap["cms-raw-payload"] ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
-                        </button>
-                        <pre className="overflow-x-auto text-green-300 whitespace-pre leading-relaxed scrollbar-thin max-h-96">
-                          <code>
-                            {renderHighlightedCode(JSON.stringify({
-                              markdownDescription: simMarkdown,
-                              images: [
-                                {
-                                  id: "img_cms_primary",
-                                  url: simImageUrl,
-                                  caption: simName
-                                }
-                              ],
-                              seo: {
-                                title: simSeoTitle,
-                                description: simSeoDesc,
-                                keywords: "baking, premium"
-                              },
-                              customAttributes: {
-                                instructor_name: simAttrValue
-                              }
-                            }, null, 2), "json")}
-                          </code>
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : null}
-
               {/* Target / Request Snippet Block */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-black text-brass">
-                    <Code size={14} />
-                    <span>Request Snippet</span>
+              <div className="space-y-0 rounded-xl overflow-hidden border border-ink-border shadow-lg shadow-black/20">
+                {/* Snippet chrome / header bar */}
+                <div className="flex items-center justify-between px-3.5 py-2.5 bg-ink-card border-b border-ink-border">
+                  <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.1em] font-bold text-light-text/70">
+                    <Code size={12} className="text-brass" />
+                    <span>Request</span>
                   </div>
-                  {/* Language Tab buttons */}
-                  <div className="bg-ink-card rounded-lg p-1 border border-ink-border flex gap-1">
+                  <div className="bg-ink-bg rounded-md p-0.5 border border-ink-border flex gap-0.5">
                     {(["curl", "node", "python"] as const).map((lang) => (
                       <button
                         key={lang}
                         onClick={() => setCodeLanguage(lang)}
                         className={`text-[10px] font-mono font-bold uppercase px-2 py-1 rounded transition-colors cursor-pointer ${
-                          codeLanguage === lang ? "bg-brass text-ink-bg" : "text-light-text hover:text-paper"
+                          codeLanguage === lang
+                            ? "bg-brass text-ink-bg"
+                            : "text-light-text hover:text-paper"
                         }`}
                       >
-                        {lang === "curl" ? "cURL" : lang === "node" ? "Node" : "Python"}
+                        {lang === "curl"
+                          ? "cURL"
+                          : lang === "node"
+                            ? "Node"
+                            : "Python"}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl text-left">
+                <div className="relative group bg-ink-bg p-4 text-xs font-mono text-left">
                   {/* Copy Button */}
                   <button
-                    onClick={() => handleCopy(codeSnippets[codeLanguage], "request")}
+                    onClick={() =>
+                      handleCopy(codeSnippets[codeLanguage], "request")
+                    }
                     className="absolute right-3 top-3 p-1.5 rounded-lg bg-ink-card text-light-text hover:text-paper border border-ink-border transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                   >
-                    {copiedMap["request"] ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+                    {copiedMap["request"] ? (
+                      <Check size={13} className="text-emerald-400" />
+                    ) : (
+                      <Copy size={13} />
+                    )}
                   </button>
 
                   <pre className="overflow-x-auto text-paper whitespace-pre leading-relaxed select-all scrollbar-thin max-h-96">
-                    <code>{renderHighlightedCode(codeSnippets[codeLanguage], codeLanguage)}</code>
+                    <code>
+                      {renderHighlightedCode(
+                        codeSnippets[codeLanguage],
+                        codeLanguage,
+                      )}
+                    </code>
                   </pre>
                 </div>
               </div>
 
               {/* Response Block (Only for non-guide/standard endpoints reference view) */}
-              {activeEndpointId !== "cms-customization-guide" && activeDocTab === "reference" && (
-                <div className="space-y-3 animate-fade-in">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs uppercase tracking-widest font-black text-brass">
-                      <Terminal size={14} />
-                      <span>Response Payload</span>
+              {activeEndpointId !== "cms-customization-guide" &&
+                activeEndpointId !== "v3-global-response-guide" &&
+                activeDocTab === "reference" && (
+                  <div className="space-y-0 rounded-xl overflow-hidden border border-ink-border shadow-lg shadow-black/20 animate-fade-in">
+                    <div className="flex items-center justify-between px-3.5 py-2.5 bg-ink-card border-b border-ink-border">
+                      <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.1em] font-bold text-light-text/70">
+                        <Terminal size={12} className="text-brass" />
+                        <span>Response</span>
+                      </div>
+                      <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-mono font-bold uppercase tracking-wide px-2 py-0.5 rounded">
+                        200 OK
+                      </span>
                     </div>
-                    <span className="text-[10px] bg-green-500/10 text-green-400 border border-green-500/20 font-mono font-bold uppercase tracking-wider px-2.5 py-0.5 rounded">
-                      200 ok
-                    </span>
-                  </div>
 
-                  <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl text-left">
-                    {/* Copy Button */}
-                    <button
-                      onClick={() => handleCopy(JSON.stringify(mockResponsePayload, null, 2), "response")}
-                      className="absolute right-3 top-3 p-1.5 rounded-lg bg-ink-card text-light-text hover:text-paper border border-ink-border transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 animate-fade-in"
-                    >
-                      {copiedMap["response"] ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
-                    </button>
+                    <div className="relative group bg-ink-bg p-4 text-xs font-mono text-left">
+                      <button
+                        onClick={() =>
+                          handleCopy(
+                            JSON.stringify(mockResponsePayload, null, 2),
+                            "response",
+                          )
+                        }
+                        className="absolute right-3 top-3 p-1.5 rounded-lg bg-ink-card text-light-text hover:text-paper border border-ink-border transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      >
+                        {copiedMap["response"] ? (
+                          <Check size={13} className="text-emerald-400" />
+                        ) : (
+                          <Copy size={13} />
+                        )}
+                      </button>
 
-                    <pre className="overflow-x-auto text-green-300 whitespace-pre leading-relaxed scrollbar-thin max-h-[350px]">
-                      <code>
-                        {renderHighlightedCode(JSON.stringify(mockResponsePayload, null, 2), "json")}
-                      </code>
-                    </pre>
+                      <pre className="overflow-x-auto text-emerald-300 whitespace-pre leading-relaxed scrollbar-thin max-h-[350px]">
+                        <code>
+                          {renderHighlightedCode(
+                            JSON.stringify(mockResponsePayload, null, 2),
+                            "json",
+                          )}
+                        </code>
+                      </pre>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
             </div>
 
             {/* Quick Helper Docs */}
             <div className="pt-6 border-t border-ink-border/60 hidden lg:block transition-colors duration-200">
               <div className="bg-ink-card/40 border border-ink-border/60 rounded-xl p-4 text-xs space-y-2 text-left">
-                <div className="font-bold text-brass flex items-center gap-1">
+                <div className="font-bold text-brass flex items-center gap-1.5">
                   <Fingerprint size={12} />
                   <span>Sandbox Credentials</span>
                 </div>
                 <p className="text-light-text leading-relaxed">
-                  Use the <code className="text-paper">/v3/auth/token</code> endpoint in sandbox mode to exchange client credentials. All write operations require a valid organization scope.
+                  Use the <code className="text-paper">/v3/auth/token</code>{" "}
+                  endpoint in sandbox mode to exchange client credentials. All
+                  write operations require a valid organization scope.
                 </p>
               </div>
             </div>
