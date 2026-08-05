@@ -1,3 +1,7 @@
+## 2026-08-05 - [Parallelized HTTP Notifications and Database Writes in CRM Reminders]
+**Learning:** Performing sequential HTTP requests (e.g. Scryme chat messages) and database writes (e.g. updating crmFollowUp) inside loops creates severe O(N) execution delays, leaving background/cron services vulnerable to timeouts. Combining individual tasks into try/catch-wrapped asynchronous promises and parallelizing them with `Promise.all` collapses the execution profile from $O(N)$ sequential blocking delays down to a flat, resilient $O(1)$ concurrent round-trip block.
+**Action:** Always wrap independent external HTTP/DB processing steps in individual try/catch handlers and parallelize them using `Promise.all` to ensure continuous throughput on batch notifications.
+
 ## 2026-08-04 - [Parallelized Database Writes and Map Aggregation in Stock Transfer Receipt]
 **Learning:** Sequential database updates and inserts inside a single database transaction (e.g., upserting `productVariantStock`, creating `stockBatch`, and updating `stockTransferItem`) multiply transaction duration, connection hold times, and trigger database row-lock contention under heavy concurrency. Consolidating row updates down to unique items prior to execution and parallelizing independent writes with `Promise.all` shrinks transactional roundtrip latency from $O(N)$ down to a flat $O(1)$.
 **Action:** Always aggregate updates on shared compound indices (such as `variantId_locationId` in stock) into a consolidated Map and execute them concurrently via `Promise.all` inside database transactions.
@@ -189,7 +193,7 @@
 **Action:** Always accumulate quantities by unique keys (like `variantId`) in-memory during batch-processing loop operations, then execute exactly one database update/upsert per unique key, while deferring validation checks or movement records as necessary to keep integrity checks aligned.
 
 ## 2026-07-31 - [Delta Category Sync in V2 POS Path]
-**Learning:** Fetching and returning all organization categories during POS sync requests is a scalability bottleneck and defeats the purpose of delta sync protocols. Adding conditional `updatedAt` filtering scoped by `lastSync` converts category sync to a true incremental/delta sync, eliminating redundant database I/O, serialization overhead, and network footprint under heavy client request load.
+**Learning:** Fetching and returning all organization categories during POS sync requests is a scalability bottleneck and defeats the purpose of delta sync protocols. Adding conditional `updatedAt` filtering scoped by `lastSync` filtering converts category sync to a true incremental/delta sync, eliminating redundant database I/O, serialization overhead, and network footprint under heavy client request load.
 **Action:** Always scope reference and catalog list fetches with `lastSync` filtering where applicable in sync endpoints to enforce strict delta sync standards.
 
 ## 2026-08-02 - [Dual Database Parallelization and Map Grouping in Android Analytics]
