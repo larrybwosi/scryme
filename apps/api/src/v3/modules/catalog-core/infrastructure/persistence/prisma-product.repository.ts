@@ -27,6 +27,7 @@ export class PrismaProductRepository implements IProductRepository {
         sku: true,
         slug: true,
         imageUrls: true,
+        customFields: true,
         category: {
           select: {
             id: true,
@@ -63,6 +64,7 @@ export class PrismaProductRepository implements IProductRepository {
             sku: v.sku,
             retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
           })),
+          p.customFields,
         ),
     );
   }
@@ -81,6 +83,7 @@ export class PrismaProductRepository implements IProductRepository {
         sku: true,
         slug: true,
         imageUrls: true,
+        customFields: true,
         category: {
           select: {
             id: true,
@@ -116,6 +119,7 @@ export class PrismaProductRepository implements IProductRepository {
         sku: v.sku,
         retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
       })),
+      p.customFields,
     );
   }
 
@@ -125,6 +129,7 @@ export class PrismaProductRepository implements IProductRepository {
       update: {
         name: product.name,
         description: product.description,
+        customFields: product.customFields !== undefined ? product.customFields : undefined,
       },
       create: {
         id: product.id,
@@ -133,6 +138,7 @@ export class PrismaProductRepository implements IProductRepository {
         organization: { connect: { id: product.organizationId } },
         sku: product.sku || `PROD-${Date.now()}`,
         category: { connect: { id: product.categoryId } },
+        customFields: product.customFields !== undefined ? product.customFields : undefined,
       },
       select: {
         id: true,
@@ -145,6 +151,7 @@ export class PrismaProductRepository implements IProductRepository {
         sku: true,
         slug: true,
         imageUrls: true,
+        customFields: true,
         category: {
           select: {
             id: true,
@@ -179,6 +186,7 @@ export class PrismaProductRepository implements IProductRepository {
         sku: v.sku,
         retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
       })),
+      p.customFields,
     );
   }
 }

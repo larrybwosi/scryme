@@ -74,6 +74,39 @@ export const PRESETS = {
   },
 };
 
+// --- Markdown to HTML Parser ---
+export function parseMarkdownToHtml(md: string): string {
+  if (!md) return "";
+  let html = md
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  // Headers: #, ##, ###
+  html = html.replace(/^### (.*$)/gim, '<h3 class="text-xs font-bold text-white mt-1.5 mb-1">$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h4 class="text-[11px] font-bold text-white mt-1.5 mb-0.5">$1</h4>');
+  html = html.replace(/^# (.*$)/gim, '<h2 class="text-sm font-bold text-white mt-2 mb-1">$1</h2>');
+
+  // Bold: **text**
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>');
+
+  // Italic: *text*
+  html = html.replace(/\*(.*?)\*/g, '<em class="italic">$1</em>');
+
+  // Lists: - item or * item
+  html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<li class="list-disc ml-4">$1</li>');
+
+  // Line breaks to paragraphs / br
+  html = html.split("\n").map(line => {
+    if (line.trim().startsWith("<h") || line.trim().startsWith("<li")) {
+      return line;
+    }
+    return line ? `${line}<br />` : "";
+  }).join("\n");
+
+  return html;
+}
+
 // --- CMS Guide Component Props ---
 interface CmsCustomizationGuideProps {
   selectedCmsTarget: "service" | "product";
@@ -604,13 +637,14 @@ export default function CmsCustomizationGuide({
                 </div>
 
                 {/* Parsed Markdown block */}
-                <div className="border border-ink-border/60 p-3 rounded bg-ink-card/45 text-[11px] leading-relaxed text-light-text max-h-24 overflow-y-auto scrollbar-thin">
+                <div className="border border-ink-border/60 p-3 rounded bg-ink-card/45 text-[11px] leading-relaxed text-light-text max-h-32 overflow-y-auto scrollbar-thin">
                   <strong className="text-white block font-bold text-xs mb-1">
                     Storefront About / Specifications (MD)
                   </strong>
-                  <p className="whitespace-pre-line text-xs font-sans">
-                    {simState.markdownDescription}
-                  </p>
+                  <div
+                    className="text-xs font-sans space-y-1"
+                    dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(simState.markdownDescription) }}
+                  />
                 </div>
 
                 <button className="w-full bg-brass text-ink-bg font-black uppercase text-[10px] py-2.5 tracking-widest hover:bg-white hover:text-black transition-all cursor-pointer rounded">

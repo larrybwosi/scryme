@@ -17,5 +17,6 @@ export class Product {
       sku: string;
       retailPrice: number | null;
     }>,
+    public readonly customFields?: any,
   ) {}
 }

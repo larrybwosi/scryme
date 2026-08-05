@@ -22,6 +22,12 @@ export class CreateProductUseCase {
       "placeholder-category-id",
       new Date(),
       new Date(),
+      dto.sku,
+      null,
+      [],
+      undefined,
+      [],
+      dto.customFields,
     );
 
     return this.productRepository.save(product);

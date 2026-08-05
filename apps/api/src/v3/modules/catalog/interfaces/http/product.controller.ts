@@ -27,6 +27,7 @@ import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-r
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import {
   CreateProductDto,
+  UpdateProductDto,
   ProductResponseDto,
   ServiceCatalogResponseDto,
 } from "../../application/dto/product.dto";
@@ -104,6 +105,7 @@ export class ProductController {
             },
         slug: p.slug || null,
         variants: p.variants || [],
+        customFields: p.customFields || null,
       };
     });
   }
@@ -169,6 +171,7 @@ export class ProductController {
         pricingModel: s.pricingModel,
         estimatedDuration: s.estimatedDuration,
         isActive: s.isActive,
+        customFields: s.customFields || null,
       };
     });
   }
@@ -214,6 +217,88 @@ export class ProductController {
       },
       slug: null,
       variants: [],
+      customFields: product.customFields || null,
+    };
+  }
+
+  @Patch("products/:id")
+  @Permissions("catalog:product:update")
+  @ApiOperation({
+    summary: "Update product details and CMS customizations",
+    operationId: "Catalog_UpdateProduct",
+  })
+  @ApiParam({ name: "id", type: "string" })
+  @ApiResponse({
+    status: 200,
+    type: ProductResponseDto,
+    description: "Product updated",
+  })
+  @ApiResponse({
+    status: 404,
+    type: ApiErrorResponseDto,
+    description: "Product not found",
+  })
+  async updateProduct(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() body: UpdateProductDto,
+  ) {
+    const organizationId = req.organization.id;
+
+    const exists = await this.prisma.client.product.findFirst({
+      where: {
+        id,
+        organizationId,
+      },
+    });
+
+    if (!exists) {
+      throw new NotFoundException("Product not found");
+    }
+
+    const updated = (await this.prisma.client.product.update({
+      where: { id },
+      data: {
+        name: body.name,
+        description: body.description,
+        sku: body.sku,
+        customFields: body.customFields !== undefined ? (body.customFields as any) : undefined,
+      },
+      include: {
+        category: true,
+        variants: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            retailPrice: true,
+          },
+        },
+      },
+    })) as any;
+
+    const firstVariant = updated.variants?.[0];
+    const retailPrice = firstVariant?.retailPrice ? Number(firstVariant.retailPrice) : null;
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      description: updated.description,
+      sku: updated.sku || "",
+      retailPrice,
+      images: updated.imageUrls || [],
+      category: updated.category
+        ? {
+            id: updated.categoryId,
+            name: updated.category.name,
+          }
+        : {
+            id: updated.categoryId,
+            name: "Unknown",
+          },
+      slug: updated.slug || null,
+      variants: updated.variants || [],
+      customFields: updated.customFields || null,
     };
   }
 
