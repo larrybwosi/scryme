@@ -48,9 +48,9 @@ export async function ensureAuthenticated(orgSlug?: string) {
         headers: { "Content-Type": "application/json" }
       });
 
-      if (response.data && response.data.accessToken) {
-        cachedToken = response.data.accessToken;
-        const expiresIn = response.data.expiresIn || 3600;
+      if (response.data && response.data.data && response.data.data.access_token) {
+        cachedToken = response.data.data.access_token;
+        const expiresIn = response.data.data.expires_in || 3600;
         tokenExpiresAt = Date.now() + expiresIn * 1000;
         console.error("Successfully obtained new V3 access token.");
       } else {

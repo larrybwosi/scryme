@@ -80,9 +80,13 @@ describe("Scryme V3 MCP Server Tool Suite", () => {
   it("should validate and execute the token exchange flow correctly", async () => {
     const mockTokenResponse = {
       data: {
-        accessToken: "mock_jwt_access_token_123",
-        tokenType: "Bearer",
-        expiresIn: 3600,
+        success: true,
+        timestamp: "2026-08-05T00:00:00.000Z",
+        data: {
+          access_token: "mock_jwt_access_token_123",
+          token_type: "Bearer",
+          expires_in: 3600,
+        }
       },
     };
 
