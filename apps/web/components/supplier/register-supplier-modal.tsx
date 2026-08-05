@@ -92,14 +92,14 @@ export function RegisterSupplierModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-xl h-10 px-6 gap-2 bg-primary hover:bg-primary/90 shadow-sm transition-all border-none">
+        <Button className="rounded-xl h-10 px-6 gap-2 shadow-sm transition-all">
           <Plus size={18} />
           <span className="font-bold">Register Supplier</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-[#1D1D1F]">
+          <DialogTitle className="text-xl font-bold text-foreground">
             Register Supplier
           </DialogTitle>
           <DialogDescription>
@@ -131,7 +131,7 @@ export function RegisterSupplierModal() {
                             );
                           }
                         }}
-                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                        className="h-11 rounded-xl bg-muted/50"
                       />
                     </FormControl>
                     <FormMessage />
@@ -154,7 +154,7 @@ export function RegisterSupplierModal() {
                           field.onChange(e);
                           setIsCodeCustomized(true);
                         }}
-                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200 font-mono"
+                        className="h-11 rounded-xl bg-muted/50 font-mono"
                       />
                     </FormControl>
                     <FormMessage />
@@ -176,7 +176,7 @@ export function RegisterSupplierModal() {
                       <Input
                         placeholder="John Doe"
                         {...field}
-                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                        className="h-11 rounded-xl bg-muted/50"
                       />
                     </FormControl>
                     <FormMessage />
@@ -195,7 +195,7 @@ export function RegisterSupplierModal() {
                       onValueChange={field.onChange}
                       defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-11 rounded-xl bg-gray-50/50 border-gray-200">
+                        <SelectTrigger className="h-11 rounded-xl bg-muted/50">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
@@ -229,7 +229,7 @@ export function RegisterSupplierModal() {
                       <Input
                         placeholder="john@acme.com"
                         {...field}
-                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                        className="h-11 rounded-xl bg-muted/50"
                       />
                     </FormControl>
                     <FormMessage />
@@ -248,7 +248,7 @@ export function RegisterSupplierModal() {
                       <Input
                         placeholder="+254..."
                         {...field}
-                        className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                        className="h-11 rounded-xl bg-muted/50"
                       />
                     </FormControl>
                     <FormMessage />
@@ -268,7 +268,7 @@ export function RegisterSupplierModal() {
                     <Input
                       placeholder="123 Industrial Area, Nairobi"
                       {...field}
-                      className="h-11 rounded-xl bg-gray-50/50 border-gray-200"
+                      className="h-11 rounded-xl bg-muted/50"
                     />
                   </FormControl>
                   <FormMessage />

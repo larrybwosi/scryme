@@ -100,7 +100,6 @@ const sidebarConfig: SidebarSection[] = [
         ],
       },
       { title: "Locations", icon: MapPin, href: "/locations" },
-      { title: "Promotions", icon: Megaphone, href: "/promotions" },
       {
         title: "Inventory",
         icon: Package,
