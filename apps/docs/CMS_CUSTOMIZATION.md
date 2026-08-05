@@ -406,35 +406,82 @@ export function getFacetedFilters(items) {
 
 ## ⚡ Quick Integration SDK Examples
 
-### 1. Fetching Customized Services via Node.js
-```javascript
-const orgSlug = "bakery-co";
-const url = `https://api.scryme.tech/v3/${orgSlug}/catalog/services`;
+### 📥 1. Installation Instructions
 
-const options = {
-  method: "GET",
-  headers: {
-    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",
-    "Content-Type": "application/json"
-  }
-};
+To install the official Scryme V3 SDK from npm, run the following command in your project directory:
+
+```bash
+# Using npm
+npm install @scryme/sdk axios
+
+# Using pnpm
+pnpm add @scryme/sdk axios
+
+# Using yarn
+yarn add @scryme/sdk axios
+```
+
+---
+
+### ⚙️ 2. Environment Variable Configuration
+
+Instead of passing the organization slug (`orgSlug`) as a parameter to every single request, the SDK automatically reads it from your environment variables.
+
+Set one of the following variables in your `.env` file depending on your build tool/runtime:
+
+```bash
+# General Node.js / Express / Next.js server environments
+SCRYME_ORG_SLUG=bakery-co
+
+# Next.js client-side accessible variables
+NEXT_PUBLIC_SCRYME_ORG_SLUG=bakery-co
+
+# Vite client-side environments
+VITE_SCRYME_ORG_SLUG=bakery-co
+```
+
+When any of these environment variables are defined, the SDK will automatically inject the organization slug to all scoped endpoints, allowing you to omit the `orgSlug` parameter!
+
+---
+
+### 🚀 3. Fetching Customized Services via Node.js (with @scryme/sdk)
+
+Here is how you initialize the client and fetch services. Note how the `orgSlug` argument is completely omitted from `catalogGetServices` because it is automatically resolved from the environment variables!
+
+```javascript
+import { getScrymeV3API } from '@scryme/sdk';
+import axios from 'axios';
+
+// Initialize the API client.
+// The SDK automatically reads SCRYME_ORG_SLUG from the environment.
+const scryme = getScrymeV3API(
+  axios.create({
+    baseURL: 'https://api.scryme.tech',
+    headers: {
+      Authorization: 'Bearer <YOUR_ACCESS_TOKEN>'
+    }
+  })
+);
 
 try {
-  const res = await fetch(url, options);
-  const payload = await res.json();
-  const services = payload.data || payload;
+  // Omit the orgSlug parameter! The SDK handles it on-the-fly.
+  const response = await scryme.catalogGetServices();
+  const services = response.data.data || response.data;
 
   services.forEach(service => {
     console.log(`Service: ${service.name}`);
-    console.log(`Main Image: ${service.images?.[0]?.url || "None"}`);
-    console.log(`Template Style: ${service.customFields?.layoutTemplate || "Default"}`);
+    console.log(`Main Image: ${service.customFields?.images?.[0]?.url || 'None'}`);
+    console.log(`Template Style: ${service.customFields?.layoutTemplate || 'Default'}`);
   });
 } catch (error) {
   console.error("SDK Retrieval Failure:", error);
 }
 ```
 
-### 2. Updating Product SEO & Custom Attributes via Python
+---
+
+### 📝 4. Updating Product SEO & Custom Attributes via Python
+
 ```python
 import requests
 
