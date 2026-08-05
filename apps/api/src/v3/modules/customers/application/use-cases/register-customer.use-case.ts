@@ -90,9 +90,16 @@ export class RegisterCustomerUseCase {
 
       return {
         id: internalId,
-        name: dto.name,
-        email: dto.email,
+        name: customer.name,
+        email: customer.email,
+        phone: customer.phone,
+        company: customer.company,
+        customerType: customer.customerType,
+        dateOfBirth: customer.dateOfBirth,
+        taxId: customer.taxId,
         organizationId,
+        createdAt: customer.createdAt,
+        updatedAt: customer.updatedAt,
       };
     });
 
@@ -109,10 +116,14 @@ export class RegisterCustomerUseCase {
       result.id,
       result.name,
       result.email,
-      null,
+      result.phone,
       result.organizationId,
-      new Date(),
-      new Date(),
+      result.createdAt || new Date(),
+      result.updatedAt || new Date(),
+      result.company,
+      result.customerType,
+      result.dateOfBirth,
+      result.taxId,
     );
   }
 
@@ -199,6 +210,10 @@ export class RegisterCustomerUseCase {
       name: dto.name,
       email: dto.email,
       phone: dto.phone,
+      company: dto.company,
+      customerType: dto.customerType,
+      dateOfBirth: dto.dateOfBirth,
+      taxId: dto.taxId,
       organizationId,
       isActive: true,
       pinnedLocation: dto.location ? { address: dto.location } : undefined,

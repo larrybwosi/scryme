@@ -87,6 +87,26 @@ export class RegisterCustomerDto {
   @ValidateNested()
   @Type(() => AddressDto)
   address?: AddressDto;
+
+  @ApiProperty({ example: "Acme Corp", required: false })
+  @IsString()
+  @IsOptional()
+  company?: string;
+
+  @ApiProperty({ example: "Premium", required: false })
+  @IsString()
+  @IsOptional()
+  customerType?: string;
+
+  @ApiProperty({ example: "1990-01-01", required: false })
+  @IsString()
+  @IsOptional()
+  dateOfBirth?: string;
+
+  @ApiProperty({ example: "PIN12345", required: false })
+  @IsString()
+  @IsOptional()
+  taxId?: string;
 }
 
 export class ProvisionZitadelDto {
