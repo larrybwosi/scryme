@@ -31,11 +31,11 @@ interface AverageSalesChartProps {
 const chartConfig = {
   current: {
     label: "Current",
-    color: "#F97316",
+    color: "hsl(var(--primary))",
   },
   previous: {
     label: "Previous",
-    color: "#FDE6D2",
+    color: "hsl(var(--muted))",
   },
 } satisfies ChartConfig;
 
@@ -47,7 +47,7 @@ export function AverageSalesChart({
 }: AverageSalesChartProps) {
   const isPositive = change >= 0;
   return (
-    <Card className="p-6 bg-white border-none shadow-sm h-full">
+    <Card className="p-6 bg-card border-border shadow-sm h-full">
       <div className="flex justify-between items-start mb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -66,9 +66,13 @@ export function AverageSalesChart({
             </Tooltip>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{value}</span>
+            <span className="text-2xl font-bold text-foreground">{value}</span>
             <div
-              className={`flex items-center text-xs font-medium ${isPositive ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"} px-1.5 py-0.5 rounded-full`}>
+              className={`flex items-center text-xs font-medium ${
+                isPositive
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                  : "text-red-600 dark:text-red-400 bg-red-500/10"
+              } px-1.5 py-0.5 rounded-full`}>
               <TrendingUp
                 className={`h-3 w-3 mr-1 ${!isPositive && "rotate-180"}`}
               />
@@ -82,7 +86,7 @@ export function AverageSalesChart({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="Maximize average sales chart">
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -94,7 +98,7 @@ export function AverageSalesChart({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="More options for average sales">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -106,12 +110,12 @@ export function AverageSalesChart({
 
       <div className="flex items-center gap-4 mb-4 text-[10px]">
         <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-orange-500" />
-          <span>Current</span>
+          <div className="h-2 w-2 rounded-full bg-primary" />
+          <span className="text-muted-foreground">Current</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-orange-100" />
-          <span>Previous</span>
+          <div className="h-2 w-2 rounded-full bg-muted" />
+          <span className="text-muted-foreground">Previous</span>
         </div>
       </div>
 
@@ -121,7 +125,7 @@ export function AverageSalesChart({
             <CartesianGrid
               vertical={false}
               strokeDasharray="3 3"
-              stroke="#f0f0f0"
+              stroke="hsl(var(--border))"
             />
             <XAxis
               dataKey="date"
@@ -132,7 +136,7 @@ export function AverageSalesChart({
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: "#9ca3af" }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               tickFormatter={val =>
                 val >= 1000 ? (val / 1000).toFixed(1) + "k" : val
               }
@@ -142,7 +146,8 @@ export function AverageSalesChart({
               type="monotone"
               dataKey="current"
               stroke="var(--color-current)"
-              fill="rgba(249, 115, 22, 0.1)"
+              fill="var(--color-current)"
+              fillOpacity={0.15}
               strokeWidth={2}
             />
             <Area
@@ -151,6 +156,7 @@ export function AverageSalesChart({
               stroke="var(--color-previous)"
               fill="transparent"
               strokeWidth={2}
+              strokeDasharray="4 4"
             />
           </AreaChart>
         </ChartContainer>

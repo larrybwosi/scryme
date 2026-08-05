@@ -2807,6 +2807,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Product updated",
@@ -11838,6 +11848,30 @@
           "price",
           "sku"
         ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Espresso Beans"
+          },
+          "description": {
+            "type": "string",
+            "example": "High-quality arabica beans"
+          },
+          "price": {
+            "type": "number",
+            "example": 15.99
+          },
+          "sku": {
+            "type": "string",
+            "example": "SKU-123"
+          },
+          "customFields": {
+            "$ref": "#/components/schemas/CmsCustomFieldsDto"
+          }
+        }
       },
       "UpdateSupplierProductDto": {
         "type": "object",

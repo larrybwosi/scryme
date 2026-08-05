@@ -68,8 +68,8 @@ export function OrganizationProfileHeader({
       {/* Banner */}
       <div
         className={cn(
-          "relative h-48 w-full rounded-xl overflow-hidden border bg-zinc-100 group transition-all",
-          !banner && "border-dashed border-2",
+          "relative h-48 w-full rounded-xl overflow-hidden border bg-muted/30 group transition-all",
+          !banner && "border-dashed border-2 border-border",
         )}>
         {banner ? (
           <Image
@@ -80,7 +80,7 @@ export function OrganizationProfileHeader({
             className="object-cover"
           />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-zinc-400">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground/60">
             <UploadCloud className="w-8 h-8 mb-2" />
             <p className="text-sm">Click to upload banner</p>
           </div>
@@ -114,7 +114,7 @@ export function OrganizationProfileHeader({
       {/* Logo Overlay */}
       <div className="absolute -bottom-16 left-8">
         <div className="relative group">
-          <div className="relative h-32 w-32 rounded-2xl overflow-hidden border-4 border-white bg-zinc-50 shadow-lg">
+          <div className="relative h-32 w-32 rounded-2xl overflow-hidden border-4 border-background bg-muted/30 shadow-lg">
             {logo ? (
               <Image
                 src={logo}
@@ -124,7 +124,7 @@ export function OrganizationProfileHeader({
                 className="object-cover"
               />
             ) : (
-              <div className="flex items-center justify-center h-full text-zinc-300">
+              <div className="flex items-center justify-center h-full text-muted-foreground/40">
                 <UploadCloud className="w-8 h-8" />
               </div>
             )}

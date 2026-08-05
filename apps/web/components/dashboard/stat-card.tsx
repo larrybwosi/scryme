@@ -52,7 +52,7 @@ export function StatCard({
   };
 
   return (
-    <Card className="p-6 bg-white border-none shadow-sm flex flex-col gap-4">
+    <Card className="p-6 bg-card border-border shadow-sm flex flex-col gap-4">
       <div className="flex items-center gap-2">
         <span className="text-muted-foreground text-sm flex items-center gap-1">
           {getIcon()}
@@ -73,13 +73,13 @@ export function StatCard({
       </div>
 
       <div className="flex items-baseline gap-2">
-        <span className="text-2xl font-bold">{value}</span>
+        <span className="text-2xl font-bold text-foreground">{value}</span>
         <div
           className={cn(
             "flex items-center text-xs font-medium px-1.5 py-0.5 rounded-full",
             isPositive
-              ? "text-green-600 bg-green-50"
-              : "text-red-600 bg-red-50",
+              ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+              : "text-red-600 dark:text-red-400 bg-red-500/10",
           )}>
           {isPositive ? (
             <TrendingUp className="h-3 w-3 mr-1" />

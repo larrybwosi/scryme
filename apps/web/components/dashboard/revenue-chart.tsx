@@ -39,11 +39,11 @@ interface RevenueChartProps {
 const chartConfig = {
   current: {
     label: "Current period",
-    color: "#000000",
+    color: "hsl(var(--primary))",
   },
   previous: {
     label: "Previous period",
-    color: "#E5E7EB",
+    color: "hsl(var(--muted))",
   },
 } satisfies ChartConfig;
 
@@ -60,7 +60,7 @@ export function RevenueChart({
   const symbol = getCurrencySymbol(currency);
 
   return (
-    <Card className="p-6 bg-white border-none shadow-sm h-full">
+    <Card className="p-6 bg-card border-border shadow-sm h-full">
       <div className="flex justify-between items-start mb-6">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -79,9 +79,15 @@ export function RevenueChart({
             </Tooltip>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold">{totalValue}</span>
+            <span className="text-2xl font-bold text-foreground">
+              {totalValue}
+            </span>
             <div
-              className={`flex items-center text-xs font-medium ${isPositive ? "text-green-600 bg-green-50" : "text-red-600 bg-red-50"} px-1.5 py-0.5 rounded-full`}>
+              className={`flex items-center text-xs font-medium ${
+                isPositive
+                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
+                  : "text-red-600 dark:text-red-400 bg-red-500/10"
+              } px-1.5 py-0.5 rounded-full`}>
               <TrendingUp
                 className={`h-3 w-3 mr-1 ${!isPositive && "rotate-180"}`}
               />
@@ -98,7 +104,7 @@ export function RevenueChart({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="Maximize chart">
                 <Maximize2 className="h-4 w-4" />
               </Button>
@@ -110,7 +116,7 @@ export function RevenueChart({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8"
+                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
                 aria-label="More options">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -122,12 +128,12 @@ export function RevenueChart({
 
       <div className="flex items-center justify-end gap-4 mb-4 text-xs">
         <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-black" />
-          <span>Current</span>
+          <div className="h-2 w-2 rounded-full bg-primary" />
+          <span className="text-muted-foreground">Current</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-gray-200" />
-          <span>Previous</span>
+          <div className="h-2 w-2 rounded-full bg-muted" />
+          <span className="text-muted-foreground">Previous</span>
         </div>
       </div>
 
@@ -137,13 +143,13 @@ export function RevenueChart({
             <CartesianGrid
               vertical={false}
               strokeDasharray="3 3"
-              stroke="#f0f0f0"
+              stroke="hsl(var(--border))"
             />
             <XAxis
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: "#9ca3af" }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               interval="preserveStartEnd"
               ticks={
                 data.length > 0
@@ -158,7 +164,7 @@ export function RevenueChart({
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: "#9ca3af" }}
+              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
               tickFormatter={value =>
                 `${symbol}${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`
               }
@@ -186,7 +192,7 @@ export function RevenueChart({
       <div className="mt-4 flex justify-end">
         <Button
           variant="link"
-          className="text-xs font-semibold text-black p-0 h-auto">
+          className="text-xs font-semibold text-primary p-0 h-auto hover:text-primary/80">
           View More
         </Button>
       </div>
