@@ -34,6 +34,10 @@ export class UpdateCustomerUseCase {
         name: dto.name,
         email: dto.email,
         phone: dto.phone,
+        company: dto.company,
+        customerType: dto.customerType,
+        dateOfBirth: dto.dateOfBirth,
+        taxId: dto.taxId,
         pinnedLocation: dto.location ? { address: dto.location } : undefined,
         deliveryNotes: dto.metadata ? JSON.stringify(dto.metadata) : undefined,
       },
@@ -44,6 +48,10 @@ export class UpdateCustomerUseCase {
         name: true,
         email: true,
         phone: true,
+        company: true,
+        customerType: true,
+        dateOfBirth: true,
+        taxId: true,
         organizationId: true,
         createdAt: true,
         updatedAt: true,
@@ -58,6 +66,10 @@ export class UpdateCustomerUseCase {
       updatedCustomer.organizationId,
       updatedCustomer.createdAt,
       updatedCustomer.updatedAt,
+      updatedCustomer.company,
+      updatedCustomer.customerType,
+      updatedCustomer.dateOfBirth,
+      updatedCustomer.taxId,
     );
   }
 }

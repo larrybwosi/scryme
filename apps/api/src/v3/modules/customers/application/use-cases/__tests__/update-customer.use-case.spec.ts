@@ -47,4 +47,51 @@ describe("UpdateCustomerUseCase", () => {
       select: expect.any(Object),
     });
   });
+
+  it("should update a customer's optional custom fields successfully", async () => {
+    const orgId = "org-123";
+    const custId = "cust-123";
+    const dto = {
+      company: "Acme Corp Ltd",
+      customerType: "VIP",
+      dateOfBirth: "1991-12-12",
+      taxId: "TAX-777",
+    };
+
+    vi.mocked(prisma.client.customer.findFirst).mockResolvedValue({
+      id: custId,
+      organizationId: orgId,
+    } as any);
+    vi.mocked(prisma.client.customer.update).mockResolvedValue({
+      id: custId,
+      name: "John Updated",
+      email: "john@example.com",
+      phone: "+1234567890",
+      company: "Acme Corp Ltd",
+      customerType: "VIP",
+      dateOfBirth: "1991-12-12",
+      taxId: "TAX-777",
+      organizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+
+    const result = await useCase.execute(orgId, custId, dto);
+
+    expect(result.company).toBe("Acme Corp Ltd");
+    expect(result.customerType).toBe("VIP");
+    expect(result.dateOfBirth).toBe("1991-12-12");
+    expect(result.taxId).toBe("TAX-777");
+
+    expect(prisma.client.customer.update).toHaveBeenCalledWith({
+      where: { id: custId },
+      data: expect.objectContaining({
+        company: "Acme Corp Ltd",
+        customerType: "VIP",
+        dateOfBirth: "1991-12-12",
+        taxId: "TAX-777",
+      }),
+      select: expect.any(Object),
+    });
+  });
 });

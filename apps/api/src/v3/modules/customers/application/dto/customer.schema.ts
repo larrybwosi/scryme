@@ -19,6 +19,10 @@ export const RegisterCustomerSchema = z.object({
   location: z.string().optional(),
   metadata: z.any().optional(),
   address: AddressSchema.optional(),
+  company: z.string().optional(),
+  customerType: z.string().optional(),
+  dateOfBirth: z.string().optional(),
+  taxId: z.string().optional(),
 });
 
 export const UpdateCustomerSchema = RegisterCustomerSchema.partial().extend({
