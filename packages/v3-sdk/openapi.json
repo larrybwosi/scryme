@@ -1668,7 +1668,29 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponseDto"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/TokenResponseDto"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2023-10-27T10:00:00.000Z"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "data",
+                    "timestamp"
+                  ]
                 }
               }
             }
@@ -4228,6 +4250,65 @@
         "summary": "Get booking conversion funnel analytics",
         "tags": [
           "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/zitadel/provision": {
+      "post": {
+        "operationId": "Customers_ProvisionZitadel",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvisionZitadelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zitadel provisioned and connected successfully"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Provision Zitadel connection with one click for this organization",
+        "tags": [
+          "V3 Customers"
         ]
       }
     },
@@ -10471,6 +10552,52 @@
         "type": "object",
         "properties": {}
       },
+      "ApiResponseDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object"
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2023-10-27T10:00:00.000Z"
+          },
+          "meta": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "success",
+          "data",
+          "timestamp"
+        ]
+      },
+      "TokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "number",
+            "example": 3600
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in"
+        ]
+      },
       "TokenRequestDto": {
         "type": "object",
         "properties": {
@@ -10488,28 +10615,6 @@
         "required": [
           "clientId",
           "clientSecret"
-        ]
-      },
-      "TokenResponseDto": {
-        "type": "object",
-        "properties": {
-          "accessToken": {
-            "type": "string",
-            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-          },
-          "tokenType": {
-            "type": "string",
-            "example": "Bearer"
-          },
-          "expiresIn": {
-            "type": "number",
-            "example": 3600
-          }
-        },
-        "required": [
-          "accessToken",
-          "tokenType",
-          "expiresIn"
         ]
       },
       "CreateOrganizationDto": {
@@ -11459,6 +11564,29 @@
           "actualEndTime": {
             "type": "string",
             "description": "Actual end time"
+          }
+        }
+      },
+      "ProvisionZitadelDto": {
+        "type": "object",
+        "properties": {
+          "redirectUris": {
+            "example": [
+              "http://localhost:3000/api/auth/callback/zitadel"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "postLogoutRedirectUris": {
+            "example": [
+              "http://localhost:3000"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

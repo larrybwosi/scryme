@@ -21,11 +21,11 @@ export class TokenRequestDto {
 
 export class TokenResponseDto {
   @ApiProperty({ example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." })
-  accessToken: string;
+  access_token: string;
 
   @ApiProperty({ example: "Bearer" })
-  tokenType: string;
+  token_type: string;
 
   @ApiProperty({ example: 3600 })
-  expiresIn: number;
+  expires_in: number;
 }

@@ -28,6 +28,7 @@ import { AuthService } from "@/auth/auth.service";
 import {
   ApiErrorResponseDto,
   ApiResponseDto,
+  ApiStandardResponse,
 } from "@/v3/common/dto/response.dto";
 
 @ApiTags("V3 Auth")
@@ -46,7 +47,7 @@ export class AuthController {
     summary: "Exchange client credentials for an access token",
     operationId: "Auth_ExchangeToken",
   })
-  @ApiResponse({
+  @ApiStandardResponse({
     status: 201,
     type: TokenResponseDto,
     description: "Token successfully exchanged",

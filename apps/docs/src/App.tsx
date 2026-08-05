@@ -161,6 +161,11 @@ export default function App() {
         const tags = methodObj.tags || ["General"];
         const primaryTag = tags[0];
 
+        // Hide finance documentation for now
+        if (primaryTag && primaryTag.toLowerCase().includes("finance")) {
+          continue;
+        }
+
         list.push({
           path: pathKey,
           method: methodKey.toUpperCase(),
