@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -31,9 +30,7 @@ import tech.scryme.admin.presentation.viewmodel.AnalyticsViewModel
 import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
 import tech.scryme.admin.presentation.theme.ScrymeColors
 
-// ---------- Shared design tokens ----------
 private val CardRadius = 18.dp
-private val RowRadius = 15.dp
 
 @Composable
 private fun ElevatedSurface(
@@ -54,14 +51,14 @@ private fun ElevatedSurface(
     }
 }
 
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun DashboardView(
     userName: String,
     userEmail: String,
-    activeOrg: String,
-    sessionToken: String,
     analyticsViewModel: AnalyticsViewModel,
     presenceViewModel: PresenceViewModel,
+    onOpenDrawer: () -> Unit,
     onNavigateToScreen: (DashboardScreen) -> Unit,
     onSignOut: () -> Unit
 ) {
@@ -77,22 +74,39 @@ fun DashboardView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(ScrymeColors.InkBg)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
-            .padding(top = 20.dp, bottom = 16.dp),
+            .padding(top = 20.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        // ---------- Header ----------
+        // ---------- Header Row with Menu Button ----------
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            IconButton(
+                onClick = onOpenDrawer,
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .border(1.dp, ScrymeColors.Paper.copy(alpha = 0.08f), RoundedCornerShape(11.dp))
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Menu,
+                    contentDescription = "Open Navigation Menu",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "SCRYME ADMIN",
-                    color = ScrymeColors.Brass.copy(alpha = 0.85f),
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.85f),
                     fontSize = 10.5.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 2.2.sp,
@@ -106,6 +120,7 @@ fun DashboardView(
                     letterSpacing = (-0.3).sp
                 )
             }
+
             ElevatedSurface(radius = 19.dp, elevationDp = 6.dp) {
                 Box(
                     modifier = Modifier
@@ -114,25 +129,25 @@ fun DashboardView(
                         .background(
                             Brush.linearGradient(
                                 listOf(
-                                    ScrymeColors.SteelDark,
-                                    ScrymeColors.InkBg
+                                    MaterialTheme.colorScheme.surface,
+                                    MaterialTheme.colorScheme.background
                                 )
                             )
                         )
-                        .border(1.dp, ScrymeColors.Brass.copy(alpha = 0.35f), CircleShape),
+                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("S", color = ScrymeColors.Brass, fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                    Text("S", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 17.sp)
                 }
             }
         }
 
-        // ---------- Welcome banner ----------
+        // ---------- Premium Welcome Banner ----------
         ElevatedSurface(elevationDp = 6.dp) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-                border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.15f)),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
                 shape = RoundedCornerShape(CardRadius),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {
@@ -144,13 +159,13 @@ fun DashboardView(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(44.dp)
+                            .size(46.dp)
                             .clip(RoundedCornerShape(13.dp))
                             .background(
                                 Brush.linearGradient(
                                     listOf(
-                                        ScrymeColors.Brass.copy(alpha = 0.25f),
-                                        ScrymeColors.Brass.copy(alpha = 0.08f)
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
                                     )
                                 )
                             ),
@@ -158,9 +173,9 @@ fun DashboardView(
                     ) {
                         Text(
                             text = userName.take(1).uppercase(),
-                            color = ScrymeColors.Brass,
+                            color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 17.sp
+                            fontSize = 18.sp
                         )
                     }
                     Spacer(modifier = Modifier.width(14.dp))
@@ -182,10 +197,110 @@ fun DashboardView(
             }
         }
 
-        // ---------- Enterprise System Status Monitor ----------
-        EnterpriseStatusMonitor(sessionToken = sessionToken)
+        // ---------- Clean Enterprise System Status Monitor (No Session/Tenant Details) ----------
+        ElevatedSurface(radius = CardRadius, elevationDp = 7.dp) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)),
+                shape = RoundedCornerShape(CardRadius)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.Green)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "ENTERPRISE CONSOLE STATUS",
+                                color = ScrymeColors.Paper,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 1.5.sp
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+                                .padding(horizontal = 7.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "ONLINE",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text(
+                                text = "SECURE GATEWAY",
+                                color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            )
+                            Text(
+                                text = "https://api.scryme.tech",
+                                color = ScrymeColors.Paper,
+                                fontSize = 12.5.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "API LATENCY",
+                                color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.8.sp
+                            )
+                            Text(
+                                text = "9ms · Excellent",
+                                color = ScrymeColors.GreenLogo,
+                                fontSize = 12.5.sp,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.padding(top = 2.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
         // ---------- Scrolling KPI Metrics Row ----------
+        Text(
+            text = "REAL-TIME KPI METRICS",
+            color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+            fontSize = 10.5.sp,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 1.6.sp,
+            modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+        )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -208,7 +323,7 @@ fun DashboardView(
                 title = "PEAK HOUR ACTIVITY",
                 value = "${peakHourValue}:00",
                 trend = "$peakCount scans",
-                trendColor = ScrymeColors.Brass,
+                trendColor = MaterialTheme.colorScheme.primary,
                 subtitle = "Highest load period",
                 icon = Icons.Default.Insights
             )
@@ -223,135 +338,65 @@ fun DashboardView(
             )
         }
 
-        // ---------- Administrative actions ----------
-        Text(
-            text = "ADMINISTRATIVE ACTIONS",
-            color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
-            fontSize = 10.5.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.6.sp,
-            modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
-        )
-
-        Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-            ShortcutCard(
-                title = "Presence Monitor",
-                subtitle = "View and force checkout active staff",
-                icon = Icons.Default.Person,
-                onClick = { onNavigateToScreen(DashboardScreen.PRESENCE) }
-            )
-
-            ShortcutCard(
-                title = "Price & Inventory Approvals",
-                subtitle = "Review price changes and stock adjustments",
-                icon = Icons.Default.Check,
-                onClick = { onNavigateToScreen(DashboardScreen.APPROVALS) }
-            )
-
-            ShortcutCard(
-                title = "Registered Expenses",
-                subtitle = "Disburse auto-approved operational expenses",
-                icon = Icons.Default.ShoppingCart,
-                onClick = { onNavigateToScreen(DashboardScreen.EXPENSES) }
-            )
-
-            ShortcutCard(
-                title = "Real-time Analytics",
-                subtitle = "Analyze branch utilization and peak hours",
-                icon = Icons.Default.Insights,
-                onClick = { onNavigateToScreen(DashboardScreen.ANALYTICS) }
-            )
-
-            ShortcutCard(
-                title = "Branch ID Inspector",
-                subtitle = "View sales, petty cash, and check-ins per branch",
-                icon = Icons.Default.Storefront,
-                onClick = { onNavigateToScreen(DashboardScreen.BRANCH_DETAIL) }
-            )
-
-            ShortcutCard(
-                title = "Branch Broadcast",
-                subtitle = "Send global or branch-specific announcements",
-                icon = Icons.Default.Share,
-                onClick = { onNavigateToScreen(DashboardScreen.BROADCAST) }
-            )
-
-            ShortcutCard(
-                title = "Branch Settings & Management",
-                subtitle = "Configure active branches and tenant settings",
-                icon = Icons.Default.Settings,
-                onClick = { onNavigateToScreen(DashboardScreen.SETTINGS) }
-            )
-        }
-
-        // ---------- Session security inspector ----------
-        ElevatedSurface(elevationDp = 6.dp) {
+        // ---------- Premium System Actions Summary ----------
+        ElevatedSurface(radius = CardRadius, elevationDp = 6.dp) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.07f)),
-                shape = RoundedCornerShape(CardRadius),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                shape = RoundedCornerShape(CardRadius)
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
-                    SectionLabel(icon = Icons.Default.Business, text = "ACTIVE TENANT")
-                    Text(
-                        text = activeOrg,
-                        color = ScrymeColors.Paper,
-                        fontSize = 14.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(top = 8.dp, bottom = 16.dp)
-                    )
-
-                    HorizontalDivider(color = ScrymeColors.Paper.copy(alpha = 0.06f), modifier = Modifier.padding(bottom = 16.dp))
-
-                    SectionLabel(icon = Icons.Default.Lock, text = "SECURE SESSION TOKEN")
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(ScrymeColors.InkBg)
-                            .border(1.dp, ScrymeColors.Paper.copy(alpha = 0.06f), RoundedCornerShape(10.dp))
-                            .padding(14.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(bottom = 12.dp)
                     ) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(RoundedCornerShape(7.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Shield,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(13.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = if (sessionToken.length > 30) {
-                                "${sessionToken.take(15)}...${sessionToken.takeLast(15)}"
-                            } else {
-                                sessionToken
-                            },
-                            color = ScrymeColors.SoftGray.copy(alpha = 0.9f),
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 11.sp
+                            text = "SECURITY & STABILITY STATUS",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp
                         )
                     }
-                }
-            }
-        }
 
-        // ---------- Sign out ----------
-        OutlinedButton(
-            onClick = onSignOut,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp, bottom = 12.dp)
-                .height(52.dp),
-            border = BorderStroke(1.dp, ScrymeColors.Crimson.copy(alpha = 0.35f)),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = ScrymeColors.Crimson.copy(alpha = 0.08f),
-                contentColor = ScrymeColors.Crimson
-            ),
-            shape = RoundedCornerShape(13.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Securely close session", fontWeight = FontWeight.SemiBold, fontSize = 13.5.sp, letterSpacing = 0.3.sp)
+                    Text(
+                        text = "Your console session is fully encrypted and operational. Use the navigation sidebar on the top left of the screen to manage presence, check approvals, disperse registered expenses, broadcast notifications, or configure systems settings.",
+                        color = ScrymeColors.Paper.copy(alpha = 0.85f),
+                        fontSize = 13.sp,
+                        lineHeight = 18.5.sp,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    Button(
+                        onClick = onOpenDrawer,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.background
+                        ),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Menu, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Open Navigation Menu", fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    }
+                }
             }
         }
     }
@@ -371,7 +416,7 @@ fun KpiMetricCard(
             modifier = Modifier
                 .width(180.dp)
                 .height(136.dp),
-            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.07f)),
             shape = RoundedCornerShape(CardRadius)
         ) {
@@ -390,10 +435,10 @@ fun KpiMetricCard(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(RoundedCornerShape(8.dp))
-                            .background(ScrymeColors.Brass.copy(alpha = 0.12f)),
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(icon, contentDescription = null, tint = ScrymeColors.Brass, modifier = Modifier.size(14.dp))
+                        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
                     }
                     Box(
                         modifier = Modifier
@@ -420,7 +465,7 @@ fun KpiMetricCard(
                     )
                     Text(
                         text = title,
-                        color = ScrymeColors.Brass.copy(alpha = 0.75f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.75f),
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.2.sp,
@@ -430,233 +475,6 @@ fun KpiMetricCard(
                         text = subtitle,
                         color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
                         fontSize = 10.sp
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun EnterpriseStatusMonitor(
-    sessionToken: String
-) {
-    ElevatedSurface(radius = CardRadius, elevationDp = 7.dp) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-            border = BorderStroke(1.dp, ScrymeColors.Brass.copy(alpha = 0.25f)), // Thin golden border for premium accent
-            shape = RoundedCornerShape(CardRadius)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(18.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(Color.Green)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "SECURE ENTERPRISE CONSOLE",
-                            color = ScrymeColors.Paper,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.5.sp
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(ScrymeColors.Brass.copy(alpha = 0.15f))
-                            .padding(horizontal = 7.dp, vertical = 3.dp)
-                    ) {
-                        Text(
-                            text = "AES-256",
-                            color = ScrymeColors.Brass,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "GATEWAY NODE",
-                            color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp
-                        )
-                        Text(
-                            text = "https://api.scryme.tech",
-                            color = ScrymeColors.Paper,
-                            fontSize = 12.5.sp,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(top = 1.dp)
-                        )
-                    }
-
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "LATENCY",
-                            color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp
-                        )
-                        Text(
-                            text = "9ms · Operational",
-                            color = ScrymeColors.GreenLogo,
-                            fontSize = 12.5.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 1.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-                HorizontalDivider(color = ScrymeColors.Paper.copy(alpha = 0.05f))
-                Spacer(modifier = Modifier.height(10.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "SESSION SIGNATURE",
-                        color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.8.sp
-                    )
-                    Text(
-                        text = if (sessionToken.length > 20) {
-                            "SHA256:${sessionToken.take(12)}...${sessionToken.takeLast(12)}"
-                        } else {
-                            "LOCAL_SECURE_KEYS"
-                        },
-                        color = ScrymeColors.SoftGray.copy(alpha = 0.8f),
-                        fontFamily = FontFamily.Monospace,
-                        fontSize = 10.sp
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SectionLabel(icon: ImageVector, text: String) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            modifier = Modifier
-                .size(22.dp)
-                .clip(RoundedCornerShape(7.dp))
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            ScrymeColors.Brass.copy(alpha = 0.22f),
-                            ScrymeColors.Brass.copy(alpha = 0.07f)
-                        )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = ScrymeColors.Brass,
-                modifier = Modifier.size(12.dp)
-            )
-        }
-        Spacer(modifier = Modifier.width(9.dp))
-        Text(
-            text = text,
-            color = ScrymeColors.Brass,
-            fontSize = 10.5.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.2.sp
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ShortcutCard(
-    title: String,
-    subtitle: String,
-    icon: ImageVector,
-    onClick: () -> Unit
-) {
-    ElevatedSurface(radius = RowRadius, elevationDp = 5.dp) {
-        Card(
-            onClick = onClick,
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
-            border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.06f)),
-            shape = RoundedCornerShape(RowRadius),
-            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(15.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            Brush.linearGradient(
-                                listOf(
-                                    ScrymeColors.Brass.copy(alpha = 0.2f),
-                                    ScrymeColors.Brass.copy(alpha = 0.06f)
-                                )
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(imageVector = icon, contentDescription = null, tint = ScrymeColors.Brass, modifier = Modifier.size(18.dp))
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = title, color = ScrymeColors.Paper, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                    Text(
-                        text = subtitle,
-                        color = ScrymeColors.SoftGray.copy(alpha = 0.55f),
-                        fontSize = 11.5.sp,
-                        modifier = Modifier.padding(top = 1.dp)
-                    )
-                }
-                Box(
-                    modifier = Modifier
-                        .size(26.dp)
-                        .clip(CircleShape)
-                        .background(ScrymeColors.InkBg),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = null,
-                        tint = ScrymeColors.SoftGray.copy(alpha = 0.55f),
-                        modifier = Modifier.size(13.dp)
                     )
                 }
             }

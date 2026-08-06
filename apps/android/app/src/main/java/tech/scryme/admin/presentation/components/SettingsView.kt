@@ -35,7 +35,6 @@ import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
 import tech.scryme.admin.presentation.theme.ScrymeColors
 import tech.scryme.admin.domain.session.SessionManager
 
-// ---------- Shared design tokens for this screen ----------
 private val CardRadius = 18.dp
 private val ControlRadius = 12.dp
 private val CardPadding = 22.dp
@@ -254,14 +253,7 @@ fun SettingsView(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.background
-                    )
-                )
-            )
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(top = 12.dp, bottom = 32.dp),
