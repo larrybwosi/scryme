@@ -1,5 +1,5 @@
-import { createClientSDK } from "../client";
-import { createServerSDK } from "../server";
+import { ScrymeClientSDK, createClientSDK } from "../client";
+import { ScrymeServerSDK, createServerSDK } from "../server";
 import axios from "axios";
 
 jest.mock("axios", () => {
@@ -38,6 +38,81 @@ describe("Scryme V3 Client and Server SDKs", () => {
       setItem: jest.fn(),
       removeItem: jest.fn(),
     };
+  });
+
+  describe("Validation Checks during Initialization", () => {
+    it("should throw a runtime error if required parameters are missing in ScrymeServerSDK", () => {
+      expect(() => {
+        new ScrymeServerSDK({} as any);
+      }).toThrow("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
+
+      expect(() => {
+        new ScrymeServerSDK({ clientId: "id", clientSecret: "secret" } as any);
+      }).toThrow("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
+    });
+
+    it("should throw a runtime error if required parameters are missing in ScrymeClientSDK", () => {
+      expect(() => {
+        new ScrymeClientSDK({} as any);
+      }).toThrow("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
+
+      expect(() => {
+        new ScrymeClientSDK({ clientId: "id", orgSlug: "slug" } as any);
+      }).toThrow("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
+    });
+  });
+
+  describe("Class-based Submodules & Prefix Stripping", () => {
+    it("should map catalog, inventory, crm, etc. with correct prefix stripping and orgSlug injection", async () => {
+      const sdk = new ScrymeServerSDK({
+        clientId: "my-id",
+        clientSecret: "my-secret",
+        orgSlug: "test-org-123",
+      });
+
+      // Mock catalogGetProducts response as an array of products
+      const mockProducts = [{ id: "p1", name: "Product 1" }];
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: mockProducts,
+      });
+
+      // Call mapped method without orgSlug!
+      const response = await sdk.catalog.getProducts({ limit: 10 });
+
+      // Ensure axios was called with the correct URL including the automatically injected orgSlug
+      expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/test-org-123/catalog/products", {
+        params: { limit: 10 },
+      });
+      expect(Array.isArray(response.data)).toBe(true);
+      expect(response.data[0].id).toBe("p1");
+    });
+
+    it("should map CRM methods correctly and auto-inject orgSlug", async () => {
+      const sdk = new ScrymeServerSDK({
+        clientId: "my-id",
+        clientSecret: "my-secret",
+        orgSlug: "test-org-123",
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { id: "record-id-456" },
+      });
+
+      // crm.createRecord maps to crmControllerCreateRecord
+      await sdk.crm.createRecord({
+        objectId: "obj-1",
+        data: { name: "deal" },
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/test-org-123/crm/records",
+        {
+          objectId: "obj-1",
+          data: { name: "deal" },
+        },
+        undefined
+      );
+    });
   });
 
   describe("Server SDK isolation", () => {
@@ -104,12 +179,6 @@ describe("Scryme V3 Client and Server SDKs", () => {
         data: []
       });
 
-      // inventoryGetInventory expects two string parameters when we provide orgSlug.
-      // Since we configure it to use Proxied getScrymeV3API, let's cast or pass parameters correctly.
-      // But we call with one argument (the params object), so it will omit orgSlug and auto-fill it!
-      // Since it expects (orgSlug, params, options), if we only pass { limit: 10 },
-      // stringArgsPassed is 0, stringParamsExpected is 1 ("orgSlug"), so stringArgsPassed < stringParamsExpected (0 < 1).
-      // Thus, it will apply "configured-test-org" as the first argument.
       await (sdk.api.inventoryGetInventory as any)({ limit: 10 });
       expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/configured-test-org/inventory", {
         params: { limit: 10 }
