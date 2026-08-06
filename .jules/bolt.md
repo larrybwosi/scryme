@@ -1,3 +1,7 @@
+## 2026-08-06 - [Parallelized External API Integrations in Service Booking Creation]
+**Learning:** Sequential HTTP calls to external third-party APIs (e.g. Cal.com booking sync) inside application loops introduce high-latency, synchronous block times ($O(N)$ execution delay). Parallelizing them with `Promise.all` and enclosing each request in a localized `try/catch` block converts the latency profile to a flat, resilient $O(1)$ and prevents individual third-party failures from crashing the transaction or blocking subsequent business actions like notifications.
+**Action:** Always wrap independent third-party sync and integration queries inside localized try/catch blocks and parallelize them concurrently using `Promise.all` to keep request handlers lightning fast and resilient.
+
 ## 2026-08-05 - [Parallelized HTTP Notifications and Database Writes in CRM Reminders]
 **Learning:** Performing sequential HTTP requests (e.g. Scryme chat messages) and database writes (e.g. updating crmFollowUp) inside loops creates severe O(N) execution delays, leaving background/cron services vulnerable to timeouts. Combining individual tasks into try/catch-wrapped asynchronous promises and parallelizing them with `Promise.all` collapses the execution profile from $O(N)$ sequential blocking delays down to a flat, resilient $O(1)$ concurrent round-trip block.
 **Action:** Always wrap independent external HTTP/DB processing steps in individual try/catch handlers and parallelize them using `Promise.all` to ensure continuous throughput on batch notifications.
