@@ -1,6 +1,6 @@
 {
   "name": "@scryme/sdk",
-  "version": "0.1.0",
+  "version": "9.64.0",
   "publishConfig": {
     "access": "public"
   },
@@ -29,15 +29,20 @@
   },
   "typesVersions": {
     "*": {
-      "client": ["dist/client.d.ts"],
-      "server": ["dist/server.d.ts"]
+      "client": [
+        "dist/client.d.ts"
+      ],
+      "server": [
+        "dist/server.d.ts"
+      ]
     }
   },
   "scripts": {
     "generate": "orval",
     "build": "tsup src/index.ts src/client.ts src/server.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts src/client.ts src/server.ts --format cjs,esm --dts --watch",
-    "test": "jest"
+    "test": "jest",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "axios": "^1.18.1"

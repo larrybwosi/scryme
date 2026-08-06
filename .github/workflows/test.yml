@@ -166,10 +166,7 @@ jobs:
 
   android-ci:
     needs: [filter]
-    if: |
-      needs.filter.outputs.android == 'true' ||
-      needs.filter.outputs.workflow == 'true' ||
-      needs.filter.outputs.test_workflow == 'true'
+    if: needs.filter.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
