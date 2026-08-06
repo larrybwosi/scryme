@@ -2,6 +2,8 @@
 
 This guide details how third-party or custom connected applications can integrate with the Scryme ERP platform to securely query products and services for a given organization using our authenticated V3 API endpoints.
 
+Looking to integrate customer-facing authentication and OIDC Single Sign-On (SSO)? Check out our [Customer Single Sign-On & Authentication Guide](./customer-authentication.md).
+
 ---
 
 ## 🔒 Authentication
