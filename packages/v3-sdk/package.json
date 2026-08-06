@@ -1,6 +1,6 @@
 {
   "name": "@scryme/sdk",
-  "version": "0.1.0",
+  "version": "9.64.0",
   "publishConfig": {
     "access": "public"
   },
@@ -29,8 +29,12 @@
   },
   "typesVersions": {
     "*": {
-      "client": ["dist/client.d.ts"],
-      "server": ["dist/server.d.ts"]
+      "client": [
+        "dist/client.d.ts"
+      ],
+      "server": [
+        "dist/server.d.ts"
+      ]
     }
   },
   "scripts": {
