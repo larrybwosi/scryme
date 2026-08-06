@@ -190,10 +190,7 @@ const scrymeServer = new ScrymeServerSDK({
 });
 
 async function run() {
-  // 1. One-click initialization & authentication
-  await scrymeServer.auth.authenticate();
-
-  // 2. Call APIs without manually passing orgSlug or accessToken!
+  // 1. Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!
   const products = await scrymeServer.catalog.getProducts({ limit: 10 });
   console.log("Server Products:", products.data);
 }`,
@@ -233,10 +230,7 @@ scrymeClient.auth.onAuthStateChange((event, session) => {
 });
 
 async function runClient() {
-  // Authentication & automatic persistence handling
-  await scrymeClient.auth.authenticate();
-
-  // Access structured domain modules directly
+  // Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!
   const stock = await scrymeClient.inventory.getInventory({ limit: 5 });
   console.log("Client Stock:", stock.data);
 }`,

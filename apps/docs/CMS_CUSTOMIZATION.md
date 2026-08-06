@@ -460,10 +460,7 @@ const scrymeServer = new ScrymeServerSDK({
 });
 
 try {
-  // 1. One-click initialization & authentication
-  await scrymeServer.auth.authenticate();
-
-  // 2. Call APIs without manually passing orgSlug or accessToken!
+  // 1. Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!
   const response = await scrymeServer.catalog.getServices();
   const services = response.data.data || response.data;
 
