@@ -537,8 +537,21 @@ export class AndroidController {
   async createExpense(@Req() req: any, @Body() dto: any) {
     const data = await this.expenseUseCase.createExpense(
       req.v3Context.organizationId,
-      dto,
       req.v3Context.memberId,
+      dto,
+    );
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Post("finance/expenses/:id/approve")
+  async approveExpense(@Req() req: any, @Param("id") id: string) {
+    const data = await this.expenseUseCase.approveExpense(
+      req.v3Context.organizationId,
+      req.v3Context.memberId,
+      id,
     );
     return {
       success: true,

@@ -46,4 +46,5 @@ interface ExpenseRepository {
     suspend fun getExpenses(status: String? = null, categoryId: String? = null): Result<List<ExpenseDto>>
     suspend fun getExpenseCategories(): Result<List<ExpenseCategoryDto>>
     suspend fun createExpense(description: String, amount: Double, categoryId: String, paymentMethod: String, notes: String? = null): Result<ExpenseDto>
+    suspend fun approveExpense(id: String): Result<Unit>
 }
