@@ -216,6 +216,9 @@ class PresenceViewModel(
     private val _memberSalesList = MutableStateFlow<List<MemberSalesDto>>(emptyList())
     val memberSalesList: StateFlow<List<MemberSalesDto>> = _memberSalesList.asStateFlow()
 
+    private val _lastTransactions = MutableStateFlow<UiState<List<TransactionDto>>>(UiState.Idle)
+    val lastTransactions: StateFlow<UiState<List<TransactionDto>>> = _lastTransactions.asStateFlow()
+
     fun selectBranchForDetail(branchId: String?) {
         _selectedBranchId.value = branchId
         if (branchId != null) {
@@ -225,6 +228,7 @@ class PresenceViewModel(
             _pettyCashTransactions.value = UiState.Idle
             _branchSales.value = 0.0
             _memberSalesList.value = emptyList()
+            _lastTransactions.value = UiState.Idle
         }
     }
 
@@ -232,6 +236,7 @@ class PresenceViewModel(
         viewModelScope.launch {
             _branchAttendanceLogs.value = UiState.Loading
             _pettyCashTransactions.value = UiState.Loading
+            _lastTransactions.value = UiState.Loading
 
             // 1. Fetch Attendance logs for branch
             repository.getAttendanceLogs(page = 1, limit = 50, locationId = branchId)
@@ -269,10 +274,12 @@ class PresenceViewModel(
                         )
                     }
                     _memberSalesList.value = breakdown
+                    _lastTransactions.value = UiState.Success(txns)
                 }
-                .onFailure {
+                .onFailure { error ->
                     _branchSales.value = 0.0
                     _memberSalesList.value = emptyList()
+                    _lastTransactions.value = UiState.Error(error.message ?: "Failed to fetch transactions")
                 }
         }
     }
@@ -454,6 +461,27 @@ class ExpenseViewModel(
 
     private val _registerState = MutableStateFlow<UiState<ExpenseDto>>(UiState.Idle)
     val registerState: StateFlow<UiState<ExpenseDto>> = _registerState.asStateFlow()
+
+    private val _approveState = MutableStateFlow<UiState<Unit>>(UiState.Idle)
+    val approveState: StateFlow<UiState<Unit>> = _approveState.asStateFlow()
+
+    fun approveExpense(id: String) {
+        viewModelScope.launch {
+            _approveState.value = UiState.Loading
+            repository.approveExpense(id)
+                .onSuccess {
+                    _approveState.value = UiState.Success(Unit)
+                    fetchExpenses() // reload list
+                }
+                .onFailure { error ->
+                    _approveState.value = UiState.Error(error.message ?: "Failed to approve expense")
+                }
+        }
+    }
+
+    fun resetApproveState() {
+        _approveState.value = UiState.Idle
+    }
 
     fun fetchExpenses() {
         viewModelScope.launch {

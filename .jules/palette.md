@@ -37,3 +37,7 @@
 ## 2026-08-04 - [Keyboard-Accessible Selection Buttons on Modal Dialogs]
 **Learning:** Rendering interactive selection lists (such as quick reasons or tagging list triggers) using non-interactive display badges (like `Badge` components compiling to simple `div` or `span` tags) prevents keyboard users from focusing or selecting those options via keyboard or screen readers.
 **Action:** Always utilize native, styled `<button type="button">` elements for interactive item selectors, and supply active `aria-pressed` states so screen-reader users receive clear auditory confirmation of their active selection.
+
+## 2026-08-05 - [Keyboard Focus Support on sr-only Switch Toggles]
+**Learning:** When using custom visual toggle switches with hidden native inputs (e.g., using the `sr-only` class), keyboard-only users will completely lose visual focus indication when navigating into the toggle, creating a critical accessibility gap.
+**Action:** Always pair visually hidden checkbox/radio inputs with the `peer` class (e.g. `sr-only peer`) and apply clear, high-contrast outline styles on the adjacent visual styling container using focus-visible classes (such as `peer-focus-visible:ring-2 peer-focus-visible:ring-primary/60 peer-focus-visible:ring-offset-1`).

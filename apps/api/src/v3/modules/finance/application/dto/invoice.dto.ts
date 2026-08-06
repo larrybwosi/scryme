@@ -6,6 +6,7 @@ import {
   IsArray,
   ValidateNested,
   IsBoolean,
+  IsNotEmpty,
 } from "class-validator";
 import { Type } from "class-transformer";
 
@@ -50,4 +51,61 @@ export class InvoiceConfigDto {
   @IsBoolean() @IsOptional() showLineNumbers?: boolean;
   @IsString() @IsOptional() defaultTerms?: string;
   @IsString() @IsOptional() defaultNotes?: string;
+}
+
+export class CreateInvoiceTemplateDto {
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @IsString()
+  @IsOptional()
+  type?: string;
+
+  @IsOptional()
+  templateData?: any;
+
+  @IsString()
+  @IsOptional()
+  logoUrl?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  showLineNumbers?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  showTaxBreakdown?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  showTerms?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  showNotes?: boolean;
+
+  @IsString()
+  @IsOptional()
+  defaultNotes?: string;
+
+  @IsString()
+  @IsOptional()
+  defaultTerms?: string;
+
+  @IsNumber()
+  @IsOptional()
+  paymentTermsDay?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  isDefault?: boolean;
 }
