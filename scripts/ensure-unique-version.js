@@ -99,25 +99,25 @@ function main() {
       `Updating apps/pos/package.json to unique version: ${currentVersion}`,
     );
     updatePackageVersion(currentVersion);
-
-    // Sync version to other package.json files and Tauri configs
-    console.log(
-      "Syncing version to apps/bakery/package.json and Tauri configurations...",
-    );
-    const syncScriptPath = path.join(__dirname, "sync-tauri-version.sh");
-    try {
-      execSync(`bash "${syncScriptPath}"`, { stdio: "inherit" });
-      console.log("Version synchronization complete.");
-    } catch (syncError) {
-      console.error(
-        `Error executing sync-tauri-version.sh: ${syncError.message}`,
-      );
-      process.exit(1);
-    }
   } else {
     console.log(
       `Version ${currentVersion} is unique and does not exist on remote. No bump required.`,
     );
+  }
+
+  // Sync version to other package.json files and Tauri configs on every run
+  console.log(
+    "Syncing version to other packages, SDKs, and Tauri configurations...",
+  );
+  const syncScriptPath = path.join(__dirname, "sync-tauri-version.sh");
+  try {
+    execSync(`bash "${syncScriptPath}"`, { stdio: "inherit" });
+    console.log("Version synchronization complete.");
+  } catch (syncError) {
+    console.error(
+      `Error executing sync-tauri-version.sh: ${syncError.message}`,
+    );
+    process.exit(1);
   }
 
   // Expose the final version to GitHub Actions step outputs if running in CI
