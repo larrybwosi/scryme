@@ -41,7 +41,8 @@
     "generate": "orval",
     "build": "tsup src/index.ts src/client.ts src/server.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts src/client.ts src/server.ts --format cjs,esm --dts --watch",
-    "test": "jest"
+    "test": "jest",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "axios": "^1.18.1"
