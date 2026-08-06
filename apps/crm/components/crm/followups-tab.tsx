@@ -168,10 +168,10 @@ function FollowUpCard({
                   type="checkbox"
                   checked={editForm.isRecurring}
                   onChange={(e) => setEditForm((f) => ({ ...f, isRecurring: e.target.checked }))}
-                  className="sr-only"
+                  className="sr-only peer"
                 />
                 <div className={cn(
-                  "w-8 h-4 rounded-full transition-colors",
+                  "w-8 h-4 rounded-full transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary/60 peer-focus-visible:ring-offset-1",
                   editForm.isRecurring ? "bg-primary" : "bg-muted"
                 )} />
                 <div className={cn(
@@ -570,10 +570,10 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
                     type="checkbox"
                     checked={form.isRecurring}
                     onChange={(e) => setForm((f) => ({ ...f, isRecurring: e.target.checked }))}
-                    className="sr-only"
+                    className="sr-only peer"
                   />
                   <div className={cn(
-                    "w-8 h-4 rounded-full transition-colors",
+                    "w-8 h-4 rounded-full transition-colors peer-focus-visible:ring-2 peer-focus-visible:ring-primary/60 peer-focus-visible:ring-offset-1",
                     form.isRecurring ? "bg-primary" : "bg-muted"
                   )} />
                   <div className={cn(
