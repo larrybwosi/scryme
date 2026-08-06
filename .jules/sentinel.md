@@ -252,3 +252,8 @@
 **Vulnerability:** Endpoints for creating reviews or adding favorites accepted a user-provided `productId` and associated it with the caller's tenant without verifying that the product actually belonged to the active `organizationId`. This allowed users to make cross-tenant data associations and pollute resources.
 **Learning:** Standard multi-tenant guards on endpoints only establish context for the primary mutated entity. Any linked entity ID (foreign key) provided in request parameters or body remains untrusted and must be verified against the tenant context.
 **Prevention:** Always perform an explicit existence/ownership check on linked entity IDs (e.g. using `findFirst` with `{ id, organizationId }`) before associating them or performing writes in service layers.
+
+## 2026-08-05 - Mass Assignment and Parameter Pollution Prevention in Template Creation
+**Vulnerability:** The invoice template creation endpoint accepted unvalidated raw objects with no defined DTO or validation schema, and spread them directly into database creation mutations. This exposed the model to Mass Assignment and parameter pollution.
+**Learning:** Accepting `any` inputs or raw objects on mutation endpoints bypasses application-level security and enables parameter injection. Even if some fields (like `organizationId`) are overwritten, other attributes (like custom IDs or relationships) can still be hijacked.
+**Prevention:** Always define robust, strongly-typed DTOs with validation decorators (e.g., `class-validator`) and explicitly map each allowed attribute in the database layer instead of using broad spread operators like `...data`.
