@@ -21,6 +21,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Fingerprint,
+  Download,
 } from "lucide-react";
 import openapiSpec from "./openapi.json";
 import CmsCustomizationGuide, {
@@ -28,6 +29,7 @@ import CmsCustomizationGuide, {
   type CmsSimulatorState,
 } from "./components/CmsCustomizationGuide";
 import GlobalResponseGuide from "./components/GlobalResponseGuide";
+import InstallationSetupGuide from "./components/InstallationSetupGuide";
 
 // --- Type Definitions for parsed schema ---
 interface Endpoint {
@@ -907,6 +909,282 @@ function getFallbackDataForPath(
   return { success: true };
 }
 
+const mappings: Record<string, Record<string, string>> = {
+  catalog: {
+    getProducts: "catalogGetProducts",
+    createProduct: "catalogCreateProduct",
+    getServices: "catalogGetServices",
+    updateProduct: "catalogUpdateProduct",
+    updateSupplierVariant: "catalogUpdateSupplierVariant",
+    getPriceChangeRequests: "catalogGetPriceChangeRequests",
+    reviewPriceChangeRequest: "catalogReviewPriceChangeRequest",
+    createServiceCategory: "servicesCreateCategory",
+    getServiceCategories: "servicesGetCategories",
+    updateServiceCategory: "servicesUpdateCategory",
+    deleteServiceCategory: "servicesDeleteCategory",
+    createService: "servicesCreateService",
+    getServicesList: "servicesGetServices",
+    getCurrentMemberShifts: "servicesGetCurrentMemberShifts",
+    getShifts: "servicesGetShifts",
+    getService: "servicesGetService",
+    updateService: "servicesUpdateService",
+    deleteService: "servicesDeleteService",
+    createResource: "servicesCreateResource",
+    getResources: "servicesGetResources",
+    updateResource: "servicesUpdateResource",
+    deleteResource: "servicesDeleteResource",
+    createBooking: "servicesCreateBooking",
+    getBookings: "servicesGetBookings",
+    getBooking: "servicesGetBooking",
+    updateBookingStatus: "servicesUpdateBookingStatus",
+    completeBooking: "servicesCompleteBooking",
+    createShift: "servicesCreateShift",
+    getStaffShifts: "servicesGetStaffShifts",
+    addBreak: "servicesAddBreak",
+    registerCustomerApp: "servicesRegisterCustomerApp",
+    getServiceUtilization: "servicesGetUtilization",
+    getServicePerformance: "servicesGetPerformance",
+    getServiceFunnel: "servicesGetFunnel",
+  },
+  auth: {
+    exchangeToken: "authExchangeToken",
+    handleOAuth2: "authControllerHandleOAuth2",
+  },
+  inventory: {
+    verifyIntegrity: "inventoryVerifyIntegrity",
+    fixIntegrity: "inventoryFixIntegrity",
+    getInventory: "inventoryGetInventory",
+    traceBatch: "inventoryTraceBatch",
+    splitBatch: "inventorySplitBatch",
+    mergeBatches: "inventoryMergeBatches",
+    createAssembly: "inventoryCreateAssembly",
+    completeAssembly: "inventoryCompleteAssembly",
+    requestAdjustment: "inventoryRequestAdjustment",
+    getAdjustments: "inventoryGetAdjustments",
+    approveAdjustment: "inventoryApproveAdjustment",
+    rejectAdjustment: "inventoryRejectAdjustment",
+    getLeadTime: "inventoryGetLeadTime",
+    getWasteAnalysis: "inventoryGetWasteAnalysis",
+    checkB2BAvailability: "inventoryCheckB2BAvailability",
+    unpackBatch: "inventoryUnpackBatch",
+    scanUnpackBatch: "inventoryScanUnpackBatch",
+    quickStockInquiry: "inventoryQuickStockInquiry",
+    getPurchases: "stockingGetPurchases",
+    createPurchase: "stockingCreatePurchase",
+    receivePurchase: "stockingReceivePurchase",
+    getTransfers: "stockingGetTransfers",
+    createTransfer: "stockingCreateTransfer",
+    shipTransfer: "stockingShipTransfer",
+    receiveTransfer: "stockingReceiveTransfer",
+    getRequests: "stockingGetRequests",
+    getPendingDispatch: "stockingGetPendingDispatch",
+    dispatchOrders: "stockingDispatchOrders",
+    getActiveDeliveries: "stockingGetActiveDeliveries",
+    reconcilePod: "stockingReconcilePod",
+    getPhysicalReconciliations: "stockingGetPhysicalReconciliations",
+    submitPhysicalReconciliation: "stockingSubmitPhysicalReconciliation",
+    getReconciliationReport: "stockingGetReconciliationReport",
+    getPartners: "stockingGetPartners",
+    createPartner: "stockingCreatePartner",
+    getPartner: "stockingGetPartner",
+    updatePartner: "stockingUpdatePartner",
+    adjustPartnerWallet: "stockingAdjustPartnerWallet",
+    getUnits: "unitsGetUnits",
+  },
+  orders: {
+    createOrder: "ordersCreateOrder",
+    getOrders: "ordersGetOrders",
+    updateStatus: "ordersUpdateStatus",
+    requestB2BQuote: "ordersRequestB2BQuote",
+    convertQuoteToOrder: "ordersConvertQuoteToOrder",
+    getB2BCatalog: "b2BGetCatalog",
+    getB2BInvoices: "b2BGetInvoices",
+    getB2BOrders: "b2BGetOrders",
+    createB2BOrder: "b2BCreateOrder",
+    createB2BQuote: "b2BCreateQuote",
+    getCart: "cartControllerGetCart",
+    clearCart: "cartControllerClearCart",
+    addToCart: "cartControllerAddToCart",
+    removeFromCart: "cartControllerRemoveFromCart",
+    handleStkCallback: "paymentsControllerHandleStkCallback",
+  },
+  crm: {
+    createRecord: "crmControllerCreateRecord",
+    getRecord: "crmControllerGetRecord",
+    updateRecord: "crmControllerUpdateRecord",
+    createNote: "crmControllerCreateNote",
+    getRecordNotes: "crmControllerGetRecordNotes",
+    createActivity: "crmControllerCreateActivity",
+    getTimeline: "crmControllerGetTimeline",
+    createObject: "crmControllerCreateObject",
+    listObjects: "crmControllerListObjects",
+    createField: "crmControllerCreateField",
+    listFields: "crmControllerListFields",
+    createRelationship: "crmControllerCreateRelationship",
+    listRelationships: "crmControllerListRelationships",
+    createAssociation: "crmControllerCreateAssociation",
+    listRecordAssociations: "crmControllerListRecordAssociations",
+    getIntegrationsAuthUrl: "crmIntegrationsGetAuthUrl",
+    handleIntegrationsCallback: "crmIntegrationsHandleCallback",
+    handleIntegrationsWebhook: "crmIntegrationsHandleWebhook",
+    replyToIntegrationsActivity: "crmIntegrationsReplyToActivity",
+    createStrapiConnection: "strapiCreateConnection",
+    listStrapiConnections: "strapiListConnections",
+    getStrapiConnection: "strapiGetConnection",
+    updateStrapiConnection: "strapiUpdateConnection",
+    deleteStrapiConnection: "strapiDeleteConnection",
+    triggerStrapiSync: "strapiTriggerSync",
+    enqueueStrapiSync: "strapiEnqueueSync",
+    getStrapiWebhookLogs: "strapiGetWebhookLogs",
+    getStrapiSyncLogs: "strapiGetSyncLogs",
+    exchangeStrapiCustomerToken: "strapiExchangeCustomerToken",
+    registerStrapiCustomer: "strapiRegisterCustomer",
+    receiveStrapiWebhook: "strapiReceiveWebhook",
+  },
+  pos: {
+    provision: "pOSProvision",
+    login: "pOSLogin",
+    getMe: "pOSGetMe",
+    processSale: "pOSProcessSale",
+    sync: "pOSSync",
+    getTransactions: "pOSGetTransactions",
+    registerPettyCash: "pOSRegisterPettyCash",
+    getPettyCashFunds: "pOSGetPettyCashFunds",
+    getPettyCashTransactions: "pOSGetPettyCashTransactions",
+    createSetupKey: "standalonePosControllerCreateSetupKey",
+    activateDevice: "standalonePosControllerActivateDevice",
+    validateKey: "standalonePosControllerValidateKey",
+    linkOrganization: "standalonePosControllerLinkOrganization",
+  },
+  accounting: {
+    createExpense: "expenseControllerCreateExpense",
+    getExpenses: "expenseControllerGetExpenses",
+    getExpenseCategories: "expenseControllerGetExpenseCategories",
+    getExpense: "expenseControllerGetExpense",
+    createPettyCashFund: "pettyCashControllerCreateFund",
+    getPettyCashFunds: "pettyCashControllerGetFunds",
+    getPettyCashFund: "pettyCashControllerGetFund",
+    topUpPettyCashFund: "pettyCashControllerTopUpFund",
+    getPettyCashFundTransactions: "pettyCashControllerGetFundTransactions",
+    createUtilityAccount: "utilityAccountControllerCreateAccount",
+    getUtilityAccounts: "utilityAccountControllerGetAccounts",
+    getUtilityAccount: "utilityAccountControllerGetAccount",
+    initialize: "accountingInitialize",
+    getProfitLoss: "accountingGetProfitLoss",
+    getBalanceSheet: "accountingGetBalanceSheet",
+    getCashFlow: "accountingGetCashFlow",
+    getTaxSummary: "accountingGetTaxSummary",
+    createInvoice: "invoiceControllerCreateInvoice",
+    getInvoices: "invoiceControllerGetInvoices",
+    getInvoice: "invoiceControllerGetInvoice",
+    updateInvoice: "invoiceControllerUpdateInvoice",
+    deleteInvoice: "invoiceControllerDeleteInvoice",
+    finalizeInvoice: "invoiceControllerFinalizeInvoice",
+    getTemplates: "invoiceControllerGetTemplates",
+    createTemplate: "invoiceControllerCreateTemplate",
+    getInvoiceConfig: "invoiceControllerGetConfig",
+    updateInvoiceConfig: "invoiceControllerUpdateConfig",
+    downloadInvoice: "publicInvoiceControllerDownloadInvoice",
+    downloadInvoiceByTransaction: "publicInvoiceControllerDownloadInvoiceByTransaction",
+    downloadReceipt: "publicInvoiceControllerDownloadReceipt",
+    generatePublicLink: "publicInvoiceControllerGeneratePublicLink",
+  },
+  loyalty: {
+    redeemReward: "loyaltyRedeemReward",
+    getCustomerStatus: "loyaltyGetCustomerStatus",
+    validateVoucher: "loyaltyValidateVoucher",
+    getFavorites: "favoritesControllerGetFavorites",
+    addFavorite: "favoritesControllerAddFavorite",
+    removeFavorite: "favoritesControllerRemoveFavorite",
+  },
+  members: {
+    getMembers: "membersControllerGetMembers",
+    createMember: "membersControllerCreateMember",
+    getMember: "membersControllerGetMember",
+    updateMember: "membersControllerUpdateMember",
+    deleteMember: "membersControllerDeleteMember",
+    getMemberActivity: "membersControllerGetMemberActivity",
+    updateStatus: "membersControllerUpdateStatus",
+    adminCheckOut: "membersControllerAdminCheckOut",
+    terminalLogin: "terminalMembersControllerLogin",
+    listInvitations: "invitationsList",
+    createInvitation: "invitationsCreate",
+    revokeInvitation: "invitationsRevoke",
+    acceptInvitation: "invitationsAccept",
+    getCustomRoles: "roleManagementControllerGetCustomRoles",
+    createCustomRole: "roleManagementControllerCreateCustomRole",
+    updateCustomRole: "roleManagementControllerUpdateCustomRole",
+    deleteCustomRole: "roleManagementControllerDeleteCustomRole",
+    getPermissionSets: "roleManagementControllerGetPermissionSets",
+    createPermissionSet: "roleManagementControllerCreatePermissionSet",
+    getRoleGroups: "roleManagementControllerGetRoleGroups",
+    createRoleGroup: "roleManagementControllerCreateRoleGroup",
+    assignRoles: "roleManagementControllerAssignRoles",
+    removeRoles: "roleManagementControllerRemoveRoles",
+    listDepartments: "departmentsList",
+    createDepartment: "departmentsCreate",
+    getDepartment: "departmentsGet",
+    updateDepartment: "departmentsUpdate",
+    deleteDepartment: "departmentsDelete",
+    addDepartmentMember: "departmentsAddMember",
+    removeDepartmentMember: "departmentsRemoveMember",
+    getAttendanceLogs: "attendanceControllerGetLogs",
+    checkIn: "attendanceControllerCheckIn",
+    checkOut: "attendanceControllerCheckOut",
+    getMyAttendanceStatus: "attendanceControllerGetMyStatus",
+    getAttendanceStatus: "attendanceControllerGetStatus",
+    broadcastAnnouncement: "announcementControllerBroadcastAnnouncement",
+  },
+  admin: {
+    getStats: "adminControllerGetStats",
+    listOrganizations: "adminControllerListOrganizations",
+    createOrganization: "adminControllerCreateOrganization",
+    getOrganizationDetails: "adminControllerGetOrganizationDetails",
+    updateOrganization: "adminControllerUpdateOrganization",
+    deleteOrganization: "adminControllerDeleteOrganization",
+    listMembers: "adminControllerListMembers",
+    listUsers: "adminControllerListUsers",
+    banUser: "adminControllerBanUser",
+    unbanUser: "adminControllerUnbanUser",
+    listConnectedApps: "adminControllerListConnectedApps",
+    listSystemLogs: "adminControllerListSystemLogs",
+    listGlobalSettings: "adminControllerListGlobalSettings",
+    setGlobalSetting: "adminControllerSetGlobalSetting",
+    deleteGlobalSetting: "adminControllerDeleteGlobalSetting",
+    listTiers: "adminControllerListTiers",
+    defineTier: "adminControllerDefineTier",
+    deleteTier: "adminControllerDeleteTier",
+    getOrganizationSubscription: "adminControllerGetOrganizationSubscription",
+    updateOrganizationSubscription: "adminControllerUpdateOrganizationSubscription",
+    listSystemPayments: "adminControllerListSystemPayments",
+    recordCustomPayment: "adminControllerRecordCustomPayment",
+    listIntegrationDefinitions: "adminControllerListIntegrationDefinitions",
+    createIntegrationDefinition: "adminControllerCreateIntegrationDefinition",
+    updateIntegrationDefinition: "adminControllerUpdateIntegrationDefinition",
+    deleteIntegrationDefinition: "adminControllerDeleteIntegrationDefinition",
+    listActiveOrganizationIntegrations: "adminControllerListActiveOrganizationIntegrations",
+    createWebhook: "webhooksCreate",
+    listWebhooks: "webhooksList",
+    deleteWebhook: "webhooksDelete",
+    handleWindmillCallback: "windmillCallbackControllerHandleCallback",
+    handleWindmillApprovalCallback: "windmillCallbackControllerHandleApprovalCallback",
+    handleWindmillBakeryDisposalCallback: "windmillCallbackControllerHandleBakeryDisposalCallback",
+    handleWindmillOutcomeCallback: "windmillCallbackControllerHandleOutcomeCallback",
+    provisionZitadel: "customersProvisionZitadel",
+    getCustomers: "customersGetCustomers",
+    registerCustomer: "customersRegister",
+    updateCustomer: "customersUpdate",
+    getCustomerById: "customersGetCustomerById",
+    deleteCustomer: "customersDelete",
+    getCustomerAddresses: "customersGetAddresses",
+    addCustomerAddress: "customersAddAddress",
+    createBusinessAccount: "businessAccountControllerCreate",
+    getBusinessAccount: "businessAccountControllerGetOne",
+    getDashboardAnalytics: "analyticsControllerGetDashboardAnalytics",
+    getResourceUtilization: "analyticsControllerGetResourceUtilization",
+  },
+};
+
 export default function App() {
   // Theme state
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -1055,7 +1333,7 @@ export default function App() {
     if (tags.length > 0) {
       setSelectedTag(tags[0]);
       setExpandedGroups(tags.reduce((acc, t) => ({ ...acc, [t]: false }), {}));
-      setActiveEndpointId("cms-customization-guide");
+      setActiveEndpointId("installation-setup-guide");
     }
   }, [tagGroups]);
 
@@ -1109,6 +1387,7 @@ export default function App() {
   useEffect(() => {
     if (
       activeEndpoint &&
+      activeEndpointId !== "installation-setup-guide" &&
       activeEndpointId !== "cms-customization-guide" &&
       activeEndpointId !== "v3-global-response-guide"
     ) {
@@ -1269,6 +1548,7 @@ export default function App() {
   // Extract Mock Request payload
   const mockRequestPayload = useMemo(() => {
     if (
+      activeEndpointId === "installation-setup-guide" ||
       activeEndpointId === "cms-customization-guide" ||
       activeEndpointId === "v3-global-response-guide"
     )
@@ -1349,13 +1629,20 @@ export default function App() {
       ? rawApiUrl.slice(0, -1)
       : rawApiUrl;
 
+    if (activeEndpointId === "installation-setup-guide") {
+      let curl = `pnpm add @scryme/sdk`;
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "https://api.scryme.tech",\n  orgSlug: "your-org-slug",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});`;
+      let python = `# Scryme SDK is natively for Node.js / TypeScript`;
+      return { curl, node, python };
+    }
+
     if (activeEndpointId === "v3-global-response-guide") {
       const targetUrl = `${normalizedApiUrl}/v3/bakery-co/inventory?locationId=loc_main`;
       const targetMethod = "GET";
 
       let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json"`;
 
-      let node = `// Node.js Fetch Code\nconst url = "${targetUrl}";\nconst options = {\n  method: "${targetMethod}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  }\n};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data); // Expect wrapped global response structure!\n} catch (error) {\n  console.error("Error:", error);\n}`;
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!\n  const response = await scrymeServer.inventory.getInventory({\n    locationId: "loc_main"\n  });\n  console.log(response.data); // Standardized enveloped response!\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\n\nresponse = requests.get(url, headers=headers)\nprint(response.json()) # Expect wrapped global response structure!`;
 
@@ -1399,7 +1686,11 @@ export default function App() {
 
       let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json" \\\n  -d '${bodyStr.replace(/'/g, "'\\''")}'`;
 
-      let node = `// Node.js Fetch Code\nconst url = "${targetUrl}";\nconst options = {\n  method: "${targetMethod}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  },\n  body: JSON.stringify(${JSON.stringify(targetPayload, null, 2)})\n};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+      const targetMethodCall = selectedCmsTarget === "service"
+        ? `catalog.updateService("srv_sourdough_101", ${JSON.stringify(targetPayload, null, 2)})`
+        : `catalog.updateProduct("prod_proofing_basket", ${JSON.stringify(targetPayload, null, 2)})`;
+
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. Call API directly via the catalog submodule—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!\n  const response = await scrymeServer.${targetMethodCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\npayload = ${JSON.stringify(targetPayload, null, 4).replace(/true/g, "True").replace(/false/g, "False").replace(/null/g, "None")}\n\nresponse = requests.patch(url, json=payload, headers=headers)\nprint(response.json())`;
 
@@ -1422,15 +1713,50 @@ export default function App() {
       curl += ` \\\n  -d '${bodyStr.replace(/'/g, "'\\''")}'`;
     }
 
-    let node = `// Node.js Fetch Code\n`;
-    node += `const url = "${fullUrl}";\n`;
-    node += `const options = {\n  method: "${method}",\n  headers: {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n  }`;
-    if (bodyStr) {
-      node += `,\n  body: JSON.stringify(${JSON.stringify(mockRequestPayload, null, 2)})\n`;
-    } else {
-      node += `\n`;
+    const sdkArgs: string[] = [];
+    activeEndpoint.parameters?.forEach((param) => {
+      if (param.in === "path" && param.name !== "orgSlug") {
+        const val = playgroundParams[param.name] || param.schema?.default || "string_value";
+        sdkArgs.push(`"${val}"`);
+      }
+    });
+
+    if (mockRequestPayload && Object.keys(mockRequestPayload).length > 0) {
+      sdkArgs.push(JSON.stringify(mockRequestPayload, null, 2));
     }
-    node += `};\n\ntry {\n  const response = await fetch(url, options);\n  const data = await response.json();\n  console.log(data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+
+    const queryParams: Record<string, any> = {};
+    activeEndpoint.parameters?.forEach((param) => {
+      if (param.in === "query" && param.name !== "orgSlug") {
+        const val = playgroundParams[param.name];
+        if (val !== undefined && val !== "") {
+          queryParams[param.name] = val;
+        }
+      }
+    });
+    if (Object.keys(queryParams).length > 0) {
+      sdkArgs.push(JSON.stringify(queryParams, null, 2));
+    }
+
+    const argsStr = sdkArgs.join(", ");
+    let classCall = "";
+    let found = false;
+    const normOpId = activeEndpoint.operationId.toLowerCase().replace(/_/g, "");
+    for (const [moduleName, moduleMapping] of Object.entries(mappings)) {
+      for (const [methodName, legacyId] of Object.entries(moduleMapping)) {
+        if (legacyId.toLowerCase().replace(/_/g, "") === normOpId) {
+          classCall = `scrymeServer.${moduleName}.${methodName}(${argsStr})`;
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    if (!classCall) {
+      classCall = `scrymeServer.api.${activeEndpoint.operationId}(${argsStr})`;
+    }
+
+    let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. Perform the API call via submodule—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!\n  const response = await ${classCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
     let python = `import requests\n\n`;
     python += `url = "${fullUrl}"\n`;
@@ -1494,6 +1820,11 @@ export default function App() {
   // Next and Previous pagination logic
   const chronologicalList = useMemo(() => {
     const list: { id: string; type: "guide" | "api"; name: string }[] = [
+      {
+        id: "installation-setup-guide",
+        type: "guide",
+        name: "Installation & Setup",
+      },
       {
         id: "cms-customization-guide",
         type: "guide",
@@ -1816,6 +2147,20 @@ export default function App() {
                 </span>
                 <button
                   onClick={() => {
+                    setActiveEndpointId("installation-setup-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left text-[13px] transition-all duration-150 cursor-pointer ${
+                    activeEndpointId === "installation-setup-guide"
+                      ? "bg-brass/[0.14] text-paper font-semibold"
+                      : "text-light-text hover:text-paper hover:bg-ink-card/70"
+                  }`}
+                >
+                  <Download size={14} className="text-brass shrink-0" />
+                  <span className="truncate">Installation & Setup</span>
+                </button>
+                <button
+                  onClick={() => {
                     setActiveEndpointId("cms-customization-guide");
                     setSidebarOpen(false);
                   }}
@@ -1931,7 +2276,11 @@ export default function App() {
           {/* MIDDLE COLUMN */}
           <section className="col-span-7 p-6 lg:px-14 lg:py-12 overflow-y-auto space-y-10 border-r border-ink-border/60 max-w-4xl flex flex-col justify-between transition-colors duration-200">
             <div className="space-y-10 flex-1">
-              {activeEndpointId === "v3-global-response-guide" ? (
+              {activeEndpointId === "installation-setup-guide" ? (
+                <InstallationSetupGuide
+                  renderHighlightedCode={renderHighlightedCode}
+                />
+              ) : activeEndpointId === "v3-global-response-guide" ? (
                 <GlobalResponseGuide
                   renderHighlightedCode={renderHighlightedCode}
                 />
@@ -2440,7 +2789,8 @@ export default function App() {
               </div>
 
               {/* Response Block (Only for non-guide/standard endpoints reference view) */}
-              {activeEndpointId !== "cms-customization-guide" &&
+              {activeEndpointId !== "installation-setup-guide" &&
+                activeEndpointId !== "cms-customization-guide" &&
                 activeEndpointId !== "v3-global-response-guide" &&
                 activeDocTab === "reference" && (
                   <div className="space-y-0 rounded-xl overflow-hidden border border-ink-border shadow-lg shadow-black/20 animate-fade-in">

@@ -143,4 +143,59 @@ describe("InvoiceUseCase", () => {
       );
     });
   });
+
+  describe("Template Creation (Mass Assignment Protection)", () => {
+    it("should create a template with only the whitelisted DTO fields", async () => {
+      const orgId = "org-1";
+      const dto = {
+        name: "My Custom Template",
+        description: "A secure invoice template",
+        type: "SALES_INVOICE",
+        templateData: { customFont: "Inter" },
+        logoUrl: "https://example.com/logo.png",
+        showLineNumbers: true,
+        showTaxBreakdown: false,
+        showTerms: true,
+        showNotes: true,
+        defaultNotes: "Thank you for your business!",
+        defaultTerms: "Net 30",
+        paymentTermsDay: 30,
+        isActive: true,
+        isDefault: false,
+        // The following is malicious input attempting mass assignment / IDOR
+        id: "malicious-template-id",
+        organizationId: "malicious-org-id",
+        extraField: "should-be-ignored",
+      } as any;
+
+      mockPrisma.client.invoiceTemplate.create.mockResolvedValue({
+        id: "generated-cuid",
+        name: "My Custom Template",
+        organizationId: orgId,
+      });
+
+      const result = await useCase.createTemplate(orgId, dto);
+
+      expect(result).toBeDefined();
+      expect(mockPrisma.client.invoiceTemplate.create).toHaveBeenCalledWith({
+        data: {
+          name: "My Custom Template",
+          description: "A secure invoice template",
+          type: "SALES_INVOICE",
+          templateData: { customFont: "Inter" },
+          logoUrl: "https://example.com/logo.png",
+          showLineNumbers: true,
+          showTaxBreakdown: false,
+          showTerms: true,
+          showNotes: true,
+          defaultNotes: "Thank you for your business!",
+          defaultTerms: "Net 30",
+          paymentTermsDay: 30,
+          isActive: true,
+          isDefault: false,
+          organizationId: orgId,
+        },
+      });
+    });
+  });
 });

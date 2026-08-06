@@ -12,6 +12,7 @@ import { Decimal } from 'decimal.js';
 describe('BookingService', () => {
   let service: BookingService;
   let prisma: PrismaService;
+  let inventoryMovementService: InventoryMovementService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -75,6 +76,7 @@ describe('BookingService', () => {
 
     service = module.get<BookingService>(BookingService);
     prisma = module.get<PrismaService>(PrismaService);
+    inventoryMovementService = module.get<InventoryMovementService>(InventoryMovementService);
   });
 
   it('should be defined', () => {
@@ -284,6 +286,174 @@ describe('BookingService', () => {
           },
         }),
       });
+    });
+  });
+
+  describe('completeBooking', () => {
+    let txMock: any;
+
+    beforeEach(() => {
+      txMock = {
+        bookingConsumedMaterial: {
+          create: vi.fn().mockResolvedValue({}),
+        },
+        productVariantStock: {
+          update: vi.fn().mockResolvedValue({}),
+        },
+        transaction: {
+          create: vi.fn().mockResolvedValue({ id: 'txn1' }),
+        },
+        serviceBooking: {
+          update: vi.fn().mockResolvedValue({ id: 'booking1', status: BookingStatus.COMPLETED }),
+        },
+      };
+
+      prisma.client.$transaction = vi.fn().mockImplementation(async (callback) => {
+        return callback(txMock);
+      }) as any;
+    });
+
+    it('should complete booking, record materials, update stock and log inventory movements', async () => {
+      const mockBooking = {
+        id: 'booking1',
+        organizationId: 'org1',
+        status: BookingStatus.SCHEDULED,
+        locationId: 'loc1',
+        price: new Decimal(100),
+        pricingModel: PricingModel.FIXED,
+        scheduledStartTime: new Date(),
+        scheduledEndTime: new Date(),
+        serviceName: 'Service 1',
+        customerId: 'cust1',
+        serviceId: 'srv1',
+        service: {
+          sku: 'SKU1',
+          materials: [
+            { variantId: 'var1', quantity: 2 },
+          ],
+          taxRates: [],
+        },
+      };
+
+      vi.spyOn(prisma.client.serviceBooking, 'findFirst').mockResolvedValue(mockBooking as any);
+
+      const dto = {
+        materials: [
+          { variantId: 'var1', quantity: 2 },
+          { variantId: 'var2', quantity: 3 },
+        ],
+      };
+
+      const result = await service.completeBooking('org1', 'booking1', 'member1', dto);
+
+      expect(result.status).toBe(BookingStatus.COMPLETED);
+
+      // Verify that consumed materials are created
+      expect(txMock.bookingConsumedMaterial.create).toHaveBeenCalledTimes(2);
+      expect(txMock.bookingConsumedMaterial.create).toHaveBeenCalledWith({
+        data: {
+          bookingId: 'booking1',
+          variantId: 'var1',
+          quantity: 2,
+        },
+      });
+
+      // Verify that stocks are updated
+      expect(txMock.productVariantStock.update).toHaveBeenCalledTimes(2);
+      expect(txMock.productVariantStock.update).toHaveBeenCalledWith({
+        where: {
+          variantId_locationId: {
+            variantId: 'var1',
+            locationId: 'loc1',
+          },
+        },
+        data: {
+          currentStock: { decrement: 2 },
+          availableStock: { decrement: 2 },
+        },
+      });
+
+      // Verify movement logging
+      expect(inventoryMovementService.recordMovement).toHaveBeenCalledTimes(2);
+
+      // Verify transaction creation
+      expect(txMock.transaction.create).toHaveBeenCalled();
+    });
+
+    it('should consolidate duplicate materials in-memory before database updates', async () => {
+      const mockBooking = {
+        id: 'booking2',
+        organizationId: 'org1',
+        status: BookingStatus.SCHEDULED,
+        locationId: 'loc1',
+        price: new Decimal(150),
+        pricingModel: PricingModel.FIXED,
+        scheduledStartTime: new Date(),
+        scheduledEndTime: new Date(),
+        serviceName: 'Service 2',
+        customerId: 'cust1',
+        serviceId: 'srv1',
+        service: {
+          sku: 'SKU2',
+          materials: [],
+          taxRates: [],
+        },
+      };
+
+      vi.spyOn(prisma.client.serviceBooking, 'findFirst').mockResolvedValue(mockBooking as any);
+
+      const dto = {
+        materials: [
+          { variantId: 'var1', quantity: 2 },
+          { variantId: 'var1', quantity: 3 }, // Duplicate variantId!
+        ],
+      };
+
+      await service.completeBooking('org1', 'booking2', 'member1', dto);
+
+      // Verify consolidation to 5 (2 + 3)
+      expect(txMock.bookingConsumedMaterial.create).toHaveBeenCalledTimes(1);
+      expect(txMock.bookingConsumedMaterial.create).toHaveBeenCalledWith({
+        data: {
+          bookingId: 'booking2',
+          variantId: 'var1',
+          quantity: 5,
+        },
+      });
+
+      expect(txMock.productVariantStock.update).toHaveBeenCalledTimes(1);
+      expect(txMock.productVariantStock.update).toHaveBeenCalledWith({
+        where: {
+          variantId_locationId: {
+            variantId: 'var1',
+            locationId: 'loc1',
+          },
+        },
+        data: {
+          currentStock: { decrement: 5 },
+          availableStock: { decrement: 5 },
+        },
+      });
+    });
+
+    it('should throw NotFoundException if booking does not exist', async () => {
+      vi.spyOn(prisma.client.serviceBooking, 'findFirst').mockResolvedValue(null);
+
+      await expect(service.completeBooking('org1', 'invalid-booking', 'member1', {}))
+        .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw BadRequestException if booking is already completed', async () => {
+      const mockBooking = {
+        id: 'booking1',
+        organizationId: 'org1',
+        status: BookingStatus.COMPLETED,
+      };
+
+      vi.spyOn(prisma.client.serviceBooking, 'findFirst').mockResolvedValue(mockBooking as any);
+
+      await expect(service.completeBooking('org1', 'booking1', 'member1', {}))
+        .rejects.toThrow(BadRequestException);
     });
   });
 });

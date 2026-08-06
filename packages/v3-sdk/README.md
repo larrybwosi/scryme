@@ -2,10 +2,14 @@
 
 The official TypeScript SDK for the **Scryme V3 API**—engineered for scalability, security, and developer convenience. This SDK provides complete, type-safe coverage of all Scryme V3 services, allowing developers to seamlessly integrate their applications with the Scryme ecosystem.
 
+For the complete, interactive documentation, live sandbox playgrounds, and detailed OpenAPI schemas, please visit our documentation portal:
+👉 **[https://docs.scryme.tech](https://docs.scryme.tech)**
+
 ## 🚀 Features
 
 - **End-to-End Type Safety**: Direct compilation from the core OpenAPI 3.0 specification.
 - **Axios-Based Client**: Built-in support for request/response interceptors, customizable base URLs, and timeout configurations.
+- **Strictly Isolated Client & Server SDKs**: Prevents request state and session pollution in multi-tenant environments.
 - **Comprehensive API Coverage**:
   - **Auth**: Token exchange (Client Credentials Flow) & OAuth2 proxy support.
   - **Inventory**: Stock queries, multi-branch listings, batch tracking (trace, split, merge), B2B availability checks, and integrity verify/fix logic.
@@ -30,329 +34,128 @@ pnpm add @scryme/sdk
 
 ---
 
-## 🔑 Authentication
+## 🔑 Client & Server SDK Isolation
 
-The Scryme V3 API uses **OAuth2 Client Credentials Flow** to authorize external applications and integrations.
+The SDK supports distinct, fully isolated client-side and server-side setup options to prevent request state and session pollution in multi-tenant environments.
 
-### Step 1: Exchange Credentials for an Access Token
-To retrieve an access token, pass your `clientId` and `clientSecret` (generated during device/app provisioning) to the token exchange endpoint:
+### 🌐 Server-Side Setup (`@scryme/sdk/server`)
+Strictly isolates requests and Axios instances. Ideal for Next.js API routes, edge functions, backend microservices, or Windmill workflows.
+
+#### Class-Based Constructor (`ScrymeServerSDK`)
+Requires `clientId`, `clientSecret`, and `orgSlug` strictly to initialize correctly:
 
 ```typescript
-import axios from "axios";
-import { authExchangeToken } from "@scryme/sdk";
+import { ScrymeServerSDK } from "@scryme/sdk/server";
 
-// Initialize the global axios configuration if needed
-axios.defaults.baseURL = "https://api.scryme.tech";
+const scrymeServer = new ScrymeServerSDK({
+  baseURL: "https://api.scryme.tech",
+  orgSlug: "your-org-slug", // Automatic orgSlug injection on all API calls!
+  clientId: "your_client_id_123",
+  clientSecret: "your_client_secret_456",
+});
 
-async function authenticate() {
-  try {
-    const response = await authExchangeToken({
-      clientId: "your_client_id_123",
-      clientSecret: "your_client_secret_456"
-    });
-
-    const { accessToken, expiresIn } = response.data;
-    console.log(`Authenticated successfully! Token expires in ${expiresIn}s.`);
-    return accessToken;
-  } catch (error) {
-    console.error("Authentication failed:", error);
-    throw error;
-  }
+async function run() {
+  // 1. Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!
+  const products = await scrymeServer.catalog.getProducts({ limit: 10 });
+  console.log("Server Products:", products.data);
 }
 ```
 
-### Step 2: Configure Authenticated Client Calls
-Once you have the `accessToken`, register an Axios request interceptor to automatically attach the bearer token to all outgoing requests:
+Or use the helper factory `createServerSDK`, which provides fallback defaults:
 
 ```typescript
-import axios from "axios";
+import { createServerSDK } from "@scryme/sdk/server";
 
-function setupAuthenticatedClient(token: string) {
-  axios.interceptors.request.use((config) => {
-    config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  });
+const scrymeServer = createServerSDK({
+  baseURL: "https://api.scryme.tech",
+  orgSlug: "your-org-slug",
+  clientId: "your_client_id_123",
+  clientSecret: "your_client_secret_456",
+});
+```
+
+### 📱 Client-Side Setup (`@scryme/sdk/client`)
+Provides stateful and reactive state persistence (localStorage / StorageProviders) with login listeners and automatic session recoveries.
+
+#### Class-Based Constructor (`ScrymeClientSDK`)
+Requires `clientId`, `clientSecret`, and `orgSlug` strictly to initialize correctly:
+
+```typescript
+import { ScrymeClientSDK } from "@scryme/sdk/client";
+
+const scrymeClient = new ScrymeClientSDK({
+  orgSlug: "your-org-slug",
+  clientId: "your_client_id_123",
+  clientSecret: "your_client_secret_456",
+});
+
+// Reactively listen to auth state changes
+scrymeClient.auth.onAuthStateChange((event, session) => {
+  console.log(`Auth Event: ${event}`, session);
+});
+
+async function runClient() {
+  // Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!
+  const stock = await scrymeClient.inventory.getInventory({ limit: 5 });
+  console.log("Client Stock:", stock.data);
 }
+```
+
+Or use the helper factory `createClientSDK`, which provides fallback defaults:
+
+```typescript
+import { createClientSDK } from "@scryme/sdk/client";
+
+const scrymeClient = createClientSDK({
+  orgSlug: "your-org-slug",
+  clientId: "your_client_id_123",
+  clientSecret: "your_client_secret_456",
+});
 ```
 
 ---
 
-## 🛠️ Domain Modules & Usage Examples
+## 🔑 Global / Legacy API client (`getScrymeV3API`)
 
-Below are comprehensive examples showing how to interact with the key V3 modules.
+Alternatively, if you prefer utilizing a global request client or overriding behavior manually, you can initialize the custom Orval proxy with `getScrymeV3API`. It supports optional auto-injection of `orgSlug` from environment variables (`SCRYME_ORG_SLUG`, etc.) or custom default configurations.
 
-### 📦 1. V3 Inventory Management
-Query stock levels, trace/merge/split batches, and check availability for B2B accounts.
-
-```typescript
-import {
-  inventoryGetInventory,
-  inventoryVerifyIntegrity,
-  inventoryMergeBatches,
-  inventorySplitBatch
-} from "@scryme/sdk";
-
-const orgSlug = "scryme-hq";
-const locationId = "loc_nairobi_001";
-
-// 1. Get current stock levels at a specific location
-async function checkStock() {
-  const response = await inventoryGetInventory(orgSlug, {
-    locationId,
-    limit: 50,
-    offset: 0
-  });
-  console.log("Stock Inventory:", response.data);
-}
-
-// 2. Verify stock integrity and run discrepancy checks
-async function runIntegrityCheck() {
-  const result = await inventoryVerifyIntegrity(orgSlug);
-  console.log("Integrity Report:", result.data);
-}
-
-// 3. Merge multiple stock batches into a single parent batch
-async function consolidateBatches() {
-  await inventoryMergeBatches(orgSlug, {
-    // Merge parameters
-  });
-}
-```
-
-### 🛒 2. Orders & B2B Sales
-Submit quotes, verify B2B item stock availability, and convert approved quotes to orders.
+### Complete Initialization Example:
 
 ```typescript
-import {
-  ordersCreateOrder,
-  ordersRequestB2BQuote,
-  ordersConvertQuoteToOrder,
-  ordersGetOrders
-} from "@scryme/sdk";
+import { getScrymeV3API } from "@scryme/sdk";
+import axios from "axios";
 
-// 1. Request a pricing and availability quote for B2B items
-async function createQuote() {
-  const quote = await ordersRequestB2BQuote(orgSlug, {
-    customerId: "cust_999",
-    businessAccountId: "biz_acme_corp",
-    locationId: "loc_nairobi_001",
-    items: [
-      { variantId: "var_espresso_beans_01", quantity: 15 }
-    ],
-    notes: "Requires delivery before Friday"
-  });
-  console.log("Quote Requested:", quote.data);
-}
+// 1. Initialize the API instance (optionally passing a custom Axios instance)
+const apiBaseUrl = process.env.SCRYME_API_URL || "https://api.scryme.tech";
+axios.defaults.baseURL = apiBaseUrl;
 
-// 2. Convert an approved quote directly into a sales order
-async function approveAndOrder(quoteId: string) {
-  const order = await ordersConvertQuoteToOrder(quoteId, orgSlug);
-  console.log("Sales Order Created:", order.data);
-}
-```
+const scryme = getScrymeV3API(axios);
 
-### 👥 3. Customers & CRM
-Create and query contacts, build custom CRM records with schemas, and manage timelines.
-
-```typescript
-import {
-  customersGetCustomers,
-  crmControllerCreateRecord,
-  crmControllerCreateNote,
-  crmControllerGetTimeline
-} from "@scryme/sdk";
-
-// 1. Fetch organization-scoped customers
-async function listCustomers() {
-  const customers = await customersGetCustomers(orgSlug, { limit: 10 });
-  console.log("Customers list:", customers.data);
-}
-
-// 2. Create custom CRM fields and records
-async function logDealRecord() {
-  // Create a record under the 'deal' definition
-  const record = await crmControllerCreateRecord(orgSlug, {
-    objectId: "def_deal_id",
-    ownerId: "member_sales_rep_01",
-    data: {
-      title: "Enterprise Upgrade 2026",
-      amount: 450000,
-      stage: "discovery",
-      expectedCloseDate: "2026-12-31"
-    }
-  });
-
-  const recordId = record.data.id;
-
-  // Add rich markdown notes to the deal's timeline
-  await crmControllerCreateNote(orgSlug, {
-    recordId,
-    content: "# Kickoff Meeting Notes\n- Client loved the POS speed.\n- Wants M-Pesa automated routing.",
-    timelineDate: new Date().toISOString()
-  });
-
-  // Fetch unified timelines containing all activities and notes
-  const timeline = await crmControllerGetTimeline(recordId, orgSlug);
-  console.log("Deal Timeline:", timeline.data);
-}
-```
-
-### 🎫 4. Loyalty & Marketing
-Track customer rewards, redeem points for discounts, and validate vouchers at Checkout.
-
-```typescript
-import {
-  loyaltyGetCustomerStatus,
-  loyaltyRedeemReward,
-  loyaltyValidateVoucher
-} from "@scryme/sdk";
-
-// 1. Get customer points balance, tier level, and available rewards
-async function checkLoyalty(customerId: string) {
-  const status = await loyaltyGetCustomerStatus(customerId, orgSlug);
-  console.log(`Tier: ${status.data.tier}, Balance: ${status.data.points} pts`);
-}
-
-// 2. Validate voucher code and check customer eligibility
-async function processDiscount(code: string, customerId: string) {
+async function runFlow() {
   try {
-    const validation = await loyaltyValidateVoucher(orgSlug, {
-      code,
-      customerId
+    // 2. Perform Client Credentials flow to retrieve access token
+    const tokenResponse = await scryme.authExchangeToken({
+      clientId: process.env.SCRYME_CLIENT_ID || "your_id",
+      clientSecret: process.env.SCRYME_CLIENT_SECRET || "your_secret"
     });
-    console.log("Voucher Approved:", validation.data);
+
+    const accessToken = tokenResponse.data.accessToken;
+    console.log("Successfully logged in! Token retrieved.");
+
+    // 3. Register the token in the Axios headers
+    axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+
+    // 4. Perform type-safe V3 operations (orgSlug is auto-injected from environment!)
+    const products = await scryme.catalogGetProducts({ limit: 10 });
+    console.log("Catalog Products:", products.data);
   } catch (error) {
-    console.error("Invalid voucher code:", error);
+    console.error("SDK execution failed:", error);
   }
 }
 ```
 
-### 💵 5. Finance, Petty Cash, & Expenses
-Track spending, top up petty cash drawers, and map payments to utility accounts.
-
-```typescript
-import {
-  expenseControllerCreateExpense,
-  pettyCashControllerCreateFund,
-  pettyCashControllerTopUpFund,
-  utilityAccountControllerCreateAccount
-} from "@scryme/sdk";
-
-// 1. Create a physical utility tracking account
-async function setupElectricityMeter() {
-  const account = await utilityAccountControllerCreateAccount({
-    name: "HQ Power - Meter A",
-    provider: "Kenya Power",
-    accountNumber: "22334455-01",
-    meterNumber: "M-778899",
-    type: "ELECTRICITY"
-  });
-  return account.data.id;
-}
-
-// 2. Record a direct corporate expense
-async function logExpense(utilityAccountId: string) {
-  await expenseControllerCreateExpense({
-    description: "HQ Monthly Electricity Bill",
-    amount: 14500,
-    categoryId: "cat_utilities_01",
-    paymentMethod: "MPESA",
-    utilityAccountId,
-    isReimbursable: false,
-    isBillable: false
-  });
-}
-```
-
-### 🏢 6. Staff, Shifts, & Attendance
-Log clock-ins, check rosters, and manage custom permission sets and roles.
-
-```typescript
-import {
-  attendanceControllerCheckIn,
-  attendanceControllerCheckOut,
-  roleManagementControllerCreateCustomRole,
-  membersControllerGetMembers
-} from "@scryme/sdk";
-
-// 1. Employee Clock-In with notes and location validation
-async function clockIn(memberId: string) {
-  await attendanceControllerCheckIn(orgSlug, {
-    locationId: "loc_nairobi_001",
-    notes: "Starting morning shift at register 02"
-  });
-}
-
-// 2. Create high-security roles with customized permissions
-async function setupManagerRole() {
-  const role = await roleManagementControllerCreateCustomRole(orgSlug, {
-    name: "Vault Auditor",
-    description: "Access to petty cash floats and inventory adjustments",
-    permissions: [
-      "finance:manage-floats",
-      "inventory:adjust"
-    ]
-  });
-  console.log("Audit Role Created:", role.data);
-}
-```
-
-### 📅 7. Services, Scheduling, & Bookings
-Manage appointments, track resource utilization, and deduct materials automatically upon completion.
-
-```typescript
-import {
-  servicesControllerCreateBooking,
-  servicesControllerCompleteBooking,
-  publicServicesControllerRequestOtp,
-  publicServicesControllerVerifyOtp
-} from "@scryme/sdk";
-
-// 1. Book an appointment for a customer with specific staff/resources
-async function bookAppointment() {
-  const booking = await servicesControllerCreateBooking(orgSlug, {
-    serviceId: "srv_coffee_cupping_01",
-    customerId: "cust_123",
-    locationId: "loc_nairobi_001",
-    scheduledStartTime: "2026-10-15T09:00:00Z",
-    staffIds: ["member_barista_expert_01"],
-    resourceIds: ["res_cupping_lab_A"],
-    notes: "VIP tasting session"
-  });
-  console.log("Appointment Booked:", booking.data);
-}
-
-// 2. Complete a booking and auto-deduct standard raw materials
-async function checkoutBooking(bookingId: string) {
-  await servicesControllerCompleteBooking(bookingId, orgSlug, {
-    actualStartTime: "2026-10-15T09:02:00Z",
-    actualEndTime: "2026-10-15T10:15:00Z",
-    materials: [
-      { variantId: "var_specialty_beans_cupping", quantity: 0.25 } // 250g beans consumed
-    ]
-  });
-  console.log("Booking closed and inventory updated.");
-}
-```
-
-### 🔗 8. Webhooks & Event Subscriptions
-Subscribe to system events and safely verify incoming signatures.
-
-```typescript
-import { webhooksCreate } from "@scryme/sdk";
-
-// 1. Register a webhook callback to sync orders to an external ERP
-async function setupWebhook() {
-  const webhook = await webhooksCreate(orgSlug, {
-    name: "External ERP Sync",
-    url: "https://erp.mycompany.com/webhooks/scryme",
-    events: ["order.created", "inventory.updated"]
-  });
-
-  // Use the secret to verify signatures in your endpoint (see Best Practices below)
-  console.log("Webhook Registered. HMAC Secret:", webhook.data.secret);
-}
-```
+For more domain examples, detailed schemas, and active playgrounds, head over to:
+👉 **[docs.scryme.tech](https://docs.scryme.tech)**
 
 ---
 
@@ -391,7 +194,7 @@ Scryme V3 API returns standardized error structures. Always wrap your SDK calls 
 import { isAxiosError } from "axios";
 
 try {
-  await checkStock();
+  await scrymeClient.inventory.getInventory({ limit: 5 });
 } catch (error) {
   if (isAxiosError(error) && error.response) {
     const apiError = error.response.data;

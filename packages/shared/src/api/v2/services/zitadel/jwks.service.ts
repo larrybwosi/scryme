@@ -4,6 +4,9 @@ export interface ZitadelJwtPayload extends jose.JWTPayload {
   sub: string;
   'urn:zitadel:iam:org:id'?: string;
   scope?: string;
+  email?: string;
+  preferred_username?: string;
+  name?: string;
 }
 
 export async function verifyZitadelJwt(

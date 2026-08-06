@@ -71,7 +71,7 @@ RUN --mount=type=cache,id=turbo,target=/app/.turbo \
     pnpm turbo build --filter=site... --concurrency=1
 
 # Compile Sanity Seed script for production runtime execution
-RUN npx -p tsup -p typescript tsup apps/site/sanity/run-seed.ts --out-dir apps/site/.next/standalone/apps/site/sanity --format esm --target node22 --no-splitting
+RUN npx -p tsup -p typescript tsup --config apps/site/sanity/tsup.config.ts
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)

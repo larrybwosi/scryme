@@ -28,6 +28,7 @@ import {
   CreateInvoiceDto,
   UpdateInvoiceDto,
   InvoiceConfigDto,
+  CreateInvoiceTemplateDto,
 } from "../../application/dto/invoice.dto";
 import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
 import { Permissions } from "../../../../common/decorators/permissions.decorator";
@@ -105,8 +106,8 @@ export class InvoiceController {
   @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
   @ApiOperation({ summary: "Create a new invoice template" })
   @Permissions("invoice:manage")
-  async createTemplate(@Req() req, @Body() data: any) {
-    return this.invoiceUseCase.createTemplate(req.organization.id, data);
+  async createTemplate(@Req() req, @Body() dto: CreateInvoiceTemplateDto) {
+    return this.invoiceUseCase.createTemplate(req.organization.id, dto);
   }
 
   @Get("config")

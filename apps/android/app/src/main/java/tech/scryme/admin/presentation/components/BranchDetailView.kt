@@ -30,8 +30,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.clickable
 import tech.scryme.admin.data.model.AttendanceLogDto
 import tech.scryme.admin.data.model.PettyCashTransactionDto
+import tech.scryme.admin.data.model.TransactionDto
 import tech.scryme.admin.presentation.theme.ScrymeColors
 import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
 import tech.scryme.admin.presentation.viewmodel.UiState
@@ -129,10 +131,11 @@ fun BranchDetailView(
     val memberSalesList by presenceViewModel.memberSalesList.collectAsState()
     val pettyCashTransactions by presenceViewModel.pettyCashTransactions.collectAsState()
     val branchAttendanceLogs by presenceViewModel.branchAttendanceLogs.collectAsState()
+    val lastTransactions by presenceViewModel.lastTransactions.collectAsState()
 
     var branchIdInput by remember { mutableStateOf("") }
     var branchDropdownExpanded by remember { mutableStateOf(false) }
-    var activeTab by remember { mutableStateOf(0) } // 0 = Petty Cash, 1 = Staff Logs, 2 = Member Sales
+    var activeTab by remember { mutableStateOf(0) } // 0 = Petty Cash, 1 = Staff Logs, 2 = Member Sales, 3 = Last 5 Txns
 
     LaunchedEffect(Unit) {
         if (selectedBranchId == null && branches.isNotEmpty()) {
@@ -419,6 +422,11 @@ fun BranchDetailView(
                             onClick = { activeTab = 2 },
                             text = { Text("MEMBER SALES", fontWeight = FontWeight.Bold, fontSize = 10.5.sp, letterSpacing = 0.4.sp) }
                         )
+                        Tab(
+                            selected = activeTab == 3,
+                            onClick = { activeTab = 3 },
+                            text = { Text("LAST 5 TXNS", fontWeight = FontWeight.Bold, fontSize = 10.5.sp, letterSpacing = 0.4.sp) }
+                        )
                     }
                 }
             }
@@ -576,6 +584,145 @@ fun BranchDetailView(
                                     }
                                 }
                             }
+                        }
+                    }
+                }
+                3 -> {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        SectionLabel("LAST 5 COMPLETED TRANSACTIONS")
+
+                        when (val state = lastTransactions) {
+                            is UiState.Loading -> {
+                                Box(modifier = Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(color = ScrymeColors.Brass)
+                                }
+                            }
+                            is UiState.Success -> {
+                                val list = state.data.take(5)
+                                if (list.isEmpty()) {
+                                    EmptyStateText("No transactions recorded under this branch.")
+                                } else {
+                                    list.forEach { txn -> TransactionRow(txn) }
+                                }
+                            }
+                            is UiState.Error -> {
+                                Text("Error: ${state.message}", color = ScrymeColors.Crimson, fontSize = 13.sp)
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TransactionRow(txn: TransactionDto) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ElevatedSurface(radius = 14.dp, elevationDp = 4.dp) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
+            colors = CardDefaults.cardColors(containerColor = ScrymeColors.SteelDark),
+            border = BorderStroke(1.dp, ScrymeColors.Paper.copy(alpha = 0.06f)),
+            shape = RoundedCornerShape(14.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "TX-${txn.id.take(8).uppercase()}",
+                            color = ScrymeColors.Brass,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.5.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Text(
+                            text = txn.createdAt?.take(16)?.replace("T", " ") ?: "Unknown date",
+                            color = ScrymeColors.SoftGray.copy(alpha = 0.65f),
+                            fontSize = 11.5.sp
+                        )
+                    }
+
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            text = "$${String.format("%.2f", txn.amount ?: 0.0)}",
+                            color = ScrymeColors.Paper,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 15.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+                        Spacer(modifier = Modifier.height(3.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(
+                                    if (txn.status?.uppercase() == "COMPLETED") ScrymeColors.GreenLogo.copy(alpha = 0.15f)
+                                    else ScrymeColors.Brass.copy(alpha = 0.15f)
+                                )
+                                .padding(horizontal = 7.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = txn.status ?: "PENDING",
+                                color = if (txn.status?.uppercase() == "COMPLETED") ScrymeColors.GreenLogo else ScrymeColors.Brass,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.4.sp
+                            )
+                        }
+                    }
+                }
+
+                if (expanded && !txn.items.isNullOrEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = ScrymeColors.Paper.copy(alpha = 0.06f))
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "ITEMS LIST",
+                        color = ScrymeColors.SoftGray.copy(alpha = 0.5f),
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        modifier = Modifier.padding(bottom = 6.dp)
+                    )
+
+                    txn.items.forEach { item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(
+                                    text = item.productName,
+                                    color = ScrymeColors.Paper,
+                                    fontSize = 12.5.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "${item.quantity} x $${String.format("%.2f", item.unitPrice)}",
+                                    color = ScrymeColors.SoftGray.copy(alpha = 0.6f),
+                                    fontSize = 11.sp
+                                )
+                            }
+                            Text(
+                                text = "$${String.format("%.2f", item.lineTotal)}",
+                                color = ScrymeColors.Paper,
+                                fontSize = 12.5.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
