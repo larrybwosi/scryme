@@ -1642,7 +1642,7 @@ export default function App() {
 
       let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json"`;
 
-      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. One-click initialization & authentication\n  await scrymeServer.auth.authenticate();\n\n  // 2. Call APIs without manually passing orgSlug or accessToken!\n  const response = await scrymeServer.inventory.getInventory({\n    locationId: "loc_main"\n  });\n  console.log(response.data); // Standardized enveloped response!\n} catch (error) {\n  console.error("Error:", error);\n}`;
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!\n  const response = await scrymeServer.inventory.getInventory({\n    locationId: "loc_main"\n  });\n  console.log(response.data); // Standardized enveloped response!\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\n\nresponse = requests.get(url, headers=headers)\nprint(response.json()) # Expect wrapped global response structure!`;
 
@@ -1690,7 +1690,7 @@ export default function App() {
         ? `catalog.updateService("srv_sourdough_101", ${JSON.stringify(targetPayload, null, 2)})`
         : `catalog.updateProduct("prod_proofing_basket", ${JSON.stringify(targetPayload, null, 2)})`;
 
-      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. One-click initialization & authentication\n  await scrymeServer.auth.authenticate();\n\n  // 2. Call API directly via the catalog submodule\n  const response = await scrymeServer.${targetMethodCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. Call API directly via the catalog submodule—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!\n  const response = await scrymeServer.${targetMethodCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\npayload = ${JSON.stringify(targetPayload, null, 4).replace(/true/g, "True").replace(/false/g, "False").replace(/null/g, "None")}\n\nresponse = requests.patch(url, json=payload, headers=headers)\nprint(response.json())`;
 
@@ -1756,7 +1756,7 @@ export default function App() {
       classCall = `scrymeServer.api.${activeEndpoint.operationId}(${argsStr})`;
     }
 
-    let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. One-click initialization & authentication\n  await scrymeServer.auth.authenticate();\n\n  // 2. Perform the API call via submodule\n  const response = await ${classCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+    let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. Perform the API call via submodule—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!\n  const response = await ${classCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
     let python = `import requests\n\n`;
     python += `url = "${fullUrl}"\n`;
