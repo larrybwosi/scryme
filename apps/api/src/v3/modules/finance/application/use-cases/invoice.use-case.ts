@@ -9,6 +9,7 @@ import {
   UpdateInvoiceDto,
   InvoiceItemDto,
   InvoiceConfigDto,
+  CreateInvoiceTemplateDto,
 } from "../dto/invoice.dto";
 import { DocumentService } from "@/common/documents/document.service";
 import { navariService } from "@repo/shared/suppliers/server";
@@ -654,12 +655,25 @@ export class InvoiceUseCase {
     });
   }
 
-  async createTemplate(organizationId: string, data: any) {
+  async createTemplate(organizationId: string, dto: CreateInvoiceTemplateDto) {
+    // SECURITY (Sentinel): Prevent Mass Assignment by explicitly whitelisting and mapping DTO fields
     return await this.prisma.client.invoiceTemplate.create({
       data: {
-        ...data,
+        name: dto.name,
+        description: dto.description,
+        type: dto.type || "SALES_INVOICE",
+        templateData: dto.templateData || {},
+        logoUrl: dto.logoUrl,
+        showLineNumbers: dto.showLineNumbers ?? false,
+        showTaxBreakdown: dto.showTaxBreakdown ?? true,
+        showTerms: dto.showTerms ?? true,
+        showNotes: dto.showNotes ?? true,
+        defaultNotes: dto.defaultNotes,
+        defaultTerms: dto.defaultTerms,
+        paymentTermsDay: dto.paymentTermsDay,
+        isActive: dto.isActive ?? true,
+        isDefault: dto.isDefault ?? false,
         organizationId,
-        templateData: data.templateData || {},
       },
     });
   }
