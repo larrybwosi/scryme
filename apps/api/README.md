@@ -97,3 +97,5 @@ Ensure the following variables are set in your production environment:
 
 Once the API is running, you can access the Swagger documentation at:
 `http://localhost:3002/api/docs` (default development port)
+
+For detailed developer instructions on customer authentication and OIDC/SSO integrations, please refer to the [Customer Single Sign-On & Authentication Guide](../../docs/customer-authentication.md).

@@ -6,6 +6,8 @@ export interface ZitadelJwtPayload extends jose.JWTPayload {
   "urn:zitadel:iam:org:id"?: string;
   scope?: string;
   email?: string;
+  preferred_username?: string;
+  name?: string;
 }
 
 export interface ZitadelProvisionResult {

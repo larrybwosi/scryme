@@ -23,6 +23,13 @@ Our application ecosystem contains specialized desktop, web, mobile, and service
 
 ---
 
+## 🔌 Connected Apps & Customer SSO
+If you are developing connected applications or integrating a third-party portal to authenticate customers using our Single Sign-On (SSO), see our comprehensive:
+- **[Customer Single Sign-On & Authentication Guide](./docs/customer-authentication.md)**
+- **[Connected Apps & V3 Catalog Guide](./docs/v3-connected-apps-catalog.md)**
+
+---
+
 ### 📦 Shared Packages (`packages/`)
 
 Our core logic, database client, configurations, and utilities are modularized into shared packages:
