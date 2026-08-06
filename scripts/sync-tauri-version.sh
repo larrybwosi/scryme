@@ -11,6 +11,16 @@ fi
 echo "Syncing version $VERSION to apps/bakery/package.json..."
 jq --arg v "$VERSION" '.version = $v' apps/bakery/package.json > tmp.json && mv tmp.json apps/bakery/package.json
 
+echo "Syncing version $VERSION to SDK packages..."
+if [ -f "packages/v3-sdk/package.json" ]; then
+  echo "Updating packages/v3-sdk/package.json"
+  jq --arg v "$VERSION" '.version = $v' packages/v3-sdk/package.json > tmp.json && mv tmp.json packages/v3-sdk/package.json
+fi
+if [ -f "packages/sdk/package.json" ]; then
+  echo "Updating packages/sdk/package.json"
+  jq --arg v "$VERSION" '.version = $v' packages/sdk/package.json > tmp.json && mv tmp.json packages/sdk/package.json
+fi
+
 echo "Syncing version $VERSION to Tauri configs..."
 
 # List of all tauri config files in the correct directory
