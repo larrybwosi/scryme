@@ -242,36 +242,51 @@ export class BookingService {
         }
       });
 
-      for (const date of dates) {
-        if (date.getTime() === startTime.getTime()) continue;
+      /**
+       * OPTIMIZATION (Bolt ⚡): Parallelize individual database inserts for recurring bookings.
+       * Instead of executing up to 50 database inserts sequentially (which blocks the request thread
+       * and multiplies latency), we run them concurrently via Promise.all.
+       * This collapses transactional roundtrips from O(N) down to a flat O(1) concurrent roundtrip block,
+       * drastically accelerating response time for recurrent service bookings.
+       */
+      await Promise.all(
+        dates
+          .filter((date) => date.getTime() !== startTime.getTime())
+          .map(async (date) => {
+            const occStartTime = date;
+            const occEndTime = new Date(
+              occStartTime.getTime() + (endTime.getTime() - startTime.getTime()),
+            );
 
-        const occStartTime = date;
-        const occEndTime = new Date(occStartTime.getTime() + (endTime.getTime() - startTime.getTime()));
-
-        await this.prisma.client.serviceBooking.create({
-          data: {
-            organizationId: orgId,
-            serviceId: dto.serviceId,
-            customerId: resolvedCustomerId,
-            locationId: dto.locationId,
-            scheduledStartTime: occStartTime,
-            scheduledEndTime: occEndTime,
-            notes: dto.notes,
-            customFields: dto.customFields as any,
-            serviceName: service.name,
-            price: service.price,
-            pricingModel: service.pricingModel,
-            status: BookingStatus.SCHEDULED,
-            recurrenceId: recurrence.id,
-            staff: dto.staffIds ? {
-              create: dto.staffIds.map(id => ({ memberId: id }))
-            } : undefined,
-            resources: dto.resourceIds ? {
-              create: dto.resourceIds.map(id => ({ resourceId: id }))
-            } : undefined,
-          }
-        });
-      }
+            await this.prisma.client.serviceBooking.create({
+              data: {
+                organizationId: orgId,
+                serviceId: dto.serviceId,
+                customerId: resolvedCustomerId,
+                locationId: dto.locationId,
+                scheduledStartTime: occStartTime,
+                scheduledEndTime: occEndTime,
+                notes: dto.notes,
+                customFields: dto.customFields as any,
+                serviceName: service.name,
+                price: service.price,
+                pricingModel: service.pricingModel,
+                status: BookingStatus.SCHEDULED,
+                recurrenceId: recurrence.id,
+                staff: dto.staffIds
+                  ? {
+                      create: dto.staffIds.map((id) => ({ memberId: id })),
+                    }
+                  : undefined,
+                resources: dto.resourceIds
+                  ? {
+                      create: dto.resourceIds.map((id) => ({ resourceId: id })),
+                    }
+                  : undefined,
+              },
+            });
+          }),
+      );
 
       await this.prisma.client.serviceBooking.update({
         where: { id: booking.id },
