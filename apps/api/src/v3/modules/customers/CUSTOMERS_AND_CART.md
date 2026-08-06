@@ -15,11 +15,12 @@ Scryme V3 supports native and federated self-authentication options using **Zita
 ### How It Works (The Self-Authentication Cycle)
 - **Federated Login (e.g., Google/OIDC)**:
   The client application coordinates with Zitadel to complete the authorization code flow (with PKCE), yielding an identity ID and a Bearer JWT.
-- **Backend Syncing**:
+- **Backend Syncing & Authentication**:
   When the customer makes an API call with the Bearer token or accesses the portal callback, the backend:
-  1. Decodes and verifies the token against the Zitadel JWKS keys.
+  1. Decodes and verifies the token against the Zitadel JWKS keys or verifies the `better-auth` session token.
   2. Extracts claims (such as `sub` as `zitadelUserId`, `email`, `name`).
   3. Creates or updates the customer’s profile inside the database, mapping the external Zitadel identity to our local database models via `ExternalMapping` (`provider: "ZITADEL"`).
+  4. Establishes a secure context attaching the resolved `Customer` ID to the request.
 - **Subsequent Profile Updates**:
   Once self-registered/logged-in, customers can safely modify their details (such as `company`, `phone`, `dateOfBirth`, or `taxId` KRA PIN) via the secure update profile endpoints.
 
@@ -334,6 +335,17 @@ Deletes all items from the active shopping cart, resetting it to an empty state.
     }
   }
   ```
+
+### Cart Session Merging and Customer Authentication
+
+When a customer is logged in via **Zitadel** or a **better-auth** session, the system automatically resolves their Customer profile and attaches their `customerId` to the request context.
+
+To support transition from an anonymous guest session to an authenticated customer session (e.g. upon customer login):
+- If the client calls `GET /v3/:orgSlug/cart` with both the customer's authenticated Bearer token and the `sessionId` they used as a guest, the API will automatically:
+  1. Detect both the guest cart (linked to `sessionId`) and the permanent customer cart (linked to `customerId`).
+  2. Perform a deep-merge: transfer or increment quantities of products/variants and services from the guest cart into the customer's cart.
+  3. Delete the temporary guest cart to keep database storage clean.
+  4. Return the fully-merged customer cart.
 
 ---
 

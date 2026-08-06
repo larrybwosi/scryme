@@ -14,6 +14,7 @@ describe("CartUseCase", () => {
           findFirst: vi.fn(),
           create: vi.fn(),
           update: vi.fn(),
+          delete: vi.fn(),
         },
         cartItem: {
           findFirst: vi.fn(),
@@ -133,6 +134,159 @@ describe("CartUseCase", () => {
     expect(result).toBeDefined();
     expect(prisma.client.cartItem.deleteMany).toHaveBeenCalledWith({
       where: { cartId: "cart-1" },
+    });
+  });
+
+  describe("Cart Merging / Migration", () => {
+    it("should merge guest cart items into customer cart when both exist", async () => {
+      const orgId = "org-1";
+      const customerId = "cust-1";
+      const sessionId = "sess-1";
+
+      const mockGuestCart = {
+        id: "cart-guest",
+        organizationId: orgId,
+        sessionId,
+        items: [
+          {
+            id: "item-guest-1",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 3,
+            bookingDetails: null,
+          },
+          {
+            id: "item-guest-2",
+            productId: "prod-2",
+            variantId: null,
+            serviceId: null,
+            quantity: 1,
+            bookingDetails: null,
+          }
+        ],
+      };
+
+      const mockCustomerCart = {
+        id: "cart-cust",
+        organizationId: orgId,
+        customerId,
+        items: [
+          {
+            id: "item-cust-1",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 2,
+            bookingDetails: null,
+          }
+        ],
+      };
+
+      // Mock first findFirst call (guestCart lookup)
+      vi.mocked(prisma.client.cart.findFirst)
+        .mockResolvedValueOnce(mockGuestCart as any) // guestCart findFirst
+        .mockResolvedValueOnce(mockCustomerCart as any) // customerCart findFirst
+        .mockResolvedValueOnce(mockCustomerCart as any); // refetch final cart
+
+      await useCase.getCart(orgId, customerId, sessionId);
+
+      // Verify that quantity was updated for existing item "prod-1"
+      expect(prisma.client.cartItem.update).toHaveBeenCalledWith({
+        where: { id: "item-cust-1" },
+        data: { quantity: 5 },
+      });
+
+      // Verify that new item "prod-2" was created in customer cart
+      expect(prisma.client.cartItem.create).toHaveBeenCalledWith({
+        data: {
+          cartId: "cart-cust",
+          productId: "prod-2",
+          variantId: null,
+          serviceId: null,
+          bookingDetails: undefined,
+          quantity: 1,
+        },
+      });
+
+      // Verify guest cart was deleted
+      expect(prisma.client.cart.delete).toHaveBeenCalledWith({
+        where: { id: "cart-guest" },
+      });
+    });
+
+    it("should assign guest cart to customer when no customer cart exists", async () => {
+      const orgId = "org-1";
+      const customerId = "cust-1";
+      const sessionId = "sess-1";
+
+      const mockGuestCart = {
+        id: "cart-guest",
+        organizationId: orgId,
+        sessionId,
+        items: [
+          {
+            id: "item-guest-1",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 3,
+            bookingDetails: null,
+          }
+        ],
+      };
+
+      vi.mocked(prisma.client.cart.findFirst)
+        .mockResolvedValueOnce(mockGuestCart as any) // guestCart findFirst
+        .mockResolvedValueOnce(null); // customerCart findFirst (none exists)
+
+      vi.mocked(prisma.client.cart.update).mockResolvedValue({
+        id: "cart-guest",
+        organizationId: orgId,
+        customerId,
+        sessionId: null,
+        items: mockGuestCart.items,
+      } as any);
+
+      const result = await useCase.getCart(orgId, customerId, sessionId);
+
+      expect(result).toBeDefined();
+      expect(prisma.client.cart.update).toHaveBeenCalledWith({
+        where: { id: "cart-guest" },
+        data: { customerId, sessionId: null },
+        include: { items: true },
+      });
+    });
+
+    it("should delete guest cart when it is empty", async () => {
+      const orgId = "org-1";
+      const customerId = "cust-1";
+      const sessionId = "sess-1";
+
+      const mockGuestCart = {
+        id: "cart-guest",
+        organizationId: orgId,
+        sessionId,
+        items: [],
+      };
+
+      const mockCustomerCart = {
+        id: "cart-cust",
+        organizationId: orgId,
+        customerId,
+        items: [],
+      };
+
+      vi.mocked(prisma.client.cart.findFirst)
+        .mockResolvedValueOnce(mockGuestCart as any)
+        .mockResolvedValueOnce(mockCustomerCart as any)
+        .mockResolvedValueOnce(mockCustomerCart as any);
+
+      await useCase.getCart(orgId, customerId, sessionId);
+
+      expect(prisma.client.cart.delete).toHaveBeenCalledWith({
+        where: { id: "cart-guest" },
+      });
     });
   });
 });
