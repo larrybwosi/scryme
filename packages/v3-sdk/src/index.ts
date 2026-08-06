@@ -54,7 +54,7 @@ function getStringParamCount(fn: Function): number {
   return count;
 }
 
-export const getScrymeV3API = (axiosInstance?: AxiosInstance) => {
+export const getScrymeV3API = (axiosInstance?: AxiosInstance, defaultOrgSlug?: string) => {
   const api = originalGetScrymeV3API(axiosInstance);
 
   return new Proxy(api, {
@@ -68,7 +68,7 @@ export const getScrymeV3API = (axiosInstance?: AxiosInstance) => {
 
             // If the caller passed fewer string arguments than expected, they omitted orgSlug
             if (stringArgsPassed < stringParamsExpected) {
-              const envSlug = getEnvOrgSlug() || "default-org";
+              const envSlug = defaultOrgSlug || getEnvOrgSlug() || "default-org";
               return originalValue.apply(this, [envSlug, ...args]);
             }
             return originalValue.apply(this, args);

@@ -30,9 +30,65 @@ pnpm add @scryme/sdk
 
 ---
 
-## 🔑 Authentication
+## 🔑 Client & Server SDK Isolation
 
-The Scryme V3 API uses **OAuth2 Client Credentials Flow** to authorize external applications and integrations.
+The SDK supports distinct, fully isolated client-side and server-side setup options to prevent request state and session pollution in multi-tenant environments.
+
+### 🌐 Server-Side Setup (`@scryme/sdk/server`)
+Strictly isolates requests and Axios instances. Ideal for Next.js API routes, edge functions, backend microservices, or Windmill workflows.
+
+```typescript
+import { createServerSDK } from "@scryme/sdk/server";
+
+const scrymeServer = createServerSDK({
+  baseURL: "https://api.scryme.tech",
+  orgSlug: "your-org-slug", // Automatic orgSlug injection on all API calls!
+  clientId: "your_client_id_123",
+  clientSecret: "your_client_secret_456",
+});
+
+async function run() {
+  // 1. One-click initialization & authentication
+  await scrymeServer.auth.authenticate();
+
+  // 2. Call APIs without manually passing orgSlug or accessToken!
+  const products = await scrymeServer.api.catalogGetProducts({ limit: 10 });
+  console.log("Server Products:", products.data);
+}
+```
+
+### 📱 Client-Side Setup (`@scryme/sdk/client`)
+Provides stateful and reactive state persistence (localStorage / StorageProviders) with login listeners and automatic session recoveries.
+
+```typescript
+import { createClientSDK } from "@scryme/sdk/client";
+
+const scrymeClient = createClientSDK({
+  orgSlug: "your-org-slug",
+  clientId: "your_client_id_123",
+  clientSecret: "your_client_secret_456",
+});
+
+// Reactively listen to auth state changes
+scrymeClient.auth.onAuthStateChange((event, session) => {
+  console.log(`Auth Event: ${event}`, session);
+});
+
+async function runClient() {
+  // One-click authentication exchange & automatic persistence config
+  await scrymeClient.auth.authenticate();
+
+  // Automatic orgSlug auto-injection is supported on the client too!
+  const stock = await scrymeClient.api.inventoryGetInventory({ limit: 5 });
+  console.log("Client Stock:", stock.data);
+}
+```
+
+---
+
+## 🔑 Legacy Authentication
+
+Alternatively, you can manually exchange credentials or configure global request headers if you want to bypass the isolated SDK instances:
 
 ### Step 1: Exchange Credentials for an Access Token
 To retrieve an access token, pass your `clientId` and `clientSecret` (generated during device/app provisioning) to the token exchange endpoint:
@@ -51,9 +107,9 @@ async function authenticate() {
       clientSecret: "your_client_secret_456"
     });
 
-    const { accessToken, expiresIn } = response.data;
-    console.log(`Authenticated successfully! Token expires in ${expiresIn}s.`);
-    return accessToken;
+    const { access_token, expires_in } = response.data.data;
+    console.log(`Authenticated successfully! Token expires in ${expires_in}s.`);
+    return access_token;
   } catch (error) {
     console.error("Authentication failed:", error);
     throw error;

@@ -24,6 +24,8 @@ class InMemoryStorage implements StorageProvider {
 export interface ClientSDKConfig {
   baseURL?: string;
   orgSlug?: string;
+  clientId?: string;
+  clientSecret?: string;
   storage?: StorageProvider;
 }
 
@@ -107,13 +109,31 @@ export function createClientSDK(config: ClientSDKConfig = {}) {
     return req;
   });
 
-  const api = getScrymeV3API(axiosInstance);
+  const api = getScrymeV3API(axiosInstance, config.orgSlug);
 
   const auth = {
     signUp: async (orgSlug: string, dto: RegisterCustomerDto) => {
       const response = await api.customersRegister(orgSlug, dto);
       // Wait, let's see if customer response can be resolved and returned
       return response;
+    },
+
+    authenticate: async () => {
+      if (!config.clientId || !config.clientSecret) {
+        throw new Error("clientId and clientSecret must be configured to authenticate");
+      }
+      const response = await api.authExchangeToken({
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+      });
+      const tokenData = response.data?.data;
+      const accessToken = tokenData?.access_token;
+      if (accessToken) {
+        state.token = accessToken;
+        await storage.setItem(SCRYME_SESSION_TOKEN_KEY, accessToken);
+        notify("SIGNED_IN");
+      }
+      return response.data;
     },
 
     signIn: async (credentials: { email: string; password?: string }) => {

@@ -64,9 +64,90 @@ describe("Scryme V3 Client and Server SDKs", () => {
       expect(sdk2.axiosInstance.defaults.headers.common["Authorization"]).toBeUndefined();
       expect(sdk2.axiosInstance.defaults.headers.common["x-api-key"]).toBe("api-key-999");
     });
+
+    it("should support authenticate using clientId and clientSecret and attach to default headers", async () => {
+      const sdk = createServerSDK({
+        clientId: "srv_client_id",
+        clientSecret: "srv_client_secret",
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            access_token: "server_jwt_token_abc",
+            token_type: "Bearer",
+            expires_in: 3600
+          },
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      const tokenData = await sdk.auth.authenticate();
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/v3/auth/token", {
+        clientId: "srv_client_id",
+        clientSecret: "srv_client_secret",
+      }, undefined);
+
+      expect(tokenData.data.access_token).toBe("server_jwt_token_abc");
+      expect(sdk.axiosInstance.defaults.headers.common["Authorization"]).toBe("Bearer server_jwt_token_abc");
+    });
   });
 
   describe("Client SDK statefulness & reactivity", () => {
+    it("should default orgSlug correctly when omitted from api calls using configured orgSlug", async () => {
+      const sdk = createClientSDK({
+        orgSlug: "configured-test-org",
+      });
+
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: []
+      });
+
+      // inventoryGetInventory expects two string parameters when we provide orgSlug.
+      // Since we configure it to use Proxied getScrymeV3API, let's cast or pass parameters correctly.
+      // But we call with one argument (the params object), so it will omit orgSlug and auto-fill it!
+      // Since it expects (orgSlug, params, options), if we only pass { limit: 10 },
+      // stringArgsPassed is 0, stringParamsExpected is 1 ("orgSlug"), so stringArgsPassed < stringParamsExpected (0 < 1).
+      // Thus, it will apply "configured-test-org" as the first argument.
+      await (sdk.api.inventoryGetInventory as any)({ limit: 10 });
+      expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/configured-test-org/inventory", {
+        params: { limit: 10 }
+      });
+    });
+
+    it("should support authenticate method using clientId and clientSecret", async () => {
+      const sdk = createClientSDK({
+        clientId: "my_client_id_777",
+        clientSecret: "my_client_secret_888",
+        storage: mockStorage,
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            access_token: "client_jwt_token_xyz",
+            token_type: "Bearer",
+            expires_in: 3600
+          },
+          timestamp: new Date().toISOString()
+        }
+      });
+
+      const tokenData = await sdk.auth.authenticate();
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/v3/auth/token", {
+        clientId: "my_client_id_777",
+        clientSecret: "my_client_secret_888",
+      }, undefined);
+
+      expect(tokenData.data.access_token).toBe("client_jwt_token_xyz");
+      expect(mockStorage.setItem).toHaveBeenCalledWith("scryme_session_token", "client_jwt_token_xyz");
+
+      const session = await sdk.auth.getSession();
+      expect(session.token).toBe("client_jwt_token_xyz");
+    });
+
     it("should recover previous session from Storage and configure interceptor", async () => {
       mockStorage.getItem.mockImplementation((key: string) => {
         if (key === "scryme_session_token") return "saved_token_777";
