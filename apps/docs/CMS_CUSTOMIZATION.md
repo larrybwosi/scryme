@@ -444,28 +444,27 @@ When any of these environment variables are defined, the SDK will automatically 
 
 ---
 
-### 🚀 3. Fetching Customized Services via Node.js (with @scryme/sdk)
+### 🚀 3. Fetching Customized Services via Node.js (with @scryme/sdk/server)
 
-Here is how you initialize the client and fetch services. Note how the `orgSlug` argument is completely omitted from `catalogGetServices` because it is automatically resolved from the environment variables!
+Here is how you initialize the client and fetch services using the new modern class-based approach. All submodules on `ScrymeServerSDK` are fully type-safe and encapsulate authentication state and automatic organization routing!
 
 ```javascript
-import { getScrymeV3API } from '@scryme/sdk';
-import axios from 'axios';
+import { ScrymeServerSDK } from '@scryme/sdk/server';
 
-// Initialize the API client.
-// The SDK automatically reads SCRYME_ORG_SLUG from the environment.
-const scryme = getScrymeV3API(
-  axios.create({
-    baseURL: 'https://api.scryme.tech',
-    headers: {
-      Authorization: 'Bearer <YOUR_ACCESS_TOKEN>'
-    }
-  })
-);
+// Initialize the class-based server API client.
+const scrymeServer = new ScrymeServerSDK({
+  baseURL: 'https://api.scryme.tech',
+  orgSlug: 'bakery-co', // Automatic orgSlug injection on all API calls!
+  clientId: 'your_client_id_123',
+  clientSecret: 'your_client_secret_456',
+});
 
 try {
-  // Omit the orgSlug parameter! The SDK handles it on-the-fly.
-  const response = await scryme.catalogGetServices();
+  // 1. One-click initialization & authentication
+  await scrymeServer.auth.authenticate();
+
+  // 2. Call APIs without manually passing orgSlug or accessToken!
+  const response = await scrymeServer.catalog.getServices();
   const services = response.data.data || response.data;
 
   services.forEach(service => {

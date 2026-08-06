@@ -160,7 +160,7 @@ export default function InstallationSetupGuide({
           <span>Client & Server SDK Isolation</span>
         </h2>
         <p className="text-xs text-light-text leading-relaxed">
-          To prevent session/request pollution in multi-tenant contexts, the SDK supports distinct isolated setup modules for both Client-side and Server-side codebases. Initializing via class-based constructors (<code className="text-paper">ScrymeClientSDK</code> and <code className="text-paper">ScrymeServerSDK</code>) strictly requires <code className="text-paper">clientId</code>, <code className="text-paper">clientSecret</code>, and <code className="text-paper">orgSlug</code>.
+          To prevent session/request pollution in multi-tenant contexts, the SDK supports distinct isolated setup modules for both Client-side and Server-side codebases. Initializing via class-based constructors (<code className="text-paper">ScrymeClientSDK</code> and <code className="text-paper">ScrymeServerSDK</code>) strictly requires <code className="text-paper">clientId</code>, <code className="text-paper">clientSecret</code>, and <code className="text-paper">orgSlug</code>. You can optionally supply configuration fields such as <code className="text-paper">baseURL</code>, <code className="text-paper">token</code>, and <code className="text-paper">apiKey</code>.
         </p>
 
         {/* Server SDK Integration */}
@@ -184,6 +184,9 @@ const scrymeServer = new ScrymeServerSDK({
   orgSlug: "your-org-slug", // Automatic orgSlug injection on all API calls!
   clientId: "your_client_id_123",
   clientSecret: "your_client_secret_456",
+  // Optional parameters:
+  // token: "pre-obtained-jwt-token",
+  // apiKey: "your-scryme-api-key",
 });
 
 async function run() {
@@ -218,6 +221,7 @@ async function run() {
 `import { ScrymeClientSDK } from "@scryme/sdk/client";
 
 const scrymeClient = new ScrymeClientSDK({
+  baseURL: "https://api.scryme.tech",
   orgSlug: "your-org-slug",
   clientId: "your_client_id_123",
   clientSecret: "your_client_secret_456",
@@ -235,59 +239,6 @@ async function runClient() {
   // Access structured domain modules directly
   const stock = await scrymeClient.inventory.getInventory({ limit: 5 });
   console.log("Client Stock:", stock.data);
-}`,
-                  "node"
-                )}
-              </code>
-            </pre>
-          </div>
-        </div>
-      </div>
-
-      {/* Global & Legacy Orval Wrapper */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold text-paper border-b border-ink-border pb-2 flex items-center gap-2">
-          <Key size={18} className="text-brass" />
-          <span>Global / Legacy API client (`getScrymeV3API`)</span>
-        </h2>
-        <p className="text-xs text-light-text leading-relaxed">
-          Alternatively, if you prefer utilizing a global request client or overriding behavior manually, you can initialize the custom Orval proxy with <code className="text-paper">getScrymeV3API</code>. It supports optional auto-injection of <code className="text-paper">orgSlug</code> from environment variables (<code className="text-paper">SCRYME_ORG_SLUG</code>, etc.) or custom default configurations.
-        </p>
-
-        <div className="space-y-2 text-left">
-          <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl">
-            <pre className="overflow-x-auto text-purple-300 whitespace-pre leading-relaxed scrollbar-thin">
-              <code>
-                {renderHighlightedCode(
-`import { getScrymeV3API } from "@scryme/sdk";
-import axios from "axios";
-
-// 1. Initialize the API instance (optionally passing a custom Axios instance)
-const apiBaseUrl = process.env.SCRYME_API_URL || "https://api.scryme.tech";
-axios.defaults.baseURL = apiBaseUrl;
-
-const scryme = getScrymeV3API(axios);
-
-async function runFlow() {
-  try {
-    // 2. Perform Client Credentials flow to retrieve access token
-    const tokenResponse = await scryme.authExchangeToken({
-      clientId: process.env.SCRYME_CLIENT_ID || "your_id",
-      clientSecret: process.env.SCRYME_CLIENT_SECRET || "your_secret"
-    });
-
-    const accessToken = tokenResponse.data.accessToken;
-    console.log("Successfully logged in! Token retrieved.");
-
-    // 3. Register the token in the Axios headers
-    axios.defaults.headers.common["Authorization"] = \`Bearer \${accessToken}\`;
-
-    // 4. Perform type-safe V3 operations (orgSlug is auto-injected from environment!)
-    const products = await scryme.catalogGetProducts({ limit: 10 });
-    console.log("Catalog Products:", products.data);
-  } catch (error) {
-    console.error("SDK execution failed:", error);
-  }
 }`,
                   "node"
                 )}
