@@ -909,6 +909,282 @@ function getFallbackDataForPath(
   return { success: true };
 }
 
+const mappings: Record<string, Record<string, string>> = {
+  catalog: {
+    getProducts: "catalogGetProducts",
+    createProduct: "catalogCreateProduct",
+    getServices: "catalogGetServices",
+    updateProduct: "catalogUpdateProduct",
+    updateSupplierVariant: "catalogUpdateSupplierVariant",
+    getPriceChangeRequests: "catalogGetPriceChangeRequests",
+    reviewPriceChangeRequest: "catalogReviewPriceChangeRequest",
+    createServiceCategory: "servicesCreateCategory",
+    getServiceCategories: "servicesGetCategories",
+    updateServiceCategory: "servicesUpdateCategory",
+    deleteServiceCategory: "servicesDeleteCategory",
+    createService: "servicesCreateService",
+    getServicesList: "servicesGetServices",
+    getCurrentMemberShifts: "servicesGetCurrentMemberShifts",
+    getShifts: "servicesGetShifts",
+    getService: "servicesGetService",
+    updateService: "servicesUpdateService",
+    deleteService: "servicesDeleteService",
+    createResource: "servicesCreateResource",
+    getResources: "servicesGetResources",
+    updateResource: "servicesUpdateResource",
+    deleteResource: "servicesDeleteResource",
+    createBooking: "servicesCreateBooking",
+    getBookings: "servicesGetBookings",
+    getBooking: "servicesGetBooking",
+    updateBookingStatus: "servicesUpdateBookingStatus",
+    completeBooking: "servicesCompleteBooking",
+    createShift: "servicesCreateShift",
+    getStaffShifts: "servicesGetStaffShifts",
+    addBreak: "servicesAddBreak",
+    registerCustomerApp: "servicesRegisterCustomerApp",
+    getServiceUtilization: "servicesGetUtilization",
+    getServicePerformance: "servicesGetPerformance",
+    getServiceFunnel: "servicesGetFunnel",
+  },
+  auth: {
+    exchangeToken: "authExchangeToken",
+    handleOAuth2: "authControllerHandleOAuth2",
+  },
+  inventory: {
+    verifyIntegrity: "inventoryVerifyIntegrity",
+    fixIntegrity: "inventoryFixIntegrity",
+    getInventory: "inventoryGetInventory",
+    traceBatch: "inventoryTraceBatch",
+    splitBatch: "inventorySplitBatch",
+    mergeBatches: "inventoryMergeBatches",
+    createAssembly: "inventoryCreateAssembly",
+    completeAssembly: "inventoryCompleteAssembly",
+    requestAdjustment: "inventoryRequestAdjustment",
+    getAdjustments: "inventoryGetAdjustments",
+    approveAdjustment: "inventoryApproveAdjustment",
+    rejectAdjustment: "inventoryRejectAdjustment",
+    getLeadTime: "inventoryGetLeadTime",
+    getWasteAnalysis: "inventoryGetWasteAnalysis",
+    checkB2BAvailability: "inventoryCheckB2BAvailability",
+    unpackBatch: "inventoryUnpackBatch",
+    scanUnpackBatch: "inventoryScanUnpackBatch",
+    quickStockInquiry: "inventoryQuickStockInquiry",
+    getPurchases: "stockingGetPurchases",
+    createPurchase: "stockingCreatePurchase",
+    receivePurchase: "stockingReceivePurchase",
+    getTransfers: "stockingGetTransfers",
+    createTransfer: "stockingCreateTransfer",
+    shipTransfer: "stockingShipTransfer",
+    receiveTransfer: "stockingReceiveTransfer",
+    getRequests: "stockingGetRequests",
+    getPendingDispatch: "stockingGetPendingDispatch",
+    dispatchOrders: "stockingDispatchOrders",
+    getActiveDeliveries: "stockingGetActiveDeliveries",
+    reconcilePod: "stockingReconcilePod",
+    getPhysicalReconciliations: "stockingGetPhysicalReconciliations",
+    submitPhysicalReconciliation: "stockingSubmitPhysicalReconciliation",
+    getReconciliationReport: "stockingGetReconciliationReport",
+    getPartners: "stockingGetPartners",
+    createPartner: "stockingCreatePartner",
+    getPartner: "stockingGetPartner",
+    updatePartner: "stockingUpdatePartner",
+    adjustPartnerWallet: "stockingAdjustPartnerWallet",
+    getUnits: "unitsGetUnits",
+  },
+  orders: {
+    createOrder: "ordersCreateOrder",
+    getOrders: "ordersGetOrders",
+    updateStatus: "ordersUpdateStatus",
+    requestB2BQuote: "ordersRequestB2BQuote",
+    convertQuoteToOrder: "ordersConvertQuoteToOrder",
+    getB2BCatalog: "b2BGetCatalog",
+    getB2BInvoices: "b2BGetInvoices",
+    getB2BOrders: "b2BGetOrders",
+    createB2BOrder: "b2BCreateOrder",
+    createB2BQuote: "b2BCreateQuote",
+    getCart: "cartControllerGetCart",
+    clearCart: "cartControllerClearCart",
+    addToCart: "cartControllerAddToCart",
+    removeFromCart: "cartControllerRemoveFromCart",
+    handleStkCallback: "paymentsControllerHandleStkCallback",
+  },
+  crm: {
+    createRecord: "crmControllerCreateRecord",
+    getRecord: "crmControllerGetRecord",
+    updateRecord: "crmControllerUpdateRecord",
+    createNote: "crmControllerCreateNote",
+    getRecordNotes: "crmControllerGetRecordNotes",
+    createActivity: "crmControllerCreateActivity",
+    getTimeline: "crmControllerGetTimeline",
+    createObject: "crmControllerCreateObject",
+    listObjects: "crmControllerListObjects",
+    createField: "crmControllerCreateField",
+    listFields: "crmControllerListFields",
+    createRelationship: "crmControllerCreateRelationship",
+    listRelationships: "crmControllerListRelationships",
+    createAssociation: "crmControllerCreateAssociation",
+    listRecordAssociations: "crmControllerListRecordAssociations",
+    getIntegrationsAuthUrl: "crmIntegrationsGetAuthUrl",
+    handleIntegrationsCallback: "crmIntegrationsHandleCallback",
+    handleIntegrationsWebhook: "crmIntegrationsHandleWebhook",
+    replyToIntegrationsActivity: "crmIntegrationsReplyToActivity",
+    createStrapiConnection: "strapiCreateConnection",
+    listStrapiConnections: "strapiListConnections",
+    getStrapiConnection: "strapiGetConnection",
+    updateStrapiConnection: "strapiUpdateConnection",
+    deleteStrapiConnection: "strapiDeleteConnection",
+    triggerStrapiSync: "strapiTriggerSync",
+    enqueueStrapiSync: "strapiEnqueueSync",
+    getStrapiWebhookLogs: "strapiGetWebhookLogs",
+    getStrapiSyncLogs: "strapiGetSyncLogs",
+    exchangeStrapiCustomerToken: "strapiExchangeCustomerToken",
+    registerStrapiCustomer: "strapiRegisterCustomer",
+    receiveStrapiWebhook: "strapiReceiveWebhook",
+  },
+  pos: {
+    provision: "pOSProvision",
+    login: "pOSLogin",
+    getMe: "pOSGetMe",
+    processSale: "pOSProcessSale",
+    sync: "pOSSync",
+    getTransactions: "pOSGetTransactions",
+    registerPettyCash: "pOSRegisterPettyCash",
+    getPettyCashFunds: "pOSGetPettyCashFunds",
+    getPettyCashTransactions: "pOSGetPettyCashTransactions",
+    createSetupKey: "standalonePosControllerCreateSetupKey",
+    activateDevice: "standalonePosControllerActivateDevice",
+    validateKey: "standalonePosControllerValidateKey",
+    linkOrganization: "standalonePosControllerLinkOrganization",
+  },
+  accounting: {
+    createExpense: "expenseControllerCreateExpense",
+    getExpenses: "expenseControllerGetExpenses",
+    getExpenseCategories: "expenseControllerGetExpenseCategories",
+    getExpense: "expenseControllerGetExpense",
+    createPettyCashFund: "pettyCashControllerCreateFund",
+    getPettyCashFunds: "pettyCashControllerGetFunds",
+    getPettyCashFund: "pettyCashControllerGetFund",
+    topUpPettyCashFund: "pettyCashControllerTopUpFund",
+    getPettyCashFundTransactions: "pettyCashControllerGetFundTransactions",
+    createUtilityAccount: "utilityAccountControllerCreateAccount",
+    getUtilityAccounts: "utilityAccountControllerGetAccounts",
+    getUtilityAccount: "utilityAccountControllerGetAccount",
+    initialize: "accountingInitialize",
+    getProfitLoss: "accountingGetProfitLoss",
+    getBalanceSheet: "accountingGetBalanceSheet",
+    getCashFlow: "accountingGetCashFlow",
+    getTaxSummary: "accountingGetTaxSummary",
+    createInvoice: "invoiceControllerCreateInvoice",
+    getInvoices: "invoiceControllerGetInvoices",
+    getInvoice: "invoiceControllerGetInvoice",
+    updateInvoice: "invoiceControllerUpdateInvoice",
+    deleteInvoice: "invoiceControllerDeleteInvoice",
+    finalizeInvoice: "invoiceControllerFinalizeInvoice",
+    getTemplates: "invoiceControllerGetTemplates",
+    createTemplate: "invoiceControllerCreateTemplate",
+    getInvoiceConfig: "invoiceControllerGetConfig",
+    updateInvoiceConfig: "invoiceControllerUpdateConfig",
+    downloadInvoice: "publicInvoiceControllerDownloadInvoice",
+    downloadInvoiceByTransaction: "publicInvoiceControllerDownloadInvoiceByTransaction",
+    downloadReceipt: "publicInvoiceControllerDownloadReceipt",
+    generatePublicLink: "publicInvoiceControllerGeneratePublicLink",
+  },
+  loyalty: {
+    redeemReward: "loyaltyRedeemReward",
+    getCustomerStatus: "loyaltyGetCustomerStatus",
+    validateVoucher: "loyaltyValidateVoucher",
+    getFavorites: "favoritesControllerGetFavorites",
+    addFavorite: "favoritesControllerAddFavorite",
+    removeFavorite: "favoritesControllerRemoveFavorite",
+  },
+  members: {
+    getMembers: "membersControllerGetMembers",
+    createMember: "membersControllerCreateMember",
+    getMember: "membersControllerGetMember",
+    updateMember: "membersControllerUpdateMember",
+    deleteMember: "membersControllerDeleteMember",
+    getMemberActivity: "membersControllerGetMemberActivity",
+    updateStatus: "membersControllerUpdateStatus",
+    adminCheckOut: "membersControllerAdminCheckOut",
+    terminalLogin: "terminalMembersControllerLogin",
+    listInvitations: "invitationsList",
+    createInvitation: "invitationsCreate",
+    revokeInvitation: "invitationsRevoke",
+    acceptInvitation: "invitationsAccept",
+    getCustomRoles: "roleManagementControllerGetCustomRoles",
+    createCustomRole: "roleManagementControllerCreateCustomRole",
+    updateCustomRole: "roleManagementControllerUpdateCustomRole",
+    deleteCustomRole: "roleManagementControllerDeleteCustomRole",
+    getPermissionSets: "roleManagementControllerGetPermissionSets",
+    createPermissionSet: "roleManagementControllerCreatePermissionSet",
+    getRoleGroups: "roleManagementControllerGetRoleGroups",
+    createRoleGroup: "roleManagementControllerCreateRoleGroup",
+    assignRoles: "roleManagementControllerAssignRoles",
+    removeRoles: "roleManagementControllerRemoveRoles",
+    listDepartments: "departmentsList",
+    createDepartment: "departmentsCreate",
+    getDepartment: "departmentsGet",
+    updateDepartment: "departmentsUpdate",
+    deleteDepartment: "departmentsDelete",
+    addDepartmentMember: "departmentsAddMember",
+    removeDepartmentMember: "departmentsRemoveMember",
+    getAttendanceLogs: "attendanceControllerGetLogs",
+    checkIn: "attendanceControllerCheckIn",
+    checkOut: "attendanceControllerCheckOut",
+    getMyAttendanceStatus: "attendanceControllerGetMyStatus",
+    getAttendanceStatus: "attendanceControllerGetStatus",
+    broadcastAnnouncement: "announcementControllerBroadcastAnnouncement",
+  },
+  admin: {
+    getStats: "adminControllerGetStats",
+    listOrganizations: "adminControllerListOrganizations",
+    createOrganization: "adminControllerCreateOrganization",
+    getOrganizationDetails: "adminControllerGetOrganizationDetails",
+    updateOrganization: "adminControllerUpdateOrganization",
+    deleteOrganization: "adminControllerDeleteOrganization",
+    listMembers: "adminControllerListMembers",
+    listUsers: "adminControllerListUsers",
+    banUser: "adminControllerBanUser",
+    unbanUser: "adminControllerUnbanUser",
+    listConnectedApps: "adminControllerListConnectedApps",
+    listSystemLogs: "adminControllerListSystemLogs",
+    listGlobalSettings: "adminControllerListGlobalSettings",
+    setGlobalSetting: "adminControllerSetGlobalSetting",
+    deleteGlobalSetting: "adminControllerDeleteGlobalSetting",
+    listTiers: "adminControllerListTiers",
+    defineTier: "adminControllerDefineTier",
+    deleteTier: "adminControllerDeleteTier",
+    getOrganizationSubscription: "adminControllerGetOrganizationSubscription",
+    updateOrganizationSubscription: "adminControllerUpdateOrganizationSubscription",
+    listSystemPayments: "adminControllerListSystemPayments",
+    recordCustomPayment: "adminControllerRecordCustomPayment",
+    listIntegrationDefinitions: "adminControllerListIntegrationDefinitions",
+    createIntegrationDefinition: "adminControllerCreateIntegrationDefinition",
+    updateIntegrationDefinition: "adminControllerUpdateIntegrationDefinition",
+    deleteIntegrationDefinition: "adminControllerDeleteIntegrationDefinition",
+    listActiveOrganizationIntegrations: "adminControllerListActiveOrganizationIntegrations",
+    createWebhook: "webhooksCreate",
+    listWebhooks: "webhooksList",
+    deleteWebhook: "webhooksDelete",
+    handleWindmillCallback: "windmillCallbackControllerHandleCallback",
+    handleWindmillApprovalCallback: "windmillCallbackControllerHandleApprovalCallback",
+    handleWindmillBakeryDisposalCallback: "windmillCallbackControllerHandleBakeryDisposalCallback",
+    handleWindmillOutcomeCallback: "windmillCallbackControllerHandleOutcomeCallback",
+    provisionZitadel: "customersProvisionZitadel",
+    getCustomers: "customersGetCustomers",
+    registerCustomer: "customersRegister",
+    updateCustomer: "customersUpdate",
+    getCustomerById: "customersGetCustomerById",
+    deleteCustomer: "customersDelete",
+    getCustomerAddresses: "customersGetAddresses",
+    addCustomerAddress: "customersAddAddress",
+    createBusinessAccount: "businessAccountControllerCreate",
+    getBusinessAccount: "businessAccountControllerGetOne",
+    getDashboardAnalytics: "analyticsControllerGetDashboardAnalytics",
+    getResourceUtilization: "analyticsControllerGetResourceUtilization",
+  },
+};
+
 export default function App() {
   // Theme state
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -1355,7 +1631,7 @@ export default function App() {
 
     if (activeEndpointId === "installation-setup-guide") {
       let curl = `pnpm add @scryme/sdk`;
-      let node = `// Node.js SDK Code\nimport { getScrymeV3API } from '@scryme/sdk';\nimport axios from 'axios';\n\nconst scryme = getScrymeV3API();`;
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "https://api.scryme.tech",\n  orgSlug: "your-org-slug",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});`;
       let python = `# Scryme SDK is natively for Node.js / TypeScript`;
       return { curl, node, python };
     }
@@ -1366,7 +1642,7 @@ export default function App() {
 
       let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json"`;
 
-      let node = `// Node.js SDK Code\nimport { getScrymeV3API } from '@scryme/sdk';\nimport axios from 'axios';\n\n// Initialize API client. SCRYME_ORG_SLUG can be configured via environment variables.\nconst scryme = getScrymeV3API(\n  axios.create({\n    baseURL: "${normalizedApiUrl}",\n    headers: {\n      Authorization: "Bearer <YOUR_ACCESS_TOKEN>"\n    }\n  })\n);\n\ntry {\n  // Calling inventoryGetInventory. orgSlug is automatically loaded from environment variables!\n  const response = await scryme.inventoryGetInventory({\n    locationId: "loc_main"\n  });\n  console.log(response.data); // Standardized enveloped response!\n} catch (error) {\n  console.error("Error:", error);\n}`;
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. One-click initialization & authentication\n  await scrymeServer.auth.authenticate();\n\n  // 2. Call APIs without manually passing orgSlug or accessToken!\n  const response = await scrymeServer.inventory.getInventory({\n    locationId: "loc_main"\n  });\n  console.log(response.data); // Standardized enveloped response!\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\n\nresponse = requests.get(url, headers=headers)\nprint(response.json()) # Expect wrapped global response structure!`;
 
@@ -1411,10 +1687,10 @@ export default function App() {
       let curl = `curl -X ${targetMethod} "${targetUrl}" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json" \\\n  -d '${bodyStr.replace(/'/g, "'\\''")}'`;
 
       const targetMethodCall = selectedCmsTarget === "service"
-        ? `servicesUpdateService("srv_sourdough_101", ${JSON.stringify(targetPayload, null, 2)})`
-        : `catalogUpdateProduct("prod_proofing_basket", ${JSON.stringify(targetPayload, null, 2)})`;
+        ? `catalog.updateService("srv_sourdough_101", ${JSON.stringify(targetPayload, null, 2)})`
+        : `catalog.updateProduct("prod_proofing_basket", ${JSON.stringify(targetPayload, null, 2)})`;
 
-      let node = `// Node.js SDK Code\nimport { getScrymeV3API } from '@scryme/sdk';\nimport axios from 'axios';\n\nconst scryme = getScrymeV3API(\n  axios.create({\n    baseURL: "${normalizedApiUrl}",\n    headers: {\n      Authorization: "Bearer <YOUR_ACCESS_TOKEN>"\n    }\n  })\n);\n\ntry {\n  // The SDK automatically loads orgSlug from the environment!\n  const response = await scryme.${targetMethodCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. One-click initialization & authentication\n  await scrymeServer.auth.authenticate();\n\n  // 2. Call API directly via the catalog submodule\n  const response = await scrymeServer.${targetMethodCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
       let python = `import requests\n\nurl = "${targetUrl}"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\npayload = ${JSON.stringify(targetPayload, null, 4).replace(/true/g, "True").replace(/false/g, "False").replace(/null/g, "None")}\n\nresponse = requests.patch(url, json=payload, headers=headers)\nprint(response.json())`;
 
@@ -1462,7 +1738,25 @@ export default function App() {
       sdkArgs.push(JSON.stringify(queryParams, null, 2));
     }
 
-    let node = `// Node.js SDK Code\nimport { getScrymeV3API } from '@scryme/sdk';\nimport axios from 'axios';\n\n// Initialize API client\nconst scryme = getScrymeV3API(\n  axios.create({\n    baseURL: "${normalizedApiUrl}",\n    headers: {\n      Authorization: "Bearer <YOUR_ACCESS_TOKEN>"\n    }\n  })\n);\n\ntry {\n  // The SDK automatically resolves the orgSlug from the environment variables!\n  const response = await scryme.${activeEndpoint.operationId}(${sdkArgs.join(", ")});\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
+    const argsStr = sdkArgs.join(", ");
+    let classCall = "";
+    let found = false;
+    const normOpId = activeEndpoint.operationId.toLowerCase().replace(/_/g, "");
+    for (const [moduleName, moduleMapping] of Object.entries(mappings)) {
+      for (const [methodName, legacyId] of Object.entries(moduleMapping)) {
+        if (legacyId.toLowerCase().replace(/_/g, "") === normOpId) {
+          classCall = `scrymeServer.${moduleName}.${methodName}(${argsStr})`;
+          found = true;
+          break;
+        }
+      }
+      if (found) break;
+    }
+    if (!classCall) {
+      classCall = `scrymeServer.api.${activeEndpoint.operationId}(${argsStr})`;
+    }
+
+    let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "${normalizedApiUrl}",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\ntry {\n  // 1. One-click initialization & authentication\n  await scrymeServer.auth.authenticate();\n\n  // 2. Perform the API call via submodule\n  const response = await ${classCall};\n  console.log(response.data);\n} catch (error) {\n  console.error("Error:", error);\n}`;
 
     let python = `import requests\n\n`;
     python += `url = "${fullUrl}"\n`;
