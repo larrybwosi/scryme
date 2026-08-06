@@ -159,4 +159,9 @@ interface ExpenseApiService {
     suspend fun createExpense(
         @Body dto: CreateExpenseRequestDto
     ): Response<ApiEnvelope<ExpenseDto>>
+
+    @POST("/api/android/finance/expenses/{id}/approve")
+    suspend fun approveExpense(
+        @Path("id") id: String
+    ): Response<ApiEnvelope<Unit>>
 }

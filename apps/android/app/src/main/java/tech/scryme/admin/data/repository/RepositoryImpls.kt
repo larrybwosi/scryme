@@ -317,6 +317,12 @@ class ExpenseRepositoryImpl(
             )
         }
     }
+
+    override suspend fun approveExpense(id: String): Result<Unit> {
+        return safeApiCallEnvelope {
+            api.approveExpense(id)
+        }
+    }
 }
 
 // --- API Helpers ---
