@@ -280,9 +280,19 @@ export class BookingService {
     }
 
     if (dto.staffIds && dto.staffIds.length > 0) {
-      for (const staffId of dto.staffIds) {
-        await this.calComService.syncBookingToCal(staffId, booking);
-      }
+      // ⚡ Bolt Optimization: Parallelize third-party API booking sync calls.
+      // Running these requests sequentially inside a loop introduces a critical O(N) external network IO bottleneck.
+      // Parallelizing them via Promise.all with localized try/catch handlers reduces latency from O(N) to O(1)
+      // and guarantees that an individual Cal.com sync failure does not break other synchronizations or subsequent notifications.
+      await Promise.all(
+        dto.staffIds.map(async (staffId) => {
+          try {
+            await this.calComService.syncBookingToCal(staffId, booking);
+          } catch (e) {
+            console.error(`Failed to sync booking to Cal.com for staff ${staffId}`, e);
+          }
+        })
+      );
 
       try {
         await notificationEngine.notify({
