@@ -1,6 +1,6 @@
 // components/InstallationSetupGuide.tsx
 import React from "react";
-import { Download, Terminal, Settings, Key, BookOpen, Workflow } from "lucide-react";
+import { Download, Terminal, Settings, Key, BookOpen, Workflow, ShieldAlert } from "lucide-react";
 
 // --- Component Props ---
 interface InstallationSetupGuideProps {
@@ -20,7 +20,7 @@ export default function InstallationSetupGuide({
   renderHighlightedCode,
 }: InstallationSetupGuideProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
         <div className="flex items-center gap-3 text-xs text-brass uppercase tracking-wider font-semibold mb-2">
@@ -33,6 +33,17 @@ export default function InstallationSetupGuide({
         </h1>
         <p className="text-light-text text-sm mt-2 leading-relaxed">
           The official Scryme V3 SDK is the recommended way to integrate your Node.js, Next.js, and backend applications with the Scryme platform. It offers complete end-to-end type safety, auto-generated DTO wrappers, and automatic organization scoping.
+        </p>
+        <p className="text-light-text text-xs mt-2 italic">
+          For full interactive API specs and playgrounds, visit our central portal:{" "}
+          <a
+            href="https://docs.scryme.tech"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-brass hover:underline font-semibold"
+          >
+            https://docs.scryme.tech
+          </a>
         </p>
       </div>
 
@@ -142,18 +153,108 @@ export default function InstallationSetupGuide({
         </div>
       </div>
 
-      {/* Initialization & Authorization flow */}
+      {/* Client & Server SDK Isolation */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-bold text-paper border-b border-ink-border pb-2 flex items-center gap-2">
+          <Workflow size={18} className="text-brass" />
+          <span>Client & Server SDK Isolation</span>
+        </h2>
+        <p className="text-xs text-light-text leading-relaxed">
+          To prevent session/request pollution in multi-tenant contexts, the SDK supports distinct isolated setup modules for both Client-side and Server-side codebases. Initializing via class-based constructors (<code className="text-paper">ScrymeClientSDK</code> and <code className="text-paper">ScrymeServerSDK</code>) strictly requires <code className="text-paper">clientId</code>, <code className="text-paper">clientSecret</code>, and <code className="text-paper">orgSlug</code>.
+        </p>
+
+        {/* Server SDK Integration */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">
+              Server-Side (`@scryme/sdk/server`)
+            </span>
+          </div>
+          <p className="text-xs text-light-text leading-relaxed">
+            Strictly isolates Axios instances and state. Perfect for Next.js API Routes, edge functions, backend microservices, or Windmill automated workflows.
+          </p>
+          <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl">
+            <pre className="overflow-x-auto text-purple-300 whitespace-pre leading-relaxed scrollbar-thin">
+              <code>
+                {renderHighlightedCode(
+`import { ScrymeServerSDK } from "@scryme/sdk/server";
+
+const scrymeServer = new ScrymeServerSDK({
+  baseURL: "https://api.scryme.tech",
+  orgSlug: "your-org-slug", // Automatic orgSlug injection on all API calls!
+  clientId: "your_client_id_123",
+  clientSecret: "your_client_secret_456",
+});
+
+async function run() {
+  // 1. One-click initialization & authentication
+  await scrymeServer.auth.authenticate();
+
+  // 2. Call APIs without manually passing orgSlug or accessToken!
+  const products = await scrymeServer.catalog.getProducts({ limit: 10 });
+  console.log("Server Products:", products.data);
+}`,
+                  "node"
+                )}
+              </code>
+            </pre>
+          </div>
+        </div>
+
+        {/* Client SDK Integration */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center gap-2">
+            <span className="bg-blue-500/10 text-blue-400 border border-blue-500/25 text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase">
+              Client-Side (`@scryme/sdk/client`)
+            </span>
+          </div>
+          <p className="text-xs text-light-text leading-relaxed">
+            Provides reactive auth state persistence (<code className="text-paper">localStorage</code> / StorageProviders) with login/logout lifecycle listeners (<code className="text-paper">onAuthStateChange</code>) and automated session persistence.
+          </p>
+          <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl">
+            <pre className="overflow-x-auto text-purple-300 whitespace-pre leading-relaxed scrollbar-thin">
+              <code>
+                {renderHighlightedCode(
+`import { ScrymeClientSDK } from "@scryme/sdk/client";
+
+const scrymeClient = new ScrymeClientSDK({
+  orgSlug: "your-org-slug",
+  clientId: "your_client_id_123",
+  clientSecret: "your_client_secret_456",
+});
+
+// Reactively listen to auth state changes and updates
+scrymeClient.auth.onAuthStateChange((event, session) => {
+  console.log(\`Auth Event: \${event}\`, session);
+});
+
+async function runClient() {
+  // Authentication & automatic persistence handling
+  await scrymeClient.auth.authenticate();
+
+  // Access structured domain modules directly
+  const stock = await scrymeClient.inventory.getInventory({ limit: 5 });
+  console.log("Client Stock:", stock.data);
+}`,
+                  "node"
+                )}
+              </code>
+            </pre>
+          </div>
+        </div>
+      </div>
+
+      {/* Global & Legacy Orval Wrapper */}
       <div className="space-y-4">
         <h2 className="text-lg font-bold text-paper border-b border-ink-border pb-2 flex items-center gap-2">
           <Key size={18} className="text-brass" />
-          <span>SDK Initialization & Token Flow</span>
+          <span>Global / Legacy API client (`getScrymeV3API`)</span>
         </h2>
         <p className="text-xs text-light-text leading-relaxed">
-          To initiate connection with the Scryme V3 API and request a secure access token, configure your client using the monorepo's <code className="text-paper">getScrymeV3API</code> client factory:
+          Alternatively, if you prefer utilizing a global request client or overriding behavior manually, you can initialize the custom Orval proxy with <code className="text-paper">getScrymeV3API</code>. It supports optional auto-injection of <code className="text-paper">orgSlug</code> from environment variables (<code className="text-paper">SCRYME_ORG_SLUG</code>, etc.) or custom default configurations.
         </p>
 
         <div className="space-y-2 text-left">
-          <span className="text-[10px] font-bold text-light-text block">COMPLETE INITIALIZATION EXAMPLE:</span>
           <div className="relative group rounded-xl overflow-hidden bg-ink-bg border border-ink-border p-4 text-xs font-mono shadow-xl">
             <pre className="overflow-x-auto text-purple-300 whitespace-pre leading-relaxed scrollbar-thin">
               <code>
