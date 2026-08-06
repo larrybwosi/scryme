@@ -80,5 +80,6 @@ export const getScrymeV3API = (axiosInstance?: AxiosInstance, defaultOrgSlug?: s
   });
 };
 
+export * from "./base";
 export * from "./client";
 export * from "./server";
