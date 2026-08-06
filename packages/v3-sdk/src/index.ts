@@ -10,10 +10,10 @@ function getEnvOrgSlug(): string | undefined {
     if (slug) return slug;
   }
   try {
-    // @ts-ignore
-    if (typeof import.meta !== "undefined" && import.meta.env) {
-      // @ts-ignore
-      const slug = import.meta.env.VITE_SCRYME_ORG_SLUG || import.meta.env.SCRYME_ORG_SLUG;
+    const getMeta = new Function("return typeof import.meta !== 'undefined' ? import.meta : undefined");
+    const meta = getMeta();
+    if (meta && meta.env) {
+      const slug = meta.env.VITE_SCRYME_ORG_SLUG || meta.env.SCRYME_ORG_SLUG;
       if (slug) return slug;
     }
   } catch (e) {}
@@ -79,3 +79,6 @@ export const getScrymeV3API = (axiosInstance?: AxiosInstance) => {
     }
   });
 };
+
+export * from "./client";
+export * from "./server";
