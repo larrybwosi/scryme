@@ -12,8 +12,8 @@ export const server = new McpServer({
   version: "1.0.0",
 });
 
-// V3 API client factory from our monorepo SDK
-const v3 = getScrymeV3API();
+// V3 API client factory from our monorepo SDK, initialized with the local axios instance
+const v3 = getScrymeV3API(axios);
 
 // Token caching and refresh logic
 let cachedToken: string | null = null;
@@ -36,18 +36,21 @@ export async function ensureAuthenticated(orgSlug?: string) {
     console.error("Exchanging client credentials for a new V3 access token...");
     try {
       const apiBaseUrl = process.env.SCRYME_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
-      const tokenUrl = `${apiBaseUrl}/v3/auth/token`;
 
-      const response = await axios.post(tokenUrl, {
+      // Set baseUrl on axios so the SDK client is initialized properly
+      axios.defaults.baseURL = apiBaseUrl;
+
+      // Utilizing the monorepo SDK instead of direct axios post calls for V3 auth exchange
+      const response = await v3.authExchangeToken({
         clientId,
         clientSecret,
       }, {
         headers: { "Content-Type": "application/json" }
       });
 
-      if (response.data && response.data.accessToken) {
-        cachedToken = response.data.accessToken;
-        const expiresIn = response.data.expiresIn || 3600;
+      if (response.data && response.data.data && response.data.data.access_token) {
+        cachedToken = response.data.data.access_token;
+        const expiresIn = response.data.data.expires_in || 3600;
         tokenExpiresAt = Date.now() + expiresIn * 1000;
         console.error("Successfully obtained new V3 access token.");
       } else {
