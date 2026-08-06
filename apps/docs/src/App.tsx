@@ -21,6 +21,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Fingerprint,
+  Download,
 } from "lucide-react";
 import openapiSpec from "./openapi.json";
 import CmsCustomizationGuide, {
@@ -28,6 +29,7 @@ import CmsCustomizationGuide, {
   type CmsSimulatorState,
 } from "./components/CmsCustomizationGuide";
 import GlobalResponseGuide from "./components/GlobalResponseGuide";
+import InstallationSetupGuide from "./components/InstallationSetupGuide";
 
 // --- Type Definitions for parsed schema ---
 interface Endpoint {
@@ -1055,7 +1057,7 @@ export default function App() {
     if (tags.length > 0) {
       setSelectedTag(tags[0]);
       setExpandedGroups(tags.reduce((acc, t) => ({ ...acc, [t]: false }), {}));
-      setActiveEndpointId("cms-customization-guide");
+      setActiveEndpointId("installation-setup-guide");
     }
   }, [tagGroups]);
 
@@ -1109,6 +1111,7 @@ export default function App() {
   useEffect(() => {
     if (
       activeEndpoint &&
+      activeEndpointId !== "installation-setup-guide" &&
       activeEndpointId !== "cms-customization-guide" &&
       activeEndpointId !== "v3-global-response-guide"
     ) {
@@ -1269,6 +1272,7 @@ export default function App() {
   // Extract Mock Request payload
   const mockRequestPayload = useMemo(() => {
     if (
+      activeEndpointId === "installation-setup-guide" ||
       activeEndpointId === "cms-customization-guide" ||
       activeEndpointId === "v3-global-response-guide"
     )
@@ -1348,6 +1352,13 @@ export default function App() {
     const normalizedApiUrl = rawApiUrl.endsWith("/")
       ? rawApiUrl.slice(0, -1)
       : rawApiUrl;
+
+    if (activeEndpointId === "installation-setup-guide") {
+      let curl = `pnpm add @scryme/sdk`;
+      let node = `// Node.js SDK Code\nimport { getScrymeV3API } from '@scryme/sdk';\nimport axios from 'axios';\n\nconst scryme = getScrymeV3API();`;
+      let python = `# Scryme SDK is natively for Node.js / TypeScript`;
+      return { curl, node, python };
+    }
 
     if (activeEndpointId === "v3-global-response-guide") {
       const targetUrl = `${normalizedApiUrl}/v3/bakery-co/inventory?locationId=loc_main`;
@@ -1515,6 +1526,11 @@ export default function App() {
   // Next and Previous pagination logic
   const chronologicalList = useMemo(() => {
     const list: { id: string; type: "guide" | "api"; name: string }[] = [
+      {
+        id: "installation-setup-guide",
+        type: "guide",
+        name: "Installation & Setup",
+      },
       {
         id: "cms-customization-guide",
         type: "guide",
@@ -1837,6 +1853,20 @@ export default function App() {
                 </span>
                 <button
                   onClick={() => {
+                    setActiveEndpointId("installation-setup-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left text-[13px] transition-all duration-150 cursor-pointer ${
+                    activeEndpointId === "installation-setup-guide"
+                      ? "bg-brass/[0.14] text-paper font-semibold"
+                      : "text-light-text hover:text-paper hover:bg-ink-card/70"
+                  }`}
+                >
+                  <Download size={14} className="text-brass shrink-0" />
+                  <span className="truncate">Installation & Setup</span>
+                </button>
+                <button
+                  onClick={() => {
                     setActiveEndpointId("cms-customization-guide");
                     setSidebarOpen(false);
                   }}
@@ -1952,7 +1982,11 @@ export default function App() {
           {/* MIDDLE COLUMN */}
           <section className="col-span-7 p-6 lg:px-14 lg:py-12 overflow-y-auto space-y-10 border-r border-ink-border/60 max-w-4xl flex flex-col justify-between transition-colors duration-200">
             <div className="space-y-10 flex-1">
-              {activeEndpointId === "v3-global-response-guide" ? (
+              {activeEndpointId === "installation-setup-guide" ? (
+                <InstallationSetupGuide
+                  renderHighlightedCode={renderHighlightedCode}
+                />
+              ) : activeEndpointId === "v3-global-response-guide" ? (
                 <GlobalResponseGuide
                   renderHighlightedCode={renderHighlightedCode}
                 />
@@ -2461,7 +2495,8 @@ export default function App() {
               </div>
 
               {/* Response Block (Only for non-guide/standard endpoints reference view) */}
-              {activeEndpointId !== "cms-customization-guide" &&
+              {activeEndpointId !== "installation-setup-guide" &&
+                activeEndpointId !== "cms-customization-guide" &&
                 activeEndpointId !== "v3-global-response-guide" &&
                 activeDocTab === "reference" && (
                   <div className="space-y-0 rounded-xl overflow-hidden border border-ink-border shadow-lg shadow-black/20 animate-fade-in">
