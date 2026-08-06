@@ -648,3 +648,25 @@ export function buildModule<Mapping extends Record<string, keyof RawAPI>>(
   }
   return result as SDKModule<Mapping>;
 }
+
+export function getJwtExpiry(token: string): number | null {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    let payloadStr = "";
+    if (typeof Buffer !== "undefined") {
+      payloadStr = Buffer.from(parts[1], "base64").toString("utf-8");
+    } else if (typeof window !== "undefined" && typeof window.atob === "function") {
+      payloadStr = window.atob(parts[1]);
+    } else {
+      payloadStr = atob(parts[1]);
+    }
+    const payload = JSON.parse(payloadStr);
+    if (payload && typeof payload.exp === "number") {
+      return payload.exp * 1000; // convert to ms
+    }
+  } catch (e) {
+    // Ignore error
+  }
+  return null;
+}

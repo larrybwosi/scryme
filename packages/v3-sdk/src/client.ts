@@ -24,6 +24,7 @@ import {
   LoyaltyModule,
   MembersModule,
   AdminModule,
+  getJwtExpiry,
 } from "./base";
 
 export interface StorageProvider {
@@ -58,12 +59,14 @@ export type AuthChangeEvent = "SIGNED_IN" | "SIGNED_OUT" | "INITIAL_SESSION";
 export interface SessionState {
   token: string | null;
   user: any | null;
+  expiresAt?: number | null;
 }
 
 export type AuthStateCallback = (event: AuthChangeEvent, session: SessionState) => void;
 
 const SCRYME_SESSION_TOKEN_KEY = "scryme_session_token";
 const SCRYME_USER_KEY = "scryme_user";
+const SCRYME_EXPIRES_AT_KEY = "scryme_expires_at";
 
 export class ScrymeClientSDK {
   public axiosInstance: AxiosInstance;
@@ -135,8 +138,19 @@ export class ScrymeClientSDK {
       try {
         const storedToken = await storage.getItem(SCRYME_SESSION_TOKEN_KEY);
         const storedUser = await storage.getItem(SCRYME_USER_KEY);
+        const storedExpiresAt = await storage.getItem(SCRYME_EXPIRES_AT_KEY);
         if (storedToken) {
           state.token = storedToken;
+          if (storedExpiresAt) {
+            state.expiresAt = Number(storedExpiresAt);
+          } else {
+            const jwtExp = getJwtExpiry(storedToken);
+            if (jwtExp) {
+              state.expiresAt = jwtExp;
+            } else {
+              delete state.expiresAt;
+            }
+          }
           if (storedUser) {
             try {
               state.user = JSON.parse(storedUser);
@@ -151,14 +165,101 @@ export class ScrymeClientSDK {
       }
     })();
 
+    let activeAuthPromise: Promise<any> | null = null;
+
+    const performExchange = async (): Promise<any> => {
+      if (activeAuthPromise) {
+        return activeAuthPromise;
+      }
+      activeAuthPromise = (async () => {
+        try {
+          const response = await this.api.authExchangeToken({
+            clientId: config.clientId,
+            clientSecret: config.clientSecret,
+          });
+          const tokenData = response.data?.data;
+          const accessToken = tokenData?.access_token;
+          const expiresIn = tokenData?.expires_in;
+
+          if (accessToken) {
+            state.token = accessToken;
+            if (expiresIn) {
+              state.expiresAt = Date.now() + expiresIn * 1000;
+              await storage.setItem(SCRYME_EXPIRES_AT_KEY, String(state.expiresAt));
+            } else {
+              const jwtExp = getJwtExpiry(accessToken);
+              if (jwtExp) {
+                state.expiresAt = jwtExp;
+                await storage.setItem(SCRYME_EXPIRES_AT_KEY, String(jwtExp));
+              } else {
+                delete state.expiresAt;
+              }
+            }
+            await storage.setItem(SCRYME_SESSION_TOKEN_KEY, accessToken);
+            notify("SIGNED_IN");
+          }
+          return response.data;
+        } finally {
+          activeAuthPromise = null;
+        }
+      })();
+      return activeAuthPromise;
+    };
+
     // Attach authorization interceptor
     this.axiosInstance.interceptors.request.use(async (req) => {
       await initPromise; // Wait for initial session state to be loaded if async
+
+      // Check if this is a token exchange request to prevent infinite loops
+      const isAuthTokenRequest = req.url && (req.url.endsWith("/auth/token") || req.url.includes("/auth/token"));
+
+      if (!isAuthTokenRequest) {
+        const isExpired = !state.token || (state.expiresAt && Date.now() >= state.expiresAt - 30000);
+        if (isExpired && config.clientId && config.clientSecret) {
+          try {
+            await performExchange();
+          } catch (e) {
+            console.error("Auto-authentication failed in request interceptor:", e);
+          }
+        }
+      }
+
       if (state.token) {
         req.headers["Authorization"] = `Bearer ${state.token}`;
       }
       return req;
     });
+
+    // Attach response interceptor for 401 retries
+    this.axiosInstance.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        const isAuthTokenRequest = originalRequest && originalRequest.url && (originalRequest.url.endsWith("/auth/token") || originalRequest.url.includes("/auth/token"));
+
+        if (
+          error.response &&
+          error.response.status === 401 &&
+          originalRequest &&
+          !originalRequest._retry &&
+          !isAuthTokenRequest &&
+          config.clientId &&
+          config.clientSecret
+        ) {
+          originalRequest._retry = true;
+          try {
+            await performExchange();
+            if (state.token) {
+              originalRequest.headers["Authorization"] = `Bearer ${state.token}`;
+            }
+            return this.axiosInstance(originalRequest);
+          } catch (e) {
+            return Promise.reject(error);
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
 
     this.api = getScrymeV3API(this.axiosInstance, config.orgSlug);
 
@@ -184,18 +285,7 @@ export class ScrymeClientSDK {
       },
 
       authenticate: async () => {
-        const response = await this.api.authExchangeToken({
-          clientId: config.clientId,
-          clientSecret: config.clientSecret,
-        });
-        const tokenData = response.data?.data;
-        const accessToken = tokenData?.access_token;
-        if (accessToken) {
-          state.token = accessToken;
-          await storage.setItem(SCRYME_SESSION_TOKEN_KEY, accessToken);
-          notify("SIGNED_IN");
-        }
-        return response.data;
+        return performExchange();
       },
 
       signIn: async (credentials: { email: string; password?: string }) => {
@@ -209,8 +299,16 @@ export class ScrymeClientSDK {
         if (token) {
           state.token = token;
           state.user = user;
+          const jwtExp = getJwtExpiry(token);
 
           await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
+          if (jwtExp) {
+            state.expiresAt = jwtExp;
+            await storage.setItem(SCRYME_EXPIRES_AT_KEY, String(state.expiresAt));
+          } else {
+            delete state.expiresAt;
+            await storage.removeItem(SCRYME_EXPIRES_AT_KEY);
+          }
           if (user) {
             await storage.setItem(SCRYME_USER_KEY, JSON.stringify(user));
           }
@@ -230,9 +328,11 @@ export class ScrymeClientSDK {
 
         state.token = null;
         state.user = null;
+        delete state.expiresAt;
 
         await storage.removeItem(SCRYME_SESSION_TOKEN_KEY);
         await storage.removeItem(SCRYME_USER_KEY);
+        await storage.removeItem(SCRYME_EXPIRES_AT_KEY);
 
         notify("SIGNED_OUT");
       },
