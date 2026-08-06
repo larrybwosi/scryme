@@ -7,6 +7,8 @@ export interface ServerSDKConfig {
   orgSlug?: string;
   token?: string;
   apiKey?: string;
+  clientId?: string;
+  clientSecret?: string;
 }
 
 export function createServerSDK(config: ServerSDKConfig = {}) {
@@ -23,11 +25,27 @@ export function createServerSDK(config: ServerSDKConfig = {}) {
     axiosInstance.defaults.headers.common["x-api-key"] = config.apiKey;
   }
 
-  const api = getScrymeV3API(axiosInstance);
+  const api = getScrymeV3API(axiosInstance, config.orgSlug);
 
   const auth = {
     signUp: async (orgSlug: string, dto: RegisterCustomerDto) => {
       return api.customersRegister(orgSlug, dto);
+    },
+
+    authenticate: async () => {
+      if (!config.clientId || !config.clientSecret) {
+        throw new Error("clientId and clientSecret must be configured to authenticate");
+      }
+      const response = await api.authExchangeToken({
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+      });
+      const tokenData = response.data?.data;
+      const accessToken = tokenData?.access_token;
+      if (accessToken) {
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
+      }
+      return response.data;
     },
 
     signIn: async (credentials: { email: string; password?: string }) => {
