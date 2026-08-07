@@ -80,7 +80,7 @@ const itemSchema = z.object({
 });
 
 const orderSchema = z.object({
-  customerId: z.string().min(1, "Customer is required"),
+  customerId: z.string().optional(),
   businessAccountId: z.string().optional(),
   locationId: z.string().min(1, "Location is required"),
   type: z.enum(["SALES_ORDER", "QUOTE", "POS_SALE"]),
@@ -92,6 +92,9 @@ const orderSchema = z.object({
   shippingAddressId: z.string().optional(),
   attachments: z.array(z.any()).optional(),
   items: z.array(itemSchema).min(1, "At least one item is required"),
+}).refine(data => data.customerId || data.businessAccountId, {
+  message: "Either Customer or Business Account is required",
+  path: ["customerId"],
 });
 
 type OrderFormValues = z.infer<typeof orderSchema>;
@@ -399,12 +402,13 @@ export function OrderForm({
                         control={control}
                         render={({ field }) => (
                           <Select
-                            onValueChange={field.onChange}
-                            value={field.value}>
+                            onValueChange={(val) => field.onChange(val === "none" ? undefined : val)}
+                            value={field.value || "none"}>
                             <SelectTrigger className="bg-background">
                               <SelectValue placeholder="Select customer" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="none">None</SelectItem>
                               {customers.map(c => (
                                 <SelectItem key={c.id} value={c.id}>
                                   {c.name}
@@ -503,12 +507,13 @@ export function OrderForm({
                         control={control}
                         render={({ field }) => (
                           <Select
-                            onValueChange={field.onChange}
-                            value={field.value}>
+                            onValueChange={(val) => field.onChange(val === "none" ? undefined : val)}
+                            value={field.value || "none"}>
                             <SelectTrigger className="bg-background">
                               <SelectValue placeholder="Select business account" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="none">None</SelectItem>
                               {businessAccounts.map(b => (
                                 <SelectItem key={b.id} value={b.id}>
                                   {b.name}
@@ -1005,7 +1010,7 @@ export function OrderForm({
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Customer</span>
                 <span className="font-medium text-foreground">
-                  {createdOrder?.customer?.name || "Walk-in Customer"}
+                  {createdOrder?.customer?.name || createdOrder?.businessAccount?.name || "Walk-in Customer"}
                 </span>
               </div>
             </div>
