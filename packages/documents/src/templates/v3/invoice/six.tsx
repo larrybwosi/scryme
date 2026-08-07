@@ -8,12 +8,12 @@ const CHARCOAL = "#222222";
 const MUTED_TEXT = "#555555";
 const LINE_COLOR = "#CCCCCC";
 
-const styles = StyleSheet.create({
+const getStyles = (activeColor: string, activeSecondaryColor: string) => StyleSheet.create({
   page: {
     paddingVertical: 50,
     paddingHorizontal: 50,
     fontSize: 9,
-    color: CHARCOAL,
+    color: activeSecondaryColor,
     fontFamily: "Helvetica",
     backgroundColor: BG_COLOR,
   },
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
     marginTop: 12,
-    color: CHARCOAL,
+    color: activeSecondaryColor,
   },
   headerRight: {
     alignItems: "flex-end",
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 46,
     fontFamily: "Helvetica-Bold",
-    color: CHARCOAL,
+    color: activeColor,
     lineHeight: 1,
     marginBottom: 25,
   },
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
   customerName: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: CHARCOAL,
+    color: activeSecondaryColor,
     textTransform: "uppercase",
     marginBottom: 4,
   },
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   tableHeaderCell: {
     fontFamily: "Helvetica-Bold",
     fontSize: 11,
-    color: CHARCOAL,
+    color: activeSecondaryColor,
   },
   tableRow: {
     flexDirection: "row",
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     fontSize: 10,
-    color: CHARCOAL,
+    color: activeSecondaryColor,
     lineHeight: 1.4,
   },
 
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   bulletAccent: {
     width: 12,
     fontSize: 10,
-    color: MUTED_TEXT,
+    color: activeColor,
   },
   itemTextContainer: {
     flex: 1,
@@ -131,12 +131,13 @@ const styles = StyleSheet.create({
   },
   totalsLabel: {
     fontSize: 10,
-    color: CHARCOAL,
+    color: activeSecondaryColor,
   },
   totalsValue: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
     textAlign: "right",
+    color: activeSecondaryColor,
   },
   grandTotalRow: {
     flexDirection: "row",
@@ -148,11 +149,13 @@ const styles = StyleSheet.create({
   grandTotalLabel: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
+    color: activeColor,
   },
   grandTotalValue: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
     textAlign: "right",
+    color: activeColor,
   },
 
   // ---------- Bottom Info Block ----------
@@ -169,7 +172,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     borderLeftWidth: 2,
-    borderLeftColor: CHARCOAL,
+    borderLeftColor: activeColor,
     paddingLeft: 6,
     marginBottom: 8,
     marginTop: 15,
@@ -177,7 +180,7 @@ const styles = StyleSheet.create({
   accentSectionTitle: {
     fontFamily: "Helvetica-Bold",
     fontSize: 11,
-    color: CHARCOAL,
+    color: activeSecondaryColor,
   },
   bankDetailsRow: {
     flexDirection: "row",
@@ -189,7 +192,7 @@ const styles = StyleSheet.create({
     color: MUTED_TEXT,
   },
   bankValue: {
-    color: CHARCOAL,
+    color: activeSecondaryColor,
   },
   termsParagraph: {
     fontSize: 9,
@@ -214,7 +217,7 @@ const styles = StyleSheet.create({
   signatureGraphic: {
     fontFamily: "Helvetica-Oblique",
     fontSize: 14,
-    color: CHARCOAL,
+    color: activeSecondaryColor,
   },
   signatureLabel: {
     fontSize: 9,
@@ -248,6 +251,8 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
   const activeColor = primaryColor || CHARCOAL;
   const activeSecondaryColor = secondaryColor || CHARCOAL;
 
+  const styles = getStyles(activeColor, activeSecondaryColor);
+
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
@@ -272,13 +277,13 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
           </View>
 
           <View style={styles.headerRight}>
-            <Text style={[styles.mainTitle, { color: activeColor }]}>
+            <Text style={styles.mainTitle}>
               {type
                 ? type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
                 : "Invoice"}
             </Text>
             <Text style={styles.invoiceToLabel}>{type === 'invoice' ? 'Invoice to' : 'Receipt to'}</Text>
-            <Text style={[styles.customerName, { color: activeSecondaryColor }]}>{customer.name}</Text>
+            <Text style={styles.customerName}>{customer.name}</Text>
             {customer.address && (
               <Text style={styles.customerAddress}>{customer.address}</Text>
             )}
@@ -372,7 +377,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
         <View style={styles.bottomContainer}>
           <View style={styles.bottomLeftBlock}>
             {/* Payment Method */}
-            <View style={[styles.accentSectionHeader, { borderLeftColor: activeColor }]}>
+            <View style={styles.accentSectionHeader}>
               <Text style={styles.accentSectionTitle}>Payment Method</Text>
             </View>
             {bankDetails && (
@@ -401,7 +406,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
             {/* KRA Compliance */}
             {(kraPin || kraControlCode || kraReceiptNumber) && (
               <View style={{ marginTop: 15 }}>
-                 <View style={[styles.accentSectionHeader, { borderLeftColor: activeColor }]}>
+                 <View style={styles.accentSectionHeader}>
                     <Text style={styles.accentSectionTitle}>Compliance info</Text>
                   </View>
                   {kraPin && <Text style={{ fontSize: 9 }}>KRA PIN: {kraPin}</Text>}
@@ -411,7 +416,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
             )}
 
             {/* Payment Terms */}
-            <View style={[styles.accentSectionHeader, { marginTop: 20, borderLeftColor: activeColor }]}>
+            <View style={styles.accentSectionHeader}>
               <Text style={styles.accentSectionTitle}>Payment Terms</Text>
             </View>
             <Text style={styles.termsParagraph}>
@@ -426,7 +431,7 @@ export const TemplateSix = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
               <>
                 {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
                 <View style={styles.signatureLine}>
-                  <Text style={[styles.signatureGraphic, { color: activeSecondaryColor }]}>{signature.name}</Text>
+                  <Text style={styles.signatureGraphic}>{signature.name}</Text>
                 </View>
                 <Text style={styles.signatureLabel}>{signature.title}</Text>
               </>

@@ -8,13 +8,13 @@ const DARK_TEXT = "#1A1A1A";
 const MUTED_GRAY = "#555555";
 const LIGHT_LINE = "#E0E0E0";
 
-const styles = StyleSheet.create({
+const getStyles = (activeColor: string, activeSecondaryColor: string) => StyleSheet.create({
   page: {
     paddingTop: 40,
     paddingBottom: 60,
     paddingHorizontal: 45,
     fontSize: 9,
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
     fontFamily: "Helvetica",
     backgroundColor: "#FFFFFF",
   },
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 24,
     borderWidth: 2,
-    borderColor: DEEP_TEAL,
+    borderColor: activeColor,
     borderRadius: 4,
     marginRight: 8,
     position: "relative",
@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: DEEP_TEAL,
+    backgroundColor: activeColor,
   },
   logoTextGroup: {
     flexDirection: "column",
@@ -55,6 +55,7 @@ const styles = StyleSheet.create({
   logoMainText: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
+    color: activeSecondaryColor,
   },
   logoSubText: {
     fontSize: 8,
@@ -67,6 +68,7 @@ const styles = StyleSheet.create({
     fontSize: 42,
     fontFamily: "Helvetica-Bold",
     letterSpacing: 0.5,
+    color: activeColor,
   },
   companyWebsite: {
     fontSize: 8,
@@ -95,6 +97,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Helvetica-Bold",
     marginBottom: 4,
+    color: activeSecondaryColor,
   },
   clientTitle: {
     fontSize: 9,
@@ -104,7 +107,7 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
     marginTop: 6,
   },
   infoValue: {
@@ -127,19 +130,19 @@ const styles = StyleSheet.create({
   barcodeLineThin: {
     width: 1,
     height: 16,
-    backgroundColor: DARK_TEXT,
+    backgroundColor: activeSecondaryColor,
     marginRight: 1,
   },
   barcodeLineThick: {
     width: 3,
     height: 16,
-    backgroundColor: DARK_TEXT,
+    backgroundColor: activeSecondaryColor,
     marginRight: 1,
   },
   barcodeLineMedium: {
     width: 2,
     height: 16,
-    backgroundColor: DARK_TEXT,
+    backgroundColor: activeSecondaryColor,
     marginRight: 1,
   },
 
@@ -152,6 +155,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Helvetica-Bold",
     marginBottom: 12,
+    color: activeSecondaryColor,
   },
   metaRow: {
     flexDirection: "row",
@@ -171,12 +175,13 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     textAlign: "left",
     width: "40%",
+    color: activeSecondaryColor,
   },
 
   // ---------- Document Table ----------
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: DEEP_TEAL,
+    backgroundColor: activeColor,
     paddingVertical: 8,
     paddingHorizontal: 8,
   },
@@ -195,7 +200,7 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     fontSize: 9,
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
   },
 
   // Column Width Layouts
@@ -226,13 +231,13 @@ const styles = StyleSheet.create({
   },
   totalsValue: {
     fontSize: 9,
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
     textAlign: "right",
   },
   grandTotalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: DEEP_TEAL,
+    backgroundColor: activeColor,
     paddingVertical: 8,
     paddingHorizontal: 8,
     marginTop: 6,
@@ -258,6 +263,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
     marginBottom: 2,
+    color: activeSecondaryColor,
   },
   signatureTitle: {
     fontSize: 8,
@@ -267,7 +273,7 @@ const styles = StyleSheet.create({
   signatureLinePlaceholder: {
     width: 45,
     borderBottomWidth: 1,
-    borderBottomColor: DARK_TEXT,
+    borderBottomColor: activeColor,
     height: 15,
     marginBottom: 2,
   },
@@ -286,7 +292,7 @@ const styles = StyleSheet.create({
   },
   footerDivider: {
     borderBottomWidth: 1,
-    borderBottomColor: DARK_TEXT,
+    borderBottomColor: activeSecondaryColor,
     marginBottom: 12,
   },
   footerMatrixRow: {
@@ -300,7 +306,7 @@ const styles = StyleSheet.create({
   footerMatrixLabel: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
     marginBottom: 4,
   },
   footerMatrixValue: {
@@ -336,6 +342,8 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
   const activeColor = primaryColor || DEEP_TEAL;
   const activeSecondaryColor = secondaryColor || DARK_TEXT;
 
+  const styles = getStyles(activeColor, activeSecondaryColor);
+
   const fmt = (n: number) =>
     `${currency.symbol} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -349,13 +357,13 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
               <Image src={company.logo} style={{ width: 100, height: 50, marginRight: 15, objectFit: 'contain' }} />
             )}
             <View style={styles.logoTextGroup}>
-              <Text style={[styles.logoMainText, { color: activeSecondaryColor }]}>{company.name}</Text>
+              <Text style={styles.logoMainText}>{company.name}</Text>
               <Text style={styles.logoSubText}>{company.slogan || 'Business Slogan'}</Text>
             </View>
           </View>
 
           <View style={styles.headerRight}>
-            <Text style={[styles.mainTitle, { color: activeColor }]}>
+            <Text style={styles.mainTitle}>
               {type
                 ? type.charAt(0).toUpperCase() + type.slice(1).toLowerCase()
                 : "Invoice"}
@@ -368,7 +376,7 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         <View style={styles.infoSection}>
           <View style={styles.clientBlock}>
             <Text style={styles.toLabel}>To</Text>
-            <Text style={[styles.clientName, { color: activeSecondaryColor }]}>{customer.name}</Text>
+            <Text style={styles.clientName}>{customer.name}</Text>
             <Text style={styles.clientTitle}>Director</Text>
 
             <Text style={styles.infoLabel}>Address</Text>
@@ -412,11 +420,11 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
             )}
 
             <Text style={styles.metaInvoiceNoLabel}>{type === 'invoice' ? 'Invoice' : 'Receipt'} No.</Text>
-            <Text style={[styles.metaInvoiceNoValue, { color: activeSecondaryColor }]}>#{number}</Text>
+            <Text style={styles.metaInvoiceNoValue}>#{number}</Text>
 
             <View style={styles.metaRow}>
               <Text style={styles.metaRowLabel}>Date :</Text>
-              <Text style={[styles.metaRowValue, { color: activeSecondaryColor }]}>{date}</Text>
+              <Text style={styles.metaRowValue}>{date}</Text>
             </View>
             {(kraPin || kraControlCode || kraReceiptNumber) && (
               <View style={{ marginTop: 5 }}>
@@ -444,7 +452,7 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         </View>
 
         {/* ================= PRIMARY LINE ITEMS TABLE ================= */}
-        <View style={[styles.tableHeader, { backgroundColor: activeColor }]}>
+        <View style={styles.tableHeader}>
           <Text style={[styles.tableHeaderCell, styles.colNo]}>No.</Text>
           <Text style={[styles.tableHeaderCell, styles.colDesc]}>
             Item Description
@@ -509,7 +517,7 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
               </View>
             )}
 
-            <View style={[styles.grandTotalRow, { backgroundColor: activeColor }]}>
+            <View style={styles.grandTotalRow}>
               <Text style={styles.grandTotalLabel}>Grand Total =</Text>
               <Text style={styles.grandTotalValue}>{fmt(total)}</Text>
             </View>
@@ -520,13 +528,13 @@ export const TemplateSeven = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         {signature && (
           <View style={styles.signatureSection}>
             {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
-            <Text style={[styles.signatureName, { color: activeSecondaryColor }]}>
+            <Text style={styles.signatureName}>
               {signature.name}
             </Text>
             <Text style={styles.signatureTitle}>
               {signature.title}
             </Text>
-            <View style={[styles.signatureLinePlaceholder, { borderBottomColor: activeColor }]} />
+            <View style={styles.signatureLinePlaceholder} />
           </View>
         )}
 

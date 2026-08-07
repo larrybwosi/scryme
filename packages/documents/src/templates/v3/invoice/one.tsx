@@ -15,13 +15,13 @@ const DARK = "#3A3A3A";
 const GRAY_TEXT = "#6B6B6B";
 const LIGHT_ROW = "#F4F6F7";
 
-const styles = StyleSheet.create({
+const getStyles = (activeColor: string, activeSecondaryColor: string) => StyleSheet.create({
   page: {
     paddingTop: 40,
     paddingBottom: 80, // Increased to account for fixed footer
     paddingHorizontal: 50,
     fontSize: 9,
-    color: DARK,
+    color: activeSecondaryColor,
     fontFamily: "Helvetica",
   },
 
@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   logoBlock: { flexDirection: "row", alignItems: "center" },
-  logoText: { fontSize: 14, fontFamily: "Helvetica-Bold" },
+  logoText: { fontSize: 14, fontFamily: "Helvetica-Bold", color: activeSecondaryColor },
   companyInfo: {
     textAlign: "right",
     fontSize: 8,
@@ -50,11 +50,11 @@ const styles = StyleSheet.create({
   toLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     marginBottom: 8,
   },
   toText: { fontSize: 8, color: GRAY_TEXT, lineHeight: 1.6 },
-  website: { fontSize: 8, color: TEAL, marginTop: 4 },
+  website: { fontSize: 8, color: activeColor, marginTop: 4 },
 
   documentTitle: {
     fontSize: 34,
@@ -69,13 +69,13 @@ const styles = StyleSheet.create({
   metaBlock: { marginLeft: 28 },
   metaBlockFirst: { marginLeft: 0 },
   metaLabel: { fontSize: 7.5, color: GRAY_TEXT, marginBottom: 4 },
-  metaValue: { fontSize: 10, fontFamily: "Helvetica-Bold" },
-  metaValueTeal: { fontSize: 10, fontFamily: "Helvetica-Bold", color: TEAL },
+  metaValue: { fontSize: 10, fontFamily: "Helvetica-Bold", color: activeSecondaryColor },
+  metaValueTeal: { fontSize: 10, fontFamily: "Helvetica-Bold", color: activeColor },
 
   // ---------- Table ----------
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: TEAL,
+    backgroundColor: activeColor,
     paddingVertical: 8,
     paddingHorizontal: 10,
   },
@@ -101,15 +101,15 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     marginBottom: 2,
   },
   itemSub: { fontSize: 7.5, color: "#9A9A9A" },
-  cellText: { fontSize: 9, color: DARK },
+  cellText: { fontSize: 9, color: activeSecondaryColor },
   cellTotal: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     textAlign: "right",
   },
 
@@ -123,14 +123,14 @@ const styles = StyleSheet.create({
   termsLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     marginBottom: 10,
   },
 
   paymentLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     marginBottom: 6,
     marginTop: 18,
   },
@@ -142,15 +142,15 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 6,
   },
-  totalsLabel: { fontSize: 9, color: DARK },
-  totalsValue: { fontSize: 9, fontFamily: "Helvetica-Bold", color: DARK },
-  discountLabel: { fontSize: 9, color: TEAL },
-  discountValue: { fontSize: 9, fontFamily: "Helvetica-Bold", color: TEAL },
+  totalsLabel: { fontSize: 9, color: activeSecondaryColor },
+  totalsValue: { fontSize: 9, fontFamily: "Helvetica-Bold", color: activeSecondaryColor },
+  discountLabel: { fontSize: 9, color: activeColor },
+  discountValue: { fontSize: 9, fontFamily: "Helvetica-Bold", color: activeColor },
 
   totalDueRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    backgroundColor: TEAL,
+    backgroundColor: activeColor,
     paddingVertical: 12,
     paddingHorizontal: 12,
     marginTop: 8,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   signatureName: {
     fontSize: 10,
     fontFamily: "Helvetica-Oblique",
-    color: DARK,
+    color: activeSecondaryColor,
     marginBottom: 2,
   },
   signatureTitle: { fontSize: 8, color: GRAY_TEXT },
@@ -180,13 +180,13 @@ const styles = StyleSheet.create({
   thankYou: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     marginTop: 28,
   },
 
   // ---------- Footer ----------
   footer: {
-    backgroundColor: "#8C8C8C",
+    backgroundColor: activeColor,
     paddingHorizontal: 50,
     paddingVertical: 18,
     position: "absolute",
@@ -238,6 +238,8 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
   const activeColor = primaryColor || TEAL;
   const activeSecondaryColor = secondaryColor || DARK;
 
+  const styles = getStyles(activeColor, activeSecondaryColor);
+
   const fmt = (n: number) =>
     `${currency.symbol} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -251,7 +253,7 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
               <Image src={company.logo} style={{ width: 60, height: 60, marginRight: 12, objectFit: 'contain' }} />
             )}
             <View>
-              <Text style={[styles.logoText, { color: activeSecondaryColor }]}>{company.name}</Text>
+              <Text style={styles.logoText}>{company.name}</Text>
               {company.slogan && <Text style={{ fontSize: 8, color: GRAY_TEXT, marginTop: 2 }}>{company.slogan}</Text>}
             </View>
           </View>
@@ -278,7 +280,7 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
               {customer.email && <Text>{customer.email}</Text>}
             </View>
             {customer.website && (
-              <Text style={[styles.website, { color: activeColor }]}>{customer.website}</Text>
+              <Text style={styles.website}>{customer.website}</Text>
             )}
             {kraPin && (
               <View style={{ marginTop: 8 }}>
@@ -295,24 +297,24 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
         <View style={[styles.metaRow, { justifyContent: "flex-end" }]}>
           <View style={styles.metaBlockFirst}>
             <Text style={styles.metaLabel}>Total Due:</Text>
-            <Text style={[styles.metaValueTeal, { color: activeColor }]}>{fmt(total)}</Text>
+            <Text style={styles.metaValueTeal}>{fmt(total)}</Text>
           </View>
           <View style={styles.metaBlock}>
             <Text style={styles.metaLabel}>
               {type === "invoice" ? "Invoice Date:" : "Receipt Date:"}
             </Text>
-            <Text style={[styles.metaValue, { color: activeSecondaryColor }]}>{date}</Text>
+            <Text style={styles.metaValue}>{date}</Text>
           </View>
           <View style={styles.metaBlock}>
             <Text style={styles.metaLabel}>
               {type === "invoice" ? "Invoice No:" : "Receipt No:"}
             </Text>
-            <Text style={[styles.metaValue, { color: activeSecondaryColor }]}>{number}</Text>
+            <Text style={styles.metaValue}>{number}</Text>
           </View>
         </View>
 
         {/* Table header */}
-        <View style={[styles.tableHeader, { marginTop: 25, backgroundColor: activeColor }]}>
+        <View style={[styles.tableHeader, { marginTop: 25 }]}>
           <Text style={[styles.tableHeaderText, styles.colDesc]}>
             ITEM DESCRIPTION
           </Text>
@@ -386,7 +388,7 @@ export const TemplateOne = ({ data, qrCode }: { data: V3DocumentData; qrCode?: s
                 <Text style={styles.discountValue}>-{fmt(discount)}</Text>
               </View>
             )}
-            <View style={[styles.totalDueRow, { backgroundColor: activeColor }]}>
+            <View style={styles.totalDueRow}>
               <Text style={styles.totalDueLabel}>Total Due:</Text>
               <Text style={styles.totalDueValue}>{fmt(total)}</Text>
             </View>
