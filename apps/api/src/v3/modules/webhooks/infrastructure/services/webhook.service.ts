@@ -22,25 +22,29 @@ export class WebhookService {
       },
     );
 
-    for (const sub of subscriptions) {
-      await this.webhookQueue.add(
-        "deliver",
-        {
-          subscriptionId: sub.id,
-          event,
-          payload,
-          url: sub.url,
-          secret: sub.secret,
-        },
-        {
-          attempts: 5,
-          backoff: {
-            type: "exponential",
-            delay: 1000,
+    // OPTIMIZATION (Bolt ⚡): Parallelizing BullMQ enqueue operations with Promise.all
+    // instead of awaiting them sequentially inside a loop. This reduces latency from O(N) sequential blocking waits to flat O(1).
+    await Promise.all(
+      subscriptions.map((sub) =>
+        this.webhookQueue.add(
+          "deliver",
+          {
+            subscriptionId: sub.id,
+            event,
+            payload,
+            url: sub.url,
+            secret: sub.secret,
           },
-        },
-      );
-    }
+          {
+            attempts: 5,
+            backoff: {
+              type: "exponential",
+              delay: 1000,
+            },
+          },
+        ),
+      ),
+    );
   }
 
   async createLog(subscriptionId: string, event: string, payload: any) {
