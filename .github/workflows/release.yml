@@ -214,7 +214,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: built-packages
-          path: .
+          path: packages
 
       - name: Build POS App
         run: pnpm turbo build --filter=pos...
@@ -289,7 +289,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: built-packages
-          path: .
+          path: packages
 
       - name: Build Bakery App
         run: pnpm turbo build --filter=bakery...
@@ -433,7 +433,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: built-packages
-          path: .
+          path: packages
 
       - name: Publish to NPM
         run: pnpm release
