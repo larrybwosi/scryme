@@ -30,6 +30,7 @@ import CmsCustomizationGuide, {
 } from "./components/CmsCustomizationGuide";
 import GlobalResponseGuide from "./components/GlobalResponseGuide";
 import InstallationSetupGuide from "./components/InstallationSetupGuide";
+import CustomerAuthGuide from "./components/CustomerAuthGuide";
 
 // --- Type Definitions for parsed schema ---
 interface Endpoint {
@@ -1372,7 +1373,10 @@ export default function App() {
       "customattributes".includes(query) ||
       "global response".includes(query) ||
       "response structure".includes(query) ||
-      "v3 global".includes(query)
+      "v3 global".includes(query) ||
+      "customer registration".includes(query) ||
+      "session management".includes(query) ||
+      "customer auth".includes(query)
     );
   }, [searchQuery]);
 
@@ -1835,6 +1839,11 @@ export default function App() {
         type: "guide",
         name: "Global Response Structure",
       },
+      {
+        id: "customer-registration-guide",
+        type: "guide",
+        name: "Customer Auth & Sessions",
+      },
     ];
     endpoints.forEach((ep) => {
       list.push({
@@ -2187,6 +2196,20 @@ export default function App() {
                   <Workflow size={14} className="text-brass shrink-0" />
                   <span className="truncate">Global Response Structure</span>
                 </button>
+                <button
+                  onClick={() => {
+                    setActiveEndpointId("customer-registration-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left text-[13px] transition-all duration-150 cursor-pointer ${
+                    activeEndpointId === "customer-registration-guide"
+                      ? "bg-brass/[0.14] text-paper font-semibold"
+                      : "text-light-text hover:text-paper hover:bg-ink-card/70"
+                  }`}
+                >
+                  <Key size={14} className="text-brass shrink-0" />
+                  <span className="truncate">Customer Auth & Sessions</span>
+                </button>
               </div>
             )}
 
@@ -2282,6 +2305,10 @@ export default function App() {
                 />
               ) : activeEndpointId === "v3-global-response-guide" ? (
                 <GlobalResponseGuide
+                  renderHighlightedCode={renderHighlightedCode}
+                />
+              ) : activeEndpointId === "customer-registration-guide" ? (
+                <CustomerAuthGuide
                   renderHighlightedCode={renderHighlightedCode}
                 />
               ) : activeEndpointId === "cms-customization-guide" ? (

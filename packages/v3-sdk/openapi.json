@@ -1456,6 +1456,16 @@
       "post": {
         "operationId": "InvoiceController_createTemplate",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceTemplateDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": ""
@@ -2802,6 +2812,7 @@
             "name": "orgSlug",
             "required": true,
             "in": "path",
+            "description": "The unique organization slug",
             "schema": {
               "type": "string"
             }
@@ -5014,6 +5025,156 @@
           }
         ],
         "summary": "Register a new customer (Zitadel)",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/auth/login": {
+      "post": {
+        "operationId": "Customers_Login",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer successfully logged in"
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Authenticate a customer using email & password, issuing a standard HS256 JWT and session",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/auth/sessions": {
+      "get": {
+        "operationId": "Customers_GetSessions",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active customer sessions list"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve all active customer sessions",
+        "tags": [
+          "V3 Customers"
+        ]
+      },
+      "delete": {
+        "operationId": "Customers_RevokeAllSessions",
+        "parameters": [
+          {
+            "name": "mode",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessions successfully revoked"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke all or other active customer sessions",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/auth/sessions/{id}": {
+      "delete": {
+        "operationId": "Customers_RevokeSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session successfully revoked"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Revoke a specific active customer session",
         "tags": [
           "V3 Customers"
         ]
@@ -11114,6 +11275,10 @@
         "type": "object",
         "properties": {}
       },
+      "CreateInvoiceTemplateDto": {
+        "type": "object",
+        "properties": {}
+      },
       "InvoiceConfigDto": {
         "type": "object",
         "properties": {}
@@ -12298,6 +12463,22 @@
           "phone": {
             "type": "string",
             "example": "+1234567890"
+          },
+          "company": {
+            "type": "string",
+            "example": "Acme Corp"
+          },
+          "customerType": {
+            "type": "string",
+            "example": "Premium"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "example": "1990-01-01"
+          },
+          "taxId": {
+            "type": "string",
+            "example": "PIN12345"
           }
         },
         "required": [
@@ -12365,6 +12546,10 @@
             "type": "string",
             "example": "john@example.com"
           },
+          "password": {
+            "type": "string",
+            "example": "password123"
+          },
           "phone": {
             "type": "string",
             "example": "+254700000000"
@@ -12381,11 +12566,44 @@
           },
           "address": {
             "$ref": "#/components/schemas/AddressDto"
+          },
+          "company": {
+            "type": "string",
+            "example": "Acme Corp"
+          },
+          "customerType": {
+            "type": "string",
+            "example": "Premium"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "example": "1990-01-01"
+          },
+          "taxId": {
+            "type": "string",
+            "example": "PIN12345"
           }
         },
         "required": [
           "name",
           "email"
+        ]
+      },
+      "CustomerLoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "password123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
         ]
       },
       "UpdateCustomerDto": {
@@ -12403,6 +12621,10 @@
             "type": "string",
             "example": "john@example.com"
           },
+          "password": {
+            "type": "string",
+            "example": "password123"
+          },
           "phone": {
             "type": "string",
             "example": "+254700000000"
@@ -12419,6 +12641,22 @@
           },
           "address": {
             "$ref": "#/components/schemas/AddressDto"
+          },
+          "company": {
+            "type": "string",
+            "example": "Acme Corp"
+          },
+          "customerType": {
+            "type": "string",
+            "example": "Premium"
+          },
+          "dateOfBirth": {
+            "type": "string",
+            "example": "1990-01-01"
+          },
+          "taxId": {
+            "type": "string",
+            "example": "PIN12345"
           }
         }
       },
@@ -12861,7 +13099,12 @@
           "customerId": {
             "type": "string",
             "example": "cust_123",
-            "description": "Internal customer ID. If omitted, it will be treated as a guest checkout."
+            "description": "Internal customer ID."
+          },
+          "businessAccountId": {
+            "type": "string",
+            "example": "bus_123",
+            "description": "Internal business account ID."
           },
           "locationId": {
             "type": "string",
