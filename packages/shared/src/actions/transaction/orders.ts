@@ -456,6 +456,7 @@ export async function createOrder(
             payments: true,
             fulfillments: true,
             customer: true,
+            businessAccount: true,
           },
         });
 
@@ -475,7 +476,7 @@ export async function createOrder(
           type: result.type,
           status: result.status,
           finalTotal: result.finalTotal,
-          customerName: result.customer?.name || "Walk-in Customer",
+          customerName: result.customer?.name || result.businessAccount?.name || "Walk-in Customer",
           createdAt: result.createdAt,
         })
         .catch((err) =>
@@ -565,6 +566,7 @@ export async function getOrderById(
           include: { shippingAddress: true, pickupLocation: true },
         },
         customer: true,
+        businessAccount: true,
         member: { select: { id: true, user: { select: { name: true } } } },
       },
     });
@@ -620,6 +622,7 @@ export async function getPaginatedOrders(
       where.OR = [
         { number: { contains: searchTerm, mode: "insensitive" } },
         { customer: { name: { contains: searchTerm, mode: "insensitive" } } },
+        { businessAccount: { name: { contains: searchTerm, mode: "insensitive" } } },
       ];
     }
     if (status) {
@@ -641,6 +644,7 @@ export async function getPaginatedOrders(
         where,
         include: {
           customer: { select: { id: true, name: true } },
+          businessAccount: { select: { id: true, name: true } },
           items: {
             select: {
               id: true,

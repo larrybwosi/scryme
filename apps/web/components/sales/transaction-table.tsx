@@ -52,6 +52,7 @@ interface Transaction {
   updatedAt: string;
   type: string;
   customer?: { name: string; email?: string } | null;
+  businessAccount?: { name: string } | null;
   location?: { name: string } | null;
   finalTotal: number;
   totalPaid?: number;
@@ -187,7 +188,7 @@ export function TransactionTable({
         "Order Number": trx.number,
         "Type": trx.type.replace(/_/g, " "),
         "Date": format(new Date(trx.createdAt), "yyyy-MM-dd HH:mm:ss"),
-        "Customer": trx.customer?.name ?? "Walk-in Customer",
+        "Customer": trx.customer?.name ?? trx.businessAccount?.name ?? "Walk-in Customer",
         "Customer Email": trx.customer?.email ?? "—",
         "Location": trx.location?.name ?? "—",
         "Amount": trx.finalTotal,
@@ -216,6 +217,7 @@ export function TransactionTable({
         !q ||
         t.number.toLowerCase().includes(q) ||
         (t.customer?.name ?? "").toLowerCase().includes(q) ||
+        (t.businessAccount?.name ?? "").toLowerCase().includes(q) ||
         (t.location?.name ?? "").toLowerCase().includes(q);
       return matchStatus && matchSearch;
     });
@@ -400,7 +402,7 @@ export function TransactionTable({
               ) : (
                 filtered.map(trx => {
                   const isSelected = selectedIds.has(trx.id);
-                  const custName = trx.customer?.name ?? "Walk-in Customer";
+                  const custName = trx.customer?.name ?? trx.businessAccount?.name ?? "Walk-in Customer";
                   const canPay =
                     trx.type !== "POS_SALE" && trx.paymentStatus !== "PAID";
 

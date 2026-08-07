@@ -257,3 +257,8 @@
 **Vulnerability:** The invoice template creation endpoint accepted unvalidated raw objects with no defined DTO or validation schema, and spread them directly into database creation mutations. This exposed the model to Mass Assignment and parameter pollution.
 **Learning:** Accepting `any` inputs or raw objects on mutation endpoints bypasses application-level security and enables parameter injection. Even if some fields (like `organizationId`) are overwritten, other attributes (like custom IDs or relationships) can still be hijacked.
 **Prevention:** Always define robust, strongly-typed DTOs with validation decorators (e.g., `class-validator`) and explicitly map each allowed attribute in the database layer instead of using broad spread operators like `...data`.
+
+## 2026-08-07 - Secure Hashing of Customer API Client Secrets to Prevent Plaintext Exposure
+**Vulnerability:** The `ServiceManagementService.registerCustomerApp` method stored newly generated `clientSecret` values in plaintext in the database. This caused subsequent authentication attempts using `validateV3ApiSecret` to fail since the validator expects a SHA-256 hashed secret, and it created a severe plaintext exposure risk if the database was compromised.
+**Learning:** Any generated application/client credentials (like API keys, client secrets, and setup tokens) must never be stored in plaintext. They must be safely hashed using a secure cryptographic hashing function like SHA-256 before being persisted.
+**Prevention:** Always pre-hash sensitive customer-facing client secrets with SHA-256 before storing them in database records, and only return the raw unhashed secret to the registering client once during creation.

@@ -31,7 +31,7 @@ export const OrderFulfillmentInputSchema = z.object({
 });
 
 export const CreateOrderInputSchema = z.object({
-  customerId: z.string(),
+  customerId: z.string().optional(),
   businessAccountId: z.string().optional(),
   locationId: z.string(),
   type: z
@@ -65,6 +65,9 @@ export const CreateOrderInputSchema = z.object({
   taxIds: z.array(z.string()).optional(),
   enableStockTracking: z.boolean().optional(),
   isWholesale: z.boolean().optional(),
+}).refine(data => data.customerId || data.businessAccountId, {
+  message: "Either Customer or Business Account must be provided",
+  path: ["customerId"],
 });
 
 export type CreateOrderInput = z.infer<typeof CreateOrderInputSchema>;

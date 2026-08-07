@@ -127,4 +127,38 @@ describe('ServiceManagementService', () => {
         });
     });
   });
+
+  describe('registerCustomerApp', () => {
+    it('should hash the clientSecret and return raw clientSecret along with the client', async () => {
+      const orgId = 'org1';
+      const name = 'Test App';
+      const mockClient = {
+        id: 'client1',
+        organizationId: orgId,
+        name,
+        clientId: 'client_123',
+        clientSecret: 'hashed_secret',
+        scopes: ['read', 'write', 'customer'],
+      };
+
+      vi.spyOn(prisma.client.v3ApiClient, 'create').mockResolvedValue(mockClient as any);
+
+      const result = await service.registerCustomerApp(orgId, name);
+
+      expect(prisma.client.v3ApiClient.create).toHaveBeenCalledWith({
+        data: {
+          organizationId: orgId,
+          name,
+          clientId: expect.stringMatching(/^client_[a-f0-9]{16}$/),
+          clientSecret: expect.stringMatching(/^[a-f0-9]{64}$/), // SHA-256 hash length is 64 hex characters
+          scopes: ['read', 'write', 'customer'],
+        },
+      });
+
+      expect(result.clientId).toBe(mockClient.clientId);
+      // result.clientSecret should be the raw (unhashed) hex string which is 64 characters long
+      expect(result.clientSecret).toHaveLength(64);
+      expect(result.clientSecret).not.toBe('hashed_secret');
+    });
+  });
 });

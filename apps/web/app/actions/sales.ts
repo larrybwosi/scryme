@@ -128,6 +128,12 @@ export async function getTransactions(params: {
           email: true,
         },
       },
+      businessAccount: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       location: {
         select: {
           id: true,
@@ -194,6 +200,12 @@ export async function getTransactionById(id: string) {
           phone: true,
         },
       },
+      businessAccount: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       location: {
         select: {
           id: true,
@@ -256,6 +268,7 @@ export async function getTransactionById(id: string) {
 export async function createTransaction(data: {
   type: TransactionType;
   customerId?: string;
+  businessAccountId?: string;
   locationId: string;
   items: {
     variantId: string;
@@ -270,6 +283,10 @@ export async function createTransaction(data: {
   expectedDeliveryDate?: Date;
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  if (!data.customerId && !data.businessAccountId) {
+    throw new Error("Either customerId or businessAccountId must be provided");
+  }
 
   const count = await db.transaction.count({
     where: { organizationId: auth.organizationId },
@@ -301,6 +318,7 @@ export async function createTransaction(data: {
       number,
       type: data.type,
       customerId: data.customerId,
+      businessAccountId: data.businessAccountId,
       locationId: data.locationId,
       subtotal,
       taxTotal,
@@ -753,7 +771,7 @@ export async function createFulfillment(data: {
 
 export async function createOrderAction(data: {
   type: TransactionType;
-  customerId: string;
+  customerId?: string;
   businessAccountId?: string;
   locationId: string;
   items: any[];

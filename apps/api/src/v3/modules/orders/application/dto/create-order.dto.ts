@@ -71,11 +71,21 @@ export class CreateOrderDto {
     example: "cust_123",
     required: false,
     description:
-      "Internal customer ID. If omitted, it will be treated as a guest checkout.",
+      "Internal customer ID.",
   })
   @IsString()
   @IsOptional()
   customerId?: string;
+
+  @ApiProperty({
+    example: "bus_123",
+    required: false,
+    description:
+      "Internal business account ID.",
+  })
+  @IsString()
+  @IsOptional()
+  businessAccountId?: string;
 
   @ApiProperty({ example: "loc_123", description: "Inventory location ID" })
   @IsString()
