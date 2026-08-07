@@ -141,7 +141,7 @@ export class V3AuthGuard implements CanActivate {
                 },
               });
 
-              let customerId = mapping?.internalId;
+              const customerId = mapping?.internalId;
               let customer = null;
 
               if (customerId) {

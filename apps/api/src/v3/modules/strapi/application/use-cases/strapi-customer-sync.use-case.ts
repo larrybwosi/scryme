@@ -265,50 +265,60 @@ export class StrapiCustomerSyncUseCase {
       mappings.map((m) => [m.customerId, m]),
     );
 
-    for (const customer of customers) {
-      try {
-        // Check for existing mapping using pre-fetched cache
-        const mapping = mappingMap.get(customer.id);
+    // ⚡ Bolt Optimization: Pre-fetch orgSlug once up-front to avoid N+1 database queries inside the map block.
+    const orgSlug = await this.getOrgSlug(organizationId);
 
-        if (mapping) {
-          await this.strapiProvider.updateCustomer(config, Number(mapping.externalCustomerId), {
-            email: customer.email,
-            firstName: (customer as any).firstName ?? undefined,
-            lastName: (customer as any).lastName ?? undefined,
-            externalId: customer.id,
-          });
-          await this.prisma.client.ecommerceCustomerMapping.update({
-            where: { id: mapping.id },
-            data: { lastSyncedAt: new Date() },
-          });
-        } else {
-          const orgSlug = await this.getOrgSlug(organizationId);
-          const created = await this.strapiProvider.createCustomer(config, {
-            email: customer.email,
-            firstName: (customer as any).firstName ?? undefined,
-            lastName: (customer as any).lastName ?? undefined,
-            externalId: customer.id,
-            organizationSlug: orgSlug ?? undefined,
-            publishedAt: new Date().toISOString(),
-          });
+    // ⚡ Bolt Optimization: Parallelize outbound customer sync in small controlled batches (concurrency = 10)
+    // to prevent database connection pool exhaustion and external API rate limiting, while still achieving significant speedup.
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < customers.length; i += BATCH_SIZE) {
+      const chunk = customers.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        chunk.map(async (customer) => {
+          try {
+            // Check for existing mapping using pre-fetched cache
+            const mapping = mappingMap.get(customer.id);
 
-          await this.prisma.client.ecommerceCustomerMapping.create({
-            data: {
-              connectionId,
-              customerId: customer.id,
-              organizationId,
-              externalCustomerId: String(created.data.id),
-              externalEmail: customer.email,
-              lastSyncedAt: new Date(),
-            },
-          });
-        }
-        successCount++;
-      } catch (err: any) {
-        failureCount++;
-        errors.push(`Customer ${customer.id}: ${err.message}`);
-        this.logger.error(`Failed to sync customer ${customer.id}: ${err.message}`);
-      }
+            if (mapping) {
+              await this.strapiProvider.updateCustomer(config, Number(mapping.externalCustomerId), {
+                email: customer.email,
+                firstName: (customer as any).firstName ?? undefined,
+                lastName: (customer as any).lastName ?? undefined,
+                externalId: customer.id,
+              });
+              await this.prisma.client.ecommerceCustomerMapping.update({
+                where: { id: mapping.id },
+                data: { lastSyncedAt: new Date() },
+              });
+            } else {
+              const created = await this.strapiProvider.createCustomer(config, {
+                email: customer.email,
+                firstName: (customer as any).firstName ?? undefined,
+                lastName: (customer as any).lastName ?? undefined,
+                externalId: customer.id,
+                organizationSlug: orgSlug ?? undefined,
+                publishedAt: new Date().toISOString(),
+              });
+
+              await this.prisma.client.ecommerceCustomerMapping.create({
+                data: {
+                  connectionId,
+                  customerId: customer.id,
+                  organizationId,
+                  externalCustomerId: String(created.data.id),
+                  externalEmail: customer.email,
+                  lastSyncedAt: new Date(),
+                },
+              });
+            }
+            successCount++;
+          } catch (err: any) {
+            failureCount++;
+            errors.push(`Customer ${customer.id}: ${err.message}`);
+            this.logger.error(`Failed to sync customer ${customer.id}: ${err.message}`);
+          }
+        })
+      );
     }
 
     await this.prisma.client.ecommerceSyncLog.update({
