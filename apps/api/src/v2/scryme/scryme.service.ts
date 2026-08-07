@@ -151,8 +151,10 @@ export class ScrymeService {
     organizationId: string,
     entityType: "department" | "location",
     entityId: string,
+    preFetchedConfig?: any,
   ) {
-    const config = await this.getConfiguration(organizationId);
+    // ⚡ Bolt Optimization: Use optional pre-fetched config to avoid redundant N+1 configuration lookups.
+    const config = preFetchedConfig || await this.getConfiguration(organizationId);
     if (!config?.workspaceSlug || !config.isActive) return;
 
     let entity;
@@ -208,6 +210,7 @@ export class ScrymeService {
   }
 
   async syncAllChannels(organizationId: string) {
+    // ⚡ Bolt Optimization: Pre-fetch configuration once to hoist non-changing lookups outside loops
     const config = await this.getConfiguration(organizationId);
     if (!config?.workspaceSlug || !config.isActive) return;
 
@@ -223,16 +226,36 @@ export class ScrymeService {
       `Syncing channels for ${departments.length} departments and ${locations.length} locations`,
     );
 
-    for (const dept of departments) {
-      await this.provisionChannelForEntity(
-        organizationId,
-        "department",
-        dept.id,
+    // ⚡ Bolt Optimization: Process channel synchronization tasks in parallelized batches of 10
+    // to avoid socket/DB starvation or rate-limits while drastically reducing sync duration.
+    const BATCH_SIZE = 10;
+
+    for (let i = 0; i < departments.length; i += BATCH_SIZE) {
+      const batch = departments.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map((dept) =>
+          this.provisionChannelForEntity(
+            organizationId,
+            "department",
+            dept.id,
+            config,
+          ),
+        ),
       );
     }
 
-    for (const loc of locations) {
-      await this.provisionChannelForEntity(organizationId, "location", loc.id);
+    for (let i = 0; i < locations.length; i += BATCH_SIZE) {
+      const batch = locations.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map((loc) =>
+          this.provisionChannelForEntity(
+            organizationId,
+            "location",
+            loc.id,
+            config,
+          ),
+        ),
+      );
     }
   }
 
@@ -260,24 +283,32 @@ export class ScrymeService {
       `Syncing ${members.length} users for Scryme workspace ${config.workspaceSlug}`,
     );
 
-    for (const member of members) {
-      try {
-        const scrymeUser = await this.scrymeClient.findUserByEmail(
-          config.workspaceSlug,
-          member.user.email,
-        );
+    // ⚡ Bolt Optimization: Process user synchronization in parallelized batches of 10
+    // to avoid rate limits and socket starvation while reducing the latency profile from O(N) down to O(1).
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < members.length; i += BATCH_SIZE) {
+      const batch = members.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (member) => {
+          try {
+            const scrymeUser = await this.scrymeClient.findUserByEmail(
+              config.workspaceSlug,
+              member.user.email,
+            );
 
-        if (scrymeUser) {
-          await this.prisma.client.user.update({
-            where: { id: member.userId },
-            data: { scrymeUserId: scrymeUser.id },
-          });
-        }
-      } catch (error: any) {
-        this.logger.warn(
-          `Failed to sync user ${member.user.email}: ${error.message}`,
-        );
-      }
+            if (scrymeUser) {
+              await this.prisma.client.user.update({
+                where: { id: member.userId },
+                data: { scrymeUserId: scrymeUser.id },
+              });
+            }
+          } catch (error: any) {
+            this.logger.warn(
+              `Failed to sync user ${member.user.email}: ${error.message}`,
+            );
+          }
+        }),
+      );
     }
 
     // Record last sync
