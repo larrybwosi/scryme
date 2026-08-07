@@ -19,13 +19,13 @@ const GRAY_TEXT = "#7A7A7A";
 const LIGHT_BG = "#F2F2F2";
 const ROW_LINE = "#E5E5E5";
 
-const styles = StyleSheet.create({
+const getStyles = (activeColor: string, activeSecondaryColor: string) => StyleSheet.create({
   page: {
     paddingTop: 40,
     paddingBottom: 40,
     paddingHorizontal: 45,
     fontSize: 9,
-    color: DARK,
+    color: activeSecondaryColor,
     fontFamily: "Helvetica",
   },
 
@@ -42,6 +42,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: "Helvetica-Bold",
     letterSpacing: 0.5,
+    color: activeSecondaryColor,
   },
   brandSlogan: {
     fontSize: 7.5,
@@ -54,6 +55,7 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica",
     letterSpacing: 2,
     textTransform: "uppercase",
+    color: activeSecondaryColor,
   },
 
   // ---------- To ----------
@@ -75,6 +77,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
     marginBottom: 4,
+    color: activeSecondaryColor,
   },
   toAddr: { fontSize: 8.5, color: GRAY_TEXT, lineHeight: 1.5 },
 
@@ -82,14 +85,14 @@ const styles = StyleSheet.create({
   metaLine: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     marginBottom: 4,
   },
 
   // ---------- Table ----------
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: DARK_NAVY,
+    backgroundColor: activeColor,
     paddingVertical: 9,
     paddingHorizontal: 12,
   },
@@ -129,14 +132,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderBottomColor: ROW_LINE,
   },
-  tdDesc: { width: "46%", fontSize: 8.5, color: DARK },
-  tdQty: { width: "16%", fontSize: 8.5, color: DARK, textAlign: "center" },
-  tdPrice: { width: "19%", fontSize: 8.5, color: DARK, textAlign: "center" },
+  tdDesc: { width: "46%", fontSize: 8.5, color: activeSecondaryColor },
+  tdQty: { width: "16%", fontSize: 8.5, color: activeSecondaryColor, textAlign: "center" },
+  tdPrice: { width: "19%", fontSize: 8.5, color: activeSecondaryColor, textAlign: "center" },
   tdTotal: {
     width: "19%",
     fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     textAlign: "right",
   },
 
@@ -149,7 +152,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   totalsLabel: { fontSize: 8.5, color: GRAY_TEXT },
-  totalsValue: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: DARK },
+  totalsValue: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: activeSecondaryColor },
 
   // ---------- Payment / Grand total band ----------
   bottomBand: {
@@ -157,7 +160,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
   },
   paymentBlock: {
-    backgroundColor: YELLOW,
+    backgroundColor: activeSecondaryColor,
     width: "55%",
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -165,7 +168,7 @@ const styles = StyleSheet.create({
   paymentLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: "#FFFFFF",
     marginBottom: 8,
     letterSpacing: 0.5,
   },
@@ -173,19 +176,19 @@ const styles = StyleSheet.create({
   paymentKey: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: "#FFFFFF",
     width: 70,
   },
-  paymentVal: { fontSize: 8, color: DARK },
+  paymentVal: { fontSize: 8, color: "#FFFFFF" },
   thankYou: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: "#FFFFFF",
     marginTop: 8,
   },
 
   grandTotalBlock: {
-    backgroundColor: DARK_NAVY,
+    backgroundColor: activeColor,
     width: "45%",
     alignItems: "center",
     justifyContent: "center",
@@ -200,7 +203,7 @@ const styles = StyleSheet.create({
   grandTotalValue: {
     fontSize: 16,
     fontFamily: "Helvetica-Bold",
-    color: YELLOW,
+    color: "#FFFFFF",
   },
 
   // ---------- Signature ----------
@@ -208,11 +211,13 @@ const styles = StyleSheet.create({
   signatureScript: {
     fontSize: 18,
     fontFamily: "Helvetica-Oblique",
+    color: activeSecondaryColor,
   },
   signatureName: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
     marginTop: 4,
+    color: activeSecondaryColor,
   },
   signatureTitle: { fontSize: 7.5, color: GRAY_TEXT, marginTop: 1 },
 
@@ -228,35 +233,12 @@ const styles = StyleSheet.create({
   termsLabel: {
     fontSize: 8,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     width: 50,
   },
   termsText: { fontSize: 7, color: GRAY_TEXT, width: 280, lineHeight: 1.5 },
   termsAddr: { fontSize: 7.5, color: GRAY_TEXT },
 });
-
-const ZigzagLogo = () => (
-  <Svg width={34} height={22} viewBox="0 0 34 22">
-    <Path
-      d="M0 6 L6 1 L12 6 L18 1 L24 6 L30 1 L34 4"
-      stroke={DARK}
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path
-      d="M0 12 L6 7 L12 12 L18 7 L24 12 L30 7 L34 10"
-      stroke={DARK}
-      strokeWidth={2}
-      fill="none"
-    />
-    <Path
-      d="M0 18 L6 13 L12 18 L18 13 L24 18 L30 13 L34 16"
-      stroke={DARK}
-      strokeWidth={2}
-      fill="none"
-    />
-  </Svg>
-);
 
 export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
   const {
@@ -285,6 +267,8 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
   const activeColor = primaryColor || DARK_NAVY;
   const activeSecondaryColor = secondaryColor || DARK;
 
+  const styles = getStyles(activeColor, activeSecondaryColor);
+
   const fmt = (n: number) => `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   return (
@@ -297,12 +281,12 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
               <Image src={company.logo} style={{ width: 60, height: 60, objectFit: 'contain', marginRight: 10 }} />
             )}
             <View style={styles.brandTextBlock}>
-              <Text style={[styles.brandName, { color: activeSecondaryColor }]}>{company.name}</Text>
+              <Text style={styles.brandName}>{company.name}</Text>
               {company.slogan && <Text style={styles.brandSlogan}>{company.slogan}</Text>}
             </View>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={[styles.documentTitle, { color: activeSecondaryColor }]}>{type}</Text>
+            <Text style={styles.documentTitle}>{type}</Text>
             {qrCode && <Image src={qrCode} style={{ width: 40, height: 40, marginTop: 5 }} />}
           </View>
         </View>
@@ -315,7 +299,7 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
                 {type === "invoice" ? "Invoice to:" : "Receipt to:"}
               </Text>
             </View>
-            <Text style={[styles.toName, { color: activeSecondaryColor }]}>{customer.name}</Text>
+            <Text style={styles.toName}>{customer.name}</Text>
             <Text style={styles.toAddr}>
               {customer.address}
               {customer.phone ? `\n${customer.phone}` : ""}
@@ -340,7 +324,7 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
         </View>
 
         {/* ---- Table ---- */}
-        <View style={[styles.tableHeader, { backgroundColor: activeColor }]}>
+        <View style={styles.tableHeader}>
           <Text style={styles.thDesc}>ITEM DESCRIPTION</Text>
           <Text style={styles.thQty}>QTY</Text>
           <Text style={styles.thPrice}>PRICE</Text>
@@ -390,7 +374,7 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
             )}
             <Text style={styles.thankYou}>Thank you for business with us!</Text>
           </View>
-          <View style={[styles.grandTotalBlock, { backgroundColor: activeColor }]}>
+          <View style={styles.grandTotalBlock}>
             <Text style={styles.grandTotalLabel}>GRAND TOTAL</Text>
             <Text style={styles.grandTotalValue}>{fmt(total)}</Text>
           </View>
@@ -400,8 +384,8 @@ export const TemplateFour = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
         {signature && signature.name && (
           <View style={styles.signatureArea}>
             {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
-            <Text style={[styles.signatureScript, { color: activeSecondaryColor }]}>{signature.name}</Text>
-            <Text style={[styles.signatureName, { color: activeSecondaryColor }]}>{signature.name.toUpperCase()}</Text>
+            <Text style={styles.signatureScript}>{signature.name}</Text>
+            <Text style={styles.signatureName}>{signature.name.toUpperCase()}</Text>
             <Text style={styles.signatureTitle}>{signature.title}</Text>
           </View>
         )}

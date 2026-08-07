@@ -10,7 +10,7 @@ const TEXT_DARK = "#1E1E1E";
 const TEXT_LIGHT = "#FFFFFF";
 const TEXT_MUTED = "#A0A0A0";
 
-const styles = StyleSheet.create({
+const getStyles = (activeColor: string, activeSecondaryColor: string) => StyleSheet.create({
   page: {
     padding: 0, // No default padding to allow bleeding block sections
     fontSize: 9,
@@ -21,8 +21,8 @@ const styles = StyleSheet.create({
 
   // ==================== UPPER BLOCK (Dark Header Matrix) ====================
   upperBlock: {
-    backgroundColor: DARK_BG,
-    color: TEXT_LIGHT,
+    backgroundColor: activeColor,
+    color: activeSecondaryColor,
     paddingHorizontal: 40,
     paddingTop: 40,
     paddingBottom: 25,
@@ -45,6 +45,7 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     letterSpacing: 1,
     textTransform: "uppercase",
+    color: activeSecondaryColor,
   },
   companySlogan: {
     fontSize: 8,
@@ -61,6 +62,7 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     letterSpacing: 12,
     textTransform: "uppercase",
+    color: activeSecondaryColor,
   },
 
   // Lower Header Row (Client vs Meta Info)
@@ -83,7 +85,7 @@ const styles = StyleSheet.create({
   clientName: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: TEXT_LIGHT,
+    color: activeSecondaryColor,
     marginBottom: 2,
   },
   clientTitle: {
@@ -108,7 +110,7 @@ const styles = StyleSheet.create({
   metaNumberValue: {
     fontSize: 14,
     fontFamily: "Helvetica-Bold",
-    color: TEXT_LIGHT,
+    color: activeSecondaryColor,
     marginBottom: 10,
     marginTop: 2,
   },
@@ -123,7 +125,7 @@ const styles = StyleSheet.create({
   },
   kvValue: {
     fontSize: 8.5,
-    color: TEXT_LIGHT,
+    color: activeSecondaryColor,
   },
 
   // ==================== LOWER BLOCK (White Content Canvas) ====================
@@ -136,12 +138,12 @@ const styles = StyleSheet.create({
   // Grid/Table Styles
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: DARK_BG,
+    backgroundColor: activeColor,
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
   tableHeaderCell: {
-    color: TEXT_LIGHT,
+    color: activeSecondaryColor,
     fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
     textTransform: "uppercase",
@@ -179,20 +181,20 @@ const styles = StyleSheet.create({
   // Full Width Subtotal Bar
   subtotalRowContainer: {
     flexDirection: "row",
-    backgroundColor: DARK_BG,
+    backgroundColor: activeColor,
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginTop: 15,
     justifyContent: "space-between",
   },
   subtotalLabel: {
-    color: TEXT_LIGHT,
+    color: activeSecondaryColor,
     fontFamily: "Helvetica-Bold",
     fontSize: 9,
     textTransform: "uppercase",
   },
   subtotalValue: {
-    color: TEXT_LIGHT,
+    color: activeSecondaryColor,
     fontFamily: "Helvetica-Bold",
     fontSize: 9,
   },
@@ -205,14 +207,14 @@ const styles = StyleSheet.create({
   },
   termsAndPaymentPane: {
     width: "50%",
-    backgroundColor: DARK_BG,
-    color: TEXT_LIGHT,
+    backgroundColor: activeColor,
+    color: activeSecondaryColor,
     padding: 15,
   },
   paneTitle: {
     fontFamily: "Helvetica-Bold",
     fontSize: 9.5,
-    color: TEXT_LIGHT,
+    color: activeSecondaryColor,
     marginBottom: 8,
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -225,7 +227,7 @@ const styles = StyleSheet.create({
   },
   signaturePane: {
     width: "45%",
-    backgroundColor: DARK_BG,
+    backgroundColor: activeColor,
     padding: 15,
     alignItems: "center",
     justifyContent: "center",
@@ -234,7 +236,7 @@ const styles = StyleSheet.create({
     width: "70%",
     height: 30,
     borderBottomWidth: 1,
-    borderBottomColor: "#FFFFFF",
+    borderBottomColor: activeSecondaryColor,
     marginBottom: 6,
     alignItems: "center",
     justifyContent: "center",
@@ -242,6 +244,7 @@ const styles = StyleSheet.create({
   signatureLineText: {
     fontFamily: "Helvetica-Oblique",
     fontSize: 15,
+    color: activeSecondaryColor,
   },
   signatureLabelText: {
     fontSize: 8.5,
@@ -274,6 +277,8 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
   const activeColor = primaryColor || DARK_BG;
   const activeSecondaryColor = secondaryColor || TEXT_LIGHT;
 
+  const styles = getStyles(activeColor, activeSecondaryColor);
+
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
@@ -281,17 +286,17 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
     <Document>
       <Page size="A4" style={styles.page}>
         {/* ==================== UPPER DARK MATRIX HEADER ==================== */}
-        <View style={[styles.upperBlock, { backgroundColor: activeColor }]}>
+        <View style={styles.upperBlock}>
           <View style={styles.topBrandRow}>
             <View style={styles.brandLeft}>
               {company.logo && (
                 <Image src={company.logo} style={{ width: 100, height: 50, marginBottom: 10, objectFit: 'contain' }} />
               )}
-              <Text style={[styles.companyName, { color: activeSecondaryColor }]}>{company.name}</Text>
+              <Text style={styles.companyName}>{company.name}</Text>
               {company.slogan && <Text style={styles.companySlogan}>{company.slogan}</Text>}
             </View>
             <View style={styles.brandRight}>
-              <Text style={[styles.hugeTitle, { color: activeSecondaryColor }]}>
+              <Text style={styles.hugeTitle}>
                 {type ? type.toUpperCase() : "INVOICE"}
               </Text>
             </View>
@@ -301,7 +306,7 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
             {/* Client Recipient Details */}
             <View style={styles.clientMetaDataBlock}>
               <Text style={styles.metaLabelInline}>To</Text>
-              <Text style={[styles.clientName, { color: activeSecondaryColor }]}>{customer.name}</Text>
+              <Text style={styles.clientName}>{customer.name}</Text>
               <Text style={styles.clientTitle}>Director</Text>
               <Text style={styles.clientAddressText}>
                 {customer.address ||
@@ -318,7 +323,7 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <View>
                   <Text style={styles.metaNumberLabel}>{type === 'invoice' ? 'Invoice' : 'Receipt'} No.</Text>
-                  <Text style={[styles.metaNumberValue, { color: activeSecondaryColor }]}>#{number}</Text>
+                  <Text style={styles.metaNumberValue}>#{number}</Text>
                 </View>
                 {qrCode && (
                   <Image src={qrCode} style={{ width: 40, height: 40 }} />
@@ -405,14 +410,14 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
           ))}
 
           {/* Unified Sub Total Ribbon Section */}
-          <View style={[styles.subtotalRowContainer, { backgroundColor: activeColor }]}>
+          <View style={styles.subtotalRowContainer}>
             <Text style={styles.subtotalLabel}>Sub Total</Text>
             <Text style={styles.subtotalValue}>{fmt(subtotal || total)}</Text>
           </View>
 
           {/* Bottom Grid Layout (Info Panel + Signature Block) */}
           <View style={styles.bottomFlexLayout}>
-            <View style={[styles.termsAndPaymentPane, { backgroundColor: activeColor }]}>
+            <View style={styles.termsAndPaymentPane}>
               <Text style={styles.paneTitle}>Payment Method :</Text>
               <Text style={styles.paneText}>
                 {paymentInfo || "Method 1 > Method 2 > Method 3"}
@@ -425,19 +430,19 @@ export const TemplateEight = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
               </Text>
             </View>
 
-            <View style={[styles.signaturePane, { backgroundColor: activeColor }]}>
+            <View style={styles.signaturePane}>
               {signature ? (
                 <>
                   {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
                   <View style={styles.signatureGraphicPlaceholder}>
-                    <Text style={[styles.signatureLineText, { color: activeSecondaryColor }]}>{signature.name}</Text>
+                    <Text style={styles.signatureLineText}>{signature.name}</Text>
                   </View>
                   <Text style={styles.signatureLabelText}>{signature.title}</Text>
                 </>
               ) : (
                 <>
                   <View style={styles.signatureGraphicPlaceholder}>
-                    <Text style={styles.signatureLineText}>Company Signature</Text>
+                    <Text style={[styles.signatureLineText, { color: activeSecondaryColor }]}>Company Signature</Text>
                   </View>
                   <Text style={styles.signatureLabelText}>Company signature</Text>
                 </>

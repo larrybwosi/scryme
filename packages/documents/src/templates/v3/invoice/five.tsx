@@ -7,11 +7,11 @@ const BG_COLOR = "#D5D6D1";
 const ACCENT_ORANGE = "#D44A2A";
 const DARK_TEXT = "#222222";
 
-const styles = StyleSheet.create({
+const getStyles = (activeColor: string, activeSecondaryColor: string) => StyleSheet.create({
   page: {
     padding: 45,
     fontSize: 9,
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
     fontFamily: "Helvetica",
     backgroundColor: BG_COLOR,
     flexDirection: "row",
@@ -31,10 +31,12 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     fontSize: 10,
     marginBottom: 4,
+    color: activeSecondaryColor,
   },
   infoText: {
     fontSize: 8.5,
     lineHeight: 1.4,
+    color: activeSecondaryColor,
   },
   contactSpacing: {
     marginTop: 10,
@@ -49,7 +51,7 @@ const styles = StyleSheet.create({
   verticalTitle: {
     fontSize: 42,
     fontFamily: "Helvetica-Bold",
-    color: ACCENT_ORANGE,
+    color: activeColor,
     transform: "rotate(90deg)",
     transformOrigin: "left top",
     marginLeft: 35,
@@ -74,12 +76,13 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 44,
     fontFamily: "Helvetica-Bold",
-    color: ACCENT_ORANGE,
+    color: activeColor,
     lineHeight: 1,
   },
   subtitle: {
     fontSize: 10,
     marginTop: 4,
+    color: activeSecondaryColor,
   },
 
   // Meta Info Header (Invoice No, Acc No, Due Date)
@@ -96,54 +99,56 @@ const styles = StyleSheet.create({
   metaLabel: {
     fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
     marginBottom: 2,
   },
   metaValue: {
     fontSize: 8.5,
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
   },
 
   // ---------- Grid/Table Structure ----------
   tableContainer: {
     borderWidth: 1,
-    borderColor: DARK_TEXT,
+    borderColor: activeSecondaryColor,
     flexDirection: "column",
     marginBottom: 25,
   },
   tableHeader: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderColor: DARK_TEXT,
+    borderColor: activeSecondaryColor,
   },
   tableHeaderCell: {
     padding: 6,
     fontFamily: "Helvetica-Bold",
     fontSize: 8.5,
+    color: activeSecondaryColor,
   },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderColor: DARK_TEXT,
+    borderColor: activeSecondaryColor,
   },
   tableCell: {
     padding: 6,
     fontSize: 8.5,
     lineHeight: 1.3,
+    color: activeSecondaryColor,
   },
 
   // Column Width Definitions
   colQty: {
     width: "10%",
     borderRightWidth: 1,
-    borderColor: DARK_TEXT,
+    borderColor: activeSecondaryColor,
     textAlign: "center",
   },
-  colDesc: { width: "55%", borderRightWidth: 1, borderColor: DARK_TEXT },
+  colDesc: { width: "55%", borderRightWidth: 1, borderColor: activeSecondaryColor },
   colUnit: {
     width: "17%",
     borderRightWidth: 1,
-    borderColor: DARK_TEXT,
+    borderColor: activeSecondaryColor,
     textAlign: "right",
   },
   colTotal: { width: "18%", textAlign: "right" },
@@ -151,10 +156,12 @@ const styles = StyleSheet.create({
   itemName: {
     fontFamily: "Helvetica-Bold",
     marginBottom: 2,
+    color: activeSecondaryColor,
   },
   itemDescription: {
     fontSize: 7.5,
-    color: DARK_TEXT,
+    color: activeSecondaryColor,
+    opacity: 0.8,
   },
 
   // Bottom Integrated Grid Block (Notes & Totals)
@@ -165,18 +172,21 @@ const styles = StyleSheet.create({
     width: "65%",
     padding: 8,
     borderRightWidth: 1,
-    borderColor: DARK_TEXT,
+    borderColor: activeSecondaryColor,
   },
   notesTitle: {
     fontFamily: "Helvetica-Bold",
     fontSize: 8.5,
     fontStyle: "italic",
     marginBottom: 4,
+    color: activeSecondaryColor,
   },
   notesText: {
     fontSize: 7.5,
     fontStyle: "italic",
     lineHeight: 1.3,
+    color: activeSecondaryColor,
+    opacity: 0.8,
   },
   totalsCellContainer: {
     width: "35%",
@@ -188,7 +198,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     paddingHorizontal: 6,
     borderBottomWidth: 1,
-    borderColor: DARK_TEXT,
+    borderColor: activeSecondaryColor,
   },
   totalsSubRowLast: {
     flexDirection: "row",
@@ -196,25 +206,28 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 6,
     fontFamily: "Helvetica-Bold",
+    color: activeSecondaryColor,
   },
   totalsLabel: {
     fontSize: 8.5,
+    color: activeSecondaryColor,
   },
   totalsValue: {
     fontSize: 8.5,
     textAlign: "right",
+    color: activeSecondaryColor,
   },
 
   // ---------- Footer Elements ----------
   thankYouText: {
     fontSize: 20,
     fontFamily: "Helvetica-Bold",
-    color: ACCENT_ORANGE,
+    color: activeColor,
     marginBottom: 5,
   },
   horizontalRule: {
     borderBottomWidth: 1,
-    borderColor: DARK_TEXT,
+    borderColor: activeSecondaryColor,
     marginBottom: 10,
   },
   termsBlock: {
@@ -224,11 +237,14 @@ const styles = StyleSheet.create({
     fontFamily: "Helvetica-Bold",
     fontSize: 8.5,
     marginBottom: 3,
+    color: activeSecondaryColor,
   },
   termsText: {
     fontSize: 7.5,
     fontStyle: "italic",
     lineHeight: 1.3,
+    color: activeSecondaryColor,
+    opacity: 0.8,
   },
 });
 
@@ -257,6 +273,8 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
   const activeColor = primaryColor || ACCENT_ORANGE;
   const activeSecondaryColor = secondaryColor || DARK_TEXT;
 
+  const styles = getStyles(activeColor, activeSecondaryColor);
+
   const fmt = (n: number) =>
     `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -266,8 +284,8 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
         {/* ================= LEFT COLUMN ================= */}
         <View style={styles.leftColumn}>
           <View style={styles.billToBlock}>
-            <Text style={[styles.sectionTitle, { color: activeSecondaryColor }]}>Bill To</Text>
-            <Text style={[styles.infoText, { fontFamily: "Helvetica-Bold", color: activeSecondaryColor }]}>
+            <Text style={styles.sectionTitle}>Bill To</Text>
+            <Text style={[styles.infoText, { fontFamily: "Helvetica-Bold" }]}>
               {customer.name}
             </Text>
             {customer.address && (
@@ -275,44 +293,44 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
             )}
 
             <View style={styles.contactSpacing}>
-              <Text style={[styles.sectionTitle, { color: activeSecondaryColor }]}>Contact</Text>
+              <Text style={styles.sectionTitle}>Contact</Text>
               {customer.phone && (
-                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{customer.phone}</Text>
+                <Text style={styles.infoText}>{customer.phone}</Text>
               )}
               {customer.email && (
-                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{customer.email}</Text>
+                <Text style={styles.infoText}>{customer.email}</Text>
               )}
               {customer.website && (
-                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{customer.website}</Text>
+                <Text style={styles.infoText}>{customer.website}</Text>
               )}
             </View>
           </View>
 
           {/* Large Vertical Rotated Document Type */}
           <View style={styles.verticalTitleContainer}>
-            <Text style={[styles.verticalTitle, { color: activeColor }]}>
+            <Text style={styles.verticalTitle}>
               {type ? type.toUpperCase() : "INVOICE"}
             </Text>
           </View>
 
           <View style={styles.leftBottomBlock}>
             <View style={styles.businessContactBlock}>
-              <Text style={[styles.sectionTitle, { color: activeSecondaryColor }]}>{company.name}</Text>
+              <Text style={styles.sectionTitle}>{company.name}</Text>
               {company.phone && (
-                <Text style={[styles.infoText, { color: DARK_TEXT }]}>Ph: {company.phone}</Text>
+                <Text style={styles.infoText}>Ph: {company.phone}</Text>
               )}
               {company.email && (
-                <Text style={[styles.infoText, { color: DARK_TEXT }]}>Email: {company.email}</Text>
+                <Text style={styles.infoText}>Email: {company.email}</Text>
               )}
               {company.address && (
-                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{company.address}</Text>
+                <Text style={styles.infoText}>{company.address}</Text>
               )}
             </View>
 
             {paymentInfo && (
               <View>
-                <Text style={[styles.sectionTitle, { color: activeSecondaryColor }]}>Payment Info</Text>
-                <Text style={[styles.infoText, { color: DARK_TEXT }]}>{paymentInfo}</Text>
+                <Text style={styles.sectionTitle}>Payment Info</Text>
+                <Text style={styles.infoText}>{paymentInfo}</Text>
               </View>
             )}
           </View>
@@ -325,8 +343,8 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
             {company.logo && (
               <Image src={company.logo} style={{ width: 120, height: 60, marginBottom: 10, objectFit: 'contain' }} />
             )}
-            <Text style={[styles.mainTitle, { color: activeColor }]}>{company.name}</Text>
-            {company.slogan && <Text style={[styles.subtitle, { color: DARK_TEXT }]}>{company.slogan}</Text>}
+            <Text style={styles.mainTitle}>{company.name}</Text>
+            {company.slogan && <Text style={styles.subtitle}>{company.slogan}</Text>}
           </View>
 
           {/* Metadata Block */}
@@ -436,11 +454,11 @@ export const TemplateFive = ({ data, qrCode }: { data: V3DocumentData; qrCode?: 
             {signature && (
               <View style={{ alignItems: 'flex-end', marginBottom: 15 }}>
                 {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
-                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: activeSecondaryColor }}>{signature.name}</Text>
+                <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold' }}>{signature.name}</Text>
                 <Text style={{ fontSize: 8 }}>{signature.title}</Text>
               </View>
             )}
-            <Text style={[styles.thankYouText, { color: activeColor }]}>Thank You</Text>
+            <Text style={styles.thankYouText}>Thank You</Text>
             <View style={styles.horizontalRule} />
 
             <View style={styles.termsBlock}>
