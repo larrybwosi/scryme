@@ -48,7 +48,7 @@ class InMemoryStorage implements StorageProvider {
 
 export interface ClientSDKConfig {
   clientId: string;
-  clientSecret: string;
+  clientSecret?: string; // Optional on client side for security
   orgSlug: string;
   baseURL?: string;
   storage?: StorageProvider;
@@ -89,11 +89,14 @@ export class ScrymeClientSDK {
     signOut(): Promise<void>;
     getSession(): Promise<SessionState>;
     onAuthStateChange(callback: AuthStateCallback): { unsubscribe(): void };
+    getSessions(): Promise<any>;
+    revokeSession(id: string): Promise<any>;
+    revokeAllSessions(mode?: string): Promise<any>;
   };
 
   constructor(config: ClientSDKConfig) {
-    if (!config || !config.clientId || !config.clientSecret || !config.orgSlug) {
-      throw new Error("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
+    if (!config || !config.clientId || !config.orgSlug) {
+      throw new Error("clientId and orgSlug are required to initialize the SDK.");
     }
 
     this.axiosInstance = axios.create({
@@ -175,7 +178,7 @@ export class ScrymeClientSDK {
         try {
           const response = await this.api.authExchangeToken({
             clientId: config.clientId,
-            clientSecret: config.clientSecret,
+            clientSecret: config.clientSecret || "",
           });
           const tokenData = response.data?.data;
           const accessToken = tokenData?.access_token;
@@ -214,7 +217,7 @@ export class ScrymeClientSDK {
       const isAuthTokenRequest = req.url && (req.url.endsWith("/auth/token") || req.url.includes("/auth/token"));
 
       if (!isAuthTokenRequest) {
-        const isExpired = !state.token || (state.expiresAt && Date.now() >= state.expiresAt - 30000);
+        const isExpired = !state.token || (state.expiresAt && Date.now() >= (state.expiresAt || 0) - 30000);
         if (isExpired && config.clientId && config.clientSecret) {
           try {
             await performExchange();
@@ -289,6 +292,37 @@ export class ScrymeClientSDK {
       },
 
       signIn: async (credentials: { email: string; password?: string }) => {
+        // First try customer-specific V3 auth login
+        try {
+          const response = await this.axiosInstance.post(`/${config.orgSlug}/customers/auth/login`, credentials);
+          const data = response.data?.data || response.data;
+          const token = data?.token || null;
+          const user = data?.session || null;
+
+          if (token) {
+            state.token = token;
+            state.user = user;
+            const jwtExp = getJwtExpiry(token);
+
+            await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
+            if (jwtExp) {
+              state.expiresAt = jwtExp;
+              await storage.setItem(SCRYME_EXPIRES_AT_KEY, String(state.expiresAt));
+            } else {
+              delete state.expiresAt;
+              await storage.removeItem(SCRYME_EXPIRES_AT_KEY);
+            }
+            if (user) {
+              await storage.setItem(SCRYME_USER_KEY, JSON.stringify(user));
+            }
+
+            notify("SIGNED_IN");
+            return response.data;
+          }
+        } catch (e) {
+          // Fall back to better-auth sign-in email proxy if customer-specific auth fails
+        }
+
         const response = await this.axiosInstance.post("/auth/sign-in/email", credentials);
         const data = response.data;
 
@@ -321,6 +355,7 @@ export class ScrymeClientSDK {
 
       signOut: async () => {
         try {
+          // If we have a sessionId in state.user, also attempt customer logout or clear sessions
           await this.axiosInstance.post("/auth/sign-out");
         } catch {
           // Fallback or ignore network error for local sign-out
@@ -358,6 +393,22 @@ export class ScrymeClientSDK {
             listeners.delete(callback);
           },
         };
+      },
+
+      getSessions: async () => {
+        const res = await this.axiosInstance.get(`/${config.orgSlug}/customers/auth/sessions`);
+        return res.data?.data || res.data;
+      },
+
+      revokeSession: async (id: string) => {
+        const res = await this.axiosInstance.delete(`/${config.orgSlug}/customers/auth/sessions/${id}`);
+        return res.data?.data || res.data;
+      },
+
+      revokeAllSessions: async (mode?: string) => {
+        const url = mode ? `/${config.orgSlug}/customers/auth/sessions?mode=${mode}` : `/${config.orgSlug}/customers/auth/sessions`;
+        const res = await this.axiosInstance.delete(url);
+        return res.data?.data || res.data;
       },
     };
   }

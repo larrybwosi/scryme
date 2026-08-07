@@ -20,14 +20,14 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { V3ZodValidationPipe } from "../../../../common/pipes/v3-zod-validation.pipe";
-import { RegisterCustomerSchema, UpdateCustomerSchema, AddressSchema, ProvisionZitadelSchema } from "../../application/dto/customer.schema";
+import { RegisterCustomerSchema, UpdateCustomerSchema, AddressSchema, ProvisionZitadelSchema, CustomerLoginSchema } from "../../application/dto/customer.schema";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";
 import { UpdateCustomerUseCase } from "../../application/use-cases/update-customer.use-case";
 import { GetCustomerByIdUseCase } from "../../application/use-cases/get-customer-by-id.use-case";
 import { DeleteCustomerUseCase } from "../../application/use-cases/delete-customer.use-case";
 import { ManageAddressesUseCase } from "../../application/use-cases/manage-addresses.use-case";
-import { RegisterCustomerDto, AddressDto, ProvisionZitadelDto } from "../../application/dto/register-customer.dto";
+import { RegisterCustomerDto, AddressDto, ProvisionZitadelDto, CustomerLoginDto } from "../../application/dto/register-customer.dto";
 import { UpdateCustomerDto } from "../../application/dto/update-customer.dto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ZitadelService } from "@repo/zitadel";
@@ -41,6 +41,12 @@ import { CustomerResponseDto } from "../../application/dto/customer.dto";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { PaginationQueryDto } from "@/v3/common/utils/pagination";
+import { RedisService } from "@/redis/redis.service";
+import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
+import { env } from "@repo/env";
+import { randomUUID } from "crypto";
+import { UnauthorizedException } from "@nestjs/common";
 
 @ApiTags("V3 Customers")
 @ApiBearerAuth()
@@ -57,6 +63,7 @@ export class CustomerController {
     private readonly deleteCustomerUseCase: DeleteCustomerUseCase,
     private readonly manageAddressesUseCase: ManageAddressesUseCase,
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
   ) {}
 
   @Post("zitadel/provision")
@@ -199,7 +206,187 @@ export class CustomerController {
     description: "Unauthorized",
   })
   async register(@Req() req: any, @Body() dto: RegisterCustomerDto) {
-    return this.registerCustomerUseCase.execute(req.organization.id, dto);
+    const contextInfo = req.v3Context ? {
+      authType: req.v3Context.authType,
+      clientId: req.v3Context.clientId,
+    } : undefined;
+    return this.registerCustomerUseCase.execute(req.organization.id, dto, contextInfo);
+  }
+
+  @Post("auth/login")
+  @AllowPublic()
+  @UsePipes(new V3ZodValidationPipe(CustomerLoginSchema))
+  @ApiOperation({
+    summary: "Authenticate a customer using email & password, issuing a standard HS256 JWT and session",
+    operationId: "Customers_Login",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Customer successfully logged in",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Invalid credentials",
+  })
+  async login(@Req() req: any, @Body() dto: CustomerLoginDto) {
+    const orgId = req.organization.id;
+
+    // Retrieve the customer from DB
+    const customer = await this.prisma.client.customer.findUnique({
+      where: {
+        organizationId_email: {
+          organizationId: orgId,
+          email: dto.email,
+        },
+      },
+    });
+
+    if (!customer) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+
+    // Attempt to verify credentials against linked user
+    const user = await this.prisma.client.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    let isPasswordValid = false;
+    if (user && user.password) {
+      isPasswordValid = await bcrypt.compare(dto.password!, user.password);
+    }
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+
+    // Create a secure active customer session in Redis
+    const sessionId = `sess_${randomUUID()}`;
+    const tokenPayload = {
+      sub: customer.id,
+      sessionId,
+      customerEmail: customer.email,
+      customerName: customer.name,
+      organizationId: orgId,
+      orgSlug: req.organization.slug,
+      type: "v3_customer",
+    };
+
+    const token = jwt.sign(tokenPayload, env.JWT_SECRET || "default_jwt_secret", {
+      expiresIn: "7d",
+      algorithm: "HS256",
+    });
+
+    const sessionState = {
+      id: sessionId,
+      customerId: customer.id,
+      email: customer.email,
+      name: customer.name,
+      token,
+      userAgent: req.headers["user-agent"] || null,
+      ipAddress: req.ip || null,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    // Store the session in Redis with 7 days TTL
+    await this.redis.setex(
+      `customer_session:${customer.id}:${sessionId}`,
+      7 * 24 * 60 * 60,
+      JSON.stringify(sessionState),
+    );
+
+    return {
+      success: true,
+      token,
+      session: sessionState,
+    };
+  }
+
+  @Get("auth/sessions")
+  @ApiOperation({
+    summary: "Retrieve all active customer sessions",
+    operationId: "Customers_GetSessions",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Active customer sessions list",
+  })
+  async getSessions(@Req() req: any) {
+    const customerId = req.v3Context?.customerId || req.user?.id;
+    if (!customerId) {
+      throw new UnauthorizedException("Customer context required");
+    }
+
+    const keys = await this.redis.keys(`customer_session:${customerId}:*`);
+    const sessions = [];
+
+    for (const key of keys) {
+      const data = await this.redis.get<string>(key);
+      if (data) {
+        try {
+          sessions.push(JSON.parse(data));
+        } catch (e) {
+          // Ignored
+        }
+      }
+    }
+
+    return sessions;
+  }
+
+  @Delete("auth/sessions/:id")
+  @ApiOperation({
+    summary: "Revoke a specific active customer session",
+    operationId: "Customers_RevokeSession",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Session successfully revoked",
+  })
+  async revokeSession(@Req() req: any, @Param("id") sessionId: string) {
+    const customerId = req.v3Context?.customerId || req.user?.id;
+    if (!customerId) {
+      throw new UnauthorizedException("Customer context required");
+    }
+
+    await this.redis.del(`customer_session:${customerId}:${sessionId}`);
+
+    return {
+      success: true,
+      message: `Session ${sessionId} successfully revoked`,
+    };
+  }
+
+  @Delete("auth/sessions")
+  @ApiOperation({
+    summary: "Revoke all or other active customer sessions",
+    operationId: "Customers_RevokeAllSessions",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Sessions successfully revoked",
+  })
+  async revokeAllSessions(@Req() req: any, @Query("mode") mode?: string) {
+    const customerId = req.v3Context?.customerId || req.user?.id;
+    const currentSessionId = req.v3Context?.sessionId;
+    if (!customerId) {
+      throw new UnauthorizedException("Customer context required");
+    }
+
+    const keys = await this.redis.keys(`customer_session:${customerId}:*`);
+
+    for (const key of keys) {
+      if (mode === "other" && currentSessionId && key.endsWith(`:${currentSessionId}`)) {
+        continue;
+      }
+      await this.redis.del(key);
+    }
+
+    return {
+      success: true,
+      message: mode === "other" ? "Other sessions successfully revoked" : "All sessions successfully revoked",
+    };
   }
 
   @Patch(":id")

@@ -66,6 +66,11 @@ export class RegisterCustomerDto {
   @IsNotEmpty()
   email: string;
 
+  @ApiProperty({ example: "password123", required: false })
+  @IsString()
+  @IsOptional()
+  password?: string;
+
   @ApiProperty({ example: "+254700000000", required: false })
   @IsString()
   @IsOptional()
@@ -117,4 +122,16 @@ export class ProvisionZitadelDto {
   @ApiProperty({ example: ["http://localhost:3000"], required: false })
   @IsOptional()
   postLogoutRedirectUris?: string[];
+}
+
+export class CustomerLoginDto {
+  @ApiProperty({ example: "john@example.com" })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: "password123" })
+  @IsString()
+  @IsNotEmpty()
+  password?: string;
 }

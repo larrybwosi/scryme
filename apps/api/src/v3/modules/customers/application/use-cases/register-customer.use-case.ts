@@ -14,6 +14,7 @@ import { randomUUID } from "crypto";
 import { emitCustomerCreated } from "@repo/windmill/server";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
+import * as bcrypt from "bcryptjs";
 
 @Injectable()
 export class RegisterCustomerUseCase {
@@ -27,7 +28,7 @@ export class RegisterCustomerUseCase {
     private readonly loyaltyService: LoyaltyService,
   ) {}
 
-  async execute(organizationId: string, dto: RegisterCustomerDto) {
+  async execute(organizationId: string, dto: RegisterCustomerDto, contextInfo?: { authType?: string; clientId?: string }) {
     this.logger.log(
       `Registering customer for organization ${organizationId}: ${dto.email}`,
     );
@@ -77,15 +78,62 @@ export class RegisterCustomerUseCase {
         );
       }
 
+      // Check if password is provided to create a linked user account or save password details
+      let hashedPassword = undefined;
+      if (dto.password) {
+        hashedPassword = await bcrypt.hash(dto.password, 10);
+      }
+
       const customer = await this.upsertCustomer(
         tx,
         internalId,
         organizationId,
         dto,
+        hashedPassword,
+        contextInfo,
       );
 
       if (dto.address) {
         await this.handleStructuredAddress(tx, customer.id, dto.address);
+      }
+
+      // If registered by a connected app / api client on behalf of the customer, create external mapping
+      if (contextInfo?.clientId) {
+        const client = await tx.v3ApiClient.findUnique({
+          where: { clientId: contextInfo.clientId },
+          include: { organization: true },
+        });
+        if (client) {
+          const integration = await tx.organizationIntegration.findFirst({
+            where: {
+              organizationId,
+              integrationDefinition: { slug: client.name.toLowerCase() },
+            },
+          });
+
+          await tx.externalMapping.upsert({
+            where: {
+              organizationId_provider_externalId_entityType: {
+                organizationId,
+                provider: client.name.toUpperCase(),
+                externalId: internalId,
+                entityType: "CUSTOMER",
+              },
+            },
+            create: {
+              organizationId,
+              organizationIntegrationId: integration?.id || null,
+              internalEntityType: "Customer",
+              internalId,
+              externalId: internalId,
+              entityType: "CUSTOMER",
+              provider: client.name.toUpperCase(),
+            },
+            update: {
+              organizationIntegrationId: integration?.id || null,
+            },
+          });
+        }
       }
 
       return {
@@ -205,7 +253,11 @@ export class RegisterCustomerUseCase {
     internalId: string,
     organizationId: string,
     dto: RegisterCustomerDto,
+    hashedPassword?: string,
+    contextInfo?: { authType?: string; clientId?: string },
   ) {
+    const isApiCreated = contextInfo?.clientId || contextInfo?.authType === "v3_client" || contextInfo?.authType === "v3_hybrid";
+
     const customerData = {
       name: dto.name,
       email: dto.email,
@@ -218,7 +270,27 @@ export class RegisterCustomerUseCase {
       isActive: true,
       pinnedLocation: dto.location ? { address: dto.location } : undefined,
       deliveryNotes: dto.metadata ? JSON.stringify(dto.metadata) : undefined,
+      creationType: isApiCreated ? "API_CREATED" as any : "SELF_REGISTERED" as any,
     };
+
+    // If password is provided, also upsert/create a linked credentials user
+    if (hashedPassword) {
+      // Find or create linked User record
+      const linkedUser = await tx.user.upsert({
+        where: { email: dto.email },
+        create: {
+          id: randomUUID(),
+          name: dto.name,
+          email: dto.email,
+          password: hashedPassword,
+          role: "CLIENT" as any,
+          activeOrganizationId: organizationId,
+        },
+        update: {
+          password: hashedPassword,
+        },
+      });
+    }
 
     return tx.customer.upsert({
       where: { id: internalId },

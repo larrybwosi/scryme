@@ -11,6 +11,7 @@ import { ALLOW_PUBLIC_KEY } from "@/common/decorators/auth.decorator";
 import { AuthService } from "@/auth/auth.service";
 import { verifyZitadelJwt } from "@repo/shared/api/v2";
 import { env } from "@repo/env";
+import { RedisService } from "@/redis/redis.service";
 
 @Injectable()
 export class V3AuthGuard implements CanActivate {
@@ -67,6 +68,20 @@ export class V3AuthGuard implements CanActivate {
     // 1. Try HS256 V3 client/hybrid JWT first
     try {
       payload = await this.v3AuthService.verifyToken(token);
+
+      // If it is a v3_customer type token, check Redis to ensure session is active
+      if (payload && payload.type === "v3_customer" && payload.sessionId) {
+        const redisService = this.moduleRef.get(RedisService, { strict: false });
+        if (redisService) {
+          const sessionActive = await redisService.get(`customer_session:${payload.sub}:${payload.sessionId}`);
+          if (!sessionActive) {
+            payload = null; // Session revoked
+          } else {
+            // Adapt fields to match what guard expects
+            payload.customerId = payload.sub;
+          }
+        }
+      }
     } catch (error) {
       // Not a valid HS256 V3 JWT, proceed to other checks
     }
