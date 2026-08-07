@@ -334,15 +334,21 @@ export class ServiceManagementService {
   async registerCustomerApp(orgId: string, name: string) {
       const clientId = `client_${crypto.randomBytes(8).toString('hex')}`;
       const clientSecret = crypto.randomBytes(32).toString('hex');
+      const hashedSecret = crypto
+          .createHash("sha256")
+          .update(clientSecret)
+          .digest("hex");
 
-      return this.prisma.client.v3ApiClient.create({
+      const client = await this.prisma.client.v3ApiClient.create({
           data: {
               organizationId: orgId,
               name,
               clientId,
-              clientSecret, // In production, this should be hashed
+              clientSecret: hashedSecret,
               scopes: ["read", "write", "customer"],
           }
       });
+
+      return { ...client, clientSecret };
   }
 }

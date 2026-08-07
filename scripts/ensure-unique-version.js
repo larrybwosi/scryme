@@ -1,15 +1,12 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-
 const posPackageJsonPath = path.join(__dirname, "../apps/pos/package.json");
-
 function getPackageVersion() {
   const content = fs.readFileSync(posPackageJsonPath, "utf8");
   const pkg = JSON.parse(content);
   return pkg.version;
 }
-
 function updatePackageVersion(newVersion) {
   const content = fs.readFileSync(posPackageJsonPath, "utf8");
   const pkg = JSON.parse(content);
@@ -20,7 +17,6 @@ function updatePackageVersion(newVersion) {
     "utf8",
   );
 }
-
 function tagExistsOnRemote(version) {
   const tag = `v${version}`;
   try {
@@ -30,7 +26,6 @@ function tagExistsOnRemote(version) {
       encoding: "utf8",
       timeout: 10000,
     }).trim();
-
     if (output) {
       console.log(`Remote tag ${tag} exists.`);
       return true;
@@ -48,42 +43,41 @@ function tagExistsOnRemote(version) {
       }).trim();
       return localOutput === tag;
     } catch (localError) {
+      // Both remote and local checks failed - we genuinely don't know whether
+      // this tag exists. Publishing under an unverified version could silently
+      // overwrite or collide with an existing release, so fail loudly instead
+      // of assuming it's safe to proceed.
       console.error(`Could not check local tags: ${localError.message}`);
-      return false;
+      throw new Error(
+        `Unable to verify whether tag ${tag} exists (remote and local checks both failed) — refusing to guess.`,
+      );
     }
   }
 }
-
 function bumpVersion(version) {
   const match = version.match(/^(\d+)\.(\d+)\.(\d+)(.*)$/);
   if (!match) {
     throw new Error(`Unsupported version format: ${version}`);
   }
-
   const major = parseInt(match[1], 10);
   const minor = parseInt(match[2], 10);
   const patch = parseInt(match[3], 10);
   const suffix = match[4] || "";
-
-  if (patch === 0 && minor === 0) {
-    // Major release
-    return `${major + 1}.0.0${suffix}`;
-  } else if (patch === 0 && minor > 0) {
-    // Minor release
-    return `${major}.${minor + 1}.0${suffix}`;
-  } else {
-    // Patch release
-    return `${major}.${minor}.${patch + 1}${suffix}`;
-  }
+  // Always take the smallest possible step to resolve a tag collision.
+  // Jumping to the next major/minor based on the shape of the current
+  // version (e.g. x.0.0 -> x+1.0.0) is wrong here: this function only
+  // exists to dodge an already-taken tag, not to decide the size of a
+  // release. On runs with no changeset, the "current" version is often
+  // already a round number (e.g. 2.0.0) that's already tagged, and that
+  // used to trigger an unintended major bump to 3.0.0 instead of 2.0.1.
+  return `${major}.${minor}.${patch + 1}${suffix}`;
 }
-
 function main() {
   let currentVersion = getPackageVersion();
   const initialVersion = currentVersion;
   console.log(
     `Starting unique version check. Initial version: ${initialVersion}`,
   );
-
   let wasBumped = false;
   while (tagExistsOnRemote(currentVersion)) {
     const nextVersion = bumpVersion(currentVersion);
@@ -93,7 +87,6 @@ function main() {
     currentVersion = nextVersion;
     wasBumped = true;
   }
-
   if (wasBumped) {
     console.log(
       `Updating apps/pos/package.json to unique version: ${currentVersion}`,
@@ -104,7 +97,6 @@ function main() {
       `Version ${currentVersion} is unique and does not exist on remote. No bump required.`,
     );
   }
-
   // Sync version to other package.json files and Tauri configs on every run
   console.log(
     "Syncing version to other packages, SDKs, and Tauri configurations...",
@@ -119,7 +111,6 @@ function main() {
     );
     process.exit(1);
   }
-
   // Expose the final version to GitHub Actions step outputs if running in CI
   if (process.env.GITHUB_OUTPUT) {
     fs.appendFileSync(
@@ -134,7 +125,6 @@ function main() {
     );
   }
 }
-
 if (require.main === module) {
   main();
 }

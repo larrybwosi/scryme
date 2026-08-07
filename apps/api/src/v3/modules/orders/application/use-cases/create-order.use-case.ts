@@ -40,6 +40,12 @@ export class CreateOrderUseCase {
   async execute(organizationId: string, dto: CreateOrderDto, memberId: string) {
     let transaction: any;
 
+    if (!dto.customerId && !dto.businessAccountId) {
+      throw new BadRequestException(
+        "Either customerId or businessAccountId must be provided to create an order.",
+      );
+    }
+
     const hasPhysicalItems = dto.items && dto.items.length > 0;
     const hasServices = dto.services && dto.services.length > 0;
 
@@ -53,6 +59,7 @@ export class CreateOrderUseCase {
       // 1. Create standard order via shared action
       const result = await createOrder(organizationId, memberId, {
         customerId: dto.customerId,
+        businessAccountId: dto.businessAccountId,
         locationId: dto.locationId,
         items: dto.items,
         type: "ONLINE_ORDER",

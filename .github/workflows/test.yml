@@ -67,6 +67,8 @@ jobs:
               - 'packages/config-eslint/**'
             pkg_config_typescript:
               - 'packages/config-typescript/**'
+            pkg_crm:
+              - 'packages/crm/**'
             pkg_db:
               - 'packages/db/**'
             pkg_documents:
@@ -139,7 +141,7 @@ jobs:
           --health-retries 5
     env:
       NODE_OPTIONS: "--max-old-space-size=8192"
-      DATABASE_URL: postgresql://localhost:5432/postgres
+      DATABASE_URL: postgresql://postgres@localhost:5432/postgres
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -166,7 +168,9 @@ jobs:
 
   android-ci:
     needs: [filter]
-    if: needs.filter.outputs.android == 'true'
+    if: |
+      needs.filter.outputs.android == 'true' ||
+      needs.filter.outputs.test_workflow == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -176,13 +180,13 @@ jobs:
       - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'zulu'
+          java-version: "21"
+          distribution: "zulu"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.8'
+          gradle-version: "8.8"
 
       - name: Verify Android Code Quality & Compilation
         run: |
@@ -269,6 +273,7 @@ jobs:
             if [ "${{ needs.filter.outputs.pkg_auth }}" == "true" ]; then FILTER="$FILTER --filter=@repo/auth..."; fi
             if [ "${{ needs.filter.outputs.pkg_config_eslint }}" == "true" ]; then FILTER="$FILTER --filter=@repo/eslint-config..."; fi
             if [ "${{ needs.filter.outputs.pkg_config_typescript }}" == "true" ]; then FILTER="$FILTER --filter=@repo/typescript-config..."; fi
+            if [ "${{ needs.filter.outputs.pkg_crm }}" == "true" ]; then FILTER="$FILTER --filter=@repo/crm..."; fi
             if [ "${{ needs.filter.outputs.pkg_db }}" == "true" ]; then FILTER="$FILTER --filter=@repo/db..."; fi
             if [ "${{ needs.filter.outputs.pkg_documents }}" == "true" ]; then FILTER="$FILTER --filter=@repo/documents..."; fi
             if [ "${{ needs.filter.outputs.pkg_env }}" == "true" ]; then FILTER="$FILTER --filter=@repo/env..."; fi
@@ -289,11 +294,14 @@ jobs:
             pnpm turbo lint type-check --filter="./packages/*"
           fi
         env:
-          DATABASE_URL: postgresql://localhost:5432/postgres
+          DATABASE_URL: postgresql://postgres@localhost:5432/postgres
 
   rust-pos:
     needs: filter
-    if: needs.filter.outputs.pos_rust == 'true' || needs.filter.outputs.test_workflow == 'true'
+    if: |
+      needs.filter.outputs.pos_rust == 'true' ||
+      needs.filter.outputs.workflow == 'true' ||
+      needs.filter.outputs.test_workflow == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -342,7 +350,10 @@ jobs:
 
   rust-bakery:
     needs: filter
-    if: needs.filter.outputs.bakery_rust == 'true' || needs.filter.outputs.test_workflow == 'true'
+    if: |
+      needs.filter.outputs.bakery_rust == 'true' ||
+      needs.filter.outputs.workflow == 'true' ||
+      needs.filter.outputs.test_workflow == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -492,5 +503,5 @@ jobs:
             echo "No web app changes requiring build-verify detected"
           fi
         env:
-          DATABASE_URL: postgresql://localhost:5432/postgres
+          DATABASE_URL: postgresql://postgres@localhost:5432/postgres
           NODE_ENV: production
