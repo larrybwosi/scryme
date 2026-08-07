@@ -273,7 +273,7 @@ export class RegisterCustomerUseCase {
       creationType: isApiCreated ? "API_CREATED" as any : "SELF_REGISTERED" as any,
     };
 
-    // If password is provided, also upsert/create a linked credentials user or store in customFields / deliveryNotes
+    // If password is provided, also upsert/create a linked credentials user
     if (hashedPassword) {
       // Find or create linked User record
       const linkedUser = await tx.user.upsert({
@@ -290,11 +290,6 @@ export class RegisterCustomerUseCase {
           password: hashedPassword,
         },
       });
-
-      // Save password hash in customFields/metadata if any back-compat required
-      const meta = dto.metadata || {};
-      meta.passwordHash = hashedPassword;
-      customerData.deliveryNotes = JSON.stringify(meta);
     }
 
     return tx.customer.upsert({

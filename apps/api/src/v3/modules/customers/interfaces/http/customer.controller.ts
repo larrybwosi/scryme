@@ -256,18 +256,6 @@ export class CustomerController {
       isPasswordValid = await bcrypt.compare(dto.password!, user.password);
     }
 
-    // Fallback: Check metadata for backward compatibility (where we stored passwordHash in deliveryNotes)
-    if (!isPasswordValid && customer.deliveryNotes) {
-      try {
-        const meta = JSON.parse(customer.deliveryNotes);
-        if (meta && meta.passwordHash) {
-          isPasswordValid = await bcrypt.compare(dto.password!, meta.passwordHash);
-        }
-      } catch (e) {
-        // Ignored
-      }
-    }
-
     if (!isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
     }
