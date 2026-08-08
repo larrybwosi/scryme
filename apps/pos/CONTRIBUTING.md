@@ -75,4 +75,4 @@ Feature requests are welcome! Open an issue and select "Feature Request". Please
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under its [PolyForm Noncommercial License 1.0.0](LICENSE).
+By contributing, you agree that your contributions will be licensed under its [GNU Affero General Public License version 3](LICENSE).
