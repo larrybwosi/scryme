@@ -319,10 +319,14 @@ export class CustomerController {
     }
 
     const keys = await this.redis.keys(`customer_session:${customerId}:*`);
-    const sessions = [];
 
-    for (const key of keys) {
-      const data = await this.redis.get<string>(key);
+    // OPTIMIZATION (Bolt ⚡): Parallelize Redis key retrievals using Promise.all to avoid O(N) sequential blocking roundtrips
+    const sessionData = await Promise.all(
+      keys.map((key) => this.redis.get<string>(key)),
+    );
+
+    const sessions = [];
+    for (const data of sessionData) {
       if (data) {
         try {
           sessions.push(JSON.parse(data));
@@ -376,11 +380,13 @@ export class CustomerController {
 
     const keys = await this.redis.keys(`customer_session:${customerId}:*`);
 
-    for (const key of keys) {
-      if (mode === "other" && currentSessionId && key.endsWith(`:${currentSessionId}`)) {
-        continue;
-      }
-      await this.redis.del(key);
+    const keysToDelete = keys.filter(
+      (key) => !(mode === "other" && currentSessionId && key.endsWith(`:${currentSessionId}`)),
+    );
+
+    if (keysToDelete.length > 0) {
+      // OPTIMIZATION (Bolt ⚡): Batch delete all matching keys in a single Redis command to avoid sequential network roundtrips
+      await this.redis.del(...keysToDelete);
     }
 
     return {

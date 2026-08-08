@@ -1,3 +1,4 @@
+import React, { createContext, useContext, useEffect, useState } from "react";
 import axios, { AxiosInstance } from "axios";
 import { getScrymeV3API } from "./index";
 import type { RegisterCustomerDto } from "./generated/model/registerCustomerDto";
@@ -81,6 +82,13 @@ export class ScrymeClientSDK {
   public loyalty: LoyaltyModule;
   public members: MembersModule;
   public admin: AdminModule;
+  public cart: {
+    get(params?: any): Promise<any>;
+    add(dto: any): Promise<any>;
+    remove(dto: any): Promise<any>;
+    clear(params?: any): Promise<any>;
+    update(dto: any): Promise<any>;
+  };
 
   public auth: AuthModule & {
     signUp(dto: RegisterCustomerDto): Promise<any>;
@@ -277,6 +285,59 @@ export class ScrymeClientSDK {
     this.members = buildModule(this.api, config.orgSlug, membersMapping);
     this.admin = buildModule(this.api, config.orgSlug, adminMapping);
 
+    this.cart = {
+      get: async (params?: any) => {
+        return this.orders.getCart(params || {});
+      },
+      add: async (dto: any) => {
+        return this.orders.addToCart(dto);
+      },
+      remove: async (dto: any) => {
+        return this.orders.removeFromCart(dto);
+      },
+      clear: async (params?: any) => {
+        return this.orders.clearCart(params || {});
+      },
+      update: async (dto: any) => {
+        const response = await this.orders.getCart({ sessionId: dto.sessionId });
+        const data: any = response.data;
+        const items = data?.data?.items || data?.items || [];
+
+        let existingItem: any = null;
+        if (dto.productId) {
+          existingItem = items.find((item: any) => item.productId === dto.productId && (item.variantId || null) === (dto.variantId || null));
+        } else if (dto.serviceId) {
+          existingItem = items.find((item: any) => item.serviceId === dto.serviceId);
+        }
+
+        if (existingItem) {
+          const currentQty = existingItem.quantity || 0;
+          if (dto.quantity <= 0) {
+            return this.orders.removeFromCart({
+              productId: dto.productId,
+              variantId: dto.variantId,
+              serviceId: dto.serviceId,
+              sessionId: dto.sessionId,
+              customerId: dto.customerId,
+            });
+          } else {
+            const diff = dto.quantity - currentQty;
+            if (diff !== 0) {
+              return this.orders.addToCart({
+                ...dto,
+                quantity: diff,
+              });
+            }
+            return response;
+          }
+        } else {
+          if (dto.quantity > 0) {
+            return this.orders.addToCart(dto);
+          }
+        }
+      }
+    };
+
     const baseAuth = buildModule(this.api, config.orgSlug, authMapping);
 
     // Enrich the auth submodule with stateful and helper methods
@@ -424,3 +485,137 @@ export function createClientSDK(config: any = {}) {
   };
   return new ScrymeClientSDK(finalConfig);
 }
+
+export interface AuthContextType {
+  sdk: ScrymeClientSDK;
+  session: SessionState;
+  user: any | null;
+  token: string | null;
+  isLoading: boolean;
+  signIn: (credentials: { email: string; password?: string }) => Promise<any>;
+  signUp: (dto: RegisterCustomerDto) => Promise<any>;
+  signOut: () => Promise<void>;
+  cart: any | null;
+  cartLoading: boolean;
+  addToCart: (dto: any) => Promise<void>;
+  removeFromCart: (dto: any) => Promise<void>;
+  updateCartItem: (dto: any) => Promise<void>;
+  clearCart: (params?: any) => Promise<void>;
+  refreshCart: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export interface ScrymeAuthProviderProps {
+  sdk: ScrymeClientSDK;
+  children: React.ReactNode;
+}
+
+export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, children }) => {
+  const [session, setSession] = useState<SessionState>({ token: null, user: null });
+  const [isLoading, setIsLoading] = useState(true);
+  const [cart, setCart] = useState<any | null>(null);
+  const [cartLoading, setCartLoading] = useState(false);
+
+  useEffect(() => {
+    const { unsubscribe } = sdk.auth.onAuthStateChange((event, newSession) => {
+      setSession(newSession);
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [sdk]);
+
+  const refreshCart = async () => {
+    if (!session.token) {
+      setCart(null);
+      return;
+    }
+    setCartLoading(true);
+    try {
+      const res = await sdk.cart.get();
+      setCart(res.data?.data || res.data || null);
+    } catch (err) {
+      console.error("Failed to fetch cart:", err);
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (session.token) {
+      refreshCart();
+    } else {
+      setCart(null);
+    }
+  }, [session.token]);
+
+  const signIn = async (credentials: { email: string; password?: string }) => {
+    const res = await sdk.auth.signIn(credentials);
+    return res;
+  };
+
+  const signUp = async (dto: RegisterCustomerDto) => {
+    const res = await sdk.auth.signUp(dto);
+    return res;
+  };
+
+  const signOut = async () => {
+    await sdk.auth.signOut();
+  };
+
+  const addToCart = async (dto: any) => {
+    if (!session.token) throw new Error("Customer must be logged in to manage cart");
+    await sdk.cart.add(dto);
+    await refreshCart();
+  };
+
+  const removeFromCart = async (dto: any) => {
+    if (!session.token) throw new Error("Customer must be logged in to manage cart");
+    await sdk.cart.remove(dto);
+    await refreshCart();
+  };
+
+  const updateCartItem = async (dto: any) => {
+    if (!session.token) throw new Error("Customer must be logged in to manage cart");
+    await sdk.cart.update(dto);
+    await refreshCart();
+  };
+
+  const clearCart = async (params?: any) => {
+    if (!session.token) throw new Error("Customer must be logged in to manage cart");
+    await sdk.cart.clear(params);
+    await refreshCart();
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        sdk,
+        session,
+        user: session.user,
+        token: session.token,
+        isLoading,
+        signIn,
+        signUp,
+        signOut,
+        cart,
+        cartLoading,
+        addToCart,
+        removeFromCart,
+        updateCartItem,
+        clearCart,
+        refreshCart,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useScrymeAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useScrymeAuth must be used within a ScrymeAuthProvider");
+  }
+  return context;
+};

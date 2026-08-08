@@ -58,11 +58,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
     it("should throw a runtime error if required parameters are missing in ScrymeClientSDK", () => {
       expect(() => {
         new ScrymeClientSDK({} as any);
-      }).toThrow("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
-
-      expect(() => {
-        new ScrymeClientSDK({ clientId: "id", orgSlug: "slug" } as any);
-      }).toThrow("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
+      }).toThrow("clientId and orgSlug are required to initialize the SDK.");
     });
   });
 
@@ -262,9 +258,11 @@ describe("Scryme V3 Client and Server SDKs", () => {
         session: { token: "new_token_888" },
         user: { id: "user_2", name: "Bob" },
       };
-      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
-        data: mockSignInResponse,
-      });
+      (sdk.axiosInstance.post as jest.Mock)
+        .mockRejectedValueOnce(new Error("First login failed"))
+        .mockResolvedValueOnce({
+          data: mockSignInResponse,
+        });
 
       await sdk.auth.signIn({ email: "bob@test.com", password: "pwd" });
 
@@ -425,6 +423,91 @@ describe("Scryme V3 Client and Server SDKs", () => {
       // Both requests should have received the exact same token
       expect(config1.headers["Authorization"]).toBe("Bearer shared_deduped_token");
       expect(config2.headers["Authorization"]).toBe("Bearer shared_deduped_token");
+    });
+  });
+
+  describe("Client SDK Stateful Cart Operations", () => {
+    it("should support get, add, remove, and clear operations", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      // Mock getCart response
+      const mockCart = { items: [{ productId: "p1", quantity: 2 }] };
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: { success: true, data: mockCart },
+      });
+
+      const getRes = await sdk.cart.get({ sessionId: "sess-123" });
+      expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/cart-org/cart", {
+        params: { sessionId: "sess-123" },
+      });
+      expect(getRes.data.data).toEqual(mockCart);
+
+      // Mock addToCart response
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+      await sdk.cart.add({ productId: "p1", quantity: 3, sessionId: "sess-123" });
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/v3/cart-org/cart/items", {
+        productId: "p1",
+        quantity: 3,
+        sessionId: "sess-123",
+      }, undefined);
+
+      // Mock removeFromCart response
+      (sdk.axiosInstance.delete as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+      await sdk.cart.remove({ productId: "p1", sessionId: "sess-123" });
+      expect(sdk.axiosInstance.delete).toHaveBeenCalledWith("/v3/cart-org/cart/items", {
+        data: { productId: "p1", sessionId: "sess-123" },
+      });
+
+      // Mock clearCart response
+      (sdk.axiosInstance.delete as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+      await sdk.cart.clear({ sessionId: "sess-123" });
+      expect(sdk.axiosInstance.delete).toHaveBeenCalledWith("/v3/cart-org/cart", {
+        params: { sessionId: "sess-123" },
+      });
+    });
+
+    it("should calculate difference and call appropriate operations on update", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      // Mock getCart to return an item with quantity 2
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          items: [{ productId: "p1", quantity: 2 }],
+        },
+      });
+
+      // Mock addToCart for the diff (+3)
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.update({ productId: "p1", quantity: 5, sessionId: "sess-123" });
+
+      // getCart should be called with sessionId
+      expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/cart-org/cart", {
+        params: { sessionId: "sess-123" },
+      });
+
+      // addToCart should be called with diff quantity (5 - 2 = 3)
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/v3/cart-org/cart/items", {
+        productId: "p1",
+        quantity: 3,
+        sessionId: "sess-123",
+      }, undefined);
     });
   });
 });
