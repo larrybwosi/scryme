@@ -30,6 +30,7 @@ describe("CustomerController", () => {
       client: {
         customer: {
           findUnique: vi.fn(),
+          findFirst: vi.fn(),
         },
         user: {
           findUnique: vi.fn(),
@@ -39,6 +40,7 @@ describe("CustomerController", () => {
 
     redis = {
       setex: vi.fn().mockResolvedValue("OK"),
+      get: vi.fn(),
     } as any;
 
     controller = new CustomerController(
@@ -157,6 +159,81 @@ describe("CustomerController", () => {
       await expect(controller.login(req, dto)).rejects.toThrow(UnauthorizedException);
 
       expect(bcrypt.compare).toHaveBeenCalledWith("wrong_password", "hashed_password");
+    });
+  });
+
+  describe("getCurrentSession", () => {
+    it("should return the customer profile and matched session details without the raw token", async () => {
+      const req = {
+        organization: { id: "org-1" },
+        v3Context: {
+          customerId: "cust-1",
+          sessionId: "sess-1",
+        },
+      };
+
+      const mockCustomer = {
+        id: "cust-1",
+        name: "Test Customer",
+        email: "test@example.com",
+        phone: null,
+        company: null,
+        customerType: null,
+        dateOfBirth: null,
+        loyaltyPoints: 100,
+        taxId: null,
+        isActive: true,
+      };
+
+      vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(mockCustomer as any);
+
+      const mockSessionStr = JSON.stringify({
+        id: "sess-1",
+        customerId: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+        token: "sensitive_jwt_token_to_be_omitted",
+        userAgent: "test-agent",
+        ipAddress: "127.0.0.1",
+      });
+
+      vi.mocked(redis.get).mockResolvedValue(mockSessionStr);
+
+      const result = await controller.getCurrentSession(req);
+
+      expect(result.customer).toEqual(mockCustomer);
+      expect(result.session).toEqual({
+        id: "sess-1",
+        customerId: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+        userAgent: "test-agent",
+        ipAddress: "127.0.0.1",
+      });
+      // Raw auth token must be omitted for safety
+      expect((result.session as any).token).toBeUndefined();
+    });
+
+    it("should throw UnauthorizedException if customerId is missing", async () => {
+      const req = {
+        organization: { id: "org-1" },
+        v3Context: {},
+      };
+
+      await expect(controller.getCurrentSession(req)).rejects.toThrow(UnauthorizedException);
+    });
+
+    it("should throw UnauthorizedException if customer is not found in database", async () => {
+      const req = {
+        organization: { id: "org-1" },
+        v3Context: {
+          customerId: "cust-1",
+        },
+      };
+
+      vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(null);
+
+      await expect(controller.getCurrentSession(req)).rejects.toThrow(UnauthorizedException);
     });
   });
 });

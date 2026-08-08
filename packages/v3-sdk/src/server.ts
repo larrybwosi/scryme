@@ -54,6 +54,7 @@ export class ScrymeServerSDK {
     signUp(dto: RegisterCustomerDto): Promise<any>;
     authenticate(): Promise<any>;
     signIn(credentials: { email: string; password?: string }): Promise<any>;
+    getCurrentSession(): Promise<any>;
   };
 
   private token: string | null = null;
@@ -201,6 +202,11 @@ export class ScrymeServerSDK {
           this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
         }
         return data;
+      },
+
+      getCurrentSession: async () => {
+        const response = await this.axiosInstance.get(`/${config.orgSlug}/customers/auth/session`);
+        return response.data?.data || response.data;
       },
     };
   }
