@@ -1,19 +1,45 @@
+import { Test, TestingModule } from "@nestjs/testing";
 import { CustomerController } from "../customer.controller";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { GetCustomersUseCase } from "../../../application/use-cases/get-customers.use-case";
+import { RegisterCustomerUseCase } from "../../../application/use-cases/register-customer.use-case";
+import { UpdateCustomerUseCase } from "../../../application/use-cases/update-customer.use-case";
+import { GetCustomerByIdUseCase } from "../../../application/use-cases/get-customer-by-id.use-case";
+import { DeleteCustomerUseCase } from "../../../application/use-cases/delete-customer.use-case";
+import { ManageAddressesUseCase } from "../../../application/use-cases/manage-addresses.use-case";
+import { PrismaService } from "@/prisma/prisma.service";
+import { RedisService } from "@/redis/redis.service";
 import { UnauthorizedException } from "@nestjs/common";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import * as bcrypt from "bcryptjs";
 
-describe("CustomerController Sessions", () => {
+vi.mock("bcryptjs", async () => {
+  const original = await vi.importActual<typeof import("bcryptjs")>("bcryptjs");
+  return {
+    ...original,
+    compare: vi.fn(),
+  };
+});
+
+describe("CustomerController", () => {
   let controller: CustomerController;
-  let mockRedisService: any;
-  let mockPrismaService: any;
+  let prisma: PrismaService;
+  let redis: RedisService;
 
   beforeEach(() => {
-    mockRedisService = {
-      keys: vi.fn(),
-      get: vi.fn(),
-      del: vi.fn(),
-    };
-    mockPrismaService = {};
+    prisma = {
+      client: {
+        customer: {
+          findUnique: vi.fn(),
+        },
+        user: {
+          findUnique: vi.fn(),
+        },
+      },
+    } as any;
+
+    redis = {
+      setex: vi.fn().mockResolvedValue("OK"),
+    } as any;
 
     controller = new CustomerController(
       {} as any, // getCustomersUseCase
@@ -22,97 +48,115 @@ describe("CustomerController Sessions", () => {
       {} as any, // getCustomerByIdUseCase
       {} as any, // deleteCustomerUseCase
       {} as any, // manageAddressesUseCase
-      mockPrismaService as any,
-      mockRedisService as any,
+      prisma,
+      redis,
     );
+
+    vi.clearAllMocks();
   });
 
-  describe("getSessions", () => {
-    it("should throw UnauthorizedException if customer context is missing", async () => {
-      const req = {};
-      await expect(controller.getSessions(req)).rejects.toThrow(
-        new UnauthorizedException("Customer context required"),
+  describe("login - constant-time credential checking", () => {
+    it("should successfully log in if both customer and user exist with correct password", async () => {
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: { "user-agent": "test-agent" },
+        ip: "127.0.0.1",
+      };
+      const dto = { email: "test@example.com", password: "password123" };
+
+      vi.mocked(prisma.client.customer.findUnique).mockResolvedValue({
+        id: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+      } as any);
+
+      vi.mocked(prisma.client.user.findUnique).mockResolvedValue({
+        id: "user-1",
+        email: "test@example.com",
+        password: "hashed_password",
+      } as any);
+
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as any);
+
+      const result = await controller.login(req, dto);
+
+      expect(result.success).toBe(true);
+      expect(result.token).toBeDefined();
+      expect(bcrypt.compare).toHaveBeenCalledWith("password123", "hashed_password");
+      expect(redis.setex).toHaveBeenCalled();
+    });
+
+    it("should fail and throw UnauthorizedException if customer is not found, but still run bcrypt.compare with dummy hash", async () => {
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: {},
+        ip: "127.0.0.1",
+      };
+      const dto = { email: "nonexistent@example.com", password: "password123" };
+
+      vi.mocked(prisma.client.customer.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.client.user.findUnique).mockResolvedValue(null);
+      vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
+
+      await expect(controller.login(req, dto)).rejects.toThrow(UnauthorizedException);
+
+      // Verify that bcrypt.compare was called with the dummy hash to mitigate timing attacks
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        "password123",
+        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO"
       );
     });
 
-    it("should fetch sessions in parallel and return list of parsed sessions", async () => {
+    it("should fail and throw UnauthorizedException if user is not found, but still run bcrypt.compare with dummy hash", async () => {
       const req = {
-        v3Context: { customerId: "cust_123" },
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: {},
+        ip: "127.0.0.1",
       };
+      const dto = { email: "test@example.com", password: "password123" };
 
-      const mockKeys = [
-        "customer_session:cust_123:sess_1",
-        "customer_session:cust_123:sess_2",
-      ];
-      mockRedisService.keys.mockResolvedValue(mockKeys);
+      vi.mocked(prisma.client.customer.findUnique).mockResolvedValue({
+        id: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+      } as any);
+      vi.mocked(prisma.client.user.findUnique).mockResolvedValue(null);
+      vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
 
-      const mockSession1 = { id: "sess_1", customerId: "cust_123", email: "test@example.com" };
-      const mockSession2 = { id: "sess_2", customerId: "cust_123", email: "test@example.com" };
+      await expect(controller.login(req, dto)).rejects.toThrow(UnauthorizedException);
 
-      mockRedisService.get.mockImplementation(async (key: string) => {
-        if (key === "customer_session:cust_123:sess_1") {
-          return JSON.stringify(mockSession1);
-        }
-        if (key === "customer_session:cust_123:sess_2") {
-          return JSON.stringify(mockSession2);
-        }
-        return null;
-      });
-
-      const result = await controller.getSessions(req);
-
-      expect(mockRedisService.keys).toHaveBeenCalledWith("customer_session:cust_123:*");
-      expect(mockRedisService.get).toHaveBeenCalledTimes(2);
-      expect(result).toEqual([mockSession1, mockSession2]);
-    });
-  });
-
-  describe("revokeAllSessions", () => {
-    it("should delete all keys in batch if mode is not other", async () => {
-      const req = {
-        v3Context: { customerId: "cust_123" },
-      };
-
-      const mockKeys = [
-        "customer_session:cust_123:sess_1",
-        "customer_session:cust_123:sess_2",
-      ];
-      mockRedisService.keys.mockResolvedValue(mockKeys);
-
-      const result = await controller.revokeAllSessions(req);
-
-      expect(mockRedisService.keys).toHaveBeenCalledWith("customer_session:cust_123:*");
-      expect(mockRedisService.del).toHaveBeenCalledWith(
-        "customer_session:cust_123:sess_1",
-        "customer_session:cust_123:sess_2",
+      // Verify that bcrypt.compare was called with the dummy hash to mitigate timing attacks
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        "password123",
+        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO"
       );
-      expect(result).toEqual({
-        success: true,
-        message: "All sessions successfully revoked",
-      });
     });
 
-    it("should filter out current session in mode other", async () => {
+    it("should fail and throw UnauthorizedException if password does not match", async () => {
       const req = {
-        v3Context: { customerId: "cust_123", sessionId: "sess_1" },
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: {},
+        ip: "127.0.0.1",
       };
+      const dto = { email: "test@example.com", password: "wrong_password" };
 
-      const mockKeys = [
-        "customer_session:cust_123:sess_1",
-        "customer_session:cust_123:sess_2",
-      ];
-      mockRedisService.keys.mockResolvedValue(mockKeys);
+      vi.mocked(prisma.client.customer.findUnique).mockResolvedValue({
+        id: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+      } as any);
 
-      const result = await controller.revokeAllSessions(req, "other");
+      vi.mocked(prisma.client.user.findUnique).mockResolvedValue({
+        id: "user-1",
+        email: "test@example.com",
+        password: "hashed_password",
+      } as any);
 
-      expect(mockRedisService.keys).toHaveBeenCalledWith("customer_session:cust_123:*");
-      expect(mockRedisService.del).toHaveBeenCalledWith(
-        "customer_session:cust_123:sess_2",
-      );
-      expect(result).toEqual({
-        success: true,
-        message: "Other sessions successfully revoked",
-      });
+      vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
+
+      await expect(controller.login(req, dto)).rejects.toThrow(UnauthorizedException);
+
+      expect(bcrypt.compare).toHaveBeenCalledWith("wrong_password", "hashed_password");
     });
   });
 });

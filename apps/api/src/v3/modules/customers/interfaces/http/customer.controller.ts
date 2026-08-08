@@ -242,21 +242,19 @@ export class CustomerController {
       },
     });
 
-    if (!customer) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-
     // Attempt to verify credentials against linked user
     const user = await this.prisma.client.user.findUnique({
       where: { email: dto.email },
     });
 
-    let isPasswordValid = false;
-    if (user && user.password) {
-      isPasswordValid = await bcrypt.compare(dto.password!, user.password);
-    }
+    // Mitigate timing attacks and username/email enumeration side-channels:
+    // Always perform a cryptographically heavy bcrypt.compare with a valid dummy hash
+    // when the customer or the linked user is not found.
+    const dummyHash = "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+    const hashToCompare = user?.password || dummyHash;
+    const isPasswordValid = await bcrypt.compare(dto.password || "", hashToCompare);
 
-    if (!isPasswordValid) {
+    if (!customer || !user || !isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
