@@ -63,7 +63,7 @@ export function WorkflowForm({ onSuccess }: WorkflowFormProps) {
           name="name"
           render={({ field }: { field: any }) => (
             <FormItem>
-              <FormLabel>Workflow Name</FormLabel>
+              <FormLabel>Workflow Name <span className="text-destructive">*</span></FormLabel>
               <FormControl>
                 <Input placeholder="Welcome Sequence" {...field} />
               </FormControl>
