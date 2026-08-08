@@ -247,7 +247,7 @@ function AppsApiContent() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all",
+                "flex items-center gap-2 px-3.5 py-2 text-xs font-semibold rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1",
                 activeTab === tab.id
                   ? "bg-foreground text-background shadow-sm"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted",
@@ -326,8 +326,10 @@ function AppsApiContent() {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-10 w-10 rounded-lg"
-                          onClick={() => copyToClipboard(v3Result.clientId)}>
+                          className="h-10 w-10 rounded-lg focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
+                          onClick={() => copyToClipboard(v3Result.clientId)}
+                          aria-label="Copy client ID"
+                          title="Copy client ID">
                           <Copy size={13} />
                         </Button>
                       </div>
@@ -343,10 +345,12 @@ function AppsApiContent() {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-10 w-10 rounded-lg"
+                          className="h-10 w-10 rounded-lg focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
                           onClick={() =>
                             copyToClipboard(v3Result.clientSecret)
-                          }>
+                          }
+                          aria-label="Copy client secret"
+                          title="Copy client secret">
                           <Copy size={13} />
                         </Button>
                       </div>
@@ -438,13 +442,14 @@ function AppsApiContent() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
                         onClick={() => setEditingV3Client(client)}
-                        title="Settings">
+                        aria-label="Edit advanced settings"
+                        title="Edit advanced settings">
                         <Settings2 size={16} />
                       </Button>
                       <DropdownMenu>
@@ -452,7 +457,9 @@ function AppsApiContent() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted">
+                            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
+                            aria-label="More actions"
+                            title="More actions">
                             <MoreVertical size={16} />
                           </Button>
                         </DropdownMenuTrigger>
@@ -846,8 +853,10 @@ function AppsApiContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 h-8 w-8 rounded-lg"
-                    onClick={() => copyToClipboard(token.rawToken)}>
+                    className="text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 h-8 w-8 rounded-lg focus-visible:ring-2 focus-visible:ring-amber-500/60 focus-visible:ring-offset-1"
+                    onClick={() => copyToClipboard(token.rawToken)}
+                    aria-label="Copy pending setup token"
+                    title="Copy pending setup token">
                     <Copy size={14} />
                   </Button>
                 </div>
@@ -1055,10 +1064,12 @@ function AppsApiContent() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 rounded-lg"
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-destructive/60 focus-visible:ring-offset-1 transition-opacity h-8 w-8 rounded-lg"
                     onClick={() =>
                       deleteWebhookSubscriptionAction(wh.id).then(loadData)
-                    }>
+                    }
+                    aria-label="Delete webhook"
+                    title="Delete webhook">
                     <Trash2 size={16} />
                   </Button>
                 </div>
@@ -1102,6 +1113,7 @@ function AppsApiContent() {
                   <Switch
                     checked={storefrontEnabled}
                     onCheckedChange={setStorefrontEnabled}
+                    aria-label="Enable Client Storefront API"
                   />
                 </div>
 
@@ -1354,6 +1366,7 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
                       isActive: checked,
                     })
                   }
+                  aria-label="Active status"
                 />
               </div>
             </div>
