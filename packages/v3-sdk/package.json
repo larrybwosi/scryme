@@ -39,19 +39,29 @@
   },
   "scripts": {
     "generate": "orval",
-    "build": "tsup src/index.ts src/client.ts src/server.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts src/client.ts src/server.ts --format cjs,esm --dts --watch",
+    "build": "tsup src/index.ts src/client.tsx src/server.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts src/client.tsx src/server.ts --format cjs,esm --dts --watch",
     "test": "jest",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "axios": "^1.18.1"
   },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/jest": "^29.5.14",
+    "@types/react": "^19.2.14",
     "jest": "^29.7.0",
     "orval": "^8.23.0",
+    "react": "^19.2.14",
     "ts-jest": "^29.1.1",
     "tsup": "^8.5.1",
     "typescript": "5.7.3"

@@ -318,7 +318,14 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "roleManagementControllerCreateRoleGroup",
   "roleManagementControllerAssignRoles",
   "roleManagementControllerRemoveRoles",
-  "departmentsList"
+  "departmentsList",
+  "cartControllerGetCart",
+  "cartControllerClearCart",
+  "cartControllerAddToCart",
+  "cartControllerRemoveFromCart",
+  "favoritesControllerGetFavorites",
+  "favoritesControllerAddFavorite",
+  "favoritesControllerRemoveFavorite"
 ]);
 
 // Helper type to omit the first argument (orgSlug) of a function if it belongs to MethodsWithOrgSlug
