@@ -35,24 +35,24 @@ export default async function StaffMemberPage({
 }) {
   const { id } = await params;
   const session = await getServerAuth();
-  const [result, membersResult, departmentsResult, organization, shiftsResult] =
+  // ⚡ Bolt Optimization: Fetch organization settings concurrently in the main Promise.all block
+  // to avoid blocking the page rendering on sequential network roundtrips.
+  const [result, membersResult, departmentsResult, organization, shiftsResult, settings] =
     await Promise.all([
       getStaffMemberDetail(id),
       getStaffMembers(),
       getMemberDepartments(id),
       getOrganizationSettings(),
       getStaffShifts(id),
+      session?.organizationId
+        ? db.organizationSettings.findUnique({
+            where: { organizationId: session.organizationId },
+            select: { managersCanManageShifts: true },
+          })
+        : Promise.resolve(null),
     ]);
   const currency = organization?.settings?.defaultCurrency || "USD";
   const memberShifts = (shiftsResult.success ? shiftsResult.data : []) || [];
-
-  // Fetch managersCanManageShifts setting
-  const settings = session?.organizationId
-    ? await db.organizationSettings.findUnique({
-        where: { organizationId: session.organizationId },
-        select: { managersCanManageShifts: true },
-      })
-    : null;
 
   const role = session?.role as string;
   const canManage =
