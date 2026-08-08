@@ -154,6 +154,6 @@ We welcome contributions from the community! Please check out our [Contributing 
 
 ## 📄 License
 
-Individual applications may have different licenses. Please refer to the `README.md` in each app directory.
+This repository is licensed under the GNU Affero General Public License version 3 (AGPL-3.0). Please see the [LICENSE](LICENSE) file for more information.
 
 _Built for efficiency. Scaled for growth._
