@@ -88,6 +88,31 @@ export class ScrymeClientSDK {
     remove(dto: any): Promise<any>;
     clear(params?: any): Promise<any>;
     update(dto: any): Promise<any>;
+    getItems(params?: any): Promise<any[]>;
+    getTotals(params?: any): Promise<{ itemsCount: number; items: any[]; raw: any }>;
+    mergeGuestCart(guestSessionId: string, customerId: string): Promise<any>;
+    checkout(params: { locationId: string; notes?: string; channel?: string }): Promise<any>;
+  };
+
+  public customer: {
+    getProfile(): Promise<any>;
+    updateProfile(dto: any): Promise<any>;
+    getAddresses(): Promise<any>;
+    addAddress(dto: any): Promise<any>;
+  };
+
+  public bookings: {
+    create(dto: {
+      serviceId: string;
+      scheduledStartTime: string;
+      scheduledEndTime?: string;
+      staffIds?: string[];
+      resourceIds?: string[];
+      notes?: string;
+    }): Promise<any>;
+    get(id: string): Promise<any>;
+    list(): Promise<any>;
+    cancel(id: string): Promise<any>;
   };
 
   public auth: AuthModule & {
@@ -336,6 +361,91 @@ export class ScrymeClientSDK {
             return this.orders.addToCart(dto);
           }
         }
+      },
+      getItems: async (params?: any) => {
+        const res = await this.orders.getCart(params || {});
+        const data: any = res?.data || res;
+        return data?.items || data?.data?.items || [];
+      },
+      getTotals: async (params?: any) => {
+        const res = await this.orders.getCart(params || {});
+        const data: any = res?.data || res;
+        const items = data?.items || data?.data?.items || [];
+        const itemsCount = items.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+        return {
+          itemsCount,
+          items,
+          raw: data,
+        };
+      },
+      mergeGuestCart: async (guestSessionId: string, customerId: string) => {
+        return this.orders.getCart({ sessionId: guestSessionId });
+      },
+      checkout: async (params: { locationId: string; notes?: string; channel?: string }) => {
+        const session = await this.auth.getSession();
+        const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
+        if (!customerId) throw new Error("No authenticated customer found for checkout.");
+
+        const items = await this.cart.getItems();
+        if (!items || items.length === 0) {
+          throw new Error("Cannot checkout an empty cart.");
+        }
+
+        const orderItems = items.map((item: any) => ({
+          variantId: item.variantId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        }));
+
+        const orderResponse = await this.orders.createOrder({
+          customerId,
+          locationId: params.locationId,
+          items: orderItems,
+          notes: params.notes,
+          channel: params.channel as any,
+        });
+
+        await this.cart.clear();
+        return orderResponse?.data || orderResponse;
+      }
+    };
+
+    this.customer = {
+      getProfile: async () => {
+        return this.auth.getCurrentSession();
+      },
+      updateProfile: async (dto: any) => {
+        const session = await this.auth.getSession();
+        const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
+        if (!customerId) throw new Error("No authenticated customer found.");
+        return this.admin.updateCustomer(customerId, dto);
+      },
+      getAddresses: async () => {
+        const session = await this.auth.getSession();
+        const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
+        if (!customerId) throw new Error("No authenticated customer found.");
+        return this.admin.getCustomerAddresses(customerId);
+      },
+      addAddress: async (dto: any) => {
+        const session = await this.auth.getSession();
+        const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
+        if (!customerId) throw new Error("No authenticated customer found.");
+        return this.admin.addCustomerAddress(customerId, dto);
+      }
+    };
+
+    this.bookings = {
+      create: async (dto: any) => {
+        return this.catalog.createBooking(dto);
+      },
+      get: async (id: string) => {
+        return this.catalog.getBooking(id);
+      },
+      list: async () => {
+        return this.catalog.getBookings();
+      },
+      cancel: async (id: string) => {
+        return this.catalog.updateBookingStatus(id, "CANCELLED" as any);
       }
     };
 
@@ -508,6 +618,21 @@ export interface AuthContextType {
   updateCartItem: (dto: any) => Promise<void>;
   clearCart: (params?: any) => Promise<void>;
   refreshCart: () => Promise<void>;
+
+  // Customer profile & addresses states
+  customerProfile: any | null;
+  customerAddresses: any[];
+  bookings: any[];
+  bookingsLoading: boolean;
+
+  // Convenience actions
+  addAddress: (dto: any) => Promise<any>;
+  updateProfile: (dto: any) => Promise<any>;
+  createBooking: (dto: any) => Promise<any>;
+  cancelBooking: (id: string) => Promise<any>;
+  checkoutCart: (params: { locationId: string; notes?: string; channel?: string }) => Promise<any>;
+  refreshProfile: () => Promise<void>;
+  refreshBookings: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -522,6 +647,12 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
   const [isLoading, setIsLoading] = useState(true);
   const [cart, setCart] = useState<any | null>(null);
   const [cartLoading, setCartLoading] = useState(false);
+
+  // Customer and bookings state
+  const [customerProfile, setCustomerProfile] = useState<any | null>(null);
+  const [customerAddresses, setCustomerAddresses] = useState<any[]>([]);
+  const [bookingsList, setBookingsList] = useState<any[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
 
   useEffect(() => {
     const { unsubscribe } = sdk.auth.onAuthStateChange((event, newSession) => {
@@ -547,11 +678,49 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
     }
   };
 
+  const refreshProfile = async () => {
+    if (!session.token) {
+      setCustomerProfile(null);
+      setCustomerAddresses([]);
+      return;
+    }
+    try {
+      const profile = await sdk.customer.getProfile();
+      setCustomerProfile(profile?.data || profile || null);
+
+      const addresses = await sdk.customer.getAddresses();
+      setCustomerAddresses(addresses?.data || addresses || []);
+    } catch (err) {
+      console.error("Failed to fetch customer profile or addresses:", err);
+    }
+  };
+
+  const refreshBookings = async () => {
+    if (!session.token) {
+      setBookingsList([]);
+      return;
+    }
+    setBookingsLoading(true);
+    try {
+      const res = await sdk.bookings.list();
+      setBookingsList(res?.data || res || []);
+    } catch (err) {
+      console.error("Failed to fetch bookings:", err);
+    } finally {
+      setBookingsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (session.token) {
       refreshCart();
+      refreshProfile();
+      refreshBookings();
     } else {
       setCart(null);
+      setCustomerProfile(null);
+      setCustomerAddresses([]);
+      setBookingsList([]);
     }
   }, [session.token]);
 
@@ -593,6 +762,42 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
     await refreshCart();
   };
 
+  const addAddress = async (dto: any) => {
+    if (!session.token) throw new Error("Customer must be logged in to manage addresses");
+    const res = await sdk.customer.addAddress(dto);
+    await refreshProfile();
+    return res;
+  };
+
+  const updateProfile = async (dto: any) => {
+    if (!session.token) throw new Error("Customer must be logged in to update profile");
+    const res = await sdk.customer.updateProfile(dto);
+    await refreshProfile();
+    return res;
+  };
+
+  const createBooking = async (dto: any) => {
+    if (!session.token) throw new Error("Customer must be logged in to create bookings");
+    const res = await sdk.bookings.create(dto);
+    await refreshBookings();
+    return res;
+  };
+
+  const cancelBooking = async (id: string) => {
+    if (!session.token) throw new Error("Customer must be logged in to cancel bookings");
+    const res = await sdk.bookings.cancel(id);
+    await refreshBookings();
+    return res;
+  };
+
+  const checkoutCart = async (params: { locationId: string; notes?: string; channel?: string }) => {
+    if (!session.token) throw new Error("Customer must be logged in to checkout");
+    const res = await sdk.cart.checkout(params);
+    await refreshCart();
+    await refreshBookings();
+    return res;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -611,6 +816,17 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
         updateCartItem,
         clearCart,
         refreshCart,
+        customerProfile,
+        customerAddresses,
+        bookings: bookingsList,
+        bookingsLoading,
+        addAddress,
+        updateProfile,
+        createBooking,
+        cancelBooking,
+        checkoutCart,
+        refreshProfile,
+        refreshBookings,
       }}
     >
       {children}
