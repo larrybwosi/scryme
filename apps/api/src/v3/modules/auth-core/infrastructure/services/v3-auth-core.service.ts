@@ -157,11 +157,18 @@ export class V3AuthCoreService {
         where: { organizationId_cardId: { organizationId, cardId } },
       });
 
+      // SECURITY (Sentinel): Mitigate timing attacks and card ID/member enumeration side-channels
+      // Always perform a cryptographically heavy bcrypt.compare with a valid dummy hash
+      // when the member is not found, inactive, or lacks a pinHash.
+      const dummyHash = "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+      const hashToCompare = (member && member.isActive && member.pinHash) ? member.pinHash : dummyHash;
+      const isPinValid = await bcrypt.compare(pin, hashToCompare);
+
       if (
         member &&
         member.isActive &&
         member.pinHash &&
-        (await bcrypt.compare(pin, member.pinHash))
+        isPinValid
       ) {
         await this.redis.del(rateLimitKey);
         return member;

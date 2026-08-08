@@ -58,11 +58,19 @@ describe("Scryme V3 Client and Server SDKs", () => {
     it("should throw a runtime error if required parameters are missing in ScrymeClientSDK", () => {
       expect(() => {
         new ScrymeClientSDK({} as any);
-      }).toThrow("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
+      }).toThrow("clientId and orgSlug are required to initialize the SDK.");
+
+      expect(() => {
+        new ScrymeClientSDK({ clientId: "id" } as any);
+      }).toThrow("clientId and orgSlug are required to initialize the SDK.");
+
+      expect(() => {
+        new ScrymeClientSDK({ orgSlug: "slug" } as any);
+      }).toThrow("clientId and orgSlug are required to initialize the SDK.");
 
       expect(() => {
         new ScrymeClientSDK({ clientId: "id", orgSlug: "slug" } as any);
-      }).toThrow("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
+      }).not.toThrow();
     });
   });
 
@@ -262,8 +270,16 @@ describe("Scryme V3 Client and Server SDKs", () => {
         session: { token: "new_token_888" },
         user: { id: "user_2", name: "Bob" },
       };
-      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
-        data: mockSignInResponse,
+      (sdk.axiosInstance.post as jest.Mock).mockImplementation((url: string) => {
+        if (url.endsWith("/customers/auth/login")) {
+          return Promise.reject(new Error("Fall back to better-auth"));
+        }
+        if (url === "/auth/sign-in/email") {
+          return Promise.resolve({
+            data: mockSignInResponse,
+          });
+        }
+        return Promise.resolve({ data: {} });
       });
 
       await sdk.auth.signIn({ email: "bob@test.com", password: "pwd" });

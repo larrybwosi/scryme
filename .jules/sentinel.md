@@ -262,3 +262,8 @@
 **Vulnerability:** The `ServiceManagementService.registerCustomerApp` method stored newly generated `clientSecret` values in plaintext in the database. This caused subsequent authentication attempts using `validateV3ApiSecret` to fail since the validator expects a SHA-256 hashed secret, and it created a severe plaintext exposure risk if the database was compromised.
 **Learning:** Any generated application/client credentials (like API keys, client secrets, and setup tokens) must never be stored in plaintext. They must be safely hashed using a secure cryptographic hashing function like SHA-256 before being persisted.
 **Prevention:** Always pre-hash sensitive customer-facing client secrets with SHA-256 before storing them in database records, and only return the raw unhashed secret to the registering client once during creation.
+
+## 2026-08-08 - Member Card PIN Authentication timing attack and enumeration
+**Vulnerability:** In Member PIN authentication, providing a cardId skipped the bcrypt.compare operation if the member record did not exist or was inactive. This introduced a significant timing discrepancy side-channel allowing attackers to enumerate active card/member IDs.
+**Learning:** Conditional verification flow optimizations that skip expensive cryptographic operations when records are not found introduce timing-attack vulnerabilities. To ensure robust security, every path must consume a comparable amount of CPU time.
+**Prevention:** Always implement a fail-safe dummy comparison using a pre-computed hash when records are missing or inactive, guaranteeing constant-time behavior across all identifier input states.
