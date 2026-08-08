@@ -100,6 +100,7 @@ export class ScrymeClientSDK {
     getSessions(): Promise<any>;
     revokeSession(id: string): Promise<any>;
     revokeAllSessions(mode?: string): Promise<any>;
+    getCurrentSession(): Promise<any>;
   };
 
   constructor(config: ClientSDKConfig) {
@@ -469,6 +470,11 @@ export class ScrymeClientSDK {
       revokeAllSessions: async (mode?: string) => {
         const url = mode ? `/${config.orgSlug}/customers/auth/sessions?mode=${mode}` : `/${config.orgSlug}/customers/auth/sessions`;
         const res = await this.axiosInstance.delete(url);
+        return res.data?.data || res.data;
+      },
+
+      getCurrentSession: async () => {
+        const res = await this.axiosInstance.get(`/${config.orgSlug}/customers/auth/session`);
         return res.data?.data || res.data;
       },
     };

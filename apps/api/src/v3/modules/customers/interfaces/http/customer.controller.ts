@@ -301,6 +301,70 @@ export class CustomerController {
     };
   }
 
+  @Get("auth/session")
+  @ApiOperation({
+    summary: "Retrieve the current active customer session and profile details",
+    operationId: "Customers_GetCurrentSession",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Current customer session and profile details",
+  })
+  async getCurrentSession(@Req() req: any) {
+    const customerId = req.v3Context?.customerId || req.user?.id;
+    if (!customerId) {
+      throw new UnauthorizedException("Customer context required");
+    }
+
+    // Retrieve safe customer details from DB
+    const customer = await this.prisma.client.customer.findFirst({
+      where: {
+        id: customerId,
+        organizationId: req.organization.id,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        company: true,
+        customerType: true,
+        dateOfBirth: true,
+        loyaltyPoints: true,
+        taxId: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    if (!customer) {
+      throw new UnauthorizedException("Customer profile not found");
+    }
+
+    let session = null;
+    const sessionId = req.v3Context?.sessionId;
+    if (sessionId) {
+      const sessionKey = `customer_session:${customerId}:${sessionId}`;
+      const sessionData = await this.redis.get<string>(sessionKey);
+      if (sessionData) {
+        try {
+          const parsedSession = JSON.parse(sessionData);
+          // Omit token for security in client response!
+          const { token, ...safeSession } = parsedSession;
+          session = safeSession;
+        } catch (e) {
+          // Ignored
+        }
+      }
+    }
+
+    return {
+      session,
+      customer,
+    };
+  }
+
   @Get("auth/sessions")
   @ApiOperation({
     summary: "Retrieve all active customer sessions",

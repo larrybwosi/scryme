@@ -234,6 +234,7 @@ export class V3AuthGuard implements CanActivate {
       locationId: payload.locationId || null,
       authType: payload.type,
       customerId: payload.customerId || null,
+      sessionId: payload.sessionId || null,
       customer: payload.customerId
         ? {
             id: payload.customerId,
