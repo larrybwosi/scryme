@@ -62,7 +62,7 @@ export function CampaignForm({ onSuccess }: CampaignFormProps) {
           name="name"
           render={({ field }: { field: any }) => (
             <FormItem>
-              <FormLabel>Campaign Name</FormLabel>
+              <FormLabel>Campaign Name <span className="text-destructive">*</span></FormLabel>
               <FormControl>
                 <Input placeholder="Summer Sale 2024" {...field} />
               </FormControl>

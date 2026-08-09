@@ -73,7 +73,7 @@ export function LeadForm({ onSuccess }: LeadFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <FormLabel>Full Name <span className="text-destructive">*</span></FormLabel>
               <FormControl>
                 <Input placeholder="John Doe" {...field} />
               </FormControl>

@@ -41,6 +41,7 @@ describe("CustomerController", () => {
     redis = {
       setex: vi.fn().mockResolvedValue("OK"),
       get: vi.fn(),
+      keys: vi.fn(),
     } as any;
 
     controller = new CustomerController(
@@ -84,7 +85,10 @@ describe("CustomerController", () => {
 
       expect(result.success).toBe(true);
       expect(result.token).toBeDefined();
-      expect(bcrypt.compare).toHaveBeenCalledWith("password123", "hashed_password");
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        "password123",
+        "hashed_password",
+      );
       expect(redis.setex).toHaveBeenCalled();
     });
 
@@ -100,12 +104,14 @@ describe("CustomerController", () => {
       vi.mocked(prisma.client.user.findUnique).mockResolvedValue(null);
       vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
 
-      await expect(controller.login(req, dto)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.login(req, dto)).rejects.toThrow(
+        UnauthorizedException,
+      );
 
       // Verify that bcrypt.compare was called with the dummy hash to mitigate timing attacks
       expect(bcrypt.compare).toHaveBeenCalledWith(
         "password123",
-        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO"
+        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO",
       );
     });
 
@@ -125,12 +131,14 @@ describe("CustomerController", () => {
       vi.mocked(prisma.client.user.findUnique).mockResolvedValue(null);
       vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
 
-      await expect(controller.login(req, dto)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.login(req, dto)).rejects.toThrow(
+        UnauthorizedException,
+      );
 
       // Verify that bcrypt.compare was called with the dummy hash to mitigate timing attacks
       expect(bcrypt.compare).toHaveBeenCalledWith(
         "password123",
-        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO"
+        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO",
       );
     });
 
@@ -156,9 +164,14 @@ describe("CustomerController", () => {
 
       vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
 
-      await expect(controller.login(req, dto)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.login(req, dto)).rejects.toThrow(
+        UnauthorizedException,
+      );
 
-      expect(bcrypt.compare).toHaveBeenCalledWith("wrong_password", "hashed_password");
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        "wrong_password",
+        "hashed_password",
+      );
     });
   });
 
@@ -185,7 +198,9 @@ describe("CustomerController", () => {
         isActive: true,
       };
 
-      vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(mockCustomer as any);
+      vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(
+        mockCustomer as any,
+      );
 
       const mockSessionStr = JSON.stringify({
         id: "sess-1",
@@ -220,7 +235,9 @@ describe("CustomerController", () => {
         v3Context: {},
       };
 
-      await expect(controller.getCurrentSession(req)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.getCurrentSession(req)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it("should throw UnauthorizedException if customer is not found in database", async () => {
@@ -233,7 +250,83 @@ describe("CustomerController", () => {
 
       vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(null);
 
-      await expect(controller.getCurrentSession(req)).rejects.toThrow(UnauthorizedException);
+      await expect(controller.getCurrentSession(req)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe("getSessions", () => {
+    it("should return the list of active customer sessions with raw JWT tokens omitted", async () => {
+      const req = {
+        organization: { id: "org-1" },
+        v3Context: {
+          customerId: "cust-1",
+        },
+      };
+
+      vi.mocked(redis.keys).mockResolvedValue([
+        "customer_session:cust-1:sess-1",
+        "customer_session:cust-1:sess-2",
+      ]);
+
+      const mockSession1 = JSON.stringify({
+        id: "sess-1",
+        customerId: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+        token: "token-1",
+        userAgent: "test-agent-1",
+        ipAddress: "127.0.0.1",
+      });
+
+      const mockSession2 = JSON.stringify({
+        id: "sess-2",
+        customerId: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+        token: "token-2",
+        userAgent: "test-agent-2",
+        ipAddress: "127.0.0.2",
+      });
+
+      vi.mocked(redis.get)
+        .mockResolvedValueOnce(mockSession1)
+        .mockResolvedValueOnce(mockSession2);
+
+      const result = await controller.getSessions(req);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        id: "sess-1",
+        customerId: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+        userAgent: "test-agent-1",
+        ipAddress: "127.0.0.1",
+      });
+      expect(result[0].token).toBeUndefined();
+
+      expect(result[1]).toEqual({
+        id: "sess-2",
+        customerId: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+        userAgent: "test-agent-2",
+        ipAddress: "127.0.0.2",
+      });
+      expect(result[1].token).toBeUndefined();
+    });
+
+    it("should throw UnauthorizedException if customerId is missing", async () => {
+      const req = {
+        organization: { id: "org-1" },
+        v3Context: {},
+      };
+
+      await expect(controller.getSessions(req)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

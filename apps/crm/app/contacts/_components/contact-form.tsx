@@ -77,7 +77,7 @@ export function ContactForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>
-                Full Name <span className="text-red-500">*</span>
+                Full Name <span className="text-destructive">*</span>
               </FormLabel>
               <FormControl>
                 <Input placeholder="Jane Smith" {...field} />

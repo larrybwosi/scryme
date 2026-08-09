@@ -556,7 +556,9 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                           name={`addresses.${index}.street1`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs text-muted-foreground">Street Line 1 *</FormLabel>
+                              <FormLabel className="text-xs text-muted-foreground">
+                                Street Line 1 <span className="text-destructive">*</span>
+                              </FormLabel>
                               <FormControl>
                                 <Input placeholder="123 Business Rd" {...field} className="h-9 text-[13px]" />
                               </FormControl>
@@ -586,7 +588,9 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                           name={`addresses.${index}.city`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs text-muted-foreground">City *</FormLabel>
+                              <FormLabel className="text-xs text-muted-foreground">
+                                City <span className="text-destructive">*</span>
+                              </FormLabel>
                               <FormControl>
                                 <Input placeholder="Nairobi" {...field} className="h-9 text-[13px]" />
                               </FormControl>
@@ -628,7 +632,9 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                           name={`addresses.${index}.country`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs text-muted-foreground">Country *</FormLabel>
+                              <FormLabel className="text-xs text-muted-foreground">
+                                Country <span className="text-destructive">*</span>
+                              </FormLabel>
                               <FormControl>
                                 <Input placeholder="Kenya" {...field} className="h-9 text-[13px]" />
                               </FormControl>
@@ -738,7 +744,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-xs text-muted-foreground">
-                                Full Name
+                                Full Name <span className="text-destructive">*</span>
                               </FormLabel>
                               <FormControl>
                                 <Input
