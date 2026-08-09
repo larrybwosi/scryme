@@ -427,4 +427,60 @@ describe("Scryme V3 Client and Server SDKs", () => {
       expect(config2.headers["Authorization"]).toBe("Bearer shared_deduped_token");
     });
   });
+
+  describe("Client/Server SDK Separate Mappings & Security", () => {
+    it("should allow client-side SDK to query public service endpoints and omit admin actions", () => {
+      const clientSdk = createClientSDK({
+        clientId: "client-id",
+        clientSecret: "client-secret",
+        orgSlug: "test-org",
+      });
+
+      // Verify that public methods exist on client.services
+      expect(clientSdk.services.listServices).toBeDefined();
+      expect(clientSdk.services.getCategories).toBeDefined();
+      expect(clientSdk.services.getService).toBeDefined();
+      expect(clientSdk.services.getAvailability).toBeDefined();
+      expect(clientSdk.services.requestOtp).toBeDefined();
+      expect(clientSdk.services.verifyOtp).toBeDefined();
+      expect(clientSdk.services.createBooking).toBeDefined();
+
+      // Verify that administrative methods do NOT exist on client.services
+      expect((clientSdk.services as any).createCategory).toBeUndefined();
+      expect((clientSdk.services as any).updateCategory).toBeUndefined();
+      expect((clientSdk.services as any).deleteCategory).toBeUndefined();
+      expect((clientSdk.services as any).createService).toBeUndefined();
+      expect((clientSdk.services as any).updateService).toBeUndefined();
+      expect((clientSdk.services as any).deleteService).toBeUndefined();
+      expect((clientSdk.services as any).createShift).toBeUndefined();
+      expect((clientSdk.services as any).addBreak).toBeUndefined();
+    });
+
+    it("should allow server-side SDK to access both public and administrative endpoints", () => {
+      const serverSdk = createServerSDK({
+        clientId: "server-id",
+        clientSecret: "server-secret",
+        orgSlug: "test-org",
+      });
+
+      // Public endpoints should still be accessible on server.services
+      expect(serverSdk.services.listServices).toBeDefined();
+      expect(serverSdk.services.getCategories).toBeDefined();
+      expect(serverSdk.services.getService).toBeDefined();
+      expect(serverSdk.services.getAvailability).toBeDefined();
+      expect(serverSdk.services.requestOtp).toBeDefined();
+      expect(serverSdk.services.verifyOtp).toBeDefined();
+      expect(serverSdk.services.createBooking).toBeDefined();
+
+      // Administrative endpoints must also be accessible on server.services
+      expect(serverSdk.services.createCategory).toBeDefined();
+      expect(serverSdk.services.updateCategory).toBeDefined();
+      expect(serverSdk.services.deleteCategory).toBeDefined();
+      expect(serverSdk.services.createService).toBeDefined();
+      expect(serverSdk.services.updateService).toBeDefined();
+      expect(serverSdk.services.deleteService).toBeDefined();
+      expect(serverSdk.services.createShift).toBeDefined();
+      expect(serverSdk.services.addBreak).toBeDefined();
+    });
+  });
 });
