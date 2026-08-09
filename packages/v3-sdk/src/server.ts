@@ -50,6 +50,39 @@ export class ScrymeServerSDK {
   public members: MembersModule;
   public admin: AdminModule;
 
+  public cart: {
+    get(params?: any): Promise<any>;
+    add(dto: any): Promise<any>;
+    remove(dto: any): Promise<any>;
+    clear(params?: any): Promise<any>;
+    update(dto: any): Promise<any>;
+    getItems(params?: any): Promise<any[]>;
+    getTotals(params?: any): Promise<{ itemsCount: number; items: any[]; raw: any }>;
+    checkout(params: { sessionId?: string; customerId?: string; locationId: string; notes?: string; channel?: string }): Promise<any>;
+  };
+
+  public customer: {
+    getProfile(customerId: string): Promise<any>;
+    updateProfile(customerId: string, dto: any): Promise<any>;
+    getAddresses(customerId: string): Promise<any>;
+    addAddress(customerId: string, dto: any): Promise<any>;
+  };
+
+  public bookings: {
+    create(dto: {
+      serviceId: string;
+      scheduledStartTime: string;
+      scheduledEndTime?: string;
+      staffIds?: string[];
+      resourceIds?: string[];
+      notes?: string;
+    }): Promise<any>;
+    get(id: string): Promise<any>;
+    list(): Promise<any>;
+    cancel(id: string): Promise<any>;
+    complete(id: string, dto: any): Promise<any>;
+  };
+
   public auth: AuthModule & {
     signUp(dto: RegisterCustomerDto): Promise<any>;
     authenticate(): Promise<any>;
@@ -178,6 +211,133 @@ export class ScrymeServerSDK {
     this.loyalty = buildModule(this.api, config.orgSlug, loyaltyMapping);
     this.members = buildModule(this.api, config.orgSlug, membersMapping);
     this.admin = buildModule(this.api, config.orgSlug, adminMapping);
+
+    this.cart = {
+      get: async (params?: any) => {
+        return this.orders.getCart(params || {});
+      },
+      add: async (dto: any) => {
+        return this.orders.addToCart(dto);
+      },
+      remove: async (dto: any) => {
+        return this.orders.removeFromCart(dto);
+      },
+      clear: async (params?: any) => {
+        return this.orders.clearCart(params || {});
+      },
+      update: async (dto: any) => {
+        const response = await this.orders.getCart({ sessionId: dto.sessionId });
+        const data: any = response.data;
+        const items = data?.data?.items || data?.items || [];
+
+        let existingItem: any = null;
+        if (dto.productId) {
+          existingItem = items.find((item: any) => item.productId === dto.productId && (item.variantId || null) === (dto.variantId || null));
+        } else if (dto.serviceId) {
+          existingItem = items.find((item: any) => item.serviceId === dto.serviceId);
+        }
+
+        if (existingItem) {
+          const currentQty = existingItem.quantity || 0;
+          if (dto.quantity <= 0) {
+            return this.orders.removeFromCart({
+              productId: dto.productId,
+              variantId: dto.variantId,
+              serviceId: dto.serviceId,
+              sessionId: dto.sessionId,
+              customerId: dto.customerId,
+            });
+          } else {
+            const diff = dto.quantity - currentQty;
+            if (diff !== 0) {
+              return this.orders.addToCart({
+                ...dto,
+                quantity: diff,
+              });
+            }
+            return response;
+          }
+        } else {
+          if (dto.quantity > 0) {
+            return this.orders.addToCart(dto);
+          }
+        }
+      },
+      getItems: async (params?: any) => {
+        const res = await this.orders.getCart(params || {});
+        const data: any = res?.data || res;
+        return data?.items || data?.data?.items || [];
+      },
+      getTotals: async (params?: any) => {
+        const res = await this.orders.getCart(params || {});
+        const data: any = res?.data || res;
+        const items = data?.items || data?.data?.items || [];
+        const itemsCount = items.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+        return {
+          itemsCount,
+          items,
+          raw: data,
+        };
+      },
+      checkout: async (params: { sessionId?: string; customerId?: string; locationId: string; notes?: string; channel?: string }) => {
+        if (!params.customerId) throw new Error("customerId is required for server checkout.");
+
+        const items = await this.cart.getItems({ sessionId: params.sessionId, customerId: params.customerId });
+        if (!items || items.length === 0) {
+          throw new Error("Cannot checkout an empty cart.");
+        }
+
+        const orderItems = items.map((item: any) => ({
+          variantId: item.variantId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        }));
+
+        const orderResponse = await this.orders.createOrder({
+          customerId: params.customerId,
+          locationId: params.locationId,
+          items: orderItems,
+          notes: params.notes,
+          channel: params.channel as any,
+        });
+
+        await this.cart.clear({ sessionId: params.sessionId, customerId: params.customerId });
+        return orderResponse?.data || orderResponse;
+      }
+    };
+
+    this.customer = {
+      getProfile: async (customerId: string) => {
+        return this.admin.getCustomerById(customerId);
+      },
+      updateProfile: async (customerId: string, dto: any) => {
+        return this.admin.updateCustomer(customerId, dto);
+      },
+      getAddresses: async (customerId: string) => {
+        return this.admin.getCustomerAddresses(customerId);
+      },
+      addAddress: async (customerId: string, dto: any) => {
+        return this.admin.addCustomerAddress(customerId, dto);
+      }
+    };
+
+    this.bookings = {
+      create: async (dto: any) => {
+        return this.catalog.createBooking(dto);
+      },
+      get: async (id: string) => {
+        return this.catalog.getBooking(id);
+      },
+      list: async () => {
+        return this.catalog.getBookings();
+      },
+      cancel: async (id: string) => {
+        return this.catalog.updateBookingStatus(id, "CANCELLED" as any);
+      },
+      complete: async (id: string, dto: any) => {
+        return this.catalog.completeBooking(id, dto);
+      }
+    };
 
     const baseAuth = buildModule(this.api, config.orgSlug, authMapping);
 

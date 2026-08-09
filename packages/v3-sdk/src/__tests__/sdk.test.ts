@@ -510,4 +510,219 @@ describe("Scryme V3 Client and Server SDKs", () => {
       }, undefined);
     });
   });
+
+  describe("Enriched Submodules for Client and Server", () => {
+    describe("Client SDK Enriched Submodules", () => {
+      it("should support client cart.getItems and cart.getTotals and cart.mergeGuestCart", async () => {
+        const sdk = createClientSDK({
+          clientId: "client-id",
+          orgSlug: "client-org",
+          storage: mockStorage,
+        });
+
+        const mockCartResponse = {
+          success: true,
+          data: {
+            items: [
+              { productId: "p1", variantId: "v1", quantity: 2 },
+              { productId: "p2", variantId: "v2", quantity: 1 }
+            ]
+          }
+        };
+
+        (sdk.axiosInstance.get as jest.Mock).mockResolvedValue(mockCartResponse);
+
+        const items = await sdk.cart.getItems();
+        expect(items).toEqual(mockCartResponse.data.items);
+
+        const totals = await sdk.cart.getTotals();
+        expect(totals.itemsCount).toBe(3);
+        expect(totals.items).toEqual(mockCartResponse.data.items);
+
+        await sdk.cart.mergeGuestCart("guest-sess", "cust-123");
+        expect(sdk.axiosInstance.get).toHaveBeenLastCalledWith("/v3/client-org/cart", {
+          params: { sessionId: "guest-sess" }
+        });
+      });
+
+      it("should support client customer profile and addresses", async () => {
+        const sdk = createClientSDK({
+          clientId: "client-id",
+          orgSlug: "client-org",
+          storage: mockStorage,
+        });
+
+        // Mock current session loading
+        sdk.auth.getSession = jest.fn().mockResolvedValue({
+          token: "token123",
+          user: { id: "cust-123" }
+        });
+
+        // Mock getCurrentSession
+        (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+          data: { success: true, data: { id: "cust-123", name: "Alice" } }
+        });
+
+        const profile = await sdk.customer.getProfile();
+        expect(profile).toBeDefined();
+
+        // Mock updateCustomer
+        (sdk.axiosInstance.patch as jest.Mock).mockResolvedValueOnce({
+          data: { success: true }
+        });
+        await sdk.customer.updateProfile({ name: "Bob" });
+        expect(sdk.axiosInstance.patch).toHaveBeenCalledWith("/v3/client-org/customers/cust-123", { name: "Bob" }, undefined);
+
+        // Mock addresses
+        (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+          data: [{ id: "addr-1" }]
+        });
+        const addresses = await sdk.customer.getAddresses();
+        expect(addresses.data).toEqual([{ id: "addr-1" }]);
+
+        // Mock add address
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { success: true }
+        });
+        await sdk.customer.addAddress({ label: "Office" });
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/v3/client-org/customers/cust-123/addresses", { label: "Office" }, undefined);
+      });
+
+      it("should support client bookings module", async () => {
+        const sdk = createClientSDK({
+          clientId: "client-id",
+          orgSlug: "client-org",
+          storage: mockStorage,
+        });
+
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { id: "booking-123" }
+        });
+
+        await sdk.bookings.create({ serviceId: "srv-1", scheduledStartTime: "2026-10-15T09:00:00Z" });
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/v3/client-org/services/bookings", {
+          serviceId: "srv-1",
+          scheduledStartTime: "2026-10-15T09:00:00Z"
+        }, undefined);
+
+        (sdk.axiosInstance.patch as jest.Mock).mockResolvedValueOnce({
+          data: { success: true }
+        });
+        await sdk.bookings.cancel("booking-123");
+        expect(sdk.axiosInstance.patch).toHaveBeenCalledWith("/v3/client-org/services/bookings/booking-123/status", "CANCELLED", undefined);
+      });
+
+      it("should support client cart checkout", async () => {
+        const sdk = createClientSDK({
+          clientId: "client-id",
+          orgSlug: "client-org",
+          storage: mockStorage,
+        });
+
+        sdk.auth.getSession = jest.fn().mockResolvedValue({
+          token: "token123",
+          user: { id: "cust-123" }
+        });
+
+        sdk.cart.getItems = jest.fn().mockResolvedValue([
+          { variantId: "v1", quantity: 2, unitPrice: 10 }
+        ]);
+
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { success: true, data: { id: "order-123" } }
+        });
+
+        await sdk.cart.checkout({ locationId: "loc-1", notes: "Leave at door" });
+
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/v3/client-org/orders", {
+          customerId: "cust-123",
+          locationId: "loc-1",
+          items: [{ variantId: "v1", quantity: 2, unitPrice: 10 }],
+          notes: "Leave at door",
+        }, undefined);
+      });
+    });
+
+    describe("Server SDK Enriched Submodules", () => {
+      it("should support server cart getItems, getTotals, and update", async () => {
+        const sdk = createServerSDK({
+          clientId: "server-id",
+          clientSecret: "server-secret",
+          orgSlug: "server-org"
+        });
+
+        const mockCartResponse = {
+          success: true,
+          data: {
+            items: [
+              { productId: "p1", variantId: "v1", quantity: 1 }
+            ]
+          }
+        };
+
+        (sdk.axiosInstance.get as jest.Mock).mockResolvedValue(mockCartResponse);
+
+        const items = await sdk.cart.getItems({ sessionId: "sess-12" });
+        expect(items).toEqual(mockCartResponse.data.items);
+
+        const totals = await sdk.cart.getTotals({ sessionId: "sess-12" });
+        expect(totals.itemsCount).toBe(1);
+      });
+
+      it("should support server customer details access", async () => {
+        const sdk = createServerSDK({
+          clientId: "server-id",
+          clientSecret: "server-secret",
+          orgSlug: "server-org"
+        });
+
+        (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+          data: { id: "cust-789", name: "Bob" }
+        });
+
+        const customer = await sdk.customer.getProfile("cust-789");
+        expect(customer.data.id).toBe("cust-789");
+        expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/server-org/customers/cust-789", undefined);
+      });
+
+      it("should support server bookings and complete sensitive operation", async () => {
+        const sdk = createServerSDK({
+          clientId: "server-id",
+          clientSecret: "server-secret",
+          orgSlug: "server-org"
+        });
+
+        (sdk.axiosInstance.patch as jest.Mock).mockResolvedValueOnce({
+          data: { success: true }
+        });
+
+        await sdk.bookings.complete("booking-1", { qcData: { pass: true } });
+        expect(sdk.axiosInstance.patch).toHaveBeenCalledWith("/v3/server-org/services/bookings/booking-1/complete", { qcData: { pass: true } }, undefined);
+      });
+
+      it("should support server cart checkout orchestration", async () => {
+        const sdk = createServerSDK({
+          clientId: "server-id",
+          clientSecret: "server-secret",
+          orgSlug: "server-org"
+        });
+
+        sdk.cart.getItems = jest.fn().mockResolvedValue([
+          { variantId: "v5", quantity: 3 }
+        ]);
+
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { id: "order-99" }
+        });
+
+        await sdk.cart.checkout({ customerId: "cust-99", locationId: "loc-99" });
+
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/v3/server-org/orders", {
+          customerId: "cust-99",
+          locationId: "loc-99",
+          items: [{ variantId: "v5", quantity: 3 }]
+        }, undefined);
+      });
+    });
+  });
 });
