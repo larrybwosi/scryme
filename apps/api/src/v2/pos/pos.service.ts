@@ -99,12 +99,13 @@ export class PosService {
       },
     });
 
-    if (!member || !member.pinHash) {
-      throw new UnauthorizedException("Invalid credentials or PIN not set.");
-    }
+    // SECURITY (Sentinel): Mitigate timing attacks and cardId/member enumeration side-channels by always
+    // performing a cryptographically heavy bcrypt.compare on a valid dummy PIN hash if member or pinHash is missing.
+    const dummyPinHash = "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+    const pinHashToCompare = member?.pinHash || dummyPinHash;
+    const isPinValid = await bcrypt.compare(pin, pinHashToCompare);
 
-    const isPinValid = await bcrypt.compare(pin, member.pinHash);
-    if (!isPinValid) {
+    if (!member || !member.pinHash || !isPinValid) {
       const newCount = await this.redis.incr(rateLimitKey);
       if (newCount === 1)
         await this.redis.expire(rateLimitKey, this.LOCKOUT_DURATION_SECONDS);
