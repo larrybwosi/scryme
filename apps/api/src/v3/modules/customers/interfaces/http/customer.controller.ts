@@ -57,7 +57,7 @@ import * as bcrypt from "bcryptjs";
 import * as jwt from "jsonwebtoken";
 import { env } from "@repo/env";
 import { randomUUID } from "crypto";
-import { UnauthorizedException } from "@nestjs/common";
+import { UnauthorizedException, BadRequestException } from "@nestjs/common";
 
 @ApiTags("V3 Customers")
 @ApiBearerAuth()
@@ -100,6 +100,11 @@ export class CustomerController {
     description: "Unauthorized",
   })
   async provisionZitadel(@Req() req: any, @Body() dto: ProvisionZitadelDto) {
+    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
+    if (authStrategy === "LOCAL") {
+      throw new BadRequestException("Zitadel provisioning is disabled under the LOCAL auth strategy");
+    }
+
     const org = req.organization;
     const redirectUris = dto.redirectUris || [
       "http://localhost:3000/api/auth/callback/zitadel",
@@ -216,6 +221,11 @@ export class CustomerController {
     description: "Unauthorized",
   })
   async register(@Req() req: any, @Body() dto: RegisterCustomerDto) {
+    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
+    if (authStrategy === "ZITADEL" && dto.password) {
+      throw new BadRequestException("Local registration (with password) is disabled under the ZITADEL auth strategy");
+    }
+
     const contextInfo = req.v3Context
       ? {
           authType: req.v3Context.authType,
@@ -247,6 +257,11 @@ export class CustomerController {
     description: "Invalid credentials",
   })
   async login(@Req() req: any, @Body() dto: CustomerLoginDto) {
+    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
+    if (authStrategy === "ZITADEL") {
+      throw new UnauthorizedException("Local login is disabled under the ZITADEL auth strategy");
+    }
+
     const orgId = req.organization.id;
 
     // Retrieve the customer from DB

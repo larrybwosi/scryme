@@ -15,6 +15,7 @@ import { emitCustomerCreated } from "@repo/windmill/server";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
 import * as bcrypt from "bcryptjs";
+import { env } from "@repo/env";
 
 @Injectable()
 export class RegisterCustomerUseCase {
@@ -33,7 +34,11 @@ export class RegisterCustomerUseCase {
       `Registering customer for organization ${organizationId}: ${dto.email}`,
     );
 
+    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
     if (dto.zitadelUserId) {
+      if (authStrategy === "LOCAL") {
+        throw new BadRequestException("Zitadel registration is disabled under the LOCAL auth strategy");
+      }
       await this.verifyZitadelUser(organizationId, dto.zitadelUserId);
     }
 

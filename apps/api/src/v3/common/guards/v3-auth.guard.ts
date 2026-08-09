@@ -64,6 +64,7 @@ export class V3AuthGuard implements CanActivate {
     }
 
     let payload: any = null;
+    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
 
     // 1. Try HS256 V3 client/hybrid JWT first
     try {
@@ -71,14 +72,19 @@ export class V3AuthGuard implements CanActivate {
 
       // If it is a v3_customer type token, check Redis to ensure session is active
       if (payload && payload.type === "v3_customer" && payload.sessionId) {
-        const redisService = this.moduleRef.get(RedisService, { strict: false });
-        if (redisService) {
-          const sessionActive = await redisService.get(`customer_session:${payload.sub}:${payload.sessionId}`);
-          if (!sessionActive) {
-            payload = null; // Session revoked
-          } else {
-            // Adapt fields to match what guard expects
-            payload.customerId = payload.sub;
+        if (authStrategy === "ZITADEL") {
+          // Under ZITADEL only strategy, reject local HS256 customer session tokens
+          payload = null;
+        } else {
+          const redisService = this.moduleRef.get(RedisService, { strict: false });
+          if (redisService) {
+            const sessionActive = await redisService.get(`customer_session:${payload.sub}:${payload.sessionId}`);
+            if (!sessionActive) {
+              payload = null; // Session revoked
+            } else {
+              // Adapt fields to match what guard expects
+              payload.customerId = payload.sub;
+            }
           }
         }
       }
@@ -87,7 +93,7 @@ export class V3AuthGuard implements CanActivate {
     }
 
     // 2. Try better-auth session token
-    if (!payload) {
+    if (!payload && authStrategy !== "ZITADEL") {
       try {
         const authService = this.moduleRef.get(AuthService, { strict: false });
         if (authService) {
@@ -130,9 +136,9 @@ export class V3AuthGuard implements CanActivate {
     }
 
     // 3. Try Zitadel OIDC JWT token
-    if (!payload) {
-      const zitadelDomain = env.ZITADEL_DOMAIN;
-      const zitadelAudience = env.ZITADEL_CLIENT_ID;
+    if (!payload && authStrategy !== "LOCAL") {
+      const zitadelDomain = process.env.ZITADEL_DOMAIN || env.ZITADEL_DOMAIN;
+      const zitadelAudience = process.env.ZITADEL_CLIENT_ID || env.ZITADEL_CLIENT_ID;
 
       if (zitadelDomain && zitadelAudience) {
         try {

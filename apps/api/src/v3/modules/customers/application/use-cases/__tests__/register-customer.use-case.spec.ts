@@ -156,6 +156,21 @@ describe("RegisterCustomerUseCase", () => {
     );
   });
 
+  it("should throw BadRequestException if registering with zitadelUserId when strategy is LOCAL", async () => {
+    vi.stubEnv("CUSTOMER_AUTH_STRATEGY", "LOCAL");
+    const organizationId = "org-123";
+    const dto = {
+      zitadelUserId: "zit-123",
+      name: "John Doe",
+      email: "john@example.com",
+    };
+
+    await expect(useCase.execute(organizationId, dto)).rejects.toThrow(
+      "Zitadel registration is disabled under the LOCAL auth strategy"
+    );
+    vi.unstubAllEnvs();
+  });
+
   it("should register a customer successfully with optional custom fields (company, taxId, customerType, DOB)", async () => {
     const organizationId = "org-123";
     const dto = {

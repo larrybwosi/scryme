@@ -175,6 +175,78 @@ describe("CustomerController", () => {
     });
   });
 
+  describe("CUSTOMER_AUTH_STRATEGY restriction", () => {
+    it("should allow everything normally under HYBRID strategy", async () => {
+      vi.stubEnv("CUSTOMER_AUTH_STRATEGY", "HYBRID");
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: { "user-agent": "test-agent" },
+        ip: "127.0.0.1",
+      };
+      const dto = { email: "test@example.com", password: "password123" };
+
+      vi.mocked(prisma.client.customer.findUnique).mockResolvedValue({
+        id: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+      } as any);
+
+      vi.mocked(prisma.client.user.findUnique).mockResolvedValue({
+        id: "user-1",
+        email: "test@example.com",
+        password: "hashed_password",
+      } as any);
+
+      vi.mocked(bcrypt.compare).mockResolvedValue(true as any);
+
+      const result = await controller.login(req, dto);
+      expect(result.success).toBe(true);
+      vi.unstubAllEnvs();
+    });
+
+    it("should block local login under ZITADEL strategy", async () => {
+      vi.stubEnv("CUSTOMER_AUTH_STRATEGY", "ZITADEL");
+      const req = {
+        organization: { id: "org-1" },
+        headers: {},
+      };
+      const dto = { email: "test@example.com", password: "password123" };
+
+      await expect(controller.login(req, dto)).rejects.toThrow(
+        "Local login is disabled under the ZITADEL auth strategy"
+      );
+      vi.unstubAllEnvs();
+    });
+
+    it("should block registration with password under ZITADEL strategy", async () => {
+      vi.stubEnv("CUSTOMER_AUTH_STRATEGY", "ZITADEL");
+      const req = {
+        organization: { id: "org-1" },
+        headers: {},
+      };
+      const dto = { email: "test@example.com", password: "password123", name: "Test" };
+
+      await expect(controller.register(req, dto)).rejects.toThrow(
+        "Local registration (with password) is disabled under the ZITADEL auth strategy"
+      );
+      vi.unstubAllEnvs();
+    });
+
+    it("should block provisionZitadel under LOCAL strategy", async () => {
+      vi.stubEnv("CUSTOMER_AUTH_STRATEGY", "LOCAL");
+      const req = {
+        organization: { id: "org-1" },
+        headers: {},
+      };
+      const dto = { redirectUris: [], postLogoutRedirectUris: [] };
+
+      await expect(controller.provisionZitadel(req, dto)).rejects.toThrow(
+        "Zitadel provisioning is disabled under the LOCAL auth strategy"
+      );
+      vi.unstubAllEnvs();
+    });
+  });
+
   describe("getCurrentSession", () => {
     it("should return the customer profile and matched session details without the raw token", async () => {
       const req = {
