@@ -5079,6 +5079,104 @@
         ]
       }
     },
+    "/v3/{orgSlug}/customers/auth/refresh": {
+      "post": {
+        "operationId": "Customers_RefreshSession",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerRefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully refreshed token and session"
+          },
+          "401": {
+            "description": "Invalid token or session expired",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Refresh an active customer session, returning a new standard HS256 JWT",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/auth/swap-zitadel": {
+      "post": {
+        "operationId": "Customers_SwapZitadel",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerSwapZitadelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully swapped Zitadel token for a local session"
+          },
+          "401": {
+            "description": "Invalid Zitadel token or customer mapping not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Exchange a valid Zitadel OIDC token for a high-performance local HS256 customer session JWT",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
     "/v3/{orgSlug}/customers/auth/session": {
       "get": {
         "operationId": "Customers_GetCurrentSession",
@@ -12633,6 +12731,27 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "CustomerRefreshDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        }
+      },
+      "CustomerSwapZitadelDto": {
+        "type": "object",
+        "properties": {
+          "zitadelToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+          }
+        },
+        "required": [
+          "zitadelToken"
         ]
       },
       "UpdateCustomerDto": {

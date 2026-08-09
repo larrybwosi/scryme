@@ -46,3 +46,11 @@ export const CustomerLoginSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
 });
+
+export const CustomerRefreshSchema = z.object({
+  token: z.string().optional(),
+});
+
+export const CustomerSwapZitadelSchema = z.object({
+  zitadelToken: z.string().min(1, "Zitadel token is required"),
+});

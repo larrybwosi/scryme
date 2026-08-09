@@ -135,3 +135,17 @@ export class CustomerLoginDto {
   @IsNotEmpty()
   password?: string;
 }
+
+export class CustomerRefreshDto {
+  @ApiProperty({ example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", required: false })
+  @IsString()
+  @IsOptional()
+  token?: string;
+}
+
+export class CustomerSwapZitadelDto {
+  @ApiProperty({ example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..." })
+  @IsString()
+  @IsNotEmpty()
+  zitadelToken: string;
+}

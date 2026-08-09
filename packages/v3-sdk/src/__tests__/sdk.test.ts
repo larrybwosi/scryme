@@ -288,6 +288,64 @@ describe("Scryme V3 Client and Server SDKs", () => {
         user: null,
       });
     });
+
+    it("should support refreshSession method which updates local session state", async () => {
+      mockStorage.getItem.mockImplementation((key: string) => {
+        if (key === "scryme_session_token") return "saved_token_777";
+        if (key === "scryme_user") return JSON.stringify({ id: "cust-1", name: "Alice" });
+        return null;
+      });
+
+      const sdk = createClientSDK({
+        orgSlug: "my-test-org",
+        storage: mockStorage,
+      });
+
+      // Await session retrieval to ensure initPromise resolves and state loads
+      await sdk.auth.getSession();
+
+      // Mock refresh endpoint response
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          token: "brand-new-customer-token",
+          session: { id: "sess-1", customerId: "cust-1", name: "Alice" },
+        }
+      });
+
+      const result = await sdk.auth.refreshSession();
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/my-test-org/customers/auth/refresh", {
+        token: "saved_token_777",
+      });
+
+      expect(result.token).toBe("brand-new-customer-token");
+      expect(mockStorage.setItem).toHaveBeenCalledWith("scryme_session_token", "brand-new-customer-token");
+    });
+
+    it("should support swapZitadel method which exchanges OIDC token for local session", async () => {
+      const sdk = createClientSDK({
+        orgSlug: "my-test-org",
+        storage: mockStorage,
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          token: "swapped-local-token",
+          session: { id: "sess-1", customerId: "cust-1", name: "Alice" },
+        }
+      });
+
+      const result = await sdk.auth.swapZitadel("oidc-zitadel-jwt-token");
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith("/my-test-org/customers/auth/swap-zitadel", {
+        zitadelToken: "oidc-zitadel-jwt-token",
+      });
+
+      expect(result.token).toBe("swapped-local-token");
+      expect(mockStorage.setItem).toHaveBeenCalledWith("scryme_session_token", "swapped-local-token");
+    });
   });
 
   describe("Automated token exchange, refresh, and deduplication", () => {

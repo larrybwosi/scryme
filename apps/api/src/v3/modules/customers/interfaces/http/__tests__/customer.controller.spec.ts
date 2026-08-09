@@ -8,15 +8,23 @@ import { DeleteCustomerUseCase } from "../../../application/use-cases/delete-cus
 import { ManageAddressesUseCase } from "../../../application/use-cases/manage-addresses.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
-import { UnauthorizedException } from "@nestjs/common";
+import { UnauthorizedException, BadRequestException } from "@nestjs/common";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as bcrypt from "bcryptjs";
+import * as jwt from "jsonwebtoken";
+import { env } from "@repo/env";
 
 vi.mock("bcryptjs", async () => {
   const original = await vi.importActual<typeof import("bcryptjs")>("bcryptjs");
   return {
     ...original,
     compare: vi.fn(),
+  };
+});
+
+vi.mock("@repo/shared/api/v2", async () => {
+  return {
+    verifyZitadelJwt: vi.fn(),
   };
 });
 
@@ -399,6 +407,185 @@ describe("CustomerController", () => {
       await expect(controller.getSessions(req)).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe("refreshSession", () => {
+    it("should successfully refresh an active customer session and issue a new token if token is valid and session exists in redis", async () => {
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: {},
+      };
+
+      const tokenPayload = {
+        sub: "cust-1",
+        sessionId: "sess-1",
+        customerEmail: "test@example.com",
+        customerName: "Test Customer",
+        type: "v3_customer",
+      };
+
+      const secret = env.JWT_SECRET || "default_jwt_secret";
+      const token = jwt.sign(tokenPayload, secret);
+
+      vi.mocked(redis.get).mockResolvedValue(
+        JSON.stringify({
+          id: "sess-1",
+          customerId: "cust-1",
+          email: "test@example.com",
+          name: "Test Customer",
+          token: "old-token",
+        })
+      );
+
+      const result = await controller.refreshSession(req, { token });
+
+      expect(result.success).toBe(true);
+      expect(result.token).toBeDefined();
+      expect(result.session).toBeDefined();
+      expect(result.session.token).toBe(result.token);
+      expect(redis.setex).toHaveBeenCalled();
+    });
+
+    it("should throw UnauthorizedException if token is missing", async () => {
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: {},
+      };
+
+      await expect(controller.refreshSession(req, { token: "" })).rejects.toThrow(
+        "Token is required"
+      );
+    });
+
+    it("should throw UnauthorizedException if session is not active in redis", async () => {
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: {},
+      };
+
+      const tokenPayload = {
+        sub: "cust-1",
+        sessionId: "sess-1",
+        customerEmail: "test@example.com",
+        customerName: "Test Customer",
+        type: "v3_customer",
+      };
+
+      const secret = env.JWT_SECRET || "default_jwt_secret";
+      const token = jwt.sign(tokenPayload, secret);
+
+      vi.mocked(redis.get).mockResolvedValue(null);
+
+      await expect(controller.refreshSession(req, { token })).rejects.toThrow(
+        "Session has expired or been revoked"
+      );
+    });
+
+    it("should throw UnauthorizedException if token is of invalid type", async () => {
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: {},
+      };
+
+      const tokenPayload = {
+        sub: "cust-1",
+        sessionId: "sess-1",
+        customerEmail: "test@example.com",
+        customerName: "Test Customer",
+        type: "v3_client", // NOT v3_customer!
+      };
+
+      const secret = env.JWT_SECRET || "default_jwt_secret";
+      const token = jwt.sign(tokenPayload, secret);
+
+      await expect(controller.refreshSession(req, { token })).rejects.toThrow(
+        "Invalid token type"
+      );
+    });
+  });
+
+  describe("swapZitadel", () => {
+    it("should successfully swap a valid Zitadel token for a local session token if customer exists", async () => {
+      vi.stubEnv("ZITADEL_DOMAIN", "http://zitadel-test");
+      vi.stubEnv("ZITADEL_CLIENT_ID", "zitadel-audience");
+
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: { "user-agent": "test-agent" },
+        ip: "127.0.0.1",
+      };
+
+      const mockZitadelPayload = {
+        sub: "zitadel-user-123",
+        email: "test@example.com",
+        scope: "openid profile email",
+      };
+
+      const { verifyZitadelJwt } = await import("@repo/shared/api/v2");
+      vi.mocked(verifyZitadelJwt).mockResolvedValue(mockZitadelPayload as any);
+
+      prisma.client.externalMapping = {
+        findFirst: vi.fn().mockResolvedValue({
+          internalId: "cust-1",
+        }),
+      } as any;
+
+      vi.mocked(prisma.client.customer.findUnique).mockResolvedValue({
+        id: "cust-1",
+        email: "test@example.com",
+        name: "Test Customer",
+      } as any);
+
+      const result = await controller.swapZitadel(req, {
+        zitadelToken: "valid-zitadel-jwt",
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.token).toBeDefined();
+      expect(result.session.customerId).toBe("cust-1");
+      expect(redis.setex).toHaveBeenCalled();
+      vi.unstubAllEnvs();
+    });
+
+    it("should throw BadRequestException if zitadel token is missing", async () => {
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+      };
+
+      await expect(controller.swapZitadel(req, { zitadelToken: "" })).rejects.toThrow(
+        "Zitadel token is required"
+      );
+    });
+
+    it("should throw UnauthorizedException if customer mapping is not found", async () => {
+      vi.stubEnv("ZITADEL_DOMAIN", "http://zitadel-test");
+      vi.stubEnv("ZITADEL_CLIENT_ID", "zitadel-audience");
+
+      const req = {
+        organization: { id: "org-1", slug: "org-slug" },
+        headers: {},
+        ip: "127.0.0.1",
+      };
+
+      const mockZitadelPayload = {
+        sub: "zitadel-user-123",
+        email: "nonexistent@example.com",
+      };
+
+      const { verifyZitadelJwt } = await import("@repo/shared/api/v2");
+      vi.mocked(verifyZitadelJwt).mockResolvedValue(mockZitadelPayload as any);
+
+      prisma.client.externalMapping = {
+        findFirst: vi.fn().mockResolvedValue(null),
+      } as any;
+
+      vi.mocked(prisma.client.customer.findUnique).mockResolvedValue(null);
+
+      await expect(
+        controller.swapZitadel(req, { zitadelToken: "valid-token" })
+      ).rejects.toThrow("No matching customer found for this Zitadel account");
+      vi.unstubAllEnvs();
     });
   });
 });

@@ -26,6 +26,8 @@ import {
   AddressSchema,
   ProvisionZitadelSchema,
   CustomerLoginSchema,
+  CustomerRefreshSchema,
+  CustomerSwapZitadelSchema,
 } from "../../application/dto/customer.schema";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";
@@ -38,7 +40,10 @@ import {
   AddressDto,
   ProvisionZitadelDto,
   CustomerLoginDto,
+  CustomerRefreshDto,
+  CustomerSwapZitadelDto,
 } from "../../application/dto/register-customer.dto";
+import { verifyZitadelJwt } from "@repo/shared/api/v2";
 import { UpdateCustomerDto } from "../../application/dto/update-customer.dto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ZitadelService } from "@repo/zitadel";
@@ -337,6 +342,231 @@ export class CustomerController {
     return {
       success: true,
       token,
+      session: sessionState,
+    };
+  }
+
+  @Post("auth/refresh")
+  @AllowPublic()
+  @UsePipes(new V3ZodValidationPipe(CustomerRefreshSchema))
+  @ApiOperation({
+    summary: "Refresh an active customer session, returning a new standard HS256 JWT",
+    operationId: "Customers_RefreshSession",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Successfully refreshed token and session",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Invalid token or session expired",
+  })
+  async refreshSession(@Req() req: any, @Body() body: CustomerRefreshDto) {
+    const authHeader = req.headers.authorization;
+    let token = body?.token;
+    if (!token && authHeader?.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    }
+
+    if (!token) {
+      throw new UnauthorizedException("Token is required");
+    }
+
+    let payload: any;
+    try {
+      payload = jwt.verify(token, env.JWT_SECRET || "default_jwt_secret", {
+        ignoreExpiration: true,
+      });
+    } catch (e) {
+      throw new UnauthorizedException("Invalid token signature");
+    }
+
+    if (!payload || payload.type !== "v3_customer" || !payload.sessionId) {
+      throw new UnauthorizedException("Invalid token type");
+    }
+
+    const customerId = payload.sub;
+    const sessionId = payload.sessionId;
+
+    const sessionKey = `customer_session:${customerId}:${sessionId}`;
+    const sessionData = await this.redis.get<string>(sessionKey);
+
+    if (!sessionData) {
+      throw new UnauthorizedException("Session has expired or been revoked");
+    }
+
+    let parsedSession: any;
+    try {
+      parsedSession = JSON.parse(sessionData);
+    } catch {
+      throw new UnauthorizedException("Invalid session data");
+    }
+
+    // Refresh the token and session
+    const tokenPayload = {
+      sub: customerId,
+      sessionId,
+      customerEmail: payload.customerEmail,
+      customerName: payload.customerName,
+      organizationId: req.organization.id,
+      orgSlug: req.organization.slug,
+      type: "v3_customer",
+    };
+
+    const newToken = jwt.sign(
+      tokenPayload,
+      env.JWT_SECRET || "default_jwt_secret",
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+      },
+    );
+
+    const updatedSession = {
+      ...parsedSession,
+      token: newToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    // Save back to Redis with 7 days TTL
+    await this.redis.setex(
+      sessionKey,
+      7 * 24 * 60 * 60,
+      JSON.stringify(updatedSession),
+    );
+
+    return {
+      success: true,
+      token: newToken,
+      session: updatedSession,
+    };
+  }
+
+  @Post("auth/swap-zitadel")
+  @AllowPublic()
+  @UsePipes(new V3ZodValidationPipe(CustomerSwapZitadelSchema))
+  @ApiOperation({
+    summary: "Exchange a valid Zitadel OIDC token for a high-performance local HS256 customer session JWT",
+    operationId: "Customers_SwapZitadel",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Successfully swapped Zitadel token for a local session",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Invalid Zitadel token or customer mapping not found",
+  })
+  async swapZitadel(@Req() req: any, @Body() body: CustomerSwapZitadelDto) {
+    const token = body?.zitadelToken;
+    if (!token) {
+      throw new BadRequestException("Zitadel token is required");
+    }
+
+    const zitadelDomain = process.env.ZITADEL_DOMAIN || env.ZITADEL_DOMAIN;
+    const zitadelAudience = process.env.ZITADEL_CLIENT_ID || env.ZITADEL_CLIENT_ID;
+
+    if (!zitadelDomain || !zitadelAudience) {
+      throw new BadRequestException("Zitadel integration is not configured");
+    }
+
+    let zitadelPayload: any;
+    try {
+      zitadelPayload = await verifyZitadelJwt(
+        token,
+        null,
+        zitadelDomain,
+        zitadelAudience,
+      );
+    } catch (e) {
+      throw new UnauthorizedException("Invalid Zitadel token signature or expired");
+    }
+
+    if (!zitadelPayload) {
+      throw new UnauthorizedException("Invalid Zitadel token");
+    }
+
+    const targetOrgId = req.organization.id;
+
+    // Try external mapping
+    const mapping = await this.prisma.client.externalMapping.findFirst({
+      where: {
+        organizationId: targetOrgId,
+        provider: "ZITADEL",
+        externalId: zitadelPayload.sub,
+        entityType: "CUSTOMER",
+      },
+    });
+
+    const customerId = mapping?.internalId;
+    let customer = null;
+
+    if (customerId) {
+      customer = await this.prisma.client.customer.findUnique({
+        where: { id: customerId },
+      });
+    }
+
+    if (!customer && zitadelPayload.email) {
+      customer = await this.prisma.client.customer.findUnique({
+        where: {
+          organizationId_email: {
+            organizationId: targetOrgId,
+            email: zitadelPayload.email,
+          },
+        },
+      });
+    }
+
+    if (!customer) {
+      throw new UnauthorizedException("No matching customer found for this Zitadel account");
+    }
+
+    // Create a local session
+    const sessionId = `sess_${randomUUID()}`;
+    const tokenPayload = {
+      sub: customer.id,
+      sessionId,
+      customerEmail: customer.email,
+      customerName: customer.name,
+      organizationId: targetOrgId,
+      orgSlug: req.organization.slug,
+      type: "v3_customer",
+    };
+
+    const localToken = jwt.sign(
+      tokenPayload,
+      env.JWT_SECRET || "default_jwt_secret",
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+      },
+    );
+
+    const sessionState = {
+      id: sessionId,
+      customerId: customer.id,
+      email: customer.email,
+      name: customer.name,
+      token: localToken,
+      userAgent: req.headers["user-agent"] || null,
+      ipAddress: req.ip || null,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    // Store in Redis
+    await this.redis.setex(
+      `customer_session:${customer.id}:${sessionId}`,
+      7 * 24 * 60 * 60,
+      JSON.stringify(sessionState),
+    );
+
+    return {
+      success: true,
+      token: localToken,
       session: sessionState,
     };
   }
