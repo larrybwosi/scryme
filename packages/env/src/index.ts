@@ -110,6 +110,9 @@ const serverSchema = z.object({
   SCRYME_CHAT_CLIENT_SECRET: z.string().optional(),
   SCRYME_SYSTEM_WORKSPACE_SLUG: z.string().optional(),
   SCRYME_SYSTEM_CHANNEL_SLUG: z.string().optional(),
+
+  // Customer Auth Strategy
+  CUSTOMER_AUTH_STRATEGY: z.enum(["LOCAL", "ZITADEL", "HYBRID"]).default("HYBRID"),
 });
 
 const clientSchema = z.object({
@@ -288,6 +291,7 @@ function getRawEnv() {
     SCRYME_CHAT_CLIENT_SECRET: process.env.SCRYME_CHAT_CLIENT_SECRET,
     SCRYME_SYSTEM_WORKSPACE_SLUG: process.env.SCRYME_SYSTEM_WORKSPACE_SLUG,
     SCRYME_SYSTEM_CHANNEL_SLUG: process.env.SCRYME_SYSTEM_CHANNEL_SLUG,
+    CUSTOMER_AUTH_STRATEGY: process.env.CUSTOMER_AUTH_STRATEGY,
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
