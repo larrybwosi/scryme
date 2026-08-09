@@ -25,6 +25,8 @@ import {
   MembersModule,
   AdminModule,
   getJwtExpiry,
+  servicesMapping,
+  ServicesModule,
 } from "./base";
 
 export interface ServerSDKConfig {
@@ -49,6 +51,7 @@ export class ScrymeServerSDK {
   public loyalty: LoyaltyModule;
   public members: MembersModule;
   public admin: AdminModule;
+  public services: ServicesModule;
 
   public auth: AuthModule & {
     signUp(dto: RegisterCustomerDto): Promise<any>;
@@ -177,6 +180,7 @@ export class ScrymeServerSDK {
     this.loyalty = buildModule(this.api, config.orgSlug, loyaltyMapping);
     this.members = buildModule(this.api, config.orgSlug, membersMapping);
     this.admin = buildModule(this.api, config.orgSlug, adminMapping);
+    this.services = buildModule(this.api, config.orgSlug, servicesMapping);
 
     const baseAuth = buildModule(this.api, config.orgSlug, authMapping);
 

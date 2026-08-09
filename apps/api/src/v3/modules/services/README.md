@@ -94,3 +94,11 @@ To register a combined sale of products and services, submit a `POST /:orgSlug/p
   "notes": "Combined walk-in and scheduled appointment checkout"
 }
 ```
+
+---
+
+## Public Booking & Storefront Integrations
+
+For customer-facing storefronts, guest widgets, or custom mobile applications, Scryme V3 provides dedicated, unauthenticated public endpoints. These support dynamic real-time slot generation, OTP-based verification, and secure guest checkouts.
+
+Refer to the [Public Booking Developer Guide](./PUBLIC_BOOKING_DEVELOPER_GUIDE.md) for endpoints, architecture overviews, and copy-pasteable TypeScript integration examples.
