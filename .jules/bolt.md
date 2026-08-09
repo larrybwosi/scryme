@@ -1,3 +1,7 @@
+## 2026-08-09 - [Optimizing Database Transaction Block Duration in Expenses]
+**Learning:** Performing multiple independent static configuration or reference database lookup queries (such as counting or verifying category, budget, or location existence) inside an active write transaction block holds database connections open unnecessarily, increasing lock contention and transaction blocking times. Moving read-only entity existences or count validations completely outside the transaction wrapper improves system concurrency and throughput significantly without losing any business logic validity.
+**Action:** Always extract and parallelize read-only existence validations before entering `prisma.$transaction` database blocks.
+
 ## 2026-08-08 - [Parallelized Next.js Server Page Queries]
 **Learning:** Performing multiple independent asynchronous database and server-action queries sequentially inside Next.js Server Components blocks the main rendering thread and multiplies perceived page loading latency. Gathering independent promises and awaiting them concurrently via `Promise.all` optimizes the page execution path, significantly reducing Time-to-First-Byte (TTFB) and overall render wait times.
 **Action:** Always inspect Server Component data fetching blocks and group unrelated data lookups or config settings into concurrent `Promise.all` wrappers.
