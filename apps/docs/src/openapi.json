@@ -5079,6 +5079,35 @@
         ]
       }
     },
+    "/v3/{orgSlug}/customers/auth/session": {
+      "get": {
+        "operationId": "Customers_GetCurrentSession",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current customer session and profile details"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Retrieve the current active customer session and profile details",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
     "/v3/{orgSlug}/customers/auth/sessions": {
       "get": {
         "operationId": "Customers_GetSessions",
