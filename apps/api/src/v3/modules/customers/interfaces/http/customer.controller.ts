@@ -20,14 +20,25 @@ import {
   ApiParam,
 } from "@nestjs/swagger";
 import { V3ZodValidationPipe } from "../../../../common/pipes/v3-zod-validation.pipe";
-import { RegisterCustomerSchema, UpdateCustomerSchema, AddressSchema, ProvisionZitadelSchema, CustomerLoginSchema } from "../../application/dto/customer.schema";
+import {
+  RegisterCustomerSchema,
+  UpdateCustomerSchema,
+  AddressSchema,
+  ProvisionZitadelSchema,
+  CustomerLoginSchema,
+} from "../../application/dto/customer.schema";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";
 import { UpdateCustomerUseCase } from "../../application/use-cases/update-customer.use-case";
 import { GetCustomerByIdUseCase } from "../../application/use-cases/get-customer-by-id.use-case";
 import { DeleteCustomerUseCase } from "../../application/use-cases/delete-customer.use-case";
 import { ManageAddressesUseCase } from "../../application/use-cases/manage-addresses.use-case";
-import { RegisterCustomerDto, AddressDto, ProvisionZitadelDto, CustomerLoginDto } from "../../application/dto/register-customer.dto";
+import {
+  RegisterCustomerDto,
+  AddressDto,
+  ProvisionZitadelDto,
+  CustomerLoginDto,
+} from "../../application/dto/register-customer.dto";
 import { UpdateCustomerDto } from "../../application/dto/update-customer.dto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ZitadelService } from "@repo/zitadel";
@@ -70,7 +81,8 @@ export class CustomerController {
   @Permissions("customer:update")
   @UsePipes(new V3ZodValidationPipe(ProvisionZitadelSchema))
   @ApiOperation({
-    summary: "Provision Zitadel connection with one click for this organization",
+    summary:
+      "Provision Zitadel connection with one click for this organization",
     operationId: "Customers_ProvisionZitadel",
   })
   @ApiResponse({
@@ -87,16 +99,13 @@ export class CustomerController {
     type: ApiErrorResponseDto,
     description: "Unauthorized",
   })
-  async provisionZitadel(
-    @Req() req: any,
-    @Body() dto: ProvisionZitadelDto,
-  ) {
+  async provisionZitadel(@Req() req: any, @Body() dto: ProvisionZitadelDto) {
     const org = req.organization;
     const redirectUris = dto.redirectUris || [
-      "http://localhost:3000/api/auth/callback/zitadel"
+      "http://localhost:3000/api/auth/callback/zitadel",
     ];
     const postLogoutRedirectUris = dto.postLogoutRedirectUris || [
-      "http://localhost:3000"
+      "http://localhost:3000",
     ];
 
     const zitadelSvc = new ZitadelService();
@@ -109,26 +118,27 @@ export class CustomerController {
         postLogoutRedirectUris,
       );
 
-      const updatedConfig = await this.prisma.client.zitadelConfiguration.upsert({
-        where: { organizationId: org.id },
-        update: {
-          zitadelOrgId: provisionResult.zitadelOrgId,
-          zitadelProjectId: provisionResult.zitadelProjectId,
-          zitadelAppId: provisionResult.zitadelAppId,
-          connectionStatus: "CONNECTED",
-          connectionError: null,
-          lastTestedAt: new Date(),
-        },
-        create: {
-          organizationId: org.id,
-          zitadelOrgId: provisionResult.zitadelOrgId,
-          zitadelProjectId: provisionResult.zitadelProjectId,
-          zitadelAppId: provisionResult.zitadelAppId,
-          connectionStatus: "CONNECTED",
-          connectionError: null,
-          lastTestedAt: new Date(),
-        },
-      });
+      const updatedConfig =
+        await this.prisma.client.zitadelConfiguration.upsert({
+          where: { organizationId: org.id },
+          update: {
+            zitadelOrgId: provisionResult.zitadelOrgId,
+            zitadelProjectId: provisionResult.zitadelProjectId,
+            zitadelAppId: provisionResult.zitadelAppId,
+            connectionStatus: "CONNECTED",
+            connectionError: null,
+            lastTestedAt: new Date(),
+          },
+          create: {
+            organizationId: org.id,
+            zitadelOrgId: provisionResult.zitadelOrgId,
+            zitadelProjectId: provisionResult.zitadelProjectId,
+            zitadelAppId: provisionResult.zitadelAppId,
+            connectionStatus: "CONNECTED",
+            connectionError: null,
+            lastTestedAt: new Date(),
+          },
+        });
 
       return {
         success: true,
@@ -206,18 +216,25 @@ export class CustomerController {
     description: "Unauthorized",
   })
   async register(@Req() req: any, @Body() dto: RegisterCustomerDto) {
-    const contextInfo = req.v3Context ? {
-      authType: req.v3Context.authType,
-      clientId: req.v3Context.clientId,
-    } : undefined;
-    return this.registerCustomerUseCase.execute(req.organization.id, dto, contextInfo);
+    const contextInfo = req.v3Context
+      ? {
+          authType: req.v3Context.authType,
+          clientId: req.v3Context.clientId,
+        }
+      : undefined;
+    return this.registerCustomerUseCase.execute(
+      req.organization.id,
+      dto,
+      contextInfo,
+    );
   }
 
   @Post("auth/login")
   @AllowPublic()
   @UsePipes(new V3ZodValidationPipe(CustomerLoginSchema))
   @ApiOperation({
-    summary: "Authenticate a customer using email & password, issuing a standard HS256 JWT and session",
+    summary:
+      "Authenticate a customer using email & password, issuing a standard HS256 JWT and session",
     operationId: "Customers_Login",
   })
   @ApiResponse({
@@ -250,9 +267,13 @@ export class CustomerController {
     // Mitigate timing attacks and username/email enumeration side-channels:
     // Always perform a cryptographically heavy bcrypt.compare with a valid dummy hash
     // when the customer or the linked user is not found.
-    const dummyHash = "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+    const dummyHash =
+      "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
     const hashToCompare = user?.password || dummyHash;
-    const isPasswordValid = await bcrypt.compare(dto.password || "", hashToCompare);
+    const isPasswordValid = await bcrypt.compare(
+      dto.password || "",
+      hashToCompare,
+    );
 
     if (!customer || !user || !isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
@@ -270,10 +291,14 @@ export class CustomerController {
       type: "v3_customer",
     };
 
-    const token = jwt.sign(tokenPayload, env.JWT_SECRET || "default_jwt_secret", {
-      expiresIn: "7d",
-      algorithm: "HS256",
-    });
+    const token = jwt.sign(
+      tokenPayload,
+      env.JWT_SECRET || "default_jwt_secret",
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+      },
+    );
 
     const sessionState = {
       id: sessionId,
@@ -384,14 +409,16 @@ export class CustomerController {
 
     // OPTIMIZATION (Bolt ⚡): Parallelize Redis key retrievals using Promise.all to avoid O(N) sequential blocking roundtrips
     const sessionData = await Promise.all(
-      keys.map((key) => this.redis.get<string>(key)),
+      keys.map(key => this.redis.get<string>(key)),
     );
 
     const sessions = [];
     for (const data of sessionData) {
       if (data) {
         try {
-          sessions.push(JSON.parse(data));
+          const parsedSession = JSON.parse(data);
+          const { token, ...safeSession } = parsedSession;
+          sessions.push(safeSession);
         } catch (e) {
           // Ignored
         }
@@ -443,7 +470,12 @@ export class CustomerController {
     const keys = await this.redis.keys(`customer_session:${customerId}:*`);
 
     const keysToDelete = keys.filter(
-      (key) => !(mode === "other" && currentSessionId && key.endsWith(`:${currentSessionId}`)),
+      key =>
+        !(
+          mode === "other" &&
+          currentSessionId &&
+          key.endsWith(`:${currentSessionId}`)
+        ),
     );
 
     if (keysToDelete.length > 0) {
@@ -453,7 +485,10 @@ export class CustomerController {
 
     return {
       success: true,
-      message: mode === "other" ? "Other sessions successfully revoked" : "All sessions successfully revoked",
+      message:
+        mode === "other"
+          ? "Other sessions successfully revoked"
+          : "All sessions successfully revoked",
     };
   }
 
@@ -513,10 +548,7 @@ export class CustomerController {
     type: ApiErrorResponseDto,
     description: "Customer not found",
   })
-  async getCustomerById(
-    @Req() req: any,
-    @Param("id") id: string,
-  ) {
+  async getCustomerById(@Req() req: any, @Param("id") id: string) {
     return this.getCustomerByIdUseCase.execute(req.organization.id, id);
   }
 
@@ -540,10 +572,7 @@ export class CustomerController {
     type: ApiErrorResponseDto,
     description: "Customer not found",
   })
-  async deleteCustomer(
-    @Req() req: any,
-    @Param("id") id: string,
-  ) {
+  async deleteCustomer(@Req() req: any, @Param("id") id: string) {
     return this.deleteCustomerUseCase.execute(req.organization.id, id);
   }
 
@@ -567,10 +596,7 @@ export class CustomerController {
     type: ApiErrorResponseDto,
     description: "Customer not found",
   })
-  async getAddresses(
-    @Req() req: any,
-    @Param("id") id: string,
-  ) {
+  async getAddresses(@Req() req: any, @Param("id") id: string) {
     return this.manageAddressesUseCase.getAddresses(req.organization.id, id);
   }
 
