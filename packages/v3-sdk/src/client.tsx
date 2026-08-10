@@ -1,7 +1,23 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { getScrymeV3API } from "./index";
-import type { RegisterCustomerDto } from "./generated/model/registerCustomerDto";
+import type {
+  CartControllerGetCartParams,
+  CartResponseDto,
+  AddToCartDto,
+  RemoveFromCartDto,
+  CartControllerClearCartParams,
+  CartItemDto,
+  OrderResponseDto,
+  CustomerResponseDto,
+  AddressDto,
+  CreateBookingDto,
+  ServiceBookingItemDto,
+  CompleteBookingDto,
+  RegisterCustomerDto,
+  AuthExchangeToken201,
+  UpdateCustomerDto,
+} from "./generated/model";
 import {
   RawAPI,
   buildModule,
@@ -83,41 +99,34 @@ export class ScrymeClientSDK {
   public members: MembersModule;
   public admin: AdminModule;
   public cart: {
-    get(params?: any): Promise<any>;
-    add(dto: any): Promise<any>;
-    remove(dto: any): Promise<any>;
-    clear(params?: any): Promise<any>;
-    update(dto: any): Promise<any>;
-    getItems(params?: any): Promise<any[]>;
-    getTotals(params?: any): Promise<{ itemsCount: number; items: any[]; raw: any }>;
-    mergeGuestCart(guestSessionId: string, customerId: string): Promise<any>;
-    checkout(params: { locationId: string; notes?: string; channel?: string }): Promise<any>;
+    get(params?: CartControllerGetCartParams): Promise<AxiosResponse<CartResponseDto & Record<string, any>>>;
+    add(dto: AddToCartDto): Promise<AxiosResponse<void>>;
+    remove(dto: RemoveFromCartDto): Promise<AxiosResponse<void>>;
+    clear(params?: CartControllerClearCartParams): Promise<AxiosResponse<void>>;
+    update(dto: AddToCartDto & { quantity: number }): Promise<AxiosResponse<void> | AxiosResponse<CartResponseDto> | undefined>;
+    getItems(params?: CartControllerGetCartParams): Promise<CartItemDto[]>;
+    getTotals(params?: CartControllerGetCartParams): Promise<{ itemsCount: number; items: CartItemDto[]; raw: CartResponseDto }>;
+    mergeGuestCart(guestSessionId: string, customerId: string): Promise<AxiosResponse<CartResponseDto & Record<string, any>>>;
+    checkout(params: { locationId: string; notes?: string; channel?: string }): Promise<OrderResponseDto>;
   };
 
   public customer: {
     getProfile(): Promise<any>;
-    updateProfile(dto: any): Promise<any>;
-    getAddresses(): Promise<any>;
-    addAddress(dto: any): Promise<any>;
+    updateProfile(dto: UpdateCustomerDto): Promise<AxiosResponse<CustomerResponseDto>>;
+    getAddresses(): Promise<AxiosResponse<AddressDto[]>>;
+    addAddress(dto: any): Promise<AxiosResponse<void>>;
   };
 
   public bookings: {
-    create(dto: {
-      serviceId: string;
-      scheduledStartTime: string;
-      scheduledEndTime?: string;
-      staffIds?: string[];
-      resourceIds?: string[];
-      notes?: string;
-    }): Promise<any>;
-    get(id: string): Promise<any>;
-    list(): Promise<any>;
-    cancel(id: string): Promise<any>;
+    create(dto: CreateBookingDto): Promise<AxiosResponse<void>>;
+    get(id: string): Promise<AxiosResponse<void>>;
+    list(): Promise<AxiosResponse<any>>;
+    cancel(id: string): Promise<AxiosResponse<void>>;
   };
 
   public auth: AuthModule & {
-    signUp(dto: RegisterCustomerDto): Promise<any>;
-    authenticate(): Promise<any>;
+    signUp(dto: RegisterCustomerDto): Promise<AxiosResponse<CustomerResponseDto>>;
+    authenticate(): Promise<AuthExchangeToken201>;
     signIn(credentials: { email: string; password?: string }): Promise<any>;
     signOut(): Promise<void>;
     getSession(): Promise<SessionState>;
@@ -425,8 +434,8 @@ export class ScrymeClientSDK {
           throw new Error("Cannot checkout an empty cart.");
         }
 
-        const orderItems = items.map((item: any) => ({
-          variantId: item.variantId,
+        const orderItems: any[] = items.map((item: any) => ({
+          variantId: item.variantId || "",
           quantity: item.quantity,
           unitPrice: item.unitPrice,
         }));
@@ -458,7 +467,7 @@ export class ScrymeClientSDK {
         const session = await this.auth.getSession();
         const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
-        return this.admin.getCustomerAddresses(customerId);
+        return this.admin.getCustomerAddresses(customerId) as any;
       },
       addAddress: async (dto: any) => {
         const session = await this.auth.getSession();
@@ -704,26 +713,26 @@ export interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   signIn: (credentials: { email: string; password?: string }) => Promise<any>;
-  signUp: (dto: RegisterCustomerDto) => Promise<any>;
+  signUp: (dto: RegisterCustomerDto) => Promise<AxiosResponse<CustomerResponseDto>>;
   signOut: () => Promise<void>;
-  cart: any | null;
+  cart: CartResponseDto | null;
   cartLoading: boolean;
-  addToCart: (dto: any) => Promise<void>;
-  removeFromCart: (dto: any) => Promise<void>;
-  updateCartItem: (dto: any) => Promise<void>;
-  clearCart: (params?: any) => Promise<void>;
+  addToCart: (dto: AddToCartDto) => Promise<void>;
+  removeFromCart: (dto: RemoveFromCartDto) => Promise<void>;
+  updateCartItem: (dto: AddToCartDto & { quantity: number }) => Promise<void>;
+  clearCart: (params?: CartControllerClearCartParams) => Promise<void>;
   refreshCart: () => Promise<void>;
 
   // Customer profile & addresses states
-  customerProfile: any | null;
-  customerAddresses: any[];
-  bookings: any[];
+  customerProfile: CustomerResponseDto | null;
+  customerAddresses: AddressDto[];
+  bookings: ServiceBookingItemDto[];
   bookingsLoading: boolean;
 
   // Convenience actions
-  addAddress: (dto: any) => Promise<any>;
-  updateProfile: (dto: any) => Promise<any>;
-  createBooking: (dto: any) => Promise<any>;
+  addAddress: (dto: AddressDto) => Promise<any>;
+  updateProfile: (dto: UpdateCustomerDto) => Promise<any>;
+  createBooking: (dto: CreateBookingDto) => Promise<any>;
   cancelBooking: (id: string) => Promise<any>;
   checkoutCart: (params: { locationId: string; notes?: string; channel?: string }) => Promise<any>;
   refreshProfile: () => Promise<void>;
@@ -784,7 +793,7 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
       setCustomerProfile(profile?.data || profile || null);
 
       const addresses = await sdk.customer.getAddresses();
-      setCustomerAddresses(addresses?.data || addresses || []);
+      setCustomerAddresses(addresses?.data || (addresses as any) || []);
     } catch (err) {
       console.error("Failed to fetch customer profile or addresses:", err);
     }
@@ -798,7 +807,7 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
     setBookingsLoading(true);
     try {
       const res = await sdk.bookings.list();
-      setBookingsList(res?.data || res || []);
+      setBookingsList(res?.data || (res as any) || []);
     } catch (err) {
       console.error("Failed to fetch bookings:", err);
     } finally {
