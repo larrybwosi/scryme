@@ -7,13 +7,9 @@ import {
 import { Reflector } from "@nestjs/core";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "../redis/redis.service";
-import { ZitadelCustomerService } from "../zitadel/zitadel-customer.service";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
 import { V2ApiContext } from "@repo/shared/api/v2";
 import { ROLE_PERMISSIONS } from "@repo/shared/api/v2";
 import { validateDeviceKey, verifyMemberToken } from "@repo/shared/api/v2";
-import { verifyZitadelJwt } from "@repo/shared/api/v2";
 import { ALLOW_PUBLIC_KEY } from "../common/decorators/auth.decorator";
 import { db } from "@repo/db";
 import { env } from "@repo/env";
@@ -24,8 +20,6 @@ export class V2AuthGuard implements CanActivate {
     private reflector: Reflector,
     private prisma: PrismaService,
     private redis: RedisService,
-    private zitadelCustomer: ZitadelCustomerService,
-    @InjectQueue("zitadel-sync") private zitadelSyncQueue: Queue,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -107,89 +101,28 @@ export class V2AuthGuard implements CanActivate {
       } catch (err) {}
     }
 
-    // 3. Authenticate Bearer (Zitadel or OAuth)
-    let bearerAuth = null;
-    const authHeader = request.headers["authorization"];
-    if (authHeader?.startsWith("Bearer ")) {
-      const token = authHeader.substring(7);
-      const zitadelDomain = env.ZITADEL_DOMAIN;
-      const zitadelAudience = env.ZITADEL_CLIENT_ID;
-
-      if (zitadelDomain && zitadelAudience) {
-        try {
-          const zitadelPayload = await verifyZitadelJwt(
-            token,
-            this.redis,
-            zitadelDomain,
-            zitadelAudience,
-          );
-          const zitadelOrgId = zitadelPayload["urn:zitadel:iam:org:id"];
-          if (zitadelPayload && zitadelOrgId) {
-            const cfg =
-              await this.prisma.client.zitadelConfiguration.findUnique({
-                where: { zitadelOrgId: zitadelOrgId },
-                select: { organizationId: true, isActive: true },
-              });
-            if (cfg?.isActive) {
-              // Offload sync to queue for high traffic
-              await this.zitadelSyncQueue.add("sync", {
-                organizationId: cfg.organizationId,
-                zitadelUserId: zitadelPayload.sub,
-                jwtPayload: zitadelPayload,
-              });
-
-              // Try to get existing mapping immediately if available, without waiting for full sync
-              const mapping = await db.externalMapping.findFirst({
-                where: {
-                  organizationId: cfg.organizationId,
-                  provider: "ZITADEL",
-                  externalId: zitadelPayload.sub,
-                  entityType: "CRM_RECORD",
-                },
-              });
-
-              bearerAuth = {
-                organizationId: cfg.organizationId,
-                zitadelUserId: zitadelPayload.sub,
-                customerId: mapping?.internalId,
-                scopes: (zitadelPayload.scope ?? "").split(" ").filter(Boolean),
-                authType: "zitadel" as const,
-                jwtPayload: zitadelPayload,
-              };
-            }
-          }
-        } catch (err) {}
-      }
-    }
-
     let authType: V2ApiContext["authType"] = "device";
     if (deviceAuth && memberAuth) {
       authType = "hybrid";
     } else if (memberAuth) {
       authType = "member";
-    } else if (bearerAuth) {
-      authType = bearerAuth.authType;
     }
 
     request.v2Context = {
       organizationId:
         deviceAuth?.organizationId ||
         memberAuth?.organizationId ||
-        bearerAuth?.organizationId ||
         "",
       deviceId: deviceAuth?.deviceId,
       locationId: deviceAuth?.locationId,
       memberId: memberAuth?.memberId,
       memberName: memberAuth?.memberName,
-      zitadelUserId: bearerAuth?.zitadelUserId,
-      customerId: bearerAuth?.customerId,
       authType,
       permissions: [
         ...(deviceAuth?.permissions || []),
         ...(memberAuth?.permissions || []),
       ],
-      scopes: bearerAuth?.scopes || [],
-      jwtPayload: bearerAuth?.jwtPayload,
+      scopes: [],
       correlationId,
       ipAddress,
       userAgent,

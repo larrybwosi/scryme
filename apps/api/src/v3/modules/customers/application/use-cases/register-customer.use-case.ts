@@ -9,7 +9,6 @@ import { ICustomerRepository } from "../../domain/repositories/customer-reposito
 import { RegisterCustomerDto } from "../dto/register-customer.dto";
 import { Customer } from "../../domain/entities/customer.entity";
 import { PrismaService } from "@/prisma/prisma.service";
-import { ZitadelService } from "@repo/zitadel";
 import { randomUUID } from "crypto";
 import { emitCustomerCreated } from "@repo/windmill/server";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
@@ -34,15 +33,22 @@ export class RegisterCustomerUseCase {
       `Registering customer for organization ${organizationId}: ${dto.email}`,
     );
 
-    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
-    if (dto.zitadelUserId) {
-      if (authStrategy === "LOCAL") {
-        throw new BadRequestException("Zitadel registration is disabled under the LOCAL auth strategy");
-      }
-      await this.verifyZitadelUser(organizationId, dto.zitadelUserId);
-    }
-
     const result = await this.prisma.client.$transaction(async (tx) => {
+      let internalId: string;
+      const cleanEmail = dto.email?.trim() || null;
+      if (cleanEmail) {
+        const existing = await tx.customer.findFirst({
+          where: {
+            organizationId,
+            email: cleanEmail,
+          },
+          select: { id: true },
+        });
+        internalId = existing ? existing.id : randomUUID();
+      } else {
+        internalId = randomUUID();
+      }
+
       // Security: Check if customer with this email already exists in this organization
       const existingCustomer = await tx.customer.findUnique({
         where: {
@@ -52,30 +58,6 @@ export class RegisterCustomerUseCase {
           },
         },
       });
-
-      let internalId: string;
-      if (dto.zitadelUserId) {
-        internalId = await this.getOrCreateInternalMapping(
-          tx,
-          organizationId,
-          dto.zitadelUserId,
-          dto.email,
-        );
-      } else {
-        const cleanEmail = dto.email?.trim() || null;
-        if (cleanEmail) {
-          const existing = await tx.customer.findFirst({
-            where: {
-              organizationId,
-              email: cleanEmail,
-            },
-            select: { id: true },
-          });
-          internalId = existing ? existing.id : randomUUID();
-        } else {
-          internalId = randomUUID();
-        }
-      }
 
       if (existingCustomer && existingCustomer.id !== internalId) {
         throw new BadRequestException(
@@ -180,78 +162,6 @@ export class RegisterCustomerUseCase {
     );
   }
 
-  private async verifyZitadelUser(organizationId: string, zitadelUserId: string) {
-    // 1. Check if Zitadel is provisioned/connected for this organization
-    const config = await this.prisma.client.zitadelConfiguration.findUnique({
-      where: { organizationId },
-    });
-
-    if (!config || config.connectionStatus !== "CONNECTED") {
-      this.logger.warn(
-        `Zitadel is not connected/provisioned for organization ${organizationId}. Proceeding with local registration fallback.`
-      );
-      return;
-    }
-
-    const zitadelSvc = new ZitadelService();
-    try {
-      const user = await zitadelSvc.getUser(zitadelUserId);
-      if (!user) {
-        throw new NotFoundException(
-          `Zitadel user with ID ${zitadelUserId} not found`,
-        );
-      }
-    } catch (e) {
-      this.logger.warn(
-        `Failed to verify Zitadel user ${zitadelUserId} for organization ${organizationId}: ${e instanceof Error ? e.message : String(e)}. Falling back to local registration.`
-      );
-    }
-  }
-
-  private async getOrCreateInternalMapping(
-    tx: any,
-    organizationId: string,
-    zitadelUserId: string,
-    email?: string,
-  ) {
-    const mapping = await tx.externalMapping.findFirst({
-      where: {
-        organizationId,
-        provider: "ZITADEL",
-        externalId: zitadelUserId,
-        entityType: "CUSTOMER",
-      },
-    });
-
-    if (mapping) return mapping.internalId!;
-
-    let internalId = randomUUID();
-
-    // If a customer already exists with the same email in the organization, reuse their ID
-    const cleanEmail = email?.trim() || null;
-    if (cleanEmail && tx.customer?.findFirst) {
-      const existingCustomer = await tx.customer.findFirst({
-        where: {
-          organizationId,
-          email: cleanEmail,
-        },
-      });
-      if (existingCustomer) {
-        internalId = existingCustomer.id;
-      }
-    }
-
-    await tx.externalMapping.create({
-      data: {
-        organizationId,
-        internalId,
-        externalId: zitadelUserId,
-        provider: "ZITADEL",
-        entityType: "CUSTOMER",
-      },
-    });
-    return internalId;
-  }
 
   private async upsertCustomer(
     tx: any,

@@ -24,7 +24,6 @@ import {
   RegisterCustomerSchema,
   UpdateCustomerSchema,
   AddressSchema,
-  ProvisionZitadelSchema,
   CustomerLoginSchema,
 } from "../../application/dto/customer.schema";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
@@ -36,12 +35,10 @@ import { ManageAddressesUseCase } from "../../application/use-cases/manage-addre
 import {
   RegisterCustomerDto,
   AddressDto,
-  ProvisionZitadelDto,
   CustomerLoginDto,
 } from "../../application/dto/register-customer.dto";
 import { UpdateCustomerDto } from "../../application/dto/update-customer.dto";
 import { PrismaService } from "@/prisma/prisma.service";
-import { ZitadelService } from "@repo/zitadel";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { AuditInterceptor } from "../../../../common/interceptors/audit.interceptor";
@@ -77,101 +74,6 @@ export class CustomerController {
     private readonly redis: RedisService,
   ) {}
 
-  @Post("zitadel/provision")
-  @Permissions("customer:update")
-  @UsePipes(new V3ZodValidationPipe(ProvisionZitadelSchema))
-  @ApiOperation({
-    summary:
-      "Provision Zitadel connection with one click for this organization",
-    operationId: "Customers_ProvisionZitadel",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Zitadel provisioned and connected successfully",
-  })
-  @ApiResponse({
-    status: 400,
-    type: ApiErrorResponseDto,
-    description: "Invalid input",
-  })
-  @ApiResponse({
-    status: 401,
-    type: ApiErrorResponseDto,
-    description: "Unauthorized",
-  })
-  async provisionZitadel(@Req() req: any, @Body() dto: ProvisionZitadelDto) {
-    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
-    if (authStrategy === "LOCAL") {
-      throw new BadRequestException("Zitadel provisioning is disabled under the LOCAL auth strategy");
-    }
-
-    const org = req.organization;
-    const redirectUris = dto.redirectUris || [
-      "http://localhost:3000/api/auth/callback/zitadel",
-    ];
-    const postLogoutRedirectUris = dto.postLogoutRedirectUris || [
-      "http://localhost:3000",
-    ];
-
-    const zitadelSvc = new ZitadelService();
-
-    try {
-      const provisionResult = await zitadelSvc.provisionOrganization(
-        org.name,
-        org.slug,
-        redirectUris,
-        postLogoutRedirectUris,
-      );
-
-      const updatedConfig =
-        await this.prisma.client.zitadelConfiguration.upsert({
-          where: { organizationId: org.id },
-          update: {
-            zitadelOrgId: provisionResult.zitadelOrgId,
-            zitadelProjectId: provisionResult.zitadelProjectId,
-            zitadelAppId: provisionResult.zitadelAppId,
-            connectionStatus: "CONNECTED",
-            connectionError: null,
-            lastTestedAt: new Date(),
-          },
-          create: {
-            organizationId: org.id,
-            zitadelOrgId: provisionResult.zitadelOrgId,
-            zitadelProjectId: provisionResult.zitadelProjectId,
-            zitadelAppId: provisionResult.zitadelAppId,
-            connectionStatus: "CONNECTED",
-            connectionError: null,
-            lastTestedAt: new Date(),
-          },
-        });
-
-      return {
-        success: true,
-        message: "Zitadel organization provisioned successfully",
-        clientId: provisionResult.clientId,
-        clientSecret: provisionResult.clientSecret,
-        config: updatedConfig,
-      };
-    } catch (error: any) {
-      await this.prisma.client.zitadelConfiguration.upsert({
-        where: { organizationId: org.id },
-        update: {
-          connectionStatus: "ERROR",
-          connectionError: error.message || String(error),
-          lastTestedAt: new Date(),
-        },
-        create: {
-          organizationId: org.id,
-          connectionStatus: "ERROR",
-          connectionError: error.message || String(error),
-          lastTestedAt: new Date(),
-        },
-      });
-
-      throw error;
-    }
-  }
-
   @Get()
   @Permissions("customer:read")
   @ApiOperation({
@@ -202,7 +104,7 @@ export class CustomerController {
   @AllowPublic()
   @UsePipes(new V3ZodValidationPipe(RegisterCustomerSchema))
   @ApiOperation({
-    summary: "Register a new customer (Zitadel)",
+    summary: "Register a new customer",
     operationId: "Customers_Register",
   })
   @ApiResponse({
@@ -221,11 +123,6 @@ export class CustomerController {
     description: "Unauthorized",
   })
   async register(@Req() req: any, @Body() dto: RegisterCustomerDto) {
-    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
-    if (authStrategy === "ZITADEL" && dto.password) {
-      throw new BadRequestException("Local registration (with password) is disabled under the ZITADEL auth strategy");
-    }
-
     const contextInfo = req.v3Context
       ? {
           authType: req.v3Context.authType,
@@ -257,10 +154,6 @@ export class CustomerController {
     description: "Invalid credentials",
   })
   async login(@Req() req: any, @Body() dto: CustomerLoginDto) {
-    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
-    if (authStrategy === "ZITADEL") {
-      throw new UnauthorizedException("Local login is disabled under the ZITADEL auth strategy");
-    }
 
     const orgId = req.organization.id;
 

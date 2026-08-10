@@ -128,7 +128,6 @@ model Organization {
   taxFilings             TaxFiling[]
   integrations           OrganizationIntegration[]
   hulyConfiguration      HulyConfiguration?
-  zitadelConfiguration   ZitadelConfiguration?
   notificationTemplates      NotificationTemplate[]
   notificationDispatches     NotificationDispatch[]
   notificationChannelConfigs NotificationChannelConfig[]
