@@ -5,7 +5,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ["dist", "node_modules", "test", "**/generated/**"],
+    ignores: ["dist", "node_modules", "test", "**/generated/**", "**/generated-client/**"],
   },
   {
     files: ["**/*.ts"],

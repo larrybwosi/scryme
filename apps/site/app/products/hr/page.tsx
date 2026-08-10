@@ -16,21 +16,18 @@ import { IndexGrid } from "@/components/products/index-grid";
 import { LedgerCardGrid } from "@/components/products/ledger-card-grid";
 import { StructuredData } from "@/components/seo/structured-data";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "HR & Workforce Management Software — Unified Employee Records",
-  description:
-    "Scryme HR manages payroll, workforce attendance, compliance, and employee schedules, syncing human capital costs directly into the Finance ledger.",
-  alternates: {
-    canonical: "/products/hr",
-  },
-  openGraph: {
-    title: "Scryme HR — Integrated Employee Records",
-    description:
-      "Manage payroll, workforce attendance, compliance, and schedules in one place.",
-    url: "https://scryme.tech/products/hr",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getHomePageContent();
+  const moduleData = content.modules?.find((m) => m.code === "HR" || m.href?.endsWith("/hr"));
+  return getPageMetadata({
+    pageSeo: moduleData?.seo,
+    fallbackTitle: "HR & Workforce Management Software — Unified Employee Records",
+    fallbackDescription: "Scryme HR manages payroll, workforce attendance, compliance, and employee schedules, syncing human capital costs directly into the Finance ledger.",
+    canonicalPath: "/products/hr",
+  });
+}
 
 const capabilities = [
   { icon: Users, label: "Unified Employee Profiles" },

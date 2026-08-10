@@ -9,6 +9,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { ModuleRef, Reflector } from "@nestjs/core";
 import { ALLOW_PUBLIC_KEY } from "@/common/decorators/auth.decorator";
 import { AuthService } from "@/auth/auth.service";
+import { CustomerAuthService } from "@/customer-auth/customer-auth.service";
 import { env } from "@repo/env";
 import { RedisService } from "@/redis/redis.service";
 
@@ -134,62 +135,62 @@ export class V3AuthGuard implements CanActivate {
       }
     }
 
-    // 3. Try Customer Auth Microservice (Better Auth) session verification
+    // 3. Try Customer Auth (Better Auth) session verification in-process
     if (!payload) {
       try {
-        const authServiceUrl = process.env.CUSTOMER_AUTH_URL || "http://localhost:4001";
-        const response = await fetch(`${authServiceUrl}/api/auth/session`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const customerAuthService = this.moduleRef.get(CustomerAuthService, { strict: false });
+        if (customerAuthService) {
+          const headers = new Headers();
+          headers.set("authorization", `Bearer ${token}`);
+          const session = await customerAuthService.auth.api.getSession({
+            headers,
+          });
 
-        if (response.ok) {
-          const sessionData = await response.json();
-          const user = sessionData.user;
-
-          const targetOrgId = organization?.id;
-          if (targetOrgId && user) {
-            // Try Better Auth external mapping
-            const mapping = await this.prisma.client.externalMapping.findFirst({
-              where: {
-                organizationId: targetOrgId,
-                provider: "BETTER_AUTH",
-                externalId: user.id,
-                entityType: "CUSTOMER",
-              },
-            });
-
-            let customerId = mapping?.internalId;
-            let customer = null;
-
-            if (customerId) {
-              customer = await this.prisma.client.customer.findUnique({
-                where: { id: customerId },
-              });
-            }
-
-            if (!customer && user.email) {
-              customer = await this.prisma.client.customer.findUnique({
+          if (session) {
+            const user = session.user;
+            const targetOrgId = organization?.id;
+            if (targetOrgId && user) {
+              // Try Better Auth external mapping
+              const mapping = await this.prisma.client.externalMapping.findFirst({
                 where: {
-                  organizationId_email: {
-                    organizationId: targetOrgId,
-                    email: user.email,
-                  },
+                  organizationId: targetOrgId,
+                  provider: "BETTER_AUTH",
+                  externalId: user.id,
+                  entityType: "CUSTOMER",
                 },
               });
-            }
 
-            if (customer) {
-              payload = {
-                type: "v3_customer",
-                customerId: customer.id,
-                customerEmail: customer.email,
-                customerName: customer.name,
-                organizationId: targetOrgId,
-                clientId: null,
-                scopes: [],
-              };
+              const customerId = mapping?.internalId;
+              let customer = null;
+
+              if (customerId) {
+                customer = await this.prisma.client.customer.findUnique({
+                  where: { id: customerId },
+                });
+              }
+
+              if (!customer && user.email) {
+                customer = await this.prisma.client.customer.findUnique({
+                  where: {
+                    organizationId_email: {
+                      organizationId: targetOrgId,
+                      email: user.email,
+                    },
+                  },
+                });
+              }
+
+              if (customer) {
+                payload = {
+                  type: "v3_customer",
+                  customerId: customer.id,
+                  customerEmail: customer.email,
+                  customerName: customer.name,
+                  organizationId: targetOrgId,
+                  clientId: null,
+                  scopes: [],
+                };
+              }
             }
           }
         }

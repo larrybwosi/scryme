@@ -11,6 +11,7 @@ import { MercuriusDriver, MercuriusDriverConfig } from "@nestjs/mercurius";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
+import { CustomerAuthModule } from "./customer-auth/customer-auth.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { RedisModule } from "./redis/redis.module";
 import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
@@ -65,6 +66,7 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
     PrismaModule,
     RedisModule,
     AuthModule,
+    CustomerAuthModule,
     V2Module,
     V3Module,
     AndroidModule,

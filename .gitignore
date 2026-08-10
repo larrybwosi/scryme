@@ -47,3 +47,7 @@ apps/android/.gradle/
 apps/android/app/build/
 apps/android/build/
 local.properties
+
+# customer-auth sqlite & generated-client
+apps/api/src/customer-auth/prisma/generated-client
+apps/api/src/customer-auth/prisma/*.db
