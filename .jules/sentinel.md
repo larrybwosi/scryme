@@ -276,3 +276,8 @@
 **Vulnerability:** The V3 customer session list endpoint (`GET /auth/sessions`) was returning raw active JWT tokens for all active customer sessions in the response payload, exposing active user credentials.
 **Learning:** Returning full session state payloads directly from storage (like Redis) without explicit normalization or serialization filters risks leaking highly sensitive credentials like JWT authentication tokens. Listing active sessions should only expose session metadata (such as device agent, IP, creation time, status) and must omit the credentials themselves.
 **Prevention:** Always perform strict attribute sanitization or destructuring on session data retrieved from database/cache layers before returning it to the client. Specifically omit sensitive authentication properties like `token` or secret keys.
+
+## 2026-08-10 - timing side-channels in V3 member login cardId lookup
+**Vulnerability:** The V3 member login flow performed cardId lookup using `prisma.client.member.findUnique` but only executed the cryptographically expensive `bcrypt.compare` PIN verification if a matching active member was found in the database. This created a timing side-channel that allowed attackers to enumerate valid active card IDs.
+**Learning:** Performing existence or active status checks and skipping cryptographic password/PIN validation on failure leaks the existence of that record via response timing. Consistent execution times must be maintained across both successful and failing lookups.
+**Prevention:** Always perform a dummy `bcrypt.compare` against a valid placeholder hash string when a record lookup or active check fails, ensuring synchronization of timing and lockout logic on all execution paths.
