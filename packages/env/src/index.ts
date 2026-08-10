@@ -24,6 +24,7 @@ const serverSchema = z.object({
   ),
   DATABASE_POOL_SIZE: z.string().optional(),
   PORT: z.coerce.number().default(3001),
+  CUSTOMER_DB: z.string().optional(),
 
   // Auth
   BETTER_AUTH_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
@@ -33,6 +34,11 @@ const serverSchema = z.object({
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 
+  // Customer Auth
+  CUSTOMER_BETTER_AUTH_SECRET: z.string().optional(),
+  CUSTOMER_GOOGLE_CLIENT_ID: z.string().optional(),
+  CUSTOMER_GOOGLE_CLIENT_SECRET: z.string().optional(),
+
   // Redis
   REDIS_HOST: z.string().default("localhost"),
   REDIS_PORT: z.coerce.number().default(6379),
@@ -40,6 +46,16 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   USE_IOREDIS_IN_PROD: z.coerce.boolean().default(false),
+
+  // RabbitMQ
+  RABBITMQ_HOST: z.string().optional(),
+  RABBITMQ_PORT: z.coerce.number().optional(),
+  RABBITMQ_USER: z.string().optional(),
+  RABBITMQ_PASSWORD: z.string().optional(),
+  RABBITMQ_URL: z
+    .string()
+    .optional()
+    .default("amqp://admin:adminpassword@rabbitmq:5672"),
 
   // API
   JWT_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
@@ -110,6 +126,11 @@ const serverSchema = z.object({
   SCRYME_CHAT_CLIENT_SECRET: z.string().optional(),
   SCRYME_SYSTEM_WORKSPACE_SLUG: z.string().optional(),
   SCRYME_SYSTEM_CHANNEL_SLUG: z.string().optional(),
+
+  // Customer Auth Strategy
+  CUSTOMER_AUTH_STRATEGY: z
+    .enum(["LOCAL", "ZITADEL", "HYBRID"])
+    .default("HYBRID"),
 });
 
 const clientSchema = z.object({
@@ -228,6 +249,7 @@ function getRawEnv() {
     // Server
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
+    CUSTOMER_DB: process.env.CUSTOMER_DB,
     DATABASE_POOL_SIZE: process.env.DATABASE_POOL_SIZE,
     PORT: process.env.PORT,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
@@ -256,6 +278,12 @@ function getRawEnv() {
     GITHUB_OWNER: process.env.GITHUB_OWNER,
     GITHUB_REPO: process.env.GITHUB_REPO,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+
+    // Customer Auth
+    CUSTOMER_BETTER_AUTH_SECRET: process.env.CUSTOMER_BETTER_AUTH_SECRET,
+    CUSTOMER_GOOGLE_CLIENT_ID: process.env.CUSTOMER_GOOGLE_CLIENT_ID,
+    CUSTOMER_GOOGLE_CLIENT_SECRET: process.env.CUSTOMER_GOOGLE_CLIENT_SECRET,
+
     // Storage Configuration
     STORAGE_PROVIDER: process.env.STORAGE_PROVIDER,
     // Sanity Configuration
@@ -288,6 +316,7 @@ function getRawEnv() {
     SCRYME_CHAT_CLIENT_SECRET: process.env.SCRYME_CHAT_CLIENT_SECRET,
     SCRYME_SYSTEM_WORKSPACE_SLUG: process.env.SCRYME_SYSTEM_WORKSPACE_SLUG,
     SCRYME_SYSTEM_CHANNEL_SLUG: process.env.SCRYME_SYSTEM_CHANNEL_SLUG,
+    CUSTOMER_AUTH_STRATEGY: process.env.CUSTOMER_AUTH_STRATEGY,
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,

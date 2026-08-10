@@ -246,5 +246,23 @@ describe("BakeryService", () => {
         }),
       );
     });
+
+    it("should ignore status filter when status is set to 'all'", async () => {
+      const ctx = { organizationId: "org-1" } as any;
+      const query = { status: "all", recipeId: "r1" };
+
+      mockPrisma.client.batch.findMany.mockResolvedValue([]);
+
+      await service.getBatches(ctx, query);
+
+      expect(mockPrisma.client.batch.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            organizationId: "org-1",
+            recipeId: "r1",
+          },
+        }),
+      );
+    });
   });
 });

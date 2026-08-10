@@ -54,7 +54,7 @@ export function SegmentForm({ onSuccess }: SegmentFormProps) {
           name="name"
           render={({ field }: { field: any }) => (
             <FormItem>
-              <FormLabel>Segment Name</FormLabel>
+              <FormLabel>Segment Name <span className="text-destructive">*</span></FormLabel>
               <FormControl>
                 <Input placeholder="High Value Customers" {...field} />
               </FormControl>

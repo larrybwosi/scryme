@@ -44,6 +44,15 @@ describe("CreateOrderUseCase", () => {
           create: vi.fn(),
           update: vi.fn(),
         },
+        service: {
+          findMany: vi.fn(),
+        },
+        transactionServiceItem: {
+          create: vi.fn(),
+        },
+        serviceBooking: {
+          update: vi.fn(),
+        },
       },
     };
     mockRealtime = {
@@ -107,5 +116,81 @@ describe("CreateOrderUseCase", () => {
     const result = await useCase.execute("org-123", dto, "member-123");
     expect(result).toBeDefined();
     expect(result.id).toBe("test-id");
+  });
+
+  it("should succeed and process service checkouts concurrently when services are provided", async () => {
+    const dto: CreateOrderDto = {
+      customerId: "cust-123",
+      locationId: "loc-123",
+      services: [
+        {
+          serviceId: "srv-1",
+          scheduledStartTime: "2026-08-09T10:00:00Z",
+        },
+        {
+          serviceId: "srv-2",
+          scheduledStartTime: "2026-08-09T11:00:00Z",
+        },
+      ],
+    };
+
+    mockPrisma.client.transaction.create.mockResolvedValue({
+      id: "tx-123",
+      number: "ORD-999",
+      subtotal: 0,
+      taxTotal: 0,
+    });
+
+    mockPrisma.client.service.findMany.mockResolvedValue([
+      {
+        id: "srv-1",
+        name: "Service One",
+        price: 50,
+        sku: "S1",
+        taxRates: [
+          {
+            taxRate: {
+              rate: 0.16,
+            },
+          },
+        ],
+      },
+      {
+        id: "srv-2",
+        name: "Service Two",
+        price: 150,
+        sku: "S2",
+        taxRates: [],
+      },
+    ]);
+
+    mockBooking.createBooking.mockImplementation((orgId, input) => {
+      return Promise.resolve({ id: `booking-${input.serviceId}` });
+    });
+
+    mockPrisma.client.transaction.update.mockResolvedValue({
+      id: "tx-123",
+      finalTotal: 208, // 50 + 150 + 8 (tax of srv-1)
+    });
+
+    const result = await useCase.execute("org-123", dto, "member-123");
+
+    expect(result.finalTotal).toBe(208);
+    expect(mockPrisma.client.service.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["srv-1", "srv-2"] },
+        organizationId: "org-123",
+      },
+      include: {
+        taxRates: {
+          include: {
+            taxRate: true,
+          },
+        },
+      },
+    });
+    expect(mockBooking.createBooking).toHaveBeenCalledTimes(2);
+    expect(mockPrisma.client.transactionServiceItem.create).toHaveBeenCalledTimes(2);
+    expect(mockPrisma.client.serviceBooking.update).toHaveBeenCalledTimes(2);
   });
 });

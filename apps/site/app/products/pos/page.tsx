@@ -26,21 +26,18 @@ import { PosOfflineMock } from "@/components/products/pos/pos-offline-mock";
 import { PosInventorySyncMock } from "@/components/products/pos/pos-inventory-sync-mock";
 import { PosDownloadSection } from "@/components/products/pos/pos-download-section";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Offline-First POS System for Retail & Wholesale",
-  description:
-    "Scryme POS is a desktop-class point-of-sale built on Tauri, designed for high-volume retail and wholesale with full offline support. Keep selling even without internet.",
-  alternates: {
-    canonical: "/products/pos",
-  },
-  openGraph: {
-    title: "Scryme POS — Native Desktop Point of Sale",
-    description:
-      "A fast, reliable checkout experience that never depends on the internet. Built with Tauri and React.",
-    url: "https://scryme.tech/products/pos",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getHomePageContent();
+  const moduleData = content.modules?.find((m) => m.code === "POS" || m.href?.endsWith("/pos"));
+  return getPageMetadata({
+    pageSeo: moduleData?.seo,
+    fallbackTitle: "Offline-First POS System for Retail & Wholesale",
+    fallbackDescription: "Scryme POS is a desktop-class point-of-sale built on Tauri, designed for high-volume retail and wholesale with full offline support. Keep selling even without internet.",
+    canonicalPath: "/products/pos",
+  });
+}
 
 const capabilities = [
   { icon: Monitor, label: "Desktop App (Tauri)" },

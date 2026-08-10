@@ -25,11 +25,15 @@ import { PageHeader } from "../../components/page-header";
 
 export default async function FinanceDashboard() {
   const auth = await getServerAuth();
-  const stats = await getFinanceOverview();
-  const organization = await db.organization.findUnique({
-    where: { id: auth?.organizationId },
-    include: { settings: true },
-  });
+  // ⚡ Bolt Optimization: Parallelize fetching of stats and organization details using Promise.all
+  // to avoid blocking page rendering on sequential backend/database queries.
+  const [stats, organization] = await Promise.all([
+    getFinanceOverview(),
+    db.organization.findUnique({
+      where: { id: auth?.organizationId },
+      include: { settings: true },
+    }),
+  ]);
 
   const sections = [
     {

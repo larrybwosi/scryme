@@ -674,6 +674,86 @@ export async function getOrgCustomRoles() {
   return { success: true, data: roles };
 }
 
+export async function createCustomRoleAction(data: {
+  name: string;
+  description: string;
+  permissions: string[];
+}) {
+  const session = await getServerAuth();
+  if (!session || !session.organizationId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const role = await db.customRole.create({
+      data: {
+        organizationId: session.organizationId,
+        name: data.name,
+        description: data.description,
+        permissions: data.permissions,
+        isActive: true,
+      },
+    });
+
+    revalidatePath("/staff");
+    return { success: true, data: role };
+  } catch (error: any) {
+    console.error("Error creating custom role:", error);
+    return { success: false, error: error.message || "Failed to create custom role" };
+  }
+}
+
+export async function updateCustomRoleAction(
+  id: string,
+  data: {
+    name: string;
+    description: string;
+    permissions: string[];
+  },
+) {
+  const session = await getServerAuth();
+  if (!session || !session.organizationId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const role = await db.customRole.update({
+      where: { id, organizationId: session.organizationId },
+      data: {
+        name: data.name,
+        description: data.description,
+        permissions: data.permissions,
+      },
+    });
+
+    revalidatePath("/staff");
+    return { success: true, data: role };
+  } catch (error: any) {
+    console.error("Error updating custom role:", error);
+    return { success: false, error: error.message || "Failed to update custom role" };
+  }
+}
+
+export async function deleteCustomRoleAction(id: string) {
+  const session = await getServerAuth();
+  if (!session || !session.organizationId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    await db.customRole.update({
+      where: { id, organizationId: session.organizationId },
+      data: { isActive: false },
+    });
+
+    revalidatePath("/staff");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting custom role:", error);
+    return { success: false, error: error.message || "Failed to delete custom role" };
+  }
+}
+
 export async function updateMemberCustomRoles(
   memberId: string,
   roleIds: string[],

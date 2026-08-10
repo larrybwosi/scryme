@@ -23,7 +23,6 @@
     "@repo/shared": "workspace:^",
     "@repo/ui": "workspace:*",
     "@repo/windmill": "workspace:*",
-    "@repo/zitadel": "workspace:*",
     "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.3.3",
     "argon2": "^0.44.0",

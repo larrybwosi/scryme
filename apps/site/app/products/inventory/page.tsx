@@ -19,21 +19,18 @@ import { InventoryStockStub } from "@/components/products/inventory/inventory-st
 import { InventoryStockMock } from "@/components/products/inventory/inventory-stock-mock";
 import { InventoryForecastMock } from "@/components/products/inventory/inventory-forecast-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Multi-Location Inventory Management Software",
-  description:
-    "Scryme Inventory gives multi-location businesses real-time stock visibility, automated reorder triggers, and intelligent demand forecasting.",
-  alternates: {
-    canonical: "/products/inventory",
-  },
-  openGraph: {
-    title: "Scryme Inventory — Real-time Stock Control",
-    description:
-      "Track every SKU across warehouses and stores. Eliminate stockouts with data-driven reorder automation.",
-    url: "https://scryme.tech/products/inventory",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getHomePageContent();
+  const moduleData = content.modules?.find((m) => m.code === "INV" || m.href?.endsWith("/inventory"));
+  return getPageMetadata({
+    pageSeo: moduleData?.seo,
+    fallbackTitle: "Multi-Location Inventory Management Software",
+    fallbackDescription: "Scryme Inventory gives multi-location businesses real-time stock visibility, automated reorder triggers, and intelligent demand forecasting.",
+    canonicalPath: "/products/inventory",
+  });
+}
 
 const capabilities = [
   { icon: Package, label: "Multi-location Stock" },

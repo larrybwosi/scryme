@@ -19,9 +19,11 @@ describe("ScrymeService", () => {
       },
       windmillExecution: {
         create: vi.fn(),
+        findFirst: vi.fn(),
       },
       approvalDecision: {
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
       department: {
         findFirst: vi.fn(),
@@ -94,6 +96,66 @@ describe("ScrymeService", () => {
       ).rejects.toThrow(BadRequestException);
 
       delete process.env.SCRYME_WEBHOOK_SECRET;
+    });
+
+    it("should prevent cross-tenant IDOR for approve decision actions", async () => {
+      const decisionPayload = {
+        event: "message.action",
+        data: {
+          workspaceSlug: "org-test",
+          action: { id: "approve:dec-123", value: "dec-123" },
+          message: { id: "msg-1" },
+          user: { email: "approver@test.com" },
+        },
+      };
+
+      // Mock configuration lookup
+      mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
+        organizationId: "org-1", // Webhook belongs to org-1
+        organization: {
+          windmillConfiguration: { id: "wm-1" },
+        },
+      });
+
+      // Mock decision lookup with a mismatching organizationId
+      // In real scenario, findFirst would return null because of the relation filter
+      mockPrisma.client.approvalDecision.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.handleWebhook("", decisionPayload),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("should prevent cross-tenant IDOR for Windmill execution resume actions", async () => {
+      const resumePayload = {
+        event: "message.action",
+        data: {
+          workspaceSlug: "org-test",
+          action: { id: "wm_resume:job-123", value: "token-abc" },
+          message: { id: "msg-1", channelSlug: "notifications" },
+          user: { id: "user-1", name: "User 1" },
+        },
+      };
+
+      mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
+        organizationId: "org-1", // Webhook belongs to org-1
+        organization: {
+          windmillConfiguration: { id: "wm-1" },
+        },
+      });
+
+      // Mock execution findFirst to return null because of different organizationId
+      mockPrisma.client.windmillExecution.findFirst.mockResolvedValue(null);
+
+      // Mock updateMessage on scrymeClient
+      vi.spyOn(service["scrymeClient"], "updateMessage").mockResolvedValue({} as any);
+
+      const result = await service.handleWebhook("", resumePayload);
+      expect(result.status).toBe("success");
+      // Verify findFirst was called with the correct scoped organizationId
+      expect(mockPrisma.client.windmillExecution.findFirst).toHaveBeenCalledWith({
+        where: { jobId: "job-123", organizationId: "org-1" },
+      });
     });
   });
 

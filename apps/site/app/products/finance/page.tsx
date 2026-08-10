@@ -20,21 +20,18 @@ import { FinancePlMock } from "@/components/products/finance/finance-pl-mock";
 import { FinanceInvoicesMock } from "@/components/products/finance/finance-invoices-mock";
 import { FinanceExpenseMock } from "@/components/products/finance/finance-expense-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Automated Finance & Accounting for Businesses",
-  description:
-    "Scryme Finance automates bookkeeping, invoicing, and financial reporting for retail and wholesale businesses — no accountant required for day-to-day operations.",
-  alternates: {
-    canonical: "/products/finance",
-  },
-  openGraph: {
-    title: "Scryme Finance — Automated Bookkeeping",
-    description:
-      "Connect POS, inventory, and CRM for automated Posting. Close your month in hours, not days.",
-    url: "https://scryme.tech/products/finance",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getHomePageContent();
+  const moduleData = content.modules?.find((m) => m.code === "FIN" || m.href?.endsWith("/finance"));
+  return getPageMetadata({
+    pageSeo: moduleData?.seo,
+    fallbackTitle: "Automated Finance & Accounting for Businesses",
+    fallbackDescription: "Scryme Finance automates bookkeeping, invoicing, and financial reporting for retail and wholesale businesses — no accountant required for day-to-day operations.",
+    canonicalPath: "/products/finance",
+  });
+}
 
 const capabilities = [
   { icon: FileText, label: "Invoicing & Billing" },

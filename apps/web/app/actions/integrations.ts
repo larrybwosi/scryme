@@ -3,7 +3,6 @@
 import { db as prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
-import { ZitadelService } from "@repo/zitadel";
 import { env } from "@repo/env";
 
 export async function getIntegrationsStatus() {
@@ -17,7 +16,6 @@ export async function getIntegrationsStatus() {
     include: {
       windmillConfiguration: true,
       hulyConfiguration: true,
-      zitadelConfiguration: true,
       planeConfiguration: true,
       scrymeConfiguration: true,
     },
@@ -50,11 +48,6 @@ export async function getIntegrationsStatus() {
             apiKey: org.hulyConfiguration.apiKey ? "••••••••" : null,
           }
         : null,
-    },
-    zitadel: {
-      connected: !!org.zitadelConfiguration,
-      config: org.zitadelConfiguration,
-      isGlobalAdminConfigured: !!env.ZITADEL_ADMIN_TOKEN,
     },
     plane: {
       connected: !!org.planeConfiguration,
@@ -96,62 +89,6 @@ export async function updateWindmillConfig(data: {
 
   revalidatePath("/integrations");
   return { success: true };
-}
-
-export async function provisionZitadel() {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId) {
-    throw new Error("Unauthorized");
-  }
-
-  const org = await prisma.organization.findUnique({
-    where: { id: context.organizationId },
-  });
-
-  if (!org) {
-    throw new Error("Organization not found");
-  }
-
-  const webUrl = env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
-  const crmUrl = env.NEXT_PUBLIC_CRM_URL || "https://crm.scryme.tech";
-
-  const redirectUris = [
-    "http://localhost:3000/api/auth/callback/zitadel",
-    `${webUrl}/api/auth/callback/zitadel`,
-    `${crmUrl}/api/auth/callback/zitadel`,
-  ];
-
-  const postLogoutRedirectUris = ["http://localhost:3000", webUrl, crmUrl];
-
-  const zitadelSvc = new ZitadelService();
-  const provisionResult = await zitadelSvc.provisionOrganization(
-    org.name,
-    org.slug,
-    redirectUris,
-    postLogoutRedirectUris,
-  );
-
-  await prisma.zitadelConfiguration.upsert({
-    where: { organizationId: context.organizationId },
-    update: {
-      zitadelOrgId: provisionResult.zitadelOrgId,
-      zitadelProjectId: provisionResult.zitadelProjectId,
-      zitadelAppId: provisionResult.zitadelAppId,
-      connectionStatus: "CONNECTED",
-      lastTestedAt: new Date(),
-    },
-    create: {
-      organizationId: context.organizationId,
-      zitadelOrgId: provisionResult.zitadelOrgId,
-      zitadelProjectId: provisionResult.zitadelProjectId,
-      zitadelAppId: provisionResult.zitadelAppId,
-      connectionStatus: "CONNECTED",
-      lastTestedAt: new Date(),
-    },
-  });
-
-  revalidatePath("/integrations");
-  return { success: true, config: provisionResult };
 }
 
 export async function provisionScryme() {
@@ -331,29 +268,6 @@ export async function updateHulyConfig(data: {
   }
 
   await prisma.hulyConfiguration.upsert({
-    where: { organizationId: context.organizationId },
-    update: data,
-    create: {
-      ...data,
-      organizationId: context.organizationId,
-    },
-  });
-
-  revalidatePath("/integrations");
-  return { success: true };
-}
-
-export async function updateZitadelConfig(data: {
-  zitadelOrgId?: string;
-  zitadelProjectId?: string;
-  zitadelAppId?: string;
-}) {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId) {
-    throw new Error("Unauthorized");
-  }
-
-  await prisma.zitadelConfiguration.upsert({
     where: { organizationId: context.organizationId },
     update: data,
     create: {

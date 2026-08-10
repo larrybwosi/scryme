@@ -4,6 +4,7 @@ import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LayoutContent } from "@/components/layout/layout-content";
 import "./globals.css";
+import { env } from "@repo/env";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -107,7 +108,8 @@ export default function RootLayout({
       "https://twitter.com/scryme",
       "https://linkedin.com/company/scryme",
     ],
-    description: "Scryme is the high-performance commerce and scale platform built to empower modern businesses. We combine integrated offline-first POS, multi-branch syncing, advanced stock management, and centralized corporate control with automated e-commerce storefront websites.",
+    description:
+      "Scryme is the high-performance commerce and scale platform built to empower modern businesses. We combine integrated offline-first POS, multi-branch syncing, advanced stock management, and centralized corporate control with automated e-commerce storefront websites.",
     contactPoint: {
       "@type": "ContactPoint",
       telephone: "+1-800-SCRYME",
@@ -142,7 +144,22 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className={`${inter.variable} bg-background`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} bg-background`}
+      suppressHydrationWarning
+    >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__ENV = {
+            NEXT_PUBLIC_SANITY_PROJECT_ID: ${JSON.stringify(process.env.NEXT_PUBLIC_SANITY_PROJECT_ID)},
+            NEXT_PUBLIC_SANITY_DATASET: ${JSON.stringify(process.env.NEXT_PUBLIC_SANITY_DATASET)},
+            NEXT_PUBLIC_API_URL: ${JSON.stringify(process.env.NEXT_PUBLIC_API_URL)}
+          };`,
+          }}
+        />
+      </head>
       <body className="font-sans antialiased text-foreground">
         <ThemeProvider>
           <StructuredData data={organizationData} />

@@ -1,6 +1,5 @@
 export * from './errors';
 export * from './services/auth.service';
-export * from './services/zitadel/jwks.service';
 export * from './types';
 export * from './utils/encryption';
 export * from './utils/crypto';

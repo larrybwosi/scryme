@@ -134,17 +134,17 @@ export class CreateOrderUseCase {
       // Map-based lookup for O(1) constant-time resolution.
       const serviceMap = new Map(services.map(s => [s.id, s]));
 
-      for (const srvInput of dto.services!) {
-        // Retrieve Service detail from Map
+      // ⚡ Bolt Optimization: Parallelize service booking creations.
+      // Launching scheduling for multiple booking service inputs concurrently via Promise.all.
+      // This collapses sequential blocking Cal.com/availability IO requests from O(N) to O(1).
+      const bookingPromises = dto.services!.map(async (srvInput) => {
         const service = serviceMap.get(srvInput.serviceId);
-
         if (!service) {
           throw new BadRequestException(
             `Service ${srvInput.serviceId} not found`,
           );
         }
 
-        // Schedule the booking slot
         const booking = await this.bookingService.createBooking(
           organizationId,
           {
@@ -160,37 +160,58 @@ export class CreateOrderUseCase {
         );
 
         const srvPrice = new Prisma.Decimal(service.price);
-        extraSubtotal = extraSubtotal.add(srvPrice);
-
-        // Compute Taxes
         let srvTax = new Prisma.Decimal(0);
         for (const tr of service.taxRates) {
           srvTax = srvTax.add(srvPrice.mul(tr.taxRate.rate));
         }
-        extraTaxTotal = extraTaxTotal.add(srvTax);
 
-        // Link Booking & create line item
-        await this.prisma.client.transactionServiceItem.create({
-          data: {
-            transactionId: transaction.id,
-            serviceId: service.id,
-            bookingId: booking.id,
-            serviceName: service.name,
-            sku: service.sku,
-            quantity: 1,
-            unitPrice: srvPrice,
-            subtotal: srvPrice,
-            taxAmount: srvTax,
-            lineTotal: srvPrice.add(srvTax),
-          },
-        });
+        return {
+          service,
+          booking,
+          srvPrice,
+          srvTax,
+        };
+      });
 
-        // Link ServiceBooking to Transaction
-        await this.prisma.client.serviceBooking.update({
-          where: { id: booking.id },
-          data: { transactionId: transaction.id },
-        });
+      const resolvedBookings = await Promise.all(bookingPromises);
+
+      // Assemble all write promises and calculate totals
+      const serviceItemCreates: Promise<any>[] = [];
+      const serviceBookingUpdates: Promise<any>[] = [];
+
+      for (const res of resolvedBookings) {
+        extraSubtotal = extraSubtotal.add(res.srvPrice);
+        extraTaxTotal = extraTaxTotal.add(res.srvTax);
+
+        // Defer database writes into concurrent promise arrays
+        serviceItemCreates.push(
+          this.prisma.client.transactionServiceItem.create({
+            data: {
+              transactionId: transaction.id,
+              serviceId: res.service.id,
+              bookingId: res.booking.id,
+              serviceName: res.service.name,
+              sku: res.service.sku,
+              quantity: 1,
+              unitPrice: res.srvPrice,
+              subtotal: res.srvPrice,
+              taxAmount: res.srvTax,
+              lineTotal: res.srvPrice.add(res.srvTax),
+            },
+          })
+        );
+
+        serviceBookingUpdates.push(
+          this.prisma.client.serviceBooking.update({
+            where: { id: res.booking.id },
+            data: { transactionId: transaction.id },
+          })
+        );
       }
+
+      // ⚡ Bolt Optimization: Batch write service items and service booking links.
+      // Executes all transactional creation and update operations in parallel, dropping round-trip latency to O(1).
+      await Promise.all([...serviceItemCreates, ...serviceBookingUpdates]);
 
       // Update Transaction totals
       const finalSubtotal = new Prisma.Decimal(transaction.subtotal).add(

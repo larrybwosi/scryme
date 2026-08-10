@@ -25,43 +25,6 @@ export async function getB2BProducts(orgSlug: string, query?: string) {
   return products;
 }
 
-export async function startZitadelSSO(orgSlug: string) {
-  const org = await db.organization.findUnique({
-    where: { slug: orgSlug },
-    include: { zitadelConfiguration: true }
-  });
-
-  if (!org) {
-    throw new Error("Organization not found");
-  }
-
-  const config = org.zitadelConfiguration;
-  if (!config || !config.isActive) {
-    throw new Error("Zitadel SSO is not configured or active for this organization.");
-  }
-
-  const zitadelDomain = env.ZITADEL_DOMAIN || "auth.scryme.tech";
-  const clientId = config.zitadelAppId || env.ZITADEL_CLIENT_ID || "mock-client-id";
-  const appUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3006";
-
-  const redirectUri = `${appUrl}/api/auth/callback/zitadel`;
-  const nonce = randomBytes(16).toString("hex");
-  const statePayload = { orgSlug, nonce };
-  const state = Buffer.from(JSON.stringify(statePayload)).toString("base64");
-
-  // Save state in secure cookies
-  const cookieStore = await cookies();
-  cookieStore.set("zitadel_auth_state", state, {
-    httpOnly: true,
-    secure: (process.env.NODE_ENV as string) === "production",
-    maxAge: 300, // 5 minutes
-    path: "/"
-  });
-
-  const authUrl = `https://${zitadelDomain}/oauth/v2/authorize?client_id=${encodeURIComponent(clientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20profile%20email&state=${encodeURIComponent(state)}`;
-
-  redirect(authUrl);
-}
 
 export async function loginMockUser(orgSlug: string, email: string) {
   // STRICT SECURITY CHECK: Deny mock login in production environments

@@ -657,7 +657,8 @@ export function HybridCmsClient({
               variant="ghost"
               size="icon"
               className="shrink-0"
-              aria-label="Back to item details">
+              aria-label="Back to item details"
+              title="Back to item details">
               <ArrowLeft className="w-4.5 h-4.5" />
             </Button>
             <div className="flex flex-col min-w-0">
@@ -696,7 +697,8 @@ export function HybridCmsClient({
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowPreview(!showPreview)}
-                  aria-label="Toggle preview">
+                  aria-label="Toggle preview"
+                  title="Toggle preview">
                   {showPreview ? <Eye size={16} /> : <EyeOff size={16} />}
                 </Button>
               </TooltipTrigger>
@@ -709,7 +711,8 @@ export function HybridCmsClient({
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsFullscreen(!isFullscreen)}
-                  aria-label="Toggle fullscreen">
+                  aria-label="Toggle fullscreen"
+                  title="Toggle fullscreen">
                   {isFullscreen ? (
                     <Minimize2 size={16} />
                   ) : (
@@ -904,7 +907,8 @@ export function HybridCmsClient({
                                   variant="outline"
                                   size="icon"
                                   className="h-7 w-7 p-0"
-                                  title="Move earlier">
+                                  title="Move earlier"
+                                  aria-label="Move earlier">
                                   <ChevronUp size={12} />
                                 </Button>
                                 <Button
@@ -913,14 +917,17 @@ export function HybridCmsClient({
                                   variant="outline"
                                   size="icon"
                                   className="h-7 w-7 p-0"
-                                  title="Move later">
+                                  title="Move later"
+                                  aria-label="Move later">
                                   <ChevronDown size={12} />
                                 </Button>
                               </div>
                               <Button
                                 onClick={() => handleRemoveImage(img.id)}
                                 variant="ghost"
-                                className="h-7 px-2 text-destructive hover:bg-destructive/10 text-[11px] font-medium">
+                                className="h-7 px-2 text-destructive hover:bg-destructive/10 text-[11px] font-medium"
+                                title="Remove image"
+                                aria-label="Remove image">
                                 <Trash2 size={12} className="mr-1" />
                                 Remove
                               </Button>
@@ -969,6 +976,8 @@ export function HybridCmsClient({
                                   type="button"
                                   variant="ghost"
                                   className="h-6 w-6 p-0 hover:bg-muted text-muted-foreground"
+                                  title="Remove uploaded image"
+                                  aria-label="Remove uploaded image"
                                   onClick={e => {
                                     e.stopPropagation();
                                     setNewImageUrl("");
@@ -1090,10 +1099,13 @@ export function HybridCmsClient({
                                         : `${btn.key} text`,
                                 )
                               }
+                              onMouseDown={(e) => e.preventDefault()}
                               className={cn(
                                 "h-7 px-2.5 text-xs hover:bg-background text-foreground",
                                 btn.cls,
-                              )}>
+                              )}
+                              aria-label={btn.title}
+                              title={btn.title}>
                               {btn.label}
                             </Button>
                           </TooltipTrigger>
@@ -1105,16 +1117,20 @@ export function HybridCmsClient({
                         type="button"
                         variant="ghost"
                         onClick={() => insertMarkdown("bullet", "list item")}
+                        onMouseDown={(e) => e.preventDefault()}
                         className="h-7 px-2.5 text-xs hover:bg-background text-foreground"
-                        title="Bullet list">
+                        title="Bullet list"
+                        aria-label="Bullet list">
                         • List
                       </Button>
                       <Button
                         type="button"
                         variant="ghost"
                         onClick={() => insertMarkdown("ordered", "list item")}
+                        onMouseDown={(e) => e.preventDefault()}
                         className="h-7 px-2.5 text-xs hover:bg-background text-foreground"
-                        title="Numbered list">
+                        title="Numbered list"
+                        aria-label="Numbered list">
                         1. List
                       </Button>
                     </div>
@@ -1443,7 +1459,9 @@ export function HybridCmsClient({
                                 onClick={() => handleRemoveCustomAttr(attr.id)}
                                 variant="ghost"
                                 size="icon"
-                                className="h-7 w-7 text-destructive hover:bg-destructive/10">
+                                className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                title="Remove parameter"
+                                aria-label="Remove parameter">
                                 <Trash2 size={13} />
                               </Button>
                             </div>
