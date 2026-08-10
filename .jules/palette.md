@@ -45,3 +45,7 @@
 ## 2026-08-08 - [Unified Required Field Indicators in Complex CRM Forms]
 **Learning:** Using inconsistent, raw asterisks (`*`) or hardcoded non-theme colors (such as `text-red-500`) for visual field requirement indicators inside form labels creates design debt, makes visual accessibility poor under dark/light modes, and degrades developer experience (DX). Pairing standard CSS theme variables (`text-destructive`) inside structured React components keeps forms accessible and visually seamless.
 **Action:** Always utilize `<span className="text-destructive">*</span>` for visually required form labels, avoiding raw inline characters and non-theme CSS colors.
+
+## 2026-08-09 - [Focus Preservation in Content Rich Markdown Composers]
+**Learning:** Clicking formatting toolbar buttons in rich content areas (like CMS story editors) triggers input blur on the active editing textarea. Utilizing `onMouseDown={(e) => e.preventDefault()}` on formatting buttons completely bypasses this default behavior, preserving both the focus and active selection/caret coordinates seamlessly.
+**Action:** Always employ `onMouseDown={(e) => e.preventDefault()}` on toolbar action buttons targeting a text input or textarea to avoid losing focus and interrupting user input.
