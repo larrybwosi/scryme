@@ -147,11 +147,11 @@ export const useProductVariants = (options: UseProductVariantsOptions = {}) => {
   });
 
   return {
-    data: data?.data || [],
-    totalCount: data?.totalCount || 0,
-    currentPage: data?.currentPage || page,
-    totalPages: data?.totalPages || 0,
-    limit: data?.limit || limit,
+    data: Array.isArray(data) ? data : (data?.data || []),
+    totalCount: Array.isArray(data) ? data.length : (data?.totalCount || 0),
+    currentPage: Array.isArray(data) ? 1 : (data?.currentPage || page),
+    totalPages: Array.isArray(data) ? 1 : (data?.totalPages || 0),
+    limit: Array.isArray(data) ? data.length : (data?.limit || limit),
     isLoading,
     isFetching,
     isError: !!error,

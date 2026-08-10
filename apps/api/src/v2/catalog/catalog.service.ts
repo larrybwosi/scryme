@@ -430,8 +430,31 @@ export class CatalogService {
     const limit = Math.min(100, Math.max(1, parseInt(query.limit || "20", 10)));
     const skip = (page - 1) * limit;
 
+    const { productType, search, isActive } = query;
+    const where: any = {
+      product: {
+        organizationId,
+      },
+    };
+
+    if (productType && productType !== "ALL") {
+      where.product.type = productType;
+    }
+
+    if (isActive !== undefined) {
+      where.isActive = isActive === "true";
+    }
+
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { sku: { contains: search, mode: "insensitive" } },
+        { product: { name: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
     return this.prisma.client.productVariant.findMany({
-      where: { product: { organizationId } },
+      where,
       /**
        * ⚡ Bolt: Performance Optimization
        * Using targeted select instead of include to fetch only essential scalar fields and relations.
