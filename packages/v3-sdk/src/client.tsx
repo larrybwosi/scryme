@@ -466,8 +466,9 @@ export class ScrymeClientSDK {
       signIn: async (credentials: { email: string; password?: string }) => {
         // Sign in using our isolated Customer Auth Microservice (Better Auth) via the exposed routes or the login fallback
         try {
-          const authServiceUrl = process.env.CUSTOMER_AUTH_URL || "http://localhost:4001";
-          const response = await axios.post(`${authServiceUrl}/api/auth/sign-in/email`, credentials);
+          const authServiceUrl = process.env.CUSTOMER_AUTH_URL || `${this.axiosInstance.defaults.baseURL || "http://localhost:3002"}/api/customer-auth`;
+          const postUrl = authServiceUrl.endsWith("/api/auth") ? `${authServiceUrl}/sign-in/email` : (authServiceUrl.endsWith("/api/customer-auth") ? `${authServiceUrl}/sign-in/email` : `${authServiceUrl}/api/auth/sign-in/email`);
+          const response = await axios.post(postUrl, credentials);
           const data = response.data;
 
           const token = data?.session?.token || data?.token || null;
@@ -492,6 +493,8 @@ export class ScrymeClientSDK {
 
             notify("SIGNED_IN");
             return data;
+          } else {
+            throw new Error("No token returned");
           }
         } catch (e) {
           // Fall back to client local email login proxy

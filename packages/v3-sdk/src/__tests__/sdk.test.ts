@@ -258,11 +258,9 @@ describe("Scryme V3 Client and Server SDKs", () => {
         session: { token: "new_token_888" },
         user: { id: "user_2", name: "Bob" },
       };
-      (sdk.axiosInstance.post as jest.Mock)
-        .mockRejectedValueOnce(new Error("First login failed"))
-        .mockResolvedValueOnce({
-          data: mockSignInResponse,
-        });
+      (axios.post as jest.Mock).mockResolvedValueOnce({
+        data: mockSignInResponse,
+      });
 
       await sdk.auth.signIn({ email: "bob@test.com", password: "pwd" });
 
