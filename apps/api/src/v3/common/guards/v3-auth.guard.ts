@@ -9,7 +9,6 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { ModuleRef, Reflector } from "@nestjs/core";
 import { ALLOW_PUBLIC_KEY } from "@/common/decorators/auth.decorator";
 import { AuthService } from "@/auth/auth.service";
-import { verifyZitadelJwt } from "@repo/shared/api/v2";
 import { env } from "@repo/env";
 import { RedisService } from "@/redis/redis.service";
 
@@ -135,69 +134,67 @@ export class V3AuthGuard implements CanActivate {
       }
     }
 
-    // 3. Try Zitadel OIDC JWT token
-    if (!payload && authStrategy !== "LOCAL") {
-      const zitadelDomain = process.env.ZITADEL_DOMAIN || env.ZITADEL_DOMAIN;
-      const zitadelAudience = process.env.ZITADEL_CLIENT_ID || env.ZITADEL_CLIENT_ID;
+    // 3. Try Customer Auth Microservice (Better Auth) session verification
+    if (!payload) {
+      try {
+        const authServiceUrl = process.env.CUSTOMER_AUTH_URL || "http://localhost:4001";
+        const response = await fetch(`${authServiceUrl}/api/auth/session`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      if (zitadelDomain && zitadelAudience) {
-        try {
-          const zitadelPayload = await verifyZitadelJwt(
-            token,
-            null,
-            zitadelDomain,
-            zitadelAudience,
-          );
+        if (response.ok) {
+          const sessionData = await response.json();
+          const user = sessionData.user;
 
-          if (zitadelPayload) {
-            const targetOrgId = organization?.id;
-            if (targetOrgId) {
-              // Try external mapping
-              const mapping = await this.prisma.client.externalMapping.findFirst({
+          const targetOrgId = organization?.id;
+          if (targetOrgId && user) {
+            // Try Better Auth external mapping
+            const mapping = await this.prisma.client.externalMapping.findFirst({
+              where: {
+                organizationId: targetOrgId,
+                provider: "BETTER_AUTH",
+                externalId: user.id,
+                entityType: "CUSTOMER",
+              },
+            });
+
+            let customerId = mapping?.internalId;
+            let customer = null;
+
+            if (customerId) {
+              customer = await this.prisma.client.customer.findUnique({
+                where: { id: customerId },
+              });
+            }
+
+            if (!customer && user.email) {
+              customer = await this.prisma.client.customer.findUnique({
                 where: {
-                  organizationId: targetOrgId,
-                  provider: "ZITADEL",
-                  externalId: zitadelPayload.sub,
-                  entityType: "CUSTOMER",
+                  organizationId_email: {
+                    organizationId: targetOrgId,
+                    email: user.email,
+                  },
                 },
               });
+            }
 
-              const customerId = mapping?.internalId;
-              let customer = null;
-
-              if (customerId) {
-                customer = await this.prisma.client.customer.findUnique({
-                  where: { id: customerId },
-                });
-              }
-
-              if (!customer && zitadelPayload.email) {
-                customer = await this.prisma.client.customer.findUnique({
-                  where: {
-                    organizationId_email: {
-                      organizationId: targetOrgId,
-                      email: zitadelPayload.email,
-                    },
-                  },
-                });
-              }
-
-              if (customer) {
-                payload = {
-                  type: "v3_customer",
-                  customerId: customer.id,
-                  customerEmail: customer.email,
-                  customerName: customer.name,
-                  organizationId: targetOrgId,
-                  clientId: null,
-                  scopes: (zitadelPayload.scope ?? "").split(" ").filter(Boolean),
-                };
-              }
+            if (customer) {
+              payload = {
+                type: "v3_customer",
+                customerId: customer.id,
+                customerEmail: customer.email,
+                customerName: customer.name,
+                organizationId: targetOrgId,
+                clientId: null,
+                scopes: [],
+              };
             }
           }
-        } catch (err) {
-          // Ignored
         }
+      } catch (err) {
+        // Ignored
       }
     }
 

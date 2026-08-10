@@ -1,0 +1,5 @@
+node_modules
+dist
+prisma/generated-client
+file:./dev.db
+*.db
