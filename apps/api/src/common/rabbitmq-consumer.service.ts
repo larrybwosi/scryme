@@ -5,7 +5,7 @@ import amqp from "amqplib";
 @Injectable()
 export class RabbitMQConsumerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RabbitMQConsumerService.name);
-  private connection: amqp.Connection | null = null;
+  private connection: amqp.ChannelModel | null = null;
   private channel: amqp.Channel | null = null;
 
   constructor(private readonly prisma: PrismaService) {}

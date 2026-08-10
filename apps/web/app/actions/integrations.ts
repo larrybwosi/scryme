@@ -16,7 +16,6 @@ export async function getIntegrationsStatus() {
     include: {
       windmillConfiguration: true,
       hulyConfiguration: true,
-      zitadelConfiguration: true,
       planeConfiguration: true,
       scrymeConfiguration: true,
     },
