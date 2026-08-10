@@ -18,7 +18,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "postinstall": "pnpm generate"
+    "postinstall": "pnpm --filter @repo/env build && pnpm generate"
   },
   "devDependencies": {
     "@changesets/cli": "^2.31.0",
