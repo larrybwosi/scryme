@@ -75,7 +75,7 @@ export type AuthChangeEvent = "SIGNED_IN" | "SIGNED_OUT" | "INITIAL_SESSION";
 
 export interface SessionState {
   token: string | null;
-  user: any | null;
+  user: CustomerResponseDto | null;
   expiresAt?: number | null;
 }
 
@@ -111,32 +111,32 @@ export class ScrymeClientSDK {
   };
 
   public customer: {
-    getProfile(): Promise<any>;
+    getProfile(): Promise<CustomerResponseDto>;
     updateProfile(dto: UpdateCustomerDto): Promise<AxiosResponse<CustomerResponseDto>>;
     getAddresses(): Promise<AxiosResponse<AddressDto[]>>;
-    addAddress(dto: any): Promise<AxiosResponse<void>>;
+    addAddress(dto: AddressDto): Promise<AxiosResponse<void>>;
   };
 
   public bookings: {
     create(dto: CreateBookingDto): Promise<AxiosResponse<void>>;
-    get(id: string): Promise<AxiosResponse<void>>;
-    list(): Promise<AxiosResponse<any>>;
+    get(id: string): Promise<AxiosResponse<ServiceBookingItemDto>>;
+    list(): Promise<AxiosResponse<ServiceBookingItemDto[]>>;
     cancel(id: string): Promise<AxiosResponse<void>>;
   };
 
   public auth: AuthModule & {
     signUp(dto: RegisterCustomerDto): Promise<AxiosResponse<CustomerResponseDto>>;
     authenticate(): Promise<AuthExchangeToken201>;
-    signIn(credentials: { email: string; password?: string }): Promise<any>;
+    signIn(credentials: { email: string; password?: string }): Promise<{ token: string; session?: any; user?: any }>;
     signOut(): Promise<void>;
     getSession(): Promise<SessionState>;
     onAuthStateChange(callback: AuthStateCallback): { unsubscribe(): void };
-    getSessions(): Promise<any>;
+    getSessions(): Promise<any[]>;
     revokeSession(id: string): Promise<any>;
     revokeAllSessions(mode?: string): Promise<any>;
-    getCurrentSession(): Promise<any>;
-    refreshSession(): Promise<any>;
-    swapZitadel(zitadelToken: string): Promise<any>;
+    getCurrentSession(): Promise<CustomerResponseDto>;
+    refreshSession(): Promise<{ token: string; session?: any }>;
+    swapZitadel(zitadelToken: string): Promise<{ token: string; session?: any }>;
   };
 
   constructor(config: ClientSDKConfig) {
@@ -206,9 +206,9 @@ export class ScrymeClientSDK {
           }
           if (storedUser) {
             try {
-              state.user = JSON.parse(storedUser);
+              state.user = JSON.parse(storedUser) as CustomerResponseDto;
             } catch {
-              state.user = storedUser;
+              state.user = null;
             }
           }
           notify("INITIAL_SESSION");
@@ -426,7 +426,8 @@ export class ScrymeClientSDK {
       },
       checkout: async (params: { locationId: string; notes?: string; channel?: string }) => {
         const session = await this.auth.getSession();
-        const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
+        const user = session.user as any;
+        const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found for checkout.");
 
         const items = await this.cart.getItems();
@@ -459,19 +460,22 @@ export class ScrymeClientSDK {
       },
       updateProfile: async (dto: any) => {
         const session = await this.auth.getSession();
-        const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
+        const user = session.user as any;
+        const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
         return this.admin.updateCustomer(customerId, dto);
       },
       getAddresses: async () => {
         const session = await this.auth.getSession();
-        const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
+        const user = session.user as any;
+        const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
         return this.admin.getCustomerAddresses(customerId) as any;
       },
       addAddress: async (dto: any) => {
         const session = await this.auth.getSession();
-        const customerId = session.user?.customerId || session.user?.id || session.user?.customer?.id;
+        const user = session.user as any;
+        const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
         return this.admin.addCustomerAddress(customerId, dto);
       }
@@ -482,10 +486,10 @@ export class ScrymeClientSDK {
         return this.catalog.createBooking(dto);
       },
       get: async (id: string) => {
-        return this.catalog.getBooking(id);
+        return this.catalog.getBooking(id) as any;
       },
       list: async () => {
-        return this.catalog.getBookings();
+        return this.catalog.getBookings() as any;
       },
       cancel: async (id: string) => {
         return this.catalog.updateBookingStatus(id, "CANCELLED" as any);
@@ -709,10 +713,10 @@ export function createClientSDK(config: any = {}) {
 export interface AuthContextType {
   sdk: ScrymeClientSDK;
   session: SessionState;
-  user: any | null;
+  user: CustomerResponseDto | null;
   token: string | null;
   isLoading: boolean;
-  signIn: (credentials: { email: string; password?: string }) => Promise<any>;
+  signIn: (credentials: { email: string; password?: string }) => Promise<{ token: string; session?: any; user?: any }>;
   signUp: (dto: RegisterCustomerDto) => Promise<AxiosResponse<CustomerResponseDto>>;
   signOut: () => Promise<void>;
   cart: CartResponseDto | null;
@@ -730,11 +734,11 @@ export interface AuthContextType {
   bookingsLoading: boolean;
 
   // Convenience actions
-  addAddress: (dto: AddressDto) => Promise<any>;
-  updateProfile: (dto: UpdateCustomerDto) => Promise<any>;
-  createBooking: (dto: CreateBookingDto) => Promise<any>;
-  cancelBooking: (id: string) => Promise<any>;
-  checkoutCart: (params: { locationId: string; notes?: string; channel?: string }) => Promise<any>;
+  addAddress: (dto: AddressDto) => Promise<AxiosResponse<void>>;
+  updateProfile: (dto: UpdateCustomerDto) => Promise<AxiosResponse<CustomerResponseDto>>;
+  createBooking: (dto: CreateBookingDto) => Promise<AxiosResponse<void>>;
+  cancelBooking: (id: string) => Promise<AxiosResponse<void>>;
+  checkoutCart: (params: { locationId: string; notes?: string; channel?: string }) => Promise<OrderResponseDto>;
   refreshProfile: () => Promise<void>;
   refreshBookings: () => Promise<void>;
 }
@@ -753,9 +757,9 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
   const [cartLoading, setCartLoading] = useState(false);
 
   // Customer and bookings state
-  const [customerProfile, setCustomerProfile] = useState<any | null>(null);
-  const [customerAddresses, setCustomerAddresses] = useState<any[]>([]);
-  const [bookingsList, setBookingsList] = useState<any[]>([]);
+  const [customerProfile, setCustomerProfile] = useState<CustomerResponseDto | null>(null);
+  const [customerAddresses, setCustomerAddresses] = useState<AddressDto[]>([]);
+  const [bookingsList, setBookingsList] = useState<ServiceBookingItemDto[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
 
   useEffect(() => {
@@ -790,7 +794,7 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
     }
     try {
       const profile = await sdk.customer.getProfile();
-      setCustomerProfile(profile?.data || profile || null);
+      setCustomerProfile(profile || null);
 
       const addresses = await sdk.customer.getAddresses();
       setCustomerAddresses(addresses?.data || (addresses as any) || []);
@@ -866,21 +870,21 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({ sdk, chi
     await refreshCart();
   };
 
-  const addAddress = async (dto: any) => {
+  const addAddress = async (dto: AddressDto) => {
     if (!session.token) throw new Error("Customer must be logged in to manage addresses");
     const res = await sdk.customer.addAddress(dto);
     await refreshProfile();
     return res;
   };
 
-  const updateProfile = async (dto: any) => {
+  const updateProfile = async (dto: UpdateCustomerDto) => {
     if (!session.token) throw new Error("Customer must be logged in to update profile");
     const res = await sdk.customer.updateProfile(dto);
     await refreshProfile();
     return res;
   };
 
-  const createBooking = async (dto: any) => {
+  const createBooking = async (dto: CreateBookingDto) => {
     if (!session.token) throw new Error("Customer must be logged in to create bookings");
     const res = await sdk.bookings.create(dto);
     await refreshBookings();
