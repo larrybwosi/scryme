@@ -1,3 +1,7 @@
+## 2026-08-10 - [Eager Loading Stock Adjustment Variant to Avoid N+1 Product Query]
+**Learning:** Performing a sequential `findUnique` query to fetch a variant's `productId` inside a stock `upsert` block (within an active database transaction like approving a stock adjustment) adds a redundant database roundtrip. Eagerly including the `variant` relation when fetching the parent `stockAdjustment` provides direct access to `variant.productId` in $O(1)$ constant time, keeping the database transaction duration minimal and reducing lock contention.
+**Action:** Always include relational parent/metadata tables when fetching root entities in transactions to avoid sequential lookups, and retrieve relation scalar attributes directly in memory.
+
 ## 2026-08-10 - [Parallelized Chunk-Batching in Outbound Strapi Product Sync]
 **Learning:** Performing sequential external HTTP requests and database updates/inserts inside a loop over a large catalog (such as pushing products to Strapi) results in a severe $O(N)$ execution bottleneck. Partitioning the catalog into controlled chunks (e.g. batch size of 10) and executing them concurrently via `Promise.all` balances server load, avoids rate-limiting, and accelerates synchronization duration by up to 90%.
 **Action:** Always partition and parallelize external API / DB-bound sync operations inside loops into controlled batches of 10 using concurrent `Promise.all`.

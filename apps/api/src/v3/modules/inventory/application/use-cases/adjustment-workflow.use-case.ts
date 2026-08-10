@@ -90,8 +90,11 @@ export class ApproveStockAdjustmentUseCase {
     adjustmentId: string,
   ) {
     return this.prisma.client.$transaction(async tx => {
+      // ⚡ Bolt Optimization: Eagerly load the variant relation so we can retrieve variant.productId in O(1) constant time,
+      // avoiding a redundant sequential tx.productVariant.findUnique database lookup inside the transaction.
       const adjustment = await tx.stockAdjustment.findUnique({
         where: { id: adjustmentId, organizationId },
+        include: { variant: true },
       });
 
       if (!adjustment)
@@ -130,9 +133,7 @@ export class ApproveStockAdjustmentUseCase {
         },
         create: {
           organizationId,
-          productId: (await tx.productVariant.findUnique({
-            where: { id: adjustment.variantId },
-          }))!.productId,
+          productId: adjustment.variant.productId,
           variantId: adjustment.variantId,
           locationId: adjustment.locationId,
           currentStock: quantityChange,
