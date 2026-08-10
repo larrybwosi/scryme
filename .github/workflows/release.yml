@@ -16,7 +16,7 @@ jobs:
     name: Release Management
     runs-on: ubuntu-latest
     outputs:
-      published: ${{ steps.changesets.outputs.published }}
+      published: ${{ steps.check-and-version.outputs.published }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -36,14 +36,39 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Create Release Pull Request or Publish
-        id: changesets
+      - name: Check Changesets and Version
+        id: check-and-version
+        run: |
+          CHANGESETS=$(find .changeset -name "*.md" ! -name "README.md")
+          if [ -n "$CHANGESETS" ]; then
+            echo "Changesets found:"
+            echo "$CHANGESETS"
+
+            # Configure Git
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            # Version packages
+            pnpm version-packages
+
+            # Commit and push if changes exist
+            if [ -n "$(git status --porcelain)" ]; then
+              git add .
+              git commit -m "chore(release): version packages"
+              git push origin HEAD:main
+            fi
+
+            echo "published=true" >> $GITHUB_OUTPUT
+          else
+            echo "No changesets found."
+            echo "published=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Git Tags and GitHub Releases
+        if: steps.check-and-version.outputs.published == 'true'
         uses: changesets/action@v1
         with:
           publish: pnpm release
-          version: pnpm version-packages
-          commit-message: "chore(release): version packages"
-          title: "Version Packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
