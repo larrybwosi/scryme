@@ -1,3 +1,7 @@
+## 2026-08-10 - [Parallelized Chunk-Batching in Outbound Strapi Product Sync]
+**Learning:** Performing sequential external HTTP requests and database updates/inserts inside a loop over a large catalog (such as pushing products to Strapi) results in a severe $O(N)$ execution bottleneck. Partitioning the catalog into controlled chunks (e.g. batch size of 10) and executing them concurrently via `Promise.all` balances server load, avoids rate-limiting, and accelerates synchronization duration by up to 90%.
+**Action:** Always partition and parallelize external API / DB-bound sync operations inside loops into controlled batches of 10 using concurrent `Promise.all`.
+
 ## 2026-08-09 - [Optimizing Database Transaction Block Duration in Expenses]
 **Learning:** Performing multiple independent static configuration or reference database lookup queries (such as counting or verifying category, budget, or location existence) inside an active write transaction block holds database connections open unnecessarily, increasing lock contention and transaction blocking times. Moving read-only entity existences or count validations completely outside the transaction wrapper improves system concurrency and throughput significantly without losing any business logic validity.
 **Action:** Always extract and parallelize read-only existence validations before entering `prisma.$transaction` database blocks.

@@ -88,71 +88,79 @@ export class StrapiProductSyncUseCase {
         mappings.map((m) => [m.productId, m]),
       );
 
-      for (const product of products) {
-        try {
-          // Build location stock map across all variants
-          const locationStock = this.buildLocationStockMap((product as any).variants as any[]);
+      // ⚡ Bolt Optimization: Parallelize outbound product sync in small controlled batches (concurrency = 10)
+      // to prevent database connection pool exhaustion and external API rate limiting, while achieving massive speedup.
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < products.length; i += BATCH_SIZE) {
+        const chunk = products.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          chunk.map(async (product) => {
+            try {
+              // Build location stock map across all variants
+              const locationStock = this.buildLocationStockMap((product as any).variants as any[]);
 
-          // Check for existing mapping using pre-fetched cache
-          const mapping = mappingMap.get(product.id);
+              // Check for existing mapping using pre-fetched cache
+              const mapping = mappingMap.get(product.id);
 
-          const strapiPayload: Partial<StrapiProductAttributes> = {
-            name: product.name,
-            slug: (product as any).slug ?? this.toSlug(product.name),
-            description: (product as any).description ?? undefined,
-            sku: (product as any).sku ?? undefined,
-            active: true,
-            publishedAt: new Date().toISOString(),
-            locationStock,
-          };
+              const strapiPayload: Partial<StrapiProductAttributes> = {
+                name: product.name,
+                slug: (product as any).slug ?? this.toSlug(product.name),
+                description: (product as any).description ?? undefined,
+                sku: (product as any).sku ?? undefined,
+                active: true,
+                publishedAt: new Date().toISOString(),
+                locationStock,
+              };
 
-          // Merge lowest variant price as default product price
-          const lowestPrice = this.getLowestVariantPrice((product as any).variants as any[]);
-          if (lowestPrice !== undefined) strapiPayload.price = lowestPrice;
+              // Merge lowest variant price as default product price
+              const lowestPrice = this.getLowestVariantPrice((product as any).variants as any[]);
+              if (lowestPrice !== undefined) strapiPayload.price = lowestPrice;
 
-          if (mapping?.externalProductId) {
-            // UPDATE existing Strapi entry
-            await this.strapiProvider.updateProduct(
-              config,
-              Number(mapping.externalProductId),
-              strapiPayload,
-            );
+              if (mapping?.externalProductId) {
+                // UPDATE existing Strapi entry
+                await this.strapiProvider.updateProduct(
+                  config,
+                  Number(mapping.externalProductId),
+                  strapiPayload,
+                );
 
-            await this.prisma.client.ecommerceProductMapping.update({
-              where: { id: mapping.id },
-              data: {
-                externalData: strapiPayload as any,
-                lastSyncedAt: new Date(),
-              },
-            });
-          } else {
-            // CREATE new Strapi entry
-            const created = await this.strapiProvider.createProduct(config, strapiPayload);
-            const strapiId = String(created.data.id);
+                await this.prisma.client.ecommerceProductMapping.update({
+                  where: { id: mapping.id },
+                  data: {
+                    externalData: strapiPayload as any,
+                    lastSyncedAt: new Date(),
+                  },
+                });
+              } else {
+                // CREATE new Strapi entry
+                const created = await this.strapiProvider.createProduct(config, strapiPayload);
+                const strapiId = String(created.data.id);
 
-            await this.prisma.client.ecommerceProductMapping.create({
-              data: {
-                connectionId,
-                productId: product.id,
-                organizationId,
-                externalProductId: strapiId,
-                externalSku: (product as any).sku ?? undefined,
-                externalData: strapiPayload as any,
-                lastSyncedAt: new Date(),
-                syncInventory: true,
-                syncPrice: true,
-                syncStatus: true,
-              },
-            });
-          }
+                await this.prisma.client.ecommerceProductMapping.create({
+                  data: {
+                    connectionId,
+                    productId: product.id,
+                    organizationId,
+                    externalProductId: strapiId,
+                    externalSku: (product as any).sku ?? undefined,
+                    externalData: strapiPayload as any,
+                    lastSyncedAt: new Date(),
+                    syncInventory: true,
+                    syncPrice: true,
+                    syncStatus: true,
+                  },
+                });
+              }
 
-          successCount++;
-        } catch (err: any) {
-          failureCount++;
-          const msg = `Product ${product.id} (${product.name}): ${err.message}`;
-          errors.push(msg);
-          this.logger.error(msg);
-        }
+              successCount++;
+            } catch (err: any) {
+              failureCount++;
+              const msg = `Product ${product.id} (${product.name}): ${err.message}`;
+              errors.push(msg);
+              this.logger.error(msg);
+            }
+          })
+        );
       }
 
       await this.finishSync(syncLog.id, {
