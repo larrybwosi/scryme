@@ -32,7 +32,6 @@ import { cn } from "@repo/ui/lib/utils";
 import {
   getIntegrationsStatus,
   provisionWindmill,
-  provisionZitadel,
   provisionScryme,
 } from "../actions/integrations";
 
@@ -63,15 +62,6 @@ const INTEGRATIONS = [
       "Enterprise project management and team collaboration platform.",
     icon: <Layout className="w-8 h-8 text-blue-600 dark:text-blue-400" />,
     category: "Management",
-    isExternal: true,
-  },
-  {
-    id: "zitadel",
-    title: "Zitadel",
-    description:
-      "Identity management and authentication for your applications.",
-    icon: <Shield className="w-8 h-8 text-orange-500 dark:text-orange-400" />,
-    category: "Security",
     isExternal: true,
   },
   {
@@ -118,29 +108,6 @@ export default function IntegrationsPage() {
   const handleOpenConfig = (integration: any) => {
     if (!integration.isExternal) return;
     setSelectedIntegration(integration);
-  };
-
-  const handleOneClickProvision = async () => {
-    setIsProvisioning(true);
-    const toastId = toast.loading(
-      "Provisioning Zitadel organization, project, and application...",
-    );
-    try {
-      const res = await provisionZitadel();
-      if (res.success) {
-        toast.success("Zitadel workspace successfully provisioned!", {
-          id: toastId,
-        });
-        setSelectedIntegration(null);
-        loadStatuses();
-      } else {
-        toast.error("Failed to provision Zitadel.", { id: toastId });
-      }
-    } catch (error: any) {
-      toast.error(`Provisioning failed: ${error.message}`, { id: toastId });
-    } finally {
-      setIsProvisioning(false);
-    }
   };
 
   const handleProvision = async () => {
@@ -223,50 +190,6 @@ export default function IntegrationsPage() {
                 administrator. Reach out to your admin team to enable this
                 connection.
               </p>
-            </div>
-          </div>
-        );
-      case "zitadel":
-        const isGlobalAdminConfigured =
-          statuses.zitadel?.isGlobalAdminConfigured;
-        return (
-          <div className="py-4">
-            <div className="p-4 rounded-xl border border-dashed border-primary/20 bg-primary/5 flex flex-col gap-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <h4 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-primary animate-pulse" />
-                    One-Click Auto-Provisioning
-                  </h4>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Automatically create a dedicated organization, project, and
-                    OIDC client credentials for your store.
-                  </p>
-                </div>
-                <Badge
-                  variant={isGlobalAdminConfigured ? "default" : "outline"}
-                  className={cn(
-                    "text-[9px] font-bold uppercase shrink-0",
-                    isGlobalAdminConfigured
-                      ? "bg-green-500 hover:bg-green-600 text-white border-transparent"
-                      : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900",
-                  )}>
-                  {isGlobalAdminConfigured
-                    ? "Production Ready"
-                    : "Mock Sandbox"}
-                </Badge>
-              </div>
-
-              <Button
-                type="button"
-                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2 mt-2"
-                onClick={handleOneClickProvision}
-                disabled={isProvisioning}>
-                {isProvisioning
-                  ? "Provisioning..."
-                  : "Provision Zitadel Workspace"}
-                <Zap className="w-4 h-4" />
-              </Button>
             </div>
           </div>
         );

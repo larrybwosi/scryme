@@ -39,17 +39,36 @@ export class PermissionsGuard implements CanActivate {
     const user = request.user;
     const organization = request.organization || v3Context?.organization;
 
-    if (!organization || (!user && !v3Context?.memberId)) {
+    const isClientCredentials = v3Context?.authType === "v3_client";
+    const isCustomer = v3Context?.authType === "v3_customer";
+
+    if (!organization || (!isClientCredentials && !isCustomer && !user && !v3Context?.memberId)) {
       throw new ForbiddenException(
         "User/Member or Organization not identified",
       );
     }
 
-    const permissions = await this.getMemberPermissions(
-      organization.id,
-      user?.id,
-      v3Context?.memberId,
-    );
+    let permissions: string[] = [];
+
+    if (isClientCredentials) {
+      permissions = v3Context?.scopes || [];
+    } else if (isCustomer) {
+      // Default storefront customer permissions for catalogs, cart, bookings, etc.
+      permissions = [
+        "catalog:product:read",
+        "services:read",
+        "cart:*",
+        "booking:*",
+        "customer:read",
+        "customer:update",
+      ];
+    } else {
+      permissions = await this.getMemberPermissions(
+        organization.id,
+        user?.id,
+        v3Context?.memberId,
+      );
+    }
 
     const hasPermission = requiredPermissions.every((permission) =>
       this.hasPermission(permissions, permission),

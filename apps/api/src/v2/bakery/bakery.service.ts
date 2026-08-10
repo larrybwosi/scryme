@@ -775,7 +775,7 @@ export class BakeryService {
     const { organizationId } = ctx;
     const { status, recipeId, limit = 100, page = 1 } = query;
     const where: any = { organizationId };
-    if (status) where.status = status;
+    if (status && status !== "all") where.status = status;
     if (recipeId) where.recipeId = recipeId;
 
     const skip = (Number(page) - 1) * Number(limit);

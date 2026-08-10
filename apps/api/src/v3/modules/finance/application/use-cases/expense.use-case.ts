@@ -30,6 +30,11 @@ export class ExpenseUseCase {
         );
     const expenseNumber = await this.generateExpenseNumber(organizationId);
 
+    // ⚡ Bolt Optimization: Validate reference entity existences outside the transactional scope.
+    // Executing these read-only checks beforehand avoids holding the database transaction open,
+    // reducing query lock contention and connection pool occupation.
+    await this.validateReferencedEntities(organizationId, dto);
+
     return await this.prisma.client.$transaction(async (tx) => {
       const expense = await this.persistExpense(
         tx,
@@ -52,6 +57,30 @@ export class ExpenseUseCase {
 
       return expense;
     });
+  }
+
+  private async validateReferencedEntities(
+    organizationId: string,
+    dto: CreateExpenseDto,
+  ) {
+    // 🛡️ Sentinel: IDOR Prevention - Verify all referenced entities belong to the organization
+    const validations = [
+      this.prisma.client.expenseCategory.count({ where: { id: dto.categoryId, organizationId } }),
+    ];
+
+    if (dto.budgetId) validations.push(this.prisma.client.budget.count({ where: { id: dto.budgetId, organizationId } }));
+    if (dto.supplierId) validations.push(this.prisma.client.supplier.count({ where: { id: dto.supplierId, organizationId } }));
+    if (dto.purchaseId) validations.push(this.prisma.client.purchase.count({ where: { id: dto.purchaseId, organizationId } }));
+    if (dto.locationId) validations.push(this.prisma.client.inventoryLocation.count({ where: { id: dto.locationId, organizationId } }));
+    if (dto.utilityAccountId) validations.push(this.prisma.client.utilityAccount.count({ where: { id: dto.utilityAccountId, organizationId } }));
+    if (dto.pettyCashFundId) validations.push(this.prisma.client.pettyCashFund.count({ where: { id: dto.pettyCashFundId, organizationId } }));
+
+    const results = await Promise.all(validations);
+    if (results.some((count) => count === 0)) {
+      throw new ForbiddenException(
+        "One or more referenced entities not found or unauthorized",
+      );
+    }
   }
 
   private async getOrganization(organizationId: string) {
@@ -121,25 +150,6 @@ export class ExpenseUseCase {
     status: ExpenseStatus,
     expenseNumber: string,
   ) {
-    // 🛡️ Sentinel: IDOR Prevention - Verify all referenced entities belong to the organization
-    const validations = [
-      tx.expenseCategory.count({ where: { id: dto.categoryId, organizationId } }),
-    ];
-
-    if (dto.budgetId) validations.push(tx.budget.count({ where: { id: dto.budgetId, organizationId } }));
-    if (dto.supplierId) validations.push(tx.supplier.count({ where: { id: dto.supplierId, organizationId } }));
-    if (dto.purchaseId) validations.push(tx.purchase.count({ where: { id: dto.purchaseId, organizationId } }));
-    if (dto.locationId) validations.push(tx.inventoryLocation.count({ where: { id: dto.locationId, organizationId } }));
-    if (dto.utilityAccountId) validations.push(tx.utilityAccount.count({ where: { id: dto.utilityAccountId, organizationId } }));
-    if (dto.pettyCashFundId) validations.push(tx.pettyCashFund.count({ where: { id: dto.pettyCashFundId, organizationId } }));
-
-    const results = await Promise.all(validations);
-    if (results.some((count) => count === 0)) {
-      throw new ForbiddenException(
-        "One or more referenced entities not found or unauthorized",
-      );
-    }
-
     return await tx.expense.create({
       data: {
         // 🛡️ Sentinel: Mass Assignment Protection - Explicitly map allowed fields from DTO

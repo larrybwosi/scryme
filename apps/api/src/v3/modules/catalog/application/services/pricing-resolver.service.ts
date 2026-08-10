@@ -34,6 +34,12 @@ export class PricingResolverService {
     businessAccountId?: string;
   }): Promise<Map<string, { unitPrice: number; priceListId?: string }>> {
     const { items, organizationId, customerId, businessAccountId } = params;
+
+    // ⚡ Bolt Optimization: Early return on empty items to save 3 redundant database queries.
+    if (!items || items.length === 0) {
+      return new Map();
+    }
+
     const variantIds = Array.from(new Set(items.map(i => i.variantId)));
 
     // 1. Get all variants in one query

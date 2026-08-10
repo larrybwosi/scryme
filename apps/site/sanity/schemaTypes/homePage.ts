@@ -78,6 +78,11 @@ export const homePageType = defineType({
             }),
             defineField({ name: 'href', title: 'Href', type: 'string' }),
             defineField({ name: 'accent', title: 'Accent Color', type: 'string' }),
+            defineField({
+              name: 'seo',
+              title: 'Module SEO Settings',
+              type: 'seo',
+            }),
           ],
         }),
       ],
@@ -241,6 +246,11 @@ export const homePageType = defineType({
           title: 'Alternative text',
         }),
       ],
+    }),
+    defineField({
+      name: 'seo',
+      title: 'Page SEO & Metadata',
+      type: 'seo',
     }),
   ],
 })

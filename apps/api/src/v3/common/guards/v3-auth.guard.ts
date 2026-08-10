@@ -9,8 +9,9 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { ModuleRef, Reflector } from "@nestjs/core";
 import { ALLOW_PUBLIC_KEY } from "@/common/decorators/auth.decorator";
 import { AuthService } from "@/auth/auth.service";
-import { verifyZitadelJwt } from "@repo/shared/api/v2";
+import { CustomerAuthService } from "@/customer-auth/customer-auth.service";
 import { env } from "@repo/env";
+import { RedisService } from "@/redis/redis.service";
 
 @Injectable()
 export class V3AuthGuard implements CanActivate {
@@ -63,16 +64,36 @@ export class V3AuthGuard implements CanActivate {
     }
 
     let payload: any = null;
+    const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
 
     // 1. Try HS256 V3 client/hybrid JWT first
     try {
       payload = await this.v3AuthService.verifyToken(token);
+
+      // If it is a v3_customer type token, check Redis to ensure session is active
+      if (payload && payload.type === "v3_customer" && payload.sessionId) {
+        if (authStrategy === "ZITADEL") {
+          // Under ZITADEL only strategy, reject local HS256 customer session tokens
+          payload = null;
+        } else {
+          const redisService = this.moduleRef.get(RedisService, { strict: false });
+          if (redisService) {
+            const sessionActive = await redisService.get(`customer_session:${payload.sub}:${payload.sessionId}`);
+            if (!sessionActive) {
+              payload = null; // Session revoked
+            } else {
+              // Adapt fields to match what guard expects
+              payload.customerId = payload.sub;
+            }
+          }
+        }
+      }
     } catch (error) {
       // Not a valid HS256 V3 JWT, proceed to other checks
     }
 
     // 2. Try better-auth session token
-    if (!payload) {
+    if (!payload && authStrategy !== "ZITADEL") {
       try {
         const authService = this.moduleRef.get(AuthService, { strict: false });
         if (authService) {
@@ -114,29 +135,27 @@ export class V3AuthGuard implements CanActivate {
       }
     }
 
-    // 3. Try Zitadel OIDC JWT token
+    // 3. Try Customer Auth (Better Auth) session verification in-process
     if (!payload) {
-      const zitadelDomain = env.ZITADEL_DOMAIN;
-      const zitadelAudience = env.ZITADEL_CLIENT_ID;
+      try {
+        const customerAuthService = this.moduleRef.get(CustomerAuthService, { strict: false });
+        if (customerAuthService) {
+          const headers = new Headers();
+          headers.set("authorization", `Bearer ${token}`);
+          const session = await customerAuthService.auth.api.getSession({
+            headers,
+          });
 
-      if (zitadelDomain && zitadelAudience) {
-        try {
-          const zitadelPayload = await verifyZitadelJwt(
-            token,
-            null,
-            zitadelDomain,
-            zitadelAudience,
-          );
-
-          if (zitadelPayload) {
+          if (session) {
+            const user = session.user;
             const targetOrgId = organization?.id;
-            if (targetOrgId) {
-              // Try external mapping
+            if (targetOrgId && user) {
+              // Try Better Auth external mapping
               const mapping = await this.prisma.client.externalMapping.findFirst({
                 where: {
                   organizationId: targetOrgId,
-                  provider: "ZITADEL",
-                  externalId: zitadelPayload.sub,
+                  provider: "BETTER_AUTH",
+                  externalId: user.id,
                   entityType: "CUSTOMER",
                 },
               });
@@ -150,12 +169,12 @@ export class V3AuthGuard implements CanActivate {
                 });
               }
 
-              if (!customer && zitadelPayload.email) {
+              if (!customer && user.email) {
                 customer = await this.prisma.client.customer.findUnique({
                   where: {
                     organizationId_email: {
                       organizationId: targetOrgId,
-                      email: zitadelPayload.email,
+                      email: user.email,
                     },
                   },
                 });
@@ -169,14 +188,14 @@ export class V3AuthGuard implements CanActivate {
                   customerName: customer.name,
                   organizationId: targetOrgId,
                   clientId: null,
-                  scopes: (zitadelPayload.scope ?? "").split(" ").filter(Boolean),
+                  scopes: [],
                 };
               }
             }
           }
-        } catch (err) {
-          // Ignored
         }
+      } catch (err) {
+        // Ignored
       }
     }
 
@@ -219,6 +238,7 @@ export class V3AuthGuard implements CanActivate {
       locationId: payload.locationId || null,
       authType: payload.type,
       customerId: payload.customerId || null,
+      sessionId: payload.sessionId || null,
       customer: payload.customerId
         ? {
             id: payload.customerId,

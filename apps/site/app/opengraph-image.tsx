@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { getHomePageContent, getSiteSettings } from "../lib/sanity";
 
 export const runtime = "edge";
 
@@ -11,6 +12,12 @@ export const size = {
 export const contentType = "image/png";
 
 export default async function Image() {
+  const homeContent = await getHomePageContent();
+  const settings = await getSiteSettings();
+
+  const title = homeContent.seo?.title || settings?.siteTitle || "Scryme — High-Performance Commerce & Scale Platform";
+  const subtitle = homeContent.seo?.description || settings?.siteDescription || homeContent.heroSubtitle || "The all-in-one enterprise platform for CRM, POS, Inventory, and Finance";
+
   return new ImageResponse(
     (
       <div
@@ -64,15 +71,27 @@ export default async function Image() {
         </div>
         <div
           style={{
-            fontSize: "48px",
+            fontSize: "36px",
+            fontWeight: "bold",
+            color: "#e0e7ff",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            marginBottom: "16px",
+          }}
+        >
+          {title}
+        </div>
+        <div
+          style={{
+            fontSize: "42px",
             fontWeight: "bold",
             color: "white",
             textAlign: "center",
-            maxWidth: "900px",
-            lineHeight: 1.2,
+            maxWidth: "1000px",
+            lineHeight: 1.3,
           }}
         >
-          The all-in-one enterprise platform for CRM, POS, Inventory, and Finance
+          {subtitle}
         </div>
       </div>
     ),

@@ -223,4 +223,31 @@ describe("PermissionsGuard", () => {
       new ForbiddenException("Insufficient permissions"),
     );
   });
+
+  it("should authorize v3_client tokens directly using client scopes", async () => {
+    const context = createMockHttpContext({
+      requiredPermissions: ["catalog:product:read"],
+      v3Context: {
+        authType: "v3_client",
+        scopes: ["catalog:product:read"],
+      },
+      organization: { id: "org1", slug: "org-1" },
+    });
+
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
+
+  it("should authorize v3_customer tokens using default customer permissions", async () => {
+    const context = createMockHttpContext({
+      requiredPermissions: ["catalog:product:read", "services:read"],
+      v3Context: {
+        authType: "v3_customer",
+      },
+      organization: { id: "org1", slug: "org-1" },
+    });
+
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
 });

@@ -41,3 +41,11 @@
 ## 2026-08-05 - [Keyboard Focus Support on sr-only Switch Toggles]
 **Learning:** When using custom visual toggle switches with hidden native inputs (e.g., using the `sr-only` class), keyboard-only users will completely lose visual focus indication when navigating into the toggle, creating a critical accessibility gap.
 **Action:** Always pair visually hidden checkbox/radio inputs with the `peer` class (e.g. `sr-only peer`) and apply clear, high-contrast outline styles on the adjacent visual styling container using focus-visible classes (such as `peer-focus-visible:ring-2 peer-focus-visible:ring-primary/60 peer-focus-visible:ring-offset-1`).
+
+## 2026-08-08 - [Unified Required Field Indicators in Complex CRM Forms]
+**Learning:** Using inconsistent, raw asterisks (`*`) or hardcoded non-theme colors (such as `text-red-500`) for visual field requirement indicators inside form labels creates design debt, makes visual accessibility poor under dark/light modes, and degrades developer experience (DX). Pairing standard CSS theme variables (`text-destructive`) inside structured React components keeps forms accessible and visually seamless.
+**Action:** Always utilize `<span className="text-destructive">*</span>` for visually required form labels, avoiding raw inline characters and non-theme CSS colors.
+
+## 2026-08-09 - [Focus Preservation in Content Rich Markdown Composers]
+**Learning:** Clicking formatting toolbar buttons in rich content areas (like CMS story editors) triggers input blur on the active editing textarea. Utilizing `onMouseDown={(e) => e.preventDefault()}` on formatting buttons completely bypasses this default behavior, preserving both the focus and active selection/caret coordinates seamlessly.
+**Action:** Always employ `onMouseDown={(e) => e.preventDefault()}` on toolbar action buttons targeting a text input or textarea to avoid losing focus and interrupting user input.

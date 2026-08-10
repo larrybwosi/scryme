@@ -51,11 +51,6 @@ export class AddressDto {
 }
 
 export class RegisterCustomerDto {
-  @ApiProperty({ example: "user_12345", required: false })
-  @IsString()
-  @IsOptional()
-  zitadelUserId?: string;
-
   @ApiProperty({ example: "John Doe" })
   @IsString()
   @IsNotEmpty()
@@ -65,6 +60,11 @@ export class RegisterCustomerDto {
   @IsEmail()
   @IsNotEmpty()
   email: string;
+
+  @ApiProperty({ example: "password123", required: false })
+  @IsString()
+  @IsOptional()
+  password?: string;
 
   @ApiProperty({ example: "+254700000000", required: false })
   @IsString()
@@ -109,12 +109,14 @@ export class RegisterCustomerDto {
   taxId?: string;
 }
 
-export class ProvisionZitadelDto {
-  @ApiProperty({ example: ["http://localhost:3000/api/auth/callback/zitadel"], required: false })
-  @IsOptional()
-  redirectUris?: string[];
+export class CustomerLoginDto {
+  @ApiProperty({ example: "john@example.com" })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
 
-  @ApiProperty({ example: ["http://localhost:3000"], required: false })
-  @IsOptional()
-  postLogoutRedirectUris?: string[];
+  @ApiProperty({ example: "password123" })
+  @IsString()
+  @IsNotEmpty()
+  password?: string;
 }

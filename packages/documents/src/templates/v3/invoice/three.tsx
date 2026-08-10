@@ -16,28 +16,28 @@ const HEADER_BG = "#E2E4E5";
 const ROW_ALT = "#EBEDEE";
 const SUBTOTAL_BG = "#DCDEDF";
 
-const styles = StyleSheet.create({
+const getStyles = (activeColor: string, activeSecondaryColor: string) => StyleSheet.create({
   page: {
     paddingTop: 0,
     paddingBottom: 40,
     paddingHorizontal: 0,
     fontSize: 9,
-    color: DARK,
+    color: activeSecondaryColor,
     fontFamily: "Helvetica",
   },
 
   // ---------- Top gray band ----------
   topBand: {
-    backgroundColor: HEADER_BG,
+    backgroundColor: activeColor,
     paddingTop: 35,
     paddingBottom: 30,
     paddingHorizontal: 45,
   },
-  dateText: { fontSize: 8.5, color: GRAY_TEXT, marginBottom: 6 },
+  dateText: { fontSize: 8.5, color: "#FFFFFF", marginBottom: 6 },
   documentTitle: {
     fontSize: 32,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: "#FFFFFF",
     letterSpacing: 1,
     marginBottom: 20,
     textTransform: "uppercase",
@@ -45,22 +45,22 @@ const styles = StyleSheet.create({
   topRow: { flexDirection: "row", justifyContent: "space-between" },
 
   companyBlock: {},
-  companyLabel: { fontSize: 9, color: DARK, marginBottom: 2 },
+  companyLabel: { fontSize: 9, color: "#FFFFFF", marginBottom: 2 },
   metaTable: { marginTop: 16 },
   metaRow: { flexDirection: "row", marginBottom: 4 },
-  metaKey: { fontSize: 8.5, color: GRAY_TEXT, width: 75 },
-  metaColon: { fontSize: 8.5, color: GRAY_TEXT, width: 10 },
-  metaVal: { fontSize: 8.5, color: DARK },
+  metaKey: { fontSize: 8.5, color: "#FFFFFF", opacity: 0.8, width: 75 },
+  metaColon: { fontSize: 8.5, color: "#FFFFFF", opacity: 0.8, width: 10 },
+  metaVal: { fontSize: 8.5, color: "#FFFFFF" },
 
   toBlock: { alignItems: "flex-start", maxWidth: 200 },
-  toLabel: { fontSize: 9, color: GRAY_TEXT, marginBottom: 4 },
+  toLabel: { fontSize: 9, color: "#FFFFFF", opacity: 0.8, marginBottom: 4 },
   toName: {
     fontSize: 11,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: "#FFFFFF",
     marginBottom: 8,
   },
-  toAddr: { fontSize: 8.5, color: GRAY_TEXT, lineHeight: 1.5 },
+  toAddr: { fontSize: 8.5, color: "#FFFFFF", opacity: 0.8, lineHeight: 1.5 },
 
   // ---------- Table ----------
   tableSection: { paddingHorizontal: 45, marginTop: 30 },
@@ -68,39 +68,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingVertical: 8,
     borderBottomWidth: 1.5,
-    borderBottomColor: DARK,
+    borderBottomColor: activeColor,
   },
   thRef: {
     width: "9%",
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
   },
   thDesc: {
     width: "38%",
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
   },
   thQty: {
     width: "13%",
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     textAlign: "center",
   },
   thUnit: {
     width: "20%",
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     textAlign: "center",
   },
   thAmount: {
     width: "20%",
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     textAlign: "right",
   },
 
@@ -109,21 +109,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     alignItems: "center",
   },
-  tdRef: { width: "9%", fontSize: 9, color: DARK },
-  tdDesc: { width: "38%", fontSize: 9, color: DARK },
-  tdQty: { width: "13%", fontSize: 9, color: DARK, textAlign: "center" },
-  tdUnit: { width: "20%", fontSize: 9, color: DARK, textAlign: "center" },
-  tdAmount: { width: "20%", fontSize: 9, color: DARK, textAlign: "right" },
+  tdRef: { width: "9%", fontSize: 9, color: activeSecondaryColor },
+  tdDesc: { width: "38%", fontSize: 9, color: activeSecondaryColor },
+  tdQty: { width: "13%", fontSize: 9, color: activeSecondaryColor, textAlign: "center" },
+  tdUnit: { width: "20%", fontSize: 9, color: activeSecondaryColor, textAlign: "center" },
+  tdAmount: { width: "20%", fontSize: 9, color: activeSecondaryColor, textAlign: "right" },
 
   refBadge: {
-    backgroundColor: "#D7D9DA",
+    backgroundColor: "#EBEDEE",
     width: 18,
     height: 18,
     borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
   },
-  refBadgeText: { fontSize: 8, color: DARK },
+  refBadgeText: { fontSize: 8, color: activeSecondaryColor },
 
   // ---------- Subtotal ----------
   subtotalRow: {
@@ -136,15 +136,15 @@ const styles = StyleSheet.create({
   subtotalLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     marginRight: 20,
   },
   subtotalValueBox: {
-    backgroundColor: SUBTOTAL_BG,
+    backgroundColor: activeColor,
     paddingVertical: 6,
     paddingHorizontal: 18,
   },
-  subtotalValue: { fontSize: 9, fontFamily: "Helvetica-Bold", color: DARK },
+  subtotalValue: { fontSize: 9, fontFamily: "Helvetica-Bold", color: "#FFFFFF" },
 
   // ---------- Bottom section ----------
   bottomSection: {
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   paymentToName: {
     fontSize: 10,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     marginBottom: 10,
   },
   paymentToAddr: { fontSize: 8.5, color: GRAY_TEXT, lineHeight: 1.5 },
@@ -168,21 +168,23 @@ const styles = StyleSheet.create({
   bankLabel: {
     fontSize: 9,
     fontFamily: "Helvetica-Bold",
-    color: DARK,
+    color: activeSecondaryColor,
     width: 70,
   },
   bankSubLabel: { fontSize: 8.5, color: GRAY_TEXT, width: 65 },
   bankColon: { fontSize: 8.5, color: GRAY_TEXT, width: 12 },
-  bankVal: { fontSize: 8.5, color: DARK },
+  bankVal: { fontSize: 8.5, color: activeSecondaryColor },
 
   signatureArea: { alignItems: "flex-end", marginTop: 18 },
   signatureScript: {
     fontSize: 16,
     fontFamily: "Helvetica-Oblique",
     marginBottom: 2,
+    color: activeSecondaryColor,
   },
   signatureLine: {
     borderTopWidth: 1,
+    borderTopColor: activeColor,
     width: 140,
     marginBottom: 3,
   },
@@ -206,7 +208,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 45,
     paddingTop: 14,
   },
-  footerText: { fontSize: 8.5, fontFamily: "Helvetica-Bold" },
+  footerText: { fontSize: 8.5, fontFamily: "Helvetica-Bold", color: activeSecondaryColor },
 });
 
 export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?: string }) => {
@@ -229,8 +231,10 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
     kraReceiptNumber,
   } = data;
 
-  const activeColor = primaryColor || DARK;
+  const activeColor = primaryColor || HEADER_BG;
   const activeSecondaryColor = secondaryColor || DARK;
+
+  const styles = getStyles(activeColor, activeSecondaryColor);
 
   const fmt = (n: number) => `${currency.symbol}${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -238,9 +242,9 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
     <Document>
       <Page size="A4" style={styles.page}>
         {/* ---- Top gray band ---- */}
-        <View style={[styles.topBand, activeColor !== DARK ? { backgroundColor: activeColor } : {}]}>
-          <Text style={[styles.dateText, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{date}</Text>
-          <Text style={[styles.documentTitle, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{type}</Text>
+        <View style={styles.topBand}>
+          <Text style={styles.dateText}>{date}</Text>
+          <Text style={styles.documentTitle}>{type}</Text>
 
           <View style={styles.topRow}>
             {/* Company block */}
@@ -248,26 +252,26 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
               {company.logo && (
                 <Image src={company.logo} style={{ width: 80, height: 80, marginBottom: 15, objectFit: 'contain' }} />
               )}
-              <Text style={[styles.companyLabel, { fontSize: 12, fontFamily: 'Helvetica-Bold' }, activeColor !== DARK ? { color: '#FFFFFF' } : { color: activeSecondaryColor }]}>{company.name}</Text>
-              {company.slogan && <Text style={[styles.companyLabel, { marginTop: 2 }, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{company.slogan}</Text>}
+              <Text style={[styles.companyLabel, { fontSize: 12, fontFamily: 'Helvetica-Bold' }]}>{company.name}</Text>
+              {company.slogan && <Text style={[styles.companyLabel, { marginTop: 2 }]}>{company.slogan}</Text>}
               <View style={styles.metaTable}>
                 <View style={styles.metaRow}>
-                  <Text style={[styles.metaKey, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>Date issued</Text>
-                  <Text style={[styles.metaColon, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>:</Text>
-                  <Text style={[styles.metaVal, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{date}</Text>
+                  <Text style={styles.metaKey}>Date issued</Text>
+                  <Text style={styles.metaColon}>:</Text>
+                  <Text style={styles.metaVal}>{date}</Text>
                 </View>
                 <View style={styles.metaRow}>
-                  <Text style={[styles.metaKey, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>
+                  <Text style={styles.metaKey}>
                     {type === "invoice" ? "Invoice No" : "Receipt No"}
                   </Text>
-                  <Text style={[styles.metaColon, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>:</Text>
-                  <Text style={[styles.metaVal, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{number}</Text>
+                  <Text style={styles.metaColon}>:</Text>
+                  <Text style={styles.metaVal}>{number}</Text>
                 </View>
                 {(kraPin || kraControlCode || kraReceiptNumber) && (
                   <View style={{ marginTop: 10 }}>
-                    {kraPin && <Text style={{ fontSize: 7, color: activeColor !== DARK ? '#FFFFFF' : GRAY_TEXT }}>KRA PIN: {kraPin}</Text>}
-                    {kraControlCode && <Text style={{ fontSize: 7, color: activeColor !== DARK ? '#FFFFFF' : GRAY_TEXT }}>Control Code: {kraControlCode}</Text>}
-                    {kraReceiptNumber && <Text style={{ fontSize: 7, color: activeColor !== DARK ? '#FFFFFF' : GRAY_TEXT }}>Receipt No: {kraReceiptNumber}</Text>}
+                    {kraPin && <Text style={{ fontSize: 7, color: '#FFFFFF', opacity: 0.8 }}>KRA PIN: {kraPin}</Text>}
+                    {kraControlCode && <Text style={{ fontSize: 7, color: '#FFFFFF', opacity: 0.8 }}>Control Code: {kraControlCode}</Text>}
+                    {kraReceiptNumber && <Text style={{ fontSize: 7, color: '#FFFFFF', opacity: 0.8 }}>Receipt No: {kraReceiptNumber}</Text>}
                   </View>
                 )}
               </View>
@@ -275,11 +279,11 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
 
             {/* To block */}
             <View style={styles.toBlock}>
-              <Text style={[styles.toLabel, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>
+              <Text style={styles.toLabel}>
                 {type === "invoice" ? "Invoice to" : "Receipt to"}
               </Text>
-              <Text style={[styles.toName, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{customer.name}</Text>
-              <Text style={[styles.toAddr, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>
+              <Text style={styles.toName}>{customer.name}</Text>
+              <Text style={styles.toAddr}>
                 {customer.address}
                 {customer.phone ? `\n${customer.phone}` : ""}
                 {customer.email ? `\n${customer.email}` : ""}
@@ -293,7 +297,7 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
 
         {/* ---- Table ---- */}
         <View style={styles.tableSection}>
-          <View style={[styles.tableHeader, { borderBottomColor: activeColor }]}>
+          <View style={styles.tableHeader}>
             <Text style={styles.thRef}>REF</Text>
             <Text style={styles.thDesc}>DESCRIPTION</Text>
             <Text style={styles.thQty}>QTY</Text>
@@ -330,8 +334,8 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         {/* ---- Subtotal ---- */}
         <View style={styles.subtotalRow}>
           <Text style={styles.subtotalLabel}>TOTAL</Text>
-          <View style={[styles.subtotalValueBox, { backgroundColor: activeColor === DARK ? SUBTOTAL_BG : activeColor }]}>
-            <Text style={[styles.subtotalValue, activeColor !== DARK ? { color: '#FFFFFF' } : {}]}>{fmt(total)}</Text>
+          <View style={styles.subtotalValueBox}>
+            <Text style={styles.subtotalValue}>{fmt(total)}</Text>
           </View>
         </View>
 
@@ -368,8 +372,8 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
             {signature && (
               <View style={styles.signatureArea}>
                 {signature.image && <Image src={signature.image} style={{ width: 100, height: 40, marginBottom: 5 }} />}
-                <Text style={[styles.signatureScript, { color: activeSecondaryColor }]}>{signature.name}</Text>
-                <View style={[styles.signatureLine, { borderTopColor: activeColor }]} />
+                <Text style={styles.signatureScript}>{signature.name}</Text>
+                <View style={styles.signatureLine} />
                 <Text style={styles.signatureLabel}>{signature.title || "Signature"}</Text>
               </View>
             )}
@@ -379,9 +383,9 @@ export const TemplateThree = ({ data, qrCode }: { data: V3DocumentData; qrCode?:
         {/* ---- Footer ---- */}
         <View style={styles.footerDivider} />
         <View style={styles.footerRow}>
-          <Text style={[styles.footerText, { color: activeSecondaryColor }]}>{footerWebsite || company.website || ""}</Text>
-          <Text style={[styles.footerText, { color: activeSecondaryColor }]}>{company.email || ""}</Text>
-          <Text style={[styles.footerText, { color: activeSecondaryColor }]}>THANK YOU</Text>
+          <Text style={styles.footerText}>{footerWebsite || company.website || ""}</Text>
+          <Text style={styles.footerText}>{company.email || ""}</Text>
+          <Text style={styles.footerText}>THANK YOU</Text>
         </View>
       </Page>
     </Document>

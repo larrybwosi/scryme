@@ -24,6 +24,8 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
+import { RolesManager } from "../../components/staff/roles-manager";
+import { Shield } from "lucide-react";
 
 export default async function StaffPage() {
   const [membersResult, invitationsResult] = await Promise.all([
@@ -149,6 +151,12 @@ export default async function StaffPage() {
                 <Mail size={16} />
                 Pending Invitations ({invitations.length})
               </TabsTrigger>
+              <TabsTrigger
+                value="roles"
+                className="gap-2 px-4 py-2 data-[state=active]:bg-muted data-[state=active]:text-foreground">
+                <Shield size={16} />
+                Roles & Scopes
+              </TabsTrigger>
             </TabsList>
 
             <div className="flex items-center gap-4">
@@ -172,6 +180,10 @@ export default async function StaffPage() {
 
           <TabsContent value="invitations" className="outline-none">
             <InvitationsTable data={invitations as any} />
+          </TabsContent>
+
+          <TabsContent value="roles" className="outline-none pt-4">
+            <RolesManager />
           </TabsContent>
         </Tabs>
       </div>

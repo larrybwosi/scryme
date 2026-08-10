@@ -20,21 +20,18 @@ import { CrmPipelineMock } from "@/components/products/crm/crm-pipeline-mock";
 import { CrmContactMock } from "@/components/products/crm/crm-contact-mock";
 import { CrmAnalyticsMock } from "@/components/products/crm/crm-analytics-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Cloud CRM Software for Growing Sales Teams",
-  description:
-    "Scryme CRM gives sales teams a visual pipeline, unified contact records, automated follow-ups, and real-time analytics to close more deals faster.",
-  alternates: {
-    canonical: "/products/crm",
-  },
-  openGraph: {
-    title: "Scryme CRM — Visual Pipeline & Sales Automation",
-    description:
-      "Close more deals with a pipeline built for scale. AI-assisted follow-ups, deal scoring, and revenue forecasting.",
-    url: "https://scryme.tech/products/crm",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getHomePageContent();
+  const moduleData = content.modules?.find((m) => m.code === "CRM" || m.href?.endsWith("/crm"));
+  return getPageMetadata({
+    pageSeo: moduleData?.seo,
+    fallbackTitle: "Cloud CRM Software for Growing Sales Teams",
+    fallbackDescription: "Scryme CRM gives sales teams a visual pipeline, unified contact records, automated follow-ups, and real-time analytics to close more deals faster.",
+    canonicalPath: "/products/crm",
+  });
+}
 
 const capabilities = [
   { icon: GitBranch, label: "Visual Pipeline" },

@@ -262,3 +262,22 @@
 **Vulnerability:** The `ServiceManagementService.registerCustomerApp` method stored newly generated `clientSecret` values in plaintext in the database. This caused subsequent authentication attempts using `validateV3ApiSecret` to fail since the validator expects a SHA-256 hashed secret, and it created a severe plaintext exposure risk if the database was compromised.
 **Learning:** Any generated application/client credentials (like API keys, client secrets, and setup tokens) must never be stored in plaintext. They must be safely hashed using a secure cryptographic hashing function like SHA-256 before being persisted.
 **Prevention:** Always pre-hash sensitive customer-facing client secrets with SHA-256 before storing them in database records, and only return the raw unhashed secret to the registering client once during creation.
+
+## 2026-08-08 - Timing Attack and Username Enumeration in Customer Login
+**Vulnerability:** The V3 customer login endpoint returned early if a queried customer or user did not exist in the database, skipping the cryptographically expensive `bcrypt.compare` operation. This created a timing side-channel that allowed attackers to differentiate between registered and non-registered email addresses.
+**Learning:** Checking existence first and failing-fast before running heavy cryptographic calculations (like password hashing comparison) is a common performance optimization that introduces a severe username/email enumeration vulnerability. Correct timing-safe login logic must ensure identical execution flow and computational footprint for both successful and failed lookups.
+**Prevention:** Always execute `bcrypt.compare` against a valid dummy hash string when the queried customer or linked user is missing from the database. This guarantees a consistent response timing profile regardless of whether the email is registered.
+
+## 2026-08-09 - Member cardId Timing Attack and PIN Enumeration in POS check-in
+**Vulnerability:** The POS check-in endpoint returned early if the member or member.pinHash was not found, bypassing the `bcrypt.compare` PIN verification. This timing side-channel allowed attackers to enumerate valid member card IDs.
+**Learning:** Security-critical check-in or login endpoints must always use dummy bcrypt comparisons to normalize processing time for valid vs. invalid credentials. Unifying the response messages and failed rate-limiting lockout increments under both branches prevents enumeration side-channels.
+**Prevention:** Perform a dummy `bcrypt.compare` against a pre-defined placeholder PIN hash when the member or their PIN is missing, and throw identical error responses with synchronized lockout counters.
+## 2026-08-09 - Sensitive Data Leakage in Customer Active Sessions Listing
+**Vulnerability:** The V3 customer session list endpoint (`GET /auth/sessions`) was returning raw active JWT tokens for all active customer sessions in the response payload, exposing active user credentials.
+**Learning:** Returning full session state payloads directly from storage (like Redis) without explicit normalization or serialization filters risks leaking highly sensitive credentials like JWT authentication tokens. Listing active sessions should only expose session metadata (such as device agent, IP, creation time, status) and must omit the credentials themselves.
+**Prevention:** Always perform strict attribute sanitization or destructuring on session data retrieved from database/cache layers before returning it to the client. Specifically omit sensitive authentication properties like `token` or secret keys.
+
+## 2026-08-10 - timing side-channels in V3 member login cardId lookup
+**Vulnerability:** The V3 member login flow performed cardId lookup using `prisma.client.member.findUnique` but only executed the cryptographically expensive `bcrypt.compare` PIN verification if a matching active member was found in the database. This created a timing side-channel that allowed attackers to enumerate valid active card IDs.
+**Learning:** Performing existence or active status checks and skipping cryptographic password/PIN validation on failure leaks the existence of that record via response timing. Consistent execution times must be maintained across both successful and failing lookups.
+**Prevention:** Always perform a dummy `bcrypt.compare` against a valid placeholder hash string when a record lookup or active check fails, ensuring synchronization of timing and lockout logic on all execution paths.

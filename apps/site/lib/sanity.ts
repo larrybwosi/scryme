@@ -1,4 +1,6 @@
 import { createClient } from "next-sanity";
+import type { Metadata } from "next";
+import { urlFor } from "@/sanity/lib/image";
 
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
 const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
@@ -359,10 +361,25 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   }
 }
 
+export interface SeoField {
+  title?: string;
+  description?: string;
+  keywords?: string[];
+  ogImage?: any;
+}
+
+export interface SiteSettings {
+  siteTitle?: string;
+  siteDescription?: string;
+  siteKeywords?: string[];
+  defaultOgImage?: any;
+}
+
 // Dynamic Site Content interfaces
 export interface HomePageContent {
   heroTitle: string;
   heroSubtitle: string;
+  seo?: SeoField;
   heroImage?: {
     asset?: {
       _ref: string;
@@ -388,6 +405,7 @@ export interface HomePageContent {
     connectsTo: string[];
     href: string;
     accent: string;
+    seo?: SeoField;
   }>;
   stats: Array<{
     value: string;
@@ -457,6 +475,7 @@ export interface HomePageContent {
 export interface AboutPageContent {
   heroTitle: string;
   heroSubtitle: string;
+  seo?: SeoField;
   stats: Array<{
     value: string;
     label: string;
@@ -498,6 +517,7 @@ export interface AboutPageContent {
 export interface PricingPageContent {
   heroTitle: string;
   heroSubtitle: string;
+  seo?: SeoField;
   plans: Array<{
     name: string;
     price: string;
@@ -979,7 +999,8 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       crmTeaserImage,
       posTeaserTitle,
       posTeaserSubtitle,
-      posTeaserImage
+      posTeaserImage,
+      seo
     }`);
     if (!data) return DEFAULT_HOME_CONTENT;
     return {
@@ -1006,6 +1027,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       posTeaserTitle: data.posTeaserTitle || DEFAULT_HOME_CONTENT.posTeaserTitle,
       posTeaserSubtitle: data.posTeaserSubtitle || DEFAULT_HOME_CONTENT.posTeaserSubtitle,
       posTeaserImage: data.posTeaserImage || DEFAULT_HOME_CONTENT.posTeaserImage,
+      seo: data.seo,
     };
   } catch (error) {
     console.warn("Sanity fetch error for homePage, falling back to default:", error);
@@ -1027,7 +1049,8 @@ export async function getAboutPageContent(): Promise<AboutPageContent> {
       missionImage,
       timeline,
       values,
-      team
+      team,
+      seo
     }`);
     if (!data) return DEFAULT_ABOUT_CONTENT;
     return {
@@ -1040,6 +1063,7 @@ export async function getAboutPageContent(): Promise<AboutPageContent> {
       timeline: data.timeline && data.timeline.length > 0 ? data.timeline : DEFAULT_ABOUT_CONTENT.timeline,
       values: data.values && data.values.length > 0 ? data.values : DEFAULT_ABOUT_CONTENT.values,
       team: data.team && data.team.length > 0 ? data.team : DEFAULT_ABOUT_CONTENT.team,
+      seo: data.seo,
     };
   } catch (error) {
     console.warn("Sanity fetch error for aboutPage, falling back to default:", error);
@@ -1057,7 +1081,8 @@ export async function getPricingPageContent(): Promise<PricingPageContent> {
       heroSubtitle,
       plans,
       comparisonRows,
-      faqItems
+      faqItems,
+      seo
     }`);
     if (!data) return DEFAULT_PRICING_CONTENT;
     return {
@@ -1066,9 +1091,108 @@ export async function getPricingPageContent(): Promise<PricingPageContent> {
       plans: data.plans && data.plans.length > 0 ? data.plans : DEFAULT_PRICING_CONTENT.plans,
       comparisonRows: data.comparisonRows && data.comparisonRows.length > 0 ? data.comparisonRows : DEFAULT_PRICING_CONTENT.comparisonRows,
       faqItems: data.faqItems && data.faqItems.length > 0 ? data.faqItems : DEFAULT_PRICING_CONTENT.faqItems,
+      seo: data.seo,
     };
   } catch (error) {
     console.warn("Sanity fetch error for pricingPage, falling back to default:", error);
     return DEFAULT_PRICING_CONTENT;
   }
+}
+
+export async function getSiteSettings(): Promise<SiteSettings | null> {
+  if (!client) {
+    return null;
+  }
+  try {
+    const data = await client.fetch<SiteSettings | null>(`*[_type == "siteSettings"][0] {
+      siteTitle,
+      siteDescription,
+      siteKeywords,
+      defaultOgImage
+    }`);
+    return data;
+  } catch (error) {
+    console.warn("Sanity fetch error for siteSettings:", error);
+    return null;
+  }
+}
+
+export async function getPageMetadata(params: {
+  pageSeo?: SeoField;
+  fallbackTitle: string;
+  fallbackDescription: string;
+  canonicalPath: string;
+}): Promise<Metadata> {
+  const settings = await getSiteSettings();
+
+  const title = params.pageSeo?.title || settings?.siteTitle || params.fallbackTitle;
+  const description = params.pageSeo?.description || settings?.siteDescription || params.fallbackDescription;
+  const keywords = params.pageSeo?.keywords || settings?.siteKeywords || [
+    "ERP",
+    "CRM",
+    "Point of Sale",
+    "POS",
+    "Multi-Branch Retail",
+    "Storefront Websites",
+    "Stock Management",
+    "Inventory Management",
+    "Business Scale Software",
+    "Enterprise Platform",
+    "Retail Software",
+    "SaaS",
+    "Wholesale ERP",
+    "Cloud POS",
+  ];
+
+  const canonicalUrl = `https://scryme.tech${params.canonicalPath}`;
+
+  let ogImageUrl = "https://scryme.tech/og-image.png";
+  if (params.pageSeo?.ogImage) {
+    try {
+      ogImageUrl = urlFor(params.pageSeo.ogImage).width(1200).height(630).url();
+    } catch {
+      // Ignored
+    }
+  } else if (settings?.defaultOgImage) {
+    try {
+      ogImageUrl = urlFor(settings.defaultOgImage).width(1200).height(630).url();
+    } catch {
+      // Ignored
+    }
+  }
+
+  return {
+    metadataBase: new URL("https://scryme.tech"),
+    title: {
+      default: title,
+      template: "%s | Scryme",
+    },
+    description,
+    keywords,
+    alternates: {
+      canonical: params.canonicalPath,
+    },
+    openGraph: {
+      type: "website",
+      locale: "en_US",
+      url: canonicalUrl,
+      title,
+      description,
+      siteName: "Scryme",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImageUrl],
+    },
+  };
 }

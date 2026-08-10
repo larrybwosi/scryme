@@ -7,25 +7,21 @@ import { AboutTimeline } from "@/components/about/about-timeline";
 import { AboutValues } from "@/components/about/about-values";
 import { AboutTeam } from "@/components/about/about-team";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { getAboutPageContent } from "../../lib/sanity";
+import { getAboutPageContent, getPageMetadata } from "../../lib/sanity";
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "About Us — Our Mission to Empower High-Performance Commerce",
-  description:
-    "Scryme is built to empower growing businesses to scale securely and enhance their performance with integrated POS, multi-branch syncing, advanced stock control, and automated storefront websites.",
-  alternates: {
-    canonical: "/about",
-  },
-  openGraph: {
-    title: "About Scryme",
-    description: "Learn about the mission and team behind the high-performance commerce platform built to scale operations.",
-    url: "https://scryme.tech/about",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getAboutPageContent();
+  return getPageMetadata({
+    pageSeo: content.seo,
+    fallbackTitle: "About Us — Our Mission to Empower High-Performance Commerce",
+    fallbackDescription: "Scryme is built to empower growing businesses to scale securely and enhance their performance with integrated POS, multi-branch syncing, advanced stock control, and automated storefront websites.",
+    canonicalPath: "/about",
+  });
+}
 
 export default async function AboutPage() {
   const content = await getAboutPageContent();
