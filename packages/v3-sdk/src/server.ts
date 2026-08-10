@@ -1,6 +1,22 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { getScrymeV3API } from "./index";
-import type { RegisterCustomerDto } from "./generated/model/registerCustomerDto";
+import type {
+  CartControllerGetCartParams,
+  CartResponseDto,
+  AddToCartDto,
+  RemoveFromCartDto,
+  CartControllerClearCartParams,
+  CartItemDto,
+  OrderResponseDto,
+  CustomerResponseDto,
+  AddressDto,
+  CreateBookingDto,
+  ServiceBookingItemDto,
+  CompleteBookingDto,
+  RegisterCustomerDto,
+  AuthExchangeToken201,
+  UpdateCustomerDto,
+} from "./generated/model";
 import {
   RawAPI,
   buildModule,
@@ -51,41 +67,34 @@ export class ScrymeServerSDK {
   public admin: AdminModule;
 
   public cart: {
-    get(params?: any): Promise<any>;
-    add(dto: any): Promise<any>;
-    remove(dto: any): Promise<any>;
-    clear(params?: any): Promise<any>;
-    update(dto: any): Promise<any>;
-    getItems(params?: any): Promise<any[]>;
-    getTotals(params?: any): Promise<{ itemsCount: number; items: any[]; raw: any }>;
-    checkout(params: { sessionId?: string; customerId?: string; locationId: string; notes?: string; channel?: string }): Promise<any>;
+    get(params?: CartControllerGetCartParams): Promise<AxiosResponse<CartResponseDto>>;
+    add(dto: AddToCartDto): Promise<AxiosResponse<void>>;
+    remove(dto: RemoveFromCartDto): Promise<AxiosResponse<void>>;
+    clear(params?: CartControllerClearCartParams): Promise<AxiosResponse<void>>;
+    update(dto: AddToCartDto & { quantity: number }): Promise<AxiosResponse<void> | AxiosResponse<CartResponseDto> | undefined>;
+    getItems(params?: CartControllerGetCartParams): Promise<CartItemDto[]>;
+    getTotals(params?: CartControllerGetCartParams): Promise<{ itemsCount: number; items: CartItemDto[]; raw: CartResponseDto }>;
+    checkout(params: { sessionId?: string; customerId?: string; locationId: string; notes?: string; channel?: string }): Promise<OrderResponseDto>;
   };
 
   public customer: {
-    getProfile(customerId: string): Promise<any>;
-    updateProfile(customerId: string, dto: any): Promise<any>;
-    getAddresses(customerId: string): Promise<any>;
-    addAddress(customerId: string, dto: any): Promise<any>;
+    getProfile(customerId: string): Promise<AxiosResponse<CustomerResponseDto>>;
+    updateProfile(customerId: string, dto: UpdateCustomerDto): Promise<AxiosResponse<CustomerResponseDto>>;
+    getAddresses(customerId: string): Promise<AxiosResponse<any>>;
+    addAddress(customerId: string, dto: AddressDto): Promise<AxiosResponse<void>>;
   };
 
   public bookings: {
-    create(dto: {
-      serviceId: string;
-      scheduledStartTime: string;
-      scheduledEndTime?: string;
-      staffIds?: string[];
-      resourceIds?: string[];
-      notes?: string;
-    }): Promise<any>;
-    get(id: string): Promise<any>;
-    list(): Promise<any>;
-    cancel(id: string): Promise<any>;
-    complete(id: string, dto: any): Promise<any>;
+    create(dto: CreateBookingDto): Promise<AxiosResponse<void>>;
+    get(id: string): Promise<AxiosResponse<void>>;
+    list(): Promise<AxiosResponse<void>>;
+    cancel(id: string): Promise<AxiosResponse<void>>;
+    complete(id: string, dto: CompleteBookingDto & Record<string, any>): Promise<AxiosResponse<void>>;
   };
 
   public auth: AuthModule & {
-    signUp(dto: RegisterCustomerDto): Promise<any>;
-    authenticate(): Promise<any>;
+    signUp(dto: RegisterCustomerDto): Promise<AxiosResponse<CustomerResponseDto>>;
+    authenticate(): Promise<AuthExchangeToken201>;
     signIn(credentials: { email: string; password?: string }): Promise<any>;
     getCurrentSession(): Promise<any>;
     refreshSession(): Promise<any>;
@@ -318,26 +327,26 @@ export class ScrymeServerSDK {
       checkout: async (params: { sessionId?: string; customerId?: string; locationId: string; notes?: string; channel?: string }) => {
         if (!params.customerId) throw new Error("customerId is required for server checkout.");
 
-        const items = await this.cart.getItems({ sessionId: params.sessionId, customerId: params.customerId });
+        const items = await this.cart.getItems({ sessionId: params.sessionId, customerId: params.customerId } as any);
         if (!items || items.length === 0) {
           throw new Error("Cannot checkout an empty cart.");
         }
 
-        const orderItems = items.map((item: any) => ({
-          variantId: item.variantId,
+        const orderItems: any[] = items.map((item: any) => ({
+          variantId: item.variantId || "",
           quantity: item.quantity,
           unitPrice: item.unitPrice,
         }));
 
         const orderResponse = await this.orders.createOrder({
-          customerId: params.customerId,
-          locationId: params.locationId,
+          customerId: params.customerId!,
+          locationId: params.locationId!,
           items: orderItems,
           notes: params.notes,
           channel: params.channel as any,
         });
 
-        await this.cart.clear({ sessionId: params.sessionId, customerId: params.customerId });
+        await this.cart.clear({ sessionId: params.sessionId || "", customerId: params.customerId } as any);
         return orderResponse?.data || orderResponse;
       }
     };
