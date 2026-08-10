@@ -120,5 +120,10 @@ export const aboutPageType = defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'seo',
+      title: 'Page SEO & Metadata',
+      type: 'seo',
+    }),
   ],
 })

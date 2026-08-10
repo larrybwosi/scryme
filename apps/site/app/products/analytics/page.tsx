@@ -16,21 +16,18 @@ import { IndexGrid } from "@/components/products/index-grid";
 import { LedgerCardGrid } from "@/components/products/ledger-card-grid";
 import { StructuredData } from "@/components/seo/structured-data";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Business Intelligence & Real-time Analytics Software",
-  description:
-    "Scryme Analytics consolidates CRM, POS, Inventory, and Finance streams into real-time business intelligence dashboards, eliminating manual reporting projects.",
-  alternates: {
-    canonical: "/products/analytics",
-  },
-  openGraph: {
-    title: "Scryme Analytics — Real-time Business Intelligence",
-    description:
-      "Consolidate operational streams into real-time business intelligence dashboards.",
-    url: "https://scryme.tech/products/analytics",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getHomePageContent();
+  const moduleData = content.modules?.find((m) => m.code === "BI" || m.href?.endsWith("/analytics"));
+  return getPageMetadata({
+    pageSeo: moduleData?.seo,
+    fallbackTitle: "Business Intelligence & Real-time Analytics Software",
+    fallbackDescription: "Scryme Analytics consolidates CRM, POS, Inventory, and Finance streams into real-time business intelligence dashboards, eliminating manual reporting projects.",
+    canonicalPath: "/products/analytics",
+  });
+}
 
 const capabilities = [
   { icon: TrendingUp, label: "Live Ledger Streams" },

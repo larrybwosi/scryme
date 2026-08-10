@@ -2,46 +2,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, BookText } from "lucide-react";
-import { getPosts } from "../../lib/sanity";
+import { getPosts, getPageMetadata } from "../../lib/sanity";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { urlFor } from "@/sanity/lib/image";
 import Image from "next/image";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "Blog — Insights on Retail, CRM, and Inventory Management",
-  description:
-    "Expert insights and guides on scaling your retail and wholesale business, optimizing CRM workflows, and mastering inventory control.",
-  alternates: {
-    canonical: "https://scryme.tech/blog",
-  },
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: "https://scryme.tech/blog",
-    title: "Blog — Insights on Retail, CRM, and Inventory Management | Scryme",
-    description:
-      "Expert insights and guides on scaling your retail and wholesale business, optimizing CRM workflows, and mastering inventory control.",
-    siteName: "Scryme",
-    images: [
-      {
-        url: "https://scryme.tech/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "The Scryme Blog — Insights on Retail, CRM & Inventory",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Blog — Insights on Retail, CRM, and Inventory Management | Scryme",
-    description:
-      "Expert insights and guides on scaling your retail and wholesale business, optimizing CRM workflows, and mastering inventory control.",
-    creator: "@scryme",
-    images: ["https://scryme.tech/og-image.png"],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getPageMetadata({
+    pageSeo: undefined,
+    fallbackTitle: "Blog — Insights on Retail, CRM, and Inventory Management",
+    fallbackDescription: "Expert insights and guides on scaling your retail and wholesale business, optimizing CRM workflows, and mastering inventory control.",
+    canonicalPath: "/blog",
+  });
+}
 
 function formatDate(dateString: string) {
   try {

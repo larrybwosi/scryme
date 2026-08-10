@@ -4,24 +4,18 @@ import { ArrowRight } from "lucide-react";
 import { colors, fonts, modules as defaultModules } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { getHomePageContent } from "../../lib/sanity";
+import { getHomePageContent, getPageMetadata } from "../../lib/sanity";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "The Scale Suite — High-Performance Business Modules",
-  description:
-    "Explore Scryme's suite of integrated operational modules: Custom Storefronts, Point of Sale, Stock & Inventory, Central Management, Multi-Branch Workforce, and Performance Analytics.",
-  alternates: {
-    canonical: "/products",
-  },
-  openGraph: {
-    title: "Scryme Modules — High-Performance Suite",
-    description:
-      "Integrated POS, multi-branch syncing, advanced stock control, and automated client storefront websites.",
-    url: "https://scryme.tech/products",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return getPageMetadata({
+    pageSeo: undefined,
+    fallbackTitle: "The Scale Suite — High-Performance Business Modules",
+    fallbackDescription: "Explore Scryme's suite of integrated operational modules: Custom Storefronts, Point of Sale, Stock & Inventory, Central Management, Multi-Branch Workforce, and Performance Analytics.",
+    canonicalPath: "/products",
+  });
+}
 
 export default async function ProductsPage() {
   const content = await getHomePageContent();

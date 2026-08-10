@@ -8,9 +8,20 @@ import { CRMTeaser } from "@/components/home/crm-teaser";
 import { POSTeaser } from "@/components/home/pos-teaser";
 import { Testimonials } from "@/components/home/testimonials";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { getHomePageContent } from "../lib/sanity";
+import { getHomePageContent, getPageMetadata } from "../lib/sanity";
+import type { Metadata } from "next";
 
 export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getHomePageContent();
+  return getPageMetadata({
+    pageSeo: content.seo,
+    fallbackTitle: "Scryme — High-Performance Commerce & Scale Platform",
+    fallbackDescription: "Scryme is the high-performance commerce and scale platform built to empower modern businesses. We combine integrated offline-first POS, multi-branch syncing, advanced stock management, and centralized corporate control with automated e-commerce storefront websites.",
+    canonicalPath: "/",
+  });
+}
 
 export default async function HomePage() {
   const content = await getHomePageContent();
