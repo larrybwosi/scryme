@@ -6,6 +6,7 @@ const mocked = vi.hoisted(() => ({
   mockDb: {
     product: { findMany: vi.fn(), count: vi.fn() },
     category: { findMany: vi.fn() },
+    productVariant: { findMany: vi.fn() },
   },
   PrismaClient: class {},
   PaymentStatus: {
@@ -168,6 +169,62 @@ describe("CatalogService", () => {
               },
             },
           }),
+        }),
+      );
+    });
+  });
+
+  describe("getVariants", () => {
+    it("should correctly query variants with default pagination", async () => {
+      const orgId = "org-1";
+      (mockDb.productVariant.findMany as any).mockResolvedValue([]);
+
+      const result = await service.getVariants(
+        { organizationId: orgId } as V2ApiContext,
+        {},
+      );
+
+      expect(result).toEqual([]);
+      expect(mockDb.productVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 20,
+          skip: 0,
+          where: {
+            product: {
+              organizationId: orgId,
+            },
+          },
+        }),
+      );
+    });
+
+    it("should correctly apply filters for productType, isActive, and search", async () => {
+      const orgId = "org-1";
+      (mockDb.productVariant.findMany as any).mockResolvedValue([]);
+
+      await service.getVariants(
+        { organizationId: orgId } as V2ApiContext,
+        {
+          productType: "FINISHED_GOOD",
+          isActive: "true",
+          search: "Sourdough",
+        },
+      );
+
+      expect(mockDb.productVariant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            product: {
+              organizationId: orgId,
+              type: "FINISHED_GOOD",
+            },
+            isActive: true,
+            OR: [
+              { name: { contains: "Sourdough", mode: "insensitive" } },
+              { sku: { contains: "Sourdough", mode: "insensitive" } },
+              { product: { name: { contains: "Sourdough", mode: "insensitive" } } },
+            ],
+          },
         }),
       );
     });
