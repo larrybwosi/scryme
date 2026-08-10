@@ -89,5 +89,47 @@ describe("V3AuthCoreService", () => {
         (service as any).validateLoginMember("org-1", "1234"),
       ).rejects.toThrow(UnauthorizedException);
     });
+
+    it("should return member if cardId is provided and PIN matches", async () => {
+      const mockMember = { id: "member-1", isActive: true, pinHash: "hash-1" };
+      (prisma.client.member.findUnique as any).mockResolvedValue(mockMember);
+      (bcrypt.compare as any).mockResolvedValue(true);
+
+      const result = await (service as any).validateLoginMember(
+        "org-1",
+        "1234",
+        "card-123",
+      );
+      expect(result.id).toBe("member-1");
+      expect(prisma.client.member.findUnique).toHaveBeenCalledWith({
+        where: { organizationId_cardId: { organizationId: "org-1", cardId: "card-123" } },
+      });
+      expect(bcrypt.compare).toHaveBeenCalledWith("1234", "hash-1");
+    });
+
+    it("should call bcrypt.compare with dummy pin hash and fail if cardId is provided but member is not found", async () => {
+      (prisma.client.member.findUnique as any).mockResolvedValue(null);
+      (bcrypt.compare as any).mockResolvedValue(false);
+
+      await expect(
+        (service as any).validateLoginMember("org-1", "1234", "card-none"),
+      ).rejects.toThrow(UnauthorizedException);
+
+      const expectedDummyHash = "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+      expect(bcrypt.compare).toHaveBeenCalledWith("1234", expectedDummyHash);
+    });
+
+    it("should call bcrypt.compare with dummy pin hash and fail if cardId is provided but member is inactive", async () => {
+      const mockMember = { id: "member-inactive", isActive: false, pinHash: "hash-inactive" };
+      (prisma.client.member.findUnique as any).mockResolvedValue(mockMember);
+      (bcrypt.compare as any).mockResolvedValue(false);
+
+      await expect(
+        (service as any).validateLoginMember("org-1", "1234", "card-inactive"),
+      ).rejects.toThrow(UnauthorizedException);
+
+      // Even if member is inactive, we run bcrypt.compare with their pinHash to hide the existence/activity status difference
+      expect(bcrypt.compare).toHaveBeenCalledWith("1234", "hash-inactive");
+    });
   });
 });
