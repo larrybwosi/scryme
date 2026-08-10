@@ -697,10 +697,20 @@ describe("Scryme V3 Client and Server SDKs", () => {
         (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
           data: { success: true },
         });
-        await sdk.customer.addAddress({ label: "Office" });
+        await sdk.customer.addAddress({
+          label: "Office",
+          street1: "123 Main St",
+          city: "New York",
+          country: "USA",
+        });
         expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
           "/v3/client-org/customers/cust-123/addresses",
-          { label: "Office" },
+          {
+            label: "Office",
+            street1: "123 Main St",
+            city: "New York",
+            country: "USA",
+          },
           undefined,
         );
       });

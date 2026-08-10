@@ -83,14 +83,14 @@ export class ScrymeServerSDK {
   public customer: {
     getProfile(customerId: string): Promise<AxiosResponse<CustomerResponseDto>>;
     updateProfile(customerId: string, dto: UpdateCustomerDto): Promise<AxiosResponse<CustomerResponseDto>>;
-    getAddresses(customerId: string): Promise<AxiosResponse<any>>;
+    getAddresses(customerId: string): Promise<AxiosResponse<AddressDto[]>>;
     addAddress(customerId: string, dto: AddressDto): Promise<AxiosResponse<void>>;
   };
 
   public bookings: {
     create(dto: CreateBookingDto): Promise<AxiosResponse<void>>;
-    get(id: string): Promise<AxiosResponse<void>>;
-    list(): Promise<AxiosResponse<void>>;
+    get(id: string): Promise<AxiosResponse<ServiceBookingItemDto>>;
+    list(): Promise<AxiosResponse<ServiceBookingItemDto[]>>;
     cancel(id: string): Promise<AxiosResponse<void>>;
     complete(id: string, dto: CompleteBookingDto & Record<string, any>): Promise<AxiosResponse<void>>;
   };
@@ -98,10 +98,10 @@ export class ScrymeServerSDK {
   public auth: AuthModule & {
     signUp(dto: RegisterCustomerDto): Promise<AxiosResponse<CustomerResponseDto>>;
     authenticate(): Promise<AuthExchangeToken201>;
-    signIn(credentials: { email: string; password?: string }): Promise<any>;
-    getCurrentSession(): Promise<any>;
-    refreshSession(): Promise<any>;
-    swapZitadel(zitadelToken: string): Promise<any>;
+    signIn(credentials: { email: string; password?: string }): Promise<{ token: string; session?: any; user?: any }>;
+    getCurrentSession(): Promise<CustomerResponseDto>;
+    refreshSession(): Promise<{ token: string; session?: any }>;
+    swapZitadel(zitadelToken: string): Promise<{ token: string; session?: any }>;
   };
 
   private token: string | null = null;
@@ -363,7 +363,7 @@ export class ScrymeServerSDK {
         return this.admin.updateCustomer(customerId, dto);
       },
       getAddresses: async (customerId: string) => {
-        return this.admin.getCustomerAddresses(customerId);
+        return this.admin.getCustomerAddresses(customerId) as any;
       },
       addAddress: async (customerId: string, dto: any) => {
         return this.admin.addCustomerAddress(customerId, dto);
@@ -375,10 +375,10 @@ export class ScrymeServerSDK {
         return this.catalog.createBooking(dto);
       },
       get: async (id: string) => {
-        return this.catalog.getBooking(id);
+        return this.catalog.getBooking(id) as any;
       },
       list: async () => {
-        return this.catalog.getBookings();
+        return this.catalog.getBookings() as any;
       },
       cancel: async (id: string) => {
         return this.catalog.updateBookingStatus(id, "CANCELLED" as any);
