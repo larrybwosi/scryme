@@ -58,6 +58,7 @@ describe("V3AuthCoreService", () => {
 
     service = module.get<V3AuthCoreService>(V3AuthCoreService);
     prisma = module.get<PrismaService>(PrismaService);
+    vi.clearAllMocks();
   });
 
   describe("validateLoginMember", () => {
@@ -74,9 +75,14 @@ describe("V3AuthCoreService", () => {
       const mockMembers = Array(50).fill({ id: "1", pinHash: "hash" });
       mockMembers.push({ id: "success", pinHash: "match" });
       (prisma.client.member.findMany as any).mockResolvedValue(mockMembers);
-      (bcrypt.compare as any).mockImplementation((pin: string, hash: string) => pin === "1234" && hash === "match");
+      (bcrypt.compare as any).mockImplementation(
+        (pin: string, hash: string) => pin === "1234" && hash === "match",
+      );
 
-      const result = await (service as any).validateLoginMember("org-1", "1234");
+      const result = await (service as any).validateLoginMember(
+        "org-1",
+        "1234",
+      );
       expect(result.id).toBe("success");
     });
 
@@ -88,6 +94,73 @@ describe("V3AuthCoreService", () => {
       await expect(
         (service as any).validateLoginMember("org-1", "1234"),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it("should return member if cardId is provided and pin matches", async () => {
+      const mockMember = {
+        id: "mem-123",
+        isActive: true,
+        pinHash: "$2b$10$hashed_pin",
+      };
+      (prisma.client.member.findUnique as any).mockResolvedValue(mockMember);
+      (bcrypt.compare as any).mockResolvedValue(true);
+
+      const result = await (service as any).validateLoginMember(
+        "org-1",
+        "1234",
+        "card-123",
+      );
+      expect(result.id).toBe("mem-123");
+      expect(bcrypt.compare).toHaveBeenCalledWith("1234", "$2b$10$hashed_pin");
+    });
+
+    it("should run comparison against dummyPinHash if cardId is provided but member does not exist", async () => {
+      (prisma.client.member.findUnique as any).mockResolvedValue(null);
+      (bcrypt.compare as any).mockResolvedValue(false);
+
+      await expect(
+        (service as any).validateLoginMember(
+          "org-1",
+          "1234",
+          "card-non-existent",
+        ),
+      ).rejects.toThrow(UnauthorizedException);
+
+      const expectedDummyHash =
+        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+      expect(bcrypt.compare).toHaveBeenCalledWith("1234", expectedDummyHash);
+    });
+
+    it("should run comparison against dummyPinHash if cardId is provided but member is inactive", async () => {
+      const mockMember = {
+        id: "mem-123",
+        isActive: false,
+        pinHash: "$2b$10$hashed_pin",
+      };
+      (prisma.client.member.findUnique as any).mockResolvedValue(mockMember);
+      (bcrypt.compare as any).mockResolvedValue(false);
+
+      await expect(
+        (service as any).validateLoginMember("org-1", "1234", "card-123"),
+      ).rejects.toThrow(UnauthorizedException);
+
+      const expectedDummyHash =
+        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+      expect(bcrypt.compare).toHaveBeenCalledWith("1234", expectedDummyHash);
+    });
+
+    it("should run comparison against dummyPinHash if cardId is provided but member has no pinHash", async () => {
+      const mockMember = { id: "mem-123", isActive: true, pinHash: null };
+      (prisma.client.member.findUnique as any).mockResolvedValue(mockMember);
+      (bcrypt.compare as any).mockResolvedValue(false);
+
+      await expect(
+        (service as any).validateLoginMember("org-1", "1234", "card-123"),
+      ).rejects.toThrow(UnauthorizedException);
+
+      const expectedDummyHash =
+        "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+      expect(bcrypt.compare).toHaveBeenCalledWith("1234", expectedDummyHash);
     });
   });
 });
