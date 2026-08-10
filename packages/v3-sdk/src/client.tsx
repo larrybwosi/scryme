@@ -17,6 +17,8 @@ import type {
   RegisterCustomerDto,
   AuthExchangeToken201,
   UpdateCustomerDto,
+  ProductResponseDto,
+  ServiceCatalogResponseDto,
 } from "./generated/model";
 import {
   RawAPI,
@@ -42,6 +44,8 @@ import {
   MembersModule,
   AdminModule,
   getJwtExpiry,
+  CustomerSessionDto,
+  CustomerAuthResponseDto,
 } from "./base";
 
 export interface StorageProvider {
@@ -73,26 +77,33 @@ export interface ClientSDKConfig {
 
 export type AuthChangeEvent = "SIGNED_IN" | "SIGNED_OUT" | "INITIAL_SESSION";
 
-export interface SessionState {
+export interface SessionState<TUser = CustomerResponseDto> {
   token: string | null;
-  user: CustomerResponseDto | null;
+  user: TUser | null;
   expiresAt?: number | null;
 }
 
-export type AuthStateCallback = (
+export type AuthStateCallback<TUser = CustomerResponseDto> = (
   event: AuthChangeEvent,
-  session: SessionState,
+  session: SessionState<TUser>,
 ) => void;
 
 const SCRYME_SESSION_TOKEN_KEY = "scryme_session_token";
 const SCRYME_USER_KEY = "scryme_user";
 const SCRYME_EXPIRES_AT_KEY = "scryme_expires_at";
 
-export class ScrymeClientSDK {
+export class ScrymeClientSDK<
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto,
+  TCartItem = CartItemDto,
+  TCartResponse = CartResponseDto,
+  TUser = CustomerResponseDto,
+  TSession = CustomerSessionDto
+> {
   public axiosInstance: AxiosInstance;
   public api: RawAPI;
 
-  public catalog: CatalogModule;
+  public catalog: CatalogModule<TProduct, TService>;
   public inventory: InventoryModule;
   public orders: OrdersModule;
   public crm: CRMModule;
@@ -102,29 +113,29 @@ export class ScrymeClientSDK {
   public members: MembersModule;
   public admin: AdminModule;
   public cart: {
-    get(
+    get<T = TCartResponse>(
       params?: CartControllerGetCartParams,
-    ): Promise<AxiosResponse<CartResponseDto & Record<string, any>>>;
+    ): Promise<AxiosResponse<T & Record<string, any>>>;
     add(dto: AddToCartDto): Promise<AxiosResponse<void>>;
     remove(dto: RemoveFromCartDto): Promise<AxiosResponse<void>>;
     clear(params?: CartControllerClearCartParams): Promise<AxiosResponse<void>>;
-    update(
+    update<T = TCartResponse>(
       dto: AddToCartDto & { quantity: number },
     ): Promise<
-      AxiosResponse<void> | AxiosResponse<CartResponseDto> | undefined
+      AxiosResponse<void> | AxiosResponse<T> | undefined
     >;
-    getItems(params?: CartControllerGetCartParams): Promise<CartItemDto[]>;
-    getTotals(
+    getItems<T = TCartItem>(params?: CartControllerGetCartParams): Promise<T[]>;
+    getTotals<TItem = TCartItem, TRaw = TCartResponse>(
       params?: CartControllerGetCartParams,
     ): Promise<{
       itemsCount: number;
-      items: CartItemDto[];
-      raw: CartResponseDto;
+      items: TItem[];
+      raw: TRaw;
     }>;
-    mergeGuestCart(
+    mergeGuestCart<T = TCartResponse>(
       guestSessionId: string,
       customerId: string,
-    ): Promise<AxiosResponse<CartResponseDto & Record<string, any>>>;
+    ): Promise<AxiosResponse<T & Record<string, any>>>;
     checkout(params: {
       locationId: string;
       notes?: string;
@@ -133,10 +144,10 @@ export class ScrymeClientSDK {
   };
 
   public customer: {
-    getProfile(): Promise<CustomerResponseDto>;
-    updateProfile(
+    getProfile<T = TUser>(): Promise<T>;
+    updateProfile<T = TUser>(
       dto: UpdateCustomerDto,
-    ): Promise<AxiosResponse<CustomerResponseDto>>;
+    ): Promise<AxiosResponse<T>>;
     getAddresses(): Promise<AxiosResponse<AddressDto[]>>;
     addAddress(dto: AddressDto): Promise<AxiosResponse<void>>;
   };
@@ -149,25 +160,25 @@ export class ScrymeClientSDK {
   };
 
   public auth: AuthModule & {
-    signUp(
+    signUp<T = TUser>(
       dto: RegisterCustomerDto,
-    ): Promise<AxiosResponse<CustomerResponseDto>>;
+    ): Promise<AxiosResponse<T>>;
     authenticate(): Promise<AuthExchangeToken201>;
-    signIn(credentials: {
+    signIn<TSess = TSession, TU = TUser>(credentials: {
       email: string;
       password?: string;
-    }): Promise<{ token: string; session?: any; user?: any }>;
+    }): Promise<CustomerAuthResponseDto<TU, TSess>>;
     signOut(): Promise<void>;
-    getSession(): Promise<SessionState>;
-    onAuthStateChange(callback: AuthStateCallback): { unsubscribe(): void };
-    getSessions(): Promise<any[]>;
+    getSession<TU = TUser>(): Promise<SessionState<TU>>;
+    onAuthStateChange<TU = TUser>(callback: AuthStateCallback<TU>): { unsubscribe(): void };
+    getSessions<TSess = TSession>(): Promise<TSess[]>;
     revokeSession(id: string): Promise<any>;
     revokeAllSessions(mode?: string): Promise<any>;
-    getCurrentSession(): Promise<CustomerResponseDto>;
-    refreshSession(): Promise<{ token: string; session?: any }>;
-    swapZitadel(
+    getCurrentSession<TU = TUser>(): Promise<TU>;
+    refreshSession<TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>>;
+    swapZitadel<TSess = TSession, TU = TUser>(
       zitadelToken: string,
-    ): Promise<{ token: string; session?: any }>;
+    ): Promise<CustomerAuthResponseDto<TU, TSess>>;
   };
 
   constructor(config: ClientSDKConfig) {
@@ -206,12 +217,12 @@ export class ScrymeClientSDK {
     }
 
     // Session state
-    const state: SessionState = {
+    const state: SessionState<TUser> = {
       token: null,
       user: null,
     };
 
-    const listeners = new Set<AuthStateCallback>();
+    const listeners = new Set<AuthStateCallback<TUser>>();
 
     const notify = (event: AuthChangeEvent) => {
       const currentState = { ...state };
@@ -244,7 +255,7 @@ export class ScrymeClientSDK {
           }
           if (storedUser) {
             try {
-              state.user = JSON.parse(storedUser) as CustomerResponseDto;
+              state.user = JSON.parse(storedUser) as TUser;
             } catch {
               state.user = null;
             }
@@ -396,7 +407,7 @@ export class ScrymeClientSDK {
     this.api = getScrymeV3API(this.axiosInstance, config.orgSlug);
 
     // Build the submodules using buildModule
-    this.catalog = buildModule(this.api, config.orgSlug, catalogMapping);
+    this.catalog = buildModule(this.api, config.orgSlug, catalogMapping) as any;
     this.inventory = buildModule(this.api, config.orgSlug, inventoryMapping);
     this.orders = buildModule(this.api, config.orgSlug, ordersMapping);
     this.crm = buildModule(this.api, config.orgSlug, crmMapping);
@@ -407,8 +418,8 @@ export class ScrymeClientSDK {
     this.admin = buildModule(this.api, config.orgSlug, adminMapping);
 
     this.cart = {
-      get: async (params?: any) => {
-        return this.orders.getCart(params || {});
+      get: async <T = TCartResponse>(params?: any): Promise<AxiosResponse<T & Record<string, any>>> => {
+        return this.orders.getCart(params || {}) as any;
       },
       add: async (dto: any) => {
         return this.orders.addToCart(dto);
@@ -419,7 +430,7 @@ export class ScrymeClientSDK {
       clear: async (params?: any) => {
         return this.orders.clearCart(params || {});
       },
-      update: async (dto: any) => {
+      update: async <T = TCartResponse>(dto: any): Promise<AxiosResponse<void> | AxiosResponse<T> | undefined> => {
         const response = await this.orders.getCart({
           sessionId: dto.sessionId,
         });
@@ -448,44 +459,44 @@ export class ScrymeClientSDK {
               serviceId: dto.serviceId,
               sessionId: dto.sessionId,
               customerId: dto.customerId,
-            });
+            }) as any;
           } else {
             const diff = dto.quantity - currentQty;
             if (diff !== 0) {
               return this.orders.addToCart({
                 ...dto,
                 quantity: diff,
-              });
+              }) as any;
             }
-            return response;
+            return response as any;
           }
         } else {
           if (dto.quantity > 0) {
-            return this.orders.addToCart(dto);
+            return this.orders.addToCart(dto) as any;
           }
         }
       },
-      getItems: async (params?: any) => {
+      getItems: async <T = TCartItem>(params?: any): Promise<T[]> => {
         const res = await this.orders.getCart(params || {});
         const data: any = res?.data || res;
-        return data?.items || data?.data?.items || [];
+        return (data?.items || data?.data?.items || []) as T[];
       },
-      getTotals: async (params?: any) => {
+      getTotals: async <TItem = TCartItem, TRaw = TCartResponse>(params?: any): Promise<{ itemsCount: number; items: TItem[]; raw: TRaw }> => {
         const res = await this.orders.getCart(params || {});
         const data: any = res?.data || res;
-        const items = data?.items || data?.data?.items || [];
+        const items = (data?.items || data?.data?.items || []) as TItem[];
         const itemsCount = items.reduce(
-          (sum: number, item: any) => sum + (item.quantity || 0),
+          (sum: number, item: any) => sum + ((item as any).quantity || 0),
           0,
         );
         return {
           itemsCount,
           items,
-          raw: data,
+          raw: data as TRaw,
         };
       },
-      mergeGuestCart: async (guestSessionId: string, customerId: string) => {
-        return this.orders.getCart({ sessionId: guestSessionId });
+      mergeGuestCart: async <T = TCartResponse>(guestSessionId: string, customerId: string): Promise<AxiosResponse<T & Record<string, any>>> => {
+        return this.orders.getCart({ sessionId: guestSessionId }) as any;
       },
       checkout: async (params: {
         locationId: string;
@@ -523,15 +534,15 @@ export class ScrymeClientSDK {
     };
 
     this.customer = {
-      getProfile: async () => {
-        return this.auth.getCurrentSession();
+      getProfile: async <T = TUser>(): Promise<T> => {
+        return this.auth.getCurrentSession() as any;
       },
-      updateProfile: async (dto: any) => {
+      updateProfile: async <T = TUser>(dto: any): Promise<AxiosResponse<T>> => {
         const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
-        return this.admin.updateCustomer(customerId, dto);
+        return this.admin.updateCustomer(customerId, dto) as any;
       },
       getAddresses: async () => {
         const session = await this.auth.getSession();
@@ -570,15 +581,15 @@ export class ScrymeClientSDK {
     this.auth = {
       ...baseAuth,
 
-      signUp: async (dto: RegisterCustomerDto) => {
-        return this.api.customersRegister(config.orgSlug, dto);
+      signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
+        return this.api.customersRegister(config.orgSlug, dto) as any;
       },
 
       authenticate: async () => {
         return performExchange();
       },
 
-      signIn: async (credentials: { email: string; password?: string }) => {
+      signIn: async <TSess = TSession, TU = TUser>(credentials: { email: string; password?: string }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
         // Sign in using our isolated Customer Auth Microservice (Better Auth) via the exposed routes or the login fallback
         try {
           const authServiceUrl =
@@ -597,7 +608,7 @@ export class ScrymeClientSDK {
 
           if (token) {
             state.token = token;
-            state.user = user;
+            state.user = user as any;
             const jwtExp = getJwtExpiry(token);
 
             await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
@@ -616,7 +627,7 @@ export class ScrymeClientSDK {
             }
 
             notify("SIGNED_IN");
-            return data;
+            return data as any;
           } else {
             throw new Error("No token returned");
           }
@@ -634,7 +645,7 @@ export class ScrymeClientSDK {
 
         if (token) {
           state.token = token;
-          state.user = user;
+          state.user = user as any;
           const jwtExp = getJwtExpiry(token);
 
           await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
@@ -655,7 +666,7 @@ export class ScrymeClientSDK {
           notify("SIGNED_IN");
         }
 
-        return data;
+        return data as any;
       },
 
       signOut: async () => {
@@ -677,17 +688,17 @@ export class ScrymeClientSDK {
         notify("SIGNED_OUT");
       },
 
-      getSession: async (): Promise<SessionState> => {
+      getSession: async <TU = TUser>(): Promise<SessionState<TU>> => {
         await initPromise;
-        return { ...state };
+        return { ...state } as any;
       },
 
-      onAuthStateChange: (callback: AuthStateCallback) => {
-        listeners.add(callback);
+      onAuthStateChange: <TU = TUser>(callback: AuthStateCallback<TU>) => {
+        listeners.add(callback as any);
         // Immediately invoke callback with the current state if already loaded
         initPromise.then(() => {
           try {
-            callback("INITIAL_SESSION", { ...state });
+            callback("INITIAL_SESSION", { ...state } as any);
           } catch (e) {
             console.error("Error in immediate auth state listener call:", e);
           }
@@ -695,16 +706,16 @@ export class ScrymeClientSDK {
 
         return {
           unsubscribe: () => {
-            listeners.delete(callback);
+            listeners.delete(callback as any);
           },
         };
       },
 
-      getSessions: async () => {
+      getSessions: async <TSess = TSession>(): Promise<TSess[]> => {
         const res = await this.axiosInstance.get(
           `/${config.orgSlug}/customers/auth/sessions`,
         );
-        return res.data?.data || res.data;
+        return (res.data?.data || res.data) as TSess[];
       },
 
       revokeSession: async (id: string) => {
@@ -722,14 +733,14 @@ export class ScrymeClientSDK {
         return res.data?.data || res.data;
       },
 
-      getCurrentSession: async () => {
+      getCurrentSession: async <TU = TUser>(): Promise<TU> => {
         const res = await this.axiosInstance.get(
           `/${config.orgSlug}/customers/auth/session`,
         );
-        return res.data?.data || res.data;
+        return (res.data?.data || res.data) as TU;
       },
 
-      refreshSession: async () => {
+      refreshSession: async <TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>> => {
         const response = await this.axiosInstance.post(
           `/${config.orgSlug}/customers/auth/refresh`,
         );
@@ -739,7 +750,7 @@ export class ScrymeClientSDK {
 
         if (token) {
           state.token = token;
-          state.user = user;
+          state.user = user as any;
           const jwtExp = getJwtExpiry(token);
 
           await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
@@ -760,10 +771,10 @@ export class ScrymeClientSDK {
           notify("SIGNED_IN");
         }
 
-        return data;
+        return data as any;
       },
 
-      swapZitadel: async (zitadelToken: string) => {
+      swapZitadel: async <TSess = TSession, TU = TUser>(zitadelToken: string): Promise<CustomerAuthResponseDto<TU, TSess>> => {
         const response = await this.axiosInstance.post(
           `/${config.orgSlug}/customers/auth/swap-zitadel`,
           { zitadelToken },
@@ -774,7 +785,7 @@ export class ScrymeClientSDK {
 
         if (token) {
           state.token = token;
-          state.user = user;
+          state.user = user as any;
           const jwtExp = getJwtExpiry(token);
 
           await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
@@ -795,38 +806,52 @@ export class ScrymeClientSDK {
           notify("SIGNED_IN");
         }
 
-        return data;
+        return data as any;
       },
     };
   }
 }
 
 // Retain backwards compatibility for createClientSDK function
-export function createClientSDK(config: any = {}) {
+export function createClientSDK<
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto,
+  TCartItem = CartItemDto,
+  TCartResponse = CartResponseDto,
+  TUser = CustomerResponseDto,
+  TSession = CustomerSessionDto
+>(config: any = {}): ScrymeClientSDK<TProduct, TService, TCartItem, TCartResponse, TUser, TSession> {
   const finalConfig = {
     clientId: config.clientId || "mock-client-id",
     clientSecret: config.clientSecret || "mock-client-secret",
     orgSlug: config.orgSlug || "mock-org-slug",
     ...config,
   };
-  return new ScrymeClientSDK(finalConfig);
+  return new ScrymeClientSDK<TProduct, TService, TCartItem, TCartResponse, TUser, TSession>(finalConfig);
 }
 
-export interface AuthContextType {
-  sdk: ScrymeClientSDK;
-  session: SessionState;
-  user: CustomerResponseDto | null;
+export interface AuthContextType<
+  TUser = CustomerResponseDto,
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto,
+  TCartItem = CartItemDto,
+  TCartResponse = CartResponseDto,
+  TSession = CustomerSessionDto
+> {
+  sdk: ScrymeClientSDK<TProduct, TService, TCartItem, TCartResponse, TUser, TSession>;
+  session: SessionState<TUser>;
+  user: TUser | null;
   token: string | null;
   isLoading: boolean;
   signIn: (credentials: {
     email: string;
     password?: string;
-  }) => Promise<{ token: string; session?: any; user?: any }>;
+  }) => Promise<CustomerAuthResponseDto<TUser, TSession>>;
   signUp: (
     dto: RegisterCustomerDto,
-  ) => Promise<AxiosResponse<CustomerResponseDto>>;
+  ) => Promise<AxiosResponse<TUser>>;
   signOut: () => Promise<void>;
-  cart: CartResponseDto | null;
+  cart: TCartResponse | null;
   cartLoading: boolean;
   addToCart: (dto: AddToCartDto) => Promise<void>;
   removeFromCart: (dto: RemoveFromCartDto) => Promise<void>;
@@ -835,7 +860,7 @@ export interface AuthContextType {
   refreshCart: () => Promise<void>;
 
   // Customer profile & addresses states
-  customerProfile: CustomerResponseDto | null;
+  customerProfile: TUser | null;
   customerAddresses: AddressDto[];
   bookings: ServiceBookingItemDto[];
   bookingsLoading: boolean;
@@ -844,7 +869,7 @@ export interface AuthContextType {
   addAddress: (dto: AddressDto) => Promise<AxiosResponse<void>>;
   updateProfile: (
     dto: UpdateCustomerDto,
-  ) => Promise<AxiosResponse<CustomerResponseDto>>;
+  ) => Promise<AxiosResponse<TUser>>;
   createBooking: (dto: CreateBookingDto) => Promise<AxiosResponse<void>>;
   cancelBooking: (id: string) => Promise<AxiosResponse<void>>;
   checkoutCart: (params: {
@@ -856,18 +881,32 @@ export interface AuthContextType {
   refreshBookings: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType<any, any, any, any, any, any> | undefined>(undefined);
 
-export interface ScrymeAuthProviderProps {
-  sdk: ScrymeClientSDK;
+export interface ScrymeAuthProviderProps<
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto,
+  TCartItem = CartItemDto,
+  TCartResponse = CartResponseDto,
+  TUser = CustomerResponseDto,
+  TSession = CustomerSessionDto
+> {
+  sdk: ScrymeClientSDK<TProduct, TService, TCartItem, TCartResponse, TUser, TSession>;
   children: React.ReactNode;
 }
 
-export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({
+export const ScrymeAuthProvider = <
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto,
+  TCartItem = CartItemDto,
+  TCartResponse = CartResponseDto,
+  TUser = CustomerResponseDto,
+  TSession = CustomerSessionDto
+>({
   sdk,
   children,
-}) => {
-  const [session, setSession] = useState<SessionState>({
+}: ScrymeAuthProviderProps<TProduct, TService, TCartItem, TCartResponse, TUser, TSession>) => {
+  const [session, setSession] = useState<SessionState<TUser>>({
     token: null,
     user: null,
   });
@@ -877,14 +916,14 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({
 
   // Customer and bookings state
   const [customerProfile, setCustomerProfile] =
-    useState<CustomerResponseDto | null>(null);
+    useState<TUser | null>(null);
   const [customerAddresses, setCustomerAddresses] = useState<AddressDto[]>([]);
   const [bookingsList, setBookingsList] = useState<ServiceBookingItemDto[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
 
   useEffect(() => {
     const { unsubscribe } = sdk.auth.onAuthStateChange((event, newSession) => {
-      setSession(newSession);
+      setSession(newSession as any);
       setIsLoading(false);
     });
     return () => unsubscribe();
@@ -913,7 +952,7 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({
       return;
     }
     try {
-      const profile = await sdk.customer.getProfile();
+      const profile = await sdk.customer.getProfile<TUser>();
       setCustomerProfile(profile || null);
 
       const addresses = await sdk.customer.getAddresses();
@@ -953,12 +992,12 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({
   }, [session.token]);
 
   const signIn = async (credentials: { email: string; password?: string }) => {
-    const res = await sdk.auth.signIn(credentials);
+    const res = await sdk.auth.signIn<TSession, TUser>(credentials);
     return res;
   };
 
   const signUp = async (dto: RegisterCustomerDto) => {
-    const res = await sdk.auth.signUp(dto);
+    const res = await sdk.auth.signUp<TUser>(dto);
     return res;
   };
 
@@ -1005,7 +1044,7 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({
   const updateProfile = async (dto: UpdateCustomerDto) => {
     if (!session.token)
       throw new Error("Customer must be logged in to update profile");
-    const res = await sdk.customer.updateProfile(dto);
+    const res = await sdk.customer.updateProfile<TUser>(dto);
     await refreshProfile();
     return res;
   };
@@ -1042,13 +1081,13 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({
   return (
     <AuthContext.Provider
       value={{
-        sdk,
-        session,
-        user: session.user,
+        sdk: sdk as any,
+        session: session as any,
+        user: session.user as any,
         token: session.token,
         isLoading,
-        signIn,
-        signUp,
+        signIn: signIn as any,
+        signUp: signUp as any,
         signOut,
         cart,
         cartLoading,
@@ -1057,12 +1096,12 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({
         updateCartItem,
         clearCart,
         refreshCart,
-        customerProfile,
+        customerProfile: customerProfile as any,
         customerAddresses,
         bookings: bookingsList,
         bookingsLoading,
         addAddress,
-        updateProfile,
+        updateProfile: updateProfile as any,
         createBooking,
         cancelBooking,
         checkoutCart,
@@ -1075,10 +1114,17 @@ export const ScrymeAuthProvider: React.FC<ScrymeAuthProviderProps> = ({
   );
 };
 
-export const useScrymeAuth = (): AuthContextType => {
+export const useScrymeAuth = <
+  TUser = CustomerResponseDto,
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto,
+  TCartItem = CartItemDto,
+  TCartResponse = CartResponseDto,
+  TSession = CustomerSessionDto
+>(): AuthContextType<TUser, TProduct, TService, TCartItem, TCartResponse, TSession> => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error("useScrymeAuth must be used within a ScrymeAuthProvider");
   }
-  return context;
+  return context as any;
 };
