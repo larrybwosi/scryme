@@ -74,5 +74,10 @@ export const pricingPageType = defineType({
         }),
       ],
     }),
+    defineField({
+      name: 'seo',
+      title: 'Page SEO & Metadata',
+      type: 'seo',
+    }),
   ],
 })

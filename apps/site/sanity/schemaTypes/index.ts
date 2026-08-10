@@ -7,6 +7,8 @@ import {authorType} from './authorType'
 import {homePageType} from './homePage'
 import {aboutPageType} from './aboutPage'
 import {pricingPageType} from './pricingPage'
+import {seoType} from './seo'
+import {siteSettingsType} from './siteSettings'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
@@ -17,5 +19,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     homePageType,
     aboutPageType,
     pricingPageType,
+    seoType,
+    siteSettingsType,
   ],
 }

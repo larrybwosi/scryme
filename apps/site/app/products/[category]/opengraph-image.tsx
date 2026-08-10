@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { getHomePageContent } from "../../../lib/sanity";
 
 export const runtime = "edge";
 
@@ -12,9 +13,15 @@ export const contentType = "image/png";
 
 export default async function Image({ params }: { params: { category: string } }) {
   const { category } = params;
-  const title = category.toUpperCase();
+
+  // Query Sanity home page modules
+  const homeContent = await getHomePageContent();
+  const moduleItem = homeContent.modules?.find(m => m.href?.endsWith(`/${category}`) || m.code?.toLowerCase() === category.toLowerCase());
 
   const getColor = (cat: string) => {
+    if (moduleItem?.accent) {
+      return moduleItem.accent;
+    }
     switch (cat) {
       case "crm":
         return "#6366f1";
@@ -30,6 +37,12 @@ export default async function Image({ params }: { params: { category: string } }
   };
 
   const getDescription = (cat: string) => {
+    if (moduleItem?.seo?.description) {
+      return moduleItem.seo.description;
+    }
+    if (moduleItem?.description) {
+      return moduleItem.description;
+    }
     switch (cat) {
       case "crm":
         return "Close more deals with a visual pipeline built for scale.";
@@ -43,6 +56,8 @@ export default async function Image({ params }: { params: { category: string } }
         return "Enterprise solutions for your business.";
     }
   };
+
+  const title = moduleItem?.seo?.title || moduleItem?.name || category.toUpperCase();
 
   return new ImageResponse(
     (

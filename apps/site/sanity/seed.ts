@@ -378,6 +378,31 @@ export async function seedSanity() {
     const seededPricing = await writeClient.createOrReplace(DEFAULT_PRICING_PAGE)
     console.log('[Sanity Seed] Pricing page seed status:', seededPricing ? 'success/exists' : 'failed')
 
+    // Seed Site Settings
+    const seededSettings = await writeClient.createOrReplace({
+      _id: 'siteSettings',
+      _type: 'siteSettings',
+      siteTitle: 'Scryme — High-Performance Commerce & Scale Platform',
+      siteDescription: 'Scryme is the high-performance commerce and scale platform built to empower modern businesses. We combine integrated offline-first POS, multi-branch syncing, advanced stock management, and centralized corporate control with automated e-commerce storefront websites.',
+      siteKeywords: [
+        'ERP',
+        'CRM',
+        'Point of Sale',
+        'POS',
+        'Multi-Branch Retail',
+        'Storefront Websites',
+        'Stock Management',
+        'Inventory Management',
+        'Business Scale Software',
+        'Enterprise Platform',
+        'Retail Software',
+        'SaaS',
+        'Wholesale ERP',
+        'Cloud POS',
+      ],
+    })
+    console.log('[Sanity Seed] Site Settings seed status:', seededSettings ? 'success/exists' : 'failed')
+
     console.log('[Sanity Seed] Seeding completed.')
   } catch (error) {
     console.error('[Sanity Seed] Seeding failed with error:', error)
