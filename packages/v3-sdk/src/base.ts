@@ -3,6 +3,13 @@ import { getScrymeV3API } from "./generated/scryme";
 export type RawAPI = ReturnType<typeof getScrymeV3API>;
 
 export type MethodsWithOrgSlug =
+  | "publicServicesListServices"
+  | "publicServicesGetCategories"
+  | "publicServicesGetService"
+  | "publicServicesGetAvailability"
+  | "publicServicesRequestOtp"
+  | "publicServicesVerifyOtp"
+  | "publicServicesCreatePublicBooking"
   | "inventoryVerifyIntegrity"
   | "inventoryFixIntegrity"
   | "inventoryGetInventory"
@@ -194,6 +201,13 @@ export type MethodsWithOrgSlug =
   | "analyticsControllerGetResourceUtilization";
 
 export const methodsWithOrgSlugSet = new Set<string>([
+  "publicServicesListServices",
+  "publicServicesGetCategories",
+  "publicServicesGetService",
+  "publicServicesGetAvailability",
+  "publicServicesRequestOtp",
+  "publicServicesVerifyOtp",
+  "publicServicesCreatePublicBooking",
   "inventoryVerifyIntegrity",
   "inventoryFixIntegrity",
   "inventoryGetInventory",
@@ -575,6 +589,48 @@ export const membersMapping = {
   broadcastAnnouncement: "announcementControllerBroadcastAnnouncement",
 } as const;
 
+export const publicServicesMapping = {
+  listServices: "publicServicesListServices",
+  getCategories: "publicServicesGetCategories",
+  getService: "publicServicesGetService",
+  getAvailability: "publicServicesGetAvailability",
+  requestOtp: "publicServicesRequestOtp",
+  verifyOtp: "publicServicesVerifyOtp",
+  createBooking: "publicServicesCreatePublicBooking",
+} as const;
+
+export const servicesMapping = {
+  ...publicServicesMapping,
+  // Admin / Staff scheduling endpoints
+  createCategory: "servicesCreateCategory",
+  getCategoriesAdmin: "servicesGetCategories",
+  updateCategory: "servicesUpdateCategory",
+  deleteCategory: "servicesDeleteCategory",
+  createService: "servicesCreateService",
+  getServicesAdmin: "servicesGetServices",
+  getCurrentMemberShifts: "servicesGetCurrentMemberShifts",
+  getShifts: "servicesGetShifts",
+  getServiceAdmin: "servicesGetService",
+  updateService: "servicesUpdateService",
+  deleteService: "servicesDeleteService",
+  createResource: "servicesCreateResource",
+  getResources: "servicesGetResources",
+  updateResource: "servicesUpdateResource",
+  deleteResource: "servicesDeleteResource",
+  createBookingAdmin: "servicesCreateBooking",
+  getBookings: "servicesGetBookings",
+  getBookingAdmin: "servicesGetBooking",
+  updateBookingStatus: "servicesUpdateBookingStatus",
+  completeBooking: "servicesCompleteBooking",
+  createShift: "servicesCreateShift",
+  getStaffShifts: "servicesGetStaffShifts",
+  addBreak: "servicesAddBreak",
+  registerCustomerApp: "servicesRegisterCustomerApp",
+  getServiceUtilization: "servicesGetUtilization",
+  getServicePerformance: "servicesGetPerformance",
+  getServiceFunnel: "servicesGetFunnel",
+} as const;
+
 export const adminMapping = {
   getStats: "adminControllerGetStats",
   listOrganizations: "adminControllerListOrganizations",
@@ -634,6 +690,9 @@ export type AccountingModule = SDKModule<typeof accountingMapping>;
 export type LoyaltyModule = SDKModule<typeof loyaltyMapping>;
 export type MembersModule = SDKModule<typeof membersMapping>;
 export type AdminModule = SDKModule<typeof adminMapping>;
+
+export type PublicServicesModule = SDKModule<typeof publicServicesMapping>;
+export type ServicesModule = SDKModule<typeof servicesMapping>;
 
 export function buildModule<Mapping extends Record<string, keyof RawAPI>>(
   api: RawAPI,

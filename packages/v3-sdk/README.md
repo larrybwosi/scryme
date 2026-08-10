@@ -210,4 +210,4 @@ try {
 
 ## 📄 License
 
-This package is proprietary software belonging to Scryme Ltd. All rights reserved.
+This package is licensed under the GNU Affero General Public License version 3 (AGPL-3.0). Please see the [LICENSE](../../LICENSE) file for more details.

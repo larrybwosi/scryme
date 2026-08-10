@@ -637,4 +637,166 @@ export class BookingService {
       }
     });
   }
+
+  async getServiceAvailability(orgId: string, serviceId: string, dateStr?: string) {
+    const targetDate = dateStr ? new Date(dateStr) : new Date();
+    // Validate targetDate
+    if (isNaN(targetDate.getTime())) {
+      throw new BadRequestException("Invalid date format. Expected YYYY-MM-DD");
+    }
+
+    const dayOfWeek = targetDate.getUTCDay();
+
+    const service = await this.prisma.client.service.findFirst({
+      where: { id: serviceId, organizationId: orgId },
+      include: {
+        staff: { select: { memberId: true } },
+        resources: { select: { resourceId: true } },
+      },
+    });
+
+    if (!service) {
+      throw new NotFoundException("Service not found");
+    }
+
+    const duration = service.estimatedDuration || 30;
+    const bufferBefore = service.bufferTimeBefore || 0;
+    const bufferAfter = service.bufferTimeAfter || 0;
+
+    // Get qualified staff IDs
+    const qualifiedStaffIds = service.staff.map((s) => s.memberId);
+
+    // Fetch active shifts for qualified staff on this day of week
+    const shifts = await this.prisma.client.staffShift.findMany({
+      where: {
+        organizationId: orgId,
+        dayOfWeek,
+        isActive: true,
+        ...(qualifiedStaffIds.length > 0 ? { memberId: { in: qualifiedStaffIds } } : {}),
+      },
+      include: {
+        breaks: true,
+      },
+    });
+
+    // Target date start and end boundaries
+    const dateYMD = targetDate.toISOString().split("T")[0];
+    const targetDateStart = new Date(`${dateYMD}T00:00:00.000Z`);
+    const targetDateEnd = new Date(`${dateYMD}T23:59:59.999Z`);
+
+    // Fetch existing bookings overlapping with this target date
+    const existingBookings = await this.prisma.client.serviceBooking.findMany({
+      where: {
+        organizationId: orgId,
+        status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+        OR: [
+          {
+            scheduledStartTime: { lte: targetDateEnd },
+            scheduledEndTime: { gte: targetDateStart },
+          },
+        ],
+      },
+      include: {
+        staff: { select: { memberId: true } },
+        resources: { select: { resourceId: true } },
+      },
+    });
+
+    const parseTimeToMinutes = (timeStr: string): number => {
+      const [hours, minutes] = timeStr.split(":").map(Number);
+      return hours * 60 + minutes;
+    };
+
+    const availableSlotsSet = new Set<string>();
+
+    for (const shift of shifts) {
+      const shiftStartMinutes = parseTimeToMinutes(shift.startTime);
+      const shiftEndMinutes = parseTimeToMinutes(shift.endTime);
+
+      const breakTimes = shift.breaks.map((b) => ({
+        start: parseTimeToMinutes(b.startTime),
+        end: parseTimeToMinutes(b.endTime),
+      }));
+
+      // Generate timeslots every 30 minutes inside the shift window
+      for (let mins = shiftStartMinutes; mins + duration <= shiftEndMinutes; mins += 30) {
+        const slotStart = new Date(`${dateYMD}T00:00:00.000Z`);
+        slotStart.setUTCMinutes(mins);
+
+        const slotEnd = new Date(slotStart.getTime() + duration * 60 * 1000);
+
+        const slotStartMins = mins;
+        const slotEndMins = mins + duration;
+
+        // 1. Check if slot overlaps with shift breaks
+        const overlapsWithBreak = breakTimes.some(
+          (b) => slotStartMins < b.end && slotEndMins > b.start,
+        );
+
+        if (overlapsWithBreak) {
+          continue;
+        }
+
+        // 2. Check if the staff member has overlapping bookings
+        const staffBookings = existingBookings.filter((b) =>
+          b.staff.some((s) => s.memberId === shift.memberId),
+        );
+
+        const staffConflict = staffBookings.some((b) => {
+          const bStart = new Date(b.scheduledStartTime).getTime();
+          const bEnd = new Date(b.scheduledEndTime || b.scheduledStartTime).getTime();
+
+          const currentSlotStartWithBuffer = slotStart.getTime() - bufferBefore * 60 * 1000;
+          const currentSlotEndWithBuffer = slotEnd.getTime() + bufferAfter * 60 * 1000;
+
+          return currentSlotStartWithBuffer < bEnd && currentSlotEndWithBuffer > bStart;
+        });
+
+        if (staffConflict) {
+          continue;
+        }
+
+        // 3. Verify resource availability if service requires specific resources
+        if (service.resources.length > 0) {
+          let hasFreeResource = false;
+
+          for (const serviceResource of service.resources) {
+            const resourceId = serviceResource.resourceId;
+
+            const resourceBookings = existingBookings.filter((b) =>
+              b.resources.some((r) => r.resourceId === resourceId),
+            );
+
+            const resourceConflict = resourceBookings.some((b) => {
+              const bStart = new Date(b.scheduledStartTime).getTime();
+              const bEnd = new Date(b.scheduledEndTime || b.scheduledStartTime).getTime();
+
+              const currentSlotStartWithBuffer = slotStart.getTime() - bufferBefore * 60 * 1000;
+              const currentSlotEndWithBuffer = slotEnd.getTime() + bufferAfter * 60 * 1000;
+
+              return currentSlotStartWithBuffer < bEnd && currentSlotEndWithBuffer > bStart;
+            });
+
+            if (!resourceConflict) {
+              hasFreeResource = true;
+              break;
+            }
+          }
+
+          if (!hasFreeResource) {
+            continue;
+          }
+        }
+
+        // If everything checks out, this is a valid timeslot!
+        availableSlotsSet.add(slotStart.toISOString());
+      }
+    }
+
+    return {
+      serviceId,
+      date: dateYMD,
+      availableSlots: Array.from(availableSlotsSet).sort(),
+    };
+  }
 }
