@@ -43,6 +43,9 @@ function NoteCard({
   };
 
   if (isEditing) {
+    const isCloseToLimit = editedContent.length >= 1800;
+    const isOverLimit = editedContent.length > 2000;
+
     return (
       <div className="relative bg-card rounded-xl border p-4 border-primary/30 shadow-sm">
         <textarea
@@ -51,10 +54,22 @@ function NoteCard({
           rows={3}
           className="w-full bg-transparent text-[13.5px] text-foreground placeholder:text-muted-foreground resize-none outline-none leading-relaxed"
           autoFocus
+          aria-label="Edit note content"
         />
         <div className="flex items-center justify-between pt-3 border-t border-border mt-2">
-          <span className="text-[11px] text-muted-foreground">
-            {editedContent.length} characters
+          <span
+            className={cn(
+              "text-[11px] transition-colors duration-150",
+              isOverLimit
+                ? "text-destructive font-bold"
+                : isCloseToLimit
+                  ? "text-amber-500 dark:text-amber-400 font-semibold"
+                  : "text-muted-foreground"
+            )}
+          >
+            {editedContent.length >= 1800
+              ? `${2000 - editedContent.length} characters remaining`
+              : `${editedContent.length} characters`}
           </span>
           <div className="flex items-center gap-2">
             <button
@@ -69,7 +84,7 @@ function NoteCard({
             </button>
             <button
               onClick={handleUpdate}
-              disabled={loading || !editedContent.trim() || editedContent === note.content}
+              disabled={loading || !editedContent.trim() || editedContent === note.content || isOverLimit}
               className="text-[11.5px] font-semibold px-3 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? 'Saving...' : 'Save'}
@@ -210,14 +225,26 @@ export function NotesTab({ customer }: NotesTabProps) {
                 rows={4}
                 className="w-full bg-transparent text-[13.5px] text-foreground placeholder:text-muted-foreground resize-none outline-none leading-relaxed"
                 autoFocus
+                aria-label="Write a note about this customer"
               />
               <div className="flex items-center justify-between pt-3 border-t border-border mt-2">
-                <span className="text-[11px] text-muted-foreground">
-                  {content.length} characters
+                <span
+                  className={cn(
+                    "text-[11px] transition-colors duration-150",
+                    content.length > 2000
+                      ? "text-destructive font-bold"
+                      : content.length >= 1800
+                        ? "text-amber-500 dark:text-amber-400 font-semibold"
+                        : "text-muted-foreground"
+                  )}
+                >
+                  {content.length >= 1800
+                    ? `${2000 - content.length} characters remaining`
+                    : `${content.length} characters`}
                 </span>
                 <button
                   onClick={handleAdd}
-                  disabled={loading || !content.trim()}
+                  disabled={loading || !content.trim() || content.length > 2000}
                   className="text-[12.5px] font-semibold px-4 py-1.5 rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
                   {loading ? 'Saving...' : 'Save Note'}
