@@ -4830,6 +4830,265 @@
         ]
       }
     },
+    "/v3/public/{orgSlug}/services": {
+      "get": {
+        "description": "Returns a list of all active services for the specified organization.",
+        "operationId": "PublicServices_ListServices",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved active services list"
+          },
+          "404": {
+            "description": "Organization not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List public services",
+        "tags": [
+          "V3 Public Services"
+        ]
+      }
+    },
+    "/v3/public/{orgSlug}/services/categories": {
+      "get": {
+        "description": "Retrieves all service categories belonging to the organization.",
+        "operationId": "PublicServices_GetCategories",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved service categories"
+          }
+        },
+        "summary": "List public service categories",
+        "tags": [
+          "V3 Public Services"
+        ]
+      }
+    },
+    "/v3/public/{orgSlug}/services/{id}": {
+      "get": {
+        "description": "Fetches details of a specific service.",
+        "operationId": "PublicServices_GetService",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the service to fetch",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns details of the specified service"
+          },
+          "404": {
+            "description": "Service not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get public service details",
+        "tags": [
+          "V3 Public Services"
+        ]
+      }
+    },
+    "/v3/public/{orgSlug}/services/{id}/availability": {
+      "get": {
+        "description": "Calculates available booking slots dynamically based on staff shifts, breaks, and overlapping booking schedules.",
+        "operationId": "PublicServices_GetAvailability",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the service",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Target date in YYYY-MM-DD format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully generated slot availability"
+          }
+        },
+        "summary": "Get service slot availability",
+        "tags": [
+          "V3 Public Services"
+        ]
+      }
+    },
+    "/v3/public/{orgSlug}/services/otp/request": {
+      "post": {
+        "description": "Generates and sends a secure OTP to the customer's email or phone number.",
+        "operationId": "PublicServices_RequestOtp",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OTP requested successfully"
+          }
+        },
+        "summary": "Request OTP for public booking",
+        "tags": [
+          "V3 Public Services"
+        ]
+      }
+    },
+    "/v3/public/{orgSlug}/services/otp/verify": {
+      "post": {
+        "description": "Verifies the OTP code submitted by the customer, returning a verification ID.",
+        "operationId": "PublicServices_VerifyOtp",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyOtpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified successfully"
+          }
+        },
+        "summary": "Verify OTP for public booking",
+        "tags": [
+          "V3 Public Services"
+        ]
+      }
+    },
+    "/v3/public/{orgSlug}/services/bookings": {
+      "post": {
+        "description": "Schedules a booking without requiring full authentication by validating an OTP verification ID.",
+        "operationId": "PublicServices_CreatePublicBooking",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicBookingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Public booking created successfully"
+          }
+        },
+        "summary": "Create a public booking",
+        "tags": [
+          "V3 Public Services"
+        ]
+      }
+    },
     "/v3/{orgSlug}/customers/zitadel/provision": {
       "post": {
         "operationId": "Customers_ProvisionZitadel",
@@ -12450,6 +12709,65 @@
             "description": "Actual end time"
           }
         }
+      },
+      "RequestOtpDto": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "description": "Phone number to send OTP to"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address to send OTP to"
+          }
+        }
+      },
+      "VerifyOtpDto": {
+        "type": "object",
+        "properties": {
+          "phoneNumber": {
+            "type": "string",
+            "description": "Phone number used"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address used"
+          },
+          "code": {
+            "type": "string",
+            "description": "OTP code"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "PublicBookingDto": {
+        "type": "object",
+        "properties": {
+          "serviceId": {
+            "type": "string",
+            "description": "Service ID"
+          },
+          "verificationId": {
+            "type": "string",
+            "description": "Verification ID (from OTP verification)"
+          },
+          "scheduledStartTime": {
+            "type": "string",
+            "description": "Scheduled start time"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Booking notes"
+          }
+        },
+        "required": [
+          "serviceId",
+          "verificationId",
+          "scheduledStartTime"
+        ]
       },
       "ProvisionZitadelDto": {
         "type": "object",
