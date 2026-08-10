@@ -77,6 +77,142 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 
+const SCOPE_CATEGORIES = [
+  {
+    name: "General",
+    scopes: [
+      { value: "read", label: "Read", description: "Generic read-only access" },
+      { value: "write", label: "Write", description: "Generic write access" },
+      { value: "admin", label: "Admin", description: "Full administrative access" },
+      { value: "customer", label: "Customer / SPA", description: "Storefront SPA access" },
+    ],
+  },
+  {
+    name: "Catalog & Products",
+    scopes: [
+      { value: "catalog:product:read", label: "Read Products", description: "Read physical catalog products" },
+      { value: "catalog:product:create", label: "Create Products", description: "Create new catalog products" },
+      { value: "catalog:product:update", label: "Update Products", description: "Update product details & CMS custom fields" },
+    ],
+  },
+  {
+    name: "Services",
+    scopes: [
+      { value: "services:read", label: "Read Services", description: "Read services & durations" },
+      { value: "services:write", label: "Write Services", description: "Create and update services" },
+      { value: "services:manage", label: "Manage Services", description: "Full service management" },
+    ],
+  },
+  {
+    name: "Orders & Sales",
+    scopes: [
+      { value: "order:read", label: "Read Orders", description: "Read customer orders & sales" },
+      { value: "order:create", label: "Create Orders", description: "Create new orders" },
+      { value: "order:write", label: "Update Orders", description: "Modify existing orders" },
+      { value: "pos:sale", label: "POS Sales", description: "Register sales on POS" },
+    ],
+  },
+  {
+    name: "Inventory & Stocking",
+    scopes: [
+      { value: "inventory:read", label: "Read Inventory", description: "Read stock levels & reorder points" },
+      { value: "inventory:write", label: "Write Inventory", description: "Adjust stock levels & locations" },
+      { value: "inventory:manage", label: "Manage Inventory", description: "Full inventory management" },
+      { value: "stock:read", label: "Read Stock", description: "Read stocking records" },
+      { value: "stock:write", label: "Write Stock", description: "Modify stocking & suppliers" },
+      { value: "partners:read", label: "Read Partners", description: "Read supplier partners" },
+      { value: "partners:write", label: "Write Partners", description: "Create and modify supplier partners" },
+    ],
+  },
+  {
+    name: "Finance & Accounting",
+    scopes: [
+      { value: "finance:read", label: "Read Finance", description: "Read financial transaction histories" },
+      { value: "finance:write", label: "Write Finance", description: "Log financial transactions" },
+      { value: "expense:view", label: "View Expenses", description: "View expenses and petty cash logs" },
+      { value: "expense:manage", label: "Manage Expenses", description: "Approve or log expense transactions" },
+      { value: "accounting:manage", label: "Manage Accounting", description: "Manage ledger accounts" },
+      { value: "accounting:report", label: "Accounting Reports", description: "Generate tax and ledger reports" },
+      { value: "invoice:view", label: "View Invoices", description: "View customer & B2B invoices" },
+      { value: "invoice:manage", label: "Manage Invoices", description: "Create and issue invoices" },
+    ],
+  },
+  {
+    name: "Customer & CRM",
+    scopes: [
+      { value: "customer:read", label: "Read Customers", description: "Read customer CRM data" },
+      { value: "customer:update", label: "Update Customers", description: "Modify customer information" },
+      { value: "customer:delete", label: "Delete Customers", description: "Remove customer records" },
+    ],
+  },
+  {
+    name: "POS & Location",
+    scopes: [
+      { value: "pos:auth", label: "POS Authentication", description: "Authenticate hardware POS devices" },
+      { value: "pos:location:read", label: "Read Locations", description: "Access active organization locations" },
+    ],
+  },
+  {
+    name: "Webhooks & Integrations",
+    scopes: [
+      { value: "webhooks:read", label: "Read Webhooks", description: "View active webhook URLs" },
+      { value: "webhooks:write", label: "Write Webhooks", description: "Create and update webhooks" },
+      { value: "integrations:strapi:create", label: "Create Strapi", description: "Create Strapi integration" },
+      { value: "integrations:strapi:read", label: "Read Strapi", description: "Read Strapi details" },
+      { value: "integrations:strapi:update", label: "Update Strapi", description: "Modify Strapi settings" },
+      { value: "integrations:strapi:delete", label: "Delete Strapi", description: "Remove Strapi integration" },
+      { value: "integrations:strapi:sync", label: "Sync Strapi", description: "Trigger Strapi sync tasks" },
+    ],
+  },
+  {
+    name: "Bakery",
+    scopes: [
+      { value: "bakery:batch:view", label: "View Batches", description: "View bakery production batches" },
+      { value: "bakery:batch:manage", label: "Manage Batches", description: "Manage bakery production batches" },
+      { value: "bakery:recipe:view", label: "View Recipes", description: "Read baking recipes" },
+      { value: "bakery:recipe:manage", label: "Manage Recipes", description: "Create and update baking recipes" },
+      { value: "bakery:template:view", label: "View Templates", description: "Read recipe template structures" },
+      { value: "bakery:template:manage", label: "Manage Templates", description: "Create and update templates" },
+      { value: "bakery:settings:manage", label: "Manage Bakery Settings", description: "Update global baking preferences" },
+    ],
+  },
+];
+
+function V3ClientSkeleton() {
+  return (
+    <div className="bg-card p-5 rounded-xl border border-border shadow-sm animate-pulse space-y-4">
+      <div className="flex justify-between items-start">
+        <div className="space-y-2.5 flex-1">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-muted rounded-lg" />
+            <div className="h-4 bg-muted rounded w-1/4" />
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="h-3 bg-muted rounded w-1/3" />
+            <div className="h-3 bg-muted rounded w-16" />
+          </div>
+        </div>
+      </div>
+      <div className="pt-4 border-t border-border grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <div className="h-3 bg-muted rounded w-24 mb-2" />
+          <div className="flex flex-wrap gap-1.5">
+            <div className="h-5 bg-muted rounded w-12" />
+            <div className="h-5 bg-muted rounded w-14" />
+            <div className="h-5 bg-muted rounded w-10" />
+          </div>
+        </div>
+        <div>
+          <div className="h-3 bg-muted rounded w-32 mb-2" />
+          <div className="flex flex-wrap gap-1.5">
+            <div className="h-5 bg-muted rounded w-24" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AppsApiContent() {
   const searchParams = useSearchParams();
   const initialTab =
@@ -88,6 +224,8 @@ function AppsApiContent() {
   // V3 Clients State
   const [v3Clients, setV3Clients] = useState<any[]>([]);
   const [newClientName, setNewClientName] = useState("");
+  const [newClientScopes, setNewClientScopes] = useState<string[]>(["read", "write"]);
+  const [newClientCors, setNewClientCors] = useState("");
   const [showV3Dialog, setShowV3Dialog] = useState(false);
   const [v3Result, setV3Result] = useState<any>(null);
   const [editingV3Client, setEditingV3Client] = useState<any>(null);
@@ -152,9 +290,15 @@ function AppsApiContent() {
 
   const handleCreateV3 = async () => {
     try {
-      const res = await createV3ApiClientAction({ name: newClientName });
+      const res = await createV3ApiClientAction({
+        name: newClientName,
+        scopes: newClientScopes,
+        corsOrigins: newClientCors ? newClientCors.split(",").map(s => s.trim()).filter(Boolean) : [],
+      });
       setV3Result(res);
       setNewClientName("");
+      setNewClientScopes(["read", "write"]);
+      setNewClientCors("");
       loadData();
       toast.success("V3 client created");
     } catch (error) {
@@ -166,6 +310,7 @@ function AppsApiContent() {
     if (!editingV3Client) return;
     try {
       await updateV3ApiClientAction(editingV3Client.id, {
+        name: editingV3Client.name,
         scopes: editingV3Client.scopes,
         corsOrigins: editingV3Client.corsOrigins,
         isActive: editingV3Client.isActive,
@@ -283,7 +428,7 @@ function AppsApiContent() {
                   New client
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-110 rounded-xl">
+              <DialogContent className="sm:max-w-xl max-h-[85vh] overflow-y-auto rounded-xl">
                 <DialogHeader>
                   <DialogTitle className="text-base font-bold tracking-tight">
                     Create API client
@@ -307,6 +452,67 @@ function AppsApiContent() {
                         placeholder="e.g., My Mobile App"
                         className="h-10 text-sm rounded-lg"
                       />
+                    </div>
+
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="client-cors" className="text-xs font-semibold">
+                        CORS allowed origins
+                      </Label>
+                      <Input
+                        id="client-cors"
+                        value={newClientCors}
+                        onChange={e => setNewClientCors(e.target.value)}
+                        placeholder="e.g. https://myapp.com, http://localhost:3000"
+                        className="h-10 text-sm rounded-lg"
+                      />
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        Comma-separated list of browser origins allowed to make authenticated requests.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-xs font-semibold">
+                        Scopes & permissions
+                      </Label>
+                      <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 border border-border rounded-xl p-4 bg-muted/40">
+                        {SCOPE_CATEGORIES.map(category => (
+                          <div key={category.name} className="space-y-2">
+                            <h4 className="text-[11px] font-bold text-foreground border-b border-border/60 pb-1 mt-2 first:mt-0">
+                              {category.name}
+                            </h4>
+                            <div className="space-y-2.5">
+                              {category.scopes.map(scope => {
+                                const isSelected = newClientScopes.includes(scope.value);
+                                return (
+                                  <div key={scope.value} className="flex items-start space-x-2.5 group">
+                                    <Checkbox
+                                      id={`new-scope-${scope.value}`}
+                                      checked={isSelected}
+                                      onCheckedChange={checked => {
+                                        const scopes = checked
+                                          ? [...newClientScopes, scope.value]
+                                          : newClientScopes.filter((s: string) => s !== scope.value);
+                                        setNewClientScopes(scopes);
+                                      }}
+                                    />
+                                    <div className="grid gap-0.5 leading-none">
+                                      <label
+                                        htmlFor={`new-scope-${scope.value}`}
+                                        className="text-xs font-semibold text-foreground cursor-pointer select-none"
+                                      >
+                                        {scope.label}
+                                      </label>
+                                      <span className="text-[10px] text-muted-foreground">
+                                        {scope.description}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -381,7 +587,13 @@ function AppsApiContent() {
           </div>
 
           <div className="grid gap-4">
-            {v3Clients.length === 0 ? (
+            {isLoading ? (
+              <>
+                <V3ClientSkeleton />
+                <V3ClientSkeleton />
+                <V3ClientSkeleton />
+              </>
+            ) : v3Clients.length === 0 ? (
               <div className="bg-card p-14 rounded-xl border border-dashed border-border flex flex-col items-center text-center">
                 <div className="p-3 bg-muted rounded-lg mb-3 border border-border">
                   <Key className="w-7 h-7 text-muted-foreground" />
@@ -1273,7 +1485,7 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
       <Sheet
         open={!!editingV3Client}
         onOpenChange={open => !open && setEditingV3Client(null)}>
-        <SheetContent className="sm:max-w-md">
+        <SheetContent className="sm:max-w-lg">
           <SheetHeader className="pb-6">
             <SheetTitle className="text-lg font-bold tracking-tight">
               Client advanced settings
@@ -1287,44 +1499,74 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
             </SheetDescription>
           </SheetHeader>
           {editingV3Client && (
-            <div className="py-4 space-y-6">
+            <div className="py-4 space-y-6 max-h-[75vh] overflow-y-auto pr-1">
+              <div className="grid gap-1.5">
+                <Label
+                  htmlFor="edit-client-name"
+                  className="text-xs font-semibold">
+                  Client name
+                </Label>
+                <Input
+                  id="edit-client-name"
+                  value={editingV3Client.name}
+                  onChange={e =>
+                    setEditingV3Client({
+                      ...editingV3Client,
+                      name: e.target.value,
+                    })
+                  }
+                  placeholder="e.g., My Mobile App"
+                  className="h-10 text-sm rounded-lg"
+                />
+              </div>
+
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                <Label className="text-xs font-semibold">
                   Scopes & permissions
                 </Label>
-                <div className="flex flex-wrap gap-1.5">
-                  {["read", "write", "admin", "inventory", "orders"].map(
-                    scope => {
-                      const isSelected = editingV3Client.scopes.includes(scope);
-                      return (
-                        <Badge
-                          key={scope}
-                          variant={isSelected ? "default" : "outline"}
-                          className={cn(
-                            "cursor-pointer py-1.5 px-3 h-auto text-[10px] font-bold transition-all border-none rounded-lg",
-                            isSelected
-                              ? "bg-foreground text-background shadow-sm"
-                              : "bg-muted text-muted-foreground hover:bg-accent border border-border",
-                          )}
-                          onClick={() => {
-                            const scopes = isSelected
-                              ? editingV3Client.scopes.filter(
-                                  (s: string) => s !== scope,
-                                )
-                              : [...editingV3Client.scopes, scope];
-                            setEditingV3Client({ ...editingV3Client, scopes });
-                          }}>
-                          {scope.toUpperCase()}
-                          {isSelected && <Check size={10} className="ml-1" />}
-                        </Badge>
-                      );
-                    },
-                  )}
+                <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 border border-border rounded-xl p-4 bg-muted/40">
+                  {SCOPE_CATEGORIES.map(category => (
+                    <div key={category.name} className="space-y-2">
+                      <h4 className="text-[11px] font-bold text-foreground border-b border-border/60 pb-1 mt-2 first:mt-0">
+                        {category.name}
+                      </h4>
+                      <div className="space-y-2.5">
+                        {category.scopes.map(scope => {
+                          const isSelected = editingV3Client.scopes.includes(scope.value);
+                          return (
+                            <div key={scope.value} className="flex items-start space-x-2.5 group">
+                              <Checkbox
+                                id={`edit-scope-${scope.value}`}
+                                checked={isSelected}
+                                onCheckedChange={checked => {
+                                  const scopes = checked
+                                    ? [...editingV3Client.scopes, scope.value]
+                                    : editingV3Client.scopes.filter((s: string) => s !== scope.value);
+                                  setEditingV3Client({ ...editingV3Client, scopes });
+                                }}
+                              />
+                              <div className="grid gap-0.5 leading-none">
+                                <label
+                                  htmlFor={`edit-scope-${scope.value}`}
+                                  className="text-xs font-semibold text-foreground cursor-pointer select-none"
+                                >
+                                  {scope.label}
+                                </label>
+                                <span className="text-[10px] text-muted-foreground">
+                                  {scope.description}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                <Label className="text-xs font-semibold">
                   CORS origins
                 </Label>
                 <div className="space-y-2">
