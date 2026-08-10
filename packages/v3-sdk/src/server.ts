@@ -88,6 +88,8 @@ export class ScrymeServerSDK {
     authenticate(): Promise<any>;
     signIn(credentials: { email: string; password?: string }): Promise<any>;
     getCurrentSession(): Promise<any>;
+    refreshSession(): Promise<any>;
+    swapZitadel(zitadelToken: string): Promise<any>;
   };
 
   private token: string | null = null;
@@ -99,8 +101,13 @@ export class ScrymeServerSDK {
       throw new Error("clientId, clientSecret, and orgSlug are required to initialize the SDK.");
     }
 
+    let finalBaseURL = config.baseURL || "https://api.scryme.tech";
+    if (finalBaseURL && !finalBaseURL.includes("/api") && !finalBaseURL.endsWith("/api")) {
+      finalBaseURL = finalBaseURL.replace(/\/$/, "") + "/api";
+    }
+
     this.axiosInstance = axios.create({
-      baseURL: config.baseURL || "https://api.scryme.tech",
+      baseURL: finalBaseURL,
     });
 
     // Attach token or apiKey if present
@@ -147,16 +154,31 @@ export class ScrymeServerSDK {
 
     // Attach authorization interceptor
     this.axiosInstance.interceptors.request.use(async (req) => {
-      // Check if this is a token exchange request or if apiKey is present to bypass token exchange
-      const isAuthTokenRequest = req.url && (req.url.endsWith("/auth/token") || req.url.includes("/auth/token"));
+      // Check if this is a token exchange request or refresh to prevent infinite loops
+      const isAuthTokenRequest = req.url && (
+        req.url.endsWith("/auth/token") ||
+        req.url.includes("/auth/token") ||
+        req.url.includes("/customers/auth/refresh") ||
+        req.url.includes("/customers/auth/swap-zitadel")
+      );
 
       if (!isAuthTokenRequest && !config.apiKey) {
         const isExpired = !this.token || (this.expiresAt && Date.now() >= this.expiresAt - 30000);
-        if (isExpired && config.clientId && config.clientSecret) {
-          try {
-            await performExchange();
-          } catch (e) {
-            console.error("Auto-authentication failed in request interceptor:", e);
+        if (isExpired) {
+          const isCustomerToken = this.token && getJwtExpiry(this.token) && !config.clientSecret;
+          if (isCustomerToken || (this.token && !config.clientSecret)) {
+            // Customer session expired, try refreshing
+            try {
+              await this.auth.refreshSession();
+            } catch (e) {
+              console.error("Proactive customer session refresh failed in request interceptor:", e);
+            }
+          } else if (config.clientId && config.clientSecret) {
+            try {
+              await performExchange();
+            } catch (e) {
+              console.error("Auto-authentication failed in request interceptor:", e);
+            }
           }
         }
       }
@@ -172,7 +194,12 @@ export class ScrymeServerSDK {
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
-        const isAuthTokenRequest = originalRequest && originalRequest.url && (originalRequest.url.endsWith("/auth/token") || originalRequest.url.includes("/auth/token"));
+        const isAuthTokenRequest = originalRequest && originalRequest.url && (
+          originalRequest.url.endsWith("/auth/token") ||
+          originalRequest.url.includes("/auth/token") ||
+          originalRequest.url.includes("/customers/auth/refresh") ||
+          originalRequest.url.includes("/customers/auth/swap-zitadel")
+        );
 
         if (
           error.response &&
@@ -180,17 +207,26 @@ export class ScrymeServerSDK {
           originalRequest &&
           !originalRequest._retry &&
           !isAuthTokenRequest &&
-          !config.apiKey &&
-          config.clientId &&
-          config.clientSecret
+          !config.apiKey
         ) {
           originalRequest._retry = true;
           try {
-            await performExchange();
-            if (this.token) {
-              originalRequest.headers["Authorization"] = `Bearer ${this.token}`;
+            const isCustomerToken = this.token && getJwtExpiry(this.token) && !config.clientSecret;
+            if (isCustomerToken || (this.token && !config.clientSecret)) {
+              // Customer token got a 401. Try refreshing.
+              await this.auth.refreshSession();
+              if (this.token) {
+                originalRequest.headers["Authorization"] = `Bearer ${this.token}`;
+              }
+              return this.axiosInstance(originalRequest);
+            } else if (config.clientId && config.clientSecret) {
+              // App credentials token expired or invalid, try client credentials exchange
+              await performExchange();
+              if (this.token) {
+                originalRequest.headers["Authorization"] = `Bearer ${this.token}`;
+              }
+              return this.axiosInstance(originalRequest);
             }
-            return this.axiosInstance(originalRequest);
           } catch (e) {
             return Promise.reject(error);
           }
@@ -367,6 +403,30 @@ export class ScrymeServerSDK {
       getCurrentSession: async () => {
         const response = await this.axiosInstance.get(`/${config.orgSlug}/customers/auth/session`);
         return response.data?.data || response.data;
+      },
+
+      refreshSession: async () => {
+        const response = await this.axiosInstance.post(`/${config.orgSlug}/customers/auth/refresh`);
+        const data = response.data?.data || response.data;
+        const token = data?.token || null;
+        if (token) {
+          this.token = token;
+          this.expiresAt = getJwtExpiry(token);
+          this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        }
+        return data;
+      },
+
+      swapZitadel: async (zitadelToken: string) => {
+        const response = await this.axiosInstance.post(`/${config.orgSlug}/customers/auth/swap-zitadel`, { zitadelToken });
+        const data = response.data?.data || response.data;
+        const token = data?.token || null;
+        if (token) {
+          this.token = token;
+          this.expiresAt = getJwtExpiry(token);
+          this.axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        }
+        return data;
       },
     };
   }

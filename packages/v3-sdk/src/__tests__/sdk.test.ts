@@ -255,10 +255,11 @@ describe("Scryme V3 Client and Server SDKs", () => {
 
       // Simulate sign in response
       const mockSignInResponse = {
-        session: { token: "new_token_888" },
-        user: { id: "user_2", name: "Bob" },
+        token: "new_token_888",
+        session: { id: "user_2", name: "Bob" },
       };
-      (axios.post as jest.Mock).mockResolvedValueOnce({
+      (axios.post as jest.Mock).mockRejectedValueOnce(new Error("First login failed"));
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
         data: mockSignInResponse,
       });
 

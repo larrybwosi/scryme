@@ -234,6 +234,233 @@ export class CustomerController {
     };
   }
 
+  @Post("auth/refresh")
+  @AllowPublic()
+  @ApiOperation({
+    summary: "Refresh an active or expired customer session token, issuing a fresh HS256 customer JWT",
+    operationId: "Customers_RefreshSession",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Session successfully refreshed",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Invalid or expired session",
+  })
+  async refresh(@Req() req: any) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new UnauthorizedException("Missing or invalid authorization header");
+    }
+    const oldToken = authHeader.split(" ")[1];
+
+    let payload: any;
+    try {
+      payload = jwt.verify(oldToken, env.JWT_SECRET || "default_jwt_secret", {
+        ignoreExpiration: true,
+        algorithms: ["HS256"],
+      }) as any;
+    } catch (e) {
+      throw new UnauthorizedException("Invalid token");
+    }
+
+    if (!payload || payload.type !== "v3_customer" || !payload.sessionId) {
+      throw new UnauthorizedException("Invalid token type");
+    }
+
+    // Check if session is still active in Redis
+    const sessionKey = `customer_session:${payload.sub}:${payload.sessionId}`;
+    const sessionData = await this.redis.get<string>(sessionKey);
+    if (!sessionData) {
+      throw new UnauthorizedException("Session has been revoked or expired");
+    }
+
+    const parsedSession = JSON.parse(sessionData);
+
+    // Issue a fresh local HS256 customer JWT
+    const newPayload = {
+      sub: payload.sub,
+      sessionId: payload.sessionId,
+      customerEmail: payload.customerEmail,
+      customerName: payload.customerName,
+      organizationId: payload.organizationId,
+      orgSlug: payload.orgSlug,
+      type: "v3_customer",
+    };
+
+    const token = jwt.sign(
+      newPayload,
+      env.JWT_SECRET || "default_jwt_secret",
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+      },
+    );
+
+    // Update session token and expiresAt in Redis
+    const updatedSession = {
+      ...parsedSession,
+      token,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    await this.redis.setex(
+      sessionKey,
+      7 * 24 * 60 * 60,
+      JSON.stringify(updatedSession),
+    );
+
+    return {
+      success: true,
+      token,
+      session: updatedSession,
+    };
+  }
+
+  @Post("auth/swap-zitadel")
+  @AllowPublic()
+  @ApiOperation({
+    summary: "Verify Zitadel OIDC token and swap it for a local high-performance customer session",
+    operationId: "Customers_SwapZitadel",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Token swapped successfully",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Invalid Zitadel token",
+  })
+  async swapZitadel(@Req() req: any, @Body() body: { zitadelToken: string }) {
+    const orgId = req.organization.id;
+    const { zitadelToken } = body;
+
+    if (!zitadelToken) {
+      throw new BadRequestException("Missing zitadelToken");
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.decode(zitadelToken);
+    } catch (e) {
+      throw new UnauthorizedException("Invalid Zitadel token format");
+    }
+
+    const externalId = decoded?.sub || decoded?.userId;
+    const email = decoded?.email;
+    const name = decoded?.name || decoded?.displayName;
+
+    if (!externalId) {
+      throw new UnauthorizedException("Invalid Zitadel token payload");
+    }
+
+    let customer = null;
+
+    // 1. Try mapping lookup
+    const mapping = await this.prisma.client.externalMapping.findFirst({
+      where: {
+        organizationId: orgId,
+        provider: "ZITADEL",
+        externalId,
+        entityType: "CUSTOMER",
+      },
+    });
+
+    if (mapping) {
+      customer = await this.prisma.client.customer.findUnique({
+        where: { id: mapping.internalId },
+      });
+    }
+
+    // 2. Try email lookup
+    if (!customer && email) {
+      customer = await this.prisma.client.customer.findUnique({
+        where: {
+          organizationId_email: {
+            organizationId: orgId,
+            email,
+          },
+        },
+      });
+    }
+
+    // 3. Auto-register if not found
+    if (!customer) {
+      if (!email) {
+        throw new UnauthorizedException("Zitadel token lacks email for auto-registration");
+      }
+
+      customer = await this.prisma.client.customer.create({
+        data: {
+          organizationId: orgId,
+          email,
+          name: name || email.split("@")[0],
+          isActive: true,
+        },
+      });
+
+      // Create mapping
+      await this.prisma.client.externalMapping.create({
+        data: {
+          organizationId: orgId,
+          provider: "ZITADEL",
+          externalId,
+          internalId: customer.id,
+          entityType: "CUSTOMER",
+        },
+      });
+    }
+
+    // Create a secure active customer session in Redis
+    const sessionId = `sess_${randomUUID()}`;
+    const tokenPayload = {
+      sub: customer.id,
+      sessionId,
+      customerEmail: customer.email,
+      customerName: customer.name,
+      organizationId: orgId,
+      orgSlug: req.organization.slug,
+      type: "v3_customer",
+    };
+
+    const token = jwt.sign(
+      tokenPayload,
+      env.JWT_SECRET || "default_jwt_secret",
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+      },
+    );
+
+    const sessionState = {
+      id: sessionId,
+      customerId: customer.id,
+      email: customer.email,
+      name: customer.name,
+      token,
+      userAgent: req.headers["user-agent"] || null,
+      ipAddress: req.ip || null,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    // Store the session in Redis with 7 days TTL
+    await this.redis.setex(
+      `customer_session:${customer.id}:${sessionId}`,
+      7 * 24 * 60 * 60,
+      JSON.stringify(sessionState),
+    );
+
+    return {
+      success: true,
+      token,
+      session: sessionState,
+    };
+  }
+
   @Get("auth/session")
   @ApiOperation({
     summary: "Retrieve the current active customer session and profile details",

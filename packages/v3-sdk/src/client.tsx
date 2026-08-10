@@ -126,6 +126,8 @@ export class ScrymeClientSDK {
     revokeSession(id: string): Promise<any>;
     revokeAllSessions(mode?: string): Promise<any>;
     getCurrentSession(): Promise<any>;
+    refreshSession(): Promise<any>;
+    swapZitadel(zitadelToken: string): Promise<any>;
   };
 
   constructor(config: ClientSDKConfig) {
@@ -133,8 +135,13 @@ export class ScrymeClientSDK {
       throw new Error("clientId and orgSlug are required to initialize the SDK.");
     }
 
+    let finalBaseURL = config.baseURL || "https://api.scryme.tech";
+    if (finalBaseURL && !finalBaseURL.includes("/api") && !finalBaseURL.endsWith("/api")) {
+      finalBaseURL = finalBaseURL.replace(/\/$/, "") + "/api";
+    }
+
     this.axiosInstance = axios.create({
-      baseURL: config.baseURL || "https://api.scryme.tech",
+      baseURL: finalBaseURL,
     });
 
     // Determine storage provider
@@ -247,16 +254,30 @@ export class ScrymeClientSDK {
     this.axiosInstance.interceptors.request.use(async (req) => {
       await initPromise; // Wait for initial session state to be loaded if async
 
-      // Check if this is a token exchange request to prevent infinite loops
-      const isAuthTokenRequest = req.url && (req.url.endsWith("/auth/token") || req.url.includes("/auth/token"));
+      // Check if this is a token exchange request or refresh to prevent infinite loops
+      const isAuthTokenRequest = req.url && (
+        req.url.endsWith("/auth/token") ||
+        req.url.includes("/auth/token") ||
+        req.url.includes("/customers/auth/refresh") ||
+        req.url.includes("/customers/auth/swap-zitadel")
+      );
 
       if (!isAuthTokenRequest) {
         const isExpired = !state.token || (state.expiresAt && Date.now() >= (state.expiresAt || 0) - 30000);
-        if (isExpired && config.clientId && config.clientSecret) {
-          try {
-            await performExchange();
-          } catch (e) {
-            console.error("Auto-authentication failed in request interceptor:", e);
+        if (isExpired) {
+          if (state.token) {
+            // Customer session expired, try refreshing
+            try {
+              await this.auth.refreshSession();
+            } catch (e) {
+              console.error("Proactive customer session refresh failed in request interceptor:", e);
+            }
+          } else if (config.clientId && config.clientSecret) {
+            try {
+              await performExchange();
+            } catch (e) {
+              console.error("Auto-authentication failed in request interceptor:", e);
+            }
           }
         }
       }
@@ -272,24 +293,37 @@ export class ScrymeClientSDK {
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
-        const isAuthTokenRequest = originalRequest && originalRequest.url && (originalRequest.url.endsWith("/auth/token") || originalRequest.url.includes("/auth/token"));
+        const isAuthTokenRequest = originalRequest && originalRequest.url && (
+          originalRequest.url.endsWith("/auth/token") ||
+          originalRequest.url.includes("/auth/token") ||
+          originalRequest.url.includes("/customers/auth/refresh") ||
+          originalRequest.url.includes("/customers/auth/swap-zitadel")
+        );
 
         if (
           error.response &&
           error.response.status === 401 &&
           originalRequest &&
           !originalRequest._retry &&
-          !isAuthTokenRequest &&
-          config.clientId &&
-          config.clientSecret
+          !isAuthTokenRequest
         ) {
           originalRequest._retry = true;
           try {
-            await performExchange();
             if (state.token) {
-              originalRequest.headers["Authorization"] = `Bearer ${state.token}`;
+              // Customer token is active, but got a 401. Try refreshing.
+              await this.auth.refreshSession();
+              if (state.token) {
+                originalRequest.headers["Authorization"] = `Bearer ${state.token}`;
+              }
+              return this.axiosInstance(originalRequest);
+            } else if (config.clientId && config.clientSecret) {
+              // App credentials token expired or invalid, try client exchange
+              await performExchange();
+              if (state.token) {
+                originalRequest.headers["Authorization"] = `Bearer ${state.token}`;
+              }
+              return this.axiosInstance(originalRequest);
             }
-            return this.axiosInstance(originalRequest);
           } catch (e) {
             return Promise.reject(error);
           }
@@ -589,6 +623,64 @@ export class ScrymeClientSDK {
       getCurrentSession: async () => {
         const res = await this.axiosInstance.get(`/${config.orgSlug}/customers/auth/session`);
         return res.data?.data || res.data;
+      },
+
+      refreshSession: async () => {
+        const response = await this.axiosInstance.post(`/${config.orgSlug}/customers/auth/refresh`);
+        const data = response.data?.data || response.data;
+        const token = data?.token || null;
+        const user = data?.session || null;
+
+        if (token) {
+          state.token = token;
+          state.user = user;
+          const jwtExp = getJwtExpiry(token);
+
+          await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
+          if (jwtExp) {
+            state.expiresAt = jwtExp;
+            await storage.setItem(SCRYME_EXPIRES_AT_KEY, String(state.expiresAt));
+          } else {
+            delete state.expiresAt;
+            await storage.removeItem(SCRYME_EXPIRES_AT_KEY);
+          }
+          if (user) {
+            await storage.setItem(SCRYME_USER_KEY, JSON.stringify(user));
+          }
+
+          notify("SIGNED_IN");
+        }
+
+        return data;
+      },
+
+      swapZitadel: async (zitadelToken: string) => {
+        const response = await this.axiosInstance.post(`/${config.orgSlug}/customers/auth/swap-zitadel`, { zitadelToken });
+        const data = response.data?.data || response.data;
+        const token = data?.token || null;
+        const user = data?.session || null;
+
+        if (token) {
+          state.token = token;
+          state.user = user;
+          const jwtExp = getJwtExpiry(token);
+
+          await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
+          if (jwtExp) {
+            state.expiresAt = jwtExp;
+            await storage.setItem(SCRYME_EXPIRES_AT_KEY, String(state.expiresAt));
+          } else {
+            delete state.expiresAt;
+            await storage.removeItem(SCRYME_EXPIRES_AT_KEY);
+          }
+          if (user) {
+            await storage.setItem(SCRYME_USER_KEY, JSON.stringify(user));
+          }
+
+          notify("SIGNED_IN");
+        }
+
+        return data;
       },
     };
   }
