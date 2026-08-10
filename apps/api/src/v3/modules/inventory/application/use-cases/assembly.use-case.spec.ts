@@ -98,6 +98,7 @@ describe("AssemblyUseCase Security Hardening", () => {
         organizationId: "org-1",
         status: "PLANNED",
         items: [{ variantId: "comp-1", quantity: 1, stockBatchId: "batch-1" }],
+        variant: { productId: "prod-1" },
       });
       prisma.client.productVariant.findUnique.mockResolvedValue({ productId: "prod-1" });
       prisma.client.stockBatch.create.mockResolvedValue({ id: "produced-batch-1" });

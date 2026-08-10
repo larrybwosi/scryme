@@ -367,6 +367,21 @@ export class ScrymeService {
     if (payload.event === "message.action") {
       const { workspaceSlug, action, message, user } = payload.data;
 
+      // Find the organization associated with this workspace
+      const config = await (
+        this.prisma.client as any
+      ).scrymeConfiguration.findFirst({
+        where: { workspaceSlug },
+        include: { organization: { include: { windmillConfiguration: true } } },
+      });
+
+      if (!config) {
+        this.logger.warn(
+          `No organization found for Scryme workspace: ${workspaceSlug}`,
+        );
+        return { status: "ignored" };
+      }
+
       if (
         action.id.startsWith("approve:") ||
         action.id.startsWith("decline:") ||
@@ -375,8 +390,13 @@ export class ScrymeService {
         const decisionId = action.value;
         const [actionType] = action.id.split(":");
 
-        const decision = await this.prisma.client.approvalDecision.findUnique({
-          where: { id: decisionId },
+        // SECURITY (Sentinel): Using findFirst instead of findUnique because we must scope the lookup
+        // to the authorized tenant (config.organizationId) to prevent IDOR / cross-tenant approvals.
+        const decision = await this.prisma.client.approvalDecision.findFirst({
+          where: {
+            id: decisionId,
+            approvalRequest: { organizationId: config.organizationId },
+          },
           include: {
             approvalRequest: true,
             approver: { include: { user: true } },
@@ -440,20 +460,22 @@ export class ScrymeService {
           }
 
           return { status: "success", message: `Action ${status} processed` };
+        } else if (decision) {
+          this.logger.warn(
+            `Approver mismatch: ${user.email} attempted to approve decision ${decisionId} belonging to ${decision.approver.user.email}`,
+          );
+          throw new BadRequestException("Approver email mismatch");
+        } else {
+          this.logger.warn(
+            `Decision ${decisionId} not found or unauthorized for workspace: ${workspaceSlug}`,
+          );
+          throw new BadRequestException("Decision not found or unauthorized");
         }
       }
 
-      // Find the organization associated with this workspace
-      const config = await (
-        this.prisma.client as any
-      ).scrymeConfiguration.findFirst({
-        where: { workspaceSlug },
-        include: { organization: { include: { windmillConfiguration: true } } },
-      });
-
-      if (!config || !config.organization.windmillConfiguration) {
+      if (!config.organization.windmillConfiguration) {
         this.logger.warn(
-          `No organization or Windmill config found for Scryme workspace: ${workspaceSlug}`,
+          `No Windmill config found for Scryme workspace: ${workspaceSlug}`,
         );
         return { status: "ignored" };
       }
@@ -467,8 +489,10 @@ export class ScrymeService {
 
         // In a real scenario, this would call Windmill's resume endpoint
         // For now, we update the execution record if it exists
+        // SECURITY (Sentinel): Using findFirst instead of findUnique because we must scope the lookup
+        // to the authorized tenant (config.organizationId) to prevent IDOR / cross-tenant resume actions.
         const execution = await this.prisma.client.windmillExecution.findFirst({
-          where: { jobId },
+          where: { jobId, organizationId: config.organizationId },
         });
 
         if (execution) {
