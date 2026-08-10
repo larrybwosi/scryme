@@ -44,8 +44,12 @@
       "cache": false,
       "persistent": true
     },
+    "@repo/env#build": {
+      "dependsOn": [],
+      "outputs": ["dist/**"]
+    },
     "generate": {
-      "dependsOn": ["^generate"],
+      "dependsOn": ["^generate", "@repo/env#build"],
       "inputs": ["prisma/schema/**", "prisma.config.ts"],
       "outputs": ["generated/**"],
       "cache": true
