@@ -87,7 +87,7 @@ export class AssemblyUseCase {
 
       const assembly = await tx.assembly.findUnique({
         where: { id: assemblyId, organizationId },
-        include: { items: true },
+        include: { items: true, variant: true },
       });
 
       if (!assembly) throw new NotFoundException("Assembly not found");
@@ -97,48 +97,52 @@ export class AssemblyUseCase {
         );
       }
 
-      // 1. Deduct components
-      for (const item of assembly.items) {
-        // If specific batch was selected, deduct from it
-        if (item.stockBatchId) {
-          // 🛡️ Sentinel: Defense in Depth - Use updateMany with organizationId scoping
-          await tx.stockBatch.updateMany({
-            where: { id: item.stockBatchId, organizationId },
-            data: { currentQuantity: { decrement: item.quantity } },
-          });
-        }
+      // 1. Deduct components concurrently using Promise.all to parallelize stock batch,
+      // variant stock updates, and movement logging. This reduces the duration the database
+      // transaction is held open.
+      await Promise.all(
+        assembly.items.map(async (item) => {
+          // If specific batch was selected, deduct from it
+          if (item.stockBatchId) {
+            // 🛡️ Sentinel: Defense in Depth - Use updateMany with organizationId scoping
+            await tx.stockBatch.updateMany({
+              where: { id: item.stockBatchId, organizationId },
+              data: { currentQuantity: { decrement: item.quantity } },
+            });
+          }
 
-        // Update summary stock
-        await tx.productVariantStock.update({
-          where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId, // Assuming components are in the same location
+          // Update summary stock
+          await tx.productVariantStock.update({
+            where: {
+              variantId_locationId: {
+                variantId: item.variantId,
+                locationId, // Assuming components are in the same location
+              },
             },
-          },
-          data: {
-            currentStock: { decrement: item.quantity },
-            availableStock: { decrement: item.quantity },
-          },
-        });
+            data: {
+              currentStock: { decrement: item.quantity },
+              availableStock: { decrement: item.quantity },
+            },
+          });
 
-        // Log movement
-        await tx.stockMovement.create({
-          data: {
-            organizationId,
-            variantId: item.variantId,
-            stockBatchId: item.stockBatchId,
-            quantity: item.quantity,
-            fromLocationId: locationId,
-            toLocationId: null,
-            movementType: "PRODUCTION_OUT",
-            memberId,
-            referenceId: assemblyId,
-            referenceType: "Assembly",
-            notes: `Used in assembly ${assembly.assemblyNumber}`,
-          },
-        });
-      }
+          // Log movement
+          await tx.stockMovement.create({
+            data: {
+              organizationId,
+              variantId: item.variantId,
+              stockBatchId: item.stockBatchId,
+              quantity: item.quantity,
+              fromLocationId: locationId,
+              toLocationId: null,
+              movementType: "PRODUCTION_OUT",
+              memberId,
+              referenceId: assemblyId,
+              referenceType: "Assembly",
+              notes: `Used in assembly ${assembly.assemblyNumber}`,
+            },
+          });
+        })
+      );
 
       // 2. Create resulting batch
       const producedBatch = await tx.stockBatch.create({
@@ -156,6 +160,8 @@ export class AssemblyUseCase {
       });
 
       // Update summary stock for result
+      // ⚡ Bolt Optimization: Avoid sequential productVariant.findUnique query by leveraging
+      // the pre-fetched variant.productId from the included 'variant' relation on assembly.
       await tx.productVariantStock.upsert({
         where: {
           variantId_locationId: {
@@ -165,9 +171,7 @@ export class AssemblyUseCase {
         },
         create: {
           organizationId,
-          productId: (await tx.productVariant.findUnique({
-            where: { id: assembly.variantId },
-          }))!.productId,
+          productId: assembly.variant.productId,
           variantId: assembly.variantId,
           locationId,
           currentStock: assembly.quantity,
