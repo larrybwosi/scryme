@@ -1,5 +1,11 @@
 # portal
 
+## 1.10.0
+
+### Minor Changes
+
+- e2ebbbc: update
+
 ## 1.9.0
 
 ### Minor Changes

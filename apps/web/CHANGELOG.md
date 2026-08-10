@@ -1,5 +1,11 @@
 # web
 
+## 6.35.0
+
+### Minor Changes
+
+- e2ebbbc: update
+
 ## 6.34.0
 
 ### Minor Changes
