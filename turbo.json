@@ -38,18 +38,13 @@
     "auth:build": {
       "cache": true
     },
-
     "dev": {
       "dependsOn": ["generate", "auth:build", "shared:build", "db:build"],
       "cache": false,
       "persistent": true
     },
-    "@repo/env#build": {
-      "dependsOn": [],
-      "outputs": ["dist/**"]
-    },
     "generate": {
-      "dependsOn": ["^generate", "@repo/env#build"],
+      "dependsOn": ["^generate"],
       "inputs": ["prisma/schema/**", "prisma.config.ts"],
       "outputs": ["generated/**"],
       "cache": true
