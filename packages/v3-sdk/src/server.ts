@@ -300,9 +300,39 @@ export class ScrymeServerSDK<
    */
   public auth: AuthModule & {
     /**
+     * Administer registration of a new customer account.
+     * @param dto Customer credentials and details.
+     */
+    signUp<T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>>;
+    /**
      * Triggers client credentials exchange for your Server credentials.
      */
     authenticate(): Promise<AuthExchangeToken201>;
+    /**
+     * Swaps credentials for an active, high-performance customer session token.
+     * @param credentials Email and password.
+     */
+    signIn<TSess = TSession, TU = TUser>(credentials: {
+      email: string;
+      password?: string;
+    }): Promise<CustomerAuthResponseDto<TU, TSess>>;
+    /**
+     * Fetches details of the customer session associated with the active token.
+     */
+    getCurrentSession<TU = TUser>(): Promise<TU>;
+    /**
+     * Refreshes the current active customer session token.
+     */
+    refreshSession<TSess = TSession, TU = TUser>(): Promise<
+      CustomerAuthResponseDto<TU, TSess>
+    >;
+    /**
+     * Exchanges a verified Zitadel OIDC token for a local customer session.
+     * @param zitadelToken Valid Zitadel OIDC ID/access token.
+     */
+    swapZitadel<TSess = TSession, TU = TUser>(
+      zitadelToken: string,
+    ): Promise<CustomerAuthResponseDto<TU, TSess>>;
   };
 
   private token: string | null = null;

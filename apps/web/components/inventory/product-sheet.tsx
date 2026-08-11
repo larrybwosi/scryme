@@ -26,6 +26,7 @@ import {
   getProduct,
   checkProductUniqueness,
 } from "../../app/actions/inventory";
+import { CategoryDialog } from "./category-dialog";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -143,6 +144,12 @@ export function ProductSheet({
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const [localCategories, setLocalCategories] = useState(categories);
+
+  useEffect(() => {
+    setLocalCategories(categories);
+  }, [categories]);
 
   const open = controlledOpen !== undefined ? controlledOpen : isOpen;
   const setOpen = onOpenChange !== undefined ? onOpenChange : setIsOpen;
@@ -416,18 +423,33 @@ export function ProductSheet({
 
                   <div className="grid grid-cols-2 gap-4">
                     <FieldWrapper>
-                      <FieldLabel htmlFor="category">Category</FieldLabel>
-                      {categories.length === 0 ? (
+                      <div className="flex items-center justify-between">
+                        <FieldLabel htmlFor="category">Category</FieldLabel>
+                        <CategoryDialog
+                          onSuccess={(newCat) => {
+                            setLocalCategories(prev => [
+                              ...prev,
+                              { id: newCat.id, name: newCat.name },
+                            ]);
+                            setFormData(prev => ({
+                              ...prev,
+                              categoryId: newCat.id,
+                            }));
+                          }}>
+                          <button
+                            type="button"
+                            className="text-[10px] text-zinc-500 hover:text-zinc-900 font-medium flex items-center gap-1 transition-colors">
+                            <Plus className="h-3 w-3" />
+                            Create Inline
+                          </button>
+                        </CategoryDialog>
+                      </div>
+
+                      {localCategories.length === 0 ? (
                         <div className="flex flex-col gap-1.5">
                           <div className="h-9 px-3 flex items-center text-sm border border-dashed border-zinc-200 rounded-md bg-zinc-50 text-zinc-400">
                             No categories available
                           </div>
-                          <Link
-                            href="/inventory/categories"
-                            className="text-[10px] text-zinc-500 hover:text-zinc-900 underline flex items-center gap-1 transition-colors">
-                            <Plus className="h-3 w-3" />
-                            Create categories first
-                          </Link>
                         </div>
                       ) : (
                         <Select
@@ -442,7 +464,7 @@ export function ProductSheet({
                             <SelectValue placeholder="Select category…" />
                           </SelectTrigger>
                           <SelectContent>
-                            {categories.map(cat => (
+                            {localCategories.map(cat => (
                               <SelectItem
                                 key={cat.id}
                                 value={cat.id}
