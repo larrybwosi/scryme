@@ -182,8 +182,7 @@ const clientSchema = z.object({
 // so this code path isn't eagerly resolved/bundled for client or edge runtimes.
 const nodeRequire: NodeJS.Require | undefined =
   typeof require !== "undefined"
-    ? // eslint-disable-next-line no-eval
-      (eval("require") as NodeJS.Require)
+    ? require
     : undefined;
 
 function loadEnvFiles() {
@@ -336,9 +335,11 @@ function getRawEnv() {
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     NEXT_PUBLIC_SITE_SANITY_DATASET:
-      process.env.NEXT_PUBLIC_SITE_SANITY_DATASET,
+      process.env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
+      process.env.NEXT_PUBLIC_SANITY_DATASET,
     NEXT_PUBLIC_SITE_SANITY_PROJECT_ID:
-      process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID,
+      process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID ||
+      process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
   };
 }
 
