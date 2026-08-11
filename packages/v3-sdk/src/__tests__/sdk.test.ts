@@ -990,4 +990,70 @@ describe("Scryme V3 Client and Server SDKs", () => {
       expect(authData.user?.customMetadata.loyaltyTier).toBe("Platinum");
     });
   });
+
+  describe("New Features: Singular Product/Service Retrieval and Header-Based Session", () => {
+    it("should retrieve a product by ID or slug via getProduct", async () => {
+      const sdk = createClientSDK({ orgSlug: "test-org" });
+      const mockProducts = [
+        { id: "prod-1", slug: "product-one", name: "Product One" },
+        { id: "prod-2", slug: "product-two", name: "Product Two" },
+      ];
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: mockProducts,
+      });
+
+      const responseById = await sdk.catalog.getProduct("prod-1");
+      expect(responseById.data.id).toBe("prod-1");
+
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: mockProducts,
+      });
+      const responseBySlug = await sdk.catalog.getProduct("product-two");
+      expect(responseBySlug.data.id).toBe("prod-2");
+
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: mockProducts,
+      });
+      const responseByObj = await sdk.catalog.getProduct({ slug: "product-one" });
+      expect(responseByObj.data.id).toBe("prod-1");
+    });
+
+    it("should retrieve a service by ID or slug via getService", async () => {
+      const sdk = createClientSDK({ orgSlug: "test-org" });
+      const mockServices = [
+        { id: "srv-1", slug: "service-one", name: "Service One" },
+        { id: "srv-2", slug: "service-two", name: "Service Two" },
+      ];
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: mockServices,
+      });
+
+      const responseById = await sdk.catalog.getService("srv-1");
+      expect(responseById.data.id).toBe("srv-1");
+
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: mockServices,
+      });
+      const responseBySlug = await sdk.catalog.getService("service-two");
+      expect(responseBySlug.data.id).toBe("srv-2");
+    });
+
+    it("should forward headers in getCurrentSession for server SDK", async () => {
+      const sdk = createServerSDK({ orgSlug: "server-org" });
+      const mockSession = { id: "cust-123", name: "Alice" };
+
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: mockSession,
+      });
+
+      const fakeHeaders = { "x-custom-session": "token-xyz" };
+      const session = await sdk.customer.auth.getCurrentSession(fakeHeaders);
+
+      expect(sdk.axiosInstance.get).toHaveBeenCalledWith(
+        "/server-org/customers/auth/session",
+        { headers: fakeHeaders }
+      );
+      expect(session).toEqual(mockSession);
+    });
+  });
 });

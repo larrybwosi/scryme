@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
 import { getScrymeV3API } from "./index";
 import type {
   CartControllerGetCartParams,
@@ -687,7 +687,60 @@ export class ScrymeClientSDK<
     this.api = getScrymeV3API(this.axiosInstance, config.orgSlug);
 
     // Build the submodules using buildModule
-    this.catalog = buildModule(this.api, config.orgSlug, catalogMapping) as any;
+    const baseCatalog = buildModule(this.api, config.orgSlug, catalogMapping) as any;
+    this.catalog = {
+      ...baseCatalog,
+      getProduct: async <T = TProduct,>(
+        idOrSlug: string | { id?: string; slug?: string },
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<T>> => {
+        const response = await this.catalog.getProducts<T>(undefined, options);
+        const products = response.data || [];
+        const product = products.find((p: any) => {
+          if (typeof idOrSlug === "string") {
+            return p.id === idOrSlug || p.slug === idOrSlug;
+          } else {
+            const { id, slug } = idOrSlug;
+            if (id && p.id === id) return true;
+            if (slug && p.slug === slug) return true;
+            return false;
+          }
+        });
+        if (!product) {
+          const criteria = typeof idOrSlug === "string" ? idOrSlug : JSON.stringify(idOrSlug);
+          throw new Error(`Product not found matching criteria: ${criteria}`);
+        }
+        return {
+          ...response,
+          data: product,
+        };
+      },
+      getService: async <T = TService,>(
+        idOrSlug: string | { id?: string; slug?: string },
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<T>> => {
+        const response = await this.catalog.getServices<T>(undefined, options);
+        const services = response.data || [];
+        const service = services.find((s: any) => {
+          if (typeof idOrSlug === "string") {
+            return s.id === idOrSlug || s.slug === idOrSlug;
+          } else {
+            const { id, slug } = idOrSlug;
+            if (id && s.id === id) return true;
+            if (slug && s.slug === slug) return true;
+            return false;
+          }
+        });
+        if (!service) {
+          const criteria = typeof idOrSlug === "string" ? idOrSlug : JSON.stringify(idOrSlug);
+          throw new Error(`Service not found matching criteria: ${criteria}`);
+        }
+        return {
+          ...response,
+          data: service,
+        };
+      },
+    };
     this.inventory = buildModule(this.api, config.orgSlug, inventoryMapping);
     this.orders = buildModule(this.api, config.orgSlug, ordersMapping);
     this.crm = buildModule(this.api, config.orgSlug, crmMapping);
@@ -815,38 +868,6 @@ export class ScrymeClientSDK<
         return orderResponse?.data || orderResponse;
       },
     };
-
-    this.customer = {
-      getProfile: async <T = TUser,>(): Promise<T> => {
-        return this.customer.auth.getCurrentSession() as any;
-      },
-      updateProfile: async <T = TUser>(dto: UpdateCustomerDto): Promise<AxiosResponse<T>> => {
-        const session = await this.auth.getSession();
-        const user = session.user as any;
-        const customerId = user?.customerId || user?.id || user?.customer?.id;
-        if (!customerId) throw new Error("No authenticated customer found.");
-        return this.admin.updateCustomer(customerId, dto) as any;
-      },
-      getAddresses: async () => {
-        const session = await this.customer.auth.getSession();
-        const user = session.user as any;
-        const customerId = user?.customerId || user?.id || user?.customer?.id;
-        if (!customerId) throw new Error("No authenticated customer found.");
-        return this.admin.getCustomerAddresses(customerId) as any;
-      },
-      addAddress: async (dto: AddressDto) => {
-        const session = await this.auth.getSession();
-        const user = session.user as any;
-        const customerId = user?.customerId || user?.id || user?.customer?.id;
-        if (!customerId) throw new Error("No authenticated customer found.");
-        return this.admin.addCustomerAddress(customerId, dto);
-      },
-      auth: {
-        signUp: async <T = TUser,>(
-          dto: RegisterCustomerDto,
-        ): Promise<AxiosResponse<T>> => {
-          return this.api.customersRegister(config.orgSlug, dto) as any;
-        },
 
     this.bookings = {
       create: async (dto: CreateBookingDto) => {
@@ -1102,43 +1123,73 @@ export class ScrymeClientSDK<
 
           return data as any;
         },
+    };
+
+    this.customer = {
+      getProfile: async <T = TUser,>(): Promise<T> => {
+        return this.customer.auth.getCurrentSession() as any;
+      },
+      updateProfile: async <T = TUser>(dto: UpdateCustomerDto): Promise<AxiosResponse<T>> => {
+        const session = await this.auth.getSession();
+        const user = session.user as any;
+        const customerId = user?.customerId || user?.id || user?.customer?.id;
+        if (!customerId) throw new Error("No authenticated customer found.");
+        return this.admin.updateCustomer(customerId, dto) as any;
+      },
+      getAddresses: async () => {
+        const session = await this.customer.auth.getSession();
+        const user = session.user as any;
+        const customerId = user?.customerId || user?.id || user?.customer?.id;
+        if (!customerId) throw new Error("No authenticated customer found.");
+        return this.admin.getCustomerAddresses(customerId) as any;
+      },
+      addAddress: async (dto: AddressDto) => {
+        const session = await this.auth.getSession();
+        const user = session.user as any;
+        const customerId = user?.customerId || user?.id || user?.customer?.id;
+        if (!customerId) throw new Error("No authenticated customer found.");
+        return this.admin.addCustomerAddress(customerId, dto);
+      },
+      auth: {
+        signUp: async <T = TUser,>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
+          return this.auth.signUp<T>(dto);
+        },
+        signIn: async <TSess = TSession, TU = TUser>(credentials: { email: string; password?: string }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+          return this.auth.signIn<TSess, TU>(credentials);
+        },
+        signOut: async () => {
+          return this.auth.signOut();
+        },
+        getSession: async <TU = TUser,>(): Promise<SessionState<TU>> => {
+          return this.auth.getSession<TU>();
+        },
+        onAuthStateChange: <TU = TUser,>(callback: AuthStateCallback<TU>) => {
+          return this.auth.onAuthStateChange<TU>(callback);
+        },
+        getSessions: async <TSess = TSession,>(): Promise<TSess[]> => {
+          return this.auth.getSessions<TSess>();
+        },
+        revokeSession: async (id: string) => {
+          return this.auth.revokeSession(id);
+        },
+        revokeAllSessions: async (mode?: string) => {
+          return this.auth.revokeAllSessions(mode);
+        },
+        getCurrentSession: async <TU = TUser,>(): Promise<TU> => {
+          return this.auth.getCurrentSession<TU>();
+        },
+        refreshSession: async <TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+          return this.auth.refreshSession<TSess, TU>();
+        },
+        swapZitadel: async <TSess = TSession, TU = TUser>(zitadelToken: string): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+          return this.auth.swapZitadel<TSess, TU>(zitadelToken);
+        },
       },
     };
 
-    this.bookings = {
-      create: async (dto: CreateBookingDto) => {
-        return this.catalog.createBooking(dto);
-      },
-      get: async (id: string) => {
-        return this.catalog.getBooking(id) as any;
-      },
-      list: async () => {
-        return this.catalog.getBookings() as any;
-      },
-      cancel: async (id: string) => {
-        return this.catalog.updateBookingStatus(id, "CANCELLED" as any);
-      },
-    };
-
-    const baseAuth = buildModule(this.api, config.orgSlug, authMapping);
-
-    // Enrich the auth submodule with stateful and helper methods
-    this.auth = {
-      ...baseAuth,
-
-      authenticate: async () => {
-        return performExchange();
-      },
-    };
   }
 }
 
-/**
- * Factory helper function to instantiate a ScrymeClientSDK.
- * Retains backward compatibility while enforcing strict ClientSDKConfig types.
- *
- * @param config Client configuration overrides.
- */
 export function createClientSDK<
   TProduct = ProductResponseDto,
   TService = ServiceCatalogResponseDto,
