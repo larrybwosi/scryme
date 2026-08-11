@@ -209,10 +209,10 @@ export class ScrymeChatApiClient {
       channelSlugOrId,
     );
     return chat.channel.message.create(channelId, {
-      // content: message.content,
-      // attachments: message.attachments,
+      content: message.content,
+      attachments: message.attachments,
       // actions: message.actions,
-      // threadId: message.threadId,
+      threadId: message.threadId,
     });
   }
 
@@ -243,15 +243,13 @@ export class ScrymeChatApiClient {
     workspaceSlug: string,
     email: string,
   ): Promise<ScrymeChatUser | null> {
-    const members = await chat.workspace.members.search(workspaceSlug, email);
-    const found = members.find(
-      (m: any) => m.email === email || m.user?.email === email,
-    );
-    if (found) {
+    const found = await chat.workspace.members.get(workspaceSlug, email);
+    const member = found?.data?.member;
+    if (member) {
       return {
-        id: found.userId || found.user?.id || found.id,
-        email: found.email || found.user?.email,
-        name: found.name || found.user?.name,
+        id: member.userId || member.user?.id || member.id,
+        email: member.user?.email,
+        name:member.user?.name,
       };
     }
     return null;
@@ -264,7 +262,7 @@ export class ScrymeChatApiClient {
     workspaceSlug: string,
     userId: string,
   ): Promise<ScrymeChatChannel> {
-    const dm = await chat.dms.create(workspaceSlug, { userId });
+    const dm = await chat.dm.create({ userId });
     return {
       id: dm.id,
       slug: dm.id,
