@@ -12,23 +12,65 @@ import type {
 
 export type RawAPI = ReturnType<typeof getScrymeV3API>;
 
+/**
+ * Represents a customer login session tracked in the backend store.
+ */
 export interface CustomerSessionDto {
+  /**
+   * Unique session identifier.
+   */
   id: string;
+  /**
+   * Database identifier of the customer this session belongs to.
+   */
   customerId: string;
+  /**
+   * Active authentication token associated with the session.
+   */
   token: string;
+  /**
+   * User agent of the client device that initiated the session.
+   */
   userAgent?: string;
+  /**
+   * IP address of the client device that initiated the session.
+   */
   ipAddress?: string;
+  /**
+   * ISO string representation of the session expiration timestamp.
+   */
   expiresAt: string;
+  /**
+   * ISO string representation of the session creation timestamp.
+   */
   createdAt: string;
+  /**
+   * ISO string representation of the session last update timestamp.
+   */
   updatedAt: string;
 }
 
+/**
+ * Standard envelope returned upon successful customer registration or login.
+ *
+ * @template TUser Custom User profile type. Defaults to CustomerResponseDto.
+ * @template TSession Custom session tracking type. Defaults to CustomerSessionDto.
+ */
 export interface CustomerAuthResponseDto<
   TUser = CustomerResponseDto,
   TSession = CustomerSessionDto
 > {
+  /**
+   * Newly-issued local High-Performance Customer JWT bearer token.
+   */
   token: string;
+  /**
+   * Active session details.
+   */
   session?: TSession;
+  /**
+   * Full customer profile and metadata details.
+   */
   user?: TUser;
 }
 
