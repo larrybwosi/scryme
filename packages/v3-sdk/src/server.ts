@@ -837,6 +837,7 @@ export class ScrymeServerSDK<
 
     this.auth = {
       ...baseAuth,
+      ...this.customer.auth,
 
       authenticate: async () => {
         return performExchange();

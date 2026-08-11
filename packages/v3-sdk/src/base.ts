@@ -109,6 +109,7 @@ export type MethodsWithOrgSlug =
   | "webhooksList"
   | "webhooksDelete"
   | "catalogGetProducts"
+  | "catalogGetProduct"
   | "catalogCreateProduct"
   | "catalogGetServices"
   | "catalogUpdateProduct"
@@ -142,7 +143,6 @@ export type MethodsWithOrgSlug =
   | "servicesGetUtilization"
   | "servicesGetPerformance"
   | "servicesGetFunnel"
-  | "customersProvisionZitadel"
   | "customersGetCustomers"
   | "customersRegister"
   | "customersUpdate"
@@ -307,6 +307,7 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "webhooksList",
   "webhooksDelete",
   "catalogGetProducts",
+  "catalogGetProduct",
   "catalogCreateProduct",
   "catalogGetServices",
   "catalogUpdateProduct",
@@ -340,7 +341,6 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "servicesGetUtilization",
   "servicesGetPerformance",
   "servicesGetFunnel",
-  "customersProvisionZitadel",
   "customersGetCustomers",
   "customersRegister",
   "customersUpdate",
@@ -429,6 +429,7 @@ export type SDKModule<Mapping> = {
 
 export const catalogMapping = {
   getProducts: "catalogGetProducts",
+  getProduct: "catalogGetProduct",
   createProduct: "catalogCreateProduct",
   getServices: "catalogGetServices",
   updateProduct: "catalogUpdateProduct",
@@ -738,7 +739,6 @@ export const adminMapping = {
   handleWindmillApprovalCallback: "windmillCallbackControllerHandleApprovalCallback",
   handleWindmillBakeryDisposalCallback: "windmillCallbackControllerHandleBakeryDisposalCallback",
   handleWindmillOutcomeCallback: "windmillCallbackControllerHandleOutcomeCallback",
-  provisionZitadel: "customersProvisionZitadel",
   getCustomers: "customersGetCustomers",
   registerCustomer: "customersRegister",
   updateCustomer: "customersUpdate",
@@ -755,7 +755,7 @@ export const adminMapping = {
 export interface CatalogModule<
   TProduct = ProductResponseDto,
   TService = ServiceCatalogResponseDto
-> extends Omit<SDKModule<typeof catalogMapping>, "getProducts" | "createProduct" | "getServices" | "updateProduct"> {
+> extends Omit<SDKModule<typeof catalogMapping>, "getProducts" | "createProduct" | "getServices" | "updateProduct" | "getProduct" | "getService"> {
   getProducts<T = TProduct>(params?: CatalogGetProductsParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;
   createProduct<T = TProduct>(createProductDto: CreateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
   getServices<T = TService>(params?: CatalogGetServicesParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;

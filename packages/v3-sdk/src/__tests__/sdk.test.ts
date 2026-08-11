@@ -981,8 +981,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
       (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
         data: mockSignInResponse,
       });
-
-      const authData = await sdk.auth.signIn({ email: "alice@generic.com", password: "secure" });
+const authData = await sdk.auth.signIn({ email: "alice@generic.com", password: "secure" });
 
       // Verify that auth session and user are fully typed and contain custom properties
       expect(authData.token).toBe("session-token-999");
@@ -1055,5 +1054,6 @@ describe("Scryme V3 Client and Server SDKs", () => {
       );
       expect(session).toEqual(mockSession);
     });
+  });
   });
 });
