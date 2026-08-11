@@ -91,9 +91,15 @@ export class WebhookController {
     description: "List of webhooks",
   })
   async list(@Req() req: any) {
-    return this.prisma.client.webhookSubscription.findMany({
+    const webhooks = await this.prisma.client.webhookSubscription.findMany({
       where: { organizationId: req.v3Context.organizationId },
     });
+
+    // SECURITY (Sentinel): Mask sensitive webhook secret keys to prevent credential harvesting/exposure in the listing endpoint
+    return webhooks.map(webhook => ({
+      ...webhook,
+      secret: webhook.secret ? "whsec_************************" : undefined,
+    }));
   }
 
   @Delete(":id")

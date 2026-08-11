@@ -281,3 +281,8 @@
 **Vulnerability:** The V3 member login flow performed cardId lookup using `prisma.client.member.findUnique` but only executed the cryptographically expensive `bcrypt.compare` PIN verification if a matching active member was found in the database. This created a timing side-channel that allowed attackers to enumerate valid active card IDs.
 **Learning:** Performing existence or active status checks and skipping cryptographic password/PIN validation on failure leaks the existence of that record via response timing. Consistent execution times must be maintained across both successful and failing lookups.
 **Prevention:** Always perform a dummy `bcrypt.compare` against a valid placeholder hash string when a record lookup or active check fails, ensuring synchronization of timing and lockout logic on all execution paths.
+
+## 2026-08-11 - Sensitive Webhook Secret Leakage in Webhook Listing Endpoint
+**Vulnerability:** The V3 Webhooks listing endpoint returned the raw plaintext signing secrets (`secret`) of all webhook subscriptions in the response, exposing sensitive credentials to any client or log with read-only webhooks permission.
+**Learning:** Returning raw database records directly in query and listing endpoints bypasses the security bounds of sensitive fields. Listing endpoints should always mask or omit credentials like HMAC secret keys to follow the principle of least privilege, only returning them in plaintext during initial creation.
+**Prevention:** Always map listing responses to explicitly redact, sanitize, or mask sensitive fields (e.g., replacing webhook secrets with a placeholder like `whsec_************************`) rather than spreading raw database models.

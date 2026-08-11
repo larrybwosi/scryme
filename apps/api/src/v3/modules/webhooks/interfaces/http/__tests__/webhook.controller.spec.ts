@@ -62,4 +62,32 @@ describe("WebhookController Security and Metadata", () => {
     );
     expect(permissions).toEqual(["webhooks:write"]);
   });
+
+  it("should mask secrets returned from list", async () => {
+    const rawWebhooks = [
+      {
+        id: "sub_1",
+        name: "Test Webhook",
+        url: "https://example.com/webhook",
+        events: ["order.created"],
+        organizationId: "org-123",
+        secret: "whsec_supersecretplaintext123",
+      },
+    ];
+
+    mockPrisma.client.webhookSubscription.findMany.mockResolvedValue(rawWebhooks);
+
+    const mockRequest = {
+      v3Context: {
+        organizationId: "org-123",
+      },
+    };
+
+    const result = await controller.list(mockRequest);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("sub_1");
+    expect(result[0].secret).toBe("whsec_************************");
+    expect(result[0].secret).not.toBe("whsec_supersecretplaintext123");
+  });
 });
