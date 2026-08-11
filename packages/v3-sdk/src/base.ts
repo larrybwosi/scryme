@@ -1,6 +1,36 @@
 import { getScrymeV3API } from "./generated/scryme";
+import type { AxiosRequestConfig, AxiosResponse } from "axios";
+import type {
+  ProductResponseDto,
+  ServiceCatalogResponseDto,
+  CustomerResponseDto,
+  CatalogGetProductsParams,
+  CreateProductDto,
+  CatalogGetServicesParams,
+  UpdateProductDto,
+} from "./generated/model";
 
 export type RawAPI = ReturnType<typeof getScrymeV3API>;
+
+export interface CustomerSessionDto {
+  id: string;
+  customerId: string;
+  token: string;
+  userAgent?: string;
+  ipAddress?: string;
+  expiresAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerAuthResponseDto<
+  TUser = CustomerResponseDto,
+  TSession = CustomerSessionDto
+> {
+  token: string;
+  session?: TSession;
+  user?: TUser;
+}
 
 export type MethodsWithOrgSlug =
   | "publicServicesListServices"
@@ -680,7 +710,16 @@ export const adminMapping = {
   getResourceUtilization: "analyticsControllerGetResourceUtilization",
 } as const;
 
-export type CatalogModule = SDKModule<typeof catalogMapping>;
+export interface CatalogModule<
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto
+> extends Omit<SDKModule<typeof catalogMapping>, "getProducts" | "createProduct" | "getServices" | "updateProduct"> {
+  getProducts<T = TProduct>(params?: CatalogGetProductsParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;
+  createProduct<T = TProduct>(createProductDto: CreateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  getServices<T = TService>(params?: CatalogGetServicesParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;
+  updateProduct<T = TProduct>(id: string, updateProductDto: UpdateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+}
+
 export type AuthModule = SDKModule<typeof authMapping>;
 export type InventoryModule = SDKModule<typeof inventoryMapping>;
 export type OrdersModule = SDKModule<typeof ordersMapping>;
