@@ -34,6 +34,7 @@ interface CategoryDialogProps {
   category?: any;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSuccess?: (newCategory: any) => void;
 }
 
 export function CategoryDialog({
@@ -41,6 +42,7 @@ export function CategoryDialog({
   category,
   isOpen: controlledOpen,
   onOpenChange,
+  onSuccess,
 }: CategoryDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,8 +103,11 @@ export function CategoryDialog({
         await updateCategory(category.id, data);
         toast.success("Category updated successfully");
       } else {
-        await createCategory(data);
+        const newCat = await createCategory(data);
         toast.success("Category created successfully");
+        if (onSuccess) {
+          onSuccess(newCat);
+        }
       }
       setOpen(false);
     } catch (error: any) {

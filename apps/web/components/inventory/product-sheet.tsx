@@ -25,8 +25,8 @@ import {
   updateProduct,
   getProduct,
   checkProductUniqueness,
-  createCategory,
 } from "../../app/actions/inventory";
+import { CategoryDialog } from "./category-dialog";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -146,9 +146,6 @@ export function ProductSheet({
   const [isLoading, setIsLoading] = useState(false);
 
   const [localCategories, setLocalCategories] = useState(categories);
-  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [isSavingCategory, setIsSavingCategory] = useState(false);
 
   useEffect(() => {
     setLocalCategories(categories);
@@ -428,107 +425,55 @@ export function ProductSheet({
                     <FieldWrapper>
                       <div className="flex items-center justify-between">
                         <FieldLabel htmlFor="category">Category</FieldLabel>
-                        {!isCreatingCategory && (
+                        <CategoryDialog
+                          onSuccess={(newCat) => {
+                            setLocalCategories(prev => [
+                              ...prev,
+                              { id: newCat.id, name: newCat.name },
+                            ]);
+                            setFormData(prev => ({
+                              ...prev,
+                              categoryId: newCat.id,
+                            }));
+                          }}>
                           <button
                             type="button"
-                            onClick={() => setIsCreatingCategory(true)}
                             className="text-[10px] text-zinc-500 hover:text-zinc-900 font-medium flex items-center gap-1 transition-colors">
                             <Plus className="h-3 w-3" />
                             Create Inline
                           </button>
-                        )}
+                        </CategoryDialog>
                       </div>
 
-                      {isCreatingCategory ? (
-                        <div className="space-y-2 border border-zinc-100 rounded-md p-2 bg-zinc-50/50">
-                          <Input
-                            id="new-category-name"
-                            placeholder="Category name..."
-                            value={newCategoryName}
-                            onChange={e => setNewCategoryName(e.target.value)}
-                            className="h-8 text-xs bg-white border-zinc-200 focus-visible:ring-zinc-900 focus-visible:ring-1 focus-visible:border-zinc-900 transition-colors"
-                            autoFocus
-                          />
-                          <div className="flex items-center justify-end gap-1.5">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setIsCreatingCategory(false);
-                                setNewCategoryName("");
-                              }}
-                              disabled={isSavingCategory}
-                              className="h-7 text-[10px] px-2 py-0 border-zinc-200 text-zinc-600 hover:bg-zinc-100 transition-colors">
-                              Cancel
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={isSavingCategory || !newCategoryName.trim()}
-                              onClick={async () => {
-                                setIsSavingCategory(true);
-                                try {
-                                  const newCat = await createCategory({
-                                    name: newCategoryName.trim(),
-                                  });
-                                  setLocalCategories(prev => [
-                                    ...prev,
-                                    { id: newCat.id, name: newCat.name },
-                                  ]);
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    categoryId: newCat.id,
-                                  }));
-                                  setIsCreatingCategory(false);
-                                  setNewCategoryName("");
-                                  toast.success(`Category "${newCat.name}" created on the fly!`);
-                                } catch (err: any) {
-                                  toast.error(err.message || "Failed to create category");
-                                } finally {
-                                  setIsSavingCategory(false);
-                                }
-                              }}
-                              className="h-7 text-[10px] px-2 py-0 bg-zinc-900 hover:bg-zinc-800 text-white transition-colors">
-                              {isSavingCategory ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                "Save"
-                              )}
-                            </Button>
+                      {localCategories.length === 0 ? (
+                        <div className="flex flex-col gap-1.5">
+                          <div className="h-9 px-3 flex items-center text-sm border border-dashed border-zinc-200 rounded-md bg-zinc-50 text-zinc-400">
+                            No categories available
                           </div>
                         </div>
                       ) : (
-                        localCategories.length === 0 ? (
-                          <div className="flex flex-col gap-1.5">
-                            <div className="h-9 px-3 flex items-center text-sm border border-dashed border-zinc-200 rounded-md bg-zinc-50 text-zinc-400">
-                              No categories available
-                            </div>
-                          </div>
-                        ) : (
-                          <Select
-                            value={formData.categoryId}
-                            onValueChange={value =>
-                              setFormData({ ...formData, categoryId: value })
-                            }
-                            required>
-                            <SelectTrigger
-                              id="category"
-                              className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
-                              <SelectValue placeholder="Select category…" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {localCategories.map(cat => (
-                                <SelectItem
-                                  key={cat.id}
-                                  value={cat.id}
-                                  className="text-sm">
-                                  {cat.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )
+                        <Select
+                          value={formData.categoryId}
+                          onValueChange={value =>
+                            setFormData({ ...formData, categoryId: value })
+                          }
+                          required>
+                          <SelectTrigger
+                            id="category"
+                            className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
+                            <SelectValue placeholder="Select category…" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {localCategories.map(cat => (
+                              <SelectItem
+                                key={cat.id}
+                                value={cat.id}
+                                className="text-sm">
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       )}
                     </FieldWrapper>
 
