@@ -49,3 +49,7 @@
 ## 2026-08-09 - [Focus Preservation in Content Rich Markdown Composers]
 **Learning:** Clicking formatting toolbar buttons in rich content areas (like CMS story editors) triggers input blur on the active editing textarea. Utilizing `onMouseDown={(e) => e.preventDefault()}` on formatting buttons completely bypasses this default behavior, preserving both the focus and active selection/caret coordinates seamlessly.
 **Action:** Always employ `onMouseDown={(e) => e.preventDefault()}` on toolbar action buttons targeting a text input or textarea to avoid losing focus and interrupting user input.
+
+## 2026-08-10 - [Dynamic Real-time Character Counter with Safe Limits]
+**Learning:** Providing real-time character count feedback on multi-line text input fields (such as CRM customer notes) prevents users from encountering abrupt server-side validation failures. Implementing a multi-phase dynamic indicator (standard, warning, destructive) coupled with screen reader `aria-label` context delivers an incredibly reassuring and accessible typing experience.
+**Action:** On textareas with strict database length limits, always incorporate dynamic colored warning thresholds (e.g. at 90% and 100% capacity) along with clear "X characters remaining" text to warn the user before they hit a save button.
