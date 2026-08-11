@@ -121,7 +121,10 @@ const serverSchema = z.object({
   WINDMILL_ADMIN_API_KEY: z.string().optional(),
 
   // Scryme System Notifications
-  SCRYME_CHAT_API_URL: z.string().optional(),
+  SCRYME_CHAT_API_URL: z
+    .string()
+    .optional()
+    .default("https://api.chat.scryme.tech"),
   SCRYME_CHAT_CLIENT_ID: z.string().optional(),
   SCRYME_CHAT_CLIENT_SECRET: z.string().optional(),
   SCRYME_SYSTEM_WORKSPACE_SLUG: z.string().optional(),

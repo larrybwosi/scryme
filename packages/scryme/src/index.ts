@@ -1,4 +1,5 @@
 import axios from "axios";
+import { chat } from "./client";
 
 export interface ScrymeChatWorkspace {
   id: string;
@@ -200,6 +201,13 @@ export class ScrymeChatApiClient {
     const dataObj = res?.data || res;
     const workspace = dataObj?.workspace || dataObj;
 
+    // const data = await chat.workspace.create({
+    //   name,
+    //   slug,
+    //   ownerEmail: ownerEmail || "admin@scryme.tech",
+    //   ...(initialMembers ? { initialMembers } : {}),
+    // });
+    // const workspace = data?.data || data;
     return {
       id: workspace.id,
       name: workspace.name,
@@ -283,14 +291,10 @@ export class ScrymeChatApiClient {
     email: string,
     role: "admin" | "member" = "member",
   ): Promise<any> {
-    return this.request(
-      "POST",
-      `/api/v3/workspaces/${workspaceSlug}/members`,
-      {
-        email,
-        role,
-      },
-    );
+    return this.request("POST", `/api/v3/workspaces/${workspaceSlug}/members`, {
+      email,
+      role,
+    });
   }
 
   /**
@@ -397,13 +401,9 @@ export class ScrymeChatApiClient {
     workspaceSlug: string,
     userId: string,
   ): Promise<ScrymeChatChannel> {
-    const dm = await this.request<any>(
-      "POST",
-      `/api/v3/${workspaceSlug}/dms`,
-      {
-        userId,
-      },
-    );
+    const dm = await this.request<any>("POST", `/api/v3/${workspaceSlug}/dms`, {
+      userId,
+    });
     return {
       id: dm.id,
       slug: dm.id,
