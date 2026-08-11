@@ -1489,8 +1489,8 @@ importers:
   packages/scryme:
     dependencies:
       '@scryme/chat':
-        specifier: ^2.13.3
-        version: 2.13.3(react@19.2.6)
+        specifier: ^2.13.4
+        version: 2.13.4(react@19.2.6)
       axios:
         specifier: ^1.6.2
         version: 1.18.1
@@ -6990,8 +6990,8 @@ packages:
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
 
-  '@scryme/chat@2.13.3':
-    resolution: {integrity: sha512-8TvULmlDz2pH1g8EZILUhF6wT9eXEM4bvh4YllQZcNh/9Unz377zeovdMDzjp/EWIL/IAf8IEXHLsh22LYcTbg==}
+  '@scryme/chat@2.13.4':
+    resolution: {integrity: sha512-5xqgV0S81fIaxbiKB+QNugM6+RBp2BdgSNc2T09lfF51Pew8448xM6y+DyHm30NJQ9LQY1NsLM5BqfNNjmZEMw==}
     peerDependencies:
       react: 19.2.6
 
@@ -22467,7 +22467,7 @@ snapshots:
 
   '@scarf/scarf@1.4.0': {}
 
-  '@scryme/chat@2.13.3(react@19.2.6)':
+  '@scryme/chat@2.13.4(react@19.2.6)':
     dependencies:
       '@tanstack/react-query': 5.96.2(react@19.2.6)
       axios: 1.19.0
