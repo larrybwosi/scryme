@@ -226,7 +226,7 @@ export class ScrymeChatApiClient {
       // content: message.content,
       // attachments: message.attachments,
       // actions: message.actions,
-      // threadId: message.threadId,
+      threadId: message.threadId,
     });
   }
 
