@@ -3,7 +3,6 @@
 import { db as prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
-import { env } from "@repo/env";
 
 export async function getIntegrationsStatus() {
   const context = await getOrganizationContext();
@@ -115,11 +114,7 @@ export async function provisionScryme() {
   }
 
   const { ScrymeChatApiClient } = await import("@repo/scryme");
-  const scrymeClient = new ScrymeChatApiClient(
-    process.env.SCRYME_CHAT_API_URL || "https://api.scryme.tech",
-    clientId,
-    clientSecret,
-  );
+  const scrymeClient = new ScrymeChatApiClient();
 
   const workspaceSlug = `org-${org.slug}`.toLowerCase();
   const ownerEmail = context.user?.email || "admin@scryme.tech";
