@@ -207,13 +207,11 @@ export class ProductController {
   ) {
     const organizationId = req.organization.id;
 
-    // Use ServiceManagementService to load services cleanly (Architectural Consistency)
-    const items = await this.serviceManagement.getServices(organizationId);
-
-    // Filter/slice in memory based on pagination if present
-    const limit = paginationQuery.limit || 20;
-    const offset = paginationQuery.offset || 0;
-    const paginatedItems = items.slice(offset, offset + limit);
+    // Use ServiceManagementService to load paginated and optimized services cleanly (Architectural Consistency)
+    const paginatedItems = await this.serviceManagement.getServicesPaginated(
+      organizationId,
+      paginationQuery,
+    );
 
     return paginatedItems.map(s => {
       const customFieldsObj =
