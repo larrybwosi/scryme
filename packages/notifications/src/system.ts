@@ -20,7 +20,7 @@ export async function sendSystemNotification(content: string, options?: { channe
   }
 
   try {
-    const scrymeClient = new ScrymeChatApiClient(apiUrl, clientId, clientSecret);
+    const scrymeClient = new ScrymeChatApiClient();
     await scrymeClient.sendMessage(workspaceSlug, channelSlug, {
       content,
     });
