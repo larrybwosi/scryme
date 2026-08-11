@@ -841,26 +841,7 @@ export class ScrymeClientSDK<
         if (!customerId) throw new Error("No authenticated customer found.");
         return this.admin.addCustomerAddress(customerId, dto);
       },
-      auth: {
-        signUp: async <T = TUser,>(
-          dto: RegisterCustomerDto,
-        ): Promise<AxiosResponse<T>> => {
-          return this.api.customersRegister(config.orgSlug, dto) as any;
-        },
-
-    this.bookings = {
-      create: async (dto: CreateBookingDto) => {
-        return this.catalog.createBooking(dto);
-      },
-      get: async (id: string) => {
-        return this.catalog.getBooking(id) as any;
-      },
-      list: async () => {
-        return this.catalog.getBookings() as any;
-      },
-      cancel: async (id: string) => {
-        return this.catalog.updateBookingStatus(id, "CANCELLED" as any);
-      },
+      auth: null as any, // Will be linked below
     };
 
     const baseAuth = buildModule(this.api, config.orgSlug, authMapping);
@@ -1102,7 +1083,6 @@ export class ScrymeClientSDK<
 
           return data as any;
         },
-      },
     };
 
     this.bookings = {
@@ -1120,16 +1100,7 @@ export class ScrymeClientSDK<
       },
     };
 
-    const baseAuth = buildModule(this.api, config.orgSlug, authMapping);
-
-    // Enrich the auth submodule with stateful and helper methods
-    this.auth = {
-      ...baseAuth,
-
-      authenticate: async () => {
-        return performExchange();
-      },
-    };
+    this.customer.auth = this.auth as any;
   }
 }
 

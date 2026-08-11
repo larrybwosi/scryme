@@ -275,9 +275,9 @@ export class ServiceManagementService {
     });
   }
 
-  async getServiceById(orgId: string, id: string) {
-    const service = await this.prisma.client.service.findFirst({
-      where: { id, organizationId: orgId },
+  async getServiceById(orgId: string, idOrSlug: string) {
+    let service = await this.prisma.client.service.findFirst({
+      where: { id: idOrSlug, organizationId: orgId },
       include: {
         category: true,
         staff: { include: { member: { include: { user: true } } } },
@@ -286,6 +286,25 @@ export class ServiceManagementService {
         taxRates: { include: { taxRate: true } }
       },
     });
+
+    if (!service) {
+      service = await this.prisma.client.service.findFirst({
+        where: {
+          organizationId: orgId,
+          customFields: {
+            path: ["slug"],
+            equals: idOrSlug,
+          },
+        },
+        include: {
+          category: true,
+          staff: { include: { member: { include: { user: true } } } },
+          resources: { include: { resource: true } },
+          materials: { include: { variant: true } },
+          taxRates: { include: { taxRate: true } }
+        },
+      });
+    }
 
     if (!service) throw new NotFoundException("Service not found");
     return service;

@@ -990,4 +990,88 @@ describe("Scryme V3 Client and Server SDKs", () => {
       expect(authData.user?.customMetadata.loyaltyTier).toBe("Platinum");
     });
   });
+
+  describe("Get Products and Services individually by slug or id", () => {
+    it("should allow getting products individually by slug or id on Client SDK", async () => {
+      const sdk = createClientSDK({
+        clientId: "test-client",
+        orgSlug: "test-org",
+        storage: mockStorage,
+      });
+
+      (sdk.axiosInstance.get as jest.Mock).mockImplementation((url) => {
+        if (url.includes("/catalog/products/p-1")) {
+          return Promise.resolve({ data: { id: "p-1", name: "Product A", slug: "product-a" } });
+        }
+        if (url.includes("/catalog/products/product-b")) {
+          return Promise.resolve({ data: { id: "p-2", name: "Product B", slug: "product-b" } });
+        }
+        return Promise.reject(new Error("Not found"));
+      });
+
+      // Get by ID
+      const resById = await sdk.catalog.getProduct("p-1");
+      expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/test-org/catalog/products/p-1", undefined);
+      expect(resById.data.name).toBe("Product A");
+
+      // Get by Slug
+      const resBySlug = await sdk.catalog.getProduct("product-b");
+      expect(sdk.axiosInstance.get).toHaveBeenLastCalledWith("/v3/test-org/catalog/products/product-b", undefined);
+      expect(resBySlug.data.name).toBe("Product B");
+    });
+
+    it("should allow getting services individually by slug or id on Client SDK", async () => {
+      const sdk = createClientSDK({
+        clientId: "test-client",
+        orgSlug: "test-org",
+        storage: mockStorage,
+      });
+
+      (sdk.axiosInstance.get as jest.Mock).mockImplementation((url) => {
+        if (url.includes("/services/s-1")) {
+          return Promise.resolve({ data: { id: "s-1", name: "Service A", slug: "service-a" } });
+        }
+        if (url.includes("/services/service-b")) {
+          return Promise.resolve({ data: { id: "s-2", name: "Service B", slug: "service-b" } });
+        }
+        return Promise.reject(new Error("Not found"));
+      });
+
+      // Get by ID
+      const resById = await sdk.catalog.getService("s-1");
+      expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/test-org/services/s-1", undefined);
+      expect(resById.data.name).toBe("Service A");
+
+      // Get by Slug
+      const resBySlug = await sdk.catalog.getService("service-b");
+      expect(sdk.axiosInstance.get).toHaveBeenLastCalledWith("/v3/test-org/services/service-b", undefined);
+      expect(resBySlug.data.name).toBe("Service B");
+    });
+
+    it("should allow getting products and services individually by slug or id on Server SDK", async () => {
+      const sdk = createServerSDK({
+        clientId: "test-client",
+        clientSecret: "test-secret",
+        orgSlug: "test-org",
+      });
+
+      (sdk.axiosInstance.get as jest.Mock).mockImplementation((url) => {
+        if (url.includes("/catalog/products/product-a")) {
+          return Promise.resolve({ data: { id: "p-1", name: "Product A", slug: "product-a" } });
+        }
+        if (url.includes("/services/s-1")) {
+          return Promise.resolve({ data: { id: "s-1", name: "Service A", slug: "service-a" } });
+        }
+        return Promise.reject(new Error("Not found"));
+      });
+
+      const resProduct = await sdk.catalog.getProduct("product-a");
+      expect(sdk.axiosInstance.get).toHaveBeenCalledWith("/v3/test-org/catalog/products/product-a", undefined);
+      expect(resProduct.data.name).toBe("Product A");
+
+      const resService = await sdk.catalog.getService("s-1");
+      expect(sdk.axiosInstance.get).toHaveBeenLastCalledWith("/v3/test-org/services/s-1", undefined);
+      expect(resService.data.name).toBe("Service A");
+    });
+  });
 });
