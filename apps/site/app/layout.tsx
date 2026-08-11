@@ -153,9 +153,9 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `window.__ENV = {
-            NEXT_PUBLIC_SANITY_PROJECT_ID: ${JSON.stringify(process.env.NEXT_PUBLIC_SANITY_PROJECT_ID)},
-            NEXT_PUBLIC_SANITY_DATASET: ${JSON.stringify(process.env.NEXT_PUBLIC_SANITY_DATASET)},
-            NEXT_PUBLIC_API_URL: ${JSON.stringify(process.env.NEXT_PUBLIC_API_URL)}
+            NEXT_PUBLIC_SITE_SANITY_PROJECT_ID: ${JSON.stringify(env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID)},
+            NEXT_PUBLIC_SITE_SANITY_DATASET: ${JSON.stringify(env.NEXT_PUBLIC_SITE_SANITY_DATASET)},
+            NEXT_PUBLIC_API_URL: ${JSON.stringify(env.NEXT_PUBLIC_API_URL)}
           };`,
           }}
         />

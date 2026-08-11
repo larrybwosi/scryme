@@ -168,6 +168,10 @@ const clientSchema = z.object({
 
   // Sentry Public Configuration
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+
+  // Sanity Public Configuration
+  NEXT_PUBLIC_SITE_SANITY_DATASET: z.string().optional().default("production"),
+  NEXT_PUBLIC_SITE_SANITY_PROJECT_ID: z.string().optional().default("ce88cj7n"),
 });
 
 // ─────────────────────────────────────────────
@@ -331,6 +335,10 @@ function getRawEnv() {
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    NEXT_PUBLIC_SITE_SANITY_DATASET:
+      process.env.NEXT_PUBLIC_SITE_SANITY_DATASET,
+    NEXT_PUBLIC_SITE_SANITY_PROJECT_ID:
+      process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID,
   };
 }
 
