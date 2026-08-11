@@ -760,8 +760,8 @@ export interface CatalogModule<
   createProduct<T = TProduct>(createProductDto: CreateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
   getServices<T = TService>(params?: CatalogGetServicesParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;
   updateProduct<T = TProduct>(id: string, updateProductDto: UpdateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
-  getProduct<T = TProduct>(idOrSlug: string, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
-  getService<T = TService>(idOrSlug: string, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  getProduct<T = TProduct>(idOrSlug: string | { id?: string; slug?: string }, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  getService<T = TService>(idOrSlug: string | { id?: string; slug?: string }, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
 }
 
 export type AuthModule = SDKModule<typeof authMapping>;

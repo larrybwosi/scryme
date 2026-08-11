@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosRequestConfig } from "axios";
 import { getScrymeV3API } from "./index";
 import type {
   CartControllerGetCartParams,
@@ -242,7 +243,7 @@ export class ScrymeServerSDK<
       /**
        * Fetches details of the customer session associated with the active token.
        */
-      getCurrentSession<TU = TUser>(): Promise<TU>;
+      getCurrentSession<TU = TUser>(headers?: any | Record<string, string | string[]>): Promise<TU>;
       /**
        * Refreshes the current active customer session token.
        */
@@ -319,7 +320,7 @@ export class ScrymeServerSDK<
     /**
      * Fetches details of the customer session associated with the active token.
      */
-    getCurrentSession<TU = TUser>(): Promise<TU>;
+    getCurrentSession<TU = TUser>(headers?: any | Record<string, string | string[]>): Promise<TU>;
     /**
      * Refreshes the current active customer session token.
      */
@@ -507,7 +508,60 @@ export class ScrymeServerSDK<
     this.api = getScrymeV3API(this.axiosInstance, config.orgSlug);
 
     // Build submodules
-    this.catalog = buildModule(this.api, config.orgSlug, catalogMapping) as any;
+    const baseCatalog = buildModule(this.api, config.orgSlug, catalogMapping) as any;
+    this.catalog = {
+      ...baseCatalog,
+      getProduct: async <T = TProduct>(
+        idOrSlug: string | { id?: string; slug?: string },
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<T>> => {
+        const response = await this.catalog.getProducts<T>(undefined, options);
+        const products = response.data || [];
+        const product = products.find((p: any) => {
+          if (typeof idOrSlug === "string") {
+            return p.id === idOrSlug || p.slug === idOrSlug;
+          } else {
+            const { id, slug } = idOrSlug;
+            if (id && p.id === id) return true;
+            if (slug && p.slug === slug) return true;
+            return false;
+          }
+        });
+        if (!product) {
+          const criteria = typeof idOrSlug === "string" ? idOrSlug : JSON.stringify(idOrSlug);
+          throw new Error(`Product not found matching criteria: ${criteria}`);
+        }
+        return {
+          ...response,
+          data: product,
+        };
+      },
+      getService: async <T = TService>(
+        idOrSlug: string | { id?: string; slug?: string },
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<T>> => {
+        const response = await this.catalog.getServices<T>(undefined, options);
+        const services = response.data || [];
+        const service = services.find((s: any) => {
+          if (typeof idOrSlug === "string") {
+            return s.id === idOrSlug || s.slug === idOrSlug;
+          } else {
+            const { id, slug } = idOrSlug;
+            if (id && s.id === id) return true;
+            if (slug && s.slug === slug) return true;
+            return false;
+          }
+        });
+        if (!service) {
+          const criteria = typeof idOrSlug === "string" ? idOrSlug : JSON.stringify(idOrSlug);
+          throw new Error(`Service not found matching criteria: ${criteria}`);
+        }
+        return {
+          ...response,
+          data: service,
+        };
+      },
+    };
     this.inventory = buildModule(this.api, config.orgSlug, inventoryMapping);
     this.orders = buildModule(this.api, config.orgSlug, ordersMapping);
     this.crm = buildModule(this.api, config.orgSlug, crmMapping);
@@ -694,9 +748,29 @@ export class ScrymeServerSDK<
           return data as any;
         },
 
-        getCurrentSession: async <TU = TUser>(): Promise<TU> => {
+        getCurrentSession: async <TU = TUser>(
+          headers?: any | Record<string, string | string[]>,
+        ): Promise<TU> => {
+          const requestConfig: AxiosRequestConfig = {};
+          if (headers) {
+            const requestHeaders: Record<string, string> = {};
+            if (typeof headers.forEach === "function") {
+              (headers as Headers).forEach((value, key) => {
+                requestHeaders[key] = value;
+              });
+            } else {
+              for (const [key, value] of Object.entries(headers)) {
+                if (value !== undefined) {
+                  requestHeaders[key] = Array.isArray(value) ? value.join(", ") : String(value);
+                }
+              }
+            }
+            requestConfig.headers = requestHeaders;
+          }
+
           const response = await this.axiosInstance.get(
             `/${config.orgSlug}/customers/auth/session`,
+            requestConfig,
           );
           return (response.data?.data || response.data) as TU;
         },
@@ -767,6 +841,26 @@ export class ScrymeServerSDK<
 
       authenticate: async () => {
         return performExchange();
+      },
+
+      signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
+        return this.customer.auth.signUp<T>(dto);
+      },
+
+      signIn: async <TSess = TSession, TU = TUser>(credentials: { email: string; password?: string }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+        return this.customer.auth.signIn<TSess, TU>(credentials);
+      },
+
+      getCurrentSession: async <TU = TUser>(headers?: any | Record<string, string | string[]>): Promise<TU> => {
+        return this.customer.auth.getCurrentSession<TU>(headers);
+      },
+
+      refreshSession: async <TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+        return this.customer.auth.refreshSession<TSess, TU>();
+      },
+
+      swapZitadel: async <TSess = TSession, TU = TUser>(zitadelToken: string): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+        return this.customer.auth.swapZitadel<TSess, TU>(zitadelToken);
       },
     };
   }
