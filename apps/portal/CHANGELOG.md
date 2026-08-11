@@ -1,5 +1,11 @@
 # portal
 
+## 1.11.0
+
+### Minor Changes
+
+- 3e23a3a: Update
+
 ## 1.10.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # api
 
+## 6.36.0
+
+### Minor Changes
+
+- 3e23a3a: Update
+
 ## 6.35.0
 
 ### Minor Changes
