@@ -1,0 +1,14 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> docs@1.3.0 predev /app/apps/docs
+> cp ../../packages/v3-sdk/openapi.json src/openapi.json
+
+
+> docs@1.3.0 dev /app/apps/docs
+> vite
+
+
+  VITE v8.1.5  ready in 465 ms
+
+  ➜  Local:   http://localhost:3008/
+  ➜  Network: use --host to expose

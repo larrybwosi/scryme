@@ -31,6 +31,7 @@ import CmsCustomizationGuide, {
 import GlobalResponseGuide from "./components/GlobalResponseGuide";
 import InstallationSetupGuide from "./components/InstallationSetupGuide";
 import CustomerAuthGuide from "./components/CustomerAuthGuide";
+import UserGuides from "./components/UserGuides";
 
 // --- Type Definitions for parsed schema ---
 interface Endpoint {
@@ -1187,6 +1188,31 @@ const mappings: Record<string, Record<string, string>> = {
 };
 
 export default function App() {
+  // Client-side Router State
+  const [currentPath, setCurrentPath] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.location.pathname;
+    }
+    return "/";
+  });
+
+  // Navigation routing helper
+  const navigate = (path: string) => {
+    if (typeof window !== "undefined") {
+      window.history.pushState({}, "", path);
+      setCurrentPath(path);
+    }
+  };
+
+  // Sync state on popstate events (browser back/forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
   // Theme state
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
@@ -1211,6 +1237,11 @@ export default function App() {
   const [activeDocTab, setActiveDocTab] = useState<
     "reference" | "playground" | "schema"
   >("reference");
+
+  // Re-route checks
+  const isApiReference = useMemo(() => {
+    return currentPath === "/api-reference" || currentPath === "/api-refrence";
+  }, [currentPath]);
   const [playgroundParams, setPlaygroundParams] = useState<
     Record<string, string>
   >({});
@@ -2065,19 +2096,30 @@ export default function App() {
           </span>
         </button>
 
-        <div className="flex items-center gap-2">
-          <a
-            href="#"
-            className="hidden sm:inline-flex items-center text-[11px] font-semibold text-light-text hover:text-paper px-2.5 py-1.5 transition-colors"
-          >
-            Changelog
-          </a>
-          <a
-            href="#"
-            className="hidden sm:inline-flex items-center text-[11px] font-bold bg-brass text-ink-bg hover:bg-white px-3 py-1.5 rounded-md transition-colors"
-          >
-            Dashboard
-          </a>
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:flex items-center gap-1.5 bg-ink-card p-0.5 border border-ink-border rounded-lg">
+            <button
+              onClick={() => navigate("/")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                !isApiReference
+                  ? "bg-brass text-ink-bg font-bold"
+                  : "text-light-text hover:text-paper"
+              }`}
+            >
+              User Guides
+            </button>
+            <button
+              onClick={() => navigate("/api-reference")}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                isApiReference
+                  ? "bg-brass text-ink-bg font-bold"
+                  : "text-light-text hover:text-paper"
+              }`}
+            >
+              API Reference
+            </button>
+          </div>
+
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             className="p-2 rounded-lg border border-ink-border bg-ink-card text-light-text hover:text-paper hover:border-brass/40 transition-all duration-200 cursor-pointer"
@@ -2091,6 +2133,13 @@ export default function App() {
 
       {/* Main Container */}
       <div className="flex flex-1 relative">
+        {/* If on User Guides home page, render UserGuides and bypass standard sidebar */}
+        {!isApiReference ? (
+          <div className="flex-1 p-6 lg:p-12 space-y-8 max-w-7xl mx-auto w-full">
+            <UserGuides />
+          </div>
+        ) : (
+          <>
         {/* Sidebar Left Column */}
         <aside
           className={`fixed inset-y-14 lg:inset-y-0 left-0 w-72 bg-ink-bg border-r border-ink-border overflow-y-auto z-40 transition-transform duration-300 transform
@@ -2207,7 +2256,7 @@ export default function App() {
                       : "text-light-text hover:text-paper hover:bg-ink-card/70"
                   }`}
                 >
-                  <Key size={14} className="text-brass shrink-0" />
+                  <Lock size={14} className="text-brass shrink-0" />
                   <span className="truncate">Customer Auth & Sessions</span>
                 </button>
               </div>
@@ -2877,6 +2926,8 @@ export default function App() {
             </div>
           </section>
         </main>
+          </>
+        )}
       </div>
     </div>
   );
