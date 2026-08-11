@@ -848,36 +848,7 @@ export class ScrymeClientSDK<
           return this.api.customersRegister(config.orgSlug, dto) as any;
         },
 
-    this.bookings = {
-      create: async (dto: CreateBookingDto) => {
-        return this.catalog.createBooking(dto);
-      },
-      get: async (id: string) => {
-        return this.catalog.getBooking(id) as any;
-      },
-      list: async () => {
-        return this.catalog.getBookings() as any;
-      },
-      cancel: async (id: string) => {
-        return this.catalog.updateBookingStatus(id, "CANCELLED" as any);
-      },
-    };
-
-    const baseAuth = buildModule(this.api, config.orgSlug, authMapping);
-
-    // Enrich the auth submodule with stateful and helper methods
-    this.auth = {
-      ...baseAuth,
-
-      signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
-        return this.api.customersRegister(config.orgSlug, dto) as any;
-      },
-
-      authenticate: async () => {
-        return performExchange();
-      },
-
-      signIn: async <TSess = TSession, TU = TUser>(credentials: { email: string; password?: string }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+        signIn: async <TSess = TSession, TU = TUser>(credentials: { email: string; password?: string }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
         // Sign in using our isolated Customer Auth Microservice (Better Auth) via the exposed routes or the login fallback
         try {
           const authServiceUrl =
@@ -1126,8 +1097,59 @@ export class ScrymeClientSDK<
     this.auth = {
       ...baseAuth,
 
+      signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
+        return this.customer.auth.signUp<T>(dto);
+      },
+
       authenticate: async () => {
         return performExchange();
+      },
+
+      signIn: async <TSess = TSession, TU = TUser>(credentials: {
+        email: string;
+        password?: string;
+      }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+        return this.customer.auth.signIn<TSess, TU>(credentials);
+      },
+
+      signOut: async () => {
+        return this.customer.auth.signOut();
+      },
+
+      getSession: async <TU = TUser>(): Promise<SessionState<TU>> => {
+        return this.customer.auth.getSession<TU>();
+      },
+
+      onAuthStateChange: <TU = TUser>(callback: AuthStateCallback<TU>) => {
+        return this.customer.auth.onAuthStateChange<TU>(callback);
+      },
+
+      getSessions: async <TSess = TSession>(): Promise<TSess[]> => {
+        return this.customer.auth.getSessions<TSess>();
+      },
+
+      revokeSession: async (id: string) => {
+        return this.customer.auth.revokeSession(id);
+      },
+
+      revokeAllSessions: async (mode?: string) => {
+        return this.customer.auth.revokeAllSessions(mode);
+      },
+
+      getCurrentSession: async <TU = TUser>(): Promise<TU> => {
+        return this.customer.auth.getCurrentSession<TU>();
+      },
+
+      refreshSession: async <TSess = TSession, TU = TUser>(): Promise<
+        CustomerAuthResponseDto<TU, TSess>
+      > => {
+        return this.customer.auth.refreshSession<TSess, TU>();
+      },
+
+      swapZitadel: async <TSess = TSession, TU = TUser>(
+        zitadelToken: string,
+      ): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+        return this.customer.auth.swapZitadel<TSess, TU>(zitadelToken);
       },
     };
   }

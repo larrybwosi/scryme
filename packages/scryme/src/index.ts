@@ -1,4 +1,5 @@
-import { chat } from "./client";
+import { ScrymeSDK } from "@scryme/chat";
+import { chat as globalChat } from "./client";
 
 export interface ScrymeChatWorkspace {
   id: string;
@@ -36,6 +37,19 @@ export interface ScrymeChatChannel {
 
 export class ScrymeChatApiClient {
   private channelCache = new Map<string, Map<string, string>>();
+  private chatClient: ScrymeSDK;
+
+  constructor(baseURL?: string, clientId?: string, clientSecret?: string) {
+    if (baseURL || clientId || clientSecret) {
+      this.chatClient = new ScrymeSDK({
+        baseURL,
+        clientId,
+        clientSecret,
+      });
+    } else {
+      this.chatClient = globalChat;
+    }
+  }
 
   /**
    * Helper to resolve channel slug to channelId
@@ -96,7 +110,7 @@ export class ScrymeChatApiClient {
     ownerEmail?: string,
     initialMembers?: { email: string; role?: "admin" | "member" }[],
   ): Promise<ScrymeChatWorkspace> {
-    const data = await chat.workspace.create({
+    const data = await this.chatClient.workspace.create({
       name,
       slug,
       ownerEmail: ownerEmail || "admin@scryme.tech",
@@ -114,7 +128,7 @@ export class ScrymeChatApiClient {
    * Get workspace details using V3 API.
    */
   async getWorkspace(slug: string): Promise<ScrymeChatWorkspace> {
-    const res = await chat.workspace.get(slug);
+    const res = await this.chatClient.workspace.get(slug);
     const workspace = res?.data?.workspace || res?.data?.workspace;
     return {
       id: workspace.id,
@@ -131,7 +145,7 @@ export class ScrymeChatApiClient {
     webhookUrl: string,
     events: string[] = ["message.action"],
   ): Promise<any> {
-    return chat.raw.webhooksControllerCreateWebhook(workspaceSlug, {
+    return this.chatClient.raw.webhooksControllerCreateWebhook(workspaceSlug, {
       name: "Interactive Action Webhook",
       url: webhookUrl,
       events,
@@ -142,7 +156,7 @@ export class ScrymeChatApiClient {
    * List channels in a workspace using V3 API.
    */
   async listChannels(workspaceSlug: string): Promise<ScrymeChatChannel[]> {
-    return chat.workspace.channels.list(workspaceSlug);
+    return this.chatClient.workspace.channels.list(workspaceSlug);
   }
 
   /**
@@ -161,7 +175,7 @@ export class ScrymeChatApiClient {
     if (slug) {
       payload.slug = slug;
     }
-    return chat.workspace.channels.create(workspaceSlug, payload);
+    return this.chatClient.workspace.channels.create(workspaceSlug, payload);
   }
 
   /**
@@ -172,7 +186,7 @@ export class ScrymeChatApiClient {
     email: string,
     role: "admin" | "member" = "member",
   ): Promise<any> {
-    return chat.workspace.members.add(workspaceSlug, { email, role });
+    return this.chatClient.workspace.members.add(workspaceSlug, { email, role });
   }
 
   /**
@@ -182,7 +196,7 @@ export class ScrymeChatApiClient {
     workspaceSlug: string,
     userId: string,
   ): Promise<any> {
-    return chat.workspace.members.delete(workspaceSlug, userId);
+    return this.chatClient.workspace.members.delete(workspaceSlug, userId);
   }
 
   /**
@@ -208,7 +222,7 @@ export class ScrymeChatApiClient {
       workspaceSlug,
       channelSlugOrId,
     );
-    return chat.channel.message.create(channelId, {
+    return this.chatClient.channel.message.create(channelId, {
       // content: message.content,
       // attachments: message.attachments,
       // actions: message.actions,
@@ -229,7 +243,7 @@ export class ScrymeChatApiClient {
       workspaceSlug,
       channelSlugOrId,
     );
-    return chat.message.update(channelId, messageId, {
+    return this.chatClient.message.update(channelId, messageId, {
       content: message.content,
       // actions: message.actions,
       // attachments: message.attachments,
@@ -243,15 +257,16 @@ export class ScrymeChatApiClient {
     workspaceSlug: string,
     email: string,
   ): Promise<ScrymeChatUser | null> {
-    const members = await chat.workspace.members.search(workspaceSlug, email);
+    const response = await this.chatClient.workspace.members.list(workspaceSlug);
+    const members = response?.data?.members || [];
     const found = members.find(
       (m: any) => m.email === email || m.user?.email === email,
     );
     if (found) {
       return {
         id: found.userId || found.user?.id || found.id,
-        email: found.email || found.user?.email,
-        name: found.name || found.user?.name,
+        email: found.user?.email || "",
+        name: found.user?.name || "",
       };
     }
     return null;
@@ -264,7 +279,7 @@ export class ScrymeChatApiClient {
     workspaceSlug: string,
     userId: string,
   ): Promise<ScrymeChatChannel> {
-    const dm = await chat.dms.create(workspaceSlug, { userId });
+    const dm = await this.chatClient.dm.create({ userId });
     return {
       id: dm.id,
       slug: dm.id,
@@ -277,7 +292,7 @@ export class ScrymeChatApiClient {
    */
   async registerGlobalWebhook(webhookUrl: string): Promise<any> {
     try {
-      const workspaces = await chat.workspace.list();
+      const workspaces = await this.chatClient.workspace.list();
       for (const ws of workspaces.data.workspaces) {
         try {
           await this.registerWorkspaceWebhook(ws.slug, webhookUrl);

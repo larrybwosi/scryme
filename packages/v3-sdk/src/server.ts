@@ -764,8 +764,35 @@ export class ScrymeServerSDK<
     this.auth = {
       ...baseAuth,
 
+      signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
+        return this.customer.auth.signUp<T>(dto);
+      },
+
       authenticate: async () => {
         return performExchange();
+      },
+
+      signIn: async <TSess = TSession, TU = TUser>(credentials: {
+        email: string;
+        password?: string;
+      }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+        return this.customer.auth.signIn<TSess, TU>(credentials);
+      },
+
+      getCurrentSession: async <TU = TUser>(): Promise<TU> => {
+        return this.customer.auth.getCurrentSession<TU>();
+      },
+
+      refreshSession: async <TSess = TSession, TU = TUser>(): Promise<
+        CustomerAuthResponseDto<TU, TSess>
+      > => {
+        return this.customer.auth.refreshSession<TSess, TU>();
+      },
+
+      swapZitadel: async <TSess = TSession, TU = TUser>(
+        zitadelToken: string,
+      ): Promise<CustomerAuthResponseDto<TU, TSess>> => {
+        return this.customer.auth.swapZitadel<TSess, TU>(zitadelToken);
       },
     };
   }
