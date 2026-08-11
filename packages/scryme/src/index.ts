@@ -223,6 +223,9 @@ export class ScrymeChatApiClient {
     const dataObj = res?.data || res;
     const workspace = dataObj?.workspace || dataObj;
 
+    // const res = await chat.workspace.get(slug);
+    // const dataObj = res?.data || res;
+    // const workspace = dataObj?.workspace || dataObj;
     return {
       id: workspace.id,
       name: workspace.name,

@@ -90,8 +90,14 @@ export class ApproveStockAdjustmentUseCase {
     adjustmentId: string,
   ) {
     return this.prisma.client.$transaction(async tx => {
+      /**
+       * OPTIMIZATION (Bolt ⚡): Eager load the variant relation's productId on stockAdjustment.
+       * This gives us O(1) direct access to `adjustment.variant.productId`, completely avoiding
+       * the sequential nested database query on `tx.productVariant.findUnique` inside the transaction.
+       */
       const adjustment = await tx.stockAdjustment.findUnique({
         where: { id: adjustmentId, organizationId },
+        include: { variant: { select: { productId: true } } },
       });
 
       if (!adjustment)
@@ -130,9 +136,7 @@ export class ApproveStockAdjustmentUseCase {
         },
         create: {
           organizationId,
-          productId: (await tx.productVariant.findUnique({
-            where: { id: adjustment.variantId },
-          }))!.productId,
+          productId: adjustment.variant.productId,
           variantId: adjustment.variantId,
           locationId: adjustment.locationId,
           currentStock: quantityChange,

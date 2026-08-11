@@ -884,4 +884,110 @@ describe("Scryme V3 Client and Server SDKs", () => {
       });
     });
   });
+
+  describe("Generic Type Customization & Auth DX Features", () => {
+    interface CustomProduct {
+      id: string;
+      name: string;
+      sku: string;
+      customFields: {
+        customSlugOverride: string;
+        layoutTemplate: string;
+        mySpecialCustomAttribute: string;
+      };
+    }
+
+    interface CustomService {
+      id: string;
+      name: string;
+      customFields: {
+        layoutTemplate: string;
+        isBookingEnabled: boolean;
+      };
+    }
+
+    interface CustomUser {
+      id: string;
+      name: string;
+      email: string;
+      phone: string;
+      customMetadata: {
+        roleGroup: string;
+        loyaltyTier: string;
+      };
+    }
+
+    interface CustomSession {
+      id: string;
+      customerId: string;
+      token: string;
+      ipAddress: string;
+      customDeviceFingerprint: string;
+    }
+
+    it("should compile and allow full type-safety with custom Product, Service, User and Session types", async () => {
+      // Initialize with our custom generic types
+      const sdk = new ScrymeServerSDK<CustomProduct, CustomService, any, any, CustomUser, CustomSession>({
+        clientId: "generic-client-id",
+        clientSecret: "generic-client-secret",
+        orgSlug: "generic-org",
+      });
+
+      // Mock catalogGetProducts response to match CustomProduct
+      const mockProduct: CustomProduct = {
+        id: "p-generic-123",
+        name: "Premium Generic Product",
+        sku: "PREM-GEN-123",
+        customFields: {
+          customSlugOverride: "premium-slug",
+          layoutTemplate: "grid",
+          mySpecialCustomAttribute: "this is fully type-safe!",
+        },
+      };
+
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: [mockProduct],
+      });
+
+      const response = await sdk.catalog.getProducts();
+      const product = response.data[0];
+
+      // Verify that the product has our generic custom field type
+      expect(product.id).toBe("p-generic-123");
+      expect(product.customFields.mySpecialCustomAttribute).toBe("this is fully type-safe!");
+
+      // Mock auth signIn response
+      const mockSignInResponse = {
+        token: "session-token-999",
+        session: {
+          id: "session-123",
+          customerId: "cust-123",
+          token: "session-token-999",
+          ipAddress: "127.0.0.1",
+          customDeviceFingerprint: "fingerprint-xyz",
+        },
+        user: {
+          id: "cust-123",
+          name: "Alice Smith",
+          email: "alice@generic.com",
+          phone: "+1234567890",
+          customMetadata: {
+            roleGroup: "Admin",
+            loyaltyTier: "Platinum",
+          },
+        },
+      };
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: mockSignInResponse,
+      });
+
+      const authData = await sdk.auth.signIn({ email: "alice@generic.com", password: "secure" });
+
+      // Verify that auth session and user are fully typed and contain custom properties
+      expect(authData.token).toBe("session-token-999");
+      expect(authData.session?.customDeviceFingerprint).toBe("fingerprint-xyz");
+      expect(authData.user?.customMetadata.loyaltyTier).toBe("Platinum");
+    });
+  });
 });
