@@ -72,10 +72,6 @@ export class V3AuthGuard implements CanActivate {
 
       // If it is a v3_customer type token, check Redis to ensure session is active
       if (payload && payload.type === "v3_customer" && payload.sessionId) {
-        if (authStrategy === "ZITADEL") {
-          // Under ZITADEL only strategy, reject local HS256 customer session tokens
-          payload = null;
-        } else {
           const redisService = this.moduleRef.get(RedisService, { strict: false });
           if (redisService) {
             const sessionActive = await redisService.get(`customer_session:${payload.sub}:${payload.sessionId}`);
@@ -86,14 +82,13 @@ export class V3AuthGuard implements CanActivate {
               payload.customerId = payload.sub;
             }
           }
-        }
       }
     } catch (error) {
       // Not a valid HS256 V3 JWT, proceed to other checks
     }
 
     // 2. Try better-auth session token
-    if (!payload && authStrategy !== "ZITADEL") {
+    if (!payload) {
       try {
         const authService = this.moduleRef.get(AuthService, { strict: false });
         if (authService) {

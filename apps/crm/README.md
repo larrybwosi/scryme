@@ -15,7 +15,6 @@
 
 - **Framework**: [Next.js](https://nextjs.org/)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
-- **Integration**: [Zitadel](https://zitadel.com/) for customer authentication.
 
 ---
 

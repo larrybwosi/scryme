@@ -44,7 +44,6 @@ Our core logic, database client, configurations, and utilities are modularized i
 - **[`@repo/sdk`](./packages/sdk)**: Central client SDK containing shared HTTP wrappers and pre-configured request interceptors.
 - **[`@scryme/sdk`](./packages/v3-sdk)**: Rigorous TypeScript API client compiler generated directly from our core OpenAPI 3.0 specification.
 - **[`@repo/windmill`](./packages/windmill)**: Secondary Handlebars compiler and Nodemailer client helper designed for background mail queues.
-- **[`@repo/zitadel`](./packages/zitadel)**: Specialized proxy utilities wrapping Zitadel IAM configurations and token introspection.
 - **[`@repo/env`](./packages/env)**: Type-safe runtime environment schema validation powered by Zod.
 - **[`@repo/eslint-config`](./packages/config-eslint)**: Common ESLint linting configurations.
 - **[`@repo/typescript-config`](./packages/config-typescript)**: Base strict TS configuration files for Next.js, Node services, and React libraries.

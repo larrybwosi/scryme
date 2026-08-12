@@ -60,23 +60,7 @@ const serverSchema = z.object({
   // API
   JWT_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
   INTERNAL_ADMIN_SECRET: z.string().optional(),
-  APP_VERSION: z.string().default("1.0.0"),
-
-  // Zitadel
-  ZITADEL_DOMAIN: z.string().optional(),
-  ZITADEL_CLIENT_ID: z.string().optional(),
-  ZITADEL_API_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.url().optional(),
-  ),
-  ZITADEL_ORG_ID: z.string().optional(),
-  ZITADEL_PROJECT_ID: z.string().optional(),
-  ZITADEL_ADMIN_TOKEN: z.string().optional(),
-
-  // Slack
-  SLACK_CLIENT_ID: z.string().optional(),
-  SLACK_CLIENT_SECRET: z.string().optional(),
-  SLACK_REDIRECT_URI: z.string().optional(),
+    APP_VERSION: z.string().default("1.0.0"),
 
   // GitHub
   GITHUB_OWNER: z.string().default("larrybwosi"),
@@ -130,10 +114,6 @@ const serverSchema = z.object({
   SCRYME_SYSTEM_WORKSPACE_SLUG: z.string().optional(),
   SCRYME_SYSTEM_CHANNEL_SLUG: z.string().optional(),
 
-  // Customer Auth Strategy
-  CUSTOMER_AUTH_STRATEGY: z
-    .enum(["LOCAL", "ZITADEL", "HYBRID"])
-    .default("HYBRID"),
 });
 
 const clientSchema = z.object({
@@ -273,15 +253,6 @@ function getRawEnv() {
     JWT_SECRET: process.env.JWT_SECRET,
     INTERNAL_ADMIN_SECRET: process.env.INTERNAL_ADMIN_SECRET,
     APP_VERSION: process.env.APP_VERSION,
-    ZITADEL_DOMAIN: process.env.ZITADEL_DOMAIN,
-    ZITADEL_CLIENT_ID: process.env.ZITADEL_CLIENT_ID,
-    ZITADEL_API_URL: process.env.ZITADEL_API_URL,
-    ZITADEL_ORG_ID: process.env.ZITADEL_ORG_ID,
-    ZITADEL_PROJECT_ID: process.env.ZITADEL_PROJECT_ID,
-    ZITADEL_ADMIN_TOKEN: process.env.ZITADEL_ADMIN_TOKEN,
-    SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
-    SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
-    SLACK_REDIRECT_URI: process.env.SLACK_REDIRECT_URI,
     GITHUB_OWNER: process.env.GITHUB_OWNER,
     GITHUB_REPO: process.env.GITHUB_REPO,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,

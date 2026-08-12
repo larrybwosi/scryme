@@ -1172,7 +1172,6 @@ const mappings: Record<string, Record<string, string>> = {
     handleWindmillApprovalCallback: "windmillCallbackControllerHandleApprovalCallback",
     handleWindmillBakeryDisposalCallback: "windmillCallbackControllerHandleBakeryDisposalCallback",
     handleWindmillOutcomeCallback: "windmillCallbackControllerHandleOutcomeCallback",
-    provisionZitadel: "customersProvisionZitadel",
     getCustomers: "customersGetCustomers",
     registerCustomer: "customersRegister",
     updateCustomer: "customersUpdate",
