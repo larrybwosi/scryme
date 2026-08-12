@@ -5375,6 +5375,45 @@
         ]
       }
     },
+    "/v3/{orgSlug}/customers/auth/swap-zitadel": {
+      "post": {
+        "operationId": "Customers_SwapZitadel",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token swapped successfully"
+          },
+          "401": {
+            "description": "Invalid Zitadel token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify Zitadel OIDC token and swap it for a local high-performance customer session",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
     "/v3/{orgSlug}/customers/auth/session": {
       "get": {
         "operationId": "Customers_GetCurrentSession",
