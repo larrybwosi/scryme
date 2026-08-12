@@ -762,20 +762,18 @@ export class ScrymeClientSDK<
         };
       },
       getSessions: async <TSess = TSession>(): Promise<TSess[]> => {
-        const res = await this.api.customersGetSessions(config.orgSlug);
-        const data = res.data as any;
-        return (data?.data || data) as TSess[];
+        const res: any = await this.api.customersGetSessions(config.orgSlug);
+        return (res.data?.data || res.data) as TSess[];
       },
       revokeSession: async (id: string) => {
-        return this.api.customersRevokeSession(config.orgSlug, id);
+        return this.api.customersRevokeSession(config.orgSlug, id) as any;
       },
       revokeAllSessions: async (mode?: string) => {
-        return this.api.customersRevokeAllSessions(config.orgSlug, { mode } as any);
+        return this.api.customersRevokeAllSessions(config.orgSlug, { mode: mode as any }) as any;
       },
       getCurrentSession: async <TU = TUser>(): Promise<TU> => {
-        const res = await this.api.customersGetCurrentSession(config.orgSlug);
-        const data = res.data as any;
-        return (data?.data || data) as TU;
+        const res: any = await this.api.customersGetCurrentSession(config.orgSlug);
+        return (res.data?.data || res.data) as TU;
       },
       refreshSession: async <TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>> => {
         const res = await this.api.customersRefreshSession(config.orgSlug);
@@ -804,7 +802,7 @@ export class ScrymeClientSDK<
       swapZitadel: async <TSess = TSession, TU = TUser>(
         zitadelToken: string,
       ): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        const res = await this.api.customersSwapZitadel(config.orgSlug, { data: { token: zitadelToken } });
+        const res = await this.api.customersSwapZitadel(config.orgSlug, { token: zitadelToken } as any);
         const authData: any = res.data;
         const token = authData?.accessToken || authData?.token;
 
@@ -866,7 +864,7 @@ export class ScrymeClientSDK<
 
     this.bookings = {
       create: async (dto: CreateBookingDto) => {
-        return this.catalog.createBooking(dto);
+        return this.catalog.createBooking(dto) as any;
       },
       get: async (id: string) => {
         return this.catalog.getBooking(id) as any;
