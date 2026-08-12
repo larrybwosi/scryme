@@ -38,6 +38,12 @@ const serverSchema = z.object({
   CUSTOMER_BETTER_AUTH_SECRET: z.string().optional(),
   CUSTOMER_GOOGLE_CLIENT_ID: z.string().optional(),
   CUSTOMER_GOOGLE_CLIENT_SECRET: z.string().optional(),
+  CUSTOMER_AUTH_STRATEGY: z.string().optional(),
+
+  // Slack Integration
+  SLACK_CLIENT_ID: z.string().optional(),
+  SLACK_CLIENT_SECRET: z.string().optional(),
+  SLACK_REDIRECT_URI: z.string().optional(),
 
   // Redis
   REDIS_HOST: z.string().default("localhost"),
@@ -261,6 +267,11 @@ function getRawEnv() {
     CUSTOMER_BETTER_AUTH_SECRET: process.env.CUSTOMER_BETTER_AUTH_SECRET,
     CUSTOMER_GOOGLE_CLIENT_ID: process.env.CUSTOMER_GOOGLE_CLIENT_ID,
     CUSTOMER_GOOGLE_CLIENT_SECRET: process.env.CUSTOMER_GOOGLE_CLIENT_SECRET,
+
+    // Slack Integration
+    SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
+    SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
+    SLACK_REDIRECT_URI: process.env.SLACK_REDIRECT_URI,
 
     // Storage Configuration
     STORAGE_PROVIDER: process.env.STORAGE_PROVIDER,
