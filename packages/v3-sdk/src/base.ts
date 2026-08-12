@@ -151,6 +151,11 @@ export type MethodsWithOrgSlug =
   | "customersGetAddresses"
   | "customersAddAddress"
   | "customersGetCurrentSession"
+  | "customersGetSessions"
+  | "customersRevokeSession"
+  | "customersRevokeAllSessions"
+  | "customersRefreshSession"
+  | "customersSwapZitadel"
   | "businessAccountControllerCreate"
   | "businessAccountControllerGetOne"
   | "crmControllerCreateRecord"
@@ -349,6 +354,11 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "customersGetAddresses",
   "customersAddAddress",
   "customersGetCurrentSession",
+  "customersGetSessions",
+  "customersRevokeSession",
+  "customersRevokeAllSessions",
+  "customersRefreshSession",
+  "customersSwapZitadel",
   "businessAccountControllerCreate",
   "businessAccountControllerGetOne",
   "crmControllerCreateRecord",

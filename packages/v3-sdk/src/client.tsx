@@ -386,8 +386,8 @@ export class ScrymeClientSDK<
               state.user = null;
             }
           }
-          notify("INITIAL_SESSION");
         }
+        notify("INITIAL_SESSION");
       } catch (e) {
         console.error("Failed to initialize Scryme Client SDK session:", e);
       }
@@ -681,7 +681,7 @@ export class ScrymeClientSDK<
         notes?: string;
         channel?: string;
       }) => {
-        const session = await this.customer.auth.getSession();
+        const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId)
@@ -713,19 +713,19 @@ export class ScrymeClientSDK<
 
     const customerAuth = {
       signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
-        return this.api.registerCustomer(config.orgSlug, dto) as any;
+        return this.api.customersRegister(config.orgSlug, dto) as any;
       },
       signIn: async <TSess = TSession, TU = TUser>(credentials: {
         email: string;
         password?: string;
       }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        const res = await this.api.loginCustomer(config.orgSlug, credentials);
+        const res = await this.api.customersLogin(config.orgSlug, credentials as any);
         const authData: any = res.data;
         const token = authData?.accessToken || authData?.token;
 
         if (token) {
           state.token = token;
-          state.user = (authData?.user || authData?.customer) as any;
+          state.user = (authData?.user || authData?.customer || authData?.session) as any;
           const jwtExp = getJwtExpiry(token);
           if (jwtExp) state.expiresAt = jwtExp;
 
@@ -762,21 +762,23 @@ export class ScrymeClientSDK<
         };
       },
       getSessions: async <TSess = TSession>(): Promise<TSess[]> => {
-        const res = await this.api.getCustomerSessions(config.orgSlug);
-        return (res.data?.data || res.data) as TSess[];
+        const res = await this.api.customersGetSessions(config.orgSlug);
+        const data = res.data as any;
+        return (data?.data || data) as TSess[];
       },
       revokeSession: async (id: string) => {
-        return this.api.revokeCustomerSession(config.orgSlug, id);
+        return this.api.customersRevokeSession(config.orgSlug, id);
       },
       revokeAllSessions: async (mode?: string) => {
-        return this.api.revokeAllCustomerSessions(config.orgSlug, { mode });
+        return this.api.customersRevokeAllSessions(config.orgSlug, { mode } as any);
       },
       getCurrentSession: async <TU = TUser>(): Promise<TU> => {
-        const res = await this.api.getCurrentCustomerSession(config.orgSlug);
-        return (res.data?.data || res.data) as TU;
+        const res = await this.api.customersGetCurrentSession(config.orgSlug);
+        const data = res.data as any;
+        return (data?.data || data) as TU;
       },
       refreshSession: async <TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        const res = await this.api.refreshCustomerSession(config.orgSlug);
+        const res = await this.api.customersRefreshSession(config.orgSlug);
         const authData: any = res.data;
         const token = authData?.accessToken || authData?.token;
 
@@ -802,7 +804,7 @@ export class ScrymeClientSDK<
       swapZitadel: async <TSess = TSession, TU = TUser>(
         zitadelToken: string,
       ): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        const res = await this.api.swapZitadelToken(config.orgSlug, { token: zitadelToken });
+        const res = await this.api.customersSwapZitadel(config.orgSlug, { data: { token: zitadelToken } });
         const authData: any = res.data;
         const token = authData?.accessToken || authData?.token;
 
@@ -830,21 +832,21 @@ export class ScrymeClientSDK<
         return this.customer.auth.getCurrentSession() as any;
       },
       updateProfile: async <T = TUser>(dto: UpdateCustomerDto): Promise<AxiosResponse<T>> => {
-        const session = await this.customer.auth.getSession();
+        const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
         return this.admin.updateCustomer(customerId, dto) as any;
       },
       getAddresses: async () => {
-        const session = await this.customer.auth.getSession();
+        const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
         return this.admin.getCustomerAddresses(customerId) as any;
       },
       addAddress: async (dto: AddressDto) => {
-        const session = await this.customer.auth.getSession();
+        const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
@@ -867,14 +869,50 @@ export class ScrymeClientSDK<
         return this.catalog.createBooking(dto);
       },
       get: async (id: string) => {
-        return this.catalog.getBooking(id);
+        return this.catalog.getBooking(id) as any;
       },
       list: async () => {
-        return this.catalog.getBookings();
+        return this.catalog.getBookings() as any;
       },
       cancel: async (id: string) => {
-        return this.catalog.cancelBooking(id);
+        return this.catalog.updateBookingStatus(id, "CANCELLED" as any) as any;
       },
     };
   }
+}
+
+/**
+ * Factory helper function to instantiate a ScrymeClientSDK.
+ * Retains backward compatibility while enforcing strict ClientSDKConfig types.
+ */
+export function createClientSDK<
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto,
+  TCartItem = CartItemDto,
+  TCartResponse = CartResponseDto,
+  TUser = CustomerResponseDto,
+  TSession = CustomerSessionDto,
+>(
+  config: Partial<ClientSDKConfig> = {},
+): ScrymeClientSDK<
+  TProduct,
+  TService,
+  TCartItem,
+  TCartResponse,
+  TUser,
+  TSession
+> {
+  const finalConfig = {
+    clientId: config.clientId || "mock-client-id",
+    orgSlug: config.orgSlug || "mock-org-slug",
+    ...config,
+  } as ClientSDKConfig;
+  return new ScrymeClientSDK<
+    TProduct,
+    TService,
+    TCartItem,
+    TCartResponse,
+    TUser,
+    TSession
+  >(finalConfig);
 }

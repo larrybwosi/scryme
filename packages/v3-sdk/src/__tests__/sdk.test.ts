@@ -1055,5 +1055,4 @@ const authData = await sdk.auth.signIn({ email: "alice@generic.com", password: "
       expect(session).toEqual(mockSession);
     });
   });
-  });
 });
