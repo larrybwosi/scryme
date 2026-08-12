@@ -386,8 +386,8 @@ export class ScrymeClientSDK<
               state.user = null;
             }
           }
-          notify("INITIAL_SESSION");
         }
+        notify("INITIAL_SESSION");
       } catch (e) {
         console.error("Failed to initialize Scryme Client SDK session:", e);
       }
@@ -681,7 +681,7 @@ export class ScrymeClientSDK<
         notes?: string;
         channel?: string;
       }) => {
-        const session = await this.customer.auth.getSession();
+        const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId)
@@ -725,7 +725,7 @@ export class ScrymeClientSDK<
 
         if (token) {
           state.token = token;
-          state.user = (authData?.user || authData?.customer) as any;
+          state.user = (authData?.user || authData?.customer || authData?.session) as any;
           const jwtExp = getJwtExpiry(token);
           if (jwtExp) state.expiresAt = jwtExp;
 
@@ -830,21 +830,21 @@ export class ScrymeClientSDK<
         return this.customer.auth.getCurrentSession() as any;
       },
       updateProfile: async <T = TUser>(dto: UpdateCustomerDto): Promise<AxiosResponse<T>> => {
-        const session = await this.customer.auth.getSession();
+        const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
         return this.admin.updateCustomer(customerId, dto) as any;
       },
       getAddresses: async () => {
-        const session = await this.customer.auth.getSession();
+        const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
         return this.admin.getCustomerAddresses(customerId) as any;
       },
       addAddress: async (dto: AddressDto) => {
-        const session = await this.customer.auth.getSession();
+        const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;
         if (!customerId) throw new Error("No authenticated customer found.");
@@ -877,4 +877,40 @@ export class ScrymeClientSDK<
       },
     };
   }
+}
+
+/**
+ * Factory helper function to instantiate a ScrymeClientSDK.
+ * Retains backward compatibility while enforcing strict ClientSDKConfig types.
+ */
+export function createClientSDK<
+  TProduct = ProductResponseDto,
+  TService = ServiceCatalogResponseDto,
+  TCartItem = CartItemDto,
+  TCartResponse = CartResponseDto,
+  TUser = CustomerResponseDto,
+  TSession = CustomerSessionDto,
+>(
+  config: Partial<ClientSDKConfig> = {},
+): ScrymeClientSDK<
+  TProduct,
+  TService,
+  TCartItem,
+  TCartResponse,
+  TUser,
+  TSession
+> {
+  const finalConfig = {
+    clientId: config.clientId || "mock-client-id",
+    orgSlug: config.orgSlug || "mock-org-slug",
+    ...config,
+  } as ClientSDKConfig;
+  return new ScrymeClientSDK<
+    TProduct,
+    TService,
+    TCartItem,
+    TCartResponse,
+    TUser,
+    TSession
+  >(finalConfig);
 }

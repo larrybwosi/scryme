@@ -1,3 +1,7 @@
+## 2026-08-11 - [Shifting Catalog Services Pagination and Relational Joins to Database]
+**Learning:** Performing full-table retrieval and in-memory slicing/filtering for pagination in endpoints like `Catalog_GetServices` fetches redundant records and joins heavy relational tables (such as staff, member, user, resources, and resource) that are never consumed by the mapper or response DTO. Shifting pagination directly to the database level via Prisma's `take`/`skip` combined with targeted `select` blocks reduces database query time, CPU overhead, network payload size, and NestJS serialization latency significantly, keeping response payloads lightweight and constant-time O(1) in size.
+**Action:** Always delegate list and catalog queries to paginated service methods using database-level pagination (`take`/`skip`) and precise `select` statements to exclude unused complex relation trees.
+
 ## 2026-08-10 - [Parallelized Chunk-Batching in Outbound Strapi Product Sync]
 **Learning:** Performing sequential external HTTP requests and database updates/inserts inside a loop over a large catalog (such as pushing products to Strapi) results in a severe $O(N)$ execution bottleneck. Partitioning the catalog into controlled chunks (e.g. batch size of 10) and executing them concurrently via `Promise.all` balances server load, avoids rate-limiting, and accelerates synchronization duration by up to 90%.
 **Action:** Always partition and parallelize external API / DB-bound sync operations inside loops into controlled batches of 10 using concurrent `Promise.all`.

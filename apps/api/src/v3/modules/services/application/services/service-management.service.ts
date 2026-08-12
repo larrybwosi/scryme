@@ -26,6 +26,44 @@ export class ServiceManagementService {
     });
   }
 
+  async getServicesPaginated(
+    orgId: string,
+    pagination: { limit?: number; offset?: number },
+  ) {
+    const limit = Number(pagination.limit || 20);
+    const offset = Number(pagination.offset || 0);
+
+    /**
+     * OPTIMIZATION (Bolt ⚡): Shifting pagination from in-memory array slicing to database-level query scoping
+     * prevents over-fetching on catalog lists. Selecting only the base columns and basic category details
+     * avoids deep relational joins (like staff and resources), reducing query overhead, network footprints,
+     * and JSON serialization latency significantly.
+     */
+    return this.prisma.client.service.findMany({
+      where: { organizationId: orgId },
+      take: limit,
+      skip: offset,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        sku: true,
+        price: true,
+        pricingModel: true,
+        estimatedDuration: true,
+        isActive: true,
+        customFields: true,
+        categoryId: true,
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
   async getServicesRaw(orgId: string, options?: { isActive?: boolean }) {
     /**
      * OPTIMIZATION (Bolt ⚡): This optimized raw query fetches only base Service columns without heavy
