@@ -713,13 +713,13 @@ export class ScrymeClientSDK<
 
     const customerAuth = {
       signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
-        return this.api.registerCustomer(config.orgSlug, dto) as any;
+        return this.api.customersRegister(config.orgSlug, dto) as any;
       },
       signIn: async <TSess = TSession, TU = TUser>(credentials: {
         email: string;
         password?: string;
       }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        const res = await this.api.loginCustomer(config.orgSlug, credentials);
+        const res = await this.api.customersLogin(config.orgSlug, credentials as any);
         const authData: any = res.data;
         const token = authData?.accessToken || authData?.token;
 
@@ -762,21 +762,21 @@ export class ScrymeClientSDK<
         };
       },
       getSessions: async <TSess = TSession>(): Promise<TSess[]> => {
-        const res = await this.api.getCustomerSessions(config.orgSlug);
+        const res: any = await this.api.customersGetSessions(config.orgSlug);
         return (res.data?.data || res.data) as TSess[];
       },
       revokeSession: async (id: string) => {
-        return this.api.revokeCustomerSession(config.orgSlug, id);
+        return this.api.customersRevokeSession(config.orgSlug, id) as any;
       },
       revokeAllSessions: async (mode?: string) => {
-        return this.api.revokeAllCustomerSessions(config.orgSlug, { mode });
+        return this.api.customersRevokeAllSessions(config.orgSlug, { mode: mode as any }) as any;
       },
       getCurrentSession: async <TU = TUser>(): Promise<TU> => {
-        const res = await this.api.getCurrentCustomerSession(config.orgSlug);
+        const res: any = await this.api.customersGetCurrentSession(config.orgSlug);
         return (res.data?.data || res.data) as TU;
       },
       refreshSession: async <TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        const res = await this.api.refreshCustomerSession(config.orgSlug);
+        const res = await this.api.customersRefreshSession(config.orgSlug);
         const authData: any = res.data;
         const token = authData?.accessToken || authData?.token;
 
@@ -802,7 +802,7 @@ export class ScrymeClientSDK<
       swapZitadel: async <TSess = TSession, TU = TUser>(
         zitadelToken: string,
       ): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        const res = await this.api.swapZitadelToken(config.orgSlug, { token: zitadelToken });
+        const res = await this.api.customersSwapZitadel(config.orgSlug, { token: zitadelToken } as any);
         const authData: any = res.data;
         const token = authData?.accessToken || authData?.token;
 
@@ -864,16 +864,16 @@ export class ScrymeClientSDK<
 
     this.bookings = {
       create: async (dto: CreateBookingDto) => {
-        return this.catalog.createBooking(dto);
+        return this.catalog.createBooking(dto) as any;
       },
       get: async (id: string) => {
-        return this.catalog.getBooking(id);
+        return this.catalog.getBooking(id) as any;
       },
       list: async () => {
-        return this.catalog.getBookings();
+        return this.catalog.getBookings() as any;
       },
       cancel: async (id: string) => {
-        return this.catalog.cancelBooking(id);
+        return this.catalog.updateBookingStatus(id, "CANCELLED" as any) as any;
       },
     };
   }
