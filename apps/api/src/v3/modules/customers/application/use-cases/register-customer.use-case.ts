@@ -191,20 +191,32 @@ export class RegisterCustomerUseCase {
     // If password is provided, also upsert/create a linked credentials user
     if (hashedPassword) {
       // Find or create linked User record
-      const linkedUser = await tx.user.upsert({
+      const existingUser = await tx.user.findUnique({
         where: { email: dto.email },
-        create: {
-          id: randomUUID(),
-          name: dto.name,
-          email: dto.email,
-          password: hashedPassword,
-          role: "CLIENT" as any,
-          activeOrganizationId: organizationId,
-        },
-        update: {
-          password: hashedPassword,
-        },
       });
+
+      if (existingUser) {
+        // Security: Prevent account takeover by refusing to overwrite an existing user's password
+        if (existingUser.password) {
+          throw new BadRequestException("An account with this email already exists");
+        }
+        // If the user exists but has no password (e.g. placeholder), set it
+        await tx.user.update({
+          where: { id: existingUser.id },
+          data: { password: hashedPassword },
+        });
+      } else {
+        await tx.user.create({
+          data: {
+            id: randomUUID(),
+            name: dto.name,
+            email: dto.email,
+            password: hashedPassword,
+            role: "CLIENT" as any,
+            activeOrganizationId: organizationId,
+          },
+        });
+      }
     }
 
     return tx.customer.upsert({

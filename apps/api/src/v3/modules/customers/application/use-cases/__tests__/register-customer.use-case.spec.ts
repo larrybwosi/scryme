@@ -23,7 +23,9 @@ describe("RegisterCustomerUseCase", () => {
           upsert: vi.fn(),
         },
         user: {
-          upsert: vi.fn(),
+          findUnique: vi.fn(),
+          create: vi.fn(),
+          update: vi.fn(),
         },
         address: {
           findFirst: vi.fn(),
@@ -68,6 +70,7 @@ describe("RegisterCustomerUseCase", () => {
 
     vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.client.customer.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.client.user.findUnique).mockResolvedValue(null);
     vi.mocked(prisma.client.customer.upsert).mockResolvedValue({
       id: "cust-123",
       name: dto.name,
@@ -81,7 +84,62 @@ describe("RegisterCustomerUseCase", () => {
 
     expect(result.name).toBe("John Doe");
     expect(result.email).toBe("john@example.com");
-    expect(prisma.client.user.upsert).toHaveBeenCalled();
+    expect(prisma.client.user.create).toHaveBeenCalled();
     expect(prisma.client.customer.upsert).toHaveBeenCalled();
+  });
+
+  it("should throw BadRequestException if an account with the email already exists and has a password", async () => {
+    const orgId = "org-123";
+    const dto = {
+      name: "John Doe",
+      email: "john@example.com",
+      password: "password123",
+    };
+
+    vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.client.customer.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.client.user.findUnique).mockResolvedValue({
+      id: "user-123",
+      email: "john@example.com",
+      password: "already_hashed_password",
+    } as any);
+
+    await expect(useCase.execute(orgId, dto)).rejects.toThrowError(
+      "An account with this email already exists"
+    );
+
+    expect(prisma.client.user.create).not.toHaveBeenCalled();
+    expect(prisma.client.user.update).not.toHaveBeenCalled();
+  });
+
+  it("should allow setting password if user exists but has no password", async () => {
+    const orgId = "org-123";
+    const dto = {
+      name: "John Doe",
+      email: "john@example.com",
+      password: "password123",
+    };
+
+    vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.client.customer.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.client.user.findUnique).mockResolvedValue({
+      id: "user-123",
+      email: "john@example.com",
+      password: null,
+    } as any);
+    vi.mocked(prisma.client.customer.upsert).mockResolvedValue({
+      id: "cust-123",
+      name: dto.name,
+      email: dto.email,
+      organizationId: orgId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as any);
+
+    const result = await useCase.execute(orgId, dto);
+
+    expect(result.name).toBe("John Doe");
+    expect(prisma.client.user.update).toHaveBeenCalled();
+    expect(prisma.client.user.create).not.toHaveBeenCalled();
   });
 });
