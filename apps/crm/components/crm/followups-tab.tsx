@@ -87,7 +87,7 @@ function FollowUpCard({
         <h4 className="text-[13px] font-bold text-foreground">Edit Follow-up</h4>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Title *</label>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Title <span className="text-destructive">*</span></label>
             <input
               value={editForm.title}
               onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
@@ -96,7 +96,7 @@ function FollowUpCard({
             />
           </div>
           <div>
-            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Due Date *</label>
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Due Date <span className="text-destructive">*</span></label>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -489,7 +489,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
           <h4 className="text-[13px] font-bold text-foreground">New Follow-up</h4>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Title *</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Title <span className="text-destructive">*</span></label>
               <input
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
@@ -498,7 +498,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
               />
             </div>
             <div>
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Due Date *</label>
+              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">Due Date <span className="text-destructive">*</span></label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button

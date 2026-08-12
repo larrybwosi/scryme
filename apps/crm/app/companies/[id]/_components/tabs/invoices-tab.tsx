@@ -290,7 +290,7 @@ export function CompanyInvoicesTab({ company, currency = "USD" }: CompanyInvoice
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="col-span-1 md:col-span-2 lg:col-span-3">
             <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Line Items / Description *
+              Line Items / Description <span className="text-destructive">*</span>
             </label>
             <input
               value={form.itemName}
@@ -323,7 +323,7 @@ export function CompanyInvoicesTab({ company, currency = "USD" }: CompanyInvoice
           </div>
           <div>
             <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Total Amount ({symbol}) *
+              Total Amount ({symbol}) <span className="text-destructive">*</span>
             </label>
             <input
               type="number"
@@ -357,7 +357,7 @@ export function CompanyInvoicesTab({ company, currency = "USD" }: CompanyInvoice
           </div>
           <div>
             <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Issue Date *
+              Issue Date <span className="text-destructive">*</span>
             </label>
             <Popover>
               <PopoverTrigger asChild>

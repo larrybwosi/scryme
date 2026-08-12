@@ -269,7 +269,7 @@ export function ConversationsTab({ customer }: ConversationsTabProps) {
             </div>
             <div className="col-span-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                Summary *
+                Summary <span className="text-destructive">*</span>
               </label>
               <textarea
                 value={form.description}

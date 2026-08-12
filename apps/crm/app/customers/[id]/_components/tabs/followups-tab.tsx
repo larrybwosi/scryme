@@ -108,7 +108,7 @@ function FollowUpCard({
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Title *
+              Title <span className="text-destructive">*</span>
             </label>
             <input
               value={editForm.title}
@@ -121,7 +121,7 @@ function FollowUpCard({
           </div>
           <div>
             <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-              Due Date *
+              Due Date <span className="text-destructive">*</span>
             </label>
             <Popover>
               <PopoverTrigger asChild>
@@ -582,7 +582,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                Title *
+                Title <span className="text-destructive">*</span>
               </label>
               <input
                 value={form.title}
@@ -595,7 +595,7 @@ export function FollowUpsTab({ customer }: FollowUpsTabProps) {
             </div>
             <div>
               <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1.5">
-                Due Date *
+                Due Date <span className="text-destructive">*</span>
               </label>
               <Popover>
                 <PopoverTrigger asChild>
