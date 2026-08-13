@@ -99,6 +99,7 @@ function NavItemLink({
       aria-label={item.title}
       className={cn(
         'relative flex items-center gap-2.5 px-3 py-[7px] rounded-md text-[13px] transition-all duration-150 group/item',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1',
         isActive
           ? 'nav-item-active'
           : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-white/5'
@@ -173,7 +174,7 @@ function CollapsibleGroup({
       {!isCollapsed ? (
         <button
           onClick={() => setIsOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-3 mb-1 group/toggle"
+          className="w-full flex items-center justify-between px-3 mb-1 group/toggle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 rounded-sm"
         >
           <span className="text-[10px] font-semibold text-sidebar-foreground/35 uppercase tracking-[0.08em] group-hover/toggle:text-sidebar-foreground/60 transition-colors">
             {group.title}
@@ -274,7 +275,7 @@ export function Sidebar() {
         {!isCollapsed && (
           <button
             onClick={() => setIsCollapsed(true)}
-            className="ml-auto p-1 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors"
+            className="ml-auto p-1 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
             aria-label="Collapse sidebar"
             title="Collapse sidebar"
           >
@@ -287,7 +288,7 @@ export function Sidebar() {
       {isCollapsed && (
         <button
           onClick={() => setIsCollapsed(false)}
-          className="flex items-center justify-center h-9 mx-2 mt-2 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors"
+          className="flex items-center justify-center h-9 mx-2 mt-2 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
           aria-label="Expand sidebar"
           title="Expand sidebar"
         >
@@ -298,7 +299,7 @@ export function Sidebar() {
       {/* Search shortcut */}
       {!isCollapsed && (
         <div className="px-3 py-2 shrink-0">
-          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/8 border border-sidebar-border/50 transition-colors text-left">
+          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/8 border border-sidebar-border/50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1">
             <Search size={12} className="text-sidebar-foreground/35 shrink-0" />
             <span className="text-[11.5px] text-sidebar-foreground/35 flex-1">Search...</span>
             <kbd className="text-[9px] text-sidebar-foreground/25 bg-white/5 px-1 py-0.5 rounded border border-sidebar-border/30 leading-none">
@@ -336,6 +337,7 @@ export function Sidebar() {
             aria-label={label}
             className={cn(
               'w-full flex items-center gap-2.5 px-3 py-[7px] rounded-md text-[13px] text-sidebar-foreground/55 hover:text-sidebar-foreground/80 hover:bg-white/5 transition-all',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1',
               isCollapsed && 'justify-center'
             )}
           >
@@ -375,7 +377,7 @@ export function Sidebar() {
             </div>
             <button
               onClick={handleLogout}
-              className="p-1 rounded-md hover:bg-white/8 transition-colors"
+              className="p-1 rounded-md hover:bg-white/8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
               aria-label="Log out"
               title="Log out"
             >
