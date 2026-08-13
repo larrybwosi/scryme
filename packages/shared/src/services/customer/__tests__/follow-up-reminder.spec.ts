@@ -11,7 +11,7 @@ const mockPrisma = {
 
 const mockSendMessage = vi.fn().mockResolvedValue({ id: "msg-123" });
 
-vi.mock("@repo/scryme", () => {
+vi.mock("@repo/chat", () => {
   return {
     ScrymeChatApiClient: class {
       sendMessage = mockSendMessage;

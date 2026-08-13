@@ -40,7 +40,7 @@ Our core logic, database client, configurations, and utilities are modularized i
 - **[`@repo/ui`](./packages/ui)**: Unified React component library containing Radix UI accessible primitives, styled with Tailwind CSS v4, and housing custom global barcode scanner key-event filters.
 - **[`@repo/documents`](./packages/documents)**: Clean PDF receipt, invoice, and balance sheet engines powered by React-PDF.
 - **[`@repo/notifications`](./packages/notifications)**: Multi-channel messaging gateway orchestrating SMTP/Nodemailer HTML emails, handlebars template compiles, and SMS services.
-- **[`@repo/scryme`](./packages/scryme)**: Developer-centric API client mapping token exchange and message publishing against the Scryme Chat API.
+- **[`@repo/chat`](./packages/scryme)**: Developer-centric API client mapping token exchange and message publishing against the Scryme Chat API.
 - **[`@repo/sdk`](./packages/sdk)**: Central client SDK containing shared HTTP wrappers and pre-configured request interceptors.
 - **[`@scryme/sdk`](./packages/v3-sdk)**: Rigorous TypeScript API client compiler generated directly from our core OpenAPI 3.0 specification.
 - **[`@repo/windmill`](./packages/windmill)**: Secondary Handlebars compiler and Nodemailer client helper designed for background mail queues.

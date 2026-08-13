@@ -1,4 +1,4 @@
-import { ScrymeChatApiClient } from "@repo/scryme";
+import { ScrymeChatApiClient } from "@repo/chat";
 import { env } from "@repo/env";
 
 /**

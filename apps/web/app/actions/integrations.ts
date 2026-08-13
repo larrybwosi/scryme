@@ -113,7 +113,7 @@ export async function provisionScryme() {
     );
   }
 
-  const { ScrymeChatApiClient } = await import("@repo/scryme");
+  const { ScrymeChatApiClient } = await import("@repo/chat");
   const scrymeClient = new ScrymeChatApiClient();
 
   const workspaceSlug = `org-${org.slug}`.toLowerCase();

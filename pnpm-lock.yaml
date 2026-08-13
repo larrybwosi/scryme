@@ -132,7 +132,7 @@ importers:
       '@repo/notifications':
         specifier: workspace:*
         version: link:../../packages/notifications
-      '@repo/scryme':
+      '@repo/chat':
         specifier: workspace:*
         version: link:../../packages/scryme
       '@repo/shared':
@@ -494,7 +494,7 @@ importers:
       '@repo/db':
         specifier: workspace:^
         version: link:../../packages/db
-      '@repo/scryme':
+      '@repo/chat':
         specifier: workspace:*
         version: link:../../packages/scryme
       '@repo/shared':
@@ -1460,7 +1460,7 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../db
-      '@repo/scryme':
+      '@repo/chat':
         specifier: workspace:*
         version: link:../scryme
       '@repo/typescript-config':
@@ -1489,8 +1489,8 @@ importers:
   packages/scryme:
     dependencies:
       '@scryme/chat':
-        specifier: ^2.15.1
-        version: 2.15.1(react@19.2.6)
+        specifier: ^2.15.2
+        version: 2.15.2(react@19.2.6)
       axios:
         specifier: ^1.6.2
         version: 1.18.1
@@ -1553,7 +1553,7 @@ importers:
       '@repo/notifications':
         specifier: workspace:*
         version: link:../notifications
-      '@repo/scryme':
+      '@repo/chat':
         specifier: workspace:*
         version: link:../scryme
       '@repo/windmill':
@@ -1829,7 +1829,7 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../db
-      '@repo/scryme':
+      '@repo/chat':
         specifier: workspace:*
         version: link:../scryme
       axios:
@@ -6990,8 +6990,8 @@ packages:
   '@scarf/scarf@1.4.0':
     resolution: {integrity: sha512-xxeapPiUXdZAE3che6f3xogoJPeZgig6omHEy1rIY5WVsB3H2BHNnZH+gHG6x91SCWyQCzWGsuL2Hh3ClO5/qQ==}
 
-  '@scryme/chat@2.15.1':
-    resolution: {integrity: sha512-FLr2mH3YNWMD0oNL9kBMGlUeQmPHWgTEpnFmBcL4Sgt9iDfkkDhQbxqM7DVNIB00ZNAF0NK0rxnY92BiSjZf0A==}
+  '@scryme/chat@2.15.2':
+    resolution: {integrity: sha512-qXfbDDQzcq9waVdQnc+1FTdNZ/EUjPUWmpMQt9BiMIuvMcOBklFxE5OPooQ365tJ+SFmy/0JzwM2K31V5V9V+A==}
     peerDependencies:
       react: 19.2.6
 
@@ -22467,7 +22467,7 @@ snapshots:
 
   '@scarf/scarf@1.4.0': {}
 
-  '@scryme/chat@2.15.1(react@19.2.6)':
+  '@scryme/chat@2.15.2(react@19.2.6)':
     dependencies:
       '@tanstack/react-query': 5.96.2(react@19.2.6)
       axios: 1.19.0
