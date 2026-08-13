@@ -4,7 +4,7 @@ The central configuration and schema validation package for environment variable
 
 ## 🚀 Key Features
 
-- **Unified Schema Enforcement**: Contains schema validations for databases, caches, Ably real-time keys, Zitadel credentials, and host variables.
+- **Unified Schema Enforcement**: Contains schema validations for databases, caches, Ably real-time keys, and host variables.
 - **Fail-Fast Configuration**: Immediately stops application startups (both web apps and API endpoints) if mandatory variables are missing or incorrectly typed.
 - **Fully Type-Safe**: Exposes TypeScript-mapped types generated automatically from Zod validation schemas.
 

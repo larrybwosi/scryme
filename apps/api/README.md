@@ -43,7 +43,7 @@ The **Scryme API** is a robust, enterprise-grade [NestJS](https://nestjs.com/) R
    ```bash
    cp .env.example .env
    ```
-   Fill in your database credentials and Zitadel configuration.
+   Fill in your database credentials.
 
 3. **Database Setup**
    ```bash
@@ -84,8 +84,6 @@ Ensure the following variables are set in your production environment:
 | Variable | Description |
 | :--- | :--- |
 | `DATABASE_URL` | PostgreSQL connection string |
-| `ZITADEL_API_URL` | Your Zitadel domain |
-| `ZITADEL_CLIENT_ID` | Zitadel application client ID |
 | `REDIS_URL` | Redis connection URL |
 | `RABBITMQ_URL` | RabbitMQ connection URL |
 | `JWT_SECRET` | Secret for signing internal tokens |

@@ -35,7 +35,7 @@ If you are developing connected applications or integrating a third-party portal
 Our core logic, database client, configurations, and utilities are modularized into shared packages:
 
 - **[`@repo/db`](./packages/db)**: The database layer wrapper enclosing the Prisma schema, PostgreSQL client singleton, and database seeding scripts.
-- **[`@repo/auth`](./packages/auth)**: Shared identity and multi-tenant authorization utilities powered by Better Auth and Zitadel.
+- **[`@repo/auth`](./packages/auth)**: Shared identity and multi-tenant authorization utilities powered by Better Auth.
 - **[`@repo/shared`](./packages/shared)**: General helper utilities, custom resilient Redis clients (with in-memory fallback), SSRF-blocking URL filters, M-PesaSTK pushes, and Ably real-time publishers.
 - **[`@repo/ui`](./packages/ui)**: Unified React component library containing Radix UI accessible primitives, styled with Tailwind CSS v4, and housing custom global barcode scanner key-event filters.
 - **[`@repo/documents`](./packages/documents)**: Clean PDF receipt, invoice, and balance sheet engines powered by React-PDF.
@@ -60,7 +60,7 @@ Our core logic, database client, configurations, and utilities are modularized i
 - **Backend**: [NestJS](https://nestjs.com/)
 - **Database**: [PostgreSQL](https://www.postgresql.org/) & SQLite with [Prisma ORM](https://prisma.io/)
 - **Realtime**: [Ably](https://ably.com/)
-- **Auth**: [Zitadel](https://zitadel.com/) & [Better Auth](https://better-auth.com/)
+- **Auth**: [Better Auth](https://better-auth.com/)
 - **Package Management**: [pnpm](https://pnpm.io/)
 - **Containerization**: [Docker Compose](https://docs.docker.com/compose/)
 

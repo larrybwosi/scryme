@@ -5,7 +5,7 @@ import { Eyebrow } from "@/components/products/eyebrow";
 export const metadata: Metadata = {
   title: "Platform Security — Scryme Enterprise",
   description:
-    "Learn how Scryme Technologies protects B2B transactions, OIDC sessions, Zitadel integrations, and offline-first terminal databases.",
+    "Learn how Scryme Technologies protects B2B transactions, OIDC sessions, and offline-first terminal databases.",
   alternates: {
     canonical: "/security",
   },
@@ -45,7 +45,7 @@ export default function SecurityPage() {
             </h2>
             <p>
               Scryme enforces strict identity separation at the tenant level.
-              All authentication is managed via Zitadel SSO OIDC redirects or
+              All authentication is managed via OIDC redirects or
               secure local session tokens processed directly into our isolated
               PostgreSQL database. Standard organizational scopes (like{" "}
               <code>org_info</code> and <code>membership</code>) safeguard all
