@@ -131,7 +131,7 @@ export class ScrymeChatApiClient {
     webhookUrl: string,
     events: string[] = ["message.action"],
   ): Promise<any> {
-    return chat.raw.webhooksControllerCreateWebhook(workspaceSlug, {
+    return chat.webhooks.create(workspaceSlug, {
       name: "Interactive Action Webhook",
       url: webhookUrl,
       events,

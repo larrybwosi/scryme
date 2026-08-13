@@ -48,13 +48,6 @@ try {
   console.error("Sign-in failed:", error);
 }`;
 
-  const oidcLoginCode = `// Exchanging Zitadel/Federated Google token for a Scryme session token
-try {
-  const response = await scryme.customer.auth.swapZitadel("zitadel_oidc_access_token_xyz");
-  console.log("Zitadel identity successfully swapped!", response.user);
-} catch (error) {
-  console.error("Token swap failed:", error);
-}`;
 
   const proactiveRefreshCode = `// Proactive SDK Token Expiration Interceptor
 // If the JWT expires in < 30 seconds, the client automatically requests a session refresh!
@@ -343,20 +336,6 @@ try {
             </p>
             <div className="relative group bg-ink-bg p-4 rounded-xl border border-ink-border text-xs font-mono">
               {renderHighlightedCode(credentialsLoginCode, "node")}
-            </div>
-          </div>
-
-          {/* Zitadel / OIDC Flow */}
-          <div className="space-y-4">
-            <h2 className="text-md font-bold text-paper border-b border-ink-border/50 pb-1.5 flex items-center gap-2">
-              <Merge size={16} className="text-brass" />
-              <span>OIDC Token Swap Federated Flow</span>
-            </h2>
-            <p className="text-light-text text-xs leading-relaxed">
-              If your client completes Google Social Sign-In or another federated authentication via Zitadel, you can exchange their external OpenID token for a local Scryme Customer session token using `swapZitadel`.
-            </p>
-            <div className="relative group bg-ink-bg p-4 rounded-xl border border-ink-border text-xs font-mono">
-              {renderHighlightedCode(oidcLoginCode, "node")}
             </div>
           </div>
 

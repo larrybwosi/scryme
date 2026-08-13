@@ -250,13 +250,6 @@ export class ScrymeServerSDK<
       refreshSession<TSess = TSession, TU = TUser>(): Promise<
         CustomerAuthResponseDto<TU, TSess>
       >;
-      /**
-       * Exchanges a verified Zitadel OIDC token for a local customer session.
-       * @param zitadelToken Valid Zitadel OIDC ID/access token.
-       */
-      swapZitadel<TSess = TSession, TU = TUser>(
-        zitadelToken: string,
-      ): Promise<CustomerAuthResponseDto<TU, TSess>>;
     };
   };
 
@@ -297,7 +290,7 @@ export class ScrymeServerSDK<
 
   /**
    * Server Authentication & Customer Session Submodule.
-   * Handles server-orchestrated sign-ups, credential-based customer login, token validations, and Zitadel OIDC session swapping.
+   * Handles server-orchestrated sign-ups, credential-based customer login, token validations.
    */
   public auth: AuthModule & {
     /**
@@ -327,13 +320,6 @@ export class ScrymeServerSDK<
     refreshSession<TSess = TSession, TU = TUser>(): Promise<
       CustomerAuthResponseDto<TU, TSess>
     >;
-    /**
-     * Exchanges a verified Zitadel OIDC token for a local customer session.
-     * @param zitadelToken Valid Zitadel OIDC ID/access token.
-     */
-    swapZitadel<TSess = TSession, TU = TUser>(
-      zitadelToken: string,
-    ): Promise<CustomerAuthResponseDto<TU, TSess>>;
   };
 
   private token: string | null = null;
@@ -791,24 +777,6 @@ export class ScrymeServerSDK<
           }
           return data as any;
         },
-
-        swapZitadel: async <TSess = TSession, TU = TUser>(
-          zitadelToken: string,
-        ): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-          const response = await this.axiosInstance.post(
-            `/${config.orgSlug}/customers/auth/swap-zitadel`,
-            { zitadelToken },
-          );
-          const data = response.data?.data || response.data;
-          const token = data?.token || null;
-          if (token) {
-            this.token = token;
-            this.expiresAt = getJwtExpiry(token);
-            this.axiosInstance.defaults.headers.common["Authorization"] =
-              `Bearer ${token}`;
-          }
-          return data as any;
-        },
       },
     };
 
@@ -857,10 +825,6 @@ export class ScrymeServerSDK<
 
       refreshSession: async <TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>> => {
         return this.customer.auth.refreshSession<TSess, TU>();
-      },
-
-      swapZitadel: async <TSess = TSession, TU = TUser>(zitadelToken: string): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        return this.customer.auth.swapZitadel<TSess, TU>(zitadelToken);
       },
     };
   }

@@ -262,9 +262,6 @@ export class ScrymeClientSDK<
       refreshSession<TSess = TSession, TU = TUser>(): Promise<
         CustomerAuthResponseDto<TU, TSess>
       >;
-      swapZitadel<TSess = TSession, TU = TUser>(
-        zitadelToken: string,
-      ): Promise<CustomerAuthResponseDto<TU, TSess>>;
     };
   };
 
@@ -298,9 +295,6 @@ export class ScrymeClientSDK<
     revokeAllSessions(mode?: string): Promise<AxiosResponse<void>>;
     getCurrentSession<TU = TUser>(): Promise<TU>;
     refreshSession<TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>>;
-    swapZitadel<TSess = TSession, TU = TUser>(
-      zitadelToken: string,
-    ): Promise<CustomerAuthResponseDto<TU, TSess>>;
   };
 
   /**
@@ -445,8 +439,7 @@ export class ScrymeClientSDK<
         req.url &&
         (req.url.endsWith("/auth/token") ||
           req.url.includes("/auth/token") ||
-          req.url.includes("/customers/auth/refresh") ||
-          req.url.includes("/customers/auth/swap-zitadel"));
+          req.url.includes("/customers/auth/refresh"));
 
       if (!isAuthTokenRequest) {
         const isExpired =
@@ -491,8 +484,7 @@ export class ScrymeClientSDK<
           originalRequest.url &&
           (originalRequest.url.endsWith("/auth/token") ||
             originalRequest.url.includes("/auth/token") ||
-            originalRequest.url.includes("/customers/auth/refresh") ||
-            originalRequest.url.includes("/customers/auth/swap-zitadel"));
+            originalRequest.url.includes("/customers/auth/refresh"));
 
         if (
           error.response &&
@@ -785,30 +777,6 @@ export class ScrymeClientSDK<
           if (authData?.user || authData?.customer) {
             state.user = (authData.user || authData.customer) as any;
           }
-          const jwtExp = getJwtExpiry(token);
-          if (jwtExp) state.expiresAt = jwtExp;
-
-          await storage.setItem(SCRYME_SESSION_TOKEN_KEY, token);
-          if (state.user) {
-            await storage.setItem(SCRYME_USER_KEY, JSON.stringify(state.user));
-          }
-          if (state.expiresAt) {
-            await storage.setItem(SCRYME_EXPIRES_AT_KEY, String(state.expiresAt));
-          }
-          notify("SIGNED_IN");
-        }
-        return authData;
-      },
-      swapZitadel: async <TSess = TSession, TU = TUser>(
-        zitadelToken: string,
-      ): Promise<CustomerAuthResponseDto<TU, TSess>> => {
-        const res = await this.api.customersSwapZitadel(config.orgSlug, { token: zitadelToken } as any);
-        const authData: any = res.data;
-        const token = authData?.accessToken || authData?.token;
-
-        if (token) {
-          state.token = token;
-          state.user = (authData?.user || authData?.customer) as any;
           const jwtExp = getJwtExpiry(token);
           if (jwtExp) state.expiresAt = jwtExp;
 

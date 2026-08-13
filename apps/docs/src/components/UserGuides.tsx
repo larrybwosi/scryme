@@ -185,7 +185,7 @@ export default function UserGuides() {
                     <li>Navigate to the <strong>Staff & HR</strong> portal inside the administrator view.</li>
                     <li>Select the <strong>Invite Member</strong> option.</li>
                     <li>Enter the user's corporate email address and assign an initial <strong>Role Profile</strong> (e.g., Owner, Manager, Cashier, Baker).</li>
-                    <li>An secure OIDC invitation link is dispatched instantly. Once accepted, their account maps seamlessly into your Zitadel or local authentication tenant.</li>
+                    <li>An secure OIDC invitation link is dispatched instantly. Once accepted, their account maps seamlessly into your local authentication tenant.</li>
                   </ol>
                 </div>
               </div>

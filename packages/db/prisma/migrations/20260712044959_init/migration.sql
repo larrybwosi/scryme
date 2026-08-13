@@ -406,12 +406,6 @@ CREATE TYPE "WebhookDeliveryStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'RE
 -- CreateEnum
 CREATE TYPE "WindmillExecutionStatus" AS ENUM ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED');
 
--- CreateEnum
-CREATE TYPE "ZitadelConnectionStatus" AS ENUM ('CONNECTED', 'DISCONNECTED', 'ERROR', 'UNKNOWN');
-
--- CreateEnum
-CREATE TYPE "ZitadelWebhookStatus" AS ENUM ('PENDING', 'PROCESSED', 'FAILED', 'SKIPPED');
-
 -- CreateTable
 CREATE TABLE "user" (
     "id" TEXT NOT NULL,
@@ -4644,45 +4638,6 @@ CREATE TABLE "windmill_execution" (
     CONSTRAINT "windmill_execution_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "zitadel_configuration" (
-    "id" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
-    "zitadelOrgId" TEXT,
-    "zitadelProjectId" TEXT,
-    "zitadelAppId" TEXT,
-    "isActive" BOOLEAN NOT NULL DEFAULT true,
-    "autoSyncOnRegister" BOOLEAN NOT NULL DEFAULT true,
-    "autoSyncOnSignIn" BOOLEAN NOT NULL DEFAULT false,
-    "syncToTwentyCrm" BOOLEAN NOT NULL DEFAULT true,
-    "syncToErpCustomer" BOOLEAN NOT NULL DEFAULT true,
-    "connectionStatus" "ZitadelConnectionStatus" NOT NULL DEFAULT 'UNKNOWN',
-    "connectionError" TEXT,
-    "lastTestedAt" TIMESTAMP(3),
-    "lastSyncAt" TIMESTAMP(3),
-    "totalUsersSynced" INTEGER NOT NULL DEFAULT 0,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" TIMESTAMP(3) NOT NULL,
-
-    CONSTRAINT "zitadel_configuration_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "zitadel_webhook_log" (
-    "id" TEXT NOT NULL,
-    "configId" TEXT NOT NULL,
-    "organizationId" TEXT NOT NULL,
-    "event" TEXT NOT NULL,
-    "zitadelUserId" TEXT,
-    "payload" JSONB NOT NULL,
-    "status" "ZitadelWebhookStatus" NOT NULL DEFAULT 'PENDING',
-    "processingError" TEXT,
-    "processedAt" TIMESTAMP(3),
-    "retryCount" INTEGER NOT NULL DEFAULT 0,
-    "receivedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "zitadel_webhook_log_pkey" PRIMARY KEY ("id")
-);
 
 -- CreateTable
 CREATE TABLE "_AssistantBakerBatches" (
@@ -6659,26 +6614,6 @@ CREATE INDEX "windmill_execution_organizationId_scriptPath_idx" ON "windmill_exe
 -- CreateIndex
 CREATE INDEX "windmill_execution_correlationId_idx" ON "windmill_execution"("correlationId");
 
--- CreateIndex
-CREATE UNIQUE INDEX "zitadel_configuration_organizationId_key" ON "zitadel_configuration"("organizationId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "zitadel_configuration_zitadelOrgId_key" ON "zitadel_configuration"("zitadelOrgId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "zitadel_configuration_zitadelProjectId_key" ON "zitadel_configuration"("zitadelProjectId");
-
--- CreateIndex
-CREATE UNIQUE INDEX "zitadel_configuration_zitadelAppId_key" ON "zitadel_configuration"("zitadelAppId");
-
--- CreateIndex
-CREATE INDEX "zitadel_webhook_log_configId_event_idx" ON "zitadel_webhook_log"("configId", "event");
-
--- CreateIndex
-CREATE INDEX "zitadel_webhook_log_organizationId_status_idx" ON "zitadel_webhook_log"("organizationId", "status");
-
--- CreateIndex
-CREATE INDEX "zitadel_webhook_log_zitadelUserId_idx" ON "zitadel_webhook_log"("zitadelUserId");
 
 -- CreateIndex
 CREATE INDEX "_AssistantBakerBatches_B_index" ON "_AssistantBakerBatches"("B");
@@ -8356,12 +8291,6 @@ ALTER TABLE "windmill_execution" ADD CONSTRAINT "windmill_execution_organization
 
 -- AddForeignKey
 ALTER TABLE "windmill_execution" ADD CONSTRAINT "windmill_execution_configId_fkey" FOREIGN KEY ("configId") REFERENCES "windmill_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "zitadel_configuration" ADD CONSTRAINT "zitadel_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "zitadel_webhook_log" ADD CONSTRAINT "zitadel_webhook_log_configId_fkey" FOREIGN KEY ("configId") REFERENCES "zitadel_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_AssistantBakerBatches" ADD CONSTRAINT "_AssistantBakerBatches_A_fkey" FOREIGN KEY ("A") REFERENCES "bakery_bakers"("id") ON DELETE CASCADE ON UPDATE CASCADE;

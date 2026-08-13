@@ -348,8 +348,6 @@ services:
       NEXT_PUBLIC_SOCKET_URL: https://${API_DOMAIN:-api.scryme.tech}
       PORT: ${CRM_PORT:-3001}
       NODE_ENV: production
-      ZITADEL_API_URL: https://${ZITADEL_DOMAIN:-auth.scryme.tech}
-      ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
       api:
@@ -498,8 +496,6 @@ services:
       NEXT_PUBLIC_APP_URL: https://${PORTAL_DOMAIN:-portal.scryme.tech}
       PORT: ${PORTAL_PORT:-3006}
       NODE_ENV: production
-      ZITADEL_API_URL: https://${ZITADEL_DOMAIN:-auth.scryme.tech}
-      ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
       api:

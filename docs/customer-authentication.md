@@ -34,7 +34,6 @@ When your system registers a customer or when a customer registers on an integra
   "name": "Jane Smith",
   "email": "jane.smith@example.com",
   "phone": "+254700000123",
-  "zitadelUserId": "user_id_from_identity_provider",
   "company": "Acme Commerce Inc",
   "customerType": "B2B_PREMIUM",
   "dateOfBirth": "1990-11-23",

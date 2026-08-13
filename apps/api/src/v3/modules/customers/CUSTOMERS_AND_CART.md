@@ -6,7 +6,7 @@ This document covers the **Customer Registration, Management, Addresses**, and *
 
 ## 🔐 Customer Authentication & Identity Providers
 
-Scryme V3 supports native and federated self-authentication options using **Zitadel** and standard credential providers. This allows your customers to register, sign-in, and manage their profiles across web, mobile (Android), and headless environments.
+Scryme V3 supports native and federated self-authentication options using standard credential providers. This allows your customers to register, sign-in, and manage their profiles across web, mobile (Android), and headless environments.
 
 ### Supported Authentication Methods
 1. **Google Social Sign-In**: Seamless, single-tap OAuth2 federation.
@@ -14,10 +14,10 @@ Scryme V3 supports native and federated self-authentication options using **Zita
 
 ### How It Works (The Self-Authentication Cycle)
 - **Federated Login (e.g., Google/OIDC)**:
-  The client application coordinates with Zitadel to complete the authorization code flow (with PKCE), yielding an identity ID and a Bearer JWT.
+  The client application coordinates with the identity provider to complete the authorization code flow (with PKCE), yielding an identity ID and a Bearer JWT.
 - **Backend Syncing & Authentication**:
   When the customer makes an API call with the Bearer token or accesses the portal callback, the backend:
-  1. Decodes and verifies the token against the Zitadel JWKS keys or verifies the `better-auth` session token.
+  1. Decodes and verifies the token against the identity provider's JWKS keys or verifies the `better-auth` session token.
   2. Extracts claims (such as `sub` as `zitadelUserId`, `email`, `name`).
   3. Creates or updates the customer’s profile inside the database, mapping the external Zitadel identity to our local database models via `ExternalMapping` (`provider: "ZITADEL"`).
   4. Establishes a secure context attaching the resolved `Customer` ID to the request.

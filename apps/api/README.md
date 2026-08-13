@@ -1,11 +1,11 @@
 # Scryme API
 
-The **Scryme API** is a robust, enterprise-grade [NestJS](https://nestjs.com/) REST API that serves as the backbone of the Scryme ERP Platform. It handles business logic, authentication via Zitadel, data persistence with PostgreSQL & Prisma, and real-time events.
+The **Scryme API** is a robust, enterprise-grade [NestJS](https://nestjs.com/) REST API that serves as the backbone of the Scryme ERP Platform. It handles business logic, authentication, data persistence with PostgreSQL & Prisma, and real-time events.
 
 ## 🚀 Features
 
 - **Multi-tenant Architecture**: Support for multiple organizations and branches.
-- **Role-Based Access Control (RBAC)**: Fine-grained permissions managed through Zitadel.
+- **Role-Based Access Control (RBAC)**: Fine-grained permissions managed through role-based access control.
 - **Inventory Management**: Complex stock tracking, transfers, and reconciliation.
 - **Financial Integrations**: M-Pesa STK push and payment processing.
 - **Real-time Notifications**: Integrated with Ably for live updates to POS and Bakery apps.
@@ -19,7 +19,6 @@ The **Scryme API** is a robust, enterprise-grade [NestJS](https://nestjs.com/) R
 - **ORM**: [Prisma](https://prisma.io/)
 - **Database**: [PostgreSQL](https://www.postgresql.org/)
 - **Cache/Queue**: [Redis](https://redis.io/) & [RabbitMQ](https://www.rabbitmq.com/)
-- **Auth**: [Zitadel](https://zitadel.com/)
 - **Validation**: [Zod](https://zod.dev/)
 
 ---
