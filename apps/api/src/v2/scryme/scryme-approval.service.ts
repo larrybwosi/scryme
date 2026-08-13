@@ -40,116 +40,121 @@ export class ScrymeApprovalService {
       (d) => d.stepNumber === request.currentStep,
     );
 
-    for (const decision of pendingDecisions) {
-      try {
-        let scrymeUserId = decision.approver.user.scrymeUserId;
+    // OPTIMIZATION (Bolt ⚡): Parallelized direct-message notifications sending and logging
+    // for all pending approvers in the current step concurrently using Promise.all.
+    // This collapses sequential high-latency network and database round-trips from O(N) down to O(1).
+    await Promise.all(
+      pendingDecisions.map(async (decision) => {
+        try {
+          let scrymeUserId = decision.approver.user.scrymeUserId;
 
-        if (!scrymeUserId) {
-          const approverEmail = decision.approver.user.email;
-          const scrymeUser = await this.scrymeClient.findUserByEmail(
+          if (!scrymeUserId) {
+            const approverEmail = decision.approver.user.email;
+            const scrymeUser = await this.scrymeClient.findUserByEmail(
+              workspaceSlug,
+              approverEmail,
+            );
+
+            if (!scrymeUser) {
+              this.logger.warn(
+                `Approver ${approverEmail} not found in Scryme workspace ${workspaceSlug}`,
+              );
+              return;
+            }
+            scrymeUserId = scrymeUser.id;
+
+            // Update for next time
+            await this.prisma.client.user.update({
+              where: { id: decision.approver.user.id },
+              data: { scrymeUserId },
+            });
+          }
+
+          const dmChannel = await this.scrymeClient.getDirectMessageChannel(
             workspaceSlug,
-            approverEmail,
+            scrymeUserId,
           );
 
-          if (!scrymeUser) {
-            this.logger.warn(
-              `Approver ${approverEmail} not found in Scryme workspace ${workspaceSlug}`,
-            );
-            continue;
-          }
-          scrymeUserId = scrymeUser.id;
+          const actions: ScrymeChatAction[] = [
+            {
+              id: `approve:${decision.id}`,
+              label: "Approve",
+              type: "button",
+              style: "primary",
+              value: decision.id,
+            },
+            {
+              id: `decline:${decision.id}`,
+              label: "Decline",
+              type: "button",
+              style: "danger",
+              value: decision.id,
+            },
+            {
+              id: `request_info:${decision.id}`,
+              label: "Ask for More Details",
+              type: "button",
+              style: "secondary",
+              value: decision.id,
+            },
+          ];
 
-          // Update for next time
-          await this.prisma.client.user.update({
-            where: { id: decision.approver.user.id },
-            data: { scrymeUserId },
+          const content =
+            `🔔 *Approval Request: ${request.relatedRecordNumber}*\n\n` +
+            `*Requester:* ${request.requester.user.name || request.requester.user.email}\n` +
+            `*Amount:* ${request.currency} ${request.amount.toString()}\n` +
+            `*Type:* ${request.requestType}\n\n` +
+            `Please review and take action.`;
+
+          // Enterprise: DO NOT use scrymeThreadId in DMs across different users.
+          // DM threads are user-specific. Instead, we use it only if it was started in THIS DM.
+          const existingDmMessage = await this.prisma.client.scrymeMessage.findFirst({
+            where: {
+              relatedId: requestId,
+              recipientId: decision.approverId,
+              channelSlug: dmChannel.slug,
+            },
+            orderBy: { createdAt: "asc" },
           });
-        }
 
-        const dmChannel = await this.scrymeClient.getDirectMessageChannel(
-          workspaceSlug,
-          scrymeUserId,
-        );
-
-        const actions: ScrymeChatAction[] = [
-          {
-            id: `approve:${decision.id}`,
-            label: "Approve",
-            type: "button",
-            style: "primary",
-            value: decision.id,
-          },
-          {
-            id: `decline:${decision.id}`,
-            label: "Decline",
-            type: "button",
-            style: "danger",
-            value: decision.id,
-          },
-          {
-            id: `request_info:${decision.id}`,
-            label: "Ask for More Details",
-            type: "button",
-            style: "secondary",
-            value: decision.id,
-          },
-        ];
-
-        const content =
-          `🔔 *Approval Request: ${request.relatedRecordNumber}*\n\n` +
-          `*Requester:* ${request.requester.user.name || request.requester.user.email}\n` +
-          `*Amount:* ${request.currency} ${request.amount.toString()}\n` +
-          `*Type:* ${request.requestType}\n\n` +
-          `Please review and take action.`;
-
-        // Enterprise: DO NOT use scrymeThreadId in DMs across different users.
-        // DM threads are user-specific. Instead, we use it only if it was started in THIS DM.
-        const existingDmMessage = await this.prisma.client.scrymeMessage.findFirst({
-          where: {
-            relatedId: requestId,
-            recipientId: decision.approverId,
-            channelSlug: dmChannel.slug,
-          },
-          orderBy: { createdAt: "asc" },
-        });
-
-        const message = await this.scrymeClient.sendMessage(
-          workspaceSlug,
-          dmChannel.slug,
-          {
-            content,
-            actions,
-            threadId: existingDmMessage?.messageId || undefined,
-          },
-        );
-
-        await this.prisma.client.approvalDecision.update({
-          where: { id: decision.id },
-          data: {
-            scrymeMessageId: message.id,
-            scrymeChannelId: dmChannel.slug,
-          },
-        });
-
-        // Log message for audit and threading
-        await this.prisma.client.scrymeMessage.create({
-          data: {
-            organizationId,
+          const message = await this.scrymeClient.sendMessage(
             workspaceSlug,
-            channelSlug: dmChannel.slug,
-            messageId: message.id,
-            content,
-            recipientId: decision.approverId,
-            eventType: "APPROVAL_REQUEST",
-            relatedId: requestId,
-          },
-        });
-      } catch (error: any) {
-        this.logger.error(
-          `Failed to send Scryme notification to approver ${decision.approverId}: ${error.message}`,
-        );
-      }
-    }
+            dmChannel.slug,
+            {
+              content,
+              actions,
+              threadId: existingDmMessage?.messageId || undefined,
+            },
+          );
+
+          await this.prisma.client.approvalDecision.update({
+            where: { id: decision.id },
+            data: {
+              scrymeMessageId: message.id,
+              scrymeChannelId: dmChannel.slug,
+            },
+          });
+
+          // Log message for audit and threading
+          await this.prisma.client.scrymeMessage.create({
+            data: {
+              organizationId,
+              workspaceSlug,
+              channelSlug: dmChannel.slug,
+              messageId: message.id,
+              content,
+              recipientId: decision.approverId,
+              eventType: "APPROVAL_REQUEST",
+              relatedId: requestId,
+            },
+          });
+        } catch (error: any) {
+          this.logger.error(
+            `Failed to send Scryme notification to approver ${decision.approverId}: ${error.message}`,
+          );
+        }
+      }),
+    );
   }
 
   /**
@@ -197,33 +202,36 @@ export class ScrymeApprovalService {
             ? "Information Requested"
             : finalDecision.status;
 
-    for (const decision of request.decisions) {
-      if (decision.scrymeMessageId && decision.scrymeChannelId) {
-        try {
-          const content =
-            `✅ *Approval Request: ${request.relatedRecordNumber}*\n\n` +
-            `*Status:* ${statusText} by ${approverName}\n` +
-            (finalDecision.comments &&
-            finalDecision.comments !== "Action taken via Scryme Chat"
-              ? `*Comments:* ${finalDecision.comments}\n`
-              : "");
+    // OPTIMIZATION (Bolt ⚡): Update step messages concurrently using Promise.all to avoid O(N) sequential high-latency HTTP calls
+    await Promise.all(
+      request.decisions.map(async (decision) => {
+        if (decision.scrymeMessageId && decision.scrymeChannelId) {
+          try {
+            const content =
+              `✅ *Approval Request: ${request.relatedRecordNumber}*\n\n` +
+              `*Status:* ${statusText} by ${approverName}\n` +
+              (finalDecision.comments &&
+              finalDecision.comments !== "Action taken via Scryme Chat"
+                ? `*Comments:* ${finalDecision.comments}\n`
+                : "");
 
-          await this.scrymeClient.updateMessage(
-            workspaceSlug,
-            decision.scrymeChannelId,
-            decision.scrymeMessageId,
-            {
-              content,
-              actions: [], // Remove buttons
-            },
-          );
-        } catch (error: any) {
-          this.logger.error(
-            `Failed to update Scryme message ${decision.scrymeMessageId}: ${error.message}`,
-          );
+            await this.scrymeClient.updateMessage(
+              workspaceSlug,
+              decision.scrymeChannelId,
+              decision.scrymeMessageId,
+              {
+                content,
+                actions: [], // Remove buttons
+              },
+            );
+          } catch (error: any) {
+            this.logger.error(
+              `Failed to update Scryme message ${decision.scrymeMessageId}: ${error.message}`,
+            );
+          }
         }
-      }
-    }
+      }),
+    );
   }
 
   /**
