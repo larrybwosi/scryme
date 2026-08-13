@@ -63,33 +63,38 @@ export class PosSaleService {
       (p: any) => p.method === "MPESA" && p.status === "PENDING",
     );
 
-    for (const payment of mpesaPayments) {
-      if (payment.payerPhone) {
-        const mpesaInput = (preCheck.data as any).payments.find(
-          (p: any) =>
-            p.method === "MPESA" &&
-            Math.abs(Number(p.amount) - Number(payment.amount)) < 0.01,
-        );
+    // ⚡ Bolt Optimization: Parallelize high-latency external Safaricom M-Pesa STK push API calls
+    // using Promise.all with localized try/catch blocks. This avoids sequential network request
+    // blocking and reduces the endpoint's latency profile significantly from O(N) down to O(1).
+    await Promise.all(
+      mpesaPayments.map(async (payment: any) => {
+        if (payment.payerPhone) {
+          const mpesaInput = (preCheck.data as any).payments.find(
+            (p: any) =>
+              p.method === "MPESA" &&
+              Math.abs(Number(p.amount) - Number(payment.amount)) < 0.01,
+          );
 
-        const flowType = mpesaInput?.mpesaFlowType || "STK_PUSH";
+          const flowType = mpesaInput?.mpesaFlowType || "STK_PUSH";
 
-        if (flowType === "STK_PUSH") {
-          try {
-            await triggerStkPush({
-              organizationId,
-              amount: Number(payment.amount),
-              phoneNumber: payment.payerPhone,
-              transactionId: transaction.id,
-              paymentId: payment.id,
-            });
-          } catch (stkError: any) {
-            this.logger.error(
-              `STK Push Failed for payment ${payment.id}: ${stkError.message}`,
-            );
+          if (flowType === "STK_PUSH") {
+            try {
+              await triggerStkPush({
+                organizationId,
+                amount: Number(payment.amount),
+                phoneNumber: payment.payerPhone,
+                transactionId: transaction.id,
+                paymentId: payment.id,
+              });
+            } catch (stkError: any) {
+              this.logger.error(
+                `STK Push Failed for payment ${payment.id}: ${stkError.message}`,
+              );
+            }
           }
         }
-      }
-    }
+      }),
+    );
 
     return result;
   }
