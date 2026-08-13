@@ -355,7 +355,7 @@ export class StrapiProductSyncUseCase {
     triggeredBy: string,
   ) {
     const conn = await this.connectionUseCase.getConnectionOrThrow(organizationId, connectionId);
-    const strapiConfig = await this.connectionUseCase.getConfigOrThrow(connectionId);
+    const strapiConfig = await this.connectionUseCase.getConfigOrThrow(organizationId, connectionId);
 
     const config: StrapiClientConfig = {
       strapiUrl: strapiConfig.strapiUrl,

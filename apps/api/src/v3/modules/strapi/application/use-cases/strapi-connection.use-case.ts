@@ -250,7 +250,10 @@ export class StrapiConnectionUseCase {
     return conn;
   }
 
-  async getConfigOrThrow(connectionId: string) {
+  async getConfigOrThrow(organizationId: string, connectionId: string) {
+    // SECURITY (Sentinel): First verify that the connection exists and belongs to the caller's organization
+    await this.getConnectionOrThrow(organizationId, connectionId);
+
     const config = await this.prisma.client.strapiConnectionConfig.findUnique({
       where: { connectionId },
     });
