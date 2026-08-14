@@ -1,3 +1,4 @@
+import React from "react";
 import { ScrymeClientSDK, createClientSDK } from "../client";
 import { ScrymeServerSDK, createServerSDK } from "../server";
 import axios from "axios";
@@ -332,6 +333,138 @@ describe("Scryme V3 Client and Server SDKs", () => {
         user: null,
       });
     });
+
+    it("should return the correct session structure synchronously using the session getter", async () => {
+      const sdk = createClientSDK({
+        storage: mockStorage,
+      });
+
+      // Initially no session
+      expect(sdk.customer.auth.session).toEqual({
+        data: null,
+        isPending: false,
+        error: null,
+      });
+      expect(sdk.auth.session).toEqual({
+        data: null,
+        isPending: false,
+        error: null,
+      });
+
+      // Sign in to establish session
+      const mockSignInResponse = {
+        token: "session_token_123",
+        session: { id: "cust_123", name: "Alice" },
+      };
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: mockSignInResponse,
+      });
+
+      await sdk.customer.auth.signIn({ email: "alice@test.com", password: "pwd" });
+
+      const expectedSession = {
+        data: {
+          session: {
+            id: "cust_123",
+            userId: "cust_123",
+            expiresAt: null,
+            token: "session_token_123",
+          },
+          user: { id: "cust_123", name: "Alice" },
+        },
+        isPending: false,
+        error: null,
+      };
+
+      expect(sdk.customer.auth.session).toEqual(expectedSession);
+      expect(sdk.auth.session).toEqual(expectedSession);
+    });
+
+    it("should reactively update when using the useSession hook", async () => {
+      const sdk = createClientSDK({
+        storage: mockStorage,
+      });
+
+      // Mock React's useState and useEffect to test useSession in isolation
+      const originalUseState = React.useState;
+      const originalUseEffect = React.useEffect;
+
+      let stateVal: any;
+      let stateSetter: any;
+
+      const mockUseState = jest.fn((init) => {
+        const val = typeof init === "function" ? init() : init;
+        stateVal = val;
+        stateSetter = jest.fn((newVal) => {
+          stateVal = typeof newVal === "function" ? newVal(stateVal) : newVal;
+        });
+        return [stateVal, stateSetter];
+      });
+
+      const mockUseEffect = jest.fn((effect) => {
+        effect();
+      });
+
+      jest.spyOn(React, "useState").mockImplementation(mockUseState as any);
+      jest.spyOn(React, "useEffect").mockImplementation(mockUseEffect as any);
+
+      try {
+        const sessionResult = sdk.customer.auth.useSession();
+        expect(sessionResult).toEqual({
+          data: null,
+          isPending: false,
+          error: null,
+        });
+
+        // Sign in
+        const mockSignInResponse = {
+          token: "session_token_456",
+          session: { id: "cust_456", name: "Bob" },
+        };
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: mockSignInResponse,
+        });
+
+        await sdk.customer.auth.signIn({ email: "bob@test.com", password: "pwd" });
+
+        // The stateSetter should have been called with the new session
+        expect(stateSetter).toHaveBeenCalled();
+      } finally {
+        React.useState = originalUseState;
+        React.useEffect = originalUseEffect;
+      }
+    });
+
+    it("should automatically sign in after calling signUp if a password is provided", async () => {
+      const sdk = createClientSDK({
+        storage: mockStorage,
+        orgSlug: "test-org-signUp",
+      });
+
+      // Mock register request returning customer profile
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { id: "cust_new_789", name: "New User", email: "new@test.com" },
+      });
+
+      // Mock login request
+      const mockLoginResponse = {
+        token: "session_token_signup_789",
+        session: { id: "cust_new_789", name: "New User" },
+      };
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: mockLoginResponse,
+      });
+
+      await sdk.customer.auth.signUp({
+        name: "New User",
+        email: "new@test.com",
+        password: "password123",
+      });
+
+      // Should automatically login and populate the session
+      expect(sdk.customer.auth.session.data?.session.token).toBe("session_token_signup_789");
+      expect(sdk.customer.auth.session.data?.user).toEqual({ id: "cust_new_789", name: "New User" });
+    });
   });
 
   describe("Automated token exchange, refresh, and deduplication", () => {
@@ -536,6 +669,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         productId: "p1",
         quantity: 3,
         sessionId: "sess-123",
+        customerId: "mock-cust-123",
       });
       expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
         "/v3/cart-org/cart/items",
@@ -543,6 +677,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
           productId: "p1",
           quantity: 3,
           sessionId: "sess-123",
+          customerId: "mock-cust-123",
         },
         undefined,
       );
@@ -551,11 +686,11 @@ describe("Scryme V3 Client and Server SDKs", () => {
       (sdk.axiosInstance.delete as jest.Mock).mockResolvedValueOnce({
         data: { success: true },
       });
-      await sdk.cart.remove({ productId: "p1", sessionId: "sess-123" });
+      await sdk.cart.remove({ productId: "p1", sessionId: "sess-123", customerId: "mock-cust-123" });
       expect(sdk.axiosInstance.delete).toHaveBeenCalledWith(
         "/v3/cart-org/cart/items",
         {
-          data: { productId: "p1", sessionId: "sess-123" },
+          data: { productId: "p1", sessionId: "sess-123", customerId: "mock-cust-123" },
         },
       );
 
@@ -595,6 +730,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         productId: "p1",
         quantity: 5,
         sessionId: "sess-123",
+        customerId: "mock-cust-123",
       });
 
       // getCart should be called with sessionId
@@ -609,9 +745,260 @@ describe("Scryme V3 Client and Server SDKs", () => {
           productId: "p1",
           quantity: 3,
           sessionId: "sess-123",
+          customerId: "mock-cust-123",
         },
         undefined,
       );
+    });
+  });
+
+  describe("Client SDK Dynamic customerId resolution", () => {
+    it("should inject customerId from active session on cart.add if not provided", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      // Mock active session with customerId
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: "session-token",
+        user: { customerId: "dynamic-cust-123" },
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.add({
+        productId: "p1",
+        quantity: 3,
+        sessionId: "sess-123",
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/cart-org/cart/items",
+        {
+          productId: "p1",
+          quantity: 3,
+          sessionId: "sess-123",
+          customerId: "dynamic-cust-123",
+        },
+        undefined,
+      );
+    });
+
+    it("should throw an error on cart.add if customerId not provided and no active session", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: null,
+        user: null,
+      });
+
+      await expect(
+        sdk.cart.add({
+          productId: "p1",
+          quantity: 3,
+          sessionId: "sess-123",
+        })
+      ).rejects.toThrow("Unauthorized: customerId is required.");
+    });
+
+    it("should preserve explicitly provided customerId on cart.add", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.add({
+        productId: "p1",
+        quantity: 3,
+        sessionId: "sess-123",
+        customerId: "explicit-cust-999",
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/cart-org/cart/items",
+        {
+          productId: "p1",
+          quantity: 3,
+          sessionId: "sess-123",
+          customerId: "explicit-cust-999",
+        },
+        undefined,
+      );
+    });
+
+    it("should inject customerId from active session on cart.remove if not provided", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: "session-token",
+        user: { id: "dynamic-cust-abc" }, // testing alternate fallback .id
+      });
+
+      (sdk.axiosInstance.delete as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.remove({ productId: "p1", sessionId: "sess-123" });
+
+      expect(sdk.axiosInstance.delete).toHaveBeenCalledWith(
+        "/v3/cart-org/cart/items",
+        {
+          data: {
+            productId: "p1",
+            sessionId: "sess-123",
+            customerId: "dynamic-cust-abc",
+          },
+        },
+      );
+    });
+
+    it("should throw an error on cart.remove if customerId not provided and no active session", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: null,
+        user: null,
+      });
+
+      await expect(
+        sdk.cart.remove({ productId: "p1", sessionId: "sess-123" })
+      ).rejects.toThrow("Unauthorized: customerId is required.");
+    });
+
+    it("should inject customerId from active session on cart.update if not provided", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: "session-token",
+        user: { customer: { id: "dynamic-cust-xyz" } }, // testing third fallback .customer.id
+      });
+
+      // Mock getCart to return existing item
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          items: [{ productId: "p1", quantity: 2 }],
+        },
+      });
+
+      // Mock addToCart for diff (+3)
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.update({
+        productId: "p1",
+        quantity: 5,
+        sessionId: "sess-123",
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/cart-org/cart/items",
+        {
+          productId: "p1",
+          quantity: 3,
+          sessionId: "sess-123",
+          customerId: "dynamic-cust-xyz",
+        },
+        undefined,
+      );
+    });
+
+    it("should throw an error on cart.update if customerId not provided and no active session", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: null,
+        user: null,
+      });
+
+      await expect(
+        sdk.cart.update({
+          productId: "p1",
+          quantity: 5,
+          sessionId: "sess-123",
+        })
+      ).rejects.toThrow("Unauthorized: customerId is required.");
+    });
+
+    it("should inject customerId from active session on bookings.create if not provided", async () => {
+      const sdk = createClientSDK({
+        clientId: "bookings-client-id",
+        orgSlug: "bookings-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: "session-token",
+        user: { customerId: "booking-cust-456" },
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { id: "booking-777" },
+      });
+
+      await sdk.bookings.create({
+        serviceId: "srv-1",
+        scheduledStartTime: "2026-10-15T09:00:00Z",
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/bookings-org/services/bookings",
+        {
+          serviceId: "srv-1",
+          scheduledStartTime: "2026-10-15T09:00:00Z",
+          customerId: "booking-cust-456",
+        },
+        undefined,
+      );
+    });
+
+    it("should throw an error on bookings.create if customerId not provided and no active session", async () => {
+      const sdk = createClientSDK({
+        clientId: "bookings-client-id",
+        orgSlug: "bookings-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: null,
+        user: null,
+      });
+
+      await expect(
+        sdk.bookings.create({
+          serviceId: "srv-1",
+          scheduledStartTime: "2026-10-15T09:00:00Z",
+        })
+      ).rejects.toThrow("Unauthorized: customerId is required.");
     });
   });
 
@@ -729,12 +1116,14 @@ describe("Scryme V3 Client and Server SDKs", () => {
         await sdk.bookings.create({
           serviceId: "srv-1",
           scheduledStartTime: "2026-10-15T09:00:00Z",
+          customerId: "mock-cust-123",
         });
         expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
           "/v3/client-org/services/bookings",
           {
             serviceId: "srv-1",
             scheduledStartTime: "2026-10-15T09:00:00Z",
+            customerId: "mock-cust-123",
           },
           undefined,
         );
@@ -991,6 +1380,41 @@ const authData = await sdk.auth.signIn({ email: "alice@generic.com", password: "
   });
 
   describe("New Features: Singular Product/Service Retrieval and Header-Based Session", () => {
+    it("should retrieve a product with reviews, favoritesCount, and dynamic meta calculations", async () => {
+      const sdk = createClientSDK({ orgSlug: "test-org" });
+      const mockProductWithReviews = {
+        id: "prod-rich",
+        slug: "rich-product",
+        name: "Rich Product",
+        brand: "Rich Brand",
+        isNew: true,
+        detailedDescription: "Extremely rich product details.",
+        tags: ["rich", "luxury"],
+        reviews: [
+          { id: "r1", rating: 5, comment: "Awesome!" },
+          { id: "r2", rating: 4, comment: "Nice!" },
+        ],
+        favoritesCount: 42,
+        favouritesCount: 42,
+        meta: {
+          averageRating: 4.5,
+          reviewCount: 2,
+        },
+      };
+
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: [mockProductWithReviews],
+      });
+
+      const response = await sdk.catalog.getProduct("prod-rich");
+      expect(response.data.id).toBe("prod-rich");
+      expect(response.data.brand).toBe("Rich Brand");
+      expect(response.data.reviews).toHaveLength(2);
+      expect(response.data.favoritesCount).toBe(42);
+      expect(response.data.favouritesCount).toBe(42);
+      expect(response.data.meta?.averageRating).toBe(4.5);
+    });
+
     it("should retrieve a product by ID or slug via getProduct", async () => {
       const sdk = createClientSDK({ orgSlug: "test-org" });
       const mockProducts = [

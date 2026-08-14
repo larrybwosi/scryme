@@ -138,6 +138,23 @@ export interface SessionState<TUser = CustomerResponseDto> {
 }
 
 /**
+ * Standard client-side session structure matching better-auth.
+ */
+export interface ClientSessionStructure<TUser = CustomerResponseDto> {
+  data: {
+    session: {
+      id: string;
+      userId: string;
+      expiresAt: Date | null;
+      token: string | null;
+    };
+    user: TUser;
+  } | null;
+  isPending: boolean;
+  error: any;
+}
+
+/**
  * Callback signature triggered whenever the customer authentication status changes.
  */
 export type AuthStateCallback<TUser = CustomerResponseDto> = (
@@ -601,15 +618,42 @@ export class ScrymeClientSDK<
         return this.orders.getCart(params as CartControllerGetCartParams) as any;
       },
       add: async (dto: AddToCartDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.orders.addToCart(dto);
       },
       remove: async (dto: RemoveFromCartDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.orders.removeFromCart(dto);
       },
       clear: async (params?: CartControllerClearCartParams) => {
         return this.orders.clearCart(params as CartControllerClearCartParams);
       },
       update: async <T = TCartResponse>(dto: AddToCartDto & { quantity: number }): Promise<AxiosResponse<void> | AxiosResponse<T> | undefined> => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         const response = await this.orders.getCart({
           sessionId: dto.sessionId || "",
         });
@@ -814,58 +858,57 @@ export class ScrymeClientSDK<
         }
         return authData;
       },
-      useSession: () => {
-        const [data, setData] = useState<any>(null);
-        const [isPending, setIsPending] = useState<boolean>(true);
-        const [error, setError] = useState<any>(null);
+    useSession: (): ClientSessionStructure<TUser> & { refetch: () => Promise<void> } => {
+  const [data, setData] = useState<ClientSessionStructure<TUser>['data']>(null);
+  const [isPending, setIsPending] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
 
-        const fetchSession = async () => {
-          setIsPending(true);
-          try {
-            const sessionState = await customerAuth.getSession();
-            if (!sessionState.token) {
-              setData(null);
-              setIsPending(false);
-              return;
-            }
-            const res = await customerAuth.getCurrentSession() as any;
-            if (res && (res.session || res.customer || res.user)) {
-              setData({
-                session: res.session,
-                user: res.customer || res.user,
-              });
-            } else {
-              setData({
-                session: { id: sessionState.token },
-                user: sessionState.user,
-              });
-            }
-            setError(null);
-          } catch (e: any) {
-            setError(e);
-            setData(null);
-          } finally {
-            setIsPending(false);
-          }
-        };
+  const fetchSession = useCallback(async () => {
+    setIsPending(true);
+    try {
+      const sessionState = await customerAuth.getSession();
+      if (!sessionState?.token) {
+        setData(null);
+        setError(null);
+        return;
+      }
 
-        useEffect(() => {
-          fetchSession();
-          const { unsubscribe } = customerAuth.onAuthStateChange(() => {
-            fetchSession();
-          });
-          return () => unsubscribe();
-        }, []);
+      const res = await customerAuth.getCurrentSession();
+      if (res && (res.session || res.customer || res.user)) {
+        setData({
+          session: res.session,
+          user: res.customer || res.user,
+        });
+      } else {
+        setData({
+          session: { id: sessionState.token },
+          user: sessionState.user,
+        });
+      }
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error(String(e)));
+      setData(null);
+    } finally {
+      setIsPending(false);
+    }
+  }, []);
 
-        return {
-          data,
-          isPending,
-          error,
-          refetch: fetchSession,
-        };
-      },
-    };
+  useEffect(() => {
+    fetchSession();
+    const { unsubscribe } = customerAuth.onAuthStateChange(() => {
+      fetchSession();
+    });
+    return () => unsubscribe();
+  }, [fetchSession]);
 
+  return {
+    data,
+    isPending,
+    error,
+    refetch: fetchSession,
+  };
+}
     this.customer = {
       getProfile: async <T = TUser>(): Promise<T> => {
         return this.customer.auth.getCurrentSession() as any;
@@ -901,10 +944,25 @@ export class ScrymeClientSDK<
       authenticate: async () => {
         return performExchange();
       },
+      get session() {
+        return customerAuth.session;
+      },
+      useSession() {
+        return customerAuth.useSession();
+      },
     };
 
     this.bookings = {
       create: async (dto: CreateBookingDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.catalog.createBooking(dto) as any;
       },
       get: async (id: string) => {
