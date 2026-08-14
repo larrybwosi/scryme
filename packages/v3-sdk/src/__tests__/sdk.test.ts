@@ -536,6 +536,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         productId: "p1",
         quantity: 3,
         sessionId: "sess-123",
+        customerId: "mock-cust-123",
       });
       expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
         "/v3/cart-org/cart/items",
@@ -543,6 +544,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
           productId: "p1",
           quantity: 3,
           sessionId: "sess-123",
+          customerId: "mock-cust-123",
         },
         undefined,
       );
@@ -551,11 +553,11 @@ describe("Scryme V3 Client and Server SDKs", () => {
       (sdk.axiosInstance.delete as jest.Mock).mockResolvedValueOnce({
         data: { success: true },
       });
-      await sdk.cart.remove({ productId: "p1", sessionId: "sess-123" });
+      await sdk.cart.remove({ productId: "p1", sessionId: "sess-123", customerId: "mock-cust-123" });
       expect(sdk.axiosInstance.delete).toHaveBeenCalledWith(
         "/v3/cart-org/cart/items",
         {
-          data: { productId: "p1", sessionId: "sess-123" },
+          data: { productId: "p1", sessionId: "sess-123", customerId: "mock-cust-123" },
         },
       );
 
@@ -595,6 +597,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         productId: "p1",
         quantity: 5,
         sessionId: "sess-123",
+        customerId: "mock-cust-123",
       });
 
       // getCart should be called with sessionId
@@ -609,9 +612,260 @@ describe("Scryme V3 Client and Server SDKs", () => {
           productId: "p1",
           quantity: 3,
           sessionId: "sess-123",
+          customerId: "mock-cust-123",
         },
         undefined,
       );
+    });
+  });
+
+  describe("Client SDK Dynamic customerId resolution", () => {
+    it("should inject customerId from active session on cart.add if not provided", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      // Mock active session with customerId
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: "session-token",
+        user: { customerId: "dynamic-cust-123" },
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.add({
+        productId: "p1",
+        quantity: 3,
+        sessionId: "sess-123",
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/cart-org/cart/items",
+        {
+          productId: "p1",
+          quantity: 3,
+          sessionId: "sess-123",
+          customerId: "dynamic-cust-123",
+        },
+        undefined,
+      );
+    });
+
+    it("should throw an error on cart.add if customerId not provided and no active session", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: null,
+        user: null,
+      });
+
+      await expect(
+        sdk.cart.add({
+          productId: "p1",
+          quantity: 3,
+          sessionId: "sess-123",
+        })
+      ).rejects.toThrow("Unauthorized: customerId is required.");
+    });
+
+    it("should preserve explicitly provided customerId on cart.add", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.add({
+        productId: "p1",
+        quantity: 3,
+        sessionId: "sess-123",
+        customerId: "explicit-cust-999",
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/cart-org/cart/items",
+        {
+          productId: "p1",
+          quantity: 3,
+          sessionId: "sess-123",
+          customerId: "explicit-cust-999",
+        },
+        undefined,
+      );
+    });
+
+    it("should inject customerId from active session on cart.remove if not provided", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: "session-token",
+        user: { id: "dynamic-cust-abc" }, // testing alternate fallback .id
+      });
+
+      (sdk.axiosInstance.delete as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.remove({ productId: "p1", sessionId: "sess-123" });
+
+      expect(sdk.axiosInstance.delete).toHaveBeenCalledWith(
+        "/v3/cart-org/cart/items",
+        {
+          data: {
+            productId: "p1",
+            sessionId: "sess-123",
+            customerId: "dynamic-cust-abc",
+          },
+        },
+      );
+    });
+
+    it("should throw an error on cart.remove if customerId not provided and no active session", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: null,
+        user: null,
+      });
+
+      await expect(
+        sdk.cart.remove({ productId: "p1", sessionId: "sess-123" })
+      ).rejects.toThrow("Unauthorized: customerId is required.");
+    });
+
+    it("should inject customerId from active session on cart.update if not provided", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: "session-token",
+        user: { customer: { id: "dynamic-cust-xyz" } }, // testing third fallback .customer.id
+      });
+
+      // Mock getCart to return existing item
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          items: [{ productId: "p1", quantity: 2 }],
+        },
+      });
+
+      // Mock addToCart for diff (+3)
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
+
+      await sdk.cart.update({
+        productId: "p1",
+        quantity: 5,
+        sessionId: "sess-123",
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/cart-org/cart/items",
+        {
+          productId: "p1",
+          quantity: 3,
+          sessionId: "sess-123",
+          customerId: "dynamic-cust-xyz",
+        },
+        undefined,
+      );
+    });
+
+    it("should throw an error on cart.update if customerId not provided and no active session", async () => {
+      const sdk = createClientSDK({
+        clientId: "cart-client-id",
+        orgSlug: "cart-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: null,
+        user: null,
+      });
+
+      await expect(
+        sdk.cart.update({
+          productId: "p1",
+          quantity: 5,
+          sessionId: "sess-123",
+        })
+      ).rejects.toThrow("Unauthorized: customerId is required.");
+    });
+
+    it("should inject customerId from active session on bookings.create if not provided", async () => {
+      const sdk = createClientSDK({
+        clientId: "bookings-client-id",
+        orgSlug: "bookings-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: "session-token",
+        user: { customerId: "booking-cust-456" },
+      });
+
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { id: "booking-777" },
+      });
+
+      await sdk.bookings.create({
+        serviceId: "srv-1",
+        scheduledStartTime: "2026-10-15T09:00:00Z",
+      });
+
+      expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+        "/v3/bookings-org/services/bookings",
+        {
+          serviceId: "srv-1",
+          scheduledStartTime: "2026-10-15T09:00:00Z",
+          customerId: "booking-cust-456",
+        },
+        undefined,
+      );
+    });
+
+    it("should throw an error on bookings.create if customerId not provided and no active session", async () => {
+      const sdk = createClientSDK({
+        clientId: "bookings-client-id",
+        orgSlug: "bookings-org",
+        storage: mockStorage,
+      });
+
+      sdk.auth.getSession = jest.fn().mockResolvedValue({
+        token: null,
+        user: null,
+      });
+
+      await expect(
+        sdk.bookings.create({
+          serviceId: "srv-1",
+          scheduledStartTime: "2026-10-15T09:00:00Z",
+        })
+      ).rejects.toThrow("Unauthorized: customerId is required.");
     });
   });
 
@@ -729,12 +983,14 @@ describe("Scryme V3 Client and Server SDKs", () => {
         await sdk.bookings.create({
           serviceId: "srv-1",
           scheduledStartTime: "2026-10-15T09:00:00Z",
+          customerId: "mock-cust-123",
         });
         expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
           "/v3/client-org/services/bookings",
           {
             serviceId: "srv-1",
             scheduledStartTime: "2026-10-15T09:00:00Z",
+            customerId: "mock-cust-123",
           },
           undefined,
         );
