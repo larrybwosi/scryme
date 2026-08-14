@@ -7,14 +7,17 @@ const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
 const apiVersion = "2023-05-03";
 
 // Determine if we should use the actual Sanity Client or Fallback
+const PROJECT_ID_PLACEHOLDER = ["NEXT_PUBLIC_SANITY_PROJECT_ID", "PLACEHOLDER"].join("_");
+const DATASET_PLACEHOLDER = ["NEXT_PUBLIC_SANITY_DATASET", "PLACEHOLDER"].join("_");
+
 const isConfigured =
   projectId &&
   dataset &&
   projectId !== "your-project-id" &&
   dataset !== "production-mock-stub" &&
   projectId !== "your-sanity-project-id" &&
-  projectId !== "NEXT_PUBLIC_SANITY_PROJECT_ID_PLACEHOLDER" &&
-  dataset !== "NEXT_PUBLIC_SANITY_DATASET_PLACEHOLDER";
+  projectId !== PROJECT_ID_PLACEHOLDER &&
+  dataset !== DATASET_PLACEHOLDER;
 
 export const client = isConfigured
   ? createClient({
