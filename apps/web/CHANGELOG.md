@@ -1,5 +1,11 @@
 # web
 
+## 6.37.0
+
+### Minor Changes
+
+- c7ca94c: Update
+
 ## 6.36.0
 
 ### Minor Changes

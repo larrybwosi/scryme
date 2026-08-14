@@ -1,5 +1,11 @@
 # site
 
+## 1.12.0
+
+### Minor Changes
+
+- c7ca94c: Update
+
 ## 1.11.0
 
 ### Minor Changes
