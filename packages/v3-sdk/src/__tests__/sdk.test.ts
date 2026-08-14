@@ -414,6 +414,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
           data: null,
           isPending: false,
           error: null,
+          refetch: expect.any(Function),
         });
 
         // Sign in
