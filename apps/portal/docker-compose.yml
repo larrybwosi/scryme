@@ -25,8 +25,6 @@ services:
       PORT: ${PORTAL_PORT:-3006}
       NODE_ENV: production
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      ZITADEL_DOMAIN: ${ZITADEL_DOMAIN:-auth.scryme.tech}
-      ZITADEL_CLIENT_ID: ${ZITADEL_CLIENT_ID}
     networks:
       - scryme-network
       - proxy-network

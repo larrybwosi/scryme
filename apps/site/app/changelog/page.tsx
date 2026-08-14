@@ -14,16 +14,6 @@ export const metadata: Metadata = {
 
 const logs = [
   {
-    version: "v3.12.0",
-    date: "October 18, 2025",
-    title: "Zitadel V2 Connect-RPC Integration & B2B Invoicing",
-    highlights: [
-      "Optimized programmatically managed tenant workspace provisioning via Zitadel's V2 APIs.",
-      "Added multi-location inventory adjustments synced directly into the Finance ledger with lot tracking.",
-      "Improved mobile checkout response speeds inside Tauri-based POS containers by 22%.",
-    ],
-  },
-  {
     version: "v3.11.2",
     date: "August 04, 2025",
     title: "better-auth Session Cookies & Next.js ESM Resolvers",

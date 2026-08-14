@@ -128,6 +128,38 @@ describe('ServiceManagementService', () => {
     });
   });
 
+  describe('getServicesPaginated', () => {
+    it('should query active services paginated and select only required columns', async () => {
+      const orgId = 'org1';
+      const pagination = { limit: 10, offset: 5 };
+      const mockServices = [
+        { id: 'srv1', name: 'Haircut', category: { id: 'cat1', name: 'Grooming' } }
+      ];
+
+      vi.spyOn(prisma.client.service, 'findMany').mockResolvedValue(mockServices as any);
+
+      const result = await service.getServicesPaginated(orgId, pagination);
+
+      expect(prisma.client.service.findMany).toHaveBeenCalledWith({
+        where: { organizationId: orgId },
+        take: 10,
+        skip: 5,
+        select: expect.objectContaining({
+          id: true,
+          name: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+            }
+          }
+        }),
+      });
+
+      expect(result).toEqual(mockServices);
+    });
+  });
+
   describe('registerCustomerApp', () => {
     it('should hash the clientSecret and return raw clientSecret along with the client', async () => {
       const orgId = 'org1';

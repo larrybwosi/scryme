@@ -2,7 +2,7 @@ import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ScrymeService } from "@/v2/scryme/scryme.service";
 import { MovementType } from "@repo/db";
-import { ScrymeChatApiClient } from "@repo/scryme";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 @Injectable()
 export class StockMovementReportService {

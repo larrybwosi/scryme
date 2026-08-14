@@ -144,9 +144,6 @@ services:
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
       - REALTIME_PROVIDER=${REALTIME_PROVIDER:-socketio}
       - SOCKET_URL=${SOCKET_URL:-https://api.scryme.tech}
-      - ZITADEL_API_URL=${ZITADEL_API_URL:-https://zitadel.example.com}
-      - ZITADEL_ORG_ID=${ZITADEL_ORG_ID:-org-id}
-      - ZITADEL_PROJECT_ID=${ZITADEL_PROJECT_ID:-project-id}
       - JWT_SECRET=${JWT_SECRET:-jwtsecret1234567890jwtsecret}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
       - INTERNAL_ADMIN_SECRET=${INTERNAL_ADMIN_SECRET:-adminsecret1234567890secret}

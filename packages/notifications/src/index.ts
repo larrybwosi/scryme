@@ -1,7 +1,7 @@
 import Handlebars from "handlebars";
 import { db, NotificationDispatch } from "@repo/db";
 import axios from "axios";
-import { ScrymeChatApiClient } from "@repo/scryme";
+import { ScrymeChatApiClient } from "@repo/chat";
 import { isSafeUrl } from "./security";
 
 // Register helpers for report construction

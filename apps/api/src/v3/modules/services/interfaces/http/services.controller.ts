@@ -184,10 +184,10 @@ export class ServicesController {
   @Permissions("services:read")
   @ApiOperation({
     summary: "Get service details",
-    description: "Fetches detailed information about a specific service, including its full category details, pricing models, assigned staff/resources, and Bill of Materials.",
+    description: "Fetches detailed information about a specific service by database ID or slug, including its full category details, pricing models, assigned staff/resources, and Bill of Materials.",
     operationId: "Services_GetService",
   })
-  @ApiParam({ name: "id", type: "string", description: "The ID of the service to fetch" })
+  @ApiParam({ name: "id", type: "string", description: "The ID or slug of the service to fetch" })
   @ApiResponse({ status: 200, description: "Returns details of the specified service" })
   @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
   @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: "Service not found" })

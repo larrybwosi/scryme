@@ -28,6 +28,17 @@ describe("AccountingService", () => {
       member: {
         findFirst: vi.fn(),
       },
+      bankStatement: {
+        findUnique: vi.fn(),
+      },
+      journalLine: {
+        findMany: vi.fn(),
+        update: vi.fn(),
+      },
+      bankStatementLine: {
+        update: vi.fn(),
+      },
+      $transaction: vi.fn(),
     },
   };
 
@@ -135,6 +146,117 @@ describe("AccountingService", () => {
           lines: true,
         },
       });
+    });
+  });
+
+  describe("autoMatchBankStatement", () => {
+    it("should successfully match unmatched bank statement lines with POSTED journal lines within 3 days in a single batch transaction", async () => {
+      const statementId = "stmt-123";
+      const orgId = "org-123";
+
+      const mockLines = [
+        {
+          id: "line-1",
+          amount: 1500,
+          transactionDate: new Date("2026-08-01"),
+          status: "UNMATCHED",
+        },
+        {
+          id: "line-2",
+          amount: -500,
+          transactionDate: new Date("2026-08-05"),
+          status: "UNMATCHED",
+        },
+      ];
+
+      mockPrisma.client.bankStatement.findUnique.mockResolvedValue({
+        id: statementId,
+        organizationId: orgId,
+        lines: mockLines,
+      });
+
+      const mockCandidates = [
+        {
+          id: "jl-1",
+          debit: 1500,
+          credit: 0,
+          bankStatementLineId: null,
+          journalEntry: {
+            organizationId: orgId,
+            status: JournalStatus.POSTED,
+            entryDate: new Date("2026-08-02"),
+          },
+        },
+        {
+          id: "jl-2",
+          debit: 0,
+          credit: 500,
+          bankStatementLineId: null,
+          journalEntry: {
+            organizationId: orgId,
+            status: JournalStatus.POSTED,
+            entryDate: new Date("2026-08-05"),
+          },
+        },
+      ];
+
+      mockPrisma.client.journalLine.findMany.mockResolvedValue(mockCandidates);
+
+      mockPrisma.client.bankStatementLine.update.mockImplementation((args) => args);
+      mockPrisma.client.journalLine.update.mockImplementation((args) => args);
+      mockPrisma.client.$transaction.mockResolvedValue([]);
+
+      const result = await service.autoMatchBankStatement(statementId);
+
+      expect(result).toEqual({ matchCount: 2 });
+      expect(mockPrisma.client.bankStatement.findUnique).toHaveBeenCalledWith({
+        where: { id: statementId },
+        include: { lines: { where: { status: "UNMATCHED" } } },
+      });
+      expect(mockPrisma.client.journalLine.findMany).toHaveBeenCalled();
+      expect(mockPrisma.client.$transaction).toHaveBeenCalledTimes(1);
+    });
+
+    it("should not match lines if date difference is more than 3 days", async () => {
+      const statementId = "stmt-123";
+      const orgId = "org-123";
+
+      const mockLines = [
+        {
+          id: "line-1",
+          amount: 1500,
+          transactionDate: new Date("2026-08-01"),
+          status: "UNMATCHED",
+        },
+      ];
+
+      mockPrisma.client.bankStatement.findUnique.mockResolvedValue({
+        id: statementId,
+        organizationId: orgId,
+        lines: mockLines,
+      });
+
+      const mockCandidates = [
+        {
+          id: "jl-1",
+          debit: 1500,
+          credit: 0,
+          bankStatementLineId: null,
+          journalEntry: {
+            organizationId: orgId,
+            status: JournalStatus.POSTED,
+            entryDate: new Date("2026-08-10"), // > 3 days
+          },
+        },
+      ];
+
+      mockPrisma.client.journalLine.findMany.mockResolvedValue(mockCandidates);
+      mockPrisma.client.$transaction.mockResolvedValue([]);
+
+      const result = await service.autoMatchBankStatement(statementId);
+
+      expect(result).toEqual({ matchCount: 0 });
+      expect(mockPrisma.client.$transaction).not.toHaveBeenCalled();
     });
   });
 });

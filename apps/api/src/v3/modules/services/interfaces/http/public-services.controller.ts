@@ -47,7 +47,10 @@ export class PublicServicesController {
   @ApiResponse({ status: 200, description: "Successfully retrieved active services list" })
   @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: "Organization not found" })
   async getPublicServices(@Req() req: any) {
-    return this.serviceManagement.getServices(req.organization.id, { isActive: true });
+    // ⚡ Bolt Optimization: Eagerly loading nested relations on frequently accessed public directory listings is a major database overhead.
+    // Replacing the broad include query with an optimized raw/flat method (getServicesRaw) bypasses multi-table joins,
+    // drastically reducing database CPU, memory footprint, payload size, and object-serialization overhead.
+    return this.serviceManagement.getServicesRaw(req.organization.id, { isActive: true });
   }
 
   @Get("categories")

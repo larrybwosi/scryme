@@ -17,7 +17,7 @@ const openRoles = [
     title: "Senior Rust / Systems Engineer",
     team: "Core Platform",
     location: "Accra, Ghana (Hybrid) / London, UK (Remote)",
-    desc: "Help us optimize our local database synchronization engines and scale our multi-tenant Zitadel / better-auth cluster architectures.",
+    desc: "Help us optimize our local database synchronization engines and scale our multi-tenant / better-auth cluster architectures.",
   },
   {
     title: "Senior Product Designer",

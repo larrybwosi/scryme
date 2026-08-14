@@ -68,11 +68,6 @@ export default function CookiesPage() {
                 active B2B storefront session to our backend.
               </li>
               <li>
-                <strong>Zitadel Identity Sessions:</strong> Retains your SSO
-                credentials when navigating between different workspace portals
-                and applications.
-              </li>
-              <li>
                 <strong>PostHog Analytics cookies:</strong> Strictly used to
                 evaluate navigation drop-offs and optimize our web loading
                 speeds.

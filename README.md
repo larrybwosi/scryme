@@ -35,16 +35,15 @@ If you are developing connected applications or integrating a third-party portal
 Our core logic, database client, configurations, and utilities are modularized into shared packages:
 
 - **[`@repo/db`](./packages/db)**: The database layer wrapper enclosing the Prisma schema, PostgreSQL client singleton, and database seeding scripts.
-- **[`@repo/auth`](./packages/auth)**: Shared identity and multi-tenant authorization utilities powered by Better Auth and Zitadel.
+- **[`@repo/auth`](./packages/auth)**: Shared identity and multi-tenant authorization utilities powered by Better Auth.
 - **[`@repo/shared`](./packages/shared)**: General helper utilities, custom resilient Redis clients (with in-memory fallback), SSRF-blocking URL filters, M-PesaSTK pushes, and Ably real-time publishers.
 - **[`@repo/ui`](./packages/ui)**: Unified React component library containing Radix UI accessible primitives, styled with Tailwind CSS v4, and housing custom global barcode scanner key-event filters.
 - **[`@repo/documents`](./packages/documents)**: Clean PDF receipt, invoice, and balance sheet engines powered by React-PDF.
 - **[`@repo/notifications`](./packages/notifications)**: Multi-channel messaging gateway orchestrating SMTP/Nodemailer HTML emails, handlebars template compiles, and SMS services.
-- **[`@repo/scryme`](./packages/scryme)**: Developer-centric API client mapping token exchange and message publishing against the Scryme Chat API.
+- **[`@repo/chat`](./packages/scryme)**: Developer-centric API client mapping token exchange and message publishing against the Scryme Chat API.
 - **[`@repo/sdk`](./packages/sdk)**: Central client SDK containing shared HTTP wrappers and pre-configured request interceptors.
 - **[`@scryme/sdk`](./packages/v3-sdk)**: Rigorous TypeScript API client compiler generated directly from our core OpenAPI 3.0 specification.
 - **[`@repo/windmill`](./packages/windmill)**: Secondary Handlebars compiler and Nodemailer client helper designed for background mail queues.
-- **[`@repo/zitadel`](./packages/zitadel)**: Specialized proxy utilities wrapping Zitadel IAM configurations and token introspection.
 - **[`@repo/env`](./packages/env)**: Type-safe runtime environment schema validation powered by Zod.
 - **[`@repo/eslint-config`](./packages/config-eslint)**: Common ESLint linting configurations.
 - **[`@repo/typescript-config`](./packages/config-typescript)**: Base strict TS configuration files for Next.js, Node services, and React libraries.
@@ -61,7 +60,7 @@ Our core logic, database client, configurations, and utilities are modularized i
 - **Backend**: [NestJS](https://nestjs.com/)
 - **Database**: [PostgreSQL](https://www.postgresql.org/) & SQLite with [Prisma ORM](https://prisma.io/)
 - **Realtime**: [Ably](https://ably.com/)
-- **Auth**: [Zitadel](https://zitadel.com/) & [Better Auth](https://better-auth.com/)
+- **Auth**: [Better Auth](https://better-auth.com/)
 - **Package Management**: [pnpm](https://pnpm.io/)
 - **Containerization**: [Docker Compose](https://docs.docker.com/compose/)
 

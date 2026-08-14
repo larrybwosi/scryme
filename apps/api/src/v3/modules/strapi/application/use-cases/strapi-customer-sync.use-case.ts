@@ -159,7 +159,7 @@ export class StrapiCustomerSyncUseCase {
     locationId?: string;
   }> {
     const { config } = await this.getClientConfig(dto.organizationId, dto.connectionId);
-    const strapiConfig = await this.connectionUseCase.getConfigOrThrow(dto.connectionId);
+    const strapiConfig = await this.connectionUseCase.getConfigOrThrow(dto.organizationId, dto.connectionId);
 
     // Use Strapi's /api/users/me to validate the JWT and get user details
     const meConfig: StrapiClientConfig = {
@@ -342,7 +342,7 @@ export class StrapiCustomerSyncUseCase {
 
   private async getClientConfig(organizationId: string, connectionId: string) {
     const conn = await this.connectionUseCase.getConnectionOrThrow(organizationId, connectionId);
-    const strapiConfig = await this.connectionUseCase.getConfigOrThrow(connectionId);
+    const strapiConfig = await this.connectionUseCase.getConfigOrThrow(organizationId, connectionId);
 
     const config: StrapiClientConfig = {
       strapiUrl: strapiConfig.strapiUrl,

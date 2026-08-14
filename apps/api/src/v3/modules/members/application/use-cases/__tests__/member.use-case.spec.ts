@@ -5,6 +5,12 @@ import { RedisService } from "@/redis/redis.service";
 import { MemberRole, MembershipStatus } from "@repo/db";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import * as bcrypt from "bcryptjs";
+
+vi.mock("bcryptjs", () => ({
+  compare: vi.fn(),
+  hash: vi.fn().mockImplementation(pin => Promise.resolve(`hashed-${pin}`)),
+}));
 
 describe("MemberUseCase", () => {
   let useCase: MemberUseCase;
@@ -218,9 +224,9 @@ describe("MemberUseCase", () => {
           role: MemberRole.ADMIN,
         });
 
-        await expect(
-          useCase.deleteMember("org1", "m1", "m1"),
-        ).rejects.toThrow("You cannot delete your own membership");
+        await expect(useCase.deleteMember("org1", "m1", "m1")).rejects.toThrow(
+          "You cannot delete your own membership",
+        );
       });
     });
 
@@ -234,9 +240,9 @@ describe("MemberUseCase", () => {
         mockRedis.get.mockResolvedValue(3);
         mockRedis.ttl.mockResolvedValue(900);
 
-        await expect(
-          useCase.login(orgId, "loc1", cardId, pin),
-        ).rejects.toThrow(/Account locked/);
+        await expect(useCase.login(orgId, "loc1", cardId, pin)).rejects.toThrow(
+          /Account locked/,
+        );
       });
 
       it("should increment failed attempts on incorrect PIN", async () => {
@@ -246,6 +252,7 @@ describe("MemberUseCase", () => {
 
         mockRedis.get.mockResolvedValue(0);
         mockRedis.incr.mockResolvedValue(1);
+        vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
 
         mockPrisma.client.member.findFirst.mockResolvedValue({
           id: "m1",
@@ -253,16 +260,64 @@ describe("MemberUseCase", () => {
           user: { name: "Test" },
         });
 
-        // Use vi.mocked for better type safety if available, or just mock directly
-        // bcrypt is often global or requires manual mocking if not handled by Vitest
-        // Since bcrypt is imported in member.use-case.ts, we might need to mock it if it's not working.
-        // Assuming it works for now or we mock it in the test file if needed.
-
-        await expect(
-          useCase.login(orgId, "loc1", cardId, pin),
-        ).rejects.toThrow(/Invalid credentials/);
+        await expect(useCase.login(orgId, "loc1", cardId, pin)).rejects.toThrow(
+          /Invalid credentials/,
+        );
 
         expect(mockRedis.incr).toHaveBeenCalled();
+        expect(bcrypt.compare).toHaveBeenCalledWith("wrong-pin", "hashed-pin");
+      });
+
+      it("should run bcrypt.compare with dummy pin hash and throw if member is not found (mitigates timing attack/enumeration)", async () => {
+        const orgId = "org1";
+        const cardId = "non-existent-card";
+        const pin = "some-pin";
+
+        mockRedis.get.mockResolvedValue(0);
+        mockRedis.incr.mockResolvedValue(1);
+        vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
+
+        mockPrisma.client.member.findFirst.mockResolvedValue(null);
+
+        await expect(useCase.login(orgId, "loc1", cardId, pin)).rejects.toThrow(
+          /Invalid credentials/,
+        );
+
+        expect(mockRedis.incr).toHaveBeenCalled();
+        const expectedDummyHash =
+          "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+        expect(bcrypt.compare).toHaveBeenCalledWith(
+          "some-pin",
+          expectedDummyHash,
+        );
+      });
+
+      it("should run bcrypt.compare with dummy pin hash and throw if member exists but lacks pinHash (mitigates timing attack/enumeration)", async () => {
+        const orgId = "org1";
+        const cardId = "card-no-pin";
+        const pin = "some-pin";
+
+        mockRedis.get.mockResolvedValue(0);
+        mockRedis.incr.mockResolvedValue(1);
+        vi.mocked(bcrypt.compare).mockResolvedValue(false as any);
+
+        mockPrisma.client.member.findFirst.mockResolvedValue({
+          id: "m_no_pin",
+          pinHash: null,
+          user: { name: "No PIN Member" },
+        });
+
+        await expect(useCase.login(orgId, "loc1", cardId, pin)).rejects.toThrow(
+          /Invalid credentials/,
+        );
+
+        expect(mockRedis.incr).toHaveBeenCalled();
+        const expectedDummyHash =
+          "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+        expect(bcrypt.compare).toHaveBeenCalledWith(
+          "some-pin",
+          expectedDummyHash,
+        );
       });
     });
   });

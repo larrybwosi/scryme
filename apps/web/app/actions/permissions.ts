@@ -2,7 +2,7 @@
 
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
-import { ScrymeChatApiClient } from "@repo/scryme";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 export async function getCurrentUserContext() {
   const auth = await getServerAuth();

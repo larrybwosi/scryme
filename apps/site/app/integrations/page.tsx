@@ -6,18 +6,13 @@ import { PricingCTA } from "@/components/home/pricing-cta";
 export const metadata: Metadata = {
   title: "Integrations — Connect Your Ecosystem",
   description:
-    "Connect Scryme Technologies with Zitadel OIDC, Windmill, RabbitMQ, and external services.",
+    "Connect Scryme Technologies with other external services.",
   alternates: {
     canonical: "/integrations",
   },
 };
 
 const integrations = [
-  {
-    name: "Zitadel SSO Integration",
-    category: "Identity",
-    desc: "Deploy programmatic OIDC Web Applications using Zitadel's high-fidelity V2 Connect-RPC structures.",
-  },
   {
     name: "Windmill Automated Flows",
     category: "Automation",

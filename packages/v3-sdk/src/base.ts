@@ -12,23 +12,65 @@ import type {
 
 export type RawAPI = ReturnType<typeof getScrymeV3API>;
 
+/**
+ * Represents a customer login session tracked in the backend store.
+ */
 export interface CustomerSessionDto {
+  /**
+   * Unique session identifier.
+   */
   id: string;
+  /**
+   * Database identifier of the customer this session belongs to.
+   */
   customerId: string;
+  /**
+   * Active authentication token associated with the session.
+   */
   token: string;
+  /**
+   * User agent of the client device that initiated the session.
+   */
   userAgent?: string;
+  /**
+   * IP address of the client device that initiated the session.
+   */
   ipAddress?: string;
+  /**
+   * ISO string representation of the session expiration timestamp.
+   */
   expiresAt: string;
+  /**
+   * ISO string representation of the session creation timestamp.
+   */
   createdAt: string;
+  /**
+   * ISO string representation of the session last update timestamp.
+   */
   updatedAt: string;
 }
 
+/**
+ * Standard envelope returned upon successful customer registration or login.
+ *
+ * @template TUser Custom User profile type. Defaults to CustomerResponseDto.
+ * @template TSession Custom session tracking type. Defaults to CustomerSessionDto.
+ */
 export interface CustomerAuthResponseDto<
   TUser = CustomerResponseDto,
   TSession = CustomerSessionDto
 > {
+  /**
+   * Newly-issued local High-Performance Customer JWT bearer token.
+   */
   token: string;
+  /**
+   * Active session details.
+   */
   session?: TSession;
+  /**
+   * Full customer profile and metadata details.
+   */
   user?: TUser;
 }
 
@@ -67,6 +109,7 @@ export type MethodsWithOrgSlug =
   | "webhooksList"
   | "webhooksDelete"
   | "catalogGetProducts"
+  | "catalogGetProduct"
   | "catalogCreateProduct"
   | "catalogGetServices"
   | "catalogUpdateProduct"
@@ -100,7 +143,6 @@ export type MethodsWithOrgSlug =
   | "servicesGetUtilization"
   | "servicesGetPerformance"
   | "servicesGetFunnel"
-  | "customersProvisionZitadel"
   | "customersGetCustomers"
   | "customersRegister"
   | "customersUpdate"
@@ -109,6 +151,10 @@ export type MethodsWithOrgSlug =
   | "customersGetAddresses"
   | "customersAddAddress"
   | "customersGetCurrentSession"
+  | "customersGetSessions"
+  | "customersRevokeSession"
+  | "customersRevokeAllSessions"
+  | "customersRefreshSession"
   | "businessAccountControllerCreate"
   | "businessAccountControllerGetOne"
   | "crmControllerCreateRecord"
@@ -265,6 +311,7 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "webhooksList",
   "webhooksDelete",
   "catalogGetProducts",
+  "catalogGetProduct",
   "catalogCreateProduct",
   "catalogGetServices",
   "catalogUpdateProduct",
@@ -298,7 +345,6 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "servicesGetUtilization",
   "servicesGetPerformance",
   "servicesGetFunnel",
-  "customersProvisionZitadel",
   "customersGetCustomers",
   "customersRegister",
   "customersUpdate",
@@ -307,6 +353,10 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "customersGetAddresses",
   "customersAddAddress",
   "customersGetCurrentSession",
+  "customersGetSessions",
+  "customersRevokeSession",
+  "customersRevokeAllSessions",
+  "customersRefreshSession",
   "businessAccountControllerCreate",
   "businessAccountControllerGetOne",
   "crmControllerCreateRecord",
@@ -387,6 +437,7 @@ export type SDKModule<Mapping> = {
 
 export const catalogMapping = {
   getProducts: "catalogGetProducts",
+  getProduct: "catalogGetProduct",
   createProduct: "catalogCreateProduct",
   getServices: "catalogGetServices",
   updateProduct: "catalogUpdateProduct",
@@ -696,7 +747,6 @@ export const adminMapping = {
   handleWindmillApprovalCallback: "windmillCallbackControllerHandleApprovalCallback",
   handleWindmillBakeryDisposalCallback: "windmillCallbackControllerHandleBakeryDisposalCallback",
   handleWindmillOutcomeCallback: "windmillCallbackControllerHandleOutcomeCallback",
-  provisionZitadel: "customersProvisionZitadel",
   getCustomers: "customersGetCustomers",
   registerCustomer: "customersRegister",
   updateCustomer: "customersUpdate",
@@ -713,11 +763,13 @@ export const adminMapping = {
 export interface CatalogModule<
   TProduct = ProductResponseDto,
   TService = ServiceCatalogResponseDto
-> extends Omit<SDKModule<typeof catalogMapping>, "getProducts" | "createProduct" | "getServices" | "updateProduct"> {
+> extends Omit<SDKModule<typeof catalogMapping>, "getProducts" | "createProduct" | "getServices" | "updateProduct" | "getProduct" | "getService"> {
   getProducts<T = TProduct>(params?: CatalogGetProductsParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;
   createProduct<T = TProduct>(createProductDto: CreateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
   getServices<T = TService>(params?: CatalogGetServicesParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;
   updateProduct<T = TProduct>(id: string, updateProductDto: UpdateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  getProduct<T = TProduct>(idOrSlug: string | { id?: string; slug?: string }, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  getService<T = TService>(idOrSlug: string | { id?: string; slug?: string }, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
 }
 
 export type AuthModule = SDKModule<typeof authMapping>;

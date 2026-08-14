@@ -38,6 +38,12 @@ const serverSchema = z.object({
   CUSTOMER_BETTER_AUTH_SECRET: z.string().optional(),
   CUSTOMER_GOOGLE_CLIENT_ID: z.string().optional(),
   CUSTOMER_GOOGLE_CLIENT_SECRET: z.string().optional(),
+  CUSTOMER_AUTH_STRATEGY: z.string().optional(),
+
+  // Slack Integration
+  SLACK_CLIENT_ID: z.string().optional(),
+  SLACK_CLIENT_SECRET: z.string().optional(),
+  SLACK_REDIRECT_URI: z.string().optional(),
 
   // Redis
   REDIS_HOST: z.string().default("localhost"),
@@ -60,23 +66,7 @@ const serverSchema = z.object({
   // API
   JWT_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
   INTERNAL_ADMIN_SECRET: z.string().optional(),
-  APP_VERSION: z.string().default("1.0.0"),
-
-  // Zitadel
-  ZITADEL_DOMAIN: z.string().optional(),
-  ZITADEL_CLIENT_ID: z.string().optional(),
-  ZITADEL_API_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
-    z.url().optional(),
-  ),
-  ZITADEL_ORG_ID: z.string().optional(),
-  ZITADEL_PROJECT_ID: z.string().optional(),
-  ZITADEL_ADMIN_TOKEN: z.string().optional(),
-
-  // Slack
-  SLACK_CLIENT_ID: z.string().optional(),
-  SLACK_CLIENT_SECRET: z.string().optional(),
-  SLACK_REDIRECT_URI: z.string().optional(),
+    APP_VERSION: z.string().default("1.0.0"),
 
   // GitHub
   GITHUB_OWNER: z.string().default("larrybwosi"),
@@ -130,10 +120,6 @@ const serverSchema = z.object({
   SCRYME_SYSTEM_WORKSPACE_SLUG: z.string().optional(),
   SCRYME_SYSTEM_CHANNEL_SLUG: z.string().optional(),
 
-  // Customer Auth Strategy
-  CUSTOMER_AUTH_STRATEGY: z
-    .enum(["LOCAL", "ZITADEL", "HYBRID"])
-    .default("HYBRID"),
 });
 
 const clientSchema = z.object({
@@ -168,6 +154,10 @@ const clientSchema = z.object({
 
   // Sentry Public Configuration
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
+
+  // Sanity Public Configuration
+  NEXT_PUBLIC_SITE_SANITY_DATASET: z.string().optional().default("production"),
+  NEXT_PUBLIC_SITE_SANITY_PROJECT_ID: z.string().optional().default("ce88cj7n"),
 });
 
 // ─────────────────────────────────────────────
@@ -269,15 +259,6 @@ function getRawEnv() {
     JWT_SECRET: process.env.JWT_SECRET,
     INTERNAL_ADMIN_SECRET: process.env.INTERNAL_ADMIN_SECRET,
     APP_VERSION: process.env.APP_VERSION,
-    ZITADEL_DOMAIN: process.env.ZITADEL_DOMAIN,
-    ZITADEL_CLIENT_ID: process.env.ZITADEL_CLIENT_ID,
-    ZITADEL_API_URL: process.env.ZITADEL_API_URL,
-    ZITADEL_ORG_ID: process.env.ZITADEL_ORG_ID,
-    ZITADEL_PROJECT_ID: process.env.ZITADEL_PROJECT_ID,
-    ZITADEL_ADMIN_TOKEN: process.env.ZITADEL_ADMIN_TOKEN,
-    SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
-    SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
-    SLACK_REDIRECT_URI: process.env.SLACK_REDIRECT_URI,
     GITHUB_OWNER: process.env.GITHUB_OWNER,
     GITHUB_REPO: process.env.GITHUB_REPO,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
@@ -286,6 +267,11 @@ function getRawEnv() {
     CUSTOMER_BETTER_AUTH_SECRET: process.env.CUSTOMER_BETTER_AUTH_SECRET,
     CUSTOMER_GOOGLE_CLIENT_ID: process.env.CUSTOMER_GOOGLE_CLIENT_ID,
     CUSTOMER_GOOGLE_CLIENT_SECRET: process.env.CUSTOMER_GOOGLE_CLIENT_SECRET,
+
+    // Slack Integration
+    SLACK_CLIENT_ID: process.env.SLACK_CLIENT_ID,
+    SLACK_CLIENT_SECRET: process.env.SLACK_CLIENT_SECRET,
+    SLACK_REDIRECT_URI: process.env.SLACK_REDIRECT_URI,
 
     // Storage Configuration
     STORAGE_PROVIDER: process.env.STORAGE_PROVIDER,
@@ -331,6 +317,10 @@ function getRawEnv() {
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    NEXT_PUBLIC_SITE_SANITY_DATASET:
+      process.env.NEXT_PUBLIC_SITE_SANITY_DATASET,
+    NEXT_PUBLIC_SITE_SANITY_PROJECT_ID:
+      process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID,
   };
 }
 

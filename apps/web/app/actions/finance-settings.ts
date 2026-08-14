@@ -11,7 +11,7 @@ import {
   ApprovalMode,
 } from "@repo/db/client";
 import { testWorkflow } from "@repo/windmill";
-import { ScrymeChatApiClient } from "@repo/scryme";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();

@@ -17,7 +17,7 @@
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **State Management**: Client-side states for shopping carts.
-- **Auth**: Built on top of `@repo/auth` / [Better Auth](https://better-auth.com/) and Zitadel integration.
+- **Auth**: Built on top of `@repo/auth` / [Better Auth](https://better-auth.com/).
 
 ---
 

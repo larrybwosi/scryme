@@ -2719,6 +2719,63 @@
         ]
       }
     },
+    "/v3/{orgSlug}/catalog/products/{idOrSlug}": {
+      "get": {
+        "description": "Retrieves a single product by its unique database identifier or SEO slug.",
+        "operationId": "Catalog_GetProduct",
+        "parameters": [
+          {
+            "name": "idOrSlug",
+            "required": true,
+            "in": "path",
+            "description": "The ID or slug of the product",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The product details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Product not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a product by ID or Slug",
+        "tags": [
+          "V3 Catalog"
+        ]
+      }
+    },
     "/v3/{orgSlug}/catalog/services": {
       "get": {
         "description": "Retrieves a unified paginated catalog of all services belonging to the organization. Loads categories, pricing details, duration metrics, active statuses, and custom field structures seamlessly.",
@@ -3550,14 +3607,14 @@
     },
     "/v3/{orgSlug}/services/{id}": {
       "get": {
-        "description": "Fetches detailed information about a specific service, including its full category details, pricing models, assigned staff/resources, and Bill of Materials.",
+        "description": "Fetches detailed information about a specific service by database ID or slug, including its full category details, pricing models, assigned staff/resources, and Bill of Materials.",
         "operationId": "Services_GetService",
         "parameters": [
           {
             "name": "id",
             "required": true,
             "in": "path",
-            "description": "The ID of the service to fetch",
+            "description": "The ID or slug of the service to fetch",
             "schema": {
               "type": "string"
             }
@@ -5089,65 +5146,6 @@
         ]
       }
     },
-    "/v3/{orgSlug}/customers/zitadel/provision": {
-      "post": {
-        "operationId": "Customers_ProvisionZitadel",
-        "parameters": [
-          {
-            "name": "orgSlug",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProvisionZitadelDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Zitadel provisioned and connected successfully"
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponseDto"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Provision Zitadel connection with one click for this organization",
-        "tags": [
-          "V3 Customers"
-        ]
-      }
-    },
     "/v3/{orgSlug}/customers": {
       "get": {
         "operationId": "Customers_GetCustomers",
@@ -5283,7 +5281,7 @@
             "bearer": []
           }
         ],
-        "summary": "Register a new customer (Zitadel)",
+        "summary": "Register a new customer",
         "tags": [
           "V3 Customers"
         ]
@@ -5333,6 +5331,45 @@
           }
         ],
         "summary": "Authenticate a customer using email & password, issuing a standard HS256 JWT and session",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/auth/refresh": {
+      "post": {
+        "operationId": "Customers_RefreshSession",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session successfully refreshed"
+          },
+          "401": {
+            "description": "Invalid or expired session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Refresh an active or expired customer session token, issuing a fresh HS256 customer JWT",
         "tags": [
           "V3 Customers"
         ]
@@ -12769,29 +12806,6 @@
           "scheduledStartTime"
         ]
       },
-      "ProvisionZitadelDto": {
-        "type": "object",
-        "properties": {
-          "redirectUris": {
-            "example": [
-              "http://localhost:3000/api/auth/callback/zitadel"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "postLogoutRedirectUris": {
-            "example": [
-              "http://localhost:3000"
-            ],
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "CustomerResponseDto": {
         "type": "object",
         "properties": {
@@ -12881,10 +12895,6 @@
       "RegisterCustomerDto": {
         "type": "object",
         "properties": {
-          "zitadelUserId": {
-            "type": "string",
-            "example": "user_12345"
-          },
           "name": {
             "type": "string",
             "example": "John Doe"
@@ -12956,10 +12966,6 @@
       "UpdateCustomerDto": {
         "type": "object",
         "properties": {
-          "zitadelUserId": {
-            "type": "string",
-            "example": "user_12345"
-          },
           "name": {
             "type": "string",
             "example": "John Doe"

@@ -51,7 +51,7 @@ model Product {
   detailedDescription String?
   tags                String[]
   isFeatured          Boolean  @default(false)
-  slug                String? @unique
+  slug                String?
 
   defaultLocationId String?
   defaultLocation   InventoryLocation? @relation("ProductDefaultLocation", fields: [defaultLocationId], references: [id], onDelete: SetNull)
@@ -81,6 +81,7 @@ model Product {
   @@index([organizationId, id])
   cartItems       CartItem[] @relation("ProductToCartItems")
   @@unique([organizationId, barcode])
+  @@unique([organizationId, slug])
   @@index([defaultLocationId])
 }
 

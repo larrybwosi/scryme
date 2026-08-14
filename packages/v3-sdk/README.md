@@ -14,7 +14,7 @@ For the complete, interactive documentation, live sandbox playgrounds, and detai
   - **Auth**: Token exchange (Client Credentials Flow) & OAuth2 proxy support.
   - **Inventory**: Stock queries, multi-branch listings, batch tracking (trace, split, merge), B2B availability checks, and integrity verify/fix logic.
   - **Orders & B2B**: Quote requests, quote-to-order conversions, and order management.
-  - **CRM & Customers**: Customer registration (Zitadel), custom CRM definitions, custom fields, relationships, associations, notes, and activity timelines.
+  - **CRM & Customers**: Customer registration, custom CRM definitions, custom fields, relationships, associations, notes, and activity timelines.
   - **Loyalty**: Loyalty status (tiers & points), voucher validation, and reward redemption.
   - **Finance**: Corporate expenses, utility account tracking, and petty cash fund management (allocations, transactions, top-ups).
   - **POS**: POS device provisioning, staff login, and petty cash expense logging.
