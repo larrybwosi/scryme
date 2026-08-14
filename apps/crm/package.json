@@ -17,7 +17,7 @@
     "@hookform/resolvers": "3.9.0",
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:^",
-    "@repo/scryme": "workspace:*",
+    "@repo/chat": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/windmill": "workspace:*",

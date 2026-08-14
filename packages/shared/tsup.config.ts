@@ -25,7 +25,7 @@ const commonOptions: Options = {
     "@repo/documents",
     "@repo/notifications",
     "@repo/windmill",
-    "@repo/scryme",
+    "@repo/chat",
     "@sanity/client",
     "@tanstack/react-query",
     "@upstash/redis",

@@ -1,1 +1,1 @@
-export * from '@repo/scryme';
+export * from '@repo/chat';

@@ -47,7 +47,7 @@
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/notifications": "workspace:*",
-    "@repo/scryme": "workspace:*",
+    "@repo/chat": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/windmill": "workspace:*",
     "@sentry/nestjs": "^10.65.0",

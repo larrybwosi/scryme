@@ -143,7 +143,7 @@
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/notifications": "workspace:*",
-    "@repo/scryme": "workspace:*",
+    "@repo/chat": "workspace:*",
     "@repo/windmill": "workspace:*",
     "@sanity/client": "^7.22.1",
     "@tanstack/react-query": "^5.100.9",

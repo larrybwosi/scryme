@@ -311,7 +311,7 @@ export class NotificationEngine {
       return;
     }
 
-    const { ScrymeChatApiClient } = await import("@repo/scryme");
+    const { ScrymeChatApiClient } = await import("@repo/chat");
     const scrymeClient = new ScrymeChatApiClient();
 
     // Determine channel - default to 'notifications' if not provided in data

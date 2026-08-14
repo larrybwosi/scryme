@@ -37,16 +37,19 @@ export class SplitBatchUseCase {
 
     return this.prisma.client.$transaction(async (tx) => {
       // 1. Deduct from parent
-      await tx.stockBatch.update({
+      const parentDeductionPromise = tx.stockBatch.update({
         where: { id: batchId },
         data: {
           currentQuantity: { decrement: totalSplitQuantity },
         },
       });
 
-      // 2. Create child batches
-      const createdChildren = [];
-      for (const split of splits) {
+      // 2. Create child batches and their corresponding movement logs concurrently.
+      // OPTIMIZATION (Bolt ⚡): Parallelize the child batch creations and their movement logs using Promise.all.
+      // Instead of sequential blocking queries inside the loop, we map splits to independent concurrent promises.
+      // This collapses the database write round-trips from O(N) down to a flat O(1) concurrent block,
+      // minimizing transaction open duration and locking contention.
+      const childPromises = splits.map(async (split, index) => {
         const childBatch = await tx.stockBatch.create({
           data: {
             organizationId,
@@ -59,11 +62,11 @@ export class SplitBatchUseCase {
             receivedDate: parentBatch.receivedDate,
             supplierId: parentBatch.supplierId,
             parentId: parentBatch.id,
-            batchNumber: `${parentBatch.batchNumber}-S${createdChildren.length + 1}`,
+            batchNumber: `${parentBatch.batchNumber}-S${index + 1}`,
           },
         });
 
-        // 3. Log movement
+        // Log movement for child batch
         await tx.stockMovement.create({
           data: {
             organizationId,
@@ -78,11 +81,11 @@ export class SplitBatchUseCase {
           },
         });
 
-        createdChildren.push(childBatch);
-      }
+        return childBatch;
+      });
 
       // Log movement for parent deduction
-      await tx.stockMovement.create({
+      const parentMovementPromise = tx.stockMovement.create({
         data: {
           organizationId,
           variantId: parentBatch.variantId,
@@ -95,6 +98,13 @@ export class SplitBatchUseCase {
           notes: `Split into ${splits.length} child batches`,
         },
       });
+
+      // Execute parent update, child creation blocks, and parent movement log concurrently.
+      const [_, createdChildren] = await Promise.all([
+        parentDeductionPromise,
+        Promise.all(childPromises),
+        parentMovementPromise,
+      ]);
 
       return createdChildren;
     });

@@ -14,7 +14,11 @@ export const AddressSchema = z.object({
 export const RegisterCustomerSchema = z.object({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email format"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .optional()
+    .or(z.literal("")),
   phone: z.string().optional(),
   location: z.string().optional(),
   metadata: z.any().optional(),

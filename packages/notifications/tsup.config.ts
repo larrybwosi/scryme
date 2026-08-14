@@ -10,7 +10,7 @@ const commonOptions: Options = {
   treeshake: true,
   external: [
     "@repo/db",
-    "@repo/scryme",
+    "@repo/chat",
     "axios",
     "handlebars",
     "nodemailer",

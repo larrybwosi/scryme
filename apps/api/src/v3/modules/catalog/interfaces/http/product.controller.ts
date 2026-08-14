@@ -110,6 +110,80 @@ export class ProductController {
     });
   }
 
+  @Get("products/:idOrSlug")
+  @Permissions("catalog:product:read")
+  @ApiOperation({
+    summary: "Get a product by ID or Slug",
+    description: "Retrieves a single product by its unique database identifier or SEO slug.",
+    operationId: "Catalog_GetProduct",
+  })
+  @ApiParam({ name: "idOrSlug", type: "string", description: "The ID or slug of the product" })
+  @ApiResponse({
+    status: 200,
+    type: ProductResponseDto,
+    description: "The product details",
+  })
+  @ApiResponse({
+    status: 404,
+    type: ApiErrorResponseDto,
+    description: "Product not found",
+  })
+  async getProduct(
+    @Req() req: any,
+    @Param("idOrSlug") idOrSlug: string,
+  ) {
+    const organizationId = req.organization.id;
+
+    const product = await this.prisma.client.product.findFirst({
+      where: {
+        organizationId,
+        OR: [
+          { id: idOrSlug },
+          { slug: idOrSlug },
+        ],
+      },
+      include: {
+        category: true,
+        variants: {
+          select: {
+            id: true,
+            name: true,
+            sku: true,
+            retailPrice: true,
+          },
+        },
+      },
+    });
+
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+
+    const firstVariant = product.variants?.[0];
+    const retailPrice = firstVariant?.retailPrice ? Number(firstVariant.retailPrice) : null;
+
+    return {
+      id: product.id,
+      name: product.name,
+      description: product.description,
+      sku: product.sku || "",
+      retailPrice,
+      images: product.imageUrls || [],
+      category: product.category
+        ? {
+            id: product.categoryId,
+            name: product.category.name,
+          }
+        : {
+            id: product.categoryId,
+            name: "Unknown",
+          },
+      slug: product.slug || null,
+      variants: product.variants || [],
+      customFields: product.customFields || null,
+    };
+  }
+
   @Get("services")
   @Permissions("services:read")
   @ApiOperation({
@@ -133,13 +207,11 @@ export class ProductController {
   ) {
     const organizationId = req.organization.id;
 
-    // Use ServiceManagementService to load services cleanly (Architectural Consistency)
-    const items = await this.serviceManagement.getServices(organizationId);
-
-    // Filter/slice in memory based on pagination if present
-    const limit = paginationQuery.limit || 20;
-    const offset = paginationQuery.offset || 0;
-    const paginatedItems = items.slice(offset, offset + limit);
+    // Use ServiceManagementService to load paginated and optimized services cleanly (Architectural Consistency)
+    const paginatedItems = await this.serviceManagement.getServicesPaginated(
+      organizationId,
+      paginationQuery,
+    );
 
     return paginatedItems.map(s => {
       const customFieldsObj =

@@ -6,7 +6,7 @@ const mockSendMessage = vi.fn().mockResolvedValue({ success: true });
 const mockConstructor = vi.fn();
 
 // Mock the Scryme module
-vi.mock("@repo/scryme", () => {
+vi.mock("@repo/chat", () => {
   return {
     ScrymeChatApiClient: class {
       constructor(baseUrl: string, clientId: string, clientSecret: string) {

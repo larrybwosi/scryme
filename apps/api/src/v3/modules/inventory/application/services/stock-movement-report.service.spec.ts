@@ -4,7 +4,7 @@ import { MovementType } from "@repo/db";
 import { Decimal } from "decimal.js";
 
 // Mock the ScrymeChatApiClient
-vi.mock("@repo/scryme", () => {
+vi.mock("@repo/chat", () => {
   return {
     ScrymeChatApiClient: class {
       sendMessage = vi.fn().mockResolvedValue({ success: true });

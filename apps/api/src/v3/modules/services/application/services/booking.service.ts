@@ -702,6 +702,37 @@ export class BookingService {
       },
     });
 
+    /**
+     * OPTIMIZATION (Bolt ⚡): Pre-index existing bookings by staff member ID and resource ID
+     * to eliminate expensive array .filter operations inside nested timeslot generation loops.
+     * This collapses runtime complexity from O(S * T * B * R) to O(B + R + S * T).
+     */
+    const staffBookingsMap = new Map<string, any[]>();
+    const resourceBookingsMap = new Map<string, any[]>();
+
+    for (const booking of existingBookings) {
+      if (booking.staff) {
+        for (const s of booking.staff) {
+          if (s.memberId) {
+            if (!staffBookingsMap.has(s.memberId)) {
+              staffBookingsMap.set(s.memberId, []);
+            }
+            staffBookingsMap.get(s.memberId)!.push(booking);
+          }
+        }
+      }
+      if (booking.resources) {
+        for (const r of booking.resources) {
+          if (r.resourceId) {
+            if (!resourceBookingsMap.has(r.resourceId)) {
+              resourceBookingsMap.set(r.resourceId, []);
+            }
+            resourceBookingsMap.get(r.resourceId)!.push(booking);
+          }
+        }
+      }
+    }
+
     const parseTimeToMinutes = (timeStr: string): number => {
       const [hours, minutes] = timeStr.split(":").map(Number);
       return hours * 60 + minutes;
@@ -738,9 +769,7 @@ export class BookingService {
         }
 
         // 2. Check if the staff member has overlapping bookings
-        const staffBookings = existingBookings.filter((b) =>
-          b.staff.some((s) => s.memberId === shift.memberId),
-        );
+        const staffBookings = staffBookingsMap.get(shift.memberId) || [];
 
         const staffConflict = staffBookings.some((b) => {
           const bStart = new Date(b.scheduledStartTime).getTime();
@@ -763,9 +792,7 @@ export class BookingService {
           for (const serviceResource of service.resources) {
             const resourceId = serviceResource.resourceId;
 
-            const resourceBookings = existingBookings.filter((b) =>
-              b.resources.some((r) => r.resourceId === resourceId),
-            );
+            const resourceBookings = resourceBookingsMap.get(resourceId) || [];
 
             const resourceConflict = resourceBookings.some((b) => {
               const bStart = new Date(b.scheduledStartTime).getTime();

@@ -350,6 +350,7 @@ export class AccountingService {
 
     let matchCount = 0;
     const threeDays = 3 * 24 * 60 * 60 * 1000;
+    const batchUpdates: any[] = [];
 
     for (const line of statement.lines) {
       const lineAmount = Number(line.amount);
@@ -369,7 +370,9 @@ export class AccountingService {
         // Remove from memory pool to prevent double matching in the same run
         possibleMatches.splice(matchIndex, 1);
 
-        await this.prisma.client.$transaction([
+        // ⚡ Bolt Optimization: Accumulate database update operations in-memory
+        // to execute them in a single batch $transaction, eliminating N+1 sequential transactions.
+        batchUpdates.push(
           this.prisma.client.bankStatementLine.update({
             where: { id: line.id },
             data: { status: "MATCHED" },
@@ -378,9 +381,13 @@ export class AccountingService {
             where: { id: match.id },
             data: { bankStatementLineId: line.id },
           }),
-        ]);
+        );
         matchCount++;
       }
+    }
+
+    if (batchUpdates.length > 0) {
+      await this.prisma.client.$transaction(batchUpdates);
     }
 
     return { matchCount };

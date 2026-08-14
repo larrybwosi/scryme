@@ -1,4 +1,4 @@
-# `@repo/scryme`
+# `@repo/chat`
 
 The official client wrapper for interfacing with the **Scryme Chat API** (V3 & V2 fallback endpoints). It encapsulates authentication token negotiation, interactive webhook registrations, workspace provisions, message postings, and direct user resolutions.
 
@@ -14,7 +14,7 @@ The official client wrapper for interfacing with the **Scryme Chat API** (V3 & V
 ## 🛠️ Quick Start
 
 ```typescript
-import { ScrymeChatApiClient } from "@repo/scryme";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 const client = new ScrymeChatApiClient(
   "https://api.scryme.tech",

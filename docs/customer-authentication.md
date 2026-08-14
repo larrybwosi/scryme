@@ -13,51 +13,6 @@ Customer authentication uses **OpenID Connect (OIDC)** and **Standard API Regist
 
 ---
 
-## 🚀 1. Provisioning SSO Connections
-
-To allow a business organization to support customer SSO, developers can programmatically provision a dedicated OIDC workspace (including client IDs and secrets) for that organization.
-
-### Endpoint: Provision Identity Connection
-- **URL**: `/api/v3/:orgSlug/customers/zitadel/provision`
-- **Method**: `POST`
-- **Permissions Required**: `customer:update`
-- **Headers**:
-  ```http
-  Authorization: Bearer <v3_client_token>
-  Content-Type: application/json
-  ```
-
-#### Request Body
-```json
-{
-  "redirectUris": [
-    "https://your-app.com/api/auth/callback/customer-sso"
-  ],
-  "postLogoutRedirectUris": [
-    "https://your-app.com"
-  ]
-}
-```
-
-#### Response (`200 OK`)
-On successful provisioning, the system returns the generated credentials for your organization's custom identity application client.
-```json
-{
-  "success": true,
-  "message": "SSO connection provisioned successfully",
-  "clientId": "234567891234567890@scryme",
-  "clientSecret": "scryme_sso_sec_99a8b7c6d5e4f3...",
-  "config": {
-    "organizationId": "org_cln123456",
-    "zitadelOrgId": "192837465657483920",
-    "zitadelProjectId": "192837465657483921",
-    "zitadelAppId": "192837465657483922",
-    "connectionStatus": "CONNECTED",
-    "isActive": true
-  }
-}
-```
-
 ---
 
 ## 👤 2. Registering and Connecting Customers Directly
@@ -79,7 +34,6 @@ When your system registers a customer or when a customer registers on an integra
   "name": "Jane Smith",
   "email": "jane.smith@example.com",
   "phone": "+254700000123",
-  "zitadelUserId": "user_id_from_identity_provider",
   "company": "Acme Commerce Inc",
   "customerType": "B2B_PREMIUM",
   "dateOfBirth": "1990-11-23",
@@ -93,7 +47,6 @@ When your system registers a customer or when a customer registers on an integra
   }
 }
 ```
-*Note: The `zitadelUserId` parameter represents the external/identity provider user identifier. When supplied, it establishes a high-fidelity mapping between their login account and their CRM/ERP Customer Profile.*
 
 #### Response (`201 Created`)
 ```json
@@ -173,7 +126,7 @@ Authorization: Bearer <customer_access_token>
 ```
 
 Our system will:
-1. **Introspect and verify** the JSON Web Token (JWT) signatures.
-2. **Parse the customer claims** (`sub`, `email`, `urn:zitadel:iam:org:id`).
+1. **Introspect and verify** the session token.
+2. **Parse the customer claims** (`sub`, `email`).
 3. **Synchronize or fetch** the corresponding customer mapping from the database.
 4. **Expose the request context** securely as a `customer` entity, enforcing multi-tenant isolation and secure data boundaries.

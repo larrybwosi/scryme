@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
-import { ScrymeChatApiClient, ScrymeChatAction } from "@repo/scryme";
+import { ScrymeChatApiClient, ScrymeChatAction } from "@repo/chat";
 
 @Injectable()
 export class ScrymeNotificationService {

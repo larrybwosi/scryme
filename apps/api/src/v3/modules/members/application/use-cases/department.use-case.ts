@@ -11,7 +11,7 @@ import {
   AddDepartmentMemberDto,
 } from "../dto/department.dto";
 import { AuditLogAction, AuditEntityType } from "@repo/db";
-import { ScrymeChatApiClient } from "@repo/scryme";
+import { ScrymeChatApiClient } from "@repo/chat";
 import { PlaneApiClient } from "@repo/shared";
 import { Logger } from "@nestjs/common";
 import { ScrymeService } from "@/v2/scryme/scryme.service";

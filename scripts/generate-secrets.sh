@@ -87,18 +87,12 @@ update_env_var "REDIS_HOST" "redis" "false"
 update_env_var "REDIS_PORT" "6379" "false"
 update_env_var "REDIS_URL" "redis://redis:6379" "false"
 
-# 8. Generate Zitadel database credentials and masterkey if missing
-update_env_var "ZITADEL_DB_USER" "zitadel" "false"
-update_env_var "ZITADEL_DB_PASSWORD" "$(generate_secret)" "false"
-update_env_var "ZITADEL_DB_NAME" "zitadel" "false"
-update_env_var "ZITADEL_MASTERKEY" "$(generate_secret)" "false"
-
-# 9. Generate Windmill database credentials if missing
+# 8. Generate Windmill database credentials if missing
 update_env_var "WINDMILL_DB_USER" "windmill" "false"
 update_env_var "WINDMILL_DB_PASSWORD" "$(generate_secret)" "false"
 update_env_var "WINDMILL_DB_NAME" "windmill" "false"
 
-# 10. Generate RabbitMQ credentials and construct URL if missing
+# 9. Generate RabbitMQ credentials and construct URL if missing
 update_env_var "RABBITMQ_USER" "scryme" "false"
 update_env_var "RABBITMQ_PASS" "$(generate_secret)" "false"
 
@@ -106,15 +100,14 @@ R_USER=$(grep "^RABBITMQ_USER=" "$ENV_FILE" | cut -d'=' -f2-)
 R_PASS=$(grep "^RABBITMQ_PASS=" "$ENV_FILE" | cut -d'=' -f2-)
 update_env_var "RABBITMQ_URL" "amqp://${R_USER}:${R_PASS}@rabbitmq:5672" "true"
 
-# 11. Service Ports
+# 10. Service Ports
 update_env_var "API_PORT" "4000" "false"
 update_env_var "WEB_PORT" "3000" "false"
 update_env_var "CRM_PORT" "3001" "false"
 update_env_var "BAKERY_PORT" "3003" "false"
 update_env_var "PORTAL_PORT" "3006" "false"
 
-# 12. Zitadel, Windmill and Scryme values
-update_env_var "ZITADEL_ADMIN_TOKEN" "your-zitadel-admin-token" "false"
+# 11. Windmill and Scryme values
 update_env_var "SCRYME_CHAT_API_URL" "https://api.scryme.tech" "false"
 update_env_var "SCRYME_CHAT_CLIENT_ID" "your-scryme-chat-client-id" "false"
 update_env_var "SCRYME_CHAT_CLIENT_SECRET" "your-scryme-chat-client-secret" "false"

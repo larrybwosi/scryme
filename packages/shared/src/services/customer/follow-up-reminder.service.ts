@@ -1,5 +1,5 @@
 import { PrismaClient } from "@repo/db";
-import { ScrymeChatApiClient } from "@repo/scryme";
+import { ScrymeChatApiClient } from "@repo/chat";
 import { addHours, subHours, isBefore, isAfter } from "date-fns";
 
 /**
