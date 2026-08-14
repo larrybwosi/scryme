@@ -112,7 +112,7 @@ export class MemberUseCase {
     ]);
 
     return {
-      items: members.map((m) => this.mapToResponse(m)),
+      items: members.map(m => this.mapToResponse(m)),
       meta: {
         total,
         page,
@@ -228,7 +228,7 @@ export class MemberUseCase {
       ...otherData
     } = dto;
 
-    return this.prisma.client.$transaction(async (tx) => {
+    return this.prisma.client.$transaction(async tx => {
       let user = await tx.user.findUnique({
         where: { email },
       });
@@ -279,19 +279,19 @@ export class MemberUseCase {
           phone,
           departmentMemberships: departmentIds
             ? {
-                create: departmentIds.map((dId) => ({
+                create: departmentIds.map(dId => ({
                   departmentId: dId,
                 })),
               }
             : undefined,
           customRoles: customRoleIds
             ? {
-                connect: customRoleIds.map((id) => ({ id })),
+                connect: customRoleIds.map(id => ({ id })),
               }
             : undefined,
           roleGroups: roleGroupIds
             ? {
-                connect: roleGroupIds.map((id) => ({ id })),
+                connect: roleGroupIds.map(id => ({ id })),
               }
             : undefined,
         },
@@ -339,7 +339,7 @@ export class MemberUseCase {
         name,
         email,
         role: finalRole,
-      }).catch((err) => console.error("[Windmill] MemberCreated error:", err));
+      }).catch(err => console.error("[Windmill] MemberCreated error:", err));
 
       return member;
     });
@@ -382,7 +382,10 @@ export class MemberUseCase {
         currentMember.role === MemberRole.OWNER ||
         currentMember.role === MemberRole.ADMIN;
 
-      if ((isSensitiveTarget || isSensitiveCurrent) && actor.role !== MemberRole.OWNER) {
+      if (
+        (isSensitiveTarget || isSensitiveCurrent) &&
+        actor.role !== MemberRole.OWNER
+      ) {
         throw new ForbiddenException(
           "Only an OWNER can manage OWNER or ADMIN roles",
         );
@@ -400,19 +403,19 @@ export class MemberUseCase {
         departmentMemberships: departmentIds
           ? {
               deleteMany: {},
-              create: departmentIds.map((dId) => ({
+              create: departmentIds.map(dId => ({
                 departmentId: dId,
               })),
             }
           : undefined,
         customRoles: customRoleIds
           ? {
-              set: customRoleIds.map((id) => ({ id })),
+              set: customRoleIds.map(id => ({ id })),
             }
           : undefined,
         roleGroups: roleGroupIds
           ? {
-              set: roleGroupIds.map((id) => ({ id })),
+              set: roleGroupIds.map(id => ({ id })),
             }
           : undefined,
       },
@@ -442,19 +445,21 @@ export class MemberUseCase {
         email: currentMember.user.email,
         previousRole: currentMember.role,
         newRole: dto.role,
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[Windmill] MemberRoleChanged error:", err),
       );
     }
 
     if (dto.isActive === false && currentMember.isActive === true) {
       if (id === actorId) {
-        throw new BadRequestException("You cannot deactivate your own membership");
+        throw new BadRequestException(
+          "You cannot deactivate your own membership",
+        );
       }
       emitEvent(organizationId, "member.deactivated", {
         memberId: member.id,
         name: currentMember.user.name,
-      }).catch((err) =>
+      }).catch(err =>
         console.error("[Windmill] MemberDeactivated error:", err),
       );
     }
@@ -496,7 +501,7 @@ export class MemberUseCase {
     emitEvent(organizationId, "member.deleted", {
       memberId: member.id,
       name: member.user.name,
-    }).catch((err) => console.error("[Windmill] MemberDeleted error:", err));
+    }).catch(err => console.error("[Windmill] MemberDeleted error:", err));
 
     return member;
   }
@@ -629,20 +634,14 @@ export class MemberUseCase {
       },
     });
 
-    if (!member || !member.pinHash) {
-      // Track failed attempts even for non-existent members to prevent enumeration if possible,
-      // though here cardId is known.
-      const newCount = await this.redis.incr(rateLimitKey);
-      if (newCount === 1) {
-        await this.redis.expire(rateLimitKey, LOCKOUT_DURATION_SECONDS);
-      }
-      throw new UnauthorizedException(
-        `Invalid credentials. ${MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
-      );
-    }
+    // SECURITY (Sentinel): Mitigate timing attacks and cardId/member enumeration side-channels by always
+    // performing a cryptographically heavy bcrypt.compare on a valid dummy PIN hash if member or pinHash is missing.
+    const dummyPinHash =
+      "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+    const pinHashToCompare = member?.pinHash || dummyPinHash;
+    const isPinValid = await bcrypt.compare(pin, pinHashToCompare);
 
-    const isPinValid = await bcrypt.compare(pin, member.pinHash);
-    if (!isPinValid) {
+    if (!member || !member.pinHash || !isPinValid) {
       // Track failed attempts
       const newCount = await this.redis.incr(rateLimitKey);
       if (newCount === 1) {
@@ -664,7 +663,7 @@ export class MemberUseCase {
     let attendanceLogId = activeLog?.id;
 
     if (!activeLog) {
-      await this.prisma.client.$transaction(async (tx) => {
+      await this.prisma.client.$transaction(async tx => {
         const log = await tx.attendanceLog.create({
           data: {
             organizationId,
