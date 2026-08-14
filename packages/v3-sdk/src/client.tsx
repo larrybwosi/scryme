@@ -589,15 +589,42 @@ export class ScrymeClientSDK<
         return this.orders.getCart(params as CartControllerGetCartParams) as any;
       },
       add: async (dto: AddToCartDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.orders.addToCart(dto);
       },
       remove: async (dto: RemoveFromCartDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.orders.removeFromCart(dto);
       },
       clear: async (params?: CartControllerClearCartParams) => {
         return this.orders.clearCart(params as CartControllerClearCartParams);
       },
       update: async <T = TCartResponse>(dto: AddToCartDto & { quantity: number }): Promise<AxiosResponse<void> | AxiosResponse<T> | undefined> => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         const response = await this.orders.getCart({
           sessionId: dto.sessionId || "",
         });
@@ -832,6 +859,15 @@ export class ScrymeClientSDK<
 
     this.bookings = {
       create: async (dto: CreateBookingDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.catalog.createBooking(dto) as any;
       },
       get: async (id: string) => {
