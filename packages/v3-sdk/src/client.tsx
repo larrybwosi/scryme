@@ -19,6 +19,10 @@ import type {
   UpdateCustomerDto,
   ProductResponseDto,
   ServiceCatalogResponseDto,
+  CreateProductReviewDto,
+  UpdateProductReviewDto,
+  ProductReviewResponseDto,
+  CatalogDeleteReviewParams,
 } from "./generated/model";
 import {
   RawAPI,
@@ -858,6 +862,51 @@ export class ScrymeClientSDK<
           ...response,
           data: service,
         };
+      },
+      createReview: async (
+        productId: string,
+        dto: CreateProductReviewDto & { customerId?: string },
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<ProductReviewResponseDto>> => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (customerId) {
+            dto = { ...dto, customerId };
+          }
+        }
+        return baseCatalog.createReview(productId, dto, options);
+      },
+      updateReview: async (
+        reviewId: string,
+        dto: UpdateProductReviewDto & { customerId?: string },
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<ProductReviewResponseDto>> => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (customerId) {
+            dto = { ...dto, customerId };
+          }
+        }
+        return baseCatalog.updateReview(reviewId, dto, options);
+      },
+      deleteReview: async (
+        reviewId: string,
+        params?: CatalogDeleteReviewParams,
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<void>> => {
+        if (!params || !params.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (customerId) {
+            params = { ...params, customerId };
+          }
+        }
+        return baseCatalog.deleteReview(reviewId, params, options);
       },
     };
     this.inventory = buildModule(this.api, config.orgSlug, inventoryMapping);

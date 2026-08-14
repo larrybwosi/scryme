@@ -1479,5 +1479,95 @@ const authData = await sdk.auth.signIn({ email: "alice@generic.com", password: "
       );
       expect(session).toEqual(mockSession);
     });
+
+    describe("Product Reviews client-side wrappers & dynamic customer ID resolution", () => {
+      it("should dynamically inject customerId from active session on catalog.createReview", async () => {
+        const sdk = createClientSDK({ orgSlug: "review-org" });
+
+        sdk.auth.getSession = jest.fn().mockResolvedValue({
+          token: "token-xyz",
+          user: { customerId: "review-customer-123" },
+        });
+
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { id: "rev-1", rating: 5, comment: "Amazing!" },
+        });
+
+        const res = await sdk.catalog.createReview("prod-1", { rating: 5, comment: "Amazing!" });
+        expect(res.data.id).toBe("rev-1");
+
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+          "/v3/review-org/catalog/products/prod-1/reviews",
+          { rating: 5, comment: "Amazing!", customerId: "review-customer-123" },
+          undefined
+        );
+      });
+
+      it("should preserve explicitly provided customerId on catalog.createReview", async () => {
+        const sdk = createClientSDK({ orgSlug: "review-org" });
+
+        sdk.auth.getSession = jest.fn().mockResolvedValue({
+          token: "token-xyz",
+          user: { customerId: "review-customer-123" },
+        });
+
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { id: "rev-2" },
+        });
+
+        await sdk.catalog.createReview("prod-1", {
+          rating: 4,
+          customerId: "custom-explicit-id",
+        });
+
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+          "/v3/review-org/catalog/products/prod-1/reviews",
+          { rating: 4, customerId: "custom-explicit-id" },
+          undefined
+        );
+      });
+
+      it("should dynamically inject customerId from active session on catalog.updateReview", async () => {
+        const sdk = createClientSDK({ orgSlug: "review-org" });
+
+        sdk.auth.getSession = jest.fn().mockResolvedValue({
+          token: "token-xyz",
+          user: { id: "user-id-999" },
+        });
+
+        (sdk.axiosInstance.patch as jest.Mock).mockResolvedValueOnce({
+          data: { id: "rev-1", rating: 4 },
+        });
+
+        const res = await sdk.catalog.updateReview("rev-1", { rating: 4 });
+        expect(res.data.id).toBe("rev-1");
+
+        expect(sdk.axiosInstance.patch).toHaveBeenCalledWith(
+          "/v3/review-org/catalog/reviews/rev-1",
+          { rating: 4, customerId: "user-id-999" },
+          undefined
+        );
+      });
+
+      it("should dynamically inject customerId as params on catalog.deleteReview", async () => {
+        const sdk = createClientSDK({ orgSlug: "review-org" });
+
+        sdk.auth.getSession = jest.fn().mockResolvedValue({
+          token: "token-xyz",
+          user: { id: "user-id-999" },
+        });
+
+        (sdk.axiosInstance.delete as jest.Mock).mockResolvedValueOnce({
+          data: { success: true },
+        });
+
+        await sdk.catalog.deleteReview("rev-1");
+
+        expect(sdk.axiosInstance.delete).toHaveBeenCalledWith(
+          "/v3/review-org/catalog/reviews/rev-1",
+          { params: { customerId: "user-id-999" } }
+        );
+      });
+    });
   });
 });

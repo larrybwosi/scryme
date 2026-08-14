@@ -318,3 +318,37 @@ export class ServiceCatalogResponseDto {
   @ApiPropertyOptional({ type: () => CmsCustomFieldsDto })
   customFields?: CmsCustomFieldsDto;
 }
+
+export class CreateProductReviewDto {
+  @ApiProperty({ example: 5, description: "Rating of the product from 1 to 5" })
+  @IsNumber()
+  @IsNotEmpty()
+  rating: number;
+
+  @ApiPropertyOptional({ example: "Outstanding product!", description: "Review comment content" })
+  @IsString()
+  @IsOptional()
+  comment?: string;
+
+  @ApiPropertyOptional({ example: "cust_123", description: "Optional customer override ID" })
+  @IsString()
+  @IsOptional()
+  customerId?: string;
+}
+
+export class UpdateProductReviewDto {
+  @ApiPropertyOptional({ example: 4, description: "Updated rating of the product from 1 to 5" })
+  @IsNumber()
+  @IsOptional()
+  rating?: number;
+
+  @ApiPropertyOptional({ example: "Almost perfect product!", description: "Updated review comment content" })
+  @IsString()
+  @IsOptional()
+  comment?: string;
+
+  @ApiPropertyOptional({ example: "cust_123", description: "Optional customer override ID" })
+  @IsString()
+  @IsOptional()
+  customerId?: string;
+}

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Body,
   UseGuards,
   UseInterceptors,
@@ -10,6 +11,8 @@ import {
   Patch,
   Param,
   NotFoundException,
+  BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -17,6 +20,7 @@ import {
   ApiBearerAuth,
   ApiResponse,
   ApiParam,
+  ApiQuery,
 } from "@nestjs/swagger";
 import { GetProductsUseCase } from "../../application/use-cases/get-products.use-case";
 import { CreateProductUseCase } from "../../application/use-cases/create-product.use-case";
@@ -30,6 +34,9 @@ import {
   UpdateProductDto,
   ProductResponseDto,
   ServiceCatalogResponseDto,
+  CreateProductReviewDto,
+  UpdateProductReviewDto,
+  ProductReviewResponseDto,
 } from "../../application/dto/product.dto";
 import { UpdateSupplierProductDto } from "../../application/dto/supplier-product.dto";
 import { ReviewPriceChangeDto } from "../../application/dto/price-change.dto";
@@ -629,5 +636,155 @@ export class ProductController {
       status: body.status,
       rejectionReason: body.rejectionReason,
     });
+  }
+
+  @Post("products/:productId/reviews")
+  @Permissions("customer:write:own")
+  @ApiOperation({
+    summary: "Create a new review for a product",
+    description: "Creates a product review. Dynamically falls back to v3Context customerId if body customerId is omitted.",
+    operationId: "Catalog_CreateReview",
+  })
+  @ApiParam({ name: "productId", type: "string" })
+  @ApiResponse({ status: 201, type: ProductReviewResponseDto })
+  async createReview(
+    @Req() req: any,
+    @Param("productId") productId: string,
+    @Body() body: CreateProductReviewDto,
+  ) {
+    const organizationId = req.organization.id;
+    const customerId = body.customerId || req.v3Context?.customerId;
+
+    if (!customerId) {
+      throw new BadRequestException("Customer ID is required");
+    }
+
+    // Tenant Isolation Check: Verify that the product exists and belongs to this organization
+    const product = await this.prisma.client.product.findFirst({
+      where: { id: productId, organizationId },
+      select: { id: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException("Product not found");
+    }
+
+    return this.prisma.client.productReview.create({
+      data: {
+        organizationId,
+        customerId,
+        productId,
+        rating: Number(body.rating),
+        comment: body.comment,
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  @Patch("reviews/:reviewId")
+  @Permissions("customer:write:own")
+  @ApiOperation({
+    summary: "Update an existing review",
+    description: "Updates rating or comment on a review. Enforces tenant isolation and ownership restrictions.",
+    operationId: "Catalog_UpdateReview",
+  })
+  @ApiParam({ name: "reviewId", type: "string" })
+  @ApiResponse({ status: 200, type: ProductReviewResponseDto })
+  async updateReview(
+    @Req() req: any,
+    @Param("reviewId") reviewId: string,
+    @Body() body: UpdateProductReviewDto,
+  ) {
+    const organizationId = req.organization.id;
+    const customerId = body.customerId || req.v3Context?.customerId;
+
+    if (!customerId) {
+      throw new BadRequestException("Customer ID is required");
+    }
+
+    // IDOR Prevention: Use findFirst to enforce tenant/organization isolation
+    const review = await this.prisma.client.productReview.findFirst({
+      where: { id: reviewId, organizationId },
+    });
+
+    if (!review) {
+      throw new NotFoundException("Review not found");
+    }
+
+    // Ownership check
+    if (review.customerId !== customerId) {
+      throw new ForbiddenException("Not authorized to update this review");
+    }
+
+    return this.prisma.client.productReview.update({
+      where: { id: reviewId },
+      data: {
+        rating: body.rating !== undefined ? Number(body.rating) : undefined,
+        comment: body.comment,
+      },
+      include: {
+        customer: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+  }
+
+  @Delete("reviews/:reviewId")
+  @Permissions("customer:write:own")
+  @ApiOperation({
+    summary: "Delete a review",
+    description: "Deletes a review by its ID. Enforces tenant isolation and ownership or admin permission checks.",
+    operationId: "Catalog_DeleteReview",
+  })
+  @ApiParam({ name: "reviewId", type: "string" })
+  @ApiQuery({ name: "customerId", type: "string", required: false })
+  @ApiResponse({ status: 200, description: "Review successfully deleted" })
+  async deleteReview(
+    @Req() req: any,
+    @Param("reviewId") reviewId: string,
+    @Query("customerId") queryCustomerId?: string,
+  ) {
+    const organizationId = req.organization.id;
+    const customerId = queryCustomerId || req.v3Context?.customerId;
+
+    if (!customerId) {
+      throw new BadRequestException("Customer ID is required");
+    }
+
+    // IDOR Prevention: Use findFirst to enforce tenant/organization isolation
+    const review = await this.prisma.client.productReview.findFirst({
+      where: { id: reviewId, organizationId },
+    });
+
+    if (!review) {
+      throw new NotFoundException("Review not found");
+    }
+
+    const isOwner = review.customerId === customerId;
+    const scopes = req.v3Context?.scopes || [];
+    const canManageAll =
+      scopes.includes("*") ||
+      scopes.includes("product:manage:reviews");
+
+    if (!isOwner && !canManageAll) {
+      throw new ForbiddenException("Not authorized to delete this review");
+    }
+
+    await this.prisma.client.productReview.delete({
+      where: { id: reviewId },
+    });
+
+    return { success: true };
   }
 }
