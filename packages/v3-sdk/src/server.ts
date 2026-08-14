@@ -710,7 +710,18 @@ export class ScrymeServerSDK<
         signUp: async <T = TUser>(
           dto: RegisterCustomerDto,
         ): Promise<AxiosResponse<T>> => {
-          return this.api.customersRegister(config.orgSlug, dto) as any;
+          const res = await this.api.customersRegister(config.orgSlug, dto) as any;
+          if (dto.password) {
+            try {
+              await this.customer.auth.signIn({
+                email: dto.email,
+                password: dto.password,
+              });
+            } catch (e) {
+              console.error("Auto sign-in after sign-up failed on server SDK:", e);
+            }
+          }
+          return res;
         },
 
         signIn: async <TSess = TSession, TU = TUser>(credentials: {

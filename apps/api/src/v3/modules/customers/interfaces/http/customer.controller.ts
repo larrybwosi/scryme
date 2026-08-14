@@ -136,6 +136,32 @@ export class CustomerController {
     );
   }
 
+  @Post("../customer/register")
+  @AllowPublic()
+  @UsePipes(new V3ZodValidationPipe(RegisterCustomerSchema))
+  @ApiOperation({
+    summary: "Register a new customer (singular alias)",
+    operationId: "Customer_Register",
+  })
+  @ApiResponse({
+    status: 201,
+    type: CustomerResponseDto,
+    description: "Customer registered successfully",
+  })
+  @ApiResponse({
+    status: 400,
+    type: ApiErrorResponseDto,
+    description: "Invalid input",
+  })
+  @ApiResponse({
+    status: 401,
+    type: ApiErrorResponseDto,
+    description: "Unauthorized",
+  })
+  async registerSingular(@Req() req: any, @Body() dto: RegisterCustomerDto) {
+    return this.register(req, dto);
+  }
+
   @Post("auth/login")
   @AllowPublic()
   @UsePipes(new V3ZodValidationPipe(CustomerLoginSchema))
@@ -231,6 +257,7 @@ export class CustomerController {
       success: true,
       token,
       session: sessionState,
+      user: customer,
     };
   }
 
@@ -312,10 +339,18 @@ export class CustomerController {
       JSON.stringify(updatedSession),
     );
 
+    const customer = await this.prisma.client.customer.findFirst({
+      where: {
+        id: payload.sub,
+        organizationId: payload.organizationId,
+      },
+    });
+
     return {
       success: true,
       token,
       session: updatedSession,
+      user: customer,
     };
   }
 

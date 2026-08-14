@@ -194,7 +194,7 @@ export class ScrymeClientSDK<
   /**
    * Raw proxy API client exposing all standard endpoints auto-bound with the configured orgSlug.
    */
-  protected api: RawAPI;
+  private api: RawAPI;
 
   /** Catalog operations submodule (products, services, categories, bookings, staff schedules). */
   public catalog: CatalogModule<TProduct, TService>;
@@ -279,8 +279,12 @@ export class ScrymeClientSDK<
       refreshSession<TSess = TSession, TU = TUser>(): Promise<
         CustomerAuthResponseDto<TU, TSess>
       >;
-      session: ClientSessionStructure<TUser>;
-      useSession(): ClientSessionStructure<TUser>;
+      useSession<TSess = TSession, TU = TUser>(): {
+        data: { session: TSess; user: TU } | null;
+        isPending: boolean;
+        error: any;
+        refetch: () => Promise<void>;
+      };
     };
   };
 
@@ -314,8 +318,12 @@ export class ScrymeClientSDK<
     revokeAllSessions(mode?: string): Promise<AxiosResponse<void>>;
     getCurrentSession<TU = TUser>(): Promise<TU>;
     refreshSession<TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>>;
-    session: ClientSessionStructure<TUser>;
-    useSession(): ClientSessionStructure<TUser>;
+    useSession<TSess = TSession, TU = TUser>(): {
+      data: { session: TSess; user: TU } | null;
+      isPending: boolean;
+      error: any;
+      refetch: () => Promise<void>;
+    };
   };
 
   /**
@@ -753,7 +761,7 @@ export class ScrymeClientSDK<
 
     const customerAuth = {
       signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
-        const res = await this.api.customersRegister(config.orgSlug, dto);
+        const res = await this.api.customersRegister(config.orgSlug, dto) as any;
         if (dto.password) {
           try {
             await customerAuth.signIn({
@@ -761,10 +769,10 @@ export class ScrymeClientSDK<
               password: dto.password,
             });
           } catch (e) {
-            console.error("Auto-login after signup failed:", e);
+            console.error("Auto sign-in after sign-up failed:", e);
           }
         }
-        return res as any;
+        return res;
       },
       signIn: async <TSess = TSession, TU = TUser>(credentials: {
         email: string;
@@ -850,83 +858,57 @@ export class ScrymeClientSDK<
         }
         return authData;
       },
-      get session(): ClientSessionStructure<TUser> {
-        const u = state.user;
-        if (!u || !state.token) {
-          return {
-            data: null,
-            isPending: false,
-            error: null,
-          };
-        }
-        return {
-          data: {
-            session: {
-              id: (u as any).customerId || (u as any).id || "session-id",
-              userId: (u as any).id,
-              expiresAt: state.expiresAt ? new Date(state.expiresAt) : null,
-              token: state.token,
-            },
-            user: u,
-          },
-          isPending: false,
-          error: null,
-        };
-      },
-      useSession(): ClientSessionStructure<TUser> {
-        const [currentSession, setCurrentSession] = useState<ClientSessionStructure<TUser>>(() => {
-          const u = state.user;
-          if (!u || !state.token) {
-            return { data: null, isPending: false, error: null };
-          }
-          return {
-            data: {
-              session: {
-                id: (u as any).customerId || (u as any).id || "session-id",
-                userId: (u as any).id,
-                expiresAt: state.expiresAt ? new Date(state.expiresAt) : null,
-                token: state.token,
-              },
-              user: u,
-            },
-            isPending: false,
-            error: null,
-          };
+    useSession: (): ClientSessionStructure<TUser> & { refetch: () => Promise<void> } => {
+  const [data, setData] = useState<ClientSessionStructure<TUser>['data']>(null);
+  const [isPending, setIsPending] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  const fetchSession = useCallback(async () => {
+    setIsPending(true);
+    try {
+      const sessionState = await customerAuth.getSession();
+      if (!sessionState?.token) {
+        setData(null);
+        setError(null);
+        return;
+      }
+
+      const res = await customerAuth.getCurrentSession();
+      if (res && (res.session || res.customer || res.user)) {
+        setData({
+          session: res.session,
+          user: res.customer || res.user,
         });
+      } else {
+        setData({
+          session: { id: sessionState.token },
+          user: sessionState.user,
+        });
+      }
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e : new Error(String(e)));
+      setData(null);
+    } finally {
+      setIsPending(false);
+    }
+  }, []);
 
-        useEffect(() => {
-          const update = () => {
-            const u = state.user;
-            if (!u || !state.token) {
-              setCurrentSession({ data: null, isPending: false, error: null });
-            } else {
-              setCurrentSession({
-                data: {
-                  session: {
-                    id: (u as any).customerId || (u as any).id || "session-id",
-                    userId: (u as any).id,
-                    expiresAt: state.expiresAt ? new Date(state.expiresAt) : null,
-                    token: state.token,
-                  },
-                  user: u,
-                },
-                isPending: false,
-                error: null,
-              });
-            }
-          };
+  useEffect(() => {
+    fetchSession();
+    const { unsubscribe } = customerAuth.onAuthStateChange(() => {
+      fetchSession();
+    });
+    return () => unsubscribe();
+  }, [fetchSession]);
 
-          // Trigger update initially to keep everything up to date with loaded state
-          update();
-
-          const { unsubscribe } = customerAuth.onAuthStateChange(update);
-          return () => unsubscribe();
-        }, []);
-
-        return currentSession;
-      },
-    };
-
+  return {
+    data,
+    isPending,
+    error,
+    refetch: fetchSession,
+  };
+}
     this.customer = {
       getProfile: async <T = TUser>(): Promise<T> => {
         return this.customer.auth.getCurrentSession() as any;
