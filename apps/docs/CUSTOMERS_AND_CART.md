@@ -9,7 +9,7 @@ This guide provides a comprehensive overview of **Customer CRUD (Create, Read, U
 Providing custom storefronts and third-party integrations with robust, secure customer and checkout capabilities is a core pillar of the Scryme V3 architecture. This guide is designed to help developers construct frictionless e-commerce and member enrollment loops.
 
 By leveraging the customer and cart services, developers can manage:
-- **Multi-tenant Identity**: Link customers to local login credentials, third-party Zitadel OpenID Connect (OIDC) identities, or federated Google accounts.
+- **Multi-tenant Identity**: Link customers to local login credentials or federated Google accounts.
 - **Full Customer CRUD Lifecycle**: Register, list, inspect, dynamically update, and cascade-safely deactivate customer profile fields.
 - **Address Management Directory**: Maintain flexible, labeled shipping and billing addresses for each customer.
 - **Stateful Shopping Cart**: Power both volatile guest carts (tracked by anonymous session tokens) and authenticated customer carts.
@@ -25,7 +25,7 @@ Scryme V3 supports native credentials, federated social logins, and secure beare
 ### Supported Authentication Methods
 
 1. **Email and Password**: Classic local credentials stored using cryptographically secure `bcrypt` hashes.
-2. **Google Social Sign-In**: Federated single-tap authentication powered by Zitadel OIDC.
+2. **Google Social Sign-In**: Federated single-tap authentication.
 3. **Better-Auth Bearer Tokens**: Transparent, standard token resolution mapping across web dashboards and mobile (Android) apps.
 
 ### Token Lifecycle & Auto-Refresh
@@ -53,7 +53,6 @@ Registering a new customer profile. For client-side storefronts, use the public 
   "name": "Alice Smith",
   "email": "alice.smith@example.com",
   "phone": "+254712345678",
-  "zitadelUserId": "user_id_from_identity_provider", // Optional: Links OIDC accounts
   "company": "Acme Baking Industries",
   "customerType": "B2B_PREMIUM",
   "dateOfBirth": "1994-04-12",

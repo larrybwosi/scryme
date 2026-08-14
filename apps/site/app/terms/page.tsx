@@ -65,7 +65,7 @@ export default function TermsPage() {
             </p>
             <p>
               You are responsible for keeping all administrator credentials,
-              Zitadel SSO client secrets, better-auth session tokens, and
+              better-auth session tokens, and
               webhook URLs securely managed. Unauthorized bypass attempts may
               result in immediate account termination.
             </p>

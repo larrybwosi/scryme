@@ -554,7 +554,6 @@ services:
 
 volumes:
   postgres_prod_data:
-  zitadel_data:
   windmill_data:
   redis_prod_data:
   rabbitmq_prod_data:

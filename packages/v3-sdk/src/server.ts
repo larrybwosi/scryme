@@ -402,8 +402,7 @@ export class ScrymeServerSDK<
         req.url &&
         (req.url.endsWith("/auth/token") ||
           req.url.includes("/auth/token") ||
-          req.url.includes("/customers/auth/refresh") ||
-          req.url.includes("/customers/auth/swap-zitadel"));
+          req.url.includes("/customers/auth/refresh"));
 
       if (!isAuthTokenRequest && !config.apiKey) {
         const isExpired =
@@ -451,8 +450,7 @@ export class ScrymeServerSDK<
           originalRequest.url &&
           (originalRequest.url.endsWith("/auth/token") ||
             originalRequest.url.includes("/auth/token") ||
-            originalRequest.url.includes("/customers/auth/refresh") ||
-            originalRequest.url.includes("/customers/auth/swap-zitadel"));
+            originalRequest.url.includes("/customers/auth/refresh"));
 
         if (
           error.response &&

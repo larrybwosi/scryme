@@ -311,7 +311,7 @@ try {
                 <span>OIDC Federated Login</span>
               </div>
               <p className="text-light-text text-xs leading-relaxed">
-                Coordinate authentication with Google Social or Zitadel OIDC identities, then exchange provider assertions for local JWT sessions.
+                Coordinate authentication with Google Social OIDC identities, then exchange provider assertions for local JWT sessions.
               </p>
             </div>
             <div className="bg-ink-card/50 border border-ink-border p-4 rounded-xl space-y-2">

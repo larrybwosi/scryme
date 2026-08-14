@@ -12895,10 +12895,6 @@
       "RegisterCustomerDto": {
         "type": "object",
         "properties": {
-          "zitadelUserId": {
-            "type": "string",
-            "example": "zit_12345"
-          },
           "name": {
             "type": "string",
             "example": "John Doe"
@@ -12970,10 +12966,6 @@
       "UpdateCustomerDto": {
         "type": "object",
         "properties": {
-          "zitadelUserId": {
-            "type": "string",
-            "example": "zit_12345"
-          },
           "name": {
             "type": "string",
             "example": "John Doe"
