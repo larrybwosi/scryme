@@ -138,6 +138,23 @@ export interface SessionState<TUser = CustomerResponseDto> {
 }
 
 /**
+ * Standard client-side session structure matching better-auth.
+ */
+export interface ClientSessionStructure<TUser = CustomerResponseDto> {
+  data: {
+    session: {
+      id: string;
+      userId: string;
+      expiresAt: Date | null;
+      token: string | null;
+    };
+    user: TUser;
+  } | null;
+  isPending: boolean;
+  error: any;
+}
+
+/**
  * Callback signature triggered whenever the customer authentication status changes.
  */
 export type AuthStateCallback<TUser = CustomerResponseDto> = (
@@ -177,7 +194,7 @@ export class ScrymeClientSDK<
   /**
    * Raw proxy API client exposing all standard endpoints auto-bound with the configured orgSlug.
    */
-  public api: RawAPI;
+  protected api: RawAPI;
 
   /** Catalog operations submodule (products, services, categories, bookings, staff schedules). */
   public catalog: CatalogModule<TProduct, TService>;
@@ -262,6 +279,8 @@ export class ScrymeClientSDK<
       refreshSession<TSess = TSession, TU = TUser>(): Promise<
         CustomerAuthResponseDto<TU, TSess>
       >;
+      session: ClientSessionStructure<TUser>;
+      useSession(): ClientSessionStructure<TUser>;
     };
   };
 
@@ -295,6 +314,8 @@ export class ScrymeClientSDK<
     revokeAllSessions(mode?: string): Promise<AxiosResponse<void>>;
     getCurrentSession<TU = TUser>(): Promise<TU>;
     refreshSession<TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>>;
+    session: ClientSessionStructure<TUser>;
+    useSession(): ClientSessionStructure<TUser>;
   };
 
   /**
@@ -732,7 +753,18 @@ export class ScrymeClientSDK<
 
     const customerAuth = {
       signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
-        return this.api.customersRegister(config.orgSlug, dto) as any;
+        const res = await this.api.customersRegister(config.orgSlug, dto);
+        if (dto.password) {
+          try {
+            await customerAuth.signIn({
+              email: dto.email,
+              password: dto.password,
+            });
+          } catch (e) {
+            console.error("Auto-login after signup failed:", e);
+          }
+        }
+        return res as any;
       },
       signIn: async <TSess = TSession, TU = TUser>(credentials: {
         email: string;
@@ -818,6 +850,81 @@ export class ScrymeClientSDK<
         }
         return authData;
       },
+      get session(): ClientSessionStructure<TUser> {
+        const u = state.user;
+        if (!u || !state.token) {
+          return {
+            data: null,
+            isPending: false,
+            error: null,
+          };
+        }
+        return {
+          data: {
+            session: {
+              id: (u as any).customerId || (u as any).id || "session-id",
+              userId: (u as any).id,
+              expiresAt: state.expiresAt ? new Date(state.expiresAt) : null,
+              token: state.token,
+            },
+            user: u,
+          },
+          isPending: false,
+          error: null,
+        };
+      },
+      useSession(): ClientSessionStructure<TUser> {
+        const [currentSession, setCurrentSession] = useState<ClientSessionStructure<TUser>>(() => {
+          const u = state.user;
+          if (!u || !state.token) {
+            return { data: null, isPending: false, error: null };
+          }
+          return {
+            data: {
+              session: {
+                id: (u as any).customerId || (u as any).id || "session-id",
+                userId: (u as any).id,
+                expiresAt: state.expiresAt ? new Date(state.expiresAt) : null,
+                token: state.token,
+              },
+              user: u,
+            },
+            isPending: false,
+            error: null,
+          };
+        });
+
+        useEffect(() => {
+          const update = () => {
+            const u = state.user;
+            if (!u || !state.token) {
+              setCurrentSession({ data: null, isPending: false, error: null });
+            } else {
+              setCurrentSession({
+                data: {
+                  session: {
+                    id: (u as any).customerId || (u as any).id || "session-id",
+                    userId: (u as any).id,
+                    expiresAt: state.expiresAt ? new Date(state.expiresAt) : null,
+                    token: state.token,
+                  },
+                  user: u,
+                },
+                isPending: false,
+                error: null,
+              });
+            }
+          };
+
+          // Trigger update initially to keep everything up to date with loaded state
+          update();
+
+          const { unsubscribe } = customerAuth.onAuthStateChange(update);
+          return () => unsubscribe();
+        }, []);
+
+        return currentSession;
+      },
     };
 
     this.customer = {
@@ -854,6 +961,12 @@ export class ScrymeClientSDK<
       ...customerAuth,
       authenticate: async () => {
         return performExchange();
+      },
+      get session() {
+        return customerAuth.session;
+      },
+      useSession() {
+        return customerAuth.useSession();
       },
     };
 

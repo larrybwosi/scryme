@@ -1,3 +1,4 @@
+import React from "react";
 import { ScrymeClientSDK, createClientSDK } from "../client";
 import { ScrymeServerSDK, createServerSDK } from "../server";
 import axios from "axios";
@@ -200,7 +201,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         data: [],
       });
 
-      await (sdk.api.inventoryGetInventory as any)({ limit: 10 });
+      await ((sdk as any).api.inventoryGetInventory as any)({ limit: 10 });
       expect(sdk.axiosInstance.get).toHaveBeenCalledWith(
         "/v3/configured-test-org/inventory",
         {
@@ -331,6 +332,138 @@ describe("Scryme V3 Client and Server SDKs", () => {
         token: null,
         user: null,
       });
+    });
+
+    it("should return the correct session structure synchronously using the session getter", async () => {
+      const sdk = createClientSDK({
+        storage: mockStorage,
+      });
+
+      // Initially no session
+      expect(sdk.customer.auth.session).toEqual({
+        data: null,
+        isPending: false,
+        error: null,
+      });
+      expect(sdk.auth.session).toEqual({
+        data: null,
+        isPending: false,
+        error: null,
+      });
+
+      // Sign in to establish session
+      const mockSignInResponse = {
+        token: "session_token_123",
+        session: { id: "cust_123", name: "Alice" },
+      };
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: mockSignInResponse,
+      });
+
+      await sdk.customer.auth.signIn({ email: "alice@test.com", password: "pwd" });
+
+      const expectedSession = {
+        data: {
+          session: {
+            id: "cust_123",
+            userId: "cust_123",
+            expiresAt: null,
+            token: "session_token_123",
+          },
+          user: { id: "cust_123", name: "Alice" },
+        },
+        isPending: false,
+        error: null,
+      };
+
+      expect(sdk.customer.auth.session).toEqual(expectedSession);
+      expect(sdk.auth.session).toEqual(expectedSession);
+    });
+
+    it("should reactively update when using the useSession hook", async () => {
+      const sdk = createClientSDK({
+        storage: mockStorage,
+      });
+
+      // Mock React's useState and useEffect to test useSession in isolation
+      const originalUseState = React.useState;
+      const originalUseEffect = React.useEffect;
+
+      let stateVal: any;
+      let stateSetter: any;
+
+      const mockUseState = jest.fn((init) => {
+        const val = typeof init === "function" ? init() : init;
+        stateVal = val;
+        stateSetter = jest.fn((newVal) => {
+          stateVal = typeof newVal === "function" ? newVal(stateVal) : newVal;
+        });
+        return [stateVal, stateSetter];
+      });
+
+      const mockUseEffect = jest.fn((effect) => {
+        effect();
+      });
+
+      jest.spyOn(React, "useState").mockImplementation(mockUseState as any);
+      jest.spyOn(React, "useEffect").mockImplementation(mockUseEffect as any);
+
+      try {
+        const sessionResult = sdk.customer.auth.useSession();
+        expect(sessionResult).toEqual({
+          data: null,
+          isPending: false,
+          error: null,
+        });
+
+        // Sign in
+        const mockSignInResponse = {
+          token: "session_token_456",
+          session: { id: "cust_456", name: "Bob" },
+        };
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: mockSignInResponse,
+        });
+
+        await sdk.customer.auth.signIn({ email: "bob@test.com", password: "pwd" });
+
+        // The stateSetter should have been called with the new session
+        expect(stateSetter).toHaveBeenCalled();
+      } finally {
+        React.useState = originalUseState;
+        React.useEffect = originalUseEffect;
+      }
+    });
+
+    it("should automatically sign in after calling signUp if a password is provided", async () => {
+      const sdk = createClientSDK({
+        storage: mockStorage,
+        orgSlug: "test-org-signUp",
+      });
+
+      // Mock register request returning customer profile
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: { id: "cust_new_789", name: "New User", email: "new@test.com" },
+      });
+
+      // Mock login request
+      const mockLoginResponse = {
+        token: "session_token_signup_789",
+        session: { id: "cust_new_789", name: "New User" },
+      };
+      (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+        data: mockLoginResponse,
+      });
+
+      await sdk.customer.auth.signUp({
+        name: "New User",
+        email: "new@test.com",
+        password: "password123",
+      });
+
+      // Should automatically login and populate the session
+      expect(sdk.customer.auth.session.data?.session.token).toBe("session_token_signup_789");
+      expect(sdk.customer.auth.session.data?.user).toEqual({ id: "cust_new_789", name: "New User" });
     });
   });
 
