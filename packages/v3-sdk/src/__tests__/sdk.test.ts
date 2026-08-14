@@ -991,6 +991,41 @@ const authData = await sdk.auth.signIn({ email: "alice@generic.com", password: "
   });
 
   describe("New Features: Singular Product/Service Retrieval and Header-Based Session", () => {
+    it("should retrieve a product with reviews, favoritesCount, and dynamic meta calculations", async () => {
+      const sdk = createClientSDK({ orgSlug: "test-org" });
+      const mockProductWithReviews = {
+        id: "prod-rich",
+        slug: "rich-product",
+        name: "Rich Product",
+        brand: "Rich Brand",
+        isNew: true,
+        detailedDescription: "Extremely rich product details.",
+        tags: ["rich", "luxury"],
+        reviews: [
+          { id: "r1", rating: 5, comment: "Awesome!" },
+          { id: "r2", rating: 4, comment: "Nice!" },
+        ],
+        favoritesCount: 42,
+        favouritesCount: 42,
+        meta: {
+          averageRating: 4.5,
+          reviewCount: 2,
+        },
+      };
+
+      (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+        data: [mockProductWithReviews],
+      });
+
+      const response = await sdk.catalog.getProduct("prod-rich");
+      expect(response.data.id).toBe("prod-rich");
+      expect(response.data.brand).toBe("Rich Brand");
+      expect(response.data.reviews).toHaveLength(2);
+      expect(response.data.favoritesCount).toBe(42);
+      expect(response.data.favouritesCount).toBe(42);
+      expect(response.data.meta?.averageRating).toBe(4.5);
+    });
+
     it("should retrieve a product by ID or slug via getProduct", async () => {
       const sdk = createClientSDK({ orgSlug: "test-org" });
       const mockProducts = [
