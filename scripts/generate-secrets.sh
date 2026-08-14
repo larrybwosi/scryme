@@ -107,7 +107,7 @@ update_env_var "CRM_PORT" "3001" "false"
 update_env_var "BAKERY_PORT" "3003" "false"
 update_env_var "PORTAL_PORT" "3006" "false"
 
-# 11. Zitadel, Windmill and Scryme values
+# 11. Windmill and Scryme values
 update_env_var "SCRYME_CHAT_API_URL" "https://api.scryme.tech" "false"
 update_env_var "SCRYME_CHAT_CLIENT_ID" "your-scryme-chat-client-id" "false"
 update_env_var "SCRYME_CHAT_CLIENT_SECRET" "your-scryme-chat-client-secret" "false"

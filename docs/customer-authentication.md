@@ -47,7 +47,6 @@ When your system registers a customer or when a customer registers on an integra
   }
 }
 ```
-*Note: The `zitadelUserId` parameter represents the external/identity provider user identifier. When supplied, it establishes a high-fidelity mapping between their login account and their CRM/ERP Customer Profile.*
 
 #### Response (`201 Created`)
 ```json
@@ -127,7 +126,7 @@ Authorization: Bearer <customer_access_token>
 ```
 
 Our system will:
-1. **Introspect and verify** the JSON Web Token (JWT) signatures.
-2. **Parse the customer claims** (`sub`, `email`, `urn:zitadel:iam:org:id`).
+1. **Introspect and verify** the session token.
+2. **Parse the customer claims** (`sub`, `email`).
 3. **Synchronize or fetch** the corresponding customer mapping from the database.
 4. **Expose the request context** securely as a `customer` entity, enforcing multi-tenant isolation and secure data boundaries.

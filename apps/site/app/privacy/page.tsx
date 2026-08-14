@@ -52,7 +52,7 @@ export default function PrivacyPage() {
             </p>
             <p>
               When user sessions are established under better-auth or OIDC
-              structures like Zitadel, we process cryptographically secure
+              structures, we process cryptographically secure
               session records, user emails, active organization IDs, and B2B
               customer identifiers.
             </p>

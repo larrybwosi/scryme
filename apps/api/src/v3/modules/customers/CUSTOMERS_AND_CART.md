@@ -17,9 +17,9 @@ Scryme V3 supports native and federated self-authentication options using standa
   The client application coordinates with the identity provider to complete the authorization code flow (with PKCE), yielding an identity ID and a Bearer JWT.
 - **Backend Syncing & Authentication**:
   When the customer makes an API call with the Bearer token or accesses the portal callback, the backend:
-  1. Decodes and verifies the token against the identity provider's JWKS keys or verifies the `better-auth` session token.
-  2. Extracts claims (such as `sub` as `zitadelUserId`, `email`, `name`).
-  3. Creates or updates the customer’s profile inside the database, mapping the external Zitadel identity to our local database models via `ExternalMapping` (`provider: "ZITADEL"`).
+  1. Decodes and verifies the session token.
+  2. Extracts claims (such as `sub` as `userId`, `email`, `name`).
+  3. Creates or updates the customer’s profile inside the database, mapping the external identity to our local database models via `ExternalMapping` (`provider: "BETTER_AUTH"`).
   4. Establishes a secure context attaching the resolved `Customer` ID to the request.
 - **Subsequent Profile Updates**:
   Once self-registered/logged-in, customers can safely modify their details (such as `company`, `phone`, `dateOfBirth`, or `taxId` KRA PIN) via the secure update profile endpoints.
@@ -31,14 +31,13 @@ Scryme V3 supports native and federated self-authentication options using standa
 All customer-related endpoints are grouped under the `:orgSlug/customers` path.
 
 ### 1. Register a Customer
-Allows registering a new customer profile. Connected apps can provide a `zitadelUserId` to link with an existing Zitadel/social identity, or register a customer using standard credentials.
+Allows registering a new customer profile. Connected apps can register a customer using standard credentials.
 
 * **Endpoint**: `POST /v3/:orgSlug/customers/register`
 * **Authentication**: Public (Uses `@AllowPublic()`)
 * **Request Body** (`RegisterCustomerDto`):
   ```json
   {
-    "zitadelUserId": "zit_12345", // Optional: Links with Zitadel identity provider
     "name": "John Doe",
     "email": "john.doe@example.com",
     "phone": "+254700000000", // Optional
@@ -338,7 +337,7 @@ Deletes all items from the active shopping cart, resetting it to an empty state.
 
 ### Cart Session Merging and Customer Authentication
 
-When a customer is logged in via **Zitadel** or a **better-auth** session, the system automatically resolves their Customer profile and attaches their `customerId` to the request context.
+When a customer is logged in via a **better-auth** session, the system automatically resolves their Customer profile and attaches their `customerId` to the request context.
 
 To support transition from an anonymous guest session to an authenticated customer session (e.g. upon customer login):
 - If the client calls `GET /v3/:orgSlug/cart` with both the customer's authenticated Bearer token and the `sessionId` they used as a guest, the API will automatically:
