@@ -177,7 +177,7 @@ export class ScrymeClientSDK<
   /**
    * Raw proxy API client exposing all standard endpoints auto-bound with the configured orgSlug.
    */
-  public api: RawAPI;
+  private api: RawAPI;
 
   /** Catalog operations submodule (products, services, categories, bookings, staff schedules). */
   public catalog: CatalogModule<TProduct, TService>;
@@ -262,6 +262,12 @@ export class ScrymeClientSDK<
       refreshSession<TSess = TSession, TU = TUser>(): Promise<
         CustomerAuthResponseDto<TU, TSess>
       >;
+      useSession<TSess = TSession, TU = TUser>(): {
+        data: { session: TSess; user: TU } | null;
+        isPending: boolean;
+        error: any;
+        refetch: () => Promise<void>;
+      };
     };
   };
 
@@ -295,6 +301,12 @@ export class ScrymeClientSDK<
     revokeAllSessions(mode?: string): Promise<AxiosResponse<void>>;
     getCurrentSession<TU = TUser>(): Promise<TU>;
     refreshSession<TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>>;
+    useSession<TSess = TSession, TU = TUser>(): {
+      data: { session: TSess; user: TU } | null;
+      isPending: boolean;
+      error: any;
+      refetch: () => Promise<void>;
+    };
   };
 
   /**
@@ -705,7 +717,18 @@ export class ScrymeClientSDK<
 
     const customerAuth = {
       signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
-        return this.api.customersRegister(config.orgSlug, dto) as any;
+        const res = await this.api.customersRegister(config.orgSlug, dto) as any;
+        if (dto.password) {
+          try {
+            await customerAuth.signIn({
+              email: dto.email,
+              password: dto.password,
+            });
+          } catch (e) {
+            console.error("Auto sign-in after sign-up failed:", e);
+          }
+        }
+        return res;
       },
       signIn: async <TSess = TSession, TU = TUser>(credentials: {
         email: string;
@@ -790,6 +813,56 @@ export class ScrymeClientSDK<
           notify("SIGNED_IN");
         }
         return authData;
+      },
+      useSession: () => {
+        const [data, setData] = useState<any>(null);
+        const [isPending, setIsPending] = useState<boolean>(true);
+        const [error, setError] = useState<any>(null);
+
+        const fetchSession = async () => {
+          setIsPending(true);
+          try {
+            const sessionState = await customerAuth.getSession();
+            if (!sessionState.token) {
+              setData(null);
+              setIsPending(false);
+              return;
+            }
+            const res = await customerAuth.getCurrentSession() as any;
+            if (res && (res.session || res.customer || res.user)) {
+              setData({
+                session: res.session,
+                user: res.customer || res.user,
+              });
+            } else {
+              setData({
+                session: { id: sessionState.token },
+                user: sessionState.user,
+              });
+            }
+            setError(null);
+          } catch (e: any) {
+            setError(e);
+            setData(null);
+          } finally {
+            setIsPending(false);
+          }
+        };
+
+        useEffect(() => {
+          fetchSession();
+          const { unsubscribe } = customerAuth.onAuthStateChange(() => {
+            fetchSession();
+          });
+          return () => unsubscribe();
+        }, []);
+
+        return {
+          data,
+          isPending,
+          error,
+          refetch: fetchSession,
+        };
       },
     };
 

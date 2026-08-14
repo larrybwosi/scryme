@@ -200,7 +200,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         data: [],
       });
 
-      await (sdk.api.inventoryGetInventory as any)({ limit: 10 });
+      await ((sdk as any).api.inventoryGetInventory as any)({ limit: 10 });
       expect(sdk.axiosInstance.get).toHaveBeenCalledWith(
         "/v3/configured-test-org/inventory",
         {
