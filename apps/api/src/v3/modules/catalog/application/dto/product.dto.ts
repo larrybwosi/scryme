@@ -172,6 +172,39 @@ export class ProductCategoryResponseDto {
   name: string;
 }
 
+export class ProductReviewCustomerDto {
+  @ApiProperty({ example: "cust_123" })
+  id: string;
+
+  @ApiProperty({ example: "John Doe" })
+  name: string;
+}
+
+export class ProductReviewResponseDto {
+  @ApiProperty({ example: "rev_123" })
+  id: string;
+
+  @ApiProperty({ type: ProductReviewCustomerDto })
+  customer: ProductReviewCustomerDto;
+
+  @ApiProperty({ example: 5 })
+  rating: number;
+
+  @ApiProperty({ example: "Great product!", nullable: true })
+  comment: string | null;
+
+  @ApiProperty({ example: "2026-03-01T08:00:00.000Z" })
+  createdAt: string;
+}
+
+export class ProductMetaDto {
+  @ApiPropertyOptional({ example: 4.5 })
+  averageRating?: number;
+
+  @ApiPropertyOptional({ example: 12 })
+  reviewCount?: number;
+}
+
 export class ProductResponseDto {
   @ApiProperty({ example: "prod_123" })
   id: string;
@@ -202,6 +235,42 @@ export class ProductResponseDto {
 
   @ApiPropertyOptional({ type: () => CmsCustomFieldsDto })
   customFields?: CmsCustomFieldsDto;
+
+  @ApiPropertyOptional({ example: "Acme Corp", nullable: true })
+  brand?: string | null;
+
+  @ApiPropertyOptional({ example: 4.5, nullable: true })
+  rating?: number | null;
+
+  @ApiPropertyOptional({ example: true })
+  isNew?: boolean;
+
+  @ApiPropertyOptional({ example: "Detailed info about the product.", nullable: true })
+  detailedDescription?: string | null;
+
+  @ApiPropertyOptional({ example: ["coffee", "beans"] })
+  tags?: string[];
+
+  @ApiPropertyOptional({ example: true })
+  isFeatured?: boolean;
+
+  @ApiPropertyOptional({ example: true })
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ example: 10, nullable: true })
+  pointsOnPurchase?: number | null;
+
+  @ApiPropertyOptional({ type: [ProductReviewResponseDto] })
+  reviews?: ProductReviewResponseDto[];
+
+  @ApiPropertyOptional({ example: 10 })
+  favoritesCount?: number;
+
+  @ApiPropertyOptional({ example: 10 })
+  favouritesCount?: number;
+
+  @ApiPropertyOptional({ type: ProductMetaDto })
+  meta?: ProductMetaDto;
 }
 
 export class ServiceCategoryResponseDto {

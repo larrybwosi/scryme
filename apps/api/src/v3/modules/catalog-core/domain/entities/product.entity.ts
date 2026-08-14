@@ -18,5 +18,15 @@ export class Product {
       retailPrice: number | null;
     }>,
     public readonly customFields?: any,
+    public readonly brand?: string | null,
+    public readonly rating?: number | null,
+    public readonly isNew?: boolean,
+    public readonly detailedDescription?: string | null,
+    public readonly tags?: string[],
+    public readonly isFeatured?: boolean,
+    public readonly isActive?: boolean,
+    public readonly pointsOnPurchase?: number | null,
+    public readonly reviews?: any[],
+    public readonly favoritesCount?: number,
   ) {}
 }

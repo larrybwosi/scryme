@@ -87,6 +87,10 @@ export class ProductController {
       const firstVariant = p.variants?.[0];
       const retailPrice = firstVariant?.retailPrice ?? null;
 
+      const reviewCount = p.reviews?.length || 0;
+      const totalRating = p.reviews?.reduce((acc: number, r: any) => acc + r.rating, 0) || 0;
+      const averageRating = reviewCount > 0 ? Number((totalRating / reviewCount).toFixed(2)) : 0;
+
       return {
         id: p.id,
         name: p.name,
@@ -106,6 +110,21 @@ export class ProductController {
         slug: p.slug || null,
         variants: p.variants || [],
         customFields: p.customFields || null,
+        brand: p.brand || null,
+        rating: p.rating || null,
+        isNew: p.isNew || false,
+        detailedDescription: p.detailedDescription || null,
+        tags: p.tags || [],
+        isFeatured: p.isFeatured || false,
+        isActive: p.isActive || false,
+        pointsOnPurchase: p.pointsOnPurchase || null,
+        reviews: p.reviews || [],
+        favoritesCount: p.favoritesCount || 0,
+        favouritesCount: p.favoritesCount || 0,
+        meta: {
+          averageRating,
+          reviewCount,
+        },
       };
     });
   }
@@ -152,6 +171,26 @@ export class ProductController {
             retailPrice: true,
           },
         },
+        reviews: {
+          where: { isVisible: true },
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            favorites: true,
+          },
+        },
       },
     });
 
@@ -161,6 +200,11 @@ export class ProductController {
 
     const firstVariant = product.variants?.[0];
     const retailPrice = firstVariant?.retailPrice ? Number(firstVariant.retailPrice) : null;
+
+    const reviewCount = product.reviews?.length || 0;
+    const totalRating = product.reviews?.reduce((acc: number, r: any) => acc + r.rating, 0) || 0;
+    const averageRating = reviewCount > 0 ? Number((totalRating / reviewCount).toFixed(2)) : 0;
+    const favoritesCount = product._count?.favorites ?? 0;
 
     return {
       id: product.id,
@@ -181,6 +225,21 @@ export class ProductController {
       slug: product.slug || null,
       variants: product.variants || [],
       customFields: product.customFields || null,
+      brand: product.brand || null,
+      rating: product.rating || null,
+      isNew: product.isNew || false,
+      detailedDescription: product.detailedDescription || null,
+      tags: product.tags || [],
+      isFeatured: product.isFeatured || false,
+      isActive: product.isActive || false,
+      pointsOnPurchase: product.pointsOnPurchase || null,
+      reviews: product.reviews || [],
+      favoritesCount,
+      favouritesCount: favoritesCount,
+      meta: {
+        averageRating,
+        reviewCount,
+      },
     };
   }
 
