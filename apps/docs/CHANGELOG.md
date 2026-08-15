@@ -1,5 +1,11 @@
 # docs
 
+## 1.5.0
+
+### Minor Changes
+
+- c03e353: Release
+
 ## 1.4.0
 
 ### Minor Changes

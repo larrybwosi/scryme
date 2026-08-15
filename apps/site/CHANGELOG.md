@@ -1,5 +1,11 @@
 # site
 
+## 1.13.0
+
+### Minor Changes
+
+- c03e353: Release
+
 ## 1.12.0
 
 ### Minor Changes

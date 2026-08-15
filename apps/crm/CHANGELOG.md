@@ -1,5 +1,11 @@
 # crm
 
+## 7.38.0
+
+### Minor Changes
+
+- c03e353: Release
+
 ## 7.37.0
 
 ### Minor Changes

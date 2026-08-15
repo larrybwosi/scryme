@@ -1,5 +1,11 @@
 # bakery
 
+## 9.68.0
+
+### Minor Changes
+
+- c03e353: Release
+
 ## 9.67.0
 
 ### Minor Changes
