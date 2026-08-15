@@ -1,5 +1,11 @@
 # web
 
+## 6.38.0
+
+### Minor Changes
+
+- c03e353: Release
+
 ## 6.37.0
 
 ### Minor Changes
