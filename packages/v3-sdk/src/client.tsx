@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
 import { getScrymeV3API } from "./index";
 import type {
@@ -19,6 +19,10 @@ import type {
   UpdateCustomerDto,
   ProductResponseDto,
   ServiceCatalogResponseDto,
+  CreateProductReviewDto,
+  UpdateProductReviewDto,
+  ProductReviewResponseDto,
+  CatalogDeleteReviewParams,
 } from "./generated/model";
 import {
   RawAPI,
@@ -138,6 +142,23 @@ export interface SessionState<TUser = CustomerResponseDto> {
 }
 
 /**
+ * Standard client-side session structure matching better-auth.
+ */
+export interface ClientSessionStructure<TUser = CustomerResponseDto> {
+  data: {
+    session: {
+      id: string;
+      userId: string;
+      expiresAt: Date | null;
+      token: string | null;
+    };
+    user: TUser;
+  } | null;
+  isPending: boolean;
+  error: any;
+}
+
+/**
  * Callback signature triggered whenever the customer authentication status changes.
  */
 export type AuthStateCallback<TUser = CustomerResponseDto> = (
@@ -177,7 +198,7 @@ export class ScrymeClientSDK<
   /**
    * Raw proxy API client exposing all standard endpoints auto-bound with the configured orgSlug.
    */
-  public api: RawAPI;
+  private api: RawAPI;
 
   /** Catalog operations submodule (products, services, categories, bookings, staff schedules). */
   public catalog: CatalogModule<TProduct, TService>;
@@ -203,18 +224,63 @@ export class ScrymeClientSDK<
    * Leverages internal tracking and smart delta calculations for optimized storefront shopping.
    */
   public cart: {
+    /**
+     * Retrieves the active shopping cart for the current session or customer.
+     * @param params Optional cart parameters including sessionId.
+     * @returns Promise containing the axios response with the cart details.
+     */
     get<T = TCartResponse>(
       params?: CartControllerGetCartParams,
     ): Promise<AxiosResponse<T & Record<string, any>>>;
+
+    /**
+     * Adds a product variant or service to the shopping cart.
+     * Automatically resolves and appends the customer ID from the active customer session if omitted.
+     * @param dto Data transfer object containing the item details and quantity.
+     * @returns Promise containing the axios response.
+     */
     add(dto: AddToCartDto): Promise<AxiosResponse<void>>;
+
+    /**
+     * Removes a product variant or service from the shopping cart.
+     * Automatically resolves and appends the customer ID from the active customer session if omitted.
+     * @param dto Data transfer object specifying the item to remove.
+     * @returns Promise containing the axios response.
+     */
     remove(dto: RemoveFromCartDto): Promise<AxiosResponse<void>>;
+
+    /**
+     * Clears all items from the active shopping cart.
+     * @param params Optional clear parameters containing sessionId.
+     * @returns Promise containing the axios response.
+     */
     clear(params?: CartControllerClearCartParams): Promise<AxiosResponse<void>>;
+
+    /**
+     * Updates the quantity of a product variant or service in the shopping cart.
+     * Computes the difference and invokes add or remove operations accordingly.
+     * Automatically resolves and appends the customer ID from the active customer session if omitted.
+     * @param dto Data transfer object containing item identifiers and the target absolute quantity.
+     * @returns Promise resolving to the updated cart state or undefined.
+     */
     update<T = TCartResponse>(
       dto: AddToCartDto & { quantity: number },
     ): Promise<
       AxiosResponse<void> | AxiosResponse<T> | undefined
     >;
+
+    /**
+     * Retrieves the flat list of cart items currently in the cart.
+     * @param params Optional parameters.
+     * @returns Promise resolving to an array of cart items.
+     */
     getItems<T = TCartItem>(params?: CartControllerGetCartParams): Promise<T[]>;
+
+    /**
+     * Calculates the totals, item counts, and summary metrics of the current shopping cart.
+     * @param params Optional parameters.
+     * @returns Promise resolving to the totals object containing the itemsCount, item array, and raw cart.
+     */
     getTotals<TItem = TCartItem, TRaw = TCartResponse>(
       params?: CartControllerGetCartParams,
     ): Promise<{
@@ -222,10 +288,25 @@ export class ScrymeClientSDK<
       items: TItem[];
       raw: TRaw;
     }>;
+
+    /**
+     * Merges a guest shopping cart session into an authenticated customer's shopping cart.
+     * @param guestSessionId The guest session token to migrate items from.
+     * @param customerId The destination customer ID.
+     * @returns Promise resolving to the merged cart state.
+     */
     mergeGuestCart<T = TCartResponse>(
       guestSessionId: string,
       customerId: string,
     ): Promise<AxiosResponse<T & Record<string, any>>>;
+
+    /**
+     * Finalizes the shopping cart, creating a physical Sales Order for checkout.
+     * Automatically resolves and appends the customer ID from the active customer session.
+     * Clears the shopping cart state upon successful transaction creation.
+     * @param params Checkout configurations including locationId, channel, and custom notes.
+     * @returns Promise resolving to the created order response.
+     */
     checkout(params: {
       locationId: string;
       notes?: string;
@@ -238,30 +319,133 @@ export class ScrymeClientSDK<
    * Manages the authenticated user's self-serve account, update workflows, and shipping/billing directories.
    */
   public customer: {
+    /**
+     * Fetches the current customer profile details.
+     * @template T The expected type of the user profile.
+     * @returns Promise resolving to the user profile object.
+     */
     getProfile<T = TUser>(): Promise<T>;
+
+    /**
+     * Updates the profile information of the authenticated customer.
+     * @param dto Updated field attributes.
+     * @returns Promise containing the updated customer profile response.
+     */
     updateProfile<T = TUser>(
       dto: UpdateCustomerDto,
     ): Promise<AxiosResponse<T>>;
+
+    /**
+     * Retrieves all saved billing/shipping addresses for the active customer.
+     * @returns Promise resolving to the list of address records.
+     */
     getAddresses(): Promise<AxiosResponse<AddressDto[]>>;
+
+    /**
+     * Saves a new address record to the active customer's profile directory.
+     * @param dto The address details to persist.
+     * @returns Promise containing the response of the creation operation.
+     */
     addAddress(dto: AddressDto): Promise<AxiosResponse<void>>;
+
+    /**
+     * Reactive & Stateful Customer Authentication Submodule.
+     */
     auth: {
+      /**
+       * Gets the current customer session synchronously in standard format.
+       * Reflects the active customer state immediately without causing React re-renders.
+       */
+      get session(): ClientSessionStructure<TUser>;
+
+      /**
+       * Registers a new customer storefront profile.
+       * Automatically performs sign-in and establishes a customer session if a password is provided.
+       * @param dto The customer registration attributes (email, name, password, etc.).
+       * @returns Promise containing the created customer details.
+       */
       signUp<T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>>;
+
+      /**
+       * Authenticates a customer using their credentials, starting an active session.
+       * Triggers a 'SIGNED_IN' authentication state change event.
+       * @param credentials Customer login email and optional password.
+       * @returns Promise containing the session token and user profile.
+       */
       signIn<TSess = TSession, TU = TUser>(credentials: {
         email: string;
         password?: string;
       }): Promise<CustomerAuthResponseDto<TU, TSess>>;
+
+      /**
+       * Terminate the active customer session, clearing persisted tokens and session memory.
+       * Triggers a 'SIGNED_OUT' authentication state change event.
+       * @returns Promise resolving once state cleanup is done.
+       */
       signOut(): Promise<void>;
+
+      /**
+       * Retrieves the raw internal authentication state synchronously/asynchronously.
+       * @returns Promise containing token and user state.
+       */
       getSession<TU = TUser>(): Promise<SessionState<TU>>;
+
+      /**
+       * Registers a listener to reactively monitor authentication events.
+       * Triggers callback upon 'SIGNED_IN', 'SIGNED_OUT', or 'INITIAL_SESSION' events.
+       * @param callback Callback function.
+       * @returns Subscription reference containing unsubscribe cleanup method.
+       */
       onAuthStateChange<TU = TUser>(
         callback: AuthStateCallback<TU>,
       ): { unsubscribe(): void };
+
+      /**
+       * Lists all active concurrent sessions associated with this customer profile.
+       * @returns Promise containing the list of active session tokens and metadata.
+       */
       getSessions<TSess = TSession>(): Promise<TSess[]>;
+
+      /**
+       * Revokes and terminates a specific active customer session by its identifier.
+       * @param id The session identifier to destroy.
+       * @returns Promise containing the revocation response.
+       */
       revokeSession(id: string): Promise<AxiosResponse<void>>;
+
+      /**
+       * Revokes and terminates all other concurrent sessions for this customer.
+       * @param mode Optional mode configurations.
+       * @returns Promise containing the response.
+       */
       revokeAllSessions(mode?: string): Promise<AxiosResponse<void>>;
+
+      /**
+       * Retrieves the current customer user record from the backend.
+       * @returns Promise containing the active customer user details.
+       */
       getCurrentSession<TU = TUser>(): Promise<TU>;
+
+      /**
+       * Refreshes the active customer session, extending the validity of the customer JWT token.
+       * Triggers automatic session token updates and reactive state updates.
+       * @returns Promise resolving to the fresh customer authentication response.
+       */
       refreshSession<TSess = TSession, TU = TUser>(): Promise<
         CustomerAuthResponseDto<TU, TSess>
       >;
+
+      /**
+       * Stateful, reactive React Hook that fetches, manages, and updates the customer session.
+       * Subscribes to authentication state change listeners to ensure immediate UI synchronization.
+       * @returns Reactive session state containing session, user, error, pending flags, and refetch handler.
+       */
+      useSession<TSess = TSession, TU = TUser>(): {
+        data: { session: TSess; user: TU } | null;
+        isPending: boolean;
+        error: any;
+        refetch: () => Promise<void>;
+      };
     };
   };
 
@@ -269,9 +453,32 @@ export class ScrymeClientSDK<
    * Service Bookings & Appointments Submodule.
    */
   public bookings: {
+    /**
+     * Creates a new booking appointment.
+     * Automatically resolves and appends the customer ID from the active customer session if omitted.
+     * @param dto The service booking reservation parameters.
+     * @returns Promise containing the booking creation response.
+     */
     create(dto: CreateBookingDto): Promise<AxiosResponse<void>>;
+
+    /**
+     * Retrieves the full details of a specific service booking by its identifier.
+     * @param id Service booking ID.
+     * @returns Promise containing the booking details response.
+     */
     get(id: string): Promise<AxiosResponse<ServiceBookingItemDto>>;
+
+    /**
+     * Lists all service bookings and reservations associated with the authenticated customer.
+     * @returns Promise containing the list of service booking records.
+     */
     list(): Promise<AxiosResponse<ServiceBookingItemDto[]>>;
+
+    /**
+     * Cancels an existing service booking appointment.
+     * @param id Service booking ID to cancel.
+     * @returns Promise containing the cancellation response.
+     */
     cancel(id: string): Promise<AxiosResponse<void>>;
   };
 
@@ -279,22 +486,104 @@ export class ScrymeClientSDK<
    * Authentication & Customer Session Submodule.
    */
   public auth: AuthModule & {
+    /**
+     * Gets the current customer session synchronously in standard format.
+     * Reflects the active customer state immediately without causing React re-renders.
+     */
+    get session(): ClientSessionStructure<TUser>;
+
+    /**
+     * Registers a new customer storefront profile.
+     * Automatically performs sign-in and establishes a customer session if a password is provided.
+     * @param dto The customer registration attributes (email, name, password, etc.).
+     * @returns Promise containing the created customer details.
+     */
     signUp<T = TUser>(
       dto: RegisterCustomerDto,
     ): Promise<AxiosResponse<T>>;
+
+    /**
+     * Authenticates application or SDK client via client ID and client secret credentials.
+     * @returns Promise resolving to the token exchange response containing access token.
+     */
     authenticate(): Promise<AuthExchangeToken201>;
+
+    /**
+     * Authenticates a customer using their credentials, starting an active session.
+     * Triggers a 'SIGNED_IN' authentication state change event.
+     * @param credentials Customer login email and optional password.
+     * @returns Promise containing the session token and user profile.
+     */
     signIn<TSess = TSession, TU = TUser>(credentials: {
       email: string;
       password?: string;
     }): Promise<CustomerAuthResponseDto<TU, TSess>>;
+
+    /**
+     * Terminate the active customer session, clearing persisted tokens and session memory.
+     * Triggers a 'SIGNED_OUT' authentication state change event.
+     * @returns Promise resolving once state cleanup is done.
+     */
     signOut(): Promise<void>;
+
+    /**
+     * Retrieves the raw internal authentication state synchronously/asynchronously.
+     * @returns Promise containing token and user state.
+     */
     getSession<TU = TUser>(): Promise<SessionState<TU>>;
+
+    /**
+     * Registers a listener to reactively monitor authentication events.
+     * Triggers callback upon 'SIGNED_IN', 'SIGNED_OUT', or 'INITIAL_SESSION' events.
+     * @param callback Callback function.
+     * @returns Subscription reference containing unsubscribe cleanup method.
+     */
     onAuthStateChange<TU = TUser>(callback: AuthStateCallback<TU>): { unsubscribe(): void };
+
+    /**
+     * Lists all active concurrent sessions associated with this customer profile.
+     * @returns Promise containing the list of active session tokens and metadata.
+     */
     getSessions<TSess = TSession>(): Promise<TSess[]>;
+
+    /**
+     * Revokes and terminates a specific active customer session by its identifier.
+     * @param id The session identifier to destroy.
+     * @returns Promise containing the revocation response.
+     */
     revokeSession(id: string): Promise<AxiosResponse<void>>;
+
+    /**
+     * Revokes and terminates all other concurrent sessions for this customer.
+     * @param mode Optional mode configurations.
+     * @returns Promise containing the response.
+     */
     revokeAllSessions(mode?: string): Promise<AxiosResponse<void>>;
+
+    /**
+     * Retrieves the current customer user record from the backend.
+     * @returns Promise containing the active customer user details.
+     */
     getCurrentSession<TU = TUser>(): Promise<TU>;
+
+    /**
+     * Refreshes the active customer session, extending the validity of the customer JWT token.
+     * Triggers automatic session token updates and reactive state updates.
+     * @returns Promise resolving to the fresh customer authentication response.
+     */
     refreshSession<TSess = TSession, TU = TUser>(): Promise<CustomerAuthResponseDto<TU, TSess>>;
+
+    /**
+     * Stateful, reactive React Hook that fetches, manages, and updates the customer session.
+     * Subscribes to authentication state change listeners to ensure immediate UI synchronization.
+     * @returns Reactive session state containing session, user, error, pending flags, and refetch handler.
+     */
+    useSession<TSess = TSession, TU = TUser>(): {
+      data: { session: TSess; user: TU } | null;
+      isPending: boolean;
+      error: any;
+      refetch: () => Promise<void>;
+    };
   };
 
   /**
@@ -574,6 +863,51 @@ export class ScrymeClientSDK<
           data: service,
         };
       },
+      createReview: async (
+        productId: string,
+        dto: CreateProductReviewDto & { customerId?: string },
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<ProductReviewResponseDto>> => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (customerId) {
+            dto = { ...dto, customerId };
+          }
+        }
+        return baseCatalog.createReview(productId, dto, options);
+      },
+      updateReview: async (
+        reviewId: string,
+        dto: UpdateProductReviewDto & { customerId?: string },
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<ProductReviewResponseDto>> => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (customerId) {
+            dto = { ...dto, customerId };
+          }
+        }
+        return baseCatalog.updateReview(reviewId, dto, options);
+      },
+      deleteReview: async (
+        reviewId: string,
+        params?: CatalogDeleteReviewParams,
+        options?: AxiosRequestConfig,
+      ): Promise<AxiosResponse<void>> => {
+        if (!params || !params.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (customerId) {
+            params = { ...params, customerId };
+          }
+        }
+        return baseCatalog.deleteReview(reviewId, params, options);
+      },
     };
     this.inventory = buildModule(this.api, config.orgSlug, inventoryMapping);
     this.orders = buildModule(this.api, config.orgSlug, ordersMapping);
@@ -589,15 +923,42 @@ export class ScrymeClientSDK<
         return this.orders.getCart(params as CartControllerGetCartParams) as any;
       },
       add: async (dto: AddToCartDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.orders.addToCart(dto);
       },
       remove: async (dto: RemoveFromCartDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.orders.removeFromCart(dto);
       },
       clear: async (params?: CartControllerClearCartParams) => {
         return this.orders.clearCart(params as CartControllerClearCartParams);
       },
       update: async <T = TCartResponse>(dto: AddToCartDto & { quantity: number }): Promise<AxiosResponse<void> | AxiosResponse<T> | undefined> => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         const response = await this.orders.getCart({
           sessionId: dto.sessionId || "",
         });
@@ -704,8 +1065,46 @@ export class ScrymeClientSDK<
     };
 
     const customerAuth = {
+      get session(): ClientSessionStructure<TUser> {
+        if (!state.token) {
+          return {
+            data: null,
+            isPending: false,
+            error: null,
+          };
+        }
+        const userId =
+          (state.user as any)?.id ||
+          (state.user as any)?.userId ||
+          (state.user as any)?.customerId ||
+          "";
+        return {
+          data: {
+            session: {
+              id: userId || state.token,
+              userId: userId,
+              expiresAt: state.expiresAt ? new Date(state.expiresAt) : null,
+              token: state.token,
+            },
+            user: state.user as TUser,
+          },
+          isPending: false,
+          error: null,
+        };
+      },
       signUp: async <T = TUser>(dto: RegisterCustomerDto): Promise<AxiosResponse<T>> => {
-        return this.api.customersRegister(config.orgSlug, dto) as any;
+        const res = await this.api.customersRegister(config.orgSlug, dto) as any;
+        if (dto.password) {
+          try {
+            await customerAuth.signIn({
+              email: dto.email,
+              password: dto.password,
+            });
+          } catch (e) {
+            console.error("Auto sign-in after sign-up failed:", e);
+          }
+        }
+        return res;
       },
       signIn: async <TSess = TSession, TU = TUser>(credentials: {
         email: string;
@@ -791,6 +1190,69 @@ export class ScrymeClientSDK<
         }
         return authData;
       },
+      useSession: <TSess = TSession, TU = TUser>(): {
+        data: { session: TSess; user: TU } | null;
+        isPending: boolean;
+        error: any;
+        refetch: () => Promise<void>;
+      } => {
+        const currentSession = customerAuth.session;
+        const [data, setData] = useState<any>(currentSession.data);
+        const [isPending, setIsPending] = useState<boolean>(false);
+        const [error, setError] = useState<Error | null>(null);
+
+        const fetchSessionSync = () => {
+          const s = customerAuth.session;
+          setData(s.data);
+          setError(s.error);
+          setIsPending(s.isPending);
+        };
+
+        const fetchSessionAsync = async () => {
+          setIsPending(true);
+          try {
+            const res = (await customerAuth.getCurrentSession()) as any;
+            if (res && (res.session || res.customer || res.user)) {
+              setData({
+                session: res.session,
+                user: res.customer || res.user,
+              });
+            } else {
+              const sessionState = await customerAuth.getSession();
+              setData({
+                session: {
+                  id: (sessionState.user as any)?.id || (sessionState.user as any)?.userId || (sessionState.user as any)?.customerId || sessionState.token,
+                  userId: (sessionState.user as any)?.id || (sessionState.user as any)?.userId || (sessionState.user as any)?.customerId || "",
+                  expiresAt: sessionState.expiresAt ? new Date(sessionState.expiresAt) : null,
+                  token: sessionState.token,
+                },
+                user: sessionState.user,
+              });
+            }
+            setError(null);
+          } catch (e) {
+            setError(e instanceof Error ? e : new Error(String(e)));
+            setData(null);
+          } finally {
+            setIsPending(false);
+          }
+        };
+
+        useEffect(() => {
+          fetchSessionSync();
+          const { unsubscribe } = customerAuth.onAuthStateChange(() => {
+            fetchSessionSync();
+          });
+          return () => unsubscribe();
+        }, []);
+
+        return {
+          data: data as any,
+          isPending,
+          error,
+          refetch: fetchSessionAsync,
+        };
+      }
     };
 
     this.customer = {
@@ -828,10 +1290,25 @@ export class ScrymeClientSDK<
       authenticate: async () => {
         return performExchange();
       },
+      get session() {
+        return customerAuth.session;
+      },
+      useSession() {
+        return customerAuth.useSession();
+      },
     };
 
     this.bookings = {
       create: async (dto: CreateBookingDto) => {
+        if (!dto.customerId) {
+          const session = await this.auth.getSession();
+          const user = session?.user as any;
+          const customerId = user?.customerId || user?.id || user?.customer?.id;
+          if (!customerId) {
+            throw new Error("Unauthorized: customerId is required.");
+          }
+          dto = { ...dto, customerId };
+        }
         return this.catalog.createBooking(dto) as any;
       },
       get: async (id: string) => {

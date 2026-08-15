@@ -1,59 +1,74 @@
 ## 2025-02-15 - [Discoverable Keyboard Shortcuts via Accessible Tooltips]
+
 **Learning:** Adding custom styled tooltips to key interactive buttons that are bound to keyboard shortcuts dramatically increases keyboard discoverability and improves micro-UX. However, retaining native `title` attributes on buttons wrapped in custom Tooltips results in "double tooltips" (styled custom tooltip + native browser tooltip appearing simultaneously on hover), causing visual clutter.
 **Action:** When wrapping interactive buttons with custom Radix/Shadcn Tooltips to display shortcuts, replace native `title` attributes with descriptive `aria-label` attributes to preserve complete screen reader accessibility without duplicate tooltip overlays.
 
 ## 2025-02-18 - [Accessible Icon-Only Collapsible Navigation Buttons]
+
 **Learning:** Collapsible layout containers (like sidebars) often render layout-only or icon-only buttons/links when collapsed. Without explicit `aria-label` attributes on these collapsed controls, screen readers fail to recognize their purpose, significantly hindering keyboard navigation and non-visual user experience.
 **Action:** Always verify that collapsible layout links and action buttons maintain identical, explicit `title` and `aria-label` attributes when in a collapsed icon-only state.
 
 ## 2025-02-19 - [Desktop Tooltips on Icon-Only Segmented and Toggle Controls]
+
 **Learning:** Sighted desktop mouse users rely onscreen hover states and native tooltips (`title`) for quick, clear visual context of compact, abstract icon-only segmented controls (like increment/decrement and layout collapsers), especially when full textual labels are omitted. Combining matching `aria-label` (for screen readers) with descriptive `title` (for desktop hovers) ensures comprehensive multi-modal accessibility.
 **Action:** When designing space-constrained icon-only buttons or layout adjustment controls, always supply consistent, identical `aria-label` and `title` attributes.
 
 ## 2025-02-23 - [Synchronized Web Application Sidebar Accessibility]
+
 **Learning:** Sidebar navigation containers in full web applications benefit greatly from synchronized accessibility controls. Specifically, collapse/expand toggle buttons and collapsed main navigation item buttons should present unified `aria-label` and conditional `title` attributes (enabling `title` strictly when collapsed to represent the hidden visual label) to provide a rich visual tooltip for desktop hovers while preserving clean, semantic screen-reader compatibility.
 **Action:** Always verify sidebar navigation triggers maintain active `aria-label` attributes, and apply matching visual `title` triggers dynamically or conditionally based on container collapsed states.
 
 ## 2026-07-28 - [Accessible Canvas and Palette Controls in Workflow Editors]
+
 **Learning:** Visual node-based workflow/campaign editors frequently contain complex toolbars, sidebar palettes, and properties panels loaded with compact, icon-only toggle and navigation controls. Sighted desktop users and screen reader users alike can easily get lost or confused without consistent accessibility features and tooltips on these controls.
 **Action:** Always equip icon-only control buttons within editor canvases and inspectors with matching, explicit `aria-label` and visual `title` attributes, and ensure collapsible group headers in the side palettes clearly announce their interactive state using `aria-expanded`.
 
 ## 2026-07-28 - [Keyboard Visibility of Hover-Only Action Buttons]
+
 **Learning:** Interactive action buttons that are hidden by default via hover-only classes (e.g., `opacity-0 group-hover:opacity-100`) become invisible focus traps for keyboard-only users who tab through the interface. Adding focus-within and focus-visible classes ensures they are rendered fully visible when they or their parents receive keyboard focus.
 **Action:** Always complement hover-only visibility toggles (`group-hover:opacity-100`) with `group-focus-within:opacity-100` and `focus-visible:opacity-100` (or `focus-within:opacity-100`) to ensure full interactive visibility for keyboard-only or non-visual navigation.
 
 ## 2026-07-29 - [Inline-Editing Input Blur Race Condition and Revert Mechanics]
+
 **Learning:** In inline-editing input fields, clicking on external action buttons (like Save/Cancel) normally triggers the input's `onBlur` handler before the button's `onClick` can fire, which often prematurely unmounts the editing state and swallows the button click. Additionally, direct state mutation during typing prevents the user from canceling or reverting changes gracefully.
 **Action:** Always decouple active state from an edit buffer (e.g., using a `tempName` state) to support clean cancel/revert mechanics on `Escape` keypress or Cancel clicks. To prevent input `onBlur` from pre-empting button click handlers, use `onMouseDown={(e) => e.preventDefault()}` on the action buttons.
 
 ## 2026-07-30 - [W3C WAI-ARIA Accessible Breadcrumb Trails]
+
 **Learning:** Icon-only breadcrumb navigation links (like Home) and their parent layout containers are often overlooked in accessibility styling and semantic structure. Applying `aria-label="Breadcrumb"` to the outer `<nav>` container conforms to W3C ARIA landmarks, while adding focus outline offset/ring utilities alongside consistent `aria-label` and `title` attributes on icon-only links guarantees visual clarity, screen-reader discoverability, and clean keyboard tab highlights.
 **Action:** Always wrap breadcrumb navigation inside an `<nav aria-label="Breadcrumb">` tag, supplement icon-only trail links with synchronized `aria-label` and `title` labels, and apply focus-visible ring styles.
 
 ## 2026-08-02 - [Synchronized Quantity Adjustment Tooltips]
+
 **Learning:** Compact, icon-only increment (`+`) and decrement (`-`) quantity buttons used inside dialogs (like item edit or unit selection dialogs) often lack immediate hover context for sighted desktop pointer users if they only carry `aria-label` screen reader attributes. Supplying matching `title` attributes on these sub-controls provides a synchronized, native browser tooltip on hover without cluttering or duplicate overlay rendering.
 **Action:** When designing icon-only quantity increase/decrease buttons in dialog components, always synchronize the `aria-label` and the `title` attributes with identical values.
 
 ## 2026-08-04 - [Keyboard-Accessible Selection Buttons on Modal Dialogs]
+
 **Learning:** Rendering interactive selection lists (such as quick reasons or tagging list triggers) using non-interactive display badges (like `Badge` components compiling to simple `div` or `span` tags) prevents keyboard users from focusing or selecting those options via keyboard or screen readers.
 **Action:** Always utilize native, styled `<button type="button">` elements for interactive item selectors, and supply active `aria-pressed` states so screen-reader users receive clear auditory confirmation of their active selection.
 
 ## 2026-08-05 - [Keyboard Focus Support on sr-only Switch Toggles]
+
 **Learning:** When using custom visual toggle switches with hidden native inputs (e.g., using the `sr-only` class), keyboard-only users will completely lose visual focus indication when navigating into the toggle, creating a critical accessibility gap.
 **Action:** Always pair visually hidden checkbox/radio inputs with the `peer` class (e.g. `sr-only peer`) and apply clear, high-contrast outline styles on the adjacent visual styling container using focus-visible classes (such as `peer-focus-visible:ring-2 peer-focus-visible:ring-primary/60 peer-focus-visible:ring-offset-1`).
 
 ## 2026-08-08 - [Unified Required Field Indicators in Complex CRM Forms]
+
 **Learning:** Using inconsistent, raw asterisks (`*`) or hardcoded non-theme colors (such as `text-red-500`) for visual field requirement indicators inside form labels creates design debt, makes visual accessibility poor under dark/light modes, and degrades developer experience (DX). Pairing standard CSS theme variables (`text-destructive`) inside structured React components keeps forms accessible and visually seamless.
 **Action:** Always utilize `<span className="text-destructive">*</span>` for visually required form labels, avoiding raw inline characters and non-theme CSS colors.
 
 ## 2026-08-09 - [Focus Preservation in Content Rich Markdown Composers]
+
 **Learning:** Clicking formatting toolbar buttons in rich content areas (like CMS story editors) triggers input blur on the active editing textarea. Utilizing `onMouseDown={(e) => e.preventDefault()}` on formatting buttons completely bypasses this default behavior, preserving both the focus and active selection/caret coordinates seamlessly.
 **Action:** Always employ `onMouseDown={(e) => e.preventDefault()}` on toolbar action buttons targeting a text input or textarea to avoid losing focus and interrupting user input.
 
 ## 2026-08-10 - [Dynamic Real-time Character Counter with Safe Limits]
+
 **Learning:** Providing real-time character count feedback on multi-line text input fields (such as CRM customer notes) prevents users from encountering abrupt server-side validation failures. Implementing a multi-phase dynamic indicator (standard, warning, destructive) coupled with screen reader `aria-label` context delivers an incredibly reassuring and accessible typing experience.
 **Action:** On textareas with strict database length limits, always incorporate dynamic colored warning thresholds (e.g. at 90% and 100% capacity) along with clear "X characters remaining" text to warn the user before they hit a save button.
 
 ## 2026-08-13 - [Focus Rings on Collapsible Sidebar and Global Navigation Controls]
+
 **Learning:** Collapsible and dynamic web application sidebars typically pack a variety of navigation links, collapser buttons, profile switchers, and shortcut controls. Neglecting custom `focus-visible:` focus styles on these components completely blinds keyboard-only users who tab through sidebars, while raw focus rings might look cluttered to pointer users.
 **Action:** Always wrap interactive navigation buttons and links within app sidebars using dedicated `focus-visible:` utilities (such as `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1`) to enable pristine, multi-modal focus indicators that render only when using keyboard navigation.

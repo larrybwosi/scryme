@@ -36,11 +36,15 @@ export async function validateV3ApiSecret(
   clientId: string,
   rawSecret: string,
 ): Promise<boolean> {
+  if (typeof clientId !== "string" || typeof rawSecret !== "string") {
+    return false;
+  }
+
   const client = await db.v3ApiClient.findUnique({
     where: { clientId },
   });
 
-  if (!client || !client.isActive) {
+  if (!client || !client.isActive || typeof client.clientSecret !== "string") {
     return false;
   }
 
@@ -49,13 +53,16 @@ export async function validateV3ApiSecret(
     .update(rawSecret)
     .digest("hex");
 
-  // Constant-time comparison to avoid timing attacks
-  const hashedBuffer = Buffer.from(hashedSecret, "hex");
-  const storedBuffer = Buffer.from(client.clientSecret, "hex");
-
-  if (hashedBuffer.length !== storedBuffer.length) {
-    return false;
-  }
+  // SECURITY (Sentinel): Pre-hash both buffers with SHA-256 before constant-time comparison
+  // to avoid length leakage via early-return length checks and protect against timing side-channels.
+  const hashedBuffer = crypto
+    .createHash("sha256")
+    .update(hashedSecret)
+    .digest();
+  const storedBuffer = crypto
+    .createHash("sha256")
+    .update(client.clientSecret)
+    .digest();
 
   return crypto.timingSafeEqual(hashedBuffer, storedBuffer);
 }

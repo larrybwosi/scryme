@@ -28,6 +28,14 @@ export class PrismaProductRepository implements IProductRepository {
         slug: true,
         imageUrls: true,
         customFields: true,
+        brand: true,
+        rating: true,
+        isNew: true,
+        detailedDescription: true,
+        tags: true,
+        isFeatured: true,
+        isActive: true,
+        pointsOnPurchase: true,
         category: {
           select: {
             id: true,
@@ -40,6 +48,26 @@ export class PrismaProductRepository implements IProductRepository {
             name: true,
             sku: true,
             retailPrice: true,
+          },
+        },
+        reviews: {
+          where: { isVisible: true },
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            favorites: true,
           },
         },
       },
@@ -65,6 +93,16 @@ export class PrismaProductRepository implements IProductRepository {
             retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
           })),
           p.customFields,
+          p.brand,
+          p.rating,
+          p.isNew,
+          p.detailedDescription,
+          p.tags,
+          p.isFeatured,
+          p.isActive,
+          p.pointsOnPurchase,
+          p.reviews,
+          p._count?.favorites ?? 0,
         ),
     );
   }
@@ -84,6 +122,14 @@ export class PrismaProductRepository implements IProductRepository {
         slug: true,
         imageUrls: true,
         customFields: true,
+        brand: true,
+        rating: true,
+        isNew: true,
+        detailedDescription: true,
+        tags: true,
+        isFeatured: true,
+        isActive: true,
+        pointsOnPurchase: true,
         category: {
           select: {
             id: true,
@@ -96,6 +142,26 @@ export class PrismaProductRepository implements IProductRepository {
             name: true,
             sku: true,
             retailPrice: true,
+          },
+        },
+        reviews: {
+          where: { isVisible: true },
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            favorites: true,
           },
         },
       },
@@ -120,6 +186,16 @@ export class PrismaProductRepository implements IProductRepository {
         retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
       })),
       p.customFields,
+      p.brand,
+      p.rating,
+      p.isNew,
+      p.detailedDescription,
+      p.tags,
+      p.isFeatured,
+      p.isActive,
+      p.pointsOnPurchase,
+      p.reviews,
+      p._count?.favorites ?? 0,
     );
   }
 
@@ -152,6 +228,14 @@ export class PrismaProductRepository implements IProductRepository {
         slug: true,
         imageUrls: true,
         customFields: true,
+        brand: true,
+        rating: true,
+        isNew: true,
+        detailedDescription: true,
+        tags: true,
+        isFeatured: true,
+        isActive: true,
+        pointsOnPurchase: true,
         category: {
           select: {
             id: true,
@@ -164,6 +248,26 @@ export class PrismaProductRepository implements IProductRepository {
             name: true,
             sku: true,
             retailPrice: true,
+          },
+        },
+        reviews: {
+          where: { isVisible: true },
+          select: {
+            id: true,
+            rating: true,
+            comment: true,
+            createdAt: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            favorites: true,
           },
         },
       },
@@ -187,6 +291,16 @@ export class PrismaProductRepository implements IProductRepository {
         retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
       })),
       p.customFields,
+      p.brand,
+      p.rating,
+      p.isNew,
+      p.detailedDescription,
+      p.tags,
+      p.isFeatured,
+      p.isActive,
+      p.pointsOnPurchase,
+      p.reviews,
+      p._count?.favorites ?? 0,
     );
   }
 }

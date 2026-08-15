@@ -3154,6 +3154,163 @@
         ]
       }
     },
+    "/v3/{orgSlug}/catalog/products/{productId}/reviews": {
+      "post": {
+        "description": "Creates a product review. Dynamically falls back to v3Context customerId if body customerId is omitted.",
+        "operationId": "Catalog_CreateReview",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReviewResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a new review for a product",
+        "tags": [
+          "V3 Catalog"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/catalog/reviews/{reviewId}": {
+      "patch": {
+        "description": "Updates rating or comment on a review. Enforces tenant isolation and ownership restrictions.",
+        "operationId": "Catalog_UpdateReview",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductReviewResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update an existing review",
+        "tags": [
+          "V3 Catalog"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a review by its ID. Enforces tenant isolation and ownership or admin permission checks.",
+        "operationId": "Catalog_DeleteReview",
+        "parameters": [
+          {
+            "name": "reviewId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "customerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Review successfully deleted"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a review",
+        "tags": [
+          "V3 Catalog"
+        ]
+      }
+    },
     "/v3/{orgSlug}/services/categories": {
       "post": {
         "description": "Creates a new category for grouping services under the organization. Supports nested hierarchies via parentId.",
@@ -5282,6 +5439,72 @@
           }
         ],
         "summary": "Register a new customer",
+        "tags": [
+          "V3 Customers"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/customers/../customer/register": {
+      "post": {
+        "operationId": "Customer_Register",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterCustomerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer registered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomerResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a new customer (singular alias)",
         "tags": [
           "V3 Customers"
         ]
@@ -12155,6 +12378,68 @@
           }
         }
       },
+      "ProductReviewCustomerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cust_123"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ProductReviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "rev_123"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/ProductReviewCustomerDto"
+          },
+          "rating": {
+            "type": "number",
+            "example": 5
+          },
+          "comment": {
+            "type": "object",
+            "example": "Great product!",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-03-01T08:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "customer",
+          "rating",
+          "comment",
+          "createdAt"
+        ]
+      },
+      "ProductMetaDto": {
+        "type": "object",
+        "properties": {
+          "averageRating": {
+            "type": "number",
+            "example": 4.5
+          },
+          "reviewCount": {
+            "type": "number",
+            "example": 12
+          }
+        }
+      },
       "ProductResponseDto": {
         "type": "object",
         "properties": {
@@ -12205,6 +12490,65 @@
           },
           "customFields": {
             "$ref": "#/components/schemas/CmsCustomFieldsDto"
+          },
+          "brand": {
+            "type": "object",
+            "example": "Acme Corp",
+            "nullable": true
+          },
+          "rating": {
+            "type": "object",
+            "example": 4.5,
+            "nullable": true
+          },
+          "isNew": {
+            "type": "boolean",
+            "example": true
+          },
+          "detailedDescription": {
+            "type": "object",
+            "example": "Detailed info about the product.",
+            "nullable": true
+          },
+          "tags": {
+            "example": [
+              "coffee",
+              "beans"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isFeatured": {
+            "type": "boolean",
+            "example": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "pointsOnPurchase": {
+            "type": "object",
+            "example": 10,
+            "nullable": true
+          },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductReviewResponseDto"
+            }
+          },
+          "favoritesCount": {
+            "type": "number",
+            "example": 10
+          },
+          "favouritesCount": {
+            "type": "number",
+            "example": 10
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ProductMetaDto"
           }
         },
         "required": [
@@ -12402,6 +12746,49 @@
         "required": [
           "status"
         ]
+      },
+      "CreateProductReviewDto": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "example": 5,
+            "description": "Rating of the product from 1 to 5"
+          },
+          "comment": {
+            "type": "string",
+            "example": "Outstanding product!",
+            "description": "Review comment content"
+          },
+          "customerId": {
+            "type": "string",
+            "example": "cust_123",
+            "description": "Optional customer override ID"
+          }
+        },
+        "required": [
+          "rating"
+        ]
+      },
+      "UpdateProductReviewDto": {
+        "type": "object",
+        "properties": {
+          "rating": {
+            "type": "number",
+            "example": 4,
+            "description": "Updated rating of the product from 1 to 5"
+          },
+          "comment": {
+            "type": "string",
+            "example": "Almost perfect product!",
+            "description": "Updated review comment content"
+          },
+          "customerId": {
+            "type": "string",
+            "example": "cust_123",
+            "description": "Optional customer override ID"
+          }
+        }
       },
       "CreateServiceCategoryDto": {
         "type": "object",
