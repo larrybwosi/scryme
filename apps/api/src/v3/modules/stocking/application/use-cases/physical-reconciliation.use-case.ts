@@ -67,6 +67,7 @@ export class PhysicalReconciliationUseCase {
       const variantIds = dto.items.map((i) => i.variantId);
       const stocks = await tx.productVariantStock.findMany({
         where: {
+          organizationId,
           variantId: { in: variantIds },
           locationId: dto.locationId,
         },
@@ -140,7 +141,9 @@ export class PhysicalReconciliationUseCase {
     reconciliationId: string,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      const reconciliation = await tx.stockReconciliation.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockReconciliation model lacks composite unique index on [id, organizationId]
+      const reconciliation = await tx.stockReconciliation.findFirst({
         where: { id: reconciliationId, organizationId },
         include: { items: true },
       });
