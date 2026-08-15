@@ -20,6 +20,7 @@ describe("PhysicalReconciliationUseCase", () => {
       },
       stockReconciliation: {
         create: vi.fn(),
+        findFirst: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
       },
@@ -39,6 +40,12 @@ describe("PhysicalReconciliationUseCase", () => {
     prisma = {
       client: {
         $transaction: vi.fn(async (callback) => await callback(mockTx)),
+        inventoryLocation: {
+          findFirst: vi.fn(),
+        },
+        productVariant: {
+          count: vi.fn(),
+        },
         productVariantStock: mockTx.productVariantStock,
         stockReconciliation: mockTx.stockReconciliation,
       },
@@ -111,7 +118,39 @@ describe("PhysicalReconciliationUseCase", () => {
   });
 
   describe("submit", () => {
+    it("should throw BadRequestException if location does not belong to organization", async () => {
+      prisma.client.inventoryLocation.findFirst.mockResolvedValue(null);
+
+      const dto = {
+        locationId: mockLocationId,
+        description: "Year-end audit",
+        items: [{ variantId: "var-1", actualQuantity: 12 }],
+      };
+
+      await expect(
+        physicalReconciliationUseCase.submit(mockOrgId, mockMemberId, dto),
+      ).rejects.toThrow("Invalid location");
+    });
+
+    it("should throw BadRequestException if any variant does not belong to organization", async () => {
+      prisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: mockLocationId });
+      prisma.client.productVariant.count.mockResolvedValue(0);
+
+      const dto = {
+        locationId: mockLocationId,
+        description: "Year-end audit",
+        items: [{ variantId: "var-1", actualQuantity: 12 }],
+      };
+
+      await expect(
+        physicalReconciliationUseCase.submit(mockOrgId, mockMemberId, dto),
+      ).rejects.toThrow("One or more invalid variants requested");
+    });
+
     it("should submit reconciliation sheet and create record in a transaction", async () => {
+      prisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: mockLocationId });
+      prisma.client.productVariant.count.mockResolvedValue(1);
+
       mockTx.productVariantStock.findMany.mockResolvedValue([
         {
           variantId: "var-1",
@@ -181,6 +220,34 @@ describe("PhysicalReconciliationUseCase", () => {
       });
 
       expect(result).toEqual({ id: "rec-123" });
+    });
+  });
+
+  describe("approve", () => {
+    it("should fetch reconciliation using findFirst with organizationId scoping", async () => {
+      mockTx.stockReconciliation.findFirst.mockResolvedValue({
+        id: "rec-1",
+        organizationId: mockOrgId,
+        locationId: mockLocationId,
+        status: ReconciliationStatus.PENDING_REVIEW,
+        items: [],
+      });
+      mockTx.stockReconciliation.update.mockResolvedValue({
+        id: "rec-1",
+        status: ReconciliationStatus.COMPLETED,
+      });
+
+      const result = await physicalReconciliationUseCase.approve(
+        mockOrgId,
+        mockMemberId,
+        "rec-1",
+      );
+
+      expect(mockTx.stockReconciliation.findFirst).toHaveBeenCalledWith({
+        where: { id: "rec-1", organizationId: mockOrgId },
+        include: { items: true },
+      });
+      expect(result.status).toEqual(ReconciliationStatus.COMPLETED);
     });
   });
 });

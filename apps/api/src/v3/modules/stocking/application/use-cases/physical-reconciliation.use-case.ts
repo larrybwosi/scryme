@@ -61,10 +61,31 @@ export class PhysicalReconciliationUseCase {
     memberId: string,
     dto: SubmitReconciliationDto,
   ) {
+    // SECURITY (Sentinel): Verify location belongs to organization
+    const location = await this.prisma.client.inventoryLocation.findFirst({
+      where: { id: dto.locationId, organizationId },
+    });
+    if (!location) {
+      throw new BadRequestException("Invalid location");
+    }
+
+    // SECURITY (Sentinel): Verify that all requested variants belong to the
+    // authenticated organization (via product relation).
+    const variantIds = dto.items.map((i) => i.variantId);
+    const validVariantsCount = await this.prisma.client.productVariant.count({
+      where: {
+        id: { in: variantIds },
+        product: { organizationId },
+      },
+    });
+
+    if (validVariantsCount !== new Set(variantIds).size) {
+      throw new BadRequestException("One or more invalid variants requested");
+    }
+
     return this.prisma.client.$transaction(async (tx) => {
       // ⚡ Bolt Optimization: Batch fetch all relevant stock records in a single query
       // to eliminate N+1 database round-trips.
-      const variantIds = dto.items.map((i) => i.variantId);
       const stocks = await tx.productVariantStock.findMany({
         where: {
           variantId: { in: variantIds },
@@ -140,7 +161,9 @@ export class PhysicalReconciliationUseCase {
     reconciliationId: string,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      const reconciliation = await tx.stockReconciliation.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockReconciliation lacks a composite unique index on [id, organizationId].
+      const reconciliation = await tx.stockReconciliation.findFirst({
         where: { id: reconciliationId, organizationId },
         include: { items: true },
       });
