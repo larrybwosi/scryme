@@ -755,4 +755,55 @@ describe("AdminService", () => {
       });
     });
   });
+
+  // --- System Logs Tests ---
+
+  describe("listSystemLogs", () => {
+    it("should list system audit logs using targeted select block", async () => {
+      mockPrisma.client.actionAuditLog.findMany.mockResolvedValue([
+        { id: "log-1", action: "CREATE_USER" },
+      ]);
+
+      const result = await service.listSystemLogs();
+      expect(result).toEqual([{ id: "log-1", action: "CREATE_USER" }]);
+      expect(mockPrisma.client.actionAuditLog.findMany).toHaveBeenCalledWith({
+        take: 100,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          action: true,
+          resourceType: true,
+          resourceId: true,
+          approved: true,
+          denialReason: true,
+          ipAddress: true,
+          userAgent: true,
+          createdAt: true,
+          organizationId: true,
+          memberId: true,
+          member: {
+            select: {
+              id: true,
+              role: true,
+              user: {
+                select: {
+                  name: true,
+                  email: true,
+                },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    it("should return an empty array if database query throws an error", async () => {
+      mockPrisma.client.actionAuditLog.findMany.mockRejectedValue(
+        new Error("Table or column does not exist"),
+      );
+
+      const result = await service.listSystemLogs();
+      expect(result).toEqual([]);
+    });
+  });
 });
