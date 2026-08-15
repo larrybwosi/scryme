@@ -465,7 +465,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                           <button
                             type="button"
                             onClick={() => removeAddress(index)}
-                            className="absolute top-3 right-3 p-1.5 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100 hover:bg-destructive/10 rounded-full"
+                            className="absolute top-3 right-3 p-1.5 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/60 focus-visible:ring-offset-1 hover:bg-destructive/10 rounded-full"
                             aria-label="Remove address"
                           >
                             <Trash2 size={16} />
@@ -702,7 +702,7 @@ export function CompanyForm({ initialData, onSuccess }: CompanyFormProps) {
                           <button
                             type="button"
                             onClick={() => remove(index)}
-                            className="absolute top-3 right-3 p-1.5 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100 hover:bg-destructive/10 rounded-full"
+                            className="absolute top-3 right-3 p-1.5 text-muted-foreground opacity-0 transition-all hover:text-destructive group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/60 focus-visible:ring-offset-1 hover:bg-destructive/10 rounded-full"
                             aria-label="Remove contact"
                           >
                             <Trash2 size={16} />
