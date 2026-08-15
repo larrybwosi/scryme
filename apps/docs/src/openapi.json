@@ -12155,6 +12155,68 @@
           }
         }
       },
+      "ProductReviewCustomerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "cust_123"
+          },
+          "name": {
+            "type": "string",
+            "example": "John Doe"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "ProductReviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "rev_123"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/ProductReviewCustomerDto"
+          },
+          "rating": {
+            "type": "number",
+            "example": 5
+          },
+          "comment": {
+            "type": "object",
+            "example": "Great product!",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-03-01T08:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "customer",
+          "rating",
+          "comment",
+          "createdAt"
+        ]
+      },
+      "ProductMetaDto": {
+        "type": "object",
+        "properties": {
+          "averageRating": {
+            "type": "number",
+            "example": 4.5
+          },
+          "reviewCount": {
+            "type": "number",
+            "example": 12
+          }
+        }
+      },
       "ProductResponseDto": {
         "type": "object",
         "properties": {
@@ -12205,6 +12267,65 @@
           },
           "customFields": {
             "$ref": "#/components/schemas/CmsCustomFieldsDto"
+          },
+          "brand": {
+            "type": "object",
+            "example": "Acme Corp",
+            "nullable": true
+          },
+          "rating": {
+            "type": "object",
+            "example": 4.5,
+            "nullable": true
+          },
+          "isNew": {
+            "type": "boolean",
+            "example": true
+          },
+          "detailedDescription": {
+            "type": "object",
+            "example": "Detailed info about the product.",
+            "nullable": true
+          },
+          "tags": {
+            "example": [
+              "coffee",
+              "beans"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isFeatured": {
+            "type": "boolean",
+            "example": true
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "pointsOnPurchase": {
+            "type": "object",
+            "example": 10,
+            "nullable": true
+          },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductReviewResponseDto"
+            }
+          },
+          "favoritesCount": {
+            "type": "number",
+            "example": 10
+          },
+          "favouritesCount": {
+            "type": "number",
+            "example": 10
+          },
+          "meta": {
+            "$ref": "#/components/schemas/ProductMetaDto"
           }
         },
         "required": [
@@ -12895,10 +13016,6 @@
       "RegisterCustomerDto": {
         "type": "object",
         "properties": {
-          "zitadelUserId": {
-            "type": "string",
-            "example": "zit_12345"
-          },
           "name": {
             "type": "string",
             "example": "John Doe"

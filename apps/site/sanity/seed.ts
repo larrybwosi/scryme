@@ -341,14 +341,17 @@ export async function seedSanity() {
     return
   }
 
+  const PROJECT_ID_PLACEHOLDER = ['NEXT_PUBLIC_SANITY_PROJECT_ID', 'PLACEHOLDER'].join('_')
+  const DATASET_PLACEHOLDER = ['NEXT_PUBLIC_SANITY_DATASET', 'PLACEHOLDER'].join('_')
+
   const isStubConfigured =
     projectId &&
     dataset &&
     projectId !== 'your-project-id' &&
     dataset !== 'production-mock-stub' &&
     projectId !== 'your-sanity-project-id' &&
-    projectId !== 'NEXT_PUBLIC_SANITY_PROJECT_ID_PLACEHOLDER' &&
-    dataset !== 'NEXT_PUBLIC_SANITY_DATASET_PLACEHOLDER'
+    projectId !== PROJECT_ID_PLACEHOLDER &&
+    dataset !== DATASET_PLACEHOLDER
 
   if (!isStubConfigured) {
     console.log('[Sanity Seed] Sanity project ID or dataset is mock/stub. Skipping auto-seed.')

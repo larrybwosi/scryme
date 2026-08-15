@@ -68,16 +68,16 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-3 mb-4">
-      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-zinc-900 text-white text-[10px] font-bold tracking-widest font-mono border border-zinc-700 shrink-0">
+      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-[10px] font-bold tracking-widest font-mono border border-primary/30 shrink-0">
         {step}
       </div>
-      <div className="flex items-center gap-2 text-zinc-800">
-        <Icon className="h-3.5 w-3.5 text-zinc-500" />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+      <div className="flex items-center gap-2 text-foreground">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           {label}
         </span>
       </div>
-      <div className="flex-1 h-px bg-zinc-100" />
+      <div className="flex-1 h-px bg-border" />
     </div>
   );
 }
@@ -106,14 +106,14 @@ function FieldLabel({
   return (
     <Label
       htmlFor={htmlFor}
-      className="flex items-center gap-1.5 text-[11px] font-medium text-zinc-600 uppercase tracking-widest">
+      className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground uppercase tracking-widest">
       {children}
       {checking ? (
-        <Loader2 className="h-3 w-3 animate-spin text-zinc-400" />
+        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/60" />
       ) : status === true ? (
         <Check className="h-3 w-3 text-emerald-500" />
       ) : status === false ? (
-        <AlertCircle className="h-3 w-3 text-red-500" />
+        <AlertCircle className="h-3 w-3 text-destructive" />
       ) : null}
     </Label>
   );
@@ -121,7 +121,7 @@ function FieldLabel({
 
 function FieldError({ message }: { message: string }) {
   return (
-    <p className="flex items-center gap-1 text-[10px] text-red-500 font-medium mt-1">
+    <p className="flex items-center gap-1 text-[10px] text-destructive font-medium mt-1">
       <AlertCircle className="h-3 w-3 shrink-0" />
       {message}
     </p>
@@ -303,19 +303,19 @@ export function ProductSheet({
       <SheetContent
         className={cn(
           "sm:max-w-[560px] p-0 overflow-hidden flex flex-col",
-          "bg-white border-l border-zinc-200 shadow-2xl",
+          "bg-card border-l border-border shadow-2xl",
         )}>
         {/* ── Header Bar ── */}
-        <div className="flex items-start justify-between px-6 pt-6 pb-5 border-b border-zinc-100 bg-zinc-50/60">
+        <div className="flex items-start justify-between px-6 pt-6 pb-5 border-b border-border bg-muted/30">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-zinc-900 shadow-sm">
-              <Package className="h-4 w-4 text-white" />
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-primary shadow-sm">
+              <Package className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <SheetTitle className="text-[15px] font-semibold text-zinc-900 tracking-tight">
+              <SheetTitle className="text-[15px] font-semibold text-foreground tracking-tight">
                 {productId ? "Edit Product" : "New Product"}
               </SheetTitle>
-              <SheetDescription className="text-[12px] text-zinc-400 mt-0.5">
+              <SheetDescription className="text-[12px] text-muted-foreground mt-0.5">
                 {productId
                   ? `Editing product · ID ${productId.slice(0, 8).toUpperCase()}`
                   : "Complete all required fields to add to inventory"}
@@ -323,10 +323,10 @@ export function ProductSheet({
             </div>
           </div>
           {/* breadcrumb hint */}
-          <div className="hidden sm:flex items-center gap-1 text-[10px] text-zinc-400 font-mono mt-1">
+          <div className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground font-mono mt-1">
             <span>Inventory</span>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-zinc-600 font-medium">
+            <span className="text-foreground font-medium">
               {productId ? "Edit" : "Create"}
             </span>
           </div>
@@ -334,8 +334,8 @@ export function ProductSheet({
 
         {isLoading ? (
           <div className="flex flex-col items-center justify-center flex-1 gap-3">
-            <Loader2 className="h-7 w-7 animate-spin text-zinc-300" />
-            <p className="text-[12px] text-zinc-400">Loading product data…</p>
+            <Loader2 className="h-7 w-7 animate-spin text-muted-foreground/40" />
+            <p className="text-[12px] text-muted-foreground">Loading product data…</p>
           </div>
         ) : (
           <form
@@ -356,7 +356,7 @@ export function ProductSheet({
                         setFormData({ ...formData, name: e.target.value })
                       }
                       required
-                      className="h-9 text-sm bg-white border-zinc-200 focus-visible:ring-zinc-900 focus-visible:ring-1 focus-visible:border-zinc-900 placeholder:text-zinc-300 transition-colors"
+                      className="h-9 text-sm bg-background border-border focus-visible:ring-ring focus-visible:ring-1 focus-visible:border-ring placeholder:text-muted-foreground/40 transition-colors"
                     />
                   </FieldWrapper>
 
@@ -378,12 +378,12 @@ export function ProductSheet({
                         }}
                         required
                         className={cn(
-                          "h-9 text-sm font-mono bg-white border-zinc-200 focus-visible:ring-1 placeholder:text-zinc-300 transition-colors",
+                          "h-9 text-sm font-mono bg-background border-border focus-visible:ring-1 placeholder:text-muted-foreground/40 transition-colors",
                           !uniqueness.sku && formData.sku
-                            ? "border-red-400 focus-visible:ring-red-400"
+                            ? "border-destructive focus-visible:ring-destructive"
                             : uniqueness.sku && formData.sku
-                              ? "border-emerald-400 focus-visible:ring-emerald-400"
-                              : "focus-visible:ring-zinc-900 focus-visible:border-zinc-900",
+                              ? "border-emerald-500 focus-visible:ring-emerald-500"
+                              : "focus-visible:ring-ring focus-visible:border-ring",
                         )}
                       />
                       {!uniqueness.sku && formData.sku && (
@@ -407,12 +407,12 @@ export function ProductSheet({
                           setFormData({ ...formData, slug: e.target.value });
                         }}
                         className={cn(
-                          "h-9 text-sm font-mono bg-white border-zinc-200 focus-visible:ring-1 placeholder:text-zinc-300 transition-colors",
+                          "h-9 text-sm font-mono bg-background border-border focus-visible:ring-1 placeholder:text-muted-foreground/40 transition-colors",
                           !uniqueness.slug && formData.slug
-                            ? "border-red-400 focus-visible:ring-red-400"
+                            ? "border-destructive focus-visible:ring-destructive"
                             : uniqueness.slug && formData.slug
-                              ? "border-emerald-400 focus-visible:ring-emerald-400"
-                              : "focus-visible:ring-zinc-900 focus-visible:border-zinc-900",
+                              ? "border-emerald-500 focus-visible:ring-emerald-500"
+                              : "focus-visible:ring-ring focus-visible:border-ring",
                         )}
                       />
                       {!uniqueness.slug && formData.slug && (
@@ -438,7 +438,7 @@ export function ProductSheet({
                           }}>
                           <button
                             type="button"
-                            className="text-[10px] text-zinc-500 hover:text-zinc-900 font-medium flex items-center gap-1 transition-colors">
+                            className="text-[10px] text-muted-foreground hover:text-foreground font-medium flex items-center gap-1 transition-colors">
                             <Plus className="h-3 w-3" />
                             Create Inline
                           </button>
@@ -447,7 +447,7 @@ export function ProductSheet({
 
                       {localCategories.length === 0 ? (
                         <div className="flex flex-col gap-1.5">
-                          <div className="h-9 px-3 flex items-center text-sm border border-dashed border-zinc-200 rounded-md bg-zinc-50 text-zinc-400">
+                          <div className="h-9 px-3 flex items-center text-sm border border-dashed border-border rounded-md bg-muted/30 text-muted-foreground/60">
                             No categories available
                           </div>
                         </div>
@@ -460,7 +460,7 @@ export function ProductSheet({
                           required>
                           <SelectTrigger
                             id="category"
-                            className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
+                            className="h-9 text-sm border-border focus:ring-1 focus:ring-ring focus:border-ring bg-background">
                             <SelectValue placeholder="Select category…" />
                           </SelectTrigger>
                           <SelectContent>
@@ -487,7 +487,7 @@ export function ProductSheet({
                         required>
                         <SelectTrigger
                           id="product-type"
-                          className="h-9 text-sm border-zinc-200 focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 bg-white">
+                          className="h-9 text-sm border-border focus:ring-1 focus:ring-ring focus:border-ring bg-background">
                           <SelectValue placeholder="Select item type…" />
                         </SelectTrigger>
                         <SelectContent>
@@ -522,7 +522,7 @@ export function ProductSheet({
                     <FieldWrapper>
                       <FieldLabel htmlFor="buying-price">Cost Price</FieldLabel>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[13px] font-medium pointer-events-none">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-[13px] font-medium pointer-events-none">
                           {symbol}
                         </span>
                         <Input
@@ -539,7 +539,7 @@ export function ProductSheet({
                             })
                           }
                           required
-                          className="h-9 pl-7 text-sm bg-white border-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-900 focus-visible:border-zinc-900 placeholder:text-zinc-300"
+                          className="h-9 pl-7 text-sm bg-background border-border focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring placeholder:text-muted-foreground/40"
                         />
                       </div>
                     </FieldWrapper>
@@ -549,7 +549,7 @@ export function ProductSheet({
                         Retail Price
                       </FieldLabel>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 text-[13px] font-medium pointer-events-none">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-[13px] font-medium pointer-events-none">
                           {symbol}
                         </span>
                         <Input
@@ -566,7 +566,7 @@ export function ProductSheet({
                             })
                           }
                           required
-                          className="h-9 pl-7 text-sm bg-white border-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-900 focus-visible:border-zinc-900 placeholder:text-zinc-300"
+                          className="h-9 pl-7 text-sm bg-background border-border focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring placeholder:text-muted-foreground/40"
                         />
                       </div>
                     </FieldWrapper>
@@ -578,10 +578,10 @@ export function ProductSheet({
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-md border text-[12px] font-medium transition-all",
                         parseFloat(margin) >= 20
-                          ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                          ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400"
                           : parseFloat(margin) >= 0
-                            ? "bg-amber-50 border-amber-200 text-amber-700"
-                            : "bg-red-50 border-red-200 text-red-700",
+                            ? "bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400"
+                            : "bg-destructive/10 border-destructive/20 text-destructive",
                       )}>
                       <BarChart2 className="h-3.5 w-3.5 shrink-0" />
                       <span>
@@ -616,7 +616,7 @@ export function ProductSheet({
                           })
                         }
                         required
-                        className="h-9 text-sm bg-white border-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-900 focus-visible:border-zinc-900 placeholder:text-zinc-300"
+                        className="h-9 text-sm bg-background border-border focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring placeholder:text-muted-foreground/40"
                       />
                     </FieldWrapper>
                   )}
@@ -637,7 +637,7 @@ export function ProductSheet({
                   }
                   maxImages={3}
                 />
-                <p className="text-[11px] text-zinc-400 mt-2">
+                <p className="text-[11px] text-muted-foreground/60 mt-2">
                   Upload up to 3 images. First image will be used as the primary
                   display.
                 </p>
@@ -645,15 +645,15 @@ export function ProductSheet({
             </div>
 
             {/* ── Footer ── */}
-            <SheetFooter className="px-6 py-4 border-t border-zinc-100 bg-zinc-50/60 flex items-center justify-between gap-3 shrink-0">
-              <div className="text-[11px] text-zinc-400">
+            <SheetFooter className="px-6 py-4 border-t border-border bg-muted/30 flex items-center justify-between gap-3 shrink-0">
+              <div className="text-[11px] text-muted-foreground">
                 {!uniqueness.sku || !uniqueness.slug ? (
-                  <span className="flex items-center gap-1 text-red-500">
+                  <span className="flex items-center gap-1 text-destructive">
                     <AlertCircle className="h-3 w-3" />
                     Resolve conflicts before saving
                   </span>
                 ) : (
-                  <span className="text-zinc-400">
+                  <span className="text-muted-foreground">
                     All fields with * are required
                   </span>
                 )}
@@ -665,14 +665,14 @@ export function ProductSheet({
                   size="sm"
                   onClick={() => setOpen(false)}
                   disabled={isSubmitting}
-                  className="h-8 text-[12px] border-zinc-200 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors">
+                  className="h-8 text-[12px] border-border text-muted-foreground hover:bg-accent hover:text-foreground transition-colors">
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   size="sm"
                   disabled={isSubmitting || !uniqueness.sku || !uniqueness.slug}
-                  className="h-8 text-[12px] bg-zinc-900 hover:bg-zinc-800 text-white px-4 transition-colors disabled:opacity-50">
+                  className="h-8 text-[12px] bg-primary hover:bg-primary/90 text-primary-foreground px-4 transition-colors disabled:opacity-50">
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />

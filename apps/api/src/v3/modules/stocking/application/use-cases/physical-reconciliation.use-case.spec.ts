@@ -21,6 +21,7 @@ describe("PhysicalReconciliationUseCase", () => {
       stockReconciliation: {
         create: vi.fn(),
         findUnique: vi.fn(),
+        findFirst: vi.fn(),
         update: vi.fn(),
       },
       stockAdjustment: {
@@ -142,6 +143,7 @@ describe("PhysicalReconciliationUseCase", () => {
 
       expect(mockTx.productVariantStock.findMany).toHaveBeenCalledWith({
         where: {
+          organizationId: mockOrgId,
           variantId: { in: ["var-1"] },
           locationId: mockLocationId,
         },
@@ -181,6 +183,75 @@ describe("PhysicalReconciliationUseCase", () => {
       });
 
       expect(result).toEqual({ id: "rec-123" });
+    });
+  });
+
+  describe("approve", () => {
+    it("should approve pending reconciliation using findFirst with organizationId scoping", async () => {
+      const mockReconciliation = {
+        id: "rec-123",
+        status: ReconciliationStatus.PENDING_REVIEW,
+        locationId: mockLocationId,
+        items: [
+          {
+            id: "item-1",
+            productVariantId: "var-1",
+            varianceQuantity: 2,
+            unitPrice: 50,
+          },
+        ],
+      };
+
+      mockTx.stockReconciliation.findFirst.mockResolvedValue(mockReconciliation);
+      mockTx.stockAdjustment.create.mockResolvedValue({ id: "adj-1" });
+      mockTx.productVariantStock.update.mockResolvedValue({});
+      mockTx.stockBatch.create.mockResolvedValue({});
+      mockTx.reconciliationItem.update.mockResolvedValue({});
+      mockTx.stockReconciliation.update.mockResolvedValue({
+        id: "rec-123",
+        status: ReconciliationStatus.COMPLETED,
+      });
+
+      const result = await physicalReconciliationUseCase.approve(
+        mockOrgId,
+        mockMemberId,
+        "rec-123",
+      );
+
+      expect(mockTx.stockReconciliation.findFirst).toHaveBeenCalledWith({
+        where: { id: "rec-123", organizationId: mockOrgId },
+        include: { items: true },
+      });
+
+      expect(mockTx.stockAdjustment.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          organizationId: mockOrgId,
+          variantId: "var-1",
+          quantity: 2,
+        }),
+      });
+
+      expect(result).toEqual({
+        id: "rec-123",
+        status: ReconciliationStatus.COMPLETED,
+      });
+    });
+
+    it("should throw NotFoundException if reconciliation is not found for the organization", async () => {
+      mockTx.stockReconciliation.findFirst.mockResolvedValue(null);
+
+      await expect(
+        physicalReconciliationUseCase.approve(
+          mockOrgId,
+          mockMemberId,
+          "other-org-rec-123",
+        ),
+      ).rejects.toThrow("Reconciliation not found");
+
+      expect(mockTx.stockReconciliation.findFirst).toHaveBeenCalledWith({
+        where: { id: "other-org-rec-123", organizationId: mockOrgId },
+        include: { items: true },
+      });
     });
   });
 });

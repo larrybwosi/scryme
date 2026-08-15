@@ -8,6 +8,10 @@ import type {
   CreateProductDto,
   CatalogGetServicesParams,
   UpdateProductDto,
+  CreateProductReviewDto,
+  UpdateProductReviewDto,
+  ProductReviewResponseDto,
+  CatalogDeleteReviewParams,
 } from "./generated/model";
 
 export type RawAPI = ReturnType<typeof getScrymeV3API>;
@@ -116,6 +120,9 @@ export type MethodsWithOrgSlug =
   | "catalogUpdateSupplierVariant"
   | "catalogGetPriceChangeRequests"
   | "catalogReviewPriceChangeRequest"
+  | "catalogCreateReview"
+  | "catalogUpdateReview"
+  | "catalogDeleteReview"
   | "servicesCreateCategory"
   | "servicesGetCategories"
   | "servicesUpdateCategory"
@@ -318,6 +325,9 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "catalogUpdateSupplierVariant",
   "catalogGetPriceChangeRequests",
   "catalogReviewPriceChangeRequest",
+  "catalogCreateReview",
+  "catalogUpdateReview",
+  "catalogDeleteReview",
   "servicesCreateCategory",
   "servicesGetCategories",
   "servicesUpdateCategory",
@@ -444,6 +454,9 @@ export const catalogMapping = {
   updateSupplierVariant: "catalogUpdateSupplierVariant",
   getPriceChangeRequests: "catalogGetPriceChangeRequests",
   reviewPriceChangeRequest: "catalogReviewPriceChangeRequest",
+  createReview: "catalogCreateReview",
+  updateReview: "catalogUpdateReview",
+  deleteReview: "catalogDeleteReview",
   createServiceCategory: "servicesCreateCategory",
   getServiceCategories: "servicesGetCategories",
   updateServiceCategory: "servicesUpdateCategory",
@@ -763,13 +776,16 @@ export const adminMapping = {
 export interface CatalogModule<
   TProduct = ProductResponseDto,
   TService = ServiceCatalogResponseDto
-> extends Omit<SDKModule<typeof catalogMapping>, "getProducts" | "createProduct" | "getServices" | "updateProduct" | "getProduct" | "getService"> {
+> extends Omit<SDKModule<typeof catalogMapping>, "getProducts" | "createProduct" | "getServices" | "updateProduct" | "getProduct" | "getService" | "createReview" | "updateReview" | "deleteReview"> {
   getProducts<T = TProduct>(params?: CatalogGetProductsParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;
   createProduct<T = TProduct>(createProductDto: CreateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
   getServices<T = TService>(params?: CatalogGetServicesParams, options?: AxiosRequestConfig): Promise<AxiosResponse<T[]>>;
   updateProduct<T = TProduct>(id: string, updateProductDto: UpdateProductDto, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
   getProduct<T = TProduct>(idOrSlug: string | { id?: string; slug?: string }, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
   getService<T = TService>(idOrSlug: string | { id?: string; slug?: string }, options?: AxiosRequestConfig): Promise<AxiosResponse<T>>;
+  createReview(productId: string, createProductReviewDto: CreateProductReviewDto, options?: AxiosRequestConfig): Promise<AxiosResponse<ProductReviewResponseDto>>;
+  updateReview(reviewId: string, updateProductReviewDto: UpdateProductReviewDto, options?: AxiosRequestConfig): Promise<AxiosResponse<ProductReviewResponseDto>>;
+  deleteReview(reviewId: string, params?: CatalogDeleteReviewParams, options?: AxiosRequestConfig): Promise<AxiosResponse<void>>;
 }
 
 export type AuthModule = SDKModule<typeof authMapping>;
