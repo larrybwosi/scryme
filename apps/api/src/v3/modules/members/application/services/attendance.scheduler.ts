@@ -42,40 +42,43 @@ export class AttendanceScheduler {
       },
     });
 
-    for (const org of orgs) {
-      try {
-        const settings = org.settings;
-        const timezone = settings?.defaultTimezone || "UTC";
-        const now = new Date();
-        const zonedNow = toZonedTime(now, timezone);
-        const currentTimeStr = format(zonedNow, "HH:mm");
+    // ⚡ Bolt Optimization: Concurrently process organization auto-checkouts with isolated error handlers
+    await Promise.all(
+      orgs.map(async org => {
+        try {
+          const settings = org.settings;
+          const timezone = settings?.defaultTimezone || "UTC";
+          const now = new Date();
+          const zonedNow = toZonedTime(now, timezone);
+          const currentTimeStr = format(zonedNow, "HH:mm");
 
-        let shouldCheckout = false;
-        const autoCheckoutTime = settings?.autoCheckoutTime || "00:00"; // Default to midnight
+          let shouldCheckout = false;
+          const autoCheckoutTime = settings?.autoCheckoutTime || "00:00"; // Default to midnight
 
-        // If auto-checkout is NOT explicitly enabled, we only auto-checkout at midnight
-        if (!settings?.enableAutoCheckout) {
-          // Check if we are within 5 minutes of midnight
-          if (currentTimeStr >= "00:00" && currentTimeStr < "00:05") {
-            shouldCheckout = true;
+          // If auto-checkout is NOT explicitly enabled, we only auto-checkout at midnight
+          if (!settings?.enableAutoCheckout) {
+            // Check if we are within 5 minutes of midnight
+            if (currentTimeStr >= "00:00" && currentTimeStr < "00:05") {
+              shouldCheckout = true;
+            }
+          } else {
+            // If enabled, we checkout at the configured time
+            // Check if we are within 5 minutes of the configured time
+            if (currentTimeStr >= autoCheckoutTime && currentTimeStr < this.addMinutes(autoCheckoutTime, 5)) {
+              shouldCheckout = true;
+            }
           }
-        } else {
-          // If enabled, we checkout at the configured time
-          // Check if we are within 5 minutes of the configured time
-          if (currentTimeStr >= autoCheckoutTime && currentTimeStr < this.addMinutes(autoCheckoutTime, 5)) {
-            shouldCheckout = true;
-          }
-        }
 
-        if (shouldCheckout) {
-          await this.processAutoCheckoutForOrg(org.id);
+          if (shouldCheckout) {
+            await this.processAutoCheckoutForOrg(org.id);
+          }
+        } catch (error) {
+          this.logger.error(
+            `Error processing auto-checkout for org ${org.id}: ${error.message}`,
+          );
         }
-      } catch (error) {
-        this.logger.error(
-          `Error processing auto-checkout for org ${org.id}: ${error.message}`,
-        );
-      }
-    }
+      }),
+    );
   }
 
   private addMinutes(timeStr: string, mins: number): string {
@@ -103,17 +106,20 @@ export class AttendanceScheduler {
       `Auto-checking out ${activeLogs.length} members for org ${organizationId}`,
     );
 
-    for (const log of activeLogs) {
-      try {
-        await this.attendanceUseCase.checkOut(organizationId, log.memberId, {
-          notes: "Auto-checkout by system",
-          isAutoCheckout: true,
-        });
-      } catch (error) {
-        this.logger.error(
-          `Failed to auto-checkout member ${log.memberId} in org ${organizationId}: ${error.message}`,
-        );
-      }
-    }
+    // ⚡ Bolt Optimization: Parallelize member checkOut calls concurrently via Promise.all
+    await Promise.all(
+      activeLogs.map(async log => {
+        try {
+          await this.attendanceUseCase.checkOut(organizationId, log.memberId, {
+            notes: "Auto-checkout by system",
+            isAutoCheckout: true,
+          });
+        } catch (error) {
+          this.logger.error(
+            `Failed to auto-checkout member ${log.memberId} in org ${organizationId}: ${error.message}`,
+          );
+        }
+      }),
+    );
   }
 }
