@@ -760,7 +760,9 @@ export function OrderForm({
                                   type="button"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all"
+                                  aria-label="Remove item"
+                                  title="Remove item"
+                                  className="h-8 w-8 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all"
                                   onClick={() => remove(index)}
                                   disabled={fields.length === 1}>
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -884,6 +886,8 @@ export function OrderForm({
                             <Button
                               variant="ghost"
                               size="icon"
+                              aria-label="Remove attachment"
+                              title="Remove attachment"
                               className="h-6 w-6 text-muted-foreground hover:text-red-500 dark:hover:text-red-400"
                               onClick={() => removeAttachment(idx)}>
                               <X className="w-4 h-4" />
