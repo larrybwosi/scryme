@@ -1,7 +1,7 @@
 services:
   sanity-seeder:
     build:
-      context: .
+      context: ../../
       dockerfile: Dockerfile.seeder
     environment:
       NEXT_PUBLIC_SANITY_PROJECT_ID: "${NEXT_PUBLIC_SANITY_PROJECT_ID:-mock-project-id}"
