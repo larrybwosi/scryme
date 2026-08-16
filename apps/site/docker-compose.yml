@@ -2,7 +2,7 @@ services:
   sanity-seeder:
     build:
       context: ../..
-      dockerfile: apps/site/Dockerfile.seed
+      dockerfile: Dockerfile.seed
     environment:
       NEXT_PUBLIC_SANITY_PROJECT_ID: "${NEXT_PUBLIC_SANITY_PROJECT_ID:-mock-project-id}"
       NEXT_PUBLIC_SANITY_DATASET: "${NEXT_PUBLIC_SANITY_DATASET:-production}"
