@@ -6,12 +6,12 @@ RUN corepack enable
 
 WORKDIR /app
 
-# Pruning stage to isolate only files needed for the web/site app
+# Pruning stage to isolate only files needed for the site app
 FROM base AS pruner
-RUN npm install -g turbo@2.10.4
+RUN npm install -g turbo
 COPY . .
-# Replace 'web' with 'site' if your package name in apps/site/package.json is 'site'
-RUN turbo prune web --docker
+RUN rm -rf .turbo && rm -rf node_modules
+RUN turbo prune site --docker
 
 # Installer stage to install dependencies
 FROM base AS installer
@@ -24,4 +24,4 @@ RUN pnpm install --frozen-lockfile
 COPY --from=pruner /app/out/full/ .
 
 # Execute the Sanity seeder
-CMD ["pnpm", "--filter", "web", "sanity:seed"]
+CMD ["pnpm", "--filter", "site", "sanity:seed"]
