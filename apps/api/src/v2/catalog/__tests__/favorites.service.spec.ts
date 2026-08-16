@@ -22,6 +22,7 @@ describe("FavoritesService", () => {
                 upsert: vi.fn(),
                 delete: vi.fn(),
                 findUnique: vi.fn(),
+                findFirst: vi.fn(),
               },
               product: {
                 findFirst: vi.fn(),
@@ -126,6 +127,92 @@ describe("FavoritesService", () => {
         update: {},
       });
       expect(result).toEqual({ id: "fav1" });
+    });
+  });
+
+  describe("removeFavorite", () => {
+    it("should throw BadRequestException if customerId is missing", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1" } as any;
+      await expect(service.removeFavorite(ctx, "prod1")).rejects.toThrow(BadRequestException);
+    });
+
+    it("should return null if the favorite is not found in the organization", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1", customerId: "cust1" } as any;
+      vi.spyOn(prisma.client.favorite, "findFirst").mockResolvedValue(null);
+
+      const result = await service.removeFavorite(ctx, "prod1");
+
+      expect(prisma.client.favorite.findFirst).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+          customerId: "cust1",
+          productId: "prod1",
+        },
+        select: { id: true },
+      });
+      expect(prisma.client.favorite.delete).not.toHaveBeenCalled();
+      expect(result).toBeNull();
+    });
+
+    it("should delete the favorite by id if it exists in the organization", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1", customerId: "cust1" } as any;
+      vi.spyOn(prisma.client.favorite, "findFirst").mockResolvedValue({ id: "fav1" } as any);
+      vi.spyOn(prisma.client.favorite, "delete").mockResolvedValue({ id: "fav1" } as any);
+
+      const result = await service.removeFavorite(ctx, "prod1");
+
+      expect(prisma.client.favorite.findFirst).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+          customerId: "cust1",
+          productId: "prod1",
+        },
+        select: { id: true },
+      });
+      expect(prisma.client.favorite.delete).toHaveBeenCalledWith({
+        where: { id: "fav1" },
+      });
+      expect(result).toEqual({ id: "fav1" });
+    });
+  });
+
+  describe("isFavorite", () => {
+    it("should return false if customerId is missing", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1" } as any;
+      const result = await service.isFavorite(ctx, "prod1");
+      expect(result).toBe(false);
+    });
+
+    it("should check favorite with organizationId filter and return true if found", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1", customerId: "cust1" } as any;
+      vi.spyOn(prisma.client.favorite, "findFirst").mockResolvedValue({ id: "fav1" } as any);
+
+      const result = await service.isFavorite(ctx, "prod1");
+
+      expect(prisma.client.favorite.findFirst).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+          customerId: "cust1",
+          productId: "prod1",
+        },
+      });
+      expect(result).toBe(true);
+    });
+
+    it("should check favorite with organizationId filter and return false if not found", async () => {
+      const ctx: V2ApiContext = { organizationId: "org1", customerId: "cust1" } as any;
+      vi.spyOn(prisma.client.favorite, "findFirst").mockResolvedValue(null);
+
+      const result = await service.isFavorite(ctx, "prod1");
+
+      expect(prisma.client.favorite.findFirst).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org1",
+          customerId: "cust1",
+          productId: "prod1",
+        },
+      });
+      expect(result).toBe(false);
     });
   });
 });
