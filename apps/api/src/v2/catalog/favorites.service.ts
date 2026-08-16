@@ -84,17 +84,26 @@ export class FavoritesService {
   }
 
   async removeFavorite(ctx: V2ApiContext, productId: string) {
-    const { customerId } = ctx;
+    const { organizationId, customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
+
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
+    const favorite = await this.prisma.client.favorite.findFirst({
+      where: {
+        organizationId,
+        customerId,
+        productId,
+      },
+      select: { id: true },
+    });
+
+    if (!favorite) {
+      return null;
+    }
 
     try {
       return await this.prisma.client.favorite.delete({
-        where: {
-          customerId_productId: {
-            customerId,
-            productId,
-          },
-        },
+        where: { id: favorite.id },
       });
     } catch (error) {
       // If it doesn't exist, just ignore
@@ -103,15 +112,15 @@ export class FavoritesService {
   }
 
   async isFavorite(ctx: V2ApiContext, productId: string) {
-    const { customerId } = ctx;
+    const { organizationId, customerId } = ctx;
     if (!customerId) return false;
 
-    const favorite = await this.prisma.client.favorite.findUnique({
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
+    const favorite = await this.prisma.client.favorite.findFirst({
       where: {
-        customerId_productId: {
-          customerId,
-          productId,
-        },
+        organizationId,
+        customerId,
+        productId,
       },
     });
 
