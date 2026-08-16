@@ -155,8 +155,9 @@ export async function makeApprovalDecisionCore(
     comments?: string;
   },
 ) {
-  const request = await db.approvalRequest.findUnique({
-    where: { id: data.requestId },
+  // SECURITY (Sentinel): Scope lookup with organizationId using findFirst to prevent IDOR / cross-tenant approvals.
+  const request = await db.approvalRequest.findFirst({
+    where: { id: data.requestId, organizationId },
     include: {
       workflow: {
         include: {
