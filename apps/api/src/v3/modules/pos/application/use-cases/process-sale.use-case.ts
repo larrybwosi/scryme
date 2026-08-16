@@ -306,6 +306,7 @@ export class ProcessSaleUseCase {
     tId: string,
     tNo: string,
   ) {
+    const bookingUpdates: any[] = [];
     const stockUpdates: any[] = [];
     const movements: any[] = [];
     const consumedMaterialsToCreate: any[] = [];
@@ -339,15 +340,19 @@ export class ProcessSaleUseCase {
           throw new BadRequestException(`Booking with ID ${si.bookingId} is already completed`);
         }
 
-        await tx.serviceBooking.update({
-          where: { id: booking.id },
-          data: {
-            status: "COMPLETED",
-            actualStartTime: booking.actualStartTime || booking.scheduledStartTime,
-            actualEndTime: new Date(),
-            transactionId: tId,
-          },
-        });
+        // ⚡ Bolt Optimization: Collect booking update promises to parallelize database writes concurrently via Promise.all.
+        // This eliminates sequential N+1 blocking DB roundtrips for multi-service sales, reducing delay from O(N) to O(1).
+        bookingUpdates.push(
+          tx.serviceBooking.update({
+            where: { id: booking.id },
+            data: {
+              status: "COMPLETED",
+              actualStartTime: booking.actualStartTime || booking.scheduledStartTime,
+              actualEndTime: new Date(),
+              transactionId: tId,
+            },
+          }),
+        );
 
         const materials = booking.service.materials || [];
         for (const mat of materials) {
@@ -416,8 +421,8 @@ export class ProcessSaleUseCase {
       }
     }
 
-    if (stockUpdates.length > 0) {
-      await Promise.all(stockUpdates);
+    if (bookingUpdates.length > 0 || stockUpdates.length > 0) {
+      await Promise.all([...bookingUpdates, ...stockUpdates]);
     }
 
     if (movements.length > 0) {
