@@ -161,15 +161,26 @@ export class StockRequestUseCase {
         },
       });
 
-      // Update allocated quantities
+      // ⚡ Bolt Optimization: Aggregate requested quantities by variantId in-memory and update allocated quantities concurrently via Promise.all.
+      // This collapses O(N) sequential database updates into a flat O(1) concurrent roundtrip, eliminating transactional bottleneck delay.
+      const allocatedQtyMap = new Map<string, number>();
       for (const item of dto.items) {
-        await tx.stockRequestItem.updateMany({
-          where: { stockRequestId: requestId, variantId: item.variantId },
-          data: {
-            allocatedQuantity: { increment: item.requestedQuantity },
-          },
-        });
+        allocatedQtyMap.set(
+          item.variantId,
+          (allocatedQtyMap.get(item.variantId) || 0) + item.requestedQuantity,
+        );
       }
+
+      await Promise.all(
+        Array.from(allocatedQtyMap.entries()).map(([variantId, qty]) =>
+          tx.stockRequestItem.updateMany({
+            where: { stockRequestId: requestId, variantId },
+            data: {
+              allocatedQuantity: { increment: qty },
+            },
+          }),
+        ),
+      );
 
       return transfer;
     });
@@ -232,15 +243,26 @@ export class StockRequestUseCase {
         },
       });
 
-      // Update allocated quantities
+      // ⚡ Bolt Optimization: Aggregate ordered quantities by variantId in-memory and update allocated quantities concurrently via Promise.all.
+      // This collapses O(N) sequential database updates into a flat O(1) concurrent roundtrip, eliminating transactional bottleneck delay.
+      const allocatedQtyMap = new Map<string, number>();
       for (const item of dto.items) {
-        await tx.stockRequestItem.updateMany({
-          where: { stockRequestId: requestId, variantId: item.variantId },
-          data: {
-            allocatedQuantity: { increment: item.orderedQuantity },
-          },
-        });
+        allocatedQtyMap.set(
+          item.variantId,
+          (allocatedQtyMap.get(item.variantId) || 0) + item.orderedQuantity,
+        );
       }
+
+      await Promise.all(
+        Array.from(allocatedQtyMap.entries()).map(([variantId, qty]) =>
+          tx.stockRequestItem.updateMany({
+            where: { stockRequestId: requestId, variantId },
+            data: {
+              allocatedQuantity: { increment: qty },
+            },
+          }),
+        ),
+      );
 
       return purchase;
     });
