@@ -9,9 +9,13 @@ WORKDIR /app
 # Pruning stage to isolate only files needed for the site app
 FROM base AS pruner
 RUN npm install -g turbo
+
+# Copy workspace configuration and entire context
 COPY . .
-RUN rm -rf .turbo && rm -rf node_modules
-RUN turbo prune site --docker
+RUN rm -rf .turbo node_modules
+
+# Run turbo prune using the package name defined in apps/site/package.json
+RUN turbo prune --scope=site --docker
 
 # Installer stage to install dependencies
 FROM base AS installer
