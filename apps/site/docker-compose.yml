@@ -1,14 +1,4 @@
 services:
-  sanity-seeder:
-    build:
-      context: ../../
-      dockerfile: apps/site/Dockerfile.seeder
-    environment:
-      NEXT_PUBLIC_SANITY_PROJECT_ID: "${NEXT_PUBLIC_SANITY_PROJECT_ID:-mock-project-id}"
-      NEXT_PUBLIC_SANITY_DATASET: "${NEXT_PUBLIC_SANITY_DATASET:-production}"
-      SANITY_API_TOKEN: "${SANITY_API_TOKEN}"
-    restart: "no"
-
   site:
     image: ghcr.io/larrybwosi/scryme/site:${SITE_VERSION:-latest}
     restart: always
@@ -40,3 +30,13 @@ services:
       - NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN}
       - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-https://eu.i.posthog.com}
       - NODE_ENV=production
+
+  # sanity-seeder:
+  #   build:
+  #     context: ../../
+  #     dockerfile: apps/site/Dockerfile.seeder
+  #   environment:
+  #     NEXT_PUBLIC_SANITY_PROJECT_ID: "${NEXT_PUBLIC_SANITY_PROJECT_ID:-mock-project-id}"
+  #     NEXT_PUBLIC_SANITY_DATASET: "${NEXT_PUBLIC_SANITY_DATASET:-production}"
+  #     SANITY_API_TOKEN: "${SANITY_API_TOKEN}"
+  #   restart: "no"
