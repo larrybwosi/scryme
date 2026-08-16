@@ -1,4 +1,13 @@
 services:
+  sanity-seeder:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.seeder
+    environment:
+      NEXT_PUBLIC_SANITY_PROJECT_ID: "${NEXT_PUBLIC_SANITY_PROJECT_ID:-mock-project-id}"
+      NEXT_PUBLIC_SANITY_DATASET: "${NEXT_PUBLIC_SANITY_DATASET:-production}"
+      SANITY_API_TOKEN: "${SANITY_API_TOKEN}"
+    restart: "no"
   site:
     image: ghcr.io/larrybwosi/scryme/site:${SITE_VERSION:-latest}
     restart: always

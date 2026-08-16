@@ -358,6 +358,13 @@ export async function seedSanity() {
     return
   }
 
+
+  console.log("=== Sanity Data Seeder ===");
+  console.log(`Project ID: ${projectId || "undefined"}`);
+  console.log(`Dataset: ${dataset}`);
+  console.log(`Token provided: ${token ? "Yes" : "No"}`);
+
+
   try {
     const writeClient = createClient({
       projectId,
