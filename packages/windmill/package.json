@@ -12,7 +12,6 @@
   "dependencies": {
     "@repo/db": "workspace:*",
     "@repo/chat": "workspace:*",
-    "@repo/shared": "workspace:*",
     "axios": "^1.15.2",
     "handlebars": "^4.7.9",
     "nodemailer": "^7.0.13",
