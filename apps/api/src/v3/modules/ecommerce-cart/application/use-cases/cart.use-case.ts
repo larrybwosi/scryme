@@ -49,24 +49,64 @@ export class CartUseCase {
             include: { items: true },
           });
         } else {
-          // Both carts exist and have items. Merge guest cart items into customer cart
+          // Both carts exist and have items. Merge guest cart items into customer cart.
+          // ⚡ Bolt Optimization: Map-Based Indexing & Parallelized Cart Item Writes
+          // 1) Pre-index existing customer cart items into Maps by composite product key and service ID.
+          //    This replaces O(N * M) nested array searches with O(1) constant-time Map lookups.
+          const productItemMap = new Map<string, any>();
+          const serviceItemMap = new Map<string, any>();
+
+          for (const item of customerCart.items) {
+            if (item.productId) {
+              const key = `${item.productId}_${item.variantId || ""}`;
+              productItemMap.set(key, item);
+            } else if (item.serviceId) {
+              serviceItemMap.set(item.serviceId, item);
+            }
+          }
+
+          // 2) In-memory consolidation: aggregate duplicate guest cart items first to prevent duplicate creates or race conditions under concurrent writes.
+          const aggregatedGuestProductMap = new Map<string, any>();
+          const aggregatedGuestServiceMap = new Map<string, any>();
+
           for (const guestItem of guestCart.items) {
+            if (guestItem.productId) {
+              const key = `${guestItem.productId}_${guestItem.variantId || ""}`;
+              const existing = aggregatedGuestProductMap.get(key);
+              if (existing) {
+                existing.quantity += guestItem.quantity;
+              } else {
+                aggregatedGuestProductMap.set(key, { ...guestItem });
+              }
+            } else if (guestItem.serviceId) {
+              const existing = aggregatedGuestServiceMap.get(guestItem.serviceId);
+              if (existing) {
+                existing.quantity = 1;
+              } else {
+                aggregatedGuestServiceMap.set(guestItem.serviceId, { ...guestItem });
+              }
+            }
+          }
+
+          const aggregatedGuestItems = [
+            ...Array.from(aggregatedGuestProductMap.values()),
+            ...Array.from(aggregatedGuestServiceMap.values()),
+          ];
+
+          // 3) Map aggregated guest cart items to write promises and execute them concurrently via Promise.all.
+          //    This collapses sequential O(N) blocking database roundtrips down to a flat O(1) concurrent roundtrip execution block.
+          const cartItemPromises = aggregatedGuestItems.map(async (guestItem) => {
             let existingCustomerItem = null;
             if (guestItem.productId) {
-              existingCustomerItem = customerCart.items.find(
-                (item) =>
-                  item.productId === guestItem.productId &&
-                  item.variantId === guestItem.variantId,
-              );
+              const key = `${guestItem.productId}_${guestItem.variantId || ""}`;
+              existingCustomerItem = productItemMap.get(key);
             } else if (guestItem.serviceId) {
-              existingCustomerItem = customerCart.items.find(
-                (item) => item.serviceId === guestItem.serviceId,
-              );
+              existingCustomerItem = serviceItemMap.get(guestItem.serviceId);
             }
 
             if (existingCustomerItem) {
               // Update quantity
-              await this.prisma.client.cartItem.update({
+              return this.prisma.client.cartItem.update({
                 where: { id: existingCustomerItem.id },
                 data: {
                   quantity: guestItem.serviceId ? 1 : existingCustomerItem.quantity + guestItem.quantity,
@@ -74,7 +114,7 @@ export class CartUseCase {
               });
             } else {
               // Create new cart item in customer cart
-              await this.prisma.client.cartItem.create({
+              return this.prisma.client.cartItem.create({
                 data: {
                   cartId: customerCart.id,
                   productId: guestItem.productId,
@@ -85,7 +125,9 @@ export class CartUseCase {
                 },
               });
             }
-          }
+          });
+
+          await Promise.all(cartItemPromises);
 
           // Delete the guest cart completely
           await this.prisma.client.cart.delete({
