@@ -11,7 +11,15 @@ export function RemoveFromCartButton({ orgSlug, variantId }: { orgSlug: string; 
     try { await removeFromCart(orgSlug, variantId); } catch (error) { console.error(error); } finally { setLoading(false); }
   };
   return (
-    <Button variant="ghost" size="icon" className="text-destructive" onClick={handleRemove} disabled={loading}>
+    <Button
+      variant="ghost"
+      size="icon"
+      className="text-destructive"
+      onClick={handleRemove}
+      disabled={loading}
+      aria-label="Remove item"
+      title="Remove item"
+    >
       <Trash2 className="size-4" />
     </Button>
   );
