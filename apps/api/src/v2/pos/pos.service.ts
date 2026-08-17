@@ -188,8 +188,10 @@ export class PosService {
         throw new BadRequestException("Member is not checked in.");
       }
 
-      const attendanceLog = await tx.attendanceLog.findUnique({
-        where: { id: member.currentAttendanceLogId },
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because AttendanceLog lacks
+      // a composite unique index on [id, organizationId]. Scoping by organizationId prevents IDOR.
+      const attendanceLog = await tx.attendanceLog.findFirst({
+        where: { id: member.currentAttendanceLogId, organizationId: ctx.organizationId },
       });
       if (!attendanceLog || attendanceLog.checkOutTime)
         throw new BadRequestException("Active attendance log not found.");
