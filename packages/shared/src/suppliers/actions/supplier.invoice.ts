@@ -38,8 +38,12 @@ export type UpdateInvoiceDto = z.infer<typeof updateInvoiceSchema>;
  * Creates a new invoice for a given purchase order.
  */
 export async function createSupplierInvoice(data: CreateInvoiceDto) {
-  const purchase = await prisma.purchase.findUnique({
-    where: { id: data.purchaseId },
+  // SECURITY (Sentinel): Verify purchase exists and belongs to the specified organization to prevent IDOR
+  const purchase = await prisma.purchase.findFirst({
+    where: {
+      id: data.purchaseId,
+      organizationId: data.organizationId,
+    },
   });
 
   if (!purchase) throw new Error("Purchase not found");
@@ -47,7 +51,7 @@ export async function createSupplierInvoice(data: CreateInvoiceDto) {
   const invoice = await prisma.supplierInvoice.create({
     data: {
       purchaseId: data.purchaseId,
-      organizationId: data.organizationId || purchase.organizationId,
+      organizationId: data.organizationId,
       invoiceNumber: data.invoiceNumber,
       supplierId: data.supplierId || purchase.supplierId,
       issueDate: data.issueDate,
@@ -76,7 +80,7 @@ export async function createSupplierInvoice(data: CreateInvoiceDto) {
 export async function getSupplierInvoices(organizationId: string) {
   return prisma.supplierInvoice.findMany({
     where: {
-      purchase: { organizationId },
+      organizationId,
     },
     include: {
       purchase: true,
@@ -90,26 +94,33 @@ export async function getSupplierInvoices(organizationId: string) {
  * Updates an existing invoice (e.g., partial payment, status change).
  */
 export async function updateSupplierInvoice(
+  organizationId: string,
   invoiceId: string,
   data: UpdateInvoiceDto,
 ) {
-  const currentInvoice = await prisma.supplierInvoice.findUnique({
-    where: { id: invoiceId },
+  // SECURITY (Sentinel): Scoped lookup using findFirst with organizationId to prevent IDOR
+  const currentInvoice = await prisma.supplierInvoice.findFirst({
+    where: {
+      id: invoiceId,
+      organizationId,
+    },
   });
 
   if (!currentInvoice) throw new Error("Invoice not found");
 
+  // SECURITY (Sentinel): Whitelist input fields instead of object spreading to prevent mass assignment
   const updatedInvoice = await prisma.supplierInvoice.update({
     where: { id: invoiceId },
     data: {
-      ...data,
+      issueDate: data.issueDate,
+      dueDate: data.dueDate,
+      status: data.status,
       notes: data.notes ?? undefined,
       invoiceUrl: data.invoiceUrl ?? undefined,
       amountPaid:
         data.amountPaid !== undefined
           ? new Prisma.Decimal(data.amountPaid)
           : undefined,
-      totalAmount: undefined, // ensure it is not overwritten if not in data
     },
   });
 
@@ -119,7 +130,20 @@ export async function updateSupplierInvoice(
 /**
  * Deletes an invoice.
  */
-export async function deleteSupplierInvoice(invoiceId: string) {
+export async function deleteSupplierInvoice(
+  organizationId: string,
+  invoiceId: string,
+) {
+  // SECURITY (Sentinel): Scoped lookup using findFirst with organizationId to prevent cross-tenant IDOR
+  const invoice = await prisma.supplierInvoice.findFirst({
+    where: {
+      id: invoiceId,
+      organizationId,
+    },
+  });
+
+  if (!invoice) throw new Error("Invoice not found");
+
   return prisma.supplierInvoice.delete({
     where: { id: invoiceId },
   });
