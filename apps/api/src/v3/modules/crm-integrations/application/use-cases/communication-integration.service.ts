@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Injectable, Logger, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { SlackProvider } from "../../infrastructure/providers/slack.provider";
 import { CommunicationProvider } from "../../domain/communication-provider.interface";
@@ -19,6 +19,53 @@ export class CommunicationIntegrationService {
     const provider = this.providers.get(slug);
     if (!provider) throw new NotFoundException(`Provider ${slug} not found`);
     return provider;
+  }
+
+  async handleOAuthCallback(
+    providerSlug: string,
+    organizationId: string,
+    code: string,
+  ) {
+    if (!organizationId || !code) {
+      throw new BadRequestException("Missing mandatory organizationId or authorization code");
+    }
+
+    const provider = this.getProvider(providerSlug);
+    const { credentials, settings } = await provider.handleCallback(code);
+
+    const definition = await this.prisma.client.integrationDefinition.findUnique({
+      where: { slug: providerSlug },
+    });
+
+    if (!definition) {
+      throw new NotFoundException(`Integration definition for ${providerSlug} not found`);
+    }
+
+    // SECURITY (Sentinel): Securely persist OAuth credentials tied to the verified organization state
+    return this.prisma.client.organizationIntegration.upsert({
+      where: {
+        organizationId_integrationDefinitionId: {
+          organizationId,
+          integrationDefinitionId: definition.id,
+        },
+      },
+      create: {
+        organizationId,
+        integrationDefinitionId: definition.id,
+        isActive: true,
+        credentials,
+        settings,
+        syncStatus: "SYNCED",
+        lastSyncAt: new Date(),
+      },
+      update: {
+        isActive: true,
+        credentials,
+        settings,
+        syncStatus: "SYNCED",
+        lastSyncAt: new Date(),
+      },
+    });
   }
 
   async handleWebhook(providerSlug: string, payload: any, query: any) {
