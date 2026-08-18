@@ -493,8 +493,9 @@ export async function processSale(
 
           const executeKRACompliance = async (isBlocking: boolean) => {
             try {
+              // SECURITY (Sentinel): Scope customer lookup by organizationId using findFirst
               const customer = customerId
-                ? await db.customer.findUnique({ where: { id: customerId } })
+                ? await db.customer.findFirst({ where: { id: customerId, organizationId } })
                 : null;
               const kraPin = customer?.taxId || "A000000000X";
 
@@ -615,8 +616,9 @@ export async function processSale(
       const capturedTaxTotal = (result as any).taxTotal;
       const postProcessTax = async () => {
         try {
+          // SECURITY (Sentinel): Scope customer lookup by organizationId using findFirst
           const customer = customerId
-            ? await db.customer.findUnique({ where: { id: customerId } })
+            ? await db.customer.findFirst({ where: { id: customerId, organizationId } })
             : null;
           const kraPin = customer?.taxId || "A000000000X";
 
@@ -663,9 +665,10 @@ export async function processSale(
       );
     }
 
+    // SECURITY (Sentinel): Use findFirst with organizationId filter to ensure strict tenant isolation
     // Re-fetch for clean relations (fulfillments, etc.)
-    const completeTransaction = await db.transaction.findUnique({
-      where: { id: result.id },
+    const completeTransaction = await db.transaction.findFirst({
+      where: { id: result.id, organizationId },
       include: {
         items: {
           include: {
