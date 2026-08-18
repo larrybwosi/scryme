@@ -17,7 +17,13 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
     organizationId: mockOrganizationId,
   };
 
+  const mockFindUnique = vi.fn();
+  const mockFindFirst = vi.fn();
+  const mockUpdateMany = vi.fn();
+
   beforeEach(async () => {
+    vi.clearAllMocks();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WindmillCallbackUseCase,
@@ -26,7 +32,11 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
           useValue: {
             client: {
               windmillConfiguration: {
-                findUnique: vi.fn(),
+                findUnique: mockFindUnique,
+              },
+              windmillExecution: {
+                findFirst: mockFindFirst,
+                updateMany: mockUpdateMany,
               },
             },
           },
@@ -91,5 +101,92 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
     await expect(useCase.verifySignature(mockOrganizationId, 'any', mockPayload)).rejects.toThrow(
       UnauthorizedException,
     );
+  });
+
+  describe('handleGeneralCallback IDOR protection', () => {
+    it('should query windmillExecution with organizationId and updateMany with organizationId', async () => {
+      mockFindFirst.mockResolvedValue({
+        id: 'exec_123',
+        jobId: 'job_123',
+        organizationId: mockOrganizationId,
+      });
+      mockUpdateMany.mockResolvedValue({ count: 1 });
+
+      const payload = {
+        jobId: 'job_123',
+        organizationId: mockOrganizationId,
+        status: 'COMPLETED',
+        completedAt: new Date().toISOString(),
+      } as any;
+
+      const result = await useCase.handleGeneralCallback(payload);
+
+      expect(result).toEqual({ success: true });
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          jobId: 'job_123',
+          organizationId: mockOrganizationId,
+        },
+      });
+      expect(mockUpdateMany).toHaveBeenCalledWith({
+        where: {
+          jobId: 'job_123',
+          organizationId: mockOrganizationId,
+        },
+        data: expect.objectContaining({
+          status: 'COMPLETED',
+        }),
+      });
+    });
+
+    it('should return not found if execution does not belong to organizationId', async () => {
+      mockFindFirst.mockResolvedValue(null);
+
+      const payload = {
+        jobId: 'job_other_org',
+        organizationId: mockOrganizationId,
+        status: 'COMPLETED',
+        completedAt: new Date().toISOString(),
+      } as any;
+
+      const result = await useCase.handleGeneralCallback(payload);
+
+      expect(result).toEqual({ success: false, message: 'Execution not found' });
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          jobId: 'job_other_org',
+          organizationId: mockOrganizationId,
+        },
+      });
+      expect(mockUpdateMany).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('handleOutcomeCallback IDOR protection', () => {
+    it('should updateMany with organizationId constraint', async () => {
+      mockUpdateMany.mockResolvedValue({ count: 1 });
+
+      const payload = {
+        jobId: 'job_123',
+        organizationId: mockOrganizationId,
+        status: 'COMPLETED',
+        completedAt: new Date().toISOString(),
+        summary: 'All good',
+      } as any;
+
+      const result = await useCase.handleOutcomeCallback(payload);
+
+      expect(result).toEqual({ success: true });
+      expect(mockUpdateMany).toHaveBeenCalledWith({
+        where: {
+          jobId: 'job_123',
+          organizationId: mockOrganizationId,
+        },
+        data: expect.objectContaining({
+          status: 'COMPLETED',
+          summary: 'All good',
+        }),
+      });
+    });
   });
 });
