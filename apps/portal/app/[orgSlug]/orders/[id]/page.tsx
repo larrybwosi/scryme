@@ -64,7 +64,7 @@ export default async function OrderDetailPage({
     <div className="p-6 space-y-6 max-w-5xl mx-auto text-primary-foreground">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link href={`/${orgSlug}/orders`}>
+          <Link href={`/${orgSlug}/orders`} aria-label="Back to orders" title="Back to orders">
             <ArrowLeft className="size-4" />
           </Link>
         </Button>
