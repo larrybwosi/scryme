@@ -15,6 +15,7 @@ import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { CurrentUser } from "@/v3/common/decorators/current-user.decorator";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
+import { env } from "@repo/env";
 
 @ApiTags("V3 CRM")
 @ApiBearerAuth()
@@ -48,13 +49,12 @@ export class CommunicationController {
     @Query("state") organizationId: string,
     @Res() res: any,
   ) {
-    const result = await this.service
-      .getProvider(provider)
-      .handleCallback(code);
+    await this.service.handleOAuthCallback(provider, organizationId, code);
 
-    // Redirect back to CRM UI
+    // SECURITY (Sentinel): Redirect back to configured application URL
+    const baseUrl = env.NEXT_PUBLIC_CRM_URL || env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     res.redirect(
-      `https://app.example.com/crm/integrations/${provider}?success=true`,
+      `${baseUrl}/crm/integrations/${provider}?success=true`,
     );
   }
 
