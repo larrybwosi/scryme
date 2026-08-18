@@ -310,6 +310,7 @@ export class ProcessSaleUseCase {
     const stockUpdates: any[] = [];
     const movements: any[] = [];
     const consumedMaterialsToCreate: any[] = [];
+    const materialQtyMap = new Map<string, number>();
 
     // ⚡ Bolt Optimization: Batch pre-fetch all matching service bookings to eliminate N+1 database queries.
     // This reduces the query overhead from O(N) sequential requests down to a single constant-time O(1) query.
@@ -354,21 +355,12 @@ export class ProcessSaleUseCase {
           }),
         );
 
+        // ⚡ Bolt Optimization: Consolidate material quantity decrements by variantId in-memory
+        // to prevent row-lock contention and transactional deadlocks on duplicate variants.
         const materials = booking.service.materials || [];
         for (const mat of materials) {
           const qty = Number(mat.quantity) * si.quantity;
-
-          stockUpdates.push(
-            tx.productVariantStock.update({
-              where: {
-                variantId_locationId: { variantId: mat.variantId, locationId: locId },
-              },
-              data: {
-                currentStock: { decrement: qty },
-                availableStock: { decrement: qty },
-              },
-            })
-          );
+          materialQtyMap.set(mat.variantId, (materialQtyMap.get(mat.variantId) || 0) + qty);
 
           movements.push({
             organizationId: orgId,
@@ -393,18 +385,7 @@ export class ProcessSaleUseCase {
         const materials = service.materials || [];
         for (const mat of materials) {
           const qty = Number(mat.quantity) * si.quantity;
-
-          stockUpdates.push(
-            tx.productVariantStock.update({
-              where: {
-                variantId_locationId: { variantId: mat.variantId, locationId: locId },
-              },
-              data: {
-                currentStock: { decrement: qty },
-                availableStock: { decrement: qty },
-              },
-            })
-          );
+          materialQtyMap.set(mat.variantId, (materialQtyMap.get(mat.variantId) || 0) + qty);
 
           movements.push({
             organizationId: orgId,
@@ -419,6 +400,20 @@ export class ProcessSaleUseCase {
           });
         }
       }
+    }
+
+    for (const [variantId, totalQty] of materialQtyMap.entries()) {
+      stockUpdates.push(
+        tx.productVariantStock.update({
+          where: {
+            variantId_locationId: { variantId, locationId: locId },
+          },
+          data: {
+            currentStock: { decrement: totalQty },
+            availableStock: { decrement: totalQty },
+          },
+        })
+      );
     }
 
     if (bookingUpdates.length > 0 || stockUpdates.length > 0) {
