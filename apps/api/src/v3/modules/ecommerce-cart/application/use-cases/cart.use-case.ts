@@ -50,42 +50,82 @@ export class CartUseCase {
           });
         } else {
           // Both carts exist and have items. Merge guest cart items into customer cart
+          // ⚡ Bolt Optimization: Pre-index existing customer cart items into an in-memory Map
+          // and consolidate guest cart items by key in-memory before database execution.
+          // This eliminates O(N * M) nested linear search scans, prevents duplicate database writes/creates
+          // for identical items, and allows running all database operations concurrently via Promise.all.
+          // Execution time collapses from O(N) sequential DB roundtrips down to a flat O(1) concurrent roundtrip.
+          const customerItemMap = new Map<string, typeof customerCart.items[0]>();
+          for (const item of customerCart.items) {
+            if (item.productId) {
+              customerItemMap.set(`product:${item.productId}:${item.variantId || ""}`, item);
+            } else if (item.serviceId) {
+              customerItemMap.set(`service:${item.serviceId}`, item);
+            }
+          }
+
+          // Consolidate guest items in-memory first to avoid concurrent DB update race conditions or duplicate creates
+          const consolidatedGuestItems = new Map<
+            string,
+            {
+              guestItem: typeof guestCart.items[0];
+              quantity: number;
+            }
+          >();
+
           for (const guestItem of guestCart.items) {
-            let existingCustomerItem = null;
+            let key = "";
             if (guestItem.productId) {
-              existingCustomerItem = customerCart.items.find(
-                (item) =>
-                  item.productId === guestItem.productId &&
-                  item.variantId === guestItem.variantId,
-              );
+              key = `product:${guestItem.productId}:${guestItem.variantId || ""}`;
             } else if (guestItem.serviceId) {
-              existingCustomerItem = customerCart.items.find(
-                (item) => item.serviceId === guestItem.serviceId,
-              );
+              key = `service:${guestItem.serviceId}`;
             }
 
-            if (existingCustomerItem) {
-              // Update quantity
-              await this.prisma.client.cartItem.update({
-                where: { id: existingCustomerItem.id },
-                data: {
-                  quantity: guestItem.serviceId ? 1 : existingCustomerItem.quantity + guestItem.quantity,
-                },
-              });
+            if (!key) continue;
+
+            const existing = consolidatedGuestItems.get(key);
+            if (existing) {
+              existing.quantity += guestItem.quantity;
             } else {
-              // Create new cart item in customer cart
-              await this.prisma.client.cartItem.create({
-                data: {
-                  cartId: customerCart.id,
-                  productId: guestItem.productId,
-                  variantId: guestItem.variantId,
-                  serviceId: guestItem.serviceId,
-                  bookingDetails: guestItem.bookingDetails || undefined,
-                  quantity: guestItem.quantity,
-                },
+              consolidatedGuestItems.set(key, {
+                guestItem,
+                quantity: guestItem.quantity,
               });
             }
           }
+
+          const cartItemOperations: Promise<any>[] = [];
+
+          for (const [key, { guestItem, quantity }] of consolidatedGuestItems.entries()) {
+            const existingCustomerItem = customerItemMap.get(key);
+
+            if (existingCustomerItem) {
+              const newQuantity = guestItem.serviceId ? 1 : existingCustomerItem.quantity + quantity;
+              cartItemOperations.push(
+                this.prisma.client.cartItem.update({
+                  where: { id: existingCustomerItem.id },
+                  data: {
+                    quantity: newQuantity,
+                  },
+                }),
+              );
+            } else {
+              cartItemOperations.push(
+                this.prisma.client.cartItem.create({
+                  data: {
+                    cartId: customerCart.id,
+                    productId: guestItem.productId,
+                    variantId: guestItem.variantId,
+                    serviceId: guestItem.serviceId,
+                    bookingDetails: guestItem.bookingDetails || undefined,
+                    quantity,
+                  },
+                }),
+              );
+            }
+          }
+
+          await Promise.all(cartItemOperations);
 
           // Delete the guest cart completely
           await this.prisma.client.cart.delete({
