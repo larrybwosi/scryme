@@ -154,6 +154,34 @@ export class PhysicalReconciliationUseCase {
         throw new BadRequestException("Reconciliation is not pending review");
       }
 
+      // OPTIMIZATION (Bolt ⚡): Pre-fetch all active stockBatch records for variants with negative variance
+      // in a single query before entering the loop. Indexing them by variantId in an in-memory Map
+      // eliminates N+1 database roundtrips during FIFO shrinkage processing.
+      const negativeVarianceVariantIds = reconciliation.items
+        .filter((item) => Number(item.varianceQuantity) < 0)
+        .map((item) => item.productVariantId);
+
+      const allBatches =
+        negativeVarianceVariantIds.length > 0
+          ? await tx.stockBatch.findMany({
+              where: {
+                organizationId,
+                locationId: reconciliation.locationId,
+                variantId: { in: negativeVarianceVariantIds },
+                currentQuantity: { gt: 0 },
+              },
+              orderBy: { receivedDate: "asc" },
+            })
+          : [];
+
+      const batchesByVariantMap = new Map<string, typeof allBatches>();
+      for (const batch of allBatches) {
+        if (!batchesByVariantMap.has(batch.variantId)) {
+          batchesByVariantMap.set(batch.variantId, []);
+        }
+        batchesByVariantMap.get(batch.variantId)!.push(batch);
+      }
+
       for (const item of reconciliation.items) {
         if (Number(item.varianceQuantity) !== 0) {
           const adjustment = await tx.stockAdjustment.create({
@@ -188,26 +216,24 @@ export class PhysicalReconciliationUseCase {
           let remainingVariance = Number(item.varianceQuantity);
 
           if (remainingVariance < 0) {
-            // Shrinkage: Deduct from existing batches (FIFO)
-            const batches = await tx.stockBatch.findMany({
-              where: {
-                variantId: item.productVariantId,
-                locationId: reconciliation.locationId,
-                currentQuantity: { gt: 0 },
-              },
-              orderBy: { receivedDate: "asc" },
-            });
+            // Shrinkage: Deduct from existing batches (FIFO) using pre-fetched batches map
+            const batches =
+              batchesByVariantMap.get(item.productVariantId) || [];
 
             for (const batch of batches) {
               if (remainingVariance >= 0) break;
+              const currentQty = Number(batch.currentQuantity);
+              if (currentQty <= 0) continue;
+
               const deduction = Math.min(
-                Number(batch.currentQuantity),
+                currentQty,
                 Math.abs(remainingVariance),
               );
               await tx.stockBatch.update({
                 where: { id: batch.id },
                 data: { currentQuantity: { decrement: deduction } },
               });
+              batch.currentQuantity = (currentQty - deduction) as any;
               remainingVariance += deduction;
             }
           } else if (remainingVariance > 0) {
@@ -248,9 +274,14 @@ export class PhysicalReconciliationUseCase {
             notes: `Reconciliation adjustment`,
           });
         }
+      }
 
-        await tx.reconciliationItem.update({
-          where: { id: item.id },
+      // OPTIMIZATION (Bolt ⚡): Consolidate reconciliation item status updates into a single
+      // updateMany query to eliminate N sequential update roundtrips inside the loop.
+      const itemIds = reconciliation.items.map((item) => item.id);
+      if (itemIds.length > 0) {
+        await tx.reconciliationItem.updateMany({
+          where: { id: { in: itemIds } },
           data: { adjustmentCreated: true, resolutionType: "ADJUST" },
         });
       }

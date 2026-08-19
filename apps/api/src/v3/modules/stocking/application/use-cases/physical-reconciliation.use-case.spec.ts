@@ -34,6 +34,7 @@ describe("PhysicalReconciliationUseCase", () => {
       },
       reconciliationItem: {
         update: vi.fn(),
+        updateMany: vi.fn(),
       },
     };
 
@@ -206,7 +207,7 @@ describe("PhysicalReconciliationUseCase", () => {
       mockTx.stockAdjustment.create.mockResolvedValue({ id: "adj-1" });
       mockTx.productVariantStock.update.mockResolvedValue({});
       mockTx.stockBatch.create.mockResolvedValue({});
-      mockTx.reconciliationItem.update.mockResolvedValue({});
+      mockTx.reconciliationItem.updateMany.mockResolvedValue({ count: 1 });
       mockTx.stockReconciliation.update.mockResolvedValue({
         id: "rec-123",
         status: ReconciliationStatus.COMPLETED,
