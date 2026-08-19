@@ -101,7 +101,13 @@ export default function PrinterSettings() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon" onClick={() => handleTest('receipt')}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Test Receipt printer"
+                  title="Test Receipt printer"
+                  onClick={() => handleTest('receipt')}
+                >
                   <Printer className="h-4 w-4" />
                 </Button>
               </div>
@@ -129,7 +135,13 @@ export default function PrinterSettings() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon" onClick={() => handleTest('bill')}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Test Bill/Cheque printer"
+                  title="Test Bill/Cheque printer"
+                  onClick={() => handleTest('bill')}
+                >
                   <Printer className="h-4 w-4" />
                 </Button>
               </div>
@@ -156,7 +168,13 @@ export default function PrinterSettings() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon" onClick={() => handleTest('invoice')}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Test Invoice printer"
+                  title="Test Invoice printer"
+                  onClick={() => handleTest('invoice')}
+                >
                   <Printer className="h-4 w-4" />
                 </Button>
               </div>
@@ -181,7 +199,13 @@ export default function PrinterSettings() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon" onClick={() => handleTest('kitchen')}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Test Kitchen printer"
+                  title="Test Kitchen printer"
+                  onClick={() => handleTest('kitchen')}
+                >
                   <Printer className="h-4 w-4" />
                 </Button>
               </div>
@@ -206,7 +230,13 @@ export default function PrinterSettings() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon" onClick={() => handleTest('bar')}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Test Bar printer"
+                  title="Test Bar printer"
+                  onClick={() => handleTest('bar')}
+                >
                   <Printer className="h-4 w-4" />
                 </Button>
               </div>
@@ -232,7 +262,13 @@ export default function PrinterSettings() {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button variant="outline" size="icon" onClick={() => handleTest('waybill')}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  aria-label="Test Waybill printer"
+                  title="Test Waybill printer"
+                  onClick={() => handleTest('waybill')}
+                >
                   <Printer className="h-4 w-4" />
                 </Button>
               </div>
