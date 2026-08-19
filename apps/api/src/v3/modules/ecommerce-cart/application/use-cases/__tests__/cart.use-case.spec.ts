@@ -288,5 +288,94 @@ describe("CartUseCase", () => {
         where: { id: "cart-guest" },
       });
     });
+
+    it("should consolidate duplicate guest cart items before executing database updates", async () => {
+      const orgId = "org-1";
+      const customerId = "cust-1";
+      const sessionId = "sess-1";
+
+      const mockGuestCart = {
+        id: "cart-guest",
+        organizationId: orgId,
+        sessionId,
+        items: [
+          {
+            id: "item-guest-1",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 2,
+            bookingDetails: null,
+          },
+          {
+            id: "item-guest-2",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 3,
+            bookingDetails: null,
+          },
+          {
+            id: "item-guest-3",
+            productId: "prod-new",
+            variantId: "var-new",
+            serviceId: null,
+            quantity: 1,
+            bookingDetails: null,
+          },
+          {
+            id: "item-guest-4",
+            productId: "prod-new",
+            variantId: "var-new",
+            serviceId: null,
+            quantity: 4,
+            bookingDetails: null,
+          },
+        ],
+      };
+
+      const mockCustomerCart = {
+        id: "cart-cust",
+        organizationId: orgId,
+        customerId,
+        items: [
+          {
+            id: "item-cust-1",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 5,
+            bookingDetails: null,
+          },
+        ],
+      };
+
+      vi.mocked(prisma.client.cart.findFirst)
+        .mockResolvedValueOnce(mockGuestCart as any)
+        .mockResolvedValueOnce(mockCustomerCart as any)
+        .mockResolvedValueOnce(mockCustomerCart as any);
+
+      await useCase.getCart(orgId, customerId, sessionId);
+
+      // Verify single consolidated update call for prod-1/var-1 (5 existing + 2 + 3 guest = 10)
+      expect(prisma.client.cartItem.update).toHaveBeenCalledTimes(1);
+      expect(prisma.client.cartItem.update).toHaveBeenCalledWith({
+        where: { id: "item-cust-1" },
+        data: { quantity: 10 },
+      });
+
+      // Verify single consolidated create call for prod-new/var-new (1 + 4 guest = 5)
+      expect(prisma.client.cartItem.create).toHaveBeenCalledTimes(1);
+      expect(prisma.client.cartItem.create).toHaveBeenCalledWith({
+        data: {
+          cartId: "cart-cust",
+          productId: "prod-new",
+          variantId: "var-new",
+          serviceId: null,
+          bookingDetails: undefined,
+          quantity: 5,
+        },
+      });
+    });
   });
 });
