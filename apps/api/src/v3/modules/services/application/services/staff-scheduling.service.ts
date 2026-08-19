@@ -10,6 +10,14 @@ export class StaffSchedulingService {
     memberId: string,
     data: { dayOfWeek: number; startTime: string; endTime: string },
   ) {
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId: orgId },
+    });
+
+    if (!member) {
+      throw new NotFoundException("Member not found");
+    }
+
     return this.prisma.client.staffShift.create({
       data: {
         ...data,
@@ -66,9 +74,18 @@ export class StaffSchedulingService {
   }
 
   async addBreak(
+    orgId: string,
     shiftId: string,
     data: { startTime: string; endTime: string; description?: string },
   ) {
+    const shift = await this.prisma.client.staffShift.findFirst({
+      where: { id: shiftId, organizationId: orgId },
+    });
+
+    if (!shift) {
+      throw new NotFoundException("Shift not found");
+    }
+
     return this.prisma.client.staffBreak.create({
       data: {
         ...data,
