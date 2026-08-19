@@ -286,3 +286,8 @@
 **Vulnerability:** The `getConfigOrThrow` helper in the Strapi connection use-case retrieved tenant connection configuration using only the raw `connectionId` without verifying that the connection belonged to the calling organization.
 **Learning:** Shared service-level lookups and helper functions are high-risk IDOR entry points if they fetch nested configuration entities relying solely on the entity ID. If any upstream controller or use case doesn't pre-validate the connection ID, any tenant can query or sync with arbitrary third-party stores.
 **Prevention:** Always make the tenant identifier parameter (e.g. `organizationId`) strictly mandatory in internal configuration lookup/helper functions. Before performing database queries on secondary config tables, explicitly run a scoped check (`findFirst` or `getConnectionOrThrow`) to enforce strict multi-tenant isolation.
+
+## 2026-08-14 - IDOR Vulnerability in Staff Shift Break Creation and Shift Assignment
+**Vulnerability:** `StaffSchedulingService.addBreak` accepted `shiftId` directly without validating whether the shift belonged to the calling organization. Additionally, `createShift` accepted `memberId` without verifying that the member belonged to the tenant.
+**Learning:** Endpoints that accept secondary entity identifiers (like `shiftId` or `memberId`) must explicitly validate tenant ownership using `organizationId` scoping before performing mutations, even if controller guards authenticate the tenant context.
+**Prevention:** Always perform a scoped lookup (`findFirst` with `{ id, organizationId }`) on foreign key parameters before creating or linking sub-entities.
