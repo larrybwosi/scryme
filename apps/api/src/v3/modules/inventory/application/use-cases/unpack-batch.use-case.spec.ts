@@ -13,6 +13,7 @@ vi.mock("src/prisma/prisma.service", () => {
           async (cb) =>
             await cb({
               stockBatch: {
+                findFirst: vi.fn(),
                 findUnique: vi.fn(),
                 update: vi.fn(),
                 create: vi.fn(),
@@ -39,6 +40,7 @@ describe("UnpackBatchUseCase", () => {
   beforeEach(() => {
     mockTx = {
       stockBatch: {
+        findFirst: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
         create: vi.fn(),
@@ -82,7 +84,7 @@ describe("UnpackBatchUseCase", () => {
   };
 
   it("should unpack a batch successfully", async () => {
-    mockTx.stockBatch.findUnique.mockResolvedValue(mockBulkBatch);
+    mockTx.stockBatch.findFirst.mockResolvedValue(mockBulkBatch);
     mockTx.stockBatch.create.mockResolvedValue({ id: "base-batch-1" });
 
     const dto: UnpackBatchDto = {
@@ -135,7 +137,7 @@ describe("UnpackBatchUseCase", () => {
   });
 
   it("should handle damages during unpacking", async () => {
-    mockTx.stockBatch.findUnique.mockResolvedValue(mockBulkBatch);
+    mockTx.stockBatch.findFirst.mockResolvedValue(mockBulkBatch);
     mockTx.stockBatch.create.mockImplementation(async (params) => {
       if (params.data.batchNumber.startsWith("DAMAGED"))
         return { id: "damaged-batch" };
@@ -194,7 +196,7 @@ describe("UnpackBatchUseCase", () => {
   });
 
   it("should throw NotFoundException if batch not found", async () => {
-    mockTx.stockBatch.findUnique.mockResolvedValue(null);
+    mockTx.stockBatch.findFirst.mockResolvedValue(null);
 
     await expect(
       useCase.execute("org-1", "member-1", {
@@ -206,7 +208,7 @@ describe("UnpackBatchUseCase", () => {
   });
 
   it("should throw BadRequestException if insufficient quantity", async () => {
-    mockTx.stockBatch.findUnique.mockResolvedValue(mockBulkBatch);
+    mockTx.stockBatch.findFirst.mockResolvedValue(mockBulkBatch);
 
     await expect(
       useCase.execute("org-1", "member-1", {
