@@ -73,7 +73,7 @@ export class RequestB2BQuoteUseCase {
     }
 
     // Resolve locationId using explicitly provided location, customer/business default, or organization default location
-    let locationId =
+    const locationId =
       dto.locationId ||
       customer?.defaultLocationId ||
       businessAccount?.defaultLocationId ||
