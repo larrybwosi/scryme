@@ -93,3 +93,76 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
     );
   });
 });
+
+describe('WindmillCallbackUseCase - Tenant Isolation', () => {
+  let useCase: WindmillCallbackUseCase;
+  let mockPrisma: any;
+
+  const mockOrgId = 'org_123';
+  const mockJobId = 'job_999';
+
+  beforeEach(async () => {
+    mockPrisma = {
+      client: {
+        windmillExecution: {
+          findFirst: vi.fn(),
+          updateMany: vi.fn(),
+        },
+      },
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        WindmillCallbackUseCase,
+        {
+          provide: PrismaService,
+          useValue: mockPrisma,
+        },
+      ],
+    }).compile();
+
+    useCase = module.get<WindmillCallbackUseCase>(WindmillCallbackUseCase);
+  });
+
+  it('should scope handleGeneralCallback to organizationId', async () => {
+    mockPrisma.client.windmillExecution.findFirst.mockResolvedValue({
+      id: 'exec_1',
+      jobId: mockJobId,
+      organizationId: mockOrgId,
+    });
+    mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await useCase.handleGeneralCallback({
+      jobId: mockJobId,
+      organizationId: mockOrgId,
+      status: 'COMPLETED',
+      completedAt: new Date().toISOString(),
+    } as any);
+
+    expect(result).toEqual({ success: true });
+    expect(mockPrisma.client.windmillExecution.findFirst).toHaveBeenCalledWith({
+      where: { jobId: mockJobId, organizationId: mockOrgId },
+    });
+    expect(mockPrisma.client.windmillExecution.updateMany).toHaveBeenCalledWith({
+      where: { jobId: mockJobId, organizationId: mockOrgId },
+      data: expect.objectContaining({ status: 'COMPLETED' }),
+    });
+  });
+
+  it('should return Execution not found if execution belongs to a different organization', async () => {
+    mockPrisma.client.windmillExecution.findFirst.mockResolvedValue(null);
+
+    const result = await useCase.handleGeneralCallback({
+      jobId: mockJobId,
+      organizationId: 'other_org',
+      status: 'COMPLETED',
+      completedAt: new Date().toISOString(),
+    } as any);
+
+    expect(result).toEqual({ success: false, message: 'Execution not found' });
+    expect(mockPrisma.client.windmillExecution.findFirst).toHaveBeenCalledWith({
+      where: { jobId: mockJobId, organizationId: 'other_org' },
+    });
+    expect(mockPrisma.client.windmillExecution.updateMany).not.toHaveBeenCalled();
+  });
+});
