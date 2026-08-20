@@ -28,7 +28,9 @@ export class UnpackBatchUseCase {
   async execute(organizationId: string, memberId: string, dto: UnpackBatchDto) {
     return this.prisma.client.$transaction(async (tx) => {
       // 1. Find the bulk batch
-      const bulkBatch = await tx.stockBatch.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockBatch lacks a composite unique index on [id, organizationId].
+      const bulkBatch = await tx.stockBatch.findFirst({
         where: { id: dto.batchId, organizationId },
         include: {
           variant: { include: { product: true } },
