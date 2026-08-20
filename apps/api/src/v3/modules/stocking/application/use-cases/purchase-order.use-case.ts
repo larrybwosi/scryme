@@ -327,22 +327,34 @@ export class PurchaseOrderUseCase {
         },
       });
 
-      // Trigger price recalculation for all items received in this PO
+      // ⚡ Bolt Optimization: Consolidate unique variant cost changes in-memory and execute price recalculations concurrently via Promise.all.
+      // Deduplicating by variantId prevents redundant price recalculation calls, and parallel execution collapses O(N) sequential database roundtrips.
+      const uniqueVariantCostChanges = new Map<string, number>();
       for (const itemDto of dto.items) {
         const purchaseItem = purchaseItemsMap.get(itemDto.purchaseItemId);
         if (purchaseItem) {
-          await this.pricingManagementService.handleCostChange(
-            {
-              organizationId,
-              variantId: purchaseItem.variantId,
-              source: "PURCHASE_ORDER",
-              sourceId: purchaseId,
-              newCost: Number(purchaseItem.unitCost),
-            },
-            tx,
+          uniqueVariantCostChanges.set(
+            purchaseItem.variantId,
+            Number(purchaseItem.unitCost),
           );
         }
       }
+
+      await Promise.all(
+        Array.from(uniqueVariantCostChanges.entries()).map(
+          ([variantId, newCost]) =>
+            this.pricingManagementService.handleCostChange(
+              {
+                organizationId,
+                variantId,
+                source: "PURCHASE_ORDER",
+                sourceId: purchaseId,
+                newCost,
+              },
+              tx,
+            ),
+        ),
+      );
 
       return receipt;
     });
