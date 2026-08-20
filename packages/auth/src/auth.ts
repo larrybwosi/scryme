@@ -42,7 +42,7 @@ interface MembershipClaim {
   role: MemberRole | undefined;
 }
 
-export const auth: ReturnType<typeof betterAuth> = betterAuth({
+export const auth = betterAuth({
   ...authOptions,
   databaseHooks: {
     user: {

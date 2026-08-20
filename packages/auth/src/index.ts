@@ -1,10 +1,11 @@
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { jwt, bearer } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
+import type { BetterAuthOptions } from "better-auth";
 import { db, UserRole } from "@repo/db";
 import { env } from "@repo/env";
 
-export const authOptions = {
+export const authOptions: BetterAuthOptions = {
   database: prismaAdapter(db, {
     provider: "postgresql",
   }),
