@@ -32,9 +32,12 @@
   },
   "dependencies": {
     "@better-auth/oauth-provider": "latest",
+    "@better-auth/passkey": "^1.7.1",
     "@repo/db": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/shared": "workspace:*",
+    "@simplewebauthn/browser": "^13.3.0",
+    "@simplewebauthn/server": "^13.3.2",
     "better-auth": "^1.6.23",
     "zod": "^4.4.3"
   },
