@@ -245,3 +245,8 @@
 **Vulnerability:** Windmill execution status callbacks in `WindmillCallbackUseCase` queried and updated `windmillExecution` records using `jobId` only, ignoring `payload.organizationId`.
 **Learning:** Even when webhook payload signatures are verified against an organization's secret, callback handlers that update database entities must still scope database lookups (`findFirst`) and updates (`updateMany`) using the payload's `organizationId` to prevent cross-tenant record manipulation if a caller provides a foreign `jobId`.
 **Prevention:** Always scope database lookups and mutation filters on execution and event tracking models with `organizationId`, using `findFirst` and `updateMany` instead of `findUnique` when composite multi-tenant indices are absent.
+
+## 2026-08-21 - IDOR / BOLA Prevention in Cart Item Operations
+**Vulnerability:** `CartUseCase.addToCart` allowed users to add products, product variants, or services from other organizations into their cart because item identifiers were not validated against the authenticated `organizationId`.
+**Learning:** E-commerce cart operations often assume that since the cart itself belongs to the active tenant, all items added via `productId`, `variantId`, or `serviceId` are safe. However, unvalidated foreign keys passed in request payloads can create unauthorized cross-tenant product associations.
+**Prevention:** Always perform explicit tenant-ownership checks (`findFirst` with `{ id, organizationId }` for products/services and `{ id, productId }` for variants) before creating or updating cart items.

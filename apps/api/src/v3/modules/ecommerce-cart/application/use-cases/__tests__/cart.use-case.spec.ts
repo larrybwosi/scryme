@@ -23,6 +23,15 @@ describe("CartUseCase", () => {
           delete: vi.fn(),
           deleteMany: vi.fn(),
         },
+        product: {
+          findFirst: vi.fn(),
+        },
+        productVariant: {
+          findFirst: vi.fn(),
+        },
+        service: {
+          findFirst: vi.fn(),
+        },
       },
     } as any;
 
@@ -47,6 +56,8 @@ describe("CartUseCase", () => {
       sessionId: "sess-1",
     };
 
+    vi.mocked(prisma.client.product.findFirst).mockResolvedValue({ id: "prod-1", organizationId: orgId } as any);
+    vi.mocked(prisma.client.productVariant.findFirst).mockResolvedValue({ id: "var-1", productId: "prod-1" } as any);
     vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
     vi.mocked(prisma.client.cartItem.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.client.cartItem.create).mockResolvedValue({
@@ -93,6 +104,7 @@ describe("CartUseCase", () => {
       sessionId: "sess-1",
     };
 
+    vi.mocked(prisma.client.service.findFirst).mockResolvedValue({ id: "srv-1", organizationId: orgId } as any);
     vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
     vi.mocked(prisma.client.cartItem.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.client.cartItem.create).mockResolvedValue({
@@ -134,6 +146,61 @@ describe("CartUseCase", () => {
     expect(result).toBeDefined();
     expect(prisma.client.cartItem.deleteMany).toHaveBeenCalledWith({
       where: { cartId: "cart-1" },
+    });
+  });
+
+  describe("Tenant Isolation and Security (IDOR Protection)", () => {
+    it("should throw NotFoundException if productId does not belong to the organization", async () => {
+      const orgId = "org-1";
+      const dto = {
+        productId: "foreign-prod",
+        quantity: 1,
+        sessionId: "sess-1",
+      };
+
+      vi.mocked(prisma.client.product.findFirst).mockResolvedValue(null);
+
+      await expect(useCase.addToCart(orgId, dto)).rejects.toThrow("Product not found");
+      expect(prisma.client.product.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-prod", organizationId: orgId },
+      });
+      expect(prisma.client.cartItem.create).not.toHaveBeenCalled();
+    });
+
+    it("should throw NotFoundException if variantId does not exist for the product", async () => {
+      const orgId = "org-1";
+      const dto = {
+        productId: "prod-1",
+        variantId: "foreign-var",
+        quantity: 1,
+        sessionId: "sess-1",
+      };
+
+      vi.mocked(prisma.client.product.findFirst).mockResolvedValue({ id: "prod-1", organizationId: orgId } as any);
+      vi.mocked(prisma.client.productVariant.findFirst).mockResolvedValue(null);
+
+      await expect(useCase.addToCart(orgId, dto)).rejects.toThrow("Product variant not found");
+      expect(prisma.client.productVariant.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-var", productId: "prod-1" },
+      });
+      expect(prisma.client.cartItem.create).not.toHaveBeenCalled();
+    });
+
+    it("should throw NotFoundException if serviceId does not belong to the organization", async () => {
+      const orgId = "org-1";
+      const dto = {
+        serviceId: "foreign-srv",
+        quantity: 1,
+        sessionId: "sess-1",
+      };
+
+      vi.mocked(prisma.client.service.findFirst).mockResolvedValue(null);
+
+      await expect(useCase.addToCart(orgId, dto)).rejects.toThrow("Service not found");
+      expect(prisma.client.service.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-srv", organizationId: orgId },
+      });
+      expect(prisma.client.cartItem.create).not.toHaveBeenCalled();
     });
   });
 
