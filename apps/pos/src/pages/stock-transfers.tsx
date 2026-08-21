@@ -229,8 +229,11 @@ function DocumentUploadZone({
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => onRemove(f.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400"
+                aria-label={`Remove attachment ${f.name}`}
+                title={`Remove attachment ${f.name}`}
+                className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-sm transition-opacity text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
