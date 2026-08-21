@@ -245,3 +245,8 @@
 **Vulnerability:** Windmill execution status callbacks in `WindmillCallbackUseCase` queried and updated `windmillExecution` records using `jobId` only, ignoring `payload.organizationId`.
 **Learning:** Even when webhook payload signatures are verified against an organization's secret, callback handlers that update database entities must still scope database lookups (`findFirst`) and updates (`updateMany`) using the payload's `organizationId` to prevent cross-tenant record manipulation if a caller provides a foreign `jobId`.
 **Prevention:** Always scope database lookups and mutation filters on execution and event tracking models with `organizationId`, using `findFirst` and `updateMany` instead of `findUnique` when composite multi-tenant indices are absent.
+
+## 2026-08-21 - Timing Attack and Client ID Enumeration in V3 API Client Authentication
+**Vulnerability:** `validateV3ApiSecret` returned `false` early when a queried `v3ApiClient` was missing or inactive, skipping `crypto.timingSafeEqual` and SHA-256 pre-hashing operations. Additionally, `V3AuthCoreService.validateClient` threw distinct exception messages (`Invalid client` vs `Invalid client secret`), exposing a client ID enumeration side-channel.
+**Learning:** Early returns when credentials or clients are missing create timing side-channels that allow attackers to probe valid client IDs. Furthermore, returning granular error messages that differentiate client existence from secret validity leaks client presence.
+**Prevention:** Always execute constant-time comparisons (`crypto.timingSafeEqual`) against a dummy hash when client lookup fails or client is inactive. Standardize error responses to a generic exception message (e.g. `Invalid client credentials`) to prevent enumeration attacks.

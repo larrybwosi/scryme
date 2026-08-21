@@ -4,10 +4,15 @@ import { V3AuthCoreService } from "../v3-auth-core.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
 import * as bcrypt from "bcryptjs";
+import { validateV3ApiSecret } from "@repo/shared/actions";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
 vi.mock("bcryptjs", () => ({
   compare: vi.fn(),
+}));
+
+vi.mock("@repo/shared/actions", () => ({
+  validateV3ApiSecret: vi.fn(),
 }));
 
 describe("V3AuthCoreService", () => {
@@ -130,6 +135,41 @@ describe("V3AuthCoreService", () => {
 
       // Even if member is inactive, we run bcrypt.compare with their pinHash to hide the existence/activity status difference
       expect(bcrypt.compare).toHaveBeenCalledWith("1234", "hash-inactive");
+    });
+  });
+
+  describe("validateClient", () => {
+    it("should throw unified UnauthorizedException('Invalid client credentials') when client is not found", async () => {
+      (prisma.client.v3ApiClient.findUnique as any).mockResolvedValue(null);
+      vi.mocked(validateV3ApiSecret).mockResolvedValue(false);
+
+      await expect(
+        service.validateClient("client-missing", "secret"),
+      ).rejects.toThrow(new UnauthorizedException("Invalid client credentials"));
+
+      expect(validateV3ApiSecret).toHaveBeenCalledWith("client-missing", "secret");
+    });
+
+    it("should throw unified UnauthorizedException('Invalid client credentials') when secret is invalid", async () => {
+      const mockClient = { id: "client-1", isActive: true };
+      (prisma.client.v3ApiClient.findUnique as any).mockResolvedValue(mockClient);
+      vi.mocked(validateV3ApiSecret).mockResolvedValue(false);
+
+      await expect(
+        service.validateClient("client-1", "wrong-secret"),
+      ).rejects.toThrow(new UnauthorizedException("Invalid client credentials"));
+
+      expect(validateV3ApiSecret).toHaveBeenCalledWith("client-1", "wrong-secret");
+    });
+
+    it("should return client when client exists, is active, and secret is valid", async () => {
+      const mockClient = { id: "client-1", isActive: true };
+      (prisma.client.v3ApiClient.findUnique as any).mockResolvedValue(mockClient);
+      vi.mocked(validateV3ApiSecret).mockResolvedValue(true);
+
+      const result = await service.validateClient("client-1", "valid-secret");
+      expect(result).toBe(mockClient);
+      expect(validateV3ApiSecret).toHaveBeenCalledWith("client-1", "valid-secret");
     });
   });
 });
