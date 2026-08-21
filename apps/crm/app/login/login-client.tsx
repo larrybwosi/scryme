@@ -13,6 +13,7 @@ import {
   Shield,
   ArrowLeft,
   CheckCircle,
+  KeyRound,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
@@ -196,6 +197,38 @@ const LoginContent = () => {
     resolver: zodResolver(forgotPasswordSchema),
   });
 
+  const handlePasskeyLogin = async () => {
+    setIsLoading(true);
+    setLoginStatus(null);
+    try {
+      const result = await authClient.signIn.passkey({
+        fetchOptions: {
+          onSuccess: () => {
+            if (callbackUrl) {
+              router.push(callbackUrl);
+            } else {
+              router.push("/customers");
+            }
+          },
+          onError: (ctx: { error?: { message?: string } }) => {
+            setLoginStatus("error");
+            toast.error(ctx.error?.message || "Passkey authentication failed.");
+          },
+        },
+      });
+
+      if (result?.error) {
+        setLoginStatus("error");
+        toast.error(result.error.message || "Passkey authentication failed.");
+      }
+    } catch (error: any) {
+      setLoginStatus("error");
+      toast.error(error?.message || "Passkey authentication failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSocialLogin = async (
     provider: "microsoft" | "google" | "github",
   ) => {
@@ -313,6 +346,23 @@ const LoginContent = () => {
                 <p className="text-gray-500 text-sm mt-2">
                   Sign in to access your enterprise dashboard.
                 </p>
+              </div>
+
+              {/* Passkey login button */}
+              <div className="mb-4">
+                <Button
+                  type="button"
+                  onClick={handlePasskeyLogin}
+                  disabled={isLoading}
+                  className="w-full h-11 bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 hover:border-emerald-500 font-semibold rounded-lg transition-all duration-150 shadow-sm flex items-center justify-center gap-2.5 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-gray-900" />
+                  ) : (
+                    <KeyRound className="h-4 w-4 text-emerald-600" />
+                  )}
+                  Sign in with Passkey
+                </Button>
               </div>
 
               {/* Social buttons */}

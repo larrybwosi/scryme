@@ -13,6 +13,7 @@ import {
   Shield,
   ArrowLeft,
   CheckCircle,
+  KeyRound,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
@@ -88,6 +89,38 @@ function LoginPageContent({
   } = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
   });
+
+  const handlePasskeyLogin = async () => {
+    setIsLoading(true);
+    setLoginStatus(null);
+    try {
+      const result = await authClient.signIn.passkey({
+        fetchOptions: {
+          onSuccess: () => {
+            if (callbackUrl) {
+              router.push(callbackUrl);
+            } else {
+              router.push("/dashboard");
+            }
+          },
+          onError: (ctx: { error?: { message?: string } }) => {
+            setLoginStatus("error");
+            toast.error(ctx.error?.message || "Passkey authentication failed.");
+          },
+        },
+      });
+
+      if (result?.error) {
+        setLoginStatus("error");
+        toast.error(result.error.message || "Passkey authentication failed.");
+      }
+    } catch (error: any) {
+      setLoginStatus("error");
+      toast.error(error?.message || "Passkey authentication failed.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSocialLogin = async (
     provider: "microsoft" | "google" | "github",
@@ -407,6 +440,22 @@ function LoginPageContent({
                 <p className="text-[#5B6B7C] text-sm mt-2">
                   Sign in to your Scryme workspace.
                 </p>
+              </div>
+
+              {/* Passkey login button */}
+              <div className="mb-4">
+                <Button
+                  type="button"
+                  onClick={handlePasskeyLogin}
+                  disabled={isLoading}
+                  className="w-full h-11 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] border border-[#E7E2D9] hover:border-[#A9824C]/50 font-semibold rounded-md transition-all duration-150 shadow-sm flex items-center justify-center gap-2.5 cursor-pointer">
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-[#0F1B2E]" />
+                  ) : (
+                    <KeyRound className="h-4 w-4 text-[#A9824C]" />
+                  )}
+                  Sign in with Passkey
+                </Button>
               </div>
 
               {/* Social buttons */}
