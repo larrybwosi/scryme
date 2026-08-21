@@ -12,6 +12,7 @@ describe("FavoritesUseCase", () => {
         favorite: {
           findMany: vi.fn(),
           findUnique: vi.fn(),
+          findFirst: vi.fn(),
           create: vi.fn(),
           delete: vi.fn(),
         },
@@ -22,6 +23,51 @@ describe("FavoritesUseCase", () => {
     } as any;
 
     useCase = new FavoritesUseCase(prisma);
+  });
+
+  it("should remove a favorite when owned by organization", async () => {
+    const orgId = "org-1";
+    const dto = { productId: "prod-1", customerId: "cust-1" };
+
+    vi.mocked(prisma.client.favorite.findFirst).mockResolvedValue({
+      id: "fav-1",
+    } as any);
+    vi.mocked(prisma.client.favorite.delete).mockResolvedValue({
+      id: "fav-1",
+    } as any);
+
+    const result = await useCase.removeFavorite(orgId, dto);
+
+    expect(result).toEqual({ id: "fav-1" });
+    expect(prisma.client.favorite.findFirst).toHaveBeenCalledWith({
+      where: {
+        organizationId: orgId,
+        customerId: dto.customerId,
+        productId: dto.productId,
+      },
+      select: { id: true },
+    });
+    expect(prisma.client.favorite.delete).toHaveBeenCalledWith({
+      where: { id: "fav-1" },
+    });
+  });
+
+  it("should throw NotFoundException when removing a favorite belonging to another organization", async () => {
+    const orgId = "org-1";
+    const dto = { productId: "prod-1", customerId: "cust-1" };
+
+    vi.mocked(prisma.client.favorite.findFirst).mockResolvedValue(null);
+
+    await expect(useCase.removeFavorite(orgId, dto)).rejects.toThrow("Favorite not found");
+    expect(prisma.client.favorite.findFirst).toHaveBeenCalledWith({
+      where: {
+        organizationId: orgId,
+        customerId: dto.customerId,
+        productId: dto.productId,
+      },
+      select: { id: true },
+    });
+    expect(prisma.client.favorite.delete).not.toHaveBeenCalled();
   });
 
   it("should add a favorite", async () => {
