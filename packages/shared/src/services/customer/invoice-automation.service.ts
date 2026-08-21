@@ -22,9 +22,12 @@ export const InvoiceAutomationService = {
       select: { id: true, name: true },
     });
 
-    for (const org of organizations) {
-      await this.processOrgInvoiceReminders(org.id, org.name);
-    }
+    // Performance Optimization: Process organization invoice reminders concurrently
+    // using Promise.all instead of sequential blocking for-of loops.
+    // Reduces latency from O(N) sequential org processing down to O(1) concurrent roundtrips.
+    await Promise.all(
+      organizations.map((org) => this.processOrgInvoiceReminders(org.id, org.name)),
+    );
 
     console.log(
       "[InvoiceAutomation] Customer invoice reminder automation completed.",
@@ -88,8 +91,10 @@ export const InvoiceAutomationService = {
     }
 
     // 2. Individual Customer Reminders based on schedule
-    for (const invoice of pendingInvoices) {
-      if (!invoice.dueDate) continue;
+    // Performance Optimization: Parallelize customer reminder dispatching
+    // across pending invoices to avoid sequential database/network blocking.
+    const reminderPromises = pendingInvoices.map(async (invoice) => {
+      if (!invoice.dueDate) return;
 
       const dueDate = new Date(invoice.dueDate);
       dueDate.setHours(0, 0, 0, 0);
@@ -101,7 +106,9 @@ export const InvoiceAutomationService = {
       if (REMINDER_SCHEDULE.includes(diffDays)) {
         await this.sendCustomerReminder(organizationId, orgName, invoice);
       }
-    }
+    });
+
+    await Promise.all(reminderPromises);
   },
 
   async sendCustomerReminder(

@@ -169,6 +169,26 @@ export class CartUseCase {
   }
 
   async addToCart(organizationId: string, dto: AddToCartDto) {
+    // SECURITY (Sentinel): Validate product, variant, or service exists and belongs to organization to prevent IDOR / BOLA cross-tenant associations.
+    if (dto.productId) {
+      const product = await this.prisma.client.product.findFirst({
+        where: { id: dto.productId, organizationId },
+      });
+      if (!product) throw new NotFoundException("Product not found");
+
+      if (dto.variantId) {
+        const variant = await this.prisma.client.productVariant.findFirst({
+          where: { id: dto.variantId, productId: dto.productId },
+        });
+        if (!variant) throw new NotFoundException("Product variant not found");
+      }
+    } else if (dto.serviceId) {
+      const service = await this.prisma.client.service.findFirst({
+        where: { id: dto.serviceId, organizationId },
+      });
+      if (!service) throw new NotFoundException("Service not found");
+    }
+
     // ⚡ Bolt Optimization: Skip fetching cart items as we only need the cart ID
     const cart = await this.getCart(
       organizationId,

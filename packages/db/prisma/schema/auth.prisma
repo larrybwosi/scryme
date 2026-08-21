@@ -19,6 +19,7 @@ model User {
   members              Member[]
   invitations          Invitation[]
   sessions             Session[]
+  passkeys             Passkey[]
   activeOrganizationId String?
   displayUsername      String?
   scrymeUserId         String?
@@ -240,4 +241,23 @@ model OAuthConsent {
   updatedAt   DateTime @updatedAt
 
   @@map("oauth_consent")
+}
+
+model Passkey {
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime?
+  aaguid       String?
+
+  @@index([userId])
+  @@index([credentialID])
+  @@map("passkey")
 }

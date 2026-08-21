@@ -813,7 +813,8 @@ export function WorkflowManager({
                             variant="ghost"
                             size="sm"
                             aria-label="More options"
-                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                            title="More options"
+                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100">
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>

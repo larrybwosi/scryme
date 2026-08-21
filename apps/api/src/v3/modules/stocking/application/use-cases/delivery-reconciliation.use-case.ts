@@ -312,24 +312,29 @@ export class DeliveryReconciliationUseCase {
           }
         }
 
+        // ⚡ Bolt Optimization: Consolidate return quantities per unique variantId and batchId in-memory first.
+        // This prevents database row lock contention or deadlocks if multiple transaction items share the same variant.
+        const returnItemsToCreate: any[] = [];
+        const variantRestockMap = new Map<string, number>();
+        const batchRestockMap = new Map<string, number>();
+        const movementsToCreate: any[] = [];
+
         for (const item of fulfillment.transaction.items) {
           const itemQtyToReturn = Math.round(
             Number(item.quantity) * returnRatio,
           );
           if (itemQtyToReturn <= 0) continue;
 
-          await tx.returnItem.create({
-            data: {
-              returnId: returnRecord.id,
-              transactionItemId: item.id,
-              quantity: itemQtyToReturn,
-              status:
-                policy === ReconciliationPolicy.RETURN_TO_STOCK
-                  ? ReturnItemStatus.RESTOCKED
-                  : ReturnItemStatus.REJECTED,
-              unitPrice: item.unitPrice,
-              refundAmount: 0,
-            },
+          returnItemsToCreate.push({
+            returnId: returnRecord.id,
+            transactionItemId: item.id,
+            quantity: itemQtyToReturn,
+            status:
+              policy === ReconciliationPolicy.RETURN_TO_STOCK
+                ? ReturnItemStatus.RESTOCKED
+                : ReturnItemStatus.REJECTED,
+            unitPrice: item.unitPrice,
+            refundAmount: 0,
           });
 
           if (
@@ -353,31 +358,21 @@ export class DeliveryReconciliationUseCase {
               }
             }
 
-            const batch = latestBatchByVariant.get(item.variantId);
+            if (qtyToRestock > 0) {
+              variantRestockMap.set(
+                item.variantId,
+                (variantRestockMap.get(item.variantId) || 0) + qtyToRestock,
+              );
 
-            if (batch) {
-              await tx.stockBatch.update({
-                where: { id: batch.id },
-                data: { currentQuantity: { increment: qtyToRestock } },
-              });
-              batch.currentQuantity = Number(batch.currentQuantity) + qtyToRestock;
-            }
+              const batch = latestBatchByVariant.get(item.variantId);
+              if (batch) {
+                batchRestockMap.set(
+                  batch.id,
+                  (batchRestockMap.get(batch.id) || 0) + qtyToRestock,
+                );
+              }
 
-            await tx.productVariantStock.update({
-              where: {
-                variantId_locationId: {
-                  variantId: item.variantId,
-                  locationId: fulfillment.transaction.locationId,
-                },
-              },
-              data: {
-                currentStock: { increment: qtyToRestock },
-                availableStock: { increment: qtyToRestock },
-              },
-            });
-
-            await tx.stockMovement.create({
-              data: {
+              movementsToCreate.push({
                 organizationId,
                 variantId: item.variantId,
                 toLocationId: fulfillment.transaction.locationId,
@@ -387,10 +382,57 @@ export class DeliveryReconciliationUseCase {
                 notes: `Reconciliation return for #${fulfillment.transaction.number}`,
                 referenceId: returnRecord.id,
                 referenceType: "Return",
-              },
-            });
+              });
+            }
           }
         }
+
+        // Execute batch database operations concurrently over unique entities
+        const dbOperations: Promise<any>[] = [];
+
+        if (returnItemsToCreate.length > 0) {
+          dbOperations.push(
+            tx.returnItem.createMany({
+              data: returnItemsToCreate,
+            }),
+          );
+        }
+
+        for (const [batchId, qty] of batchRestockMap.entries()) {
+          dbOperations.push(
+            tx.stockBatch.update({
+              where: { id: batchId },
+              data: { currentQuantity: { increment: qty } },
+            }),
+          );
+        }
+
+        for (const [variantId, qty] of variantRestockMap.entries()) {
+          dbOperations.push(
+            tx.productVariantStock.update({
+              where: {
+                variantId_locationId: {
+                  variantId,
+                  locationId: fulfillment.transaction.locationId,
+                },
+              },
+              data: {
+                currentStock: { increment: qty },
+                availableStock: { increment: qty },
+              },
+            }),
+          );
+        }
+
+        if (movementsToCreate.length > 0) {
+          dbOperations.push(
+            tx.stockMovement.createMany({
+              data: movementsToCreate,
+            }),
+          );
+        }
+
+        await Promise.all(dbOperations);
       }
 
       return { success: true };
