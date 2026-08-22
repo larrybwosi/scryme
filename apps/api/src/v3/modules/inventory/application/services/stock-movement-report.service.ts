@@ -83,8 +83,12 @@ export class StockMovementReportService {
       },
     });
 
+    // ⚡ Bolt Optimization: Pre-index variants metadata by ID in a Map to replace
+    // linear array search (.find()) inside mapping loops with O(1) constant-time map lookups.
+    const variantMap = new Map(variantsMetadata.map((v) => [v.id, v]));
+
     const topItems = topVariantAggs.map((agg) => {
-      const v = variantsMetadata.find((m) => m.id === agg.variantId);
+      const v = variantMap.get(agg.variantId);
       return {
         name: v
           ? `${v.product.name} (${v.name || "Default"})`
