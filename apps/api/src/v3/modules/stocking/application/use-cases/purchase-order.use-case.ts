@@ -378,7 +378,7 @@ export class PurchaseOrderUseCase {
     });
 
     // Post to ledger after approval
-    await this.accountingService.postPurchaseToLedger(updatedPurchase.id).catch((err) =>
+    await this.accountingService.postPurchaseToLedger(updatedPurchase.id, organizationId).catch((err) =>
       console.error("[PurchaseOrderUseCase] Failed to post purchase to ledger:", err),
     );
 
