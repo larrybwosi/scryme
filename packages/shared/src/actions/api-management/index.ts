@@ -44,9 +44,15 @@ export async function validateV3ApiSecret(
     where: { clientId },
   });
 
-  if (!client || !client.isActive || typeof client.clientSecret !== "string") {
-    return false;
-  }
+  const isValidClient = Boolean(
+    client && client.isActive && typeof client.clientSecret === "string",
+  );
+  // Placeholder SHA-256 hash used for timing-safe dummy comparison when client is missing or inactive
+  const dummySecretHash =
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+  const storedSecretToCompare = isValidClient
+    ? (client!.clientSecret as string)
+    : dummySecretHash;
 
   const hashedSecret = crypto
     .createHash("sha256")
@@ -61,10 +67,11 @@ export async function validateV3ApiSecret(
     .digest();
   const storedBuffer = crypto
     .createHash("sha256")
-    .update(client.clientSecret)
+    .update(storedSecretToCompare)
     .digest();
 
-  return crypto.timingSafeEqual(hashedBuffer, storedBuffer);
+  const isMatch = crypto.timingSafeEqual(hashedBuffer, storedBuffer);
+  return isValidClient && isMatch;
 }
 
 export async function getV3ApiClients(organizationId: string) {
