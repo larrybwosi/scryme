@@ -201,6 +201,14 @@ export async function createStockTransfer(data: {
   const transferNumber = `TRF-${Date.now()}`;
 
   const result = await db.$transaction(async tx => {
+    // ⚡ Bolt Optimization: Batch variant buying price lookup to prevent N+1 queries during transfer item creation.
+    const variantIds = Array.from(new Set(data.items.map(i => i.variantId)));
+    const variants = await tx.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      select: { id: true, buyingPrice: true },
+    });
+    const priceMap = new Map(variants.map(v => [v.id, v.buyingPrice]));
+
     const transfer = await tx.stockTransfer.create({
       data: {
         organizationId: context.organizationId,
@@ -211,19 +219,11 @@ export async function createStockTransfer(data: {
         requestedById: context.memberId,
         status: "PENDING_APPROVAL",
         items: {
-          create: await Promise.all(
-            data.items.map(async item => {
-              const variant = await tx.productVariant.findUnique({
-                where: { id: item.variantId },
-                select: { buyingPrice: true },
-              });
-              return {
-                variantId: item.variantId,
-                requestedQuantity: new Decimal(item.quantity),
-                unitCost: variant?.buyingPrice || new Decimal(0),
-              };
-            }),
-          ),
+          create: data.items.map(item => ({
+            variantId: item.variantId,
+            requestedQuantity: new Decimal(item.quantity),
+            unitCost: priceMap.get(item.variantId) || new Decimal(0),
+          })),
         },
       },
     });
@@ -268,20 +268,20 @@ export async function updateStockTransfer(
       where: { stockTransferId: id },
     });
 
+    // ⚡ Bolt Optimization: Batch variant buying price lookup to eliminate N+1 queries.
+    const variantIds = Array.from(new Set(data.items.map(i => i.variantId)));
+    const variants = await tx.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      select: { id: true, buyingPrice: true },
+    });
+    const priceMap = new Map(variants.map(v => [v.id, v.buyingPrice]));
+
     // 2. Create new items
-    const newItems = await Promise.all(
-      data.items.map(async item => {
-        const variant = await tx.productVariant.findUnique({
-          where: { id: item.variantId },
-          select: { buyingPrice: true },
-        });
-        return {
-          variantId: item.variantId,
-          requestedQuantity: new Decimal(item.quantity),
-          unitCost: variant?.buyingPrice || new Decimal(0),
-        };
-      }),
-    );
+    const newItems = data.items.map(item => ({
+      variantId: item.variantId,
+      requestedQuantity: new Decimal(item.quantity),
+      unitCost: priceMap.get(item.variantId) || new Decimal(0),
+    }));
 
     // 3. Update stock transfer details and create new items
     const updatedTransfer = await tx.stockTransfer.update({
@@ -616,61 +616,61 @@ export async function getStockLevels(params: {
     };
   }
 
-  // 1. Get products and variants with their stock records
-  const products = await db.product.findMany({
-    where,
-    include: {
-      category: { select: { name: true } },
-      suppliers: {
-        include: { supplier: { select: { name: true } } },
-      },
-      variants: {
-        where: { isActive: true },
-        include: {
-          variantStocks: {
-            where:
-              locationId && locationId !== "all" ? { locationId } : undefined,
-            include: {
-              location: { select: { name: true } },
+  // ⚡ Bolt Optimization: Parallelize independent read database queries for products,
+  // incoming transfers, and incoming purchases using Promise.all.
+  // This reduces query latency by collapsing 3 sequential roundtrips into 1 flat parallel roundtrip.
+  const [products, incomingTransfers, incomingPurchases] = await Promise.all([
+    db.product.findMany({
+      where,
+      include: {
+        category: { select: { name: true } },
+        suppliers: {
+          include: { supplier: { select: { name: true } } },
+        },
+        variants: {
+          where: { isActive: true },
+          include: {
+            variantStocks: {
+              where:
+                locationId && locationId !== "all" ? { locationId } : undefined,
+              include: {
+                location: { select: { name: true } },
+              },
             },
           },
         },
       },
-    },
-  });
-
-  // 2. Get incoming transfers (Shipped or In Transit)
-  const incomingTransfers = await db.stockTransferItem.findMany({
-    where: {
-      stockTransfer: {
-        organizationId: context.organizationId,
-        toLocationId:
-          locationId && locationId !== "all" ? locationId : undefined,
-        status: { in: ["SHIPPED", "IN_TRANSIT"] },
+    }),
+    db.stockTransferItem.findMany({
+      where: {
+        stockTransfer: {
+          organizationId: context.organizationId,
+          toLocationId:
+            locationId && locationId !== "all" ? locationId : undefined,
+          status: { in: ["SHIPPED", "IN_TRANSIT"] },
+        },
       },
-    },
-    select: {
-      variantId: true,
-      requestedQuantity: true,
-      shippedQuantity: true,
-    },
-  });
-
-  // 3. Get incoming purchases (Ordered or Partially Received)
-  const incomingPurchases = await db.purchaseItem.findMany({
-    where: {
-      purchase: {
-        organizationId: context.organizationId,
-        // locationId: locationId && locationId !== "all" ? locationId : undefined,
-        status: { in: ["ORDERED", "PARTIALLY_RECEIVED"] },
+      select: {
+        variantId: true,
+        requestedQuantity: true,
+        shippedQuantity: true,
       },
-    },
-    select: {
-      variantId: true,
-      orderedQuantity: true,
-      receivedQuantity: true,
-    },
-  });
+    }),
+    db.purchaseItem.findMany({
+      where: {
+        purchase: {
+          organizationId: context.organizationId,
+          // locationId: locationId && locationId !== "all" ? locationId : undefined,
+          status: { in: ["ORDERED", "PARTIALLY_RECEIVED"] },
+        },
+      },
+      select: {
+        variantId: true,
+        orderedQuantity: true,
+        receivedQuantity: true,
+      },
+    }),
+  ]);
 
   // 4. Create lookup maps for efficiency
   const transferMap = new Map<string, Decimal>();
