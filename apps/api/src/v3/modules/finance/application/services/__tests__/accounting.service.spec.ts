@@ -17,19 +17,19 @@ describe("AccountingService", () => {
         create: vi.fn(),
       },
       transaction: {
-        findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
       purchase: {
-        findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
       expense: {
-        findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
       member: {
         findFirst: vi.fn(),
       },
       bankStatement: {
-        findUnique: vi.fn(),
+        findFirst: vi.fn(),
       },
       journalLine: {
         findMany: vi.fn(),
@@ -169,7 +169,7 @@ describe("AccountingService", () => {
         },
       ];
 
-      mockPrisma.client.bankStatement.findUnique.mockResolvedValue({
+      mockPrisma.client.bankStatement.findFirst.mockResolvedValue({
         id: statementId,
         organizationId: orgId,
         lines: mockLines,
@@ -209,7 +209,7 @@ describe("AccountingService", () => {
       const result = await service.autoMatchBankStatement(statementId);
 
       expect(result).toEqual({ matchCount: 2 });
-      expect(mockPrisma.client.bankStatement.findUnique).toHaveBeenCalledWith({
+      expect(mockPrisma.client.bankStatement.findFirst).toHaveBeenCalledWith({
         where: { id: statementId },
         include: { lines: { where: { status: "UNMATCHED" } } },
       });
@@ -230,7 +230,7 @@ describe("AccountingService", () => {
         },
       ];
 
-      mockPrisma.client.bankStatement.findUnique.mockResolvedValue({
+      mockPrisma.client.bankStatement.findFirst.mockResolvedValue({
         id: statementId,
         organizationId: orgId,
         lines: mockLines,
@@ -257,6 +257,38 @@ describe("AccountingService", () => {
 
       expect(result).toEqual({ matchCount: 0 });
       expect(mockPrisma.client.$transaction).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("postPurchaseToLedger multi-tenant scoping", () => {
+    it("should look up purchase using findFirst scoped with organizationId when provided", async () => {
+      const purchaseId = "po-123";
+      const orgId = "org-123";
+
+      mockPrisma.client.purchase.findFirst.mockResolvedValue(null);
+
+      await service.postPurchaseToLedger(purchaseId, orgId);
+
+      expect(mockPrisma.client.purchase.findFirst).toHaveBeenCalledWith({
+        where: { id: purchaseId, organizationId: orgId },
+        select: expect.any(Object),
+      });
+    });
+  });
+
+  describe("postSaleToLedger multi-tenant scoping", () => {
+    it("should look up transaction using findFirst scoped with organizationId when provided", async () => {
+      const transactionId = "tx-123";
+      const orgId = "org-123";
+
+      mockPrisma.client.transaction.findFirst.mockResolvedValue(null);
+
+      await service.postSaleToLedger(transactionId, orgId);
+
+      expect(mockPrisma.client.transaction.findFirst).toHaveBeenCalledWith({
+        where: { id: transactionId, organizationId: orgId },
+        select: expect.any(Object),
+      });
     });
   });
 });
