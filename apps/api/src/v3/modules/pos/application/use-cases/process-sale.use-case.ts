@@ -46,7 +46,7 @@ export class ProcessSaleUseCase {
 
         // 1. Process Product Items if present
         if (hasProducts) {
-          const variants = await this.getV(tx, dto.items);
+          const variants = await this.getV(tx, dto.items, orgId);
           items = this.prepI(dto.items, variants, orgId);
           sub += items.reduce((s: number, i: any) => s + i.lineTotal, 0);
         }
@@ -89,7 +89,7 @@ export class ProcessSaleUseCase {
         }
 
         const cId = await this.getC(tx, orgId, dto.customerPhone);
-        const disc = await this.vDisc(tx, dto.loyaltyVoucherCode, cId, sub);
+        const disc = await this.vDisc(tx, orgId, dto.loyaltyVoucherCode, cId, sub);
         const total = sub - (dto.discountAmount || 0) - disc;
 
         const t = await tx.transaction.create({
@@ -170,10 +170,10 @@ export class ProcessSaleUseCase {
     };
   }
 
-  private async getV(tx: any, items: any[]) {
+  private async getV(tx: any, items: any[], organizationId: string) {
     const ids = items.map((i) => i.variantId);
     const v = await tx.productVariant.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, product: { organizationId } },
       select: {
         id: true,
         retailPrice: true,
@@ -183,7 +183,7 @@ export class ProcessSaleUseCase {
         product: { select: { name: true } },
       },
     });
-    if (v.length !== ids.length)
+    if (v.length !== new Set(ids).size)
       throw new BadRequestException("Missing variants");
     return v;
   }
@@ -226,10 +226,16 @@ export class ProcessSaleUseCase {
     return nc.id;
   }
 
-  private async vDisc(tx: any, code: string, cId: string, sub: number) {
+  private async vDisc(
+    tx: any,
+    organizationId: string,
+    code: string,
+    cId: string,
+    sub: number,
+  ) {
     if (!code || !cId) return 0;
-    const v = await tx.loyaltyVoucher.findUnique({
-      where: { code },
+    const v = await tx.loyaltyVoucher.findFirst({
+      where: { code, organizationId },
       include: { reward: true },
     });
     this.valV(v, cId);
