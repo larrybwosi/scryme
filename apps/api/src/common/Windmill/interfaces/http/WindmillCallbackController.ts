@@ -26,8 +26,13 @@ export class WindmillCallbackController {
     );
 
     try {
-      const execution = await this.prisma.client.windmillExecution.findUnique({
-        where: { jobId: payload.jobId },
+      // SECURITY (Sentinel): Scoping query by organizationId to maintain strict multi-tenant isolation
+      // and prevent cross-tenant job callback manipulation if jobIds are shared or predicted.
+      const execution = await this.prisma.client.windmillExecution.findFirst({
+        where: {
+          jobId: payload.jobId,
+          organizationId: payload.organizationId,
+        },
       });
 
       if (!execution) {
@@ -36,8 +41,11 @@ export class WindmillCallbackController {
         );
       }
 
-      await this.prisma.client.windmillExecution.update({
-        where: { jobId: payload.jobId },
+      await this.prisma.client.windmillExecution.updateMany({
+        where: {
+          jobId: payload.jobId,
+          organizationId: payload.organizationId,
+        },
         data: {
           status: payload.status as any,
           result: payload.result ?? undefined,
