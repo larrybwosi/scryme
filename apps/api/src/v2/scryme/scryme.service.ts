@@ -214,12 +214,16 @@ export class ScrymeService {
     const config = await this.getConfiguration(organizationId);
     if (!config?.workspaceSlug || !config.isActive) return;
 
+    // ⚡ Bolt Optimization: Replace broad model fetches with targeted select blocks
+    // to reduce database payload, memory usage, and Prisma object hydration overhead.
     const departments = await this.prisma.client.department.findMany({
       where: { organizationId, scrymeChannelId: null },
+      select: { id: true },
     });
 
     const locations = await this.prisma.client.inventoryLocation.findMany({
       where: { organizationId, scrymeChannelId: null },
+      select: { id: true },
     });
 
     this.logger.log(
@@ -274,9 +278,18 @@ export class ScrymeService {
       }
     }
 
+    // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select' projection
+    // to retrieve only required fields (userId, email), reducing payload and memory footprint.
     const members = await this.prisma.client.member.findMany({
       where: { organizationId },
-      include: { user: true },
+      select: {
+        userId: true,
+        user: {
+          select: {
+            email: true,
+          },
+        },
+      },
     });
 
     this.logger.log(
