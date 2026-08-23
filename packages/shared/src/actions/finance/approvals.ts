@@ -200,7 +200,7 @@ export async function makeApprovalDecisionCore(
     await db.approvalDecision.update({
       where: { id: existingDecision.id },
       data: {
-        status: data.status as ApprovalStatus,
+        status: data.status as any,
         comments: data.comments,
         decisionDate: new Date(),
       },
@@ -210,7 +210,7 @@ export async function makeApprovalDecisionCore(
       data: {
         approvalRequestId: data.requestId,
         approverId: memberId,
-        status: data.status as ApprovalStatus,
+        status: data.status as any,
         comments: data.comments,
         decisionDate: new Date(),
         stepNumber: request.currentStep,
@@ -219,7 +219,7 @@ export async function makeApprovalDecisionCore(
   }
 
   // Multi-step logic
-  let finalStatus: ApprovalStatus = data.status as ApprovalStatus;
+  let finalStatus: any = data.status;
   let nextStep = request.currentStep;
 
   if (data.status === "APPROVED") {
