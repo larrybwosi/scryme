@@ -81,7 +81,7 @@ export async function submitForApprovalCore(
           },
           select: { id: true },
         });
-        for (const member of members) {
+        for (const member of members as { id: string }[]) {
           approverIds.add(member.id);
         }
       }
@@ -92,7 +92,7 @@ export async function submitForApprovalCore(
         approvalRequestId: request.id,
         approverId,
         stepNumber: 1,
-        status: "PENDING",
+        status: "PENDING" as any,
       }));
       if (typeof client.approvalDecision.createMany === "function") {
         await client.approvalDecision.createMany({
@@ -100,7 +100,7 @@ export async function submitForApprovalCore(
         });
       } else {
         await Promise.all(
-          decisionsToCreate.map((data) => client.approvalDecision.create({ data })),
+          decisionsToCreate.map((data: any) => client.approvalDecision.create({ data })),
         );
       }
     }
@@ -114,11 +114,11 @@ export async function submitForApprovalCore(
       select: { id: true },
     });
     if (admins.length > 0) {
-      const decisionsToCreate = admins.map((admin) => ({
+      const decisionsToCreate = (admins as { id: string }[]).map((admin) => ({
         approvalRequestId: request.id,
         approverId: admin.id,
         stepNumber: 1,
-        status: "PENDING",
+        status: "PENDING" as any,
       }));
       if (typeof client.approvalDecision.createMany === "function") {
         await client.approvalDecision.createMany({
@@ -126,7 +126,7 @@ export async function submitForApprovalCore(
         });
       } else {
         await Promise.all(
-          decisionsToCreate.map((data) => client.approvalDecision.create({ data })),
+          decisionsToCreate.map((data: any) => client.approvalDecision.create({ data })),
         );
       }
     }
@@ -279,7 +279,7 @@ export async function makeApprovalDecisionCore(
               approvalRequestId: request.id,
               approverId,
               stepNumber: nextStep,
-              status: "PENDING",
+              status: "PENDING" as any,
             }),
           );
           if (typeof db.approvalDecision.createMany === "function") {
@@ -288,7 +288,7 @@ export async function makeApprovalDecisionCore(
             });
           } else {
             await Promise.all(
-              nextDecisionsToCreate.map((data) =>
+              nextDecisionsToCreate.map((data: any) =>
                 db.approvalDecision.create({ data }),
               ),
             );
