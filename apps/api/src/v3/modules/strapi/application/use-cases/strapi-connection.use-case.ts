@@ -13,6 +13,7 @@ import {
   StrapiConnectionResponseDto,
 } from "../dto/strapi-connection.dto";
 import { EcommercePlatform, SyncDirection, EntitySyncType } from "@repo/db";
+import { isSafeUrl } from "@repo/shared/server";
 
 @Injectable()
 export class StrapiConnectionUseCase {
@@ -31,6 +32,11 @@ export class StrapiConnectionUseCase {
     organizationId: string,
     dto: CreateStrapiConnectionDto,
   ): Promise<StrapiConnectionResponseDto> {
+    // SECURITY (Sentinel): Validate URL against SSRF before making outbound HTTP ping
+    if (!(await isSafeUrl(dto.strapiUrl))) {
+      throw new BadRequestException("Insecure Strapi URL blocked");
+    }
+
     // Verify credentials by pinging Strapi before persisting
     let strapiVersion: string | undefined;
     try {
@@ -124,6 +130,11 @@ export class StrapiConnectionUseCase {
 
       const testUrl = dto.strapiUrl ?? config!.strapiUrl;
       const testToken = dto.apiToken ?? config!.apiToken;
+
+      // SECURITY (Sentinel): Validate URL against SSRF before making outbound HTTP ping
+      if (!(await isSafeUrl(testUrl))) {
+        throw new BadRequestException("Insecure Strapi URL blocked");
+      }
 
       try {
         await this.strapiProvider.ping({
