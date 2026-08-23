@@ -66,37 +66,43 @@ export async function submitForApprovalCore(
   });
 
   // Create initial decisions for the first step if workflow exists
+  // ⚡ Bolt Optimization: Parallelize approval decision creations across actions/members using Promise.all
+  // to avoid O(N) blocking sequential database roundtrips.
   if (workflow && workflow.steps.length > 0) {
     const firstStep = workflow.steps[0];
-    for (const action of firstStep.actions) {
-      if (action.type === "SPECIFIC_MEMBER" && action.specificMemberId) {
-        await client.approvalDecision.create({
-          data: {
-            approvalRequestId: request.id,
-            approverId: action.specificMemberId,
-            stepNumber: 1,
-            status: "PENDING",
-          },
-        });
-      } else if (action.type === "ROLE" && action.approverRole) {
-        const members = await client.member.findMany({
-          where: {
-            organizationId: organizationId,
-            role: action.approverRole,
-          },
-        });
-        for (const member of members) {
+    await Promise.all(
+      firstStep.actions.map(async (action) => {
+        if (action.type === "SPECIFIC_MEMBER" && action.specificMemberId) {
           await client.approvalDecision.create({
             data: {
               approvalRequestId: request.id,
-              approverId: member.id,
+              approverId: action.specificMemberId,
               stepNumber: 1,
               status: "PENDING",
             },
           });
+        } else if (action.type === "ROLE" && action.approverRole) {
+          const members = await client.member.findMany({
+            where: {
+              organizationId: organizationId,
+              role: action.approverRole,
+            },
+          });
+          await Promise.all(
+            members.map((member) =>
+              client.approvalDecision.create({
+                data: {
+                  approvalRequestId: request.id,
+                  approverId: member.id,
+                  stepNumber: 1,
+                  status: "PENDING",
+                },
+              }),
+            ),
+          );
         }
-      }
-    }
+      }),
+    );
   } else {
     // Manual approval by Admins/Owners if no workflow
     const admins = await client.member.findMany({
@@ -105,16 +111,18 @@ export async function submitForApprovalCore(
         role: { in: ["ADMIN", "OWNER"] },
       },
     });
-    for (const admin of admins) {
-      await client.approvalDecision.create({
-        data: {
-          approvalRequestId: request.id,
-          approverId: admin.id,
-          stepNumber: 1,
-          status: "PENDING",
-        },
-      });
-    }
+    await Promise.all(
+      admins.map((admin) =>
+        client.approvalDecision.create({
+          data: {
+            approvalRequestId: request.id,
+            approverId: admin.id,
+            stepNumber: 1,
+            status: "PENDING",
+          },
+        }),
+      ),
+    );
   }
 
   // Update the related record status
@@ -237,36 +245,41 @@ export async function makeApprovalDecisionCore(
         finalStatus = "PENDING";
 
         // Create decisions for the next step
+        // ⚡ Bolt Optimization: Parallelize approval decision creations for subsequent steps using Promise.all.
         const nextWorkflowStep = request.workflow!.steps[nextStep - 1];
-        for (const action of nextWorkflowStep.actions) {
-          if (action.type === "SPECIFIC_MEMBER" && action.specificMemberId) {
-            await db.approvalDecision.create({
-              data: {
-                approvalRequestId: request.id,
-                approverId: action.specificMemberId,
-                stepNumber: nextStep,
-                status: "PENDING",
-              },
-            });
-          } else if (action.type === "ROLE" && action.approverRole) {
-            const members = await db.member.findMany({
-              where: {
-                organizationId: organizationId,
-                role: action.approverRole,
-              },
-            });
-            for (const member of members) {
+        await Promise.all(
+          nextWorkflowStep.actions.map(async (action) => {
+            if (action.type === "SPECIFIC_MEMBER" && action.specificMemberId) {
               await db.approvalDecision.create({
                 data: {
                   approvalRequestId: request.id,
-                  approverId: member.id,
+                  approverId: action.specificMemberId,
                   stepNumber: nextStep,
                   status: "PENDING",
                 },
               });
+            } else if (action.type === "ROLE" && action.approverRole) {
+              const members = await db.member.findMany({
+                where: {
+                  organizationId: organizationId,
+                  role: action.approverRole,
+                },
+              });
+              await Promise.all(
+                members.map((member) =>
+                  db.approvalDecision.create({
+                    data: {
+                      approvalRequestId: request.id,
+                      approverId: member.id,
+                      stepNumber: nextStep,
+                      status: "PENDING",
+                    },
+                  }),
+                ),
+              );
             }
-          }
-        }
+          }),
+        );
       }
     }
   }
