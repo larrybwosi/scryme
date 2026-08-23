@@ -23,6 +23,9 @@ describe("CheckoutUseCase (Integration)", () => {
           findFirst: vi.fn(),
           update: vi.fn(),
         },
+        inventoryLocation: {
+          findFirst: vi.fn(),
+        },
         productVariant: {
           findMany: vi.fn(),
         },
@@ -42,7 +45,7 @@ describe("CheckoutUseCase (Integration)", () => {
     useCase = new CheckoutUseCase(prisma, mpesaService);
   });
 
-  it("should create an order and initiate mpesa payment", async () => {
+  it("should create an order and initiate mpesa payment with explicit locationId", async () => {
     const organizationId = "org-123";
     const customerId = "cust-123";
     const dto = {
@@ -109,6 +112,8 @@ describe("CheckoutUseCase (Integration)", () => {
       include: { items: true },
     });
 
+    expect(prisma.client.inventoryLocation.findFirst).not.toHaveBeenCalled();
+
     expect(result).toEqual({
       orderId: "order-123",
       paymentId: "pay-123",
@@ -123,6 +128,106 @@ describe("CheckoutUseCase (Integration)", () => {
         amount: 200,
         phoneNumber: "254700000000",
       }),
+    );
+  });
+
+  it("should resolve default location concurrently when locationId is omitted", async () => {
+    const organizationId = "org-123";
+    const customerId = "cust-123";
+    const dto = {
+      cartId: "cart-123",
+      phoneNumber: "254700000000",
+    };
+
+    const mockCart = {
+      id: "cart-123",
+      organizationId,
+      customerId,
+      items: [{ productId: "prod-1", variantId: "var-1", quantity: 1 }],
+    };
+
+    const mockLocation = { id: "loc-default" };
+
+    const mockVariants = [
+      {
+        id: "var-1",
+        productId: "prod-1",
+        retailPrice: 50,
+        buyingPrice: 40,
+        name: "Variant 1",
+        sku: "SKU-1",
+        product: { name: "Product 1" },
+      },
+    ];
+
+    const mockTransaction = {
+      id: "order-456",
+      number: "ORD-456",
+      finalTotal: 50,
+    };
+
+    const mockPayment = { id: "pay-456" };
+
+    const mockMpesaResponse = {
+      paymentId: "pay-456",
+      CustomerMessage: "Success",
+      MerchantRequestID: "merch-456",
+      CheckoutRequestID: "check-456",
+    };
+
+    vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
+    vi.mocked(prisma.client.inventoryLocation.findFirst).mockResolvedValue(
+      mockLocation as any,
+    );
+    vi.mocked(prisma.client.productVariant.findMany).mockResolvedValue(
+      mockVariants as any,
+    );
+    vi.mocked(prisma.client.transaction.create).mockResolvedValue(
+      mockTransaction as any,
+    );
+    vi.mocked(prisma.client.payment.create).mockResolvedValue(
+      mockPayment as any,
+    );
+    vi.mocked(mpesaService.initiateStkPush).mockResolvedValue(
+      mockMpesaResponse as any,
+    );
+    vi.mocked(prisma.client.cart.update).mockResolvedValue({} as any);
+
+    const result = await useCase.execute(organizationId, dto);
+
+    expect(prisma.client.cart.findFirst).toHaveBeenCalledWith({
+      where: { id: dto.cartId, organizationId },
+      include: { items: true },
+    });
+
+    expect(prisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
+      where: { organizationId, isDefault: true },
+      select: { id: true },
+    });
+
+    expect(result.orderId).toBe("order-456");
+  });
+
+  it("should throw BadRequestException if locationId is missing and default location not found", async () => {
+    const organizationId = "org-123";
+    const dto = {
+      cartId: "cart-123",
+      phoneNumber: "254700000000",
+    };
+
+    const mockCart = {
+      id: "cart-123",
+      organizationId,
+      items: [{ productId: "prod-1", variantId: "var-1", quantity: 1 }],
+    };
+
+    vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
+    vi.mocked(prisma.client.inventoryLocation.findFirst).mockResolvedValue(
+      null,
+    );
+
+    await expect(useCase.execute(organizationId, dto)).rejects.toThrow(
+      "No location provided and no default location found for organization",
     );
   });
 });
