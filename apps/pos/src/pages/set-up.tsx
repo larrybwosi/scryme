@@ -66,9 +66,9 @@ const SetupTokenInstructions = ({ onBack, apiUrl }: { onBack: () => void, apiUrl
       <div className="grid gap-4">
         {[
           { icon: Laptop, title: '1. Login to Dashboard', desc: 'Sign in to your Merchant Portal.' },
-          { icon: Settings, title: '2. Go to Devices', desc: 'Navigate to Settings > Devices.' },
-          { icon: Key, title: '3. Generate Token', desc: 'Create a new setup token for this location.' },
-          { icon: ClipboardCheck, title: '4. Copy & Paste', desc: 'Copy the token and paste it here.' },
+          { icon: Settings, title: '2. Go to Integrations', desc: 'Navigate to Integrations > Apps & API.' },
+          { icon: Monitor, title: '3. Select Devices', desc: 'Switch to the Devices tab.' },
+          { icon: Key, title: '4. Generate Token', desc: 'Click "Provision device" to generate a setup token.' },
         ].map((item, i) => (
           <div
             key={i}
@@ -86,7 +86,7 @@ const SetupTokenInstructions = ({ onBack, apiUrl }: { onBack: () => void, apiUrl
       </div>
 
       <Button variant="outline" className="w-full h-11 rounded-none border-zinc-300 dark:border-zinc-700" asChild>
-        <a href={`${apiUrl}/settings/devices`} target="_blank" rel="noreferrer">
+        <a href={`${apiUrl}/integrations/apps-api?tab=devices`} target="_blank" rel="noreferrer">
           Open Dashboard <ExternalLink className="w-4 h-4 ml-2" />
         </a>
       </Button>
