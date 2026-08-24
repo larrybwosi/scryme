@@ -27,7 +27,7 @@ describe("ProcessSaleUseCase", () => {
         transaction: { create: vi.fn() },
         productVariantStock: { update: vi.fn() },
         stockMovement: { createMany: vi.fn() },
-        loyaltyVoucher: { findUnique: vi.fn(), update: vi.fn() },
+        loyaltyVoucher: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
         organization: { findUnique: vi.fn() },
         service: { findMany: vi.fn() },
         serviceBooking: { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn() },
@@ -110,6 +110,15 @@ describe("ProcessSaleUseCase", () => {
 
     await useCase.execute(ctx, dto);
 
+    // Verify productVariant lookup was scoped by organizationId
+    expect(prisma.client.productVariant.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["v1", "v2"] },
+        product: { organizationId: "org_1" },
+      },
+      select: expect.anything(),
+    });
+
     // Verify stock updates were called for each item
     expect(prisma.client.productVariantStock.update).toHaveBeenCalledTimes(2);
     expect(prisma.client.productVariantStock.update).toHaveBeenCalledWith({
@@ -137,7 +146,7 @@ describe("ProcessSaleUseCase", () => {
     });
   });
 
-  it("should throw error if variants are missing", async () => {
+  it("should throw error if variants are missing or belong to another organization", async () => {
     const ctx = {
       organizationId: "org_1",
       memberId: "mem_1",

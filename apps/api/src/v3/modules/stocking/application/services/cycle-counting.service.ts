@@ -17,10 +17,18 @@ export class CycleCountingService {
       },
     });
 
-    for (const config of configs) {
-      await this.generateStockTake(config);
-      await this.updateNextRun(config);
-    }
+    /**
+     * OPTIMIZATION (Bolt ⚡): Parallelized cycle count config execution.
+     * Replaced sequential 'for...of' loop with Promise.all concurrent execution.
+     * This collapses execution time from O(N) sequential database roundtrips down to
+     * a flat O(1) concurrent latency profile when multiple cycle counts are due.
+     */
+    await Promise.all(
+      configs.map(async (config) => {
+        await this.generateStockTake(config);
+        await this.updateNextRun(config);
+      }),
+    );
   }
 
   async generateStockTake(config: any) {

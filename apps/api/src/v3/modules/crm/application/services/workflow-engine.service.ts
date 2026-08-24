@@ -56,8 +56,12 @@ export class WorkflowExecutionEngine {
       return;
     }
 
+    // ⚡ Bolt Optimization: Pre-index nodes by ID into a Map for O(1) constant-time lookups
+    // instead of performing an O(N) linear array search (.find()) for every outgoing edge.
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+
     for (const edge of nextEdges) {
-      const nextNode = nodes.find((n) => n.id === edge.target);
+      const nextNode = nodeMap.get(edge.target);
       if (!nextNode) continue;
 
       await this.executeNode(instanceId, nextNode);

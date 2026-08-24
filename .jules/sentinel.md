@@ -192,57 +192,6 @@
 **Learning:** Controller-level security context is only a partial layer of defense. In APIs where a "fail-open" permission guard pattern is used, forgetting to decorate a controller class with `PermissionsGuard` and forgetting to decorate individual methods with explicit permission scopes (such as `webhooks:read` or `webhooks:write`) creates an authorization bypass.
 **Prevention:** Always secure every routing controller class using `PermissionsGuard` and decorate individual route handlers with explicit permissions. Implement metadata unit tests to prevent regression of endpoint permissions.
 
-## 2026-07-24 - Cryptographically Insecure PRNG in OTP and Voucher Generation
-**Vulnerability:** Pseudo-random number generation (`Math.random()`) was used to generate 6-digit booking OTP codes and loyalty reward vouchers. Because `Math.random()` is not cryptographically secure, the internal state of the PRNG could be predicted by an attacker after observing several generated codes, leading to OTP bypass and unauthorized voucher generation.
-**Learning:** Never use `Math.random()` or other predictable seed-based PRNGs for security-sensitive operations like passwords, OTPs, session keys, or vouchers. Cryptographically secure alternatives are standard and easy to integrate.
-**Prevention:** Always use Node.js native `crypto.randomInt` for numeric ranges (like 6-digit OTP codes) and `crypto.randomBytes` for raw random byte values (like hex vouchers) to guarantee non-predictability.
-
-## 2026-07-25 - Cryptographically Insecure PRNG in Delivery Confirmation OTP
-**Vulnerability:** The delivery OTP confirmation token was generated using `Math.random()`, exposing the system to predictability attacks and delivery hijacking.
-**Learning:** Using standard seed-based PRNGs like `Math.random()` for any security-sensitive token, password, or OTP allows attackers who observe several values to predict future outcomes.
-**Prevention:** Always use Node.js's native cryptographically secure random number generators, such as `crypto.randomInt` or `crypto.randomBytes`, for any security tokens or OTPs.
-## 2026-07-25 - OTP Verification Replay and Guest Booking Spamming Vulnerability
-**Vulnerability:** The booking verification OTP mechanism allowed the same validated verification identifier to be reused multiple times to submit guest bookings, leading to a replay/bypass attack vector and guest booking spamming.
-**Learning:** OTP or identity-verification tokens/records must follow a single-use "fail-closed" consumption model. Once validated successfully, the token or verification state must be immediately consumed, invalidated, or deleted. If left active, attackers can replay the verification ID to perform multiple authorized actions without re-authenticating or re-proving identity.
-**Prevention:** Always delete or invalidate verification records (`BookingVerificationCode`) in the database as soon as they are validated. Enforce a strict single-use policy on verification codes.
-
-## 2026-07-26 - IDOR and Multi-tenant Product Variant Loading in B2B Orders and Quotes
-**Vulnerability:** The B2BUseCase `createOrder` and `createQuote` methods loaded product variants using only their primary IDs, permitting authenticated B2B customers to place orders or request quotes containing variants belonging to other tenants.
-**Learning:** Even when controller-level multi-tenancy guards are active, service-level transactional logic remains vulnerable to IDOR if it queries nested resources (like variants) by their primary IDs without validating that the resources belong to the active organization.
-**Prevention:** Always scope database lookups for nested relational entities to the current tenant (e.g. `product: { organizationId }`) and explicitly verify that the count of retrieved records matches the count of unique requested IDs to prevent unauthorized data manipulation.
-## 2026-07-26 - IDOR Vulnerability in CRM Activity Communication Reply
-**Vulnerability:** The CRM integrations service resolved communication activities for replying using `findUnique` with only the `id` field, then validated ownership in-memory. This was inefficient and could lead to data leakage if organization checks were bypassed or omitted.
-**Learning:** For database tables that lack a composite unique index on `[id, organizationId]`, retrieving records with `findUnique` by ID first and then asserting ownership can fail-open or load extraneous records from other tenants. Implementing tenant isolation directly at the database query layer via `findFirst` is safer and more performant.
-**Prevention:** Always use `findFirst` instead of `findUnique` with explicit `where: { id, organizationId }` for tenant-scoped record lookups on models lacking composite unique indices.
-
-## 2026-07-28 - SSRF Vulnerability in Binary and Update Signature Downloading
-**Vulnerability:** The public POS binary proxy downloader (`BinariesController.downloadBinary`) and the update signature downloader (`BakeryService.getUpdate`) performed outbound requests to dynamic external URLs resolved from GitHub's releases metadata without validating the resolved target URLs.
-**Learning:** Outbound network calls made to endpoints retrieved dynamically from third-party APIs can introduce SSRF vulnerabilities if the repository configuration is compromised or DNS response metadata is spoofed. Validating all dynamic outbound URLs before execution is necessary for a secure system.
-**Prevention:** Always validate all dynamically resolved URLs with the shared DNS-resolving `isSafeUrl` utility prior to initiating network requests. For controllers that wrap errors in generic fallback exceptions (e.g., `InternalServerErrorException`), ensure that validation exceptions like `BadRequestException` are allowed to propagate cleanly.
-
-## 2026-07-29 - Cryptographically Insecure PRNG in Order and Quote Generation
-**Vulnerability:** Insecure pseudo-random number generation (`Math.random()`) was used to generate random suffixes for customer-facing order and quote numbers in `create-order.use-case.ts`, `request-b2b-quote.use-case.ts`, and `b2b.use-case.ts`.
-**Learning:** Standard seed-based PRNGs like `Math.random()` are predictable and must never be used for security-sensitive identifiers, tokens, or codes. Attackers observing sequences of generated numbers can predict future outcomes, risking business identifier probing or unauthorized access.
-**Prevention:** Always utilize Node's native `crypto` library, employing cryptographically secure pseudo-random number generators (CSPRNG) such as `crypto.randomBytes()` or `crypto.randomInt()`, to generate secure, unpredictable suffixes for customer-facing identifiers.
-## 2026-07-29 - Race Condition / Reentrancy in Standalone POS Activation
-**Vulnerability:** Standalone POS setup tokens were read, and then marked as used only after the associated device and keys were created. Because these operations were not executing atomically or within an exclusive lock, concurrent activation requests with the same token could bypass the single-use check, leading to double-redeem/replay vulnerability.
-**Learning:** Checking state conditions before performing side-effects is vulnerable to concurrent race conditions in non-transactional paths or read-committed isolation levels. State-changing tokens must be checked and set/invalidated in a single atomic database operation (such as a conditional write) before initiating any external resource creation.
-**Prevention:** Always use atomic, conditional updates (e.g., using Prisma's `updateMany` with a target constraint like `where: { id, usedAt: null }`) to perform state transitions. Verify that the update affected exactly one record (`count === 1`) before continuing with any dependent creation steps.
-
-## 2026-07-30 - Cryptographically Insecure PRNG in Transaction Suffixes
-**Vulnerability:** Predictable pseudo-random number generation (`Math.random()`) was used to generate suffixes for order and POS sale numbers in the shared transaction action files (`orders.ts` and `process.sale.ts`).
-**Learning:** Using predictable random suffixes for transaction-facing numbers exposes the system to transaction enumeration, sequence forecasting, and sales volume estimation by competitors. Secure identifiers must use cryptographically strong random suffixes.
-**Prevention:** Always employ cryptographically secure pseudo-random generators (CSPRNG) via Node's native `crypto` module (like `crypto.randomBytes()`) for generating order and sale identification number suffixes.
-
-## 2026-07-31 - SSRF Bypass via Incomplete IPv6 Range Blocking in Duplicated Security Utility
-**Vulnerability:** The `isSafeIp` function in `packages/notifications/src/security.ts` lacked filters for site-local IPv6 addresses (`fec0::/10`) and multicast IPv6 addresses (`ff00::/8`), allowing attackers to bypass SSRF protections in notifications.
-**Learning:** Security-critical utility functions that are duplicated across multiple packages (e.g. `packages/shared` and `packages/notifications`) are prone to security configuration drift. While the main shared utility had been hardened against these ranges in a prior security patch, the notifications-specific variant was missed.
-**Prevention:** Centralize security-critical logic in a single shared package (like `@repo/shared/server`) and consume it everywhere, or keep copy-pasted implementations in strict sync via unified automated integration test suites.
-## 2026-07-31 - IDOR Vulnerability in Scryme Channel Provisioning and Notifications
-**Vulnerability:** The Scryme module queried `Department`, `InventoryLocation`, `Transaction`, and `ApprovalRequest` using `findUnique` by global record ID only, ignoring the tenant's `organizationId` or querying without it entirely.
-**Learning:** In a multi-tenant application, referencing linked entity IDs without scoping the lookups to the authenticated tenant's `organizationId` introduces IDOR vectors. Even with global authorization guards active, individual handler or helper queries must enforce strict multi-tenant boundaries.
-**Prevention:** Always utilize `findFirst` instead of `findUnique` when performing database lookups on tables lacking composite unique indices, explicitly including `{ id, organizationId }` in the query's `where` filter to guarantee isolation.
-
 ## 2026-08-01 - IDOR Prevention via Strict Mandatory Tenant-Scoping in Serialization
 **Vulnerability:** The private `toResponse` serialization helper inside `StrapiConnectionUseCase` allowed `organizationId` to be an optional parameter, which when omitted, fetched connection details from the database by `id` only, risking IDOR/BOLA bypass during create/update flows if not pre-validated.
 **Learning:** Helper methods that serialize or query records must never allow "fail-open" optional parameters for tenant-scoping. Enforcing mandatory scoping parameters at the lowest possible layer of the use-case prevents accidental developer omissions.
@@ -286,3 +235,22 @@
 **Vulnerability:** The `getConfigOrThrow` helper in the Strapi connection use-case retrieved tenant connection configuration using only the raw `connectionId` without verifying that the connection belonged to the calling organization.
 **Learning:** Shared service-level lookups and helper functions are high-risk IDOR entry points if they fetch nested configuration entities relying solely on the entity ID. If any upstream controller or use case doesn't pre-validate the connection ID, any tenant can query or sync with arbitrary third-party stores.
 **Prevention:** Always make the tenant identifier parameter (e.g. `organizationId`) strictly mandatory in internal configuration lookup/helper functions. Before performing database queries on secondary config tables, explicitly run a scoped check (`findFirst` or `getConnectionOrThrow`) to enforce strict multi-tenant isolation.
+
+## 2026-08-14 - IDOR Vulnerability in Staff Shift Break Creation and Shift Assignment
+**Vulnerability:** `StaffSchedulingService.addBreak` accepted `shiftId` directly without validating whether the shift belonged to the calling organization. Additionally, `createShift` accepted `memberId` without verifying that the member belonged to the tenant.
+**Learning:** Endpoints that accept secondary entity identifiers (like `shiftId` or `memberId`) must explicitly validate tenant ownership using `organizationId` scoping before performing mutations, even if controller guards authenticate the tenant context.
+**Prevention:** Always perform a scoped lookup (`findFirst` with `{ id, organizationId }`) on foreign key parameters before creating or linking sub-entities.
+
+## 2026-08-20 - IDOR Vulnerability in Windmill Execution Callbacks
+**Vulnerability:** Windmill execution status callbacks in `WindmillCallbackUseCase` queried and updated `windmillExecution` records using `jobId` only, ignoring `payload.organizationId`.
+**Learning:** Even when webhook payload signatures are verified against an organization's secret, callback handlers that update database entities must still scope database lookups (`findFirst`) and updates (`updateMany`) using the payload's `organizationId` to prevent cross-tenant record manipulation if a caller provides a foreign `jobId`.
+**Prevention:** Always scope database lookups and mutation filters on execution and event tracking models with `organizationId`, using `findFirst` and `updateMany` instead of `findUnique` when composite multi-tenant indices are absent.
+
+## 2026-08-21 - Timing Attack and Client ID Enumeration in V3 API Client Authentication
+**Vulnerability:** `validateV3ApiSecret` returned `false` early when a queried `v3ApiClient` was missing or inactive, skipping `crypto.timingSafeEqual` and SHA-256 pre-hashing operations. Additionally, `V3AuthCoreService.validateClient` threw distinct exception messages (`Invalid client` vs `Invalid client secret`), exposing a client ID enumeration side-channel.
+**Learning:** Early returns when credentials or clients are missing create timing side-channels that allow attackers to probe valid client IDs. Furthermore, returning granular error messages that differentiate client existence from secret validity leaks client presence.
+**Prevention:** Always execute constant-time comparisons (`crypto.timingSafeEqual`) against a dummy hash when client lookup fails or client is inactive. Standardize error responses to a generic exception message (e.g. `Invalid client credentials`) to prevent enumeration attacks.
+## 2026-08-21 - IDOR / BOLA Prevention in Cart Item Operations
+**Vulnerability:** `CartUseCase.addToCart` allowed users to add products, product variants, or services from other organizations into their cart because item identifiers were not validated against the authenticated `organizationId`.
+**Learning:** E-commerce cart operations often assume that since the cart itself belongs to the active tenant, all items added via `productId`, `variantId`, or `serviceId` are safe. However, unvalidated foreign keys passed in request payloads can create unauthorized cross-tenant product associations.
+**Prevention:** Always perform explicit tenant-ownership checks (`findFirst` with `{ id, organizationId }` for products/services and `{ id, productId }` for variants) before creating or updating cart items.

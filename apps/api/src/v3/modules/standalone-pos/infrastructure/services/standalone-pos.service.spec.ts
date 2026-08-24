@@ -83,11 +83,15 @@ describe("StandalonePosService", () => {
   });
 
   describe("activateDevice", () => {
-    it("should throw UnauthorizedException for invalid token", async () => {
+    it("should throw UnauthorizedException for invalid token and run dummy device query", async () => {
       mockPrisma.client.standaloneSetupKey.findUnique.mockResolvedValue(null);
       await expect(
         service.activateDevice({ token: "invalid", machineId: "m1" }),
       ).rejects.toThrow(UnauthorizedException);
+
+      expect(mockPrisma.client.standaloneDevice.findUnique).toHaveBeenCalledWith({
+        where: { machineId: "m1" },
+      });
     });
 
     it("should throw ForbiddenException if token already used", async () => {

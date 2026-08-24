@@ -41,4 +41,24 @@ describe('PricingResolverService - Bolt early return', () => {
     expect(prisma.client.priceList.findMany).not.toHaveBeenCalled();
     expect(prisma.client.priceListItem.findMany).not.toHaveBeenCalled();
   });
+
+  it('should execute productVariant and priceList queries in parallel', async () => {
+    (prisma.client.productVariant.findMany as any).mockResolvedValue([
+      { id: 'v1', retailPrice: { toNumber: () => 100 }, wholesalePrice: null },
+    ]);
+    (prisma.client.priceList.findMany as any).mockResolvedValue([
+      { id: 'pl1' },
+    ]);
+    (prisma.client.priceListItem.findMany as any).mockResolvedValue([]);
+
+    const result = await service.resolveBatchVariantPrices({
+      items: [{ variantId: 'v1', quantity: 2 }],
+      organizationId: 'org-1',
+    });
+
+    expect(result.get('v1')).toEqual({ unitPrice: 100 });
+    expect(prisma.client.productVariant.findMany).toHaveBeenCalledOnce();
+    expect(prisma.client.priceList.findMany).toHaveBeenCalledOnce();
+    expect(prisma.client.priceListItem.findMany).toHaveBeenCalledOnce();
+  });
 });

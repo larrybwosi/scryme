@@ -23,6 +23,15 @@ describe("CartUseCase", () => {
           delete: vi.fn(),
           deleteMany: vi.fn(),
         },
+        product: {
+          findFirst: vi.fn(),
+        },
+        productVariant: {
+          findFirst: vi.fn(),
+        },
+        service: {
+          findFirst: vi.fn(),
+        },
       },
     } as any;
 
@@ -47,6 +56,8 @@ describe("CartUseCase", () => {
       sessionId: "sess-1",
     };
 
+    vi.mocked(prisma.client.product.findFirst).mockResolvedValue({ id: "prod-1", organizationId: orgId } as any);
+    vi.mocked(prisma.client.productVariant.findFirst).mockResolvedValue({ id: "var-1", productId: "prod-1" } as any);
     vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
     vi.mocked(prisma.client.cartItem.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.client.cartItem.create).mockResolvedValue({
@@ -93,6 +104,7 @@ describe("CartUseCase", () => {
       sessionId: "sess-1",
     };
 
+    vi.mocked(prisma.client.service.findFirst).mockResolvedValue({ id: "srv-1", organizationId: orgId } as any);
     vi.mocked(prisma.client.cart.findFirst).mockResolvedValue(mockCart as any);
     vi.mocked(prisma.client.cartItem.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.client.cartItem.create).mockResolvedValue({
@@ -134,6 +146,61 @@ describe("CartUseCase", () => {
     expect(result).toBeDefined();
     expect(prisma.client.cartItem.deleteMany).toHaveBeenCalledWith({
       where: { cartId: "cart-1" },
+    });
+  });
+
+  describe("Tenant Isolation and Security (IDOR Protection)", () => {
+    it("should throw NotFoundException if productId does not belong to the organization", async () => {
+      const orgId = "org-1";
+      const dto = {
+        productId: "foreign-prod",
+        quantity: 1,
+        sessionId: "sess-1",
+      };
+
+      vi.mocked(prisma.client.product.findFirst).mockResolvedValue(null);
+
+      await expect(useCase.addToCart(orgId, dto)).rejects.toThrow("Product not found");
+      expect(prisma.client.product.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-prod", organizationId: orgId },
+      });
+      expect(prisma.client.cartItem.create).not.toHaveBeenCalled();
+    });
+
+    it("should throw NotFoundException if variantId does not exist for the product", async () => {
+      const orgId = "org-1";
+      const dto = {
+        productId: "prod-1",
+        variantId: "foreign-var",
+        quantity: 1,
+        sessionId: "sess-1",
+      };
+
+      vi.mocked(prisma.client.product.findFirst).mockResolvedValue({ id: "prod-1", organizationId: orgId } as any);
+      vi.mocked(prisma.client.productVariant.findFirst).mockResolvedValue(null);
+
+      await expect(useCase.addToCart(orgId, dto)).rejects.toThrow("Product variant not found");
+      expect(prisma.client.productVariant.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-var", productId: "prod-1" },
+      });
+      expect(prisma.client.cartItem.create).not.toHaveBeenCalled();
+    });
+
+    it("should throw NotFoundException if serviceId does not belong to the organization", async () => {
+      const orgId = "org-1";
+      const dto = {
+        serviceId: "foreign-srv",
+        quantity: 1,
+        sessionId: "sess-1",
+      };
+
+      vi.mocked(prisma.client.service.findFirst).mockResolvedValue(null);
+
+      await expect(useCase.addToCart(orgId, dto)).rejects.toThrow("Service not found");
+      expect(prisma.client.service.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-srv", organizationId: orgId },
+      });
+      expect(prisma.client.cartItem.create).not.toHaveBeenCalled();
     });
   });
 
@@ -286,6 +353,95 @@ describe("CartUseCase", () => {
 
       expect(prisma.client.cart.delete).toHaveBeenCalledWith({
         where: { id: "cart-guest" },
+      });
+    });
+
+    it("should consolidate duplicate guest cart items before executing database updates", async () => {
+      const orgId = "org-1";
+      const customerId = "cust-1";
+      const sessionId = "sess-1";
+
+      const mockGuestCart = {
+        id: "cart-guest",
+        organizationId: orgId,
+        sessionId,
+        items: [
+          {
+            id: "item-guest-1",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 2,
+            bookingDetails: null,
+          },
+          {
+            id: "item-guest-2",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 3,
+            bookingDetails: null,
+          },
+          {
+            id: "item-guest-3",
+            productId: "prod-new",
+            variantId: "var-new",
+            serviceId: null,
+            quantity: 1,
+            bookingDetails: null,
+          },
+          {
+            id: "item-guest-4",
+            productId: "prod-new",
+            variantId: "var-new",
+            serviceId: null,
+            quantity: 4,
+            bookingDetails: null,
+          },
+        ],
+      };
+
+      const mockCustomerCart = {
+        id: "cart-cust",
+        organizationId: orgId,
+        customerId,
+        items: [
+          {
+            id: "item-cust-1",
+            productId: "prod-1",
+            variantId: "var-1",
+            serviceId: null,
+            quantity: 5,
+            bookingDetails: null,
+          },
+        ],
+      };
+
+      vi.mocked(prisma.client.cart.findFirst)
+        .mockResolvedValueOnce(mockGuestCart as any)
+        .mockResolvedValueOnce(mockCustomerCart as any)
+        .mockResolvedValueOnce(mockCustomerCart as any);
+
+      await useCase.getCart(orgId, customerId, sessionId);
+
+      // Verify single consolidated update call for prod-1/var-1 (5 existing + 2 + 3 guest = 10)
+      expect(prisma.client.cartItem.update).toHaveBeenCalledTimes(1);
+      expect(prisma.client.cartItem.update).toHaveBeenCalledWith({
+        where: { id: "item-cust-1" },
+        data: { quantity: 10 },
+      });
+
+      // Verify single consolidated create call for prod-new/var-new (1 + 4 guest = 5)
+      expect(prisma.client.cartItem.create).toHaveBeenCalledTimes(1);
+      expect(prisma.client.cartItem.create).toHaveBeenCalledWith({
+        data: {
+          cartId: "cart-cust",
+          productId: "prod-new",
+          variantId: "var-new",
+          serviceId: null,
+          bookingDetails: undefined,
+          quantity: 5,
+        },
       });
     });
   });

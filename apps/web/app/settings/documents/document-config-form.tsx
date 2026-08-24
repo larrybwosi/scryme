@@ -266,7 +266,9 @@ export function DocumentConfigForm({
                           <button
                             type="button"
                             onClick={() => field.onChange("")}
-                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            aria-label="Remove logo"
+                            title="Remove logo"
+                            className="absolute top-1 right-1 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1">
                             <X className="w-3 h-3" />
                           </button>
                         </div>

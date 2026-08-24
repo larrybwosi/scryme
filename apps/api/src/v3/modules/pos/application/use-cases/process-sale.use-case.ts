@@ -46,7 +46,7 @@ export class ProcessSaleUseCase {
 
         // 1. Process Product Items if present
         if (hasProducts) {
-          const variants = await this.getV(tx, dto.items);
+          const variants = await this.getV(tx, dto.items, orgId);
           items = this.prepI(dto.items, variants, orgId);
           sub += items.reduce((s: number, i: any) => s + i.lineTotal, 0);
         }
@@ -89,7 +89,7 @@ export class ProcessSaleUseCase {
         }
 
         const cId = await this.getC(tx, orgId, dto.customerPhone);
-        const disc = await this.vDisc(tx, dto.loyaltyVoucherCode, cId, sub);
+        const disc = await this.vDisc(tx, orgId, dto.loyaltyVoucherCode, cId, sub);
         const total = sub - (dto.discountAmount || 0) - disc;
 
         const t = await tx.transaction.create({
@@ -170,10 +170,10 @@ export class ProcessSaleUseCase {
     };
   }
 
-  private async getV(tx: any, items: any[]) {
+  private async getV(tx: any, items: any[], organizationId: string) {
     const ids = items.map((i) => i.variantId);
     const v = await tx.productVariant.findMany({
-      where: { id: { in: ids } },
+      where: { id: { in: ids }, product: { organizationId } },
       select: {
         id: true,
         retailPrice: true,
@@ -183,7 +183,7 @@ export class ProcessSaleUseCase {
         product: { select: { name: true } },
       },
     });
-    if (v.length !== ids.length)
+    if (v.length !== new Set(ids).size)
       throw new BadRequestException("Missing variants");
     return v;
   }
@@ -226,10 +226,16 @@ export class ProcessSaleUseCase {
     return nc.id;
   }
 
-  private async vDisc(tx: any, code: string, cId: string, sub: number) {
+  private async vDisc(
+    tx: any,
+    organizationId: string,
+    code: string,
+    cId: string,
+    sub: number,
+  ) {
     if (!code || !cId) return 0;
-    const v = await tx.loyaltyVoucher.findUnique({
-      where: { code },
+    const v = await tx.loyaltyVoucher.findFirst({
+      where: { code, organizationId },
       include: { reward: true },
     });
     this.valV(v, cId);
@@ -306,9 +312,11 @@ export class ProcessSaleUseCase {
     tId: string,
     tNo: string,
   ) {
+    const bookingUpdates: any[] = [];
     const stockUpdates: any[] = [];
     const movements: any[] = [];
     const consumedMaterialsToCreate: any[] = [];
+    const materialQtyMap = new Map<string, number>();
 
     // ⚡ Bolt Optimization: Batch pre-fetch all matching service bookings to eliminate N+1 database queries.
     // This reduces the query overhead from O(N) sequential requests down to a single constant-time O(1) query.
@@ -339,31 +347,26 @@ export class ProcessSaleUseCase {
           throw new BadRequestException(`Booking with ID ${si.bookingId} is already completed`);
         }
 
-        await tx.serviceBooking.update({
-          where: { id: booking.id },
-          data: {
-            status: "COMPLETED",
-            actualStartTime: booking.actualStartTime || booking.scheduledStartTime,
-            actualEndTime: new Date(),
-            transactionId: tId,
-          },
-        });
+        // ⚡ Bolt Optimization: Collect booking update promises to parallelize database writes concurrently via Promise.all.
+        // This eliminates sequential N+1 blocking DB roundtrips for multi-service sales, reducing delay from O(N) to O(1).
+        bookingUpdates.push(
+          tx.serviceBooking.update({
+            where: { id: booking.id },
+            data: {
+              status: "COMPLETED",
+              actualStartTime: booking.actualStartTime || booking.scheduledStartTime,
+              actualEndTime: new Date(),
+              transactionId: tId,
+            },
+          }),
+        );
 
+        // ⚡ Bolt Optimization: Consolidate material quantity decrements by variantId in-memory
+        // to prevent row-lock contention and transactional deadlocks on duplicate variants.
         const materials = booking.service.materials || [];
         for (const mat of materials) {
           const qty = Number(mat.quantity) * si.quantity;
-
-          stockUpdates.push(
-            tx.productVariantStock.update({
-              where: {
-                variantId_locationId: { variantId: mat.variantId, locationId: locId },
-              },
-              data: {
-                currentStock: { decrement: qty },
-                availableStock: { decrement: qty },
-              },
-            })
-          );
+          materialQtyMap.set(mat.variantId, (materialQtyMap.get(mat.variantId) || 0) + qty);
 
           movements.push({
             organizationId: orgId,
@@ -388,18 +391,7 @@ export class ProcessSaleUseCase {
         const materials = service.materials || [];
         for (const mat of materials) {
           const qty = Number(mat.quantity) * si.quantity;
-
-          stockUpdates.push(
-            tx.productVariantStock.update({
-              where: {
-                variantId_locationId: { variantId: mat.variantId, locationId: locId },
-              },
-              data: {
-                currentStock: { decrement: qty },
-                availableStock: { decrement: qty },
-              },
-            })
-          );
+          materialQtyMap.set(mat.variantId, (materialQtyMap.get(mat.variantId) || 0) + qty);
 
           movements.push({
             organizationId: orgId,
@@ -416,8 +408,22 @@ export class ProcessSaleUseCase {
       }
     }
 
-    if (stockUpdates.length > 0) {
-      await Promise.all(stockUpdates);
+    for (const [variantId, totalQty] of materialQtyMap.entries()) {
+      stockUpdates.push(
+        tx.productVariantStock.update({
+          where: {
+            variantId_locationId: { variantId, locationId: locId },
+          },
+          data: {
+            currentStock: { decrement: totalQty },
+            availableStock: { decrement: totalQty },
+          },
+        })
+      );
+    }
+
+    if (bookingUpdates.length > 0 || stockUpdates.length > 0) {
+      await Promise.all([...bookingUpdates, ...stockUpdates]);
     }
 
     if (movements.length > 0) {

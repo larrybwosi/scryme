@@ -96,7 +96,7 @@ export class ScrymeChatApiClient {
     ownerEmail?: string,
     initialMembers?: { email: string; role?: "admin" | "member" }[],
   ): Promise<ScrymeChatWorkspace> {
-    const data = await chat.workspace.create({
+    const data = await chat.m2m.workspace.provision({
       name,
       slug,
       ownerEmail: ownerEmail || "admin@scryme.tech",

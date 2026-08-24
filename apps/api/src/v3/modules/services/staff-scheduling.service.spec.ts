@@ -1,4 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
+import { NotFoundException } from "@nestjs/common";
 import { StaffSchedulingService } from "./application/services/staff-scheduling.service";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -15,8 +16,12 @@ describe("StaffSchedulingService", () => {
           provide: PrismaService,
           useValue: {
             client: {
+              member: {
+                findFirst: vi.fn(),
+              },
               staffShift: {
                 create: vi.fn(),
+                findFirst: vi.fn(),
                 findMany: vi.fn(),
               },
               staffBreak: {
@@ -34,6 +39,98 @@ describe("StaffSchedulingService", () => {
 
   it("should be defined", () => {
     expect(service).toBeDefined();
+  });
+
+  describe("createShift", () => {
+    it("should throw NotFoundException if member does not belong to organization", async () => {
+      vi.spyOn(prisma.client.member, "findFirst").mockResolvedValue(null);
+
+      await expect(
+        service.createShift("org-1", "foreign-member", {
+          dayOfWeek: 1,
+          startTime: "09:00",
+          endTime: "17:00",
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prisma.client.member.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-member", organizationId: "org-1" },
+      });
+      expect(prisma.client.staffShift.create).not.toHaveBeenCalled();
+    });
+
+    it("should create shift if member belongs to organization", async () => {
+      const mockMember = { id: "member-1", organizationId: "org-1" };
+      const mockShift = { id: "shift-1", memberId: "member-1", organizationId: "org-1" };
+
+      vi.spyOn(prisma.client.member, "findFirst").mockResolvedValue(mockMember as any);
+      vi.spyOn(prisma.client.staffShift, "create").mockResolvedValue(mockShift as any);
+
+      const result = await service.createShift("org-1", "member-1", {
+        dayOfWeek: 1,
+        startTime: "09:00",
+        endTime: "17:00",
+      });
+
+      expect(prisma.client.member.findFirst).toHaveBeenCalledWith({
+        where: { id: "member-1", organizationId: "org-1" },
+      });
+      expect(prisma.client.staffShift.create).toHaveBeenCalledWith({
+        data: {
+          dayOfWeek: 1,
+          startTime: "09:00",
+          endTime: "17:00",
+          memberId: "member-1",
+          organizationId: "org-1",
+        },
+      });
+      expect(result).toEqual(mockShift);
+    });
+  });
+
+  describe("addBreak", () => {
+    it("should throw NotFoundException if shift does not belong to organization", async () => {
+      vi.spyOn(prisma.client.staffShift, "findFirst").mockResolvedValue(null);
+
+      await expect(
+        service.addBreak("org-1", "foreign-shift", {
+          startTime: "12:00",
+          endTime: "13:00",
+        }),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prisma.client.staffShift.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-shift", organizationId: "org-1" },
+      });
+      expect(prisma.client.staffBreak.create).not.toHaveBeenCalled();
+    });
+
+    it("should create break if shift belongs to organization", async () => {
+      const mockShift = { id: "shift-1", organizationId: "org-1" };
+      const mockBreak = { id: "break-1", shiftId: "shift-1", startTime: "12:00", endTime: "13:00" };
+
+      vi.spyOn(prisma.client.staffShift, "findFirst").mockResolvedValue(mockShift as any);
+      vi.spyOn(prisma.client.staffBreak, "create").mockResolvedValue(mockBreak as any);
+
+      const result = await service.addBreak("org-1", "shift-1", {
+        startTime: "12:00",
+        endTime: "13:00",
+        description: "Lunch",
+      });
+
+      expect(prisma.client.staffShift.findFirst).toHaveBeenCalledWith({
+        where: { id: "shift-1", organizationId: "org-1" },
+      });
+      expect(prisma.client.staffBreak.create).toHaveBeenCalledWith({
+        data: {
+          shiftId: "shift-1",
+          startTime: "12:00",
+          endTime: "13:00",
+          description: "Lunch",
+        },
+      });
+      expect(result).toEqual(mockBreak);
+    });
   });
 
   describe("isStaffAvailable", () => {

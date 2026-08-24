@@ -83,17 +83,22 @@ export class FavoritesUseCase {
   async removeFavorite(organizationId: string, dto: FavoriteDto) {
     if (!dto.customerId) throw new Error("customerId is required");
 
-    try {
-      return await this.prisma.client.favorite.delete({
-        where: {
-          customerId_productId: {
-            customerId: dto.customerId,
-            productId: dto.productId,
-          },
-        },
-      });
-    } catch (e) {
+    // 🛡️ Sentinel: Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
+    const favorite = await this.prisma.client.favorite.findFirst({
+      where: {
+        organizationId,
+        customerId: dto.customerId,
+        productId: dto.productId,
+      },
+      select: { id: true },
+    });
+
+    if (!favorite) {
       throw new NotFoundException("Favorite not found");
     }
+
+    return this.prisma.client.favorite.delete({
+      where: { id: favorite.id },
+    });
   }
 }

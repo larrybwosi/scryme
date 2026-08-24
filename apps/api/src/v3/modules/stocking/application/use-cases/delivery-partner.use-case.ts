@@ -17,9 +17,27 @@ export class DeliveryPartnerUseCase {
 
   // fallow-ignore-next-line unused-class-members
   async createPartner(organizationId: string, dto: CreatePartnerDto) {
+    const {
+      name,
+      email,
+      phone,
+      address,
+      benefitType,
+      commissionRate,
+      fixedFee,
+      reconciliationPolicy,
+    } = dto;
+
     return this.prisma.client.deliveryPartner.create({
       data: {
-        ...dto,
+        name,
+        email,
+        phone,
+        address,
+        benefitType,
+        commissionRate,
+        fixedFee,
+        reconciliationPolicy,
         organizationId,
       },
     });
@@ -60,10 +78,35 @@ export class DeliveryPartnerUseCase {
     dto: UpdatePartnerDto,
   ) {
     const partner = await this.getPartner(organizationId, id);
-    return this.prisma.client.deliveryPartner.update({
-      where: { id: partner.id },
-      data: dto,
+
+    const {
+      name,
+      email,
+      phone,
+      address,
+      benefitType,
+      commissionRate,
+      fixedFee,
+      reconciliationPolicy,
+      isActive,
+    } = dto;
+
+    await this.prisma.client.deliveryPartner.updateMany({
+      where: { id: partner.id, organizationId },
+      data: {
+        ...(name !== undefined && { name }),
+        ...(email !== undefined && { email }),
+        ...(phone !== undefined && { phone }),
+        ...(address !== undefined && { address }),
+        ...(benefitType !== undefined && { benefitType }),
+        ...(commissionRate !== undefined && { commissionRate }),
+        ...(fixedFee !== undefined && { fixedFee }),
+        ...(reconciliationPolicy !== undefined && { reconciliationPolicy }),
+        ...(isActive !== undefined && { isActive }),
+      },
     });
+
+    return this.getPartner(organizationId, id);
   }
 
   // fallow-ignore-next-line unused-class-members

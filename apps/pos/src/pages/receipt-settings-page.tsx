@@ -900,7 +900,10 @@ function ReceiptSettings({
             <Section title="Custom Enterprise Fields" icon={Building2} description="Regional tax and legal fields">
               <div className="space-y-4">
                 {(config.customFields || []).map((field, idx) => (
-                  <div key={idx} className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 space-y-3">
+                  <div
+                    key={idx}
+                    className="p-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/50 space-y-3"
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <GripVertical className="w-3.5 h-3.5 text-zinc-600" />
@@ -950,7 +953,12 @@ function ReceiptSettings({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => updateConfig('customFields', [...(config.customFields || []), { label: '', value: '', enabled: true }])}
+                  onClick={() =>
+                    updateConfig('customFields', [
+                      ...(config.customFields || []),
+                      { label: '', value: '', enabled: true },
+                    ])
+                  }
                   className="w-full h-8 text-[11px] border-dashed border-zinc-700 bg-zinc-900/30"
                 >
                   + Add Custom Field
@@ -1057,22 +1065,26 @@ function ReceiptSettings({
                     </div>
                     <span className="text-[12px] font-medium text-zinc-200 capitalize">{section}</span>
                   </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-7 w-7 text-zinc-500 hover:text-white"
+                      className="h-7 w-7 text-zinc-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
                       disabled={idx === 0}
                       onClick={() => moveSection(idx, 'up')}
+                      aria-label={`Move ${section} section up`}
+                      title={`Move ${section} section up`}
                     >
                       <ChevronUp className="w-4 h-4" />
                     </Button>
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="h-7 w-7 text-zinc-500 hover:text-white"
+                      className="h-7 w-7 text-zinc-500 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
                       disabled={idx === config.sectionOrder.length - 1}
                       onClick={() => moveSection(idx, 'down')}
+                      aria-label={`Move ${section} section down`}
+                      title={`Move ${section} section down`}
                     >
                       <ChevronDown className="w-4 h-4" />
                     </Button>
@@ -1108,7 +1120,11 @@ function ReceiptSettings({
                 </div>
               )}
             </Section>
-            <Section title="KRA Details & Tax Registration" icon={Building2} description="KRA details, Tax & VAT identification numbers">
+            <Section
+              title="KRA Details & Tax Registration"
+              icon={Building2}
+              description="KRA details, Tax & VAT identification numbers"
+            >
               <ToggleRow
                 label="KRA Details"
                 checked={!!config.showKraDetails}
@@ -1679,8 +1695,7 @@ export default function ReceiptSettingsPage() {
   const hasKitchenDisplay =
     isRestaurantOrBarBuild &&
     businessConfig.features.kitchenDisplay &&
-    (['restaurant', 'bar'].includes(businessMode) ||
-      ['restaurant', 'bar'].includes(settings.businessType));
+    (['restaurant', 'bar'].includes(businessMode) || ['restaurant', 'bar'].includes(settings.businessType));
 
   const [mode, setMode] = useState<'receipt' | 'kitchen'>('receipt');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
@@ -1781,7 +1796,9 @@ export default function ReceiptSettingsPage() {
               <Settings2 className="w-4 h-4 text-zinc-700 dark:text-zinc-300" />
             </div>
             <div>
-              <h2 className="font-semibold text-[14px] leading-none text-zinc-950 dark:text-white tracking-tight">Print Configuration</h2>
+              <h2 className="font-semibold text-[14px] leading-none text-zinc-950 dark:text-white tracking-tight">
+                Print Configuration
+              </h2>
               <p className="text-[11px] text-zinc-500 mt-1 font-mono">
                 {hasKitchenDisplay ? 'receipt · kitchen ticket' : 'customer receipt'}
               </p>
@@ -1866,8 +1883,11 @@ export default function ReceiptSettingsPage() {
         {/* Floating toolbar */}
         <div className="absolute top-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1 bg-zinc-900/95 backdrop-blur-xl border border-zinc-700/60 shadow-2xl rounded-full px-3 py-1.5">
           <button
-            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-200"
+            type="button"
+            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
             onClick={() => setPreviewScale(p => [Math.max(50, p[0] - 10)])}
+            aria-label="Zoom out preview"
+            title="Zoom out preview"
           >
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
@@ -1875,20 +1895,26 @@ export default function ReceiptSettingsPage() {
             {previewScale[0]}%
           </span>
           <button
-            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-200"
+            type="button"
+            className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
             onClick={() => setPreviewScale(p => [Math.min(150, p[0] + 10)])}
+            aria-label="Zoom in preview"
+            title="Zoom in preview"
           >
             <ZoomIn className="w-3.5 h-3.5" />
           </button>
           <div className="w-px h-4 bg-zinc-700 mx-1" />
           <button
+            type="button"
             onClick={() => setPreviewBg(previewBg === 'dark' ? 'light' : 'dark')}
             className={cn(
-              'w-7 h-7 rounded-full flex items-center justify-center transition-all',
+              'w-7 h-7 rounded-full flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60',
               previewBg === 'dark'
                 ? 'bg-zinc-700 text-zinc-200 ring-1 ring-zinc-600'
                 : 'hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200'
             )}
+            aria-label={`Switch to ${previewBg === 'dark' ? 'light' : 'dark'} background`}
+            title={`Switch to ${previewBg === 'dark' ? 'light' : 'dark'} background`}
           >
             <Layout className="w-3.5 h-3.5" />
           </button>
@@ -1910,7 +1936,9 @@ export default function ReceiptSettingsPage() {
                 if (requestFullscreen) requestFullscreen.call(element);
               }
             }}
-            className="h-8 w-8 p-0 bg-zinc-900/50 backdrop-blur hover:bg-zinc-800 text-zinc-400 rounded-lg"
+            className="h-8 w-8 p-0 bg-zinc-900/50 backdrop-blur hover:bg-zinc-800 text-zinc-400 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60"
+            aria-label="View preview fullscreen"
+            title="View preview fullscreen"
           >
             <Layers className="w-4 h-4" />
           </Button>

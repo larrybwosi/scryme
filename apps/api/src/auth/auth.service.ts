@@ -3,5 +3,5 @@ import { auth } from "@repo/auth/nest";
 
 @Injectable()
 export class AuthService {
-  public auth = auth;
+  public auth: typeof auth = auth;
 }

@@ -24,58 +24,60 @@ export class RequestB2BQuoteUseCase {
   ) {}
 
   async execute(organizationId: string, dto: RequestB2BQuoteDto) {
-    // 1. Validate Related Entities Ownership
-    if (dto.customerId) {
-      const customer = await this.prisma.client.customer.findFirst({
-        where: { id: dto.customerId, organizationId },
-        select: { id: true, defaultLocationId: true },
-      });
-      if (!customer) {
-        throw new BadRequestException(
-          "Customer not found in this organization",
-        );
-      }
-      if (!dto.locationId) {
-        dto.locationId = customer.defaultLocationId || undefined;
-      }
+    /**
+     * ⚡ Bolt Optimization: Parallelize initial read-only entity validation lookups.
+     * Running customer, businessAccount, and location / defaultLocation checks concurrently
+     * via Promise.all collapses sequential database roundtrips from up to 3 roundtrips down to 1 flat
+     * concurrent roundtrip, reducing initial request latency by up to ~66%.
+     */
+    const [customer, businessAccount, location, defaultLocation] =
+      await Promise.all([
+        dto.customerId
+          ? this.prisma.client.customer.findFirst({
+              where: { id: dto.customerId, organizationId },
+              select: { id: true, defaultLocationId: true },
+            })
+          : null,
+        dto.businessAccountId
+          ? this.prisma.client.businessAccount.findFirst({
+              where: { id: dto.businessAccountId, organizationId },
+              select: { id: true, defaultLocationId: true },
+            })
+          : null,
+        dto.locationId
+          ? this.prisma.client.inventoryLocation.findFirst({
+              where: { id: dto.locationId, organizationId },
+              select: { id: true },
+            })
+          : null,
+        !dto.locationId
+          ? this.prisma.client.inventoryLocation.findFirst({
+              where: { organizationId, isDefault: true },
+              select: { id: true },
+            })
+          : null,
+      ]);
+
+    if (dto.customerId && !customer) {
+      throw new BadRequestException("Customer not found in this organization");
     }
 
-    if (dto.businessAccountId) {
-      const businessAccount =
-        await this.prisma.client.businessAccount.findFirst({
-          where: { id: dto.businessAccountId, organizationId },
-          select: { id: true, defaultLocationId: true },
-        });
-      if (!businessAccount) {
-        throw new BadRequestException(
-          "Business account not found in this organization",
-        );
-      }
-      if (!dto.locationId) {
-        dto.locationId = businessAccount.defaultLocationId || undefined;
-      }
+    if (dto.businessAccountId && !businessAccount) {
+      throw new BadRequestException(
+        "Business account not found in this organization",
+      );
     }
 
-    // 2. Resolve Location
-    let locationId = dto.locationId;
-
-    if (locationId) {
-      // Validate location belongs to organization
-      const location = await this.prisma.client.inventoryLocation.findFirst({
-        where: { id: locationId, organizationId },
-      });
-      if (!location)
-        throw new BadRequestException(
-          "Location not found in this organization",
-        );
-    } else {
-      const defaultLocation =
-        await this.prisma.client.inventoryLocation.findFirst({
-          where: { organizationId, isDefault: true },
-          select: { id: true },
-        });
-      locationId = defaultLocation?.id;
+    if (dto.locationId && !location) {
+      throw new BadRequestException("Location not found in this organization");
     }
+
+    // Resolve locationId using explicitly provided location, customer/business default, or organization default location
+    const locationId =
+      dto.locationId ||
+      customer?.defaultLocationId ||
+      businessAccount?.defaultLocationId ||
+      defaultLocation?.id;
 
     if (!locationId) {
       throw new BadRequestException(

@@ -30,7 +30,10 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     if (isAuthRoute || isBypassedFromLoginCheck) {
       return NextResponse.next();
     }
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginUrl = new URL("/login", request.url);
+    const targetPath = pathname + request.nextUrl.search;
+    loginUrl.searchParams.set("callbackUrl", targetPath);
+    return NextResponse.redirect(loginUrl);
   }
 
   // If authenticated and on an auth route, redirect to dashboard or callbackUrl
