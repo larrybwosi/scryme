@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Geist_Mono } from "next/font/google";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LayoutContent } from "@/components/layout/layout-content";
@@ -8,7 +8,13 @@ import { env } from "@repo/env";
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-sans",
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -146,7 +152,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} bg-background`}
+      className={`${inter.variable} ${geistMono.variable} bg-background`}
       suppressHydrationWarning
     >
       <head>
@@ -161,6 +167,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased text-foreground">
+        <a href="#main-content" className="sr-only fixed left-4 top-4 rounded-md bg-background px-4 py-3 text-foreground shadow-lg focus:not-sr-only">Skip to main content</a>
         <ThemeProvider>
           <StructuredData data={organizationData} />
           <StructuredData data={websiteData} />
