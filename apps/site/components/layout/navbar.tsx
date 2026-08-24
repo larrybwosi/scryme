@@ -20,7 +20,7 @@ const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
 function captureNavigationCta(
   ctaLabel: string,
   destination: string,
-  ctaType: "signin" | "signup",
+  ctaType: "signin" | "signup" | "primary",
 ) {
   captureCtaClicked("navigation_cta_clicked", {
     location: "navbar",
@@ -201,7 +201,7 @@ export function Navbar() {
             Sign in
           </Link>
           <Link
-            href={`${webUrl}/sign-up`}
+            href="/demo"
             className="px-4 py-2 rounded-md text-sm font-semibold transition-opacity hover:opacity-90"
             style={{
               background: colors.brass,
@@ -209,10 +209,10 @@ export function Navbar() {
               fontFamily: fonts.body,
             }}
             onClick={() =>
-              captureNavigationCta("Get started", `${webUrl}/sign-up`, "signup")
+              captureNavigationCta("Book a demo", "/demo", "primary")
             }
           >
-            Get started
+            Book a demo
           </Link>
         </div>
 
@@ -317,7 +317,7 @@ export function Navbar() {
               <ThemeToggle />
             </div>
             <Link
-              href={`${webUrl}/sign-up`}
+              href="/demo"
               className="px-4 py-2.5 rounded-lg text-sm font-semibold text-center transition-opacity hover:opacity-90"
               style={{
                 background: colors.brass,
@@ -325,11 +325,11 @@ export function Navbar() {
                 fontFamily: fonts.body,
               }}
               onClick={() => {
-                captureNavigationCta("Get started", `${webUrl}/sign-up`, "signup");
+                captureNavigationCta("Book a demo", "/demo", "primary");
                 setMobileOpen(false);
               }}
             >
-              Get started
+              Book a demo
             </Link>
           </div>
         </div>
