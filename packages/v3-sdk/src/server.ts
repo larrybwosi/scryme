@@ -37,6 +37,7 @@ import {
   loyaltyMapping,
   membersMapping,
   adminMapping,
+  webhooksMapping,
   CatalogModule,
   AuthModule,
   InventoryModule,
@@ -47,6 +48,7 @@ import {
   LoyaltyModule,
   MembersModule,
   AdminModule,
+  WebhooksModule,
   getJwtExpiry,
   servicesMapping,
   ServicesModule,
@@ -128,6 +130,8 @@ export class ScrymeServerSDK<
   public members: MembersModule;
   /** Global setup parameters, organization definitions, audit trails, and tier limit submodule. */
   public admin: AdminModule;
+  /** Webhook registration, management, listing, and deletion submodule. */
+  public webhooks: WebhooksModule;
   /** Scheduling operations, break/shift management, staff schedules, and resource utilization submodule. */
   public services: ServicesModule;
 
@@ -596,6 +600,7 @@ export class ScrymeServerSDK<
     this.loyalty = buildModule(this.api, config.orgSlug, loyaltyMapping);
     this.members = buildModule(this.api, config.orgSlug, membersMapping);
     this.admin = buildModule(this.api, config.orgSlug, adminMapping);
+    this.webhooks = buildModule(this.api, config.orgSlug, webhooksMapping);
     this.services = buildModule(this.api, config.orgSlug, servicesMapping);
 
     this.cart = {
@@ -693,10 +698,23 @@ export class ScrymeServerSDK<
       checkout: async (params: {
         sessionId?: string;
         customerId?: string;
+        cartId?: string;
+        phoneNumber?: string;
         locationId: string;
         notes?: string;
         channel?: string;
       }) => {
+        if (params.phoneNumber) {
+          const res = await (this.orders as any).checkout({
+            cartId: params.cartId,
+            sessionId: params.sessionId,
+            phoneNumber: params.phoneNumber,
+            locationId: params.locationId,
+            notes: params.notes,
+          });
+          return res?.data || res;
+        }
+
         if (!params.customerId)
           throw new Error("customerId is required for server checkout.");
 

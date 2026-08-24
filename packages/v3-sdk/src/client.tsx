@@ -41,6 +41,7 @@ import {
   loyaltyMapping,
   membersMapping,
   adminMapping,
+  webhooksMapping,
   CatalogModule,
   AuthModule,
   InventoryModule,
@@ -51,6 +52,7 @@ import {
   LoyaltyModule,
   MembersModule,
   AdminModule,
+  WebhooksModule,
   getJwtExpiry,
   CustomerSessionDto,
   CustomerAuthResponseDto,
@@ -222,6 +224,8 @@ export class ScrymeClientSDK<
   public members: MembersModule;
   /** Global setup parameters, organization definitions, audit trails, and tier limit submodule. */
   public admin: AdminModule;
+  /** Webhook registration, management, listing, and deletion submodule. */
+  public webhooks: WebhooksModule;
 
   /**
    * Stateful Shopping Cart Submodule.
@@ -305,17 +309,19 @@ export class ScrymeClientSDK<
     ): Promise<AxiosResponse<T & Record<string, any>>>;
 
     /**
-     * Finalizes the shopping cart, creating a physical Sales Order for checkout.
-     * Automatically resolves and appends the customer ID from the active customer session.
+     * Finalizes the shopping cart, creating a physical Sales Order or executing STK Push checkout.
+     * Automatically resolves and appends the customer ID from the active customer session if phoneNumber is omitted.
      * Clears the shopping cart state upon successful transaction creation.
-     * @param params Checkout configurations including locationId, channel, and custom notes.
-     * @returns Promise resolving to the created order response.
+     * @param params Checkout configurations including locationId, phoneNumber, cartId, channel, and custom notes.
+     * @returns Promise resolving to the created order or payment response.
      */
     checkout(params: {
       locationId: string;
+      phoneNumber?: string;
+      cartId?: string;
       notes?: string;
       channel?: string;
-    }): Promise<OrderResponseDto>;
+    }): Promise<any>;
   };
 
   /**
@@ -983,6 +989,7 @@ export class ScrymeClientSDK<
     this.loyalty = buildModule(this.api, config.orgSlug, loyaltyMapping);
     this.members = buildModule(this.api, config.orgSlug, membersMapping);
     this.admin = buildModule(this.api, config.orgSlug, adminMapping);
+    this.webhooks = buildModule(this.api, config.orgSlug, webhooksMapping);
 
     this.cart = {
       get: async <T = TCartResponse>(params?: CartControllerGetCartParams): Promise<AxiosResponse<T & Record<string, any>>> => {
@@ -1097,9 +1104,21 @@ export class ScrymeClientSDK<
       },
       checkout: async (params: {
         locationId: string;
+        phoneNumber?: string;
+        cartId?: string;
         notes?: string;
         channel?: string;
       }) => {
+        if (params.phoneNumber) {
+          const res = await (this.orders as any).checkout({
+            cartId: params.cartId,
+            phoneNumber: params.phoneNumber,
+            locationId: params.locationId,
+            notes: params.notes,
+          });
+          return res?.data || res;
+        }
+
         const session = await this.auth.getSession();
         const user = session.user as any;
         const customerId = user?.customerId || user?.id || user?.customer?.id;

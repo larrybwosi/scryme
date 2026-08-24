@@ -11688,6 +11688,46 @@
           "V3 Analytics"
         ]
       }
+    },
+    "/v3/{orgSlug}/payments/checkout": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Process customer checkout and initiate payment",
+        "operationId": "Payments_Checkout",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Checkout processed and payment initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "info": {
@@ -16150,6 +16190,50 @@
         "required": [
           "syncTypes"
         ]
+      },
+      "CheckoutDto": {
+        "type": "object",
+        "properties": {
+          "cartId": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "locationId": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "phoneNumber",
+          "locationId"
+        ]
+      },
+      "CheckoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "merchantRequestID": {
+            "type": "string"
+          },
+          "checkoutRequestID": {
+            "type": "string"
+          }
+        }
       }
     }
   }

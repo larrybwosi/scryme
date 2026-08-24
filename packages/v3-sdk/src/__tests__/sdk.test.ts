@@ -1230,7 +1230,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         );
       });
 
-      it("should support client cart checkout", async () => {
+      it("should support client cart checkout and STK Push checkout", async () => {
         const sdk = createClientSDK({
           clientId: "client-id",
           orgSlug: "client-org",
@@ -1263,6 +1263,47 @@ describe("Scryme V3 Client and Server SDKs", () => {
             items: [{ variantId: "v1", quantity: 2, unitPrice: 10 }],
             notes: "Leave at door",
           },
+          undefined,
+        );
+
+        // STK push checkout via payments/checkout
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { orderId: "ord-stk", paymentId: "pay-stk", status: "STK Sent" },
+        });
+
+        const stkRes = await sdk.cart.checkout({
+          cartId: "cart-123",
+          phoneNumber: "254700000000",
+          locationId: "loc-1",
+        });
+
+        expect(stkRes).toEqual({ orderId: "ord-stk", paymentId: "pay-stk", status: "STK Sent" });
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+          "/v3/client-org/payments/checkout",
+          {
+            cartId: "cart-123",
+            phoneNumber: "254700000000",
+            locationId: "loc-1",
+          },
+          undefined,
+        );
+      });
+
+      it("should support webhooks submodule on client SDK", async () => {
+        const sdk = createClientSDK({
+          clientId: "client-id",
+          orgSlug: "client-org",
+          storage: mockStorage,
+        });
+
+        (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+          data: [{ id: "wh-1", name: "Order Events" }],
+        });
+
+        const webhooks = await sdk.webhooks.list();
+        expect(webhooks.data).toEqual([{ id: "wh-1", name: "Order Events" }]);
+        expect(sdk.axiosInstance.get).toHaveBeenCalledWith(
+          "/v3/client-org/webhooks",
           undefined,
         );
       });

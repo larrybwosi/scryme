@@ -7,6 +7,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { CheckoutDto, CheckoutResponseDto } from "../dto/checkout.dto";
 import { MpesaService } from "@repo/shared/mpesa/server";
 import { emitOrderPlaced } from "@repo/windmill/server";
+import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
 import { Decimal } from "decimal.js";
 
 @Injectable()
@@ -14,6 +15,7 @@ export class CheckoutUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mpesaService: MpesaService,
+    private readonly webhookService: WebhookService,
   ) {}
 
   async execute(
@@ -153,13 +155,23 @@ export class CheckoutUseCase {
       data: { status: "CHECKED_OUT" },
     });
 
-    // 6. Emit Event
+    // 6. Emit Event & Dispatch Webhooks
     await emitOrderPlaced(organizationId, {
       orderId: transaction.id,
       orderNumber: transaction.number,
       totalAmount: Number(transaction.finalTotal),
       currency: "KES",
       items: [],
+    });
+
+    await this.webhookService.dispatch("order.placed", organizationId, {
+      orderId: transaction.id,
+      orderNumber: transaction.number,
+      finalTotal: Number(transaction.finalTotal),
+      status: transaction.status,
+      customerId: cart.customerId,
+      paymentId: payment.id,
+      paymentStatus: payment.status,
     });
 
     return {
