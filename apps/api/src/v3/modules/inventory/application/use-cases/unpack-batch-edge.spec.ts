@@ -19,6 +19,7 @@ describe("UnpackBatchUseCase Edge Cases", () => {
 
     mockTx = {
       stockBatch: {
+        findFirst: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
         create: vi.fn(),
@@ -56,7 +57,7 @@ describe("UnpackBatchUseCase Edge Cases", () => {
 
   it("should unpack batch and handle damages", async () => {
     const bulkBatchId = "bulk-1";
-    mockTx.stockBatch.findUnique.mockResolvedValue({
+    mockTx.stockBatch.findFirst.mockResolvedValue({
       id: bulkBatchId,
       organizationId: mockOrgId,
       variantId: "v1",
@@ -109,7 +110,7 @@ describe("UnpackBatchUseCase Edge Cases", () => {
   });
 
   it("should fail if insufficient quantity in bulk batch", async () => {
-    mockTx.stockBatch.findUnique.mockResolvedValue({
+    mockTx.stockBatch.findFirst.mockResolvedValue({
       id: "bulk-1",
       currentQuantity: new Decimal(1),
     });

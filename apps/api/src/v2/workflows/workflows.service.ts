@@ -113,21 +113,26 @@ export class WorkflowsService {
     // In a real scenario, this would fetch from Windmill API or a shared library table
     // For now, we return our mock scripts and mark if they are provisioned for this org
 
-    const provisionedWorkflows = await (
-      this.prisma.client as any
-    ).windmillWorkflow.findMany({
-      where: { organizationId: ctx.organizationId },
-    });
+    // ⚡ Bolt Optimization: Parallelize independent database queries and use Map pre-indexing.
+    // 1) Fetch provisioned workflows and configuration concurrently via Promise.all.
+    // 2) Index provisionedWorkflows into a Map for O(1) constant-time lookups during array mapping,
+    //    reducing total lookup complexity from O(N * M) to O(N + M).
+    const [provisionedWorkflows, _config] = await Promise.all([
+      (this.prisma.client as any).windmillWorkflow.findMany({
+        where: { organizationId: ctx.organizationId },
+      }),
+      (this.prisma.client as any).windmillConfiguration.findUnique({
+        where: { organizationId: ctx.organizationId },
+      }),
+    ]);
 
-    const config = await (
-      this.prisma.client as any
-    ).windmillConfiguration.findUnique({
-      where: { organizationId: ctx.organizationId },
-    });
+    const provisionedMap = new Map<string, any>(
+      provisionedWorkflows.map((w: any) => [w.path, w]),
+    );
 
     // Simulated: if config exists and has an API key, we consider it "active" for the org
     return this.mockScripts.map((script) => {
-      const provisioned = provisionedWorkflows.find((w) => w.path === script.path);
+      const provisioned = provisionedMap.get(script.path);
       return {
         ...script,
         isProvisioned: !!provisioned,

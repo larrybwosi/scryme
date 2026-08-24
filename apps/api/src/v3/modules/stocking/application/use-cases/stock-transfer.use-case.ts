@@ -232,25 +232,59 @@ export class StockTransferUseCase {
       // ⚡ Bolt Optimization: Pre-index transfer items into a Map to avoid O(N*M) nested loop search
       const transferItemsMap = new Map(transfer.items.map((i) => [i.id, i]));
 
+      // ⚡ Bolt Optimization: Consolidate stock updates per unique variantId in-memory.
+      // Doing individual `productVariantStock.update` calls inside the loop for each item
+      // causes sequential database write roundtrips and row lock contention if multiple items share a variant.
+      // Aggregating quantities by unique variantId allows us to perform exactly 1 update per unique variant concurrently via Promise.all.
+      const variantStockUpdates = new Map<
+        string,
+        { totalShipped: number; totalRequested: number }
+      >();
+
       for (const itemDto of dto.items) {
         const item = transferItemsMap.get(itemDto.transferItemId);
-        if (!item)
+        if (!item) {
           throw new NotFoundException(
             `Item ${itemDto.transferItemId} not found`,
           );
+        }
 
-        await tx.productVariantStock.update({
-          where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId: transfer.fromLocationId,
-            },
-          },
-          data: {
-            currentStock: { decrement: itemDto.shippedQuantity },
-            reservedStock: { decrement: item.requestedQuantity },
-          },
-        });
+        const existing = variantStockUpdates.get(item.variantId);
+        if (existing) {
+          existing.totalShipped += itemDto.shippedQuantity;
+          existing.totalRequested += Number(item.requestedQuantity);
+        } else {
+          variantStockUpdates.set(item.variantId, {
+            totalShipped: itemDto.shippedQuantity,
+            totalRequested: Number(item.requestedQuantity),
+          });
+        }
+      }
+
+      // Execute consolidated productVariantStock updates concurrently across unique variants
+      await Promise.all(
+        Array.from(variantStockUpdates.entries()).map(
+          ([variantId, { totalShipped, totalRequested }]) =>
+            tx.productVariantStock.update({
+              where: {
+                variantId_locationId: {
+                  variantId,
+                  locationId: transfer.fromLocationId,
+                },
+              },
+              data: {
+                currentStock: { decrement: totalShipped },
+                reservedStock: { decrement: totalRequested },
+              },
+            }),
+        ),
+      );
+
+      // Process batch deductions and item updates
+      const itemUpdatePromises: Promise<any>[] = [];
+
+      for (const itemDto of dto.items) {
+        const item = transferItemsMap.get(itemDto.transferItemId)!;
 
         let remainingToDeduct = itemDto.shippedQuantity;
         const availableBatches = batchesByVariant.get(item.variantId) || [];
@@ -271,7 +305,8 @@ export class StockTransferUseCase {
           });
 
           // Update local copy to handle multiple lines for the same variant in one shipment correctly
-          (batch as any).currentQuantity = Number(batch.currentQuantity) - deduction;
+          (batch as any).currentQuantity =
+            Number(batch.currentQuantity) - deduction;
 
           await this.inventoryMovementService.recordMovement(tx, {
             organizationId,
@@ -295,14 +330,19 @@ export class StockTransferUseCase {
           );
         }
 
-        await tx.stockTransferItem.update({
-          where: { id: item.id },
-          data: {
-            shippedQuantity: itemDto.shippedQuantity,
-            stockBatchId: itemDto.stockBatchId,
-          },
-        });
+        itemUpdatePromises.push(
+          tx.stockTransferItem.update({
+            where: { id: item.id },
+            data: {
+              shippedQuantity: itemDto.shippedQuantity,
+              stockBatchId: itemDto.stockBatchId,
+            },
+          }),
+        );
       }
+
+      // Execute stockTransferItem updates concurrently
+      await Promise.all(itemUpdatePromises);
 
       const updatedTransfer = await tx.stockTransfer.update({
         where: { id: transferId },

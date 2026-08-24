@@ -23,6 +23,13 @@ describe("CommunicationIntegrationService - Security Tests", () => {
     crmObjectDefinition: {
       findFirst: vi.fn(),
     },
+    integrationDefinition: {
+      findUnique: vi.fn(),
+    },
+    organizationIntegration: {
+      findFirst: vi.fn(),
+      upsert: vi.fn(),
+    },
   };
 
   const mockSlackProvider = {
@@ -47,6 +54,73 @@ describe("CommunicationIntegrationService - Security Tests", () => {
       CommunicationIntegrationService,
     );
     vi.clearAllMocks();
+  });
+
+  describe("handleOAuthCallback (Credential Persistence & Validation)", () => {
+    it("should throw BadRequestException if organizationId or code is missing", async () => {
+      await expect(
+        service.handleOAuthCallback("slack", "", "code-123"),
+      ).rejects.toThrow();
+
+      await expect(
+        service.handleOAuthCallback("slack", "org-1", ""),
+      ).rejects.toThrow();
+    });
+
+    it("should throw NotFoundException if integration definition is missing", async () => {
+      mockSlackProvider.handleCallback.mockResolvedValue({
+        credentials: { accessToken: "token-123" },
+        settings: { channelId: "channel-123" },
+      });
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.handleOAuthCallback("slack", "org-1", "code-123"),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("should exchange code for credentials and upsert organizationIntegration record", async () => {
+      const mockOAuthResult = {
+        credentials: { accessToken: "token-123", teamId: "team-123" },
+        settings: { channelId: "channel-123" },
+      };
+      const mockDefinition = { id: "def-123", slug: "slack" };
+
+      mockSlackProvider.handleCallback.mockResolvedValue(mockOAuthResult);
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue(mockDefinition);
+      mockPrisma.organizationIntegration.upsert.mockResolvedValue({ id: "org-int-123" });
+
+      const result = await service.handleOAuthCallback("slack", "org-1", "code-123");
+
+      expect(mockSlackProvider.handleCallback).toHaveBeenCalledWith("code-123");
+      expect(mockPrisma.integrationDefinition.findUnique).toHaveBeenCalledWith({
+        where: { slug: "slack" },
+      });
+      expect(mockPrisma.organizationIntegration.upsert).toHaveBeenCalledWith({
+        where: {
+          organizationId_integrationDefinitionId: {
+            organizationId: "org-1",
+            integrationDefinitionId: "def-123",
+          },
+        },
+        create: expect.objectContaining({
+          organizationId: "org-1",
+          integrationDefinitionId: "def-123",
+          isActive: true,
+          credentials: mockOAuthResult.credentials,
+          settings: mockOAuthResult.settings,
+          syncStatus: "SYNCED",
+        }),
+        update: expect.objectContaining({
+          isActive: true,
+          credentials: mockOAuthResult.credentials,
+          settings: mockOAuthResult.settings,
+          syncStatus: "SYNCED",
+        }),
+      });
+
+      expect(result).toEqual({ id: "org-int-123" });
+    });
   });
 
   describe("replyToActivity (IDOR & Multi-tenancy Isolation)", () => {

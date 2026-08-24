@@ -5,18 +5,39 @@ export class InsightService {
   constructor(private prisma: PrismaClient) {}
 
   async getCustomerInsights(organizationId: string, customerId: string) {
-    // 1. Get Transaction Data
-    const transactions = await this.prisma.transaction.findMany({
-      where: {
-        organizationId,
-        customerId,
-        status: "COMPLETED",
-      },
-      select: {
-        finalTotal: true,
-        createdAt: true,
-      },
-    });
+    /**
+     * ⚡ Bolt Performance Optimization:
+     * 1. Executing independent transaction and crmRecord database queries concurrently using Promise.all
+     *    reduces database latency from 2 serial network roundtrips down to 1 concurrent roundtrip (~50% latency reduction).
+     * 2. Compute lastPurchase once when transactions exist, avoiding redundant array iterations and mapping calls.
+     */
+    const [transactions, crmRecord] = await Promise.all([
+      // 1. Get Transaction Data
+      this.prisma.transaction.findMany({
+        where: {
+          organizationId,
+          customerId,
+          status: "COMPLETED",
+        },
+        select: {
+          finalTotal: true,
+          createdAt: true,
+        },
+      }),
+      // 2. Get Activity Data
+      this.prisma.crmRecord.findFirst({
+        where: {
+          organizationId,
+          customer: { id: customerId },
+        },
+        select: {
+          id: true,
+          activities: {
+            select: { id: true, createdAt: true },
+          },
+        },
+      }),
+    ]);
 
     const totalSpent = transactions.reduce(
       (acc: number, tx: { finalTotal: any }) => acc + Number(tx.finalTotal),
@@ -24,21 +45,6 @@ export class InsightService {
     );
     const purchaseCount = transactions.length;
     const avgOrderValue = purchaseCount > 0 ? totalSpent / purchaseCount : 0;
-
-    // 2. Get Activity Data
-    const crmRecord = await this.prisma.crmRecord.findFirst({
-      where: {
-        organizationId,
-        customer: { id: customerId },
-      },
-      select: {
-        id: true,
-        activities: {
-          select: { id: true, createdAt: true },
-        },
-      },
-    });
-
     const activityCount = crmRecord?.activities.length || 0;
 
     // 3. Calculate Engagement Score
@@ -46,12 +52,15 @@ export class InsightService {
     // Normalized to 0-100
 
     let recencyScore = 0;
+    let lastPurchaseDate: Date | null = null;
+
     if (transactions.length > 0) {
-      const lastPurchase = new Date(
-        Math.max(...transactions.map((t: { createdAt: Date }) => t.createdAt.getTime())),
+      const maxTimestamp = Math.max(
+        ...transactions.map((t: { createdAt: Date }) => t.createdAt.getTime()),
       );
+      lastPurchaseDate = new Date(maxTimestamp);
       const daysSinceLastPurchase =
-        (Date.now() - lastPurchase.getTime()) / (1000 * 60 * 60 * 24);
+        (Date.now() - maxTimestamp) / (1000 * 60 * 60 * 24);
       recencyScore = Math.max(0, 100 - daysSinceLastPurchase); // Simple decay
     }
 
@@ -66,16 +75,7 @@ export class InsightService {
       aov: avgOrderValue,
       purchaseCount,
       engagementScore: Math.round(engagementScore),
-      lastPurchaseDate:
-        transactions.length > 0
-          ? new Date(
-              Math.max(
-                ...transactions.map((t: { createdAt: Date }) =>
-                  t.createdAt.getTime(),
-                ),
-              )
-            )
-          : null,
+      lastPurchaseDate,
     };
   }
 }

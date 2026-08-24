@@ -20,16 +20,35 @@ export class CheckoutUseCase {
     organizationId: string,
     dto: CheckoutDto,
   ): Promise<CheckoutResponseDto> {
-    // 1. Get Cart
+    // 1. Get Cart and Default Location concurrently
+    // ⚡ Bolt Optimization: Parallelize cart lookup and default inventory location query using Promise.all.
+    // Running these independent queries concurrently collapses 2 sequential database roundtrips down to 1 parallel
+    // roundtrip during checkout, reducing request latency by up to ~50%.
     // SECURITY (Sentinel): Using findFirst instead of findUnique to scope by organizationId
     // since Cart may lack a composite unique index on [id, organizationId].
-    const cart = await this.prisma.client.cart.findFirst({
-      where: { id: dto.cartId, organizationId },
-      include: { items: true },
-    });
+    const [cart, defaultLocation] = await Promise.all([
+      this.prisma.client.cart.findFirst({
+        where: { id: dto.cartId, organizationId },
+        include: { items: true },
+      }),
+      !dto.locationId
+        ? this.prisma.client.inventoryLocation.findFirst({
+            where: { organizationId, isDefault: true },
+            select: { id: true },
+          })
+        : null,
+    ]);
 
     if (!cart) throw new NotFoundException("Cart not found");
     if (cart.items.length === 0) throw new BadRequestException("Cart is empty");
+
+    // Resolve and validate locationId upfront before performing heavy variant lookups
+    const locationId = dto.locationId || defaultLocation?.id;
+    if (!locationId) {
+      throw new BadRequestException(
+        "No location provided and no default location found for organization",
+      );
+    }
 
     const variantIds = cart.items
       .map((i) => i.variantId)
@@ -84,19 +103,6 @@ export class CheckoutUseCase {
 
     // 2. Create Order (Transaction)
     const orderNumber = `ORD-${Date.now()}`;
-
-    // Need a locationId.
-    let locationId = dto.locationId;
-    if (!locationId) {
-      const location = await this.prisma.client.inventoryLocation.findFirst({
-        where: { organizationId, isDefault: true },
-      });
-      if (!location)
-        throw new BadRequestException(
-          "No location provided and no default location found for organization",
-        );
-      locationId = location.id;
-    }
 
     const transaction = await this.prisma.client.transaction.create({
       data: {

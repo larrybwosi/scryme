@@ -244,46 +244,49 @@ export class CreateOrderUseCase {
       });
     }
 
-    // 4. Trigger events
-    await this.realtimeService
-      .publish(`order:${transaction.id}`, "order.created", transaction)
-      .catch(err =>
-        console.error("[v3 Order] Failed to publish realtime:", err),
-      );
+    // 4. Trigger downstream notification events concurrently
+    // ⚡ Bolt Optimization: Parallelize independent post-order event dispatches
+    // (realtime update, webhook dispatch, Windmill event trigger, and Scryme notification).
+    // Collapses 4 sequential asynchronous network/messaging roundtrips down to a flat O(1) concurrent latency profile.
+    await Promise.all([
+      this.realtimeService
+        .publish(`order:${transaction.id}`, "order.created", transaction)
+        .catch(err =>
+          console.error("[v3 Order] Failed to publish realtime:", err),
+        ),
 
-    await this.webhookService
-      .dispatch("order.created", organizationId, transaction)
-      .catch(err =>
-        console.error("[v3 Order] Failed to dispatch webhook:", err),
-      );
+      this.webhookService
+        .dispatch("order.created", organizationId, transaction)
+        .catch(err =>
+          console.error("[v3 Order] Failed to dispatch webhook:", err),
+        ),
 
-    // 5. Emit Windmill event
-    await emitOrderPlaced(organizationId, {
-      orderId: transaction.id,
-      orderNumber: transaction.number,
-      customerId: transaction.customerId,
-      totalAmount: Number(transaction.finalTotal),
-      currency: transaction.currencyCode || "KES",
-      items: [
-        ...(transaction.items || []).map((i: any) => ({
-          productName: i.productName,
-          quantity: Number(i.quantity),
-          lineTotal: Number(i.lineTotal),
-        })),
-        ...(transaction.serviceItems || []).map((i: any) => ({
-          productName: i.serviceName,
-          quantity: Number(i.quantity),
-          lineTotal: Number(i.lineTotal),
-        })),
-      ],
-    }).catch(err =>
-      console.error("[v3 Order] Failed to emit Windmill event:", err),
-    );
+      emitOrderPlaced(organizationId, {
+        orderId: transaction.id,
+        orderNumber: transaction.number,
+        customerId: transaction.customerId,
+        totalAmount: Number(transaction.finalTotal),
+        currency: transaction.currencyCode || "KES",
+        items: [
+          ...(transaction.items || []).map((i: any) => ({
+            productName: i.productName,
+            quantity: Number(i.quantity),
+            lineTotal: Number(i.lineTotal),
+          })),
+          ...(transaction.serviceItems || []).map((i: any) => ({
+            productName: i.serviceName,
+            quantity: Number(i.quantity),
+            lineTotal: Number(i.lineTotal),
+          })),
+        ],
+      }).catch(err =>
+        console.error("[v3 Order] Failed to emit Windmill event:", err),
+      ),
 
-    // 6. Notify Scryme
-    await this.scrymeNotificationService
-      .notifyOrderCreated(organizationId, transaction.id)
-      .catch(err => console.error("[v3 Order] Failed to notify Scryme:", err));
+      this.scrymeNotificationService
+        .notifyOrderCreated(organizationId, transaction.id)
+        .catch(err => console.error("[v3 Order] Failed to notify Scryme:", err)),
+    ]);
 
     return transaction;
   }

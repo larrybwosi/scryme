@@ -279,7 +279,9 @@ export default function PettyCashPage() {
                           <button
                             type="button"
                             onClick={() => setReceiptUrl(null)}
-                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label="Remove receipt"
+                            title="Remove receipt"
+                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
                           >
                             <X className="w-4 h-4 text-white" />
                           </button>

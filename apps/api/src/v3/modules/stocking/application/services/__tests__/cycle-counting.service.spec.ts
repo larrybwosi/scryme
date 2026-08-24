@@ -35,7 +35,7 @@ describe("CycleCountingService", () => {
   });
 
   describe("processCycleCounts", () => {
-    it("should process active cycle count configs that are due", async () => {
+    it("should process multiple active cycle count configs concurrently via Promise.all", async () => {
       const mockConfigs = [
         {
           id: "config-1",
@@ -45,6 +45,15 @@ describe("CycleCountingService", () => {
           name: "Daily Count",
           frequency: AutomationFrequency.DAILY,
           includeABC: ["A"],
+        },
+        {
+          id: "config-2",
+          organizationId: "org-1",
+          locationId: "loc-2",
+          categoryId: "cat-2",
+          name: "Weekly Count",
+          frequency: AutomationFrequency.WEEKLY,
+          includeABC: [],
         },
       ];
 
@@ -56,7 +65,7 @@ describe("CycleCountingService", () => {
 
       await service.processCycleCounts();
 
-      // Verify cycle configs were queried with active filter and lte now run time
+      // Verify cycle configs were queried with active filter
       expect(mockCycleCountConfig.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -65,10 +74,19 @@ describe("CycleCountingService", () => {
         }),
       );
 
-      // Verify nextRunAt was updated
+      // Verify update was called for lastRunAt and nextRunAt for both configs (2 calls per config)
+      expect(mockCycleCountConfig.update).toHaveBeenCalledTimes(4);
       expect(mockCycleCountConfig.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "config-1" },
+          data: expect.objectContaining({
+            nextRunAt: expect.any(Date),
+          }),
+        }),
+      );
+      expect(mockCycleCountConfig.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "config-2" },
           data: expect.objectContaining({
             nextRunAt: expect.any(Date),
           }),

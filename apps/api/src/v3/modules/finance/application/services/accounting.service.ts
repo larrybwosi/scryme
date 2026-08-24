@@ -109,9 +109,14 @@ export class AccountingService {
     return member.id;
   }
 
-  async postSaleToLedger(transactionId: string) {
-    const transaction = await this.prisma.client.transaction.findUnique({
-      where: { id: transactionId },
+  async postSaleToLedger(transactionId: string, organizationId?: string) {
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Transaction lacks a composite unique index on [id, organizationId].
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: {
+        id: transactionId,
+        ...(organizationId ? { organizationId } : {}),
+      },
       // ⚡ Bolt Optimization: Use targeted select for transaction data
       // to reduce database payload and memory pressure.
       select: {
@@ -173,9 +178,14 @@ export class AccountingService {
     });
   }
 
-  async postPurchaseToLedger(purchaseId: string) {
-    const purchase = await this.prisma.client.purchase.findUnique({
-      where: { id: purchaseId },
+  async postPurchaseToLedger(purchaseId: string, organizationId?: string) {
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Purchase lacks a composite unique index on [id, organizationId].
+    const purchase = await this.prisma.client.purchase.findFirst({
+      where: {
+        id: purchaseId,
+        ...(organizationId ? { organizationId } : {}),
+      },
       // ⚡ Bolt Optimization: Use targeted select for purchase data
       // to reduce database payload and memory pressure.
       select: {
@@ -240,9 +250,14 @@ export class AccountingService {
     });
   }
 
-  async postExpenseToLedger(expenseId: string) {
-    const expense = await this.prisma.client.expense.findUnique({
-      where: { id: expenseId },
+  async postExpenseToLedger(expenseId: string, organizationId?: string) {
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // Expense lacks a composite unique index on [id, organizationId].
+    const expense = await this.prisma.client.expense.findFirst({
+      where: {
+        id: expenseId,
+        ...(organizationId ? { organizationId } : {}),
+      },
       // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
       // to reduce database payload and memory pressure.
       select: {
@@ -315,9 +330,14 @@ export class AccountingService {
     });
   }
 
-  async autoMatchBankStatement(statementId: string) {
-    const statement = await this.prisma.client.bankStatement.findUnique({
-      where: { id: statementId },
+  async autoMatchBankStatement(statementId: string, organizationId?: string) {
+    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // BankStatement lacks a composite unique index on [id, organizationId].
+    const statement = await this.prisma.client.bankStatement.findFirst({
+      where: {
+        id: statementId,
+        ...(organizationId ? { organizationId } : {}),
+      },
       include: { lines: { where: { status: "UNMATCHED" } } },
     });
 

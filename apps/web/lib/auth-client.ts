@@ -1,4 +1,5 @@
 import { createAuthClient } from "better-auth/react";
+import { passkeyClient } from "@better-auth/passkey/client";
 
 const isDev = process.env.NODE_ENV === "development";
 const defaultAppUrl = isDev
@@ -10,6 +11,7 @@ export const authClient: any = createAuthClient({
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_WEB_URL ||
     defaultAppUrl,
+  plugins: [passkeyClient()],
 });
 
 export const signIn: typeof authClient.signIn = authClient.signIn;

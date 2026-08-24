@@ -146,7 +146,9 @@ export function CategoryManager({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100">
+                    aria-label={`Edit ${cat.name}`}
+                    title={`Edit ${cat.name}`}
+                    className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100">
                     <Edit2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>

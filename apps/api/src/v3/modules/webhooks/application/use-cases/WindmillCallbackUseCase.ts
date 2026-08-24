@@ -82,8 +82,9 @@ export class WindmillCallbackUseCase {
       `Processing general Windmill callback for job ${payload.jobId}`,
     );
 
-    const execution = await this.prisma.client.windmillExecution.findUnique({
-      where: { jobId: payload.jobId },
+    // SECURITY (Sentinel): Use findFirst with organizationId filter to ensure strict multi-tenant isolation.
+    const execution = await this.prisma.client.windmillExecution.findFirst({
+      where: { jobId: payload.jobId, organizationId: payload.organizationId },
     });
 
     if (!execution) {
@@ -91,8 +92,8 @@ export class WindmillCallbackUseCase {
       return { success: false, message: "Execution not found" };
     }
 
-    await this.prisma.client.windmillExecution.update({
-      where: { jobId: payload.jobId },
+    await this.prisma.client.windmillExecution.updateMany({
+      where: { jobId: payload.jobId, organizationId: payload.organizationId },
       data: {
         status: payload.status as any,
         result: payload.result ?? undefined,
@@ -120,8 +121,9 @@ export class WindmillCallbackUseCase {
     if (payload.relatedEntityId)
       updateData.relatedEntityId = payload.relatedEntityId;
 
+    // SECURITY (Sentinel): Enforce organizationId scoping on execution updates.
     await this.prisma.client.windmillExecution.updateMany({
-      where: { jobId: payload.jobId },
+      where: { jobId: payload.jobId, organizationId: payload.organizationId },
       data: updateData,
     });
 
@@ -135,8 +137,9 @@ export class WindmillCallbackUseCase {
 
     return this.prisma.client.$transaction(async (tx) => {
       // 1. Update the windmillExecution record (Consolidation)
+      // SECURITY (Sentinel): Enforce organizationId scoping on execution updates.
       await tx.windmillExecution.updateMany({
-        where: { jobId: payload.jobId },
+        where: { jobId: payload.jobId, organizationId: payload.organizationId },
         data: {
           status: payload.status as any,
           result: payload.result ?? undefined,
@@ -208,8 +211,9 @@ export class WindmillCallbackUseCase {
 
     return this.prisma.client.$transaction(async (tx) => {
       // 1. Update Execution
+      // SECURITY (Sentinel): Enforce organizationId scoping on execution updates.
       await tx.windmillExecution.updateMany({
-        where: { jobId: payload.jobId },
+        where: { jobId: payload.jobId, organizationId: payload.organizationId },
         data: {
           status: payload.status as any,
           result: payload.result ?? undefined,

@@ -1,13 +1,12 @@
 import { db } from "@repo/db";
 import {
   ApprovalRequestType,
-  ApprovalStatus,
   ApprovalRequest,
   Member,
   User,
   ApprovalDecision,
   MemberRole,
-} from "@repo/db/client";
+} from "@repo/db";
 
 /**
  * Shared core logic for submitting a request for approval.
@@ -66,35 +65,43 @@ export async function submitForApprovalCore(
   });
 
   // Create initial decisions for the first step if workflow exists
+  // ⚡ Bolt Optimization: Batch initial pending approval decisions using createMany to execute in a single O(1) query.
   if (workflow && workflow.steps.length > 0) {
     const firstStep = workflow.steps[0];
+    const approverIds = new Set<string>();
+
     for (const action of firstStep.actions) {
       if (action.type === "SPECIFIC_MEMBER" && action.specificMemberId) {
-        await client.approvalDecision.create({
-          data: {
-            approvalRequestId: request.id,
-            approverId: action.specificMemberId,
-            stepNumber: 1,
-            status: "PENDING",
-          },
-        });
+        approverIds.add(action.specificMemberId);
       } else if (action.type === "ROLE" && action.approverRole) {
         const members = await client.member.findMany({
           where: {
             organizationId: organizationId,
             role: action.approverRole,
           },
+          select: { id: true },
         });
-        for (const member of members) {
-          await client.approvalDecision.create({
-            data: {
-              approvalRequestId: request.id,
-              approverId: member.id,
-              stepNumber: 1,
-              status: "PENDING",
-            },
-          });
+        for (const member of members as { id: string }[]) {
+          approverIds.add(member.id);
         }
+      }
+    }
+
+    if (approverIds.size > 0) {
+      const decisionsToCreate = Array.from(approverIds).map((approverId) => ({
+        approvalRequestId: request.id,
+        approverId,
+        stepNumber: 1,
+        status: "PENDING" as any,
+      }));
+      if (typeof client.approvalDecision.createMany === "function") {
+        await client.approvalDecision.createMany({
+          data: decisionsToCreate,
+        });
+      } else {
+        await Promise.all(
+          decisionsToCreate.map((data: any) => client.approvalDecision.create({ data })),
+        );
       }
     }
   } else {
@@ -104,16 +111,24 @@ export async function submitForApprovalCore(
         organizationId: organizationId,
         role: { in: ["ADMIN", "OWNER"] },
       },
+      select: { id: true },
     });
-    for (const admin of admins) {
-      await client.approvalDecision.create({
-        data: {
-          approvalRequestId: request.id,
-          approverId: admin.id,
-          stepNumber: 1,
-          status: "PENDING",
-        },
-      });
+    if (admins.length > 0) {
+      const decisionsToCreate = (admins as { id: string }[]).map((admin) => ({
+        approvalRequestId: request.id,
+        approverId: admin.id,
+        stepNumber: 1,
+        status: "PENDING" as any,
+      }));
+      if (typeof client.approvalDecision.createMany === "function") {
+        await client.approvalDecision.createMany({
+          data: decisionsToCreate,
+        });
+      } else {
+        await Promise.all(
+          decisionsToCreate.map((data: any) => client.approvalDecision.create({ data })),
+        );
+      }
     }
   }
 
@@ -155,8 +170,9 @@ export async function makeApprovalDecisionCore(
     comments?: string;
   },
 ) {
-  const request = await db.approvalRequest.findUnique({
-    where: { id: data.requestId },
+  // SECURITY (Sentinel): Scope lookup with organizationId using findFirst to prevent IDOR / cross-tenant approvals.
+  const request = await db.approvalRequest.findFirst({
+    where: { id: data.requestId, organizationId },
     include: {
       workflow: {
         include: {
@@ -184,7 +200,7 @@ export async function makeApprovalDecisionCore(
     await db.approvalDecision.update({
       where: { id: existingDecision.id },
       data: {
-        status: data.status as ApprovalStatus,
+        status: data.status as any,
         comments: data.comments,
         decisionDate: new Date(),
       },
@@ -194,7 +210,7 @@ export async function makeApprovalDecisionCore(
       data: {
         approvalRequestId: data.requestId,
         approverId: memberId,
-        status: data.status as ApprovalStatus,
+        status: data.status as any,
         comments: data.comments,
         decisionDate: new Date(),
         stepNumber: request.currentStep,
@@ -203,7 +219,7 @@ export async function makeApprovalDecisionCore(
   }
 
   // Multi-step logic
-  let finalStatus: ApprovalStatus = data.status as ApprovalStatus;
+  let finalStatus: any = data.status;
   let nextStep = request.currentStep;
 
   if (data.status === "APPROVED") {
@@ -236,34 +252,46 @@ export async function makeApprovalDecisionCore(
         finalStatus = "PENDING";
 
         // Create decisions for the next step
+        // ⚡ Bolt Optimization: Batch approval decisions creation for subsequent steps using createMany in a single O(1) query.
         const nextWorkflowStep = request.workflow!.steps[nextStep - 1];
+        const nextApproverIds = new Set<string>();
+
         for (const action of nextWorkflowStep.actions) {
           if (action.type === "SPECIFIC_MEMBER" && action.specificMemberId) {
-            await db.approvalDecision.create({
-              data: {
-                approvalRequestId: request.id,
-                approverId: action.specificMemberId,
-                stepNumber: nextStep,
-                status: "PENDING",
-              },
-            });
+            nextApproverIds.add(action.specificMemberId);
           } else if (action.type === "ROLE" && action.approverRole) {
             const members = await db.member.findMany({
               where: {
                 organizationId: organizationId,
                 role: action.approverRole,
               },
+              select: { id: true },
             });
             for (const member of members) {
-              await db.approvalDecision.create({
-                data: {
-                  approvalRequestId: request.id,
-                  approverId: member.id,
-                  stepNumber: nextStep,
-                  status: "PENDING",
-                },
-              });
+              nextApproverIds.add(member.id);
             }
+          }
+        }
+
+        if (nextApproverIds.size > 0) {
+          const nextDecisionsToCreate = Array.from(nextApproverIds).map(
+            (approverId) => ({
+              approvalRequestId: request.id,
+              approverId,
+              stepNumber: nextStep,
+              status: "PENDING" as any,
+            }),
+          );
+          if (typeof db.approvalDecision.createMany === "function") {
+            await db.approvalDecision.createMany({
+              data: nextDecisionsToCreate,
+            });
+          } else {
+            await Promise.all(
+              nextDecisionsToCreate.map((data: any) =>
+                db.approvalDecision.create({ data }),
+              ),
+            );
           }
         }
       }

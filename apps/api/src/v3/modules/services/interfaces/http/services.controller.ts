@@ -461,7 +461,7 @@ export class ServicesController {
     @Param("shiftId") shiftId: string,
     @Body() dto: { startTime: string, endTime: string, description?: string }
   ) {
-    return this.staffScheduling.addBreak(shiftId, dto);
+    return this.staffScheduling.addBreak(req.organization.id, shiftId, dto);
   }
 
   @Post("register-customer-app")

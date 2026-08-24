@@ -25,6 +25,26 @@ export class RequestStockAdjustmentUseCase {
       stockBatchId?: string;
     },
   ) {
+    // SECURITY (Sentinel): Verify that linked resources belong to the authenticated tenant
+    const [variant, location] = await Promise.all([
+      this.prisma.client.productVariant.findFirst({
+        where: { id: data.variantId, product: { organizationId } },
+      }),
+      this.prisma.client.inventoryLocation.findFirst({
+        where: { id: data.locationId, organizationId },
+      }),
+    ]);
+
+    if (!variant) throw new NotFoundException("Product variant not found");
+    if (!location) throw new NotFoundException("Inventory location not found");
+
+    if (data.stockBatchId) {
+      const batch = await this.prisma.client.stockBatch.findFirst({
+        where: { id: data.stockBatchId, organizationId },
+      });
+      if (!batch) throw new NotFoundException("Stock batch not found");
+    }
+
     return this.prisma.client.$transaction(async tx => {
       const adjustment = await tx.stockAdjustment.create({
         data: {
@@ -95,7 +115,9 @@ export class ApproveStockAdjustmentUseCase {
        * This gives us O(1) direct access to `adjustment.variant.productId`, completely avoiding
        * the sequential nested database query on `tx.productVariant.findUnique` inside the transaction.
        */
-      const adjustment = await tx.stockAdjustment.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockAdjustment lacks a composite unique index on [id, organizationId].
+      const adjustment = await tx.stockAdjustment.findFirst({
         where: { id: adjustmentId, organizationId },
         include: { variant: { select: { productId: true } } },
       });
@@ -263,7 +285,9 @@ export class RejectStockAdjustmentUseCase {
     reason?: string,
   ) {
     return this.prisma.client.$transaction(async tx => {
-      const adjustment = await tx.stockAdjustment.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // StockAdjustment lacks a composite unique index on [id, organizationId].
+      const adjustment = await tx.stockAdjustment.findFirst({
         where: { id: adjustmentId, organizationId },
       });
 

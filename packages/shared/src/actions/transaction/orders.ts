@@ -705,8 +705,10 @@ export async function confirmOrder(
 
     const confirmedTransaction = await db.$transaction(
       async (tx) => {
+        // SECURITY (Sentinel): Using findFirst instead of findUnique because
+        // Transaction lacks @@unique([id, organizationId]). Using findUnique ignores non-unique filters in Prisma.
         // 2. Fetch Order with Deep Relations to resolve Units
-        const order = await tx.transaction.findUnique({
+        const order = await tx.transaction.findFirst({
           where: { id: transactionId, organizationId },
           include: {
             items: {
@@ -1040,8 +1042,10 @@ export async function cancelOrder(
 
     const cancelledTransaction = await prisma.$transaction(
       async (tx) => {
+        // SECURITY (Sentinel): Using findFirst instead of findUnique because
+        // Transaction lacks @@unique([id, organizationId]). Using findUnique ignores non-unique filters in Prisma.
         // 1. Fetch Order with Conversions
-        const order = await tx.transaction.findUnique({
+        const order = await tx.transaction.findFirst({
           where: { id: transactionId, organizationId },
           include: {
             items: {

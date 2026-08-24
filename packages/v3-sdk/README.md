@@ -179,11 +179,18 @@ function verifySignature(
   const hmac = crypto.createHmac("sha256", webhookSecret);
   const expectedSignature = hmac.update(payload).digest("hex");
 
-  // Constant-time comparison to prevent timing attacks
-  return crypto.timingSafeEqual(
-    Buffer.from(signature, "hex"),
-    Buffer.from(expectedSignature, "hex")
-  );
+  // Pre-hash both signatures using SHA-256 to ensure identical 32-byte buffer length.
+  // This prevents timing side-channels, signature length leakage, and RangeError exceptions on unequal buffer lengths.
+  const expectedHash = crypto
+    .createHash("sha256")
+    .update(expectedSignature)
+    .digest();
+  const actualHash = crypto
+    .createHash("sha256")
+    .update(signature || "")
+    .digest();
+
+  return crypto.timingSafeEqual(expectedHash, actualHash);
 }
 ```
 

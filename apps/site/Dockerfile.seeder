@@ -1,0 +1,30 @@
+# Base stage for shared configuration and dependencies
+FROM node:22-slim AS base
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+WORKDIR /app
+
+# Pruning stage to isolate only files needed for the site app
+FROM base AS pruner
+RUN npm install -g turbo
+
+# Copy workspace configuration and entire context
+COPY . .
+RUN rm -rf .turbo node_modules
+RUN turbo prune --scope=site --docker
+
+# Installer stage to install dependencies
+FROM base AS installer
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Install dependencies without triggering lifecycle scripts early
+RUN pnpm install --frozen-lockfile --ignore-scripts
+
+# Copy full source code so build scripts have access to source files
+COPY --from=pruner /app/out/full/ .
+
+# Execute the Sanity seeder
+CMD ["pnpm", "--filter", "site", "sanity:seed"]

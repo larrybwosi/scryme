@@ -42,13 +42,6 @@ export class PricingResolverService {
 
     const variantIds = Array.from(new Set(items.map(i => i.variantId)));
 
-    // 1. Get all variants in one query
-    const variants = await this.prisma.client.productVariant.findMany({
-      where: { id: { in: variantIds } },
-      select: { id: true, wholesalePrice: true, retailPrice: true },
-    });
-    const variantMap = new Map(variants.map(v => [v.id, v]));
-
     // 2. Resolve all applicable price lists for this context
     // Hardened Filter: Avoid matching generic price lists when IDs are undefined
     const orClauses: any[] = [{ isGlobal: true }];
@@ -56,17 +49,28 @@ export class PricingResolverService {
     if (businessAccountId)
       orClauses.push({ businessAccounts: { some: { id: businessAccountId } } });
 
-    const priceLists = await this.prisma.client.priceList.findMany({
-      where: {
-        organizationId,
-        isActive: true,
-        OR: orClauses,
-        validFrom: { lte: new Date() },
-        validTo: { gte: new Date() },
-      },
-      orderBy: { priority: "desc" },
-      select: { id: true },
-    });
+    // ⚡ Bolt Optimization: Parallelize independent read-only database queries
+    // for variants and applicable price lists using Promise.all.
+    // This reduces database wait time from 2 sequential roundtrips to 1 flat parallel roundtrip.
+    const [variants, priceLists] = await Promise.all([
+      this.prisma.client.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        select: { id: true, wholesalePrice: true, retailPrice: true },
+      }),
+      this.prisma.client.priceList.findMany({
+        where: {
+          organizationId,
+          isActive: true,
+          OR: orClauses,
+          validFrom: { lte: new Date() },
+          validTo: { gte: new Date() },
+        },
+        orderBy: { priority: "desc" },
+        select: { id: true },
+      }),
+    ]);
+
+    const variantMap = new Map(variants.map(v => [v.id, v]));
     const priceListIds = priceLists.map(pl => pl.id);
 
     // 3. Fetch all relevant price list items for these variants and price lists

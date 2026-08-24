@@ -32,15 +32,15 @@ export class V3AuthCoreService {
       include: { organization: true },
     });
 
-    if (!client || !client.isActive)
-      throw new UnauthorizedException("Invalid client");
+    let isSecretValid = false;
     try {
-      const isSecretValid = await validateV3ApiSecret(clientId, clientSecret);
-      if (!isSecretValid)
-        throw new UnauthorizedException("Invalid client secret");
-    } catch (error) {
-      console.log("error", error);
-      throw new UnauthorizedException("Invalid client secret");
+      isSecretValid = await validateV3ApiSecret(clientId, clientSecret);
+    } catch {
+      isSecretValid = false;
+    }
+
+    if (!client || !client.isActive || !isSecretValid) {
+      throw new UnauthorizedException("Invalid client credentials");
     }
 
     return client;
@@ -127,7 +127,7 @@ export class V3AuthCoreService {
       where: { clientId },
       include: { organization: true },
     });
-    if (!client) throw new UnauthorizedException("Invalid client");
+    if (!client || !client.isActive) throw new UnauthorizedException("Invalid client credentials");
     return client;
   }
 
