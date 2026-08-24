@@ -368,6 +368,8 @@ export interface SeoField {
   title?: string;
   description?: string;
   keywords?: string[];
+  canonicalUrl?: string;
+  noIndex?: boolean;
   ogImage?: any;
 }
 
@@ -380,6 +382,7 @@ export interface SiteSettings {
 
 // Dynamic Site Content interfaces
 export interface HomePageContent {
+  sections?: any[];
   heroTitle: string;
   heroSubtitle: string;
   seo?: SeoField;
@@ -980,6 +983,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
   }
   try {
     const data = await client.fetch<HomePageContent | null>(`*[_type == "homePage"][0] {
+      sections,
       heroTitle,
       heroSubtitle,
       heroImage,
@@ -1007,6 +1011,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
     }`);
     if (!data) return DEFAULT_HOME_CONTENT;
     return {
+      sections: data.sections,
       heroTitle: data.heroTitle || DEFAULT_HOME_CONTENT.heroTitle,
       heroSubtitle: data.heroSubtitle || DEFAULT_HOME_CONTENT.heroSubtitle,
       heroImage: data.heroImage || DEFAULT_HOME_CONTENT.heroImage,
@@ -1120,6 +1125,27 @@ export async function getSiteSettings(): Promise<SiteSettings | null> {
   }
 }
 
+export interface CmsPage {
+  _id: string;
+  _updatedAt: string;
+  title: string;
+  slug: {current: string};
+  pageType?: string;
+  summary?: string;
+  sections?: any[];
+  seo?: SeoField;
+}
+
+export async function getCmsPage(slug: string): Promise<CmsPage | null> {
+  if (!client) return null;
+  return client.fetch<CmsPage | null>(`*[_type in ["page", "productPage"] && slug.current == $slug][0]{_id, _updatedAt, title, slug, pageType, summary, sections, seo}`, {slug}, {next: {revalidate: 60, tags: [`page:${slug}`]}});
+}
+
+export async function getCmsRoutes(): Promise<Array<{slug: string; updatedAt: string; noIndex?: boolean}>> {
+  if (!client) return [];
+  return client.fetch(`*[_type in ["page", "productPage"] && defined(slug.current)]{ "slug": slug.current, "updatedAt": _updatedAt, "noIndex": seo.noIndex }`, {}, {next: {revalidate: 300, tags: ['cms-routes']}});
+}
+
 export async function getPageMetadata(params: {
   pageSeo?: SeoField;
   fallbackTitle: string;
@@ -1147,7 +1173,7 @@ export async function getPageMetadata(params: {
     "Cloud POS",
   ];
 
-  const canonicalUrl = `https://scryme.tech${params.canonicalPath}`;
+  const canonicalUrl = params.pageSeo?.canonicalUrl || `https://scryme.tech${params.canonicalPath}`;
 
   let ogImageUrl = "https://scryme.tech/og-image.png";
   if (params.pageSeo?.ogImage) {
@@ -1173,8 +1199,9 @@ export async function getPageMetadata(params: {
     description,
     keywords,
     alternates: {
-      canonical: params.canonicalPath,
+      canonical: canonicalUrl,
     },
+    robots: params.pageSeo?.noIndex ? {index: false, follow: false} : {index: true, follow: true},
     openGraph: {
       type: "website",
       locale: "en_US",
