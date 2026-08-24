@@ -1,5 +1,11 @@
 # crm
 
+## 7.39.0
+
+### Minor Changes
+
+- 5279d6a: Update
+
 ## 7.38.0
 
 ### Minor Changes
