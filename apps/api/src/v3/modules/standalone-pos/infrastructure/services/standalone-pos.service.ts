@@ -47,6 +47,10 @@ export class StandalonePosService {
     });
 
     if (!setupKey) {
+      // SECURITY (Sentinel): Execute dummy database query to normalize execution time and query count for invalid tokens, mitigating timing side-channel attacks.
+      await this.prisma.client.standaloneDevice.findUnique({
+        where: { machineId: dto.machineId || "dummy-machine-id" },
+      });
       throw new UnauthorizedException("Invalid setup token");
     }
 
