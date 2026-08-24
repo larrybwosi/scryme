@@ -1,0 +1,141 @@
+package tech.scryme.admin.presentation.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import tech.scryme.admin.data.model.*
+import tech.scryme.admin.domain.repository.PresenceRepository
+
+class PresenceViewModel(
+    private val repository: PresenceRepository
+) : ViewModel() {
+
+    private val _presenceState = MutableStateFlow<UiState<List<MemberResponseDto>>>(UiState.Idle)
+    val presenceState: StateFlow<UiState<List<MemberResponseDto>>> = _presenceState.asStateFlow()
+
+    private val _branches = MutableStateFlow<List<LocationDto>>(emptyList())
+    val branches: StateFlow<List<LocationDto>> = _branches.asStateFlow()
+
+    private val _selectedBranchId = MutableStateFlow<String?>(null)
+    val selectedBranchId: StateFlow<String?> = _selectedBranchId.asStateFlow()
+
+    private val _branchAttendanceLogs = MutableStateFlow<UiState<List<AttendanceLogDto>>>(UiState.Idle)
+    val branchAttendanceLogs: StateFlow<UiState<List<AttendanceLogDto>>> = _branchAttendanceLogs.asStateFlow()
+
+    private val _pettyCashTransactions = MutableStateFlow<UiState<List<PettyCashTransactionDto>>>(UiState.Idle)
+    val pettyCashTransactions: StateFlow<UiState<List<PettyCashTransactionDto>>> = _pettyCashTransactions.asStateFlow()
+
+    private val _branchSales = MutableStateFlow<Double>(0.0)
+    val branchSales: StateFlow<Double> = _branchSales.asStateFlow()
+
+    private val _memberSalesList = MutableStateFlow<List<MemberSalesDto>>(emptyList())
+    val memberSalesList: StateFlow<List<MemberSalesDto>> = _memberSalesList.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            repository.monitorActivePresence().collect { activeMembers ->
+                if (_presenceState.value is UiState.Idle) {
+                    _presenceState.value = UiState.Success(activeMembers)
+                }
+            }
+        }
+    }
+
+    fun fetchBranches() {
+        viewModelScope.launch {
+            repository.getLocations()
+                .onSuccess { locations ->
+                    _branches.value = locations
+                }
+        }
+    }
+
+    fun addBranch(name: String, code: String, type: String) {
+        val newBranch = LocationDto(
+            id = "loc_${_branches.value.size + 1}",
+            name = name,
+            organizationId = "org_1",
+            isActive = true
+        )
+        _branches.value = _branches.value + newBranch
+    }
+
+    fun toggleBranchStatus(locationId: String) {
+        _branches.value = _branches.value.map {
+            if (it.id == locationId) {
+                it.copy(isActive = !it.isActive)
+            } else {
+                it
+            }
+        }
+    }
+
+    fun fetchCheckedInMembers() {
+        viewModelScope.launch {
+            _presenceState.value = UiState.Loading
+            repository.getMembers(status = "ONLINE", search = null)
+                .onSuccess { members ->
+                    _presenceState.value = UiState.Success(members)
+                }
+                .onFailure { error ->
+                    _presenceState.value = UiState.Error(error.message ?: "Failed to fetch members")
+                }
+        }
+    }
+
+    fun forceCheckoutMember(memberId: String, notes: String? = null) {
+        viewModelScope.launch {
+            repository.adminCheckOut(memberId, null, notes)
+                .onSuccess {
+                    fetchCheckedInMembers()
+                }
+                .onFailure {
+                    fetchCheckedInMembers()
+                }
+        }
+    }
+
+    fun selectBranchForDetail(locationId: String) {
+        _selectedBranchId.value = locationId
+        _branchAttendanceLogs.value = UiState.Loading
+        _pettyCashTransactions.value = UiState.Loading
+
+        viewModelScope.launch {
+            repository.getAttendanceLogs(1, 10, null, locationId)
+                .onSuccess { response ->
+                    _branchAttendanceLogs.value = UiState.Success(response.items)
+                }
+                .onFailure { error ->
+                    _branchAttendanceLogs.value = UiState.Error(error.message ?: "Failed to load logs")
+                }
+
+            repository.getPettyCashTransactions()
+                .onSuccess { txns ->
+                    _pettyCashTransactions.value = UiState.Success(txns)
+                }
+                .onFailure { error ->
+                    _pettyCashTransactions.value = UiState.Error(error.message ?: "Failed to load petty cash")
+                }
+
+            repository.getTransactions(locationId, null, null)
+                .onSuccess { txns ->
+                    val totalSales = txns.sumOf { it.amount ?: 0.0 }
+                    _branchSales.value = totalSales
+
+                    val groupedByMember = txns.groupBy { it.memberId ?: "unknown" }
+                    val memberSales = groupedByMember.map { (memberId, memberTxns) ->
+                        MemberSalesDto(
+                            memberId = memberId,
+                            memberName = memberTxns.firstOrNull()?.memberId ?: "Staff Member",
+                            salesCount = memberTxns.size,
+                            totalAmount = memberTxns.sumOf { it.amount ?: 0.0 }
+                        )
+                    }
+                    _memberSalesList.value = memberSales
+                }
+        }
+    }
+}
