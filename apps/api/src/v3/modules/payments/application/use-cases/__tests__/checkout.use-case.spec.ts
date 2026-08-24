@@ -15,6 +15,7 @@ describe("CheckoutUseCase (Integration)", () => {
   let useCase: CheckoutUseCase;
   let prisma: PrismaService;
   let mpesaService: any;
+  let webhookService: any;
 
   beforeEach(() => {
     prisma = {
@@ -42,7 +43,11 @@ describe("CheckoutUseCase (Integration)", () => {
       initiateStkPush: vi.fn(),
     } as any;
 
-    useCase = new CheckoutUseCase(prisma, mpesaService);
+    webhookService = {
+      dispatch: vi.fn().mockResolvedValue(undefined),
+    } as any;
+
+    useCase = new CheckoutUseCase(prisma, mpesaService, webhookService);
   });
 
   it("should create an order and initiate mpesa payment with explicit locationId", async () => {
@@ -127,6 +132,15 @@ describe("CheckoutUseCase (Integration)", () => {
       expect.objectContaining({
         amount: 200,
         phoneNumber: "254700000000",
+      }),
+    );
+    expect(webhookService.dispatch).toHaveBeenCalledWith(
+      "order.placed",
+      organizationId,
+      expect.objectContaining({
+        orderId: "order-123",
+        finalTotal: 200,
+        customerId: "cust-123",
       }),
     );
   });
