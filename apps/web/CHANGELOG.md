@@ -1,5 +1,11 @@
 # web
 
+## 6.39.0
+
+### Minor Changes
+
+- 5279d6a: Update
+
 ## 6.38.0
 
 ### Minor Changes

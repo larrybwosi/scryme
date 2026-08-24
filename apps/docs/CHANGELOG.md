@@ -1,5 +1,11 @@
 # docs
 
+## 1.6.0
+
+### Minor Changes
+
+- 5279d6a: Update
+
 ## 1.5.0
 
 ### Minor Changes
