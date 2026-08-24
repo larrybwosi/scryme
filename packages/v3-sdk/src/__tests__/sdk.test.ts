@@ -1103,7 +1103,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         );
       });
 
-      it("should support client bookings module", async () => {
+      it("should support client bookings module with status updates, recurrence series cancellation, and completion", async () => {
         const sdk = createClientSDK({
           clientId: "client-id",
           orgSlug: "client-org",
@@ -1132,10 +1132,100 @@ describe("Scryme V3 Client and Server SDKs", () => {
         (sdk.axiosInstance.patch as jest.Mock).mockResolvedValueOnce({
           data: { success: true },
         });
+        await sdk.bookings.updateStatus("booking-123", "IN_PROGRESS");
+        expect(sdk.axiosInstance.patch).toHaveBeenCalledWith(
+          "/v3/client-org/services/bookings/booking-123/status",
+          "IN_PROGRESS",
+          undefined,
+        );
+
+        (sdk.axiosInstance.patch as jest.Mock).mockResolvedValueOnce({
+          data: { success: true },
+        });
         await sdk.bookings.cancel("booking-123");
         expect(sdk.axiosInstance.patch).toHaveBeenCalledWith(
           "/v3/client-org/services/bookings/booking-123/status",
           "CANCELLED",
+          undefined,
+        );
+
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { count: 3 },
+        });
+        await sdk.bookings.cancelSeries("recurrence-777");
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+          "/v3/client-org/services/bookings/recurrence/recurrence-777/cancel",
+          undefined,
+          undefined,
+        );
+
+        (sdk.axiosInstance.patch as jest.Mock).mockResolvedValueOnce({
+          data: { id: "booking-123", status: "COMPLETED" },
+        });
+        await sdk.bookings.complete("booking-123", { actualStartTime: "2026-10-15T09:00:00Z" });
+        expect(sdk.axiosInstance.patch).toHaveBeenCalledWith(
+          "/v3/client-org/services/bookings/booking-123/complete",
+          { actualStartTime: "2026-10-15T09:00:00Z" },
+          undefined,
+        );
+      });
+
+      it("should support public services booking availability and OTP flow in bookings submodule", async () => {
+        const sdk = createClientSDK({
+          clientId: "client-id",
+          orgSlug: "public-org",
+          storage: mockStorage,
+        });
+
+        // Availability check
+        (sdk.axiosInstance.get as jest.Mock).mockResolvedValueOnce({
+          data: { serviceId: "srv-99", availableSlots: ["2026-10-15T10:00:00Z"] },
+        });
+        const avail = await sdk.bookings.getAvailability("srv-99", "2026-10-15");
+        expect(sdk.axiosInstance.get).toHaveBeenCalledWith(
+          "/v3/public/public-org/services/srv-99/availability",
+          { params: { date: "2026-10-15" } },
+        );
+        expect(avail.data.availableSlots).toEqual(["2026-10-15T10:00:00Z"]);
+
+        // Request OTP
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { success: true },
+        });
+        await sdk.bookings.requestOtp({ email: "guest@example.com" });
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+          "/v3/public/public-org/services/otp/request",
+          { email: "guest@example.com" },
+          undefined,
+        );
+
+        // Verify OTP
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { verificationId: "ver-123" },
+        });
+        await sdk.bookings.verifyOtp({ email: "guest@example.com", code: "123456" });
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+          "/v3/public/public-org/services/otp/verify",
+          { email: "guest@example.com", code: "123456" },
+          undefined,
+        );
+
+        // Create Public Booking
+        (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
+          data: { id: "public-booking-1" },
+        });
+        await sdk.bookings.createPublicBooking({
+          serviceId: "srv-99",
+          verificationId: "ver-123",
+          scheduledStartTime: "2026-10-15T10:00:00Z",
+        });
+        expect(sdk.axiosInstance.post).toHaveBeenCalledWith(
+          "/v3/public/public-org/services/bookings",
+          {
+            serviceId: "srv-99",
+            verificationId: "ver-123",
+            scheduledStartTime: "2026-10-15T10:00:00Z",
+          },
           undefined,
         );
       });

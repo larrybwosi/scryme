@@ -141,8 +141,10 @@ export type MethodsWithOrgSlug =
   | "servicesCreateBooking"
   | "servicesGetBookings"
   | "servicesGetBooking"
+  | "servicesGetAvailability"
   | "servicesUpdateBookingStatus"
   | "servicesCompleteBooking"
+  | "servicesCancelBookingSeries"
   | "servicesCreateShift"
   | "servicesGetStaffShifts"
   | "servicesAddBreak"
@@ -346,8 +348,10 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "servicesCreateBooking",
   "servicesGetBookings",
   "servicesGetBooking",
+  "servicesGetAvailability",
   "servicesUpdateBookingStatus",
   "servicesCompleteBooking",
+  "servicesCancelBookingSeries",
   "servicesCreateShift",
   "servicesGetStaffShifts",
   "servicesAddBreak",
@@ -714,8 +718,10 @@ export const servicesMapping = {
   createBookingAdmin: "servicesCreateBooking",
   getBookings: "servicesGetBookings",
   getBookingAdmin: "servicesGetBooking",
+  getAvailabilityAdmin: "servicesGetAvailability",
   updateBookingStatus: "servicesUpdateBookingStatus",
   completeBooking: "servicesCompleteBooking",
+  cancelBookingSeries: "servicesCancelBookingSeries",
   createShift: "servicesCreateShift",
   getStaffShifts: "servicesGetStaffShifts",
   addBreak: "servicesAddBreak",

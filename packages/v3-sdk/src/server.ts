@@ -19,6 +19,10 @@ import type {
   UpdateCustomerDto,
   ProductResponseDto,
   ServiceCatalogResponseDto,
+  PublicBookingDto,
+  RequestOtpDto,
+  VerifyOtpDto,
+  ServicesUpdateBookingStatusBodyStatus,
 } from "./generated/model";
 import {
   RawAPI,
@@ -255,7 +259,7 @@ export class ScrymeServerSDK<
 
   /**
    * Server Bookings & Appointment Submodule.
-   * Enables booking creation, history audits, cancellations, and secure completion workflows.
+   * Enables booking creation, history audits, cancellations, recurrence series management, public OTP flows, and secure completion workflows.
    */
   public bookings: {
     /**
@@ -273,10 +277,24 @@ export class ScrymeServerSDK<
      */
     list(): Promise<AxiosResponse<ServiceBookingItemDto[]>>;
     /**
+     * Updates the status of an active booking reservation.
+     * @param id Booking database identifier.
+     * @param status Target status enum value (e.g. CONFIRMED, CANCELLED, IN_PROGRESS).
+     */
+    updateStatus(
+      id: string,
+      status: ServicesUpdateBookingStatusBodyStatus | string,
+    ): Promise<AxiosResponse<void>>;
+    /**
      * Cancels an active reservation, marking its status as CANCELLED.
      * @param id Booking database identifier.
      */
     cancel(id: string): Promise<AxiosResponse<void>>;
+    /**
+     * Cancels an entire recurring booking series by its recurrence ID.
+     * @param recurrenceId Recurrence series identifier.
+     */
+    cancelSeries(recurrenceId: string): Promise<AxiosResponse<void>>;
     /**
      * Securely completes a booking reservation (including post-service audits and QC reports).
      * @param id Booking database identifier.
@@ -286,6 +304,30 @@ export class ScrymeServerSDK<
       id: string,
       dto: CompleteBookingDto & Record<string, any>,
     ): Promise<AxiosResponse<void>>;
+    /**
+     * Calculates available booking slots for a service on a specified date.
+     * @param serviceId Service database identifier.
+     * @param date Target date string in YYYY-MM-DD format.
+     */
+    getAvailability(
+      serviceId: string,
+      date?: string,
+    ): Promise<AxiosResponse<any>>;
+    /**
+     * Requests an OTP code for public guest booking flows.
+     * @param dto Contact details.
+     */
+    requestOtp(dto: RequestOtpDto): Promise<AxiosResponse<any>>;
+    /**
+     * Verifies an OTP code for public guest booking flows.
+     * @param dto OTP code and contact.
+     */
+    verifyOtp(dto: VerifyOtpDto): Promise<AxiosResponse<any>>;
+    /**
+     * Creates a public booking using a verification ID.
+     * @param dto Public booking parameters.
+     */
+    createPublicBooking(dto: PublicBookingDto): Promise<AxiosResponse<any>>;
   };
 
   /**
@@ -799,14 +841,35 @@ export class ScrymeServerSDK<
       list: async () => {
         return this.catalog.getBookings() as any;
       },
+      updateStatus: async (
+        id: string,
+        status: ServicesUpdateBookingStatusBodyStatus | string,
+      ) => {
+        return this.catalog.updateBookingStatus(id, status as any);
+      },
       cancel: async (id: string) => {
         return this.catalog.updateBookingStatus(id, "CANCELLED" as any);
+      },
+      cancelSeries: async (recurrenceId: string) => {
+        return this.api.servicesCancelBookingSeries(config.orgSlug, recurrenceId) as any;
       },
       complete: async (
         id: string,
         dto: CompleteBookingDto & Record<string, any>,
       ) => {
         return this.catalog.completeBooking(id, dto);
+      },
+      getAvailability: async (serviceId: string, date?: string) => {
+        return this.api.publicServicesGetAvailability(config.orgSlug, serviceId, date ? { date } : undefined) as any;
+      },
+      requestOtp: async (dto: RequestOtpDto) => {
+        return this.api.publicServicesRequestOtp(config.orgSlug, dto) as any;
+      },
+      verifyOtp: async (dto: VerifyOtpDto) => {
+        return this.api.publicServicesVerifyOtp(config.orgSlug, dto) as any;
+      },
+      createPublicBooking: async (dto: PublicBookingDto) => {
+        return this.api.publicServicesCreatePublicBooking(config.orgSlug, dto) as any;
       },
     };
 
