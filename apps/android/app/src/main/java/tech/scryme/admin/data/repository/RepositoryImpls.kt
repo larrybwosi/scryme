@@ -281,6 +281,17 @@ class AnnouncementRepositoryImpl(
     }
 }
 
+class DeviceRepositoryImpl(
+    private val api: DeviceApiService
+) : DeviceRepository {
+
+    override suspend fun provisionDevice(setupToken: String): Result<DeviceProvisionResponseDto> {
+        return safeApiCallEnvelope {
+            api.provisionDevice(mapOf("setupToken" to setupToken))
+        }
+    }
+}
+
 class ExpenseRepositoryImpl(
     private val api: ExpenseApiService
 ) : ExpenseRepository {

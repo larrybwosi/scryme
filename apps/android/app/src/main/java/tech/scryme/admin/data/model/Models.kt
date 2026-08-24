@@ -232,6 +232,21 @@ data class StockAdjustmentLocationDto(
     @SerializedName("name") val name: String
 )
 
+// --- Device Authorization & Provisioning Models ---
+
+data class DeviceProvisionResponseDto(
+    @SerializedName("apiKey") val apiKey: String? = null,
+    @SerializedName("deviceRegistryId") val deviceRegistryId: String? = null,
+    @SerializedName("organization") val organization: LocationSummary? = null,
+    @SerializedName("device") val device: DeviceSummaryDto? = null
+)
+
+data class DeviceSummaryDto(
+    @SerializedName("deviceName") val deviceName: String? = null,
+    @SerializedName("deviceType") val deviceType: String? = null,
+    @SerializedName("locationId") val locationId: String? = null
+)
+
 // --- Petty Cash & Transactions ---
 
 data class PettyCashTransactionDto(

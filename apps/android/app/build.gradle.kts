@@ -81,6 +81,12 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.security.crypto)
 
+    // CameraX & QR Scanning
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.zxing.core)
+
     // Retrofit & Network
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
