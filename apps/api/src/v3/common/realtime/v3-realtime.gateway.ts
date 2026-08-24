@@ -95,11 +95,19 @@ export class V3RealtimeGateway
     const presenceChannels = (client as any).presenceChannels as Set<string>;
 
     if (presenceChannels) {
-      for (const channel of presenceChannels) {
-        await this.redis.leavePresence(channel, clientId);
-        const members = await this.redis.getPresence(channel);
-        this.server.to(channel).emit("presence:update", { channel, members });
-      }
+      /**
+       * OPTIMIZATION (Bolt ⚡): Replaced sequential for...of loop with Promise.all.
+       * Parallelizing presence cleanup across multiple channels converts O(N) sequential Redis
+       * network roundtrips into a flat O(1) concurrent profile, significantly reducing socket
+       * disconnect latency under high concurrency or multi-channel subscriptions.
+       */
+      await Promise.all(
+        Array.from(presenceChannels).map(async (channel) => {
+          await this.redis.leavePresence(channel, clientId);
+          const members = await this.redis.getPresence(channel);
+          this.server.to(channel).emit("presence:update", { channel, members });
+        }),
+      );
       presenceChannels.clear();
     }
   }

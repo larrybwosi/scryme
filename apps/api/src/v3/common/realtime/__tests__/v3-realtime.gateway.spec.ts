@@ -38,7 +38,7 @@ describe('V3RealtimeGateway', () => {
             saveMessage: vi.fn(),
             getHistory: vi.fn().mockResolvedValue([]),
             enterPresence: vi.fn(),
-            leavePresence: vi.fn(),
+            leavePresence: vi.fn().mockResolvedValue(undefined),
             getPresence: vi.fn().mockResolvedValue([]),
             keys: vi.fn().mockResolvedValue([]),
           },
@@ -156,5 +156,26 @@ describe('V3RealtimeGateway', () => {
 
     expect(result).not.toEqual({ event: 'error', message: 'Unauthorized' });
     expect(redis.getHistory).toHaveBeenCalledWith('inventory:org-1');
+  });
+
+  describe('handleDisconnect', () => {
+    it('should clean up presence across multiple channels concurrently on disconnect', async () => {
+      const presenceChannels = new Set(['inventory:org-1', 'order:order-123']);
+      const client = {
+        id: 'socket-1',
+        v3Context: mockContext,
+        presenceChannels,
+      } as any as Socket;
+
+      await gateway.handleDisconnect(client);
+
+      expect(redis.leavePresence).toHaveBeenCalledWith('inventory:org-1', 'member-1');
+      expect(redis.leavePresence).toHaveBeenCalledWith('order:order-123', 'member-1');
+      expect(redis.getPresence).toHaveBeenCalledWith('inventory:org-1');
+      expect(redis.getPresence).toHaveBeenCalledWith('order:order-123');
+      expect(gateway.server.to).toHaveBeenCalledWith('inventory:org-1');
+      expect(gateway.server.to).toHaveBeenCalledWith('order:order-123');
+      expect(presenceChannels.size).toBe(0);
+    });
   });
 });
