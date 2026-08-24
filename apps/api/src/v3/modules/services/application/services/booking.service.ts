@@ -18,6 +18,15 @@ export class BookingService {
     private readonly calComService: CalComService,
   ) {}
 
+  /**
+   * Schedules a new service booking for an organization.
+   * Performs concurrent validations for staff availability, resource allocation, and overlapping slots.
+   * Auto-creates customer profiles if contact information is provided without a customer ID.
+   *
+   * @param orgId - Unique tenant organization identifier.
+   * @param dto - Booking creation payload including service ID, scheduled start time, staff, and resources.
+   * @returns The created ServiceBooking record.
+   */
   async createBooking(orgId: string, dto: CreateBookingDto & { customerContact?: string }) {
     const contact = dto.customerContact?.trim();
     const isEmail = contact?.includes("@");
@@ -331,6 +340,16 @@ export class BookingService {
     return booking;
   }
 
+  /**
+   * Completes an active service booking, calculates final duration/pricing, records consumed materials,
+   * deducts inventory stock from the specified location, and issues a completed service transaction.
+   *
+   * @param orgId - Unique tenant organization identifier.
+   * @param bookingId - Service booking identifier to complete.
+   * @param memberId - Authenticated staff member performing the completion.
+   * @param dto - Completion payload including actual start/end times and optional override materials.
+   * @returns The updated completed ServiceBooking record.
+   */
   async completeBooking(orgId: string, bookingId: string, memberId: string, dto: CompleteBookingDto) {
     const booking = await this.prisma.client.serviceBooking.findFirst({
       where: { id: bookingId, organizationId: orgId },
@@ -490,6 +509,12 @@ export class BookingService {
     });
   }
 
+  /**
+   * Retrieves all service bookings associated with an organization.
+   *
+   * @param orgId - Unique tenant organization identifier.
+   * @returns Array of ServiceBooking objects with populated service, customer, staff, and resource details.
+   */
   async getBookings(orgId: string) {
     return this.prisma.client.serviceBooking.findMany({
       where: { organizationId: orgId },
@@ -596,6 +621,13 @@ export class BookingService {
     });
   }
 
+  /**
+   * Fetches detailed information for a specific service booking by its ID.
+   *
+   * @param orgId - Unique tenant organization identifier.
+   * @param id - Service booking identifier.
+   * @returns The ServiceBooking object with associated relationships.
+   */
   async getBookingById(orgId: string, id: string) {
     const booking = await this.prisma.client.serviceBooking.findFirst({
       where: { id, organizationId: orgId },
@@ -612,6 +644,14 @@ export class BookingService {
     return booking;
   }
 
+  /**
+   * Updates the workflow status of an existing service booking (e.g. CONFIRMED, CANCELLED, IN_PROGRESS).
+   *
+   * @param orgId - Unique tenant organization identifier.
+   * @param id - Service booking identifier.
+   * @param status - Target BookingStatus enum value.
+   * @returns The updated ServiceBooking record.
+   */
   async updateBookingStatus(orgId: string, id: string, status: BookingStatus) {
     const booking = await this.prisma.client.serviceBooking.findFirst({
       where: { id, organizationId: orgId }
@@ -625,6 +665,13 @@ export class BookingService {
     });
   }
 
+  /**
+   * Cancels all future scheduled or requested service bookings belonging to a recurring booking series.
+   *
+   * @param orgId - Unique tenant organization identifier.
+   * @param recurrenceId - Unique booking recurrence series identifier.
+   * @returns Prisma batch update payload with count of updated records.
+   */
   async cancelBookingSeries(orgId: string, recurrenceId: string) {
     return this.prisma.client.serviceBooking.updateMany({
       where: {
@@ -638,6 +685,15 @@ export class BookingService {
     });
   }
 
+  /**
+   * Dynamically calculates available 30-minute booking timeslots for a service on a given date based on
+   * staff shifts, configured breaks, buffer times, and existing overlapping bookings.
+   *
+   * @param orgId - Unique tenant organization identifier.
+   * @param serviceId - Service database identifier.
+   * @param dateStr - Optional target date in YYYY-MM-DD format (defaults to current date).
+   * @returns Object containing service ID, formatted YYYY-MM-DD date, and array of available ISO slot strings.
+   */
   async getServiceAvailability(orgId: string, serviceId: string, dateStr?: string) {
     const targetDate = dateStr ? new Date(dateStr) : new Date();
     // Validate targetDate

@@ -195,6 +195,26 @@ export class ServicesController {
     return this.serviceManagement.getServiceById(req.organization.id, id);
   }
 
+  @Get(":id/availability")
+  @Permissions("services:read")
+  @ApiOperation({
+    summary: "Get service slot availability",
+    description: "Calculates available booking slots dynamically based on staff shifts, breaks, and overlapping booking schedules.",
+    operationId: "Services_GetAvailability",
+  })
+  @ApiParam({ name: "id", type: "string", description: "The ID of the service" })
+  @ApiQuery({ name: "date", type: "string", required: false, description: "Target date in YYYY-MM-DD format" })
+  @ApiResponse({ status: 200, description: "Successfully generated slot availability" })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
+  @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: "Service not found" })
+  async getServiceAvailability(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Query("date") date?: string,
+  ) {
+    return this.bookingService.getServiceAvailability(req.organization.id, id, date);
+  }
+
   @Patch(":id")
   @Permissions("services:manage")
   @ApiOperation({
@@ -386,6 +406,23 @@ export class ServicesController {
     @Body() dto: CompleteBookingDto
   ) {
     return this.bookingService.completeBooking(req.organization.id, id, req.user.id, dto);
+  }
+
+  @Post("bookings/recurrence/:recurrenceId/cancel")
+  @Permissions("services:write")
+  @ApiOperation({
+    summary: "Cancel recurring booking series",
+    description: "Cancels all scheduled and requested future bookings belonging to a recurring booking series.",
+    operationId: "Services_CancelBookingSeries",
+  })
+  @ApiParam({ name: "recurrenceId", type: "string", description: "The recurrence rule ID of the booking series" })
+  @ApiResponse({ status: 200, description: "Booking series cancelled successfully" })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
+  async cancelBookingSeries(
+    @Req() req: any,
+    @Param("recurrenceId") recurrenceId: string,
+  ) {
+    return this.bookingService.cancelBookingSeries(req.organization.id, recurrenceId);
   }
 
   @Post("staff/:memberId/shifts")

@@ -23,6 +23,10 @@ import type {
   UpdateProductReviewDto,
   ProductReviewResponseDto,
   CatalogDeleteReviewParams,
+  PublicBookingDto,
+  RequestOtpDto,
+  VerifyOtpDto,
+  ServicesUpdateBookingStatusBodyStatus,
 } from "./generated/model";
 import {
   RawAPI,
@@ -451,6 +455,7 @@ export class ScrymeClientSDK<
 
   /**
    * Service Bookings & Appointments Submodule.
+   * Provides comprehensive booking management, appointment scheduling, cancellations, public OTP flows, and completion orchestration.
    */
   public bookings: {
     /**
@@ -475,11 +480,72 @@ export class ScrymeClientSDK<
     list(): Promise<AxiosResponse<ServiceBookingItemDto[]>>;
 
     /**
+     * Updates the status of an existing booking appointment.
+     * @param id Service booking ID.
+     * @param status Target status enum value (e.g. CONFIRMED, CANCELLED, IN_PROGRESS).
+     * @returns Promise containing the status update response.
+     */
+    updateStatus(
+      id: string,
+      status: ServicesUpdateBookingStatusBodyStatus | string,
+    ): Promise<AxiosResponse<void>>;
+
+    /**
      * Cancels an existing service booking appointment.
      * @param id Service booking ID to cancel.
      * @returns Promise containing the cancellation response.
      */
     cancel(id: string): Promise<AxiosResponse<void>>;
+
+    /**
+     * Cancels an entire recurring booking series by its recurrence ID.
+     * @param recurrenceId Recurrence series identifier.
+     * @returns Promise containing the series cancellation response.
+     */
+    cancelSeries(recurrenceId: string): Promise<AxiosResponse<void>>;
+
+    /**
+     * Completes a booking appointment, recording actual duration and deducting consumed material stock.
+     * @param id Service booking ID.
+     * @param dto Completion details including actual start/end times and consumed materials.
+     * @returns Promise containing the completion response.
+     */
+    complete(
+      id: string,
+      dto: CompleteBookingDto & Record<string, any>,
+    ): Promise<AxiosResponse<void>>;
+
+    /**
+     * Calculates and retrieves available booking slot times for a service on a given target date.
+     * @param serviceId Service identifier.
+     * @param date Target date string in YYYY-MM-DD format (optional).
+     * @returns Promise containing the available booking slots.
+     */
+    getAvailability(
+      serviceId: string,
+      date?: string,
+    ): Promise<AxiosResponse<any>>;
+
+    /**
+     * Requests a secure One-Time Password (OTP) code via email or SMS for public guest bookings.
+     * @param dto Contact parameters specifying email or phone number.
+     * @returns Promise containing the OTP request response.
+     */
+    requestOtp(dto: RequestOtpDto): Promise<AxiosResponse<any>>;
+
+    /**
+     * Verifies an OTP code submitted by a customer for public booking flows.
+     * @param dto Code and contact details.
+     * @returns Promise containing the verification response with verificationId.
+     */
+    verifyOtp(dto: VerifyOtpDto): Promise<AxiosResponse<any>>;
+
+    /**
+     * Creates a public booking without requiring full customer authentication using a valid verification ID.
+     * @param dto Public booking payload including serviceId, verificationId, and scheduled time.
+     * @returns Promise containing the public booking response.
+     */
+    createPublicBooking(dto: PublicBookingDto): Promise<AxiosResponse<any>>;
   };
 
   /**
@@ -1317,8 +1383,29 @@ export class ScrymeClientSDK<
       list: async () => {
         return this.catalog.getBookings() as any;
       },
+      updateStatus: async (id: string, status: ServicesUpdateBookingStatusBodyStatus | string) => {
+        return this.catalog.updateBookingStatus(id, status as any) as any;
+      },
       cancel: async (id: string) => {
         return this.catalog.updateBookingStatus(id, "CANCELLED" as any) as any;
+      },
+      cancelSeries: async (recurrenceId: string) => {
+        return this.api.servicesCancelBookingSeries(config.orgSlug, recurrenceId) as any;
+      },
+      complete: async (id: string, dto: CompleteBookingDto & Record<string, any>) => {
+        return this.catalog.completeBooking(id, dto) as any;
+      },
+      getAvailability: async (serviceId: string, date?: string) => {
+        return this.api.publicServicesGetAvailability(config.orgSlug, serviceId, date ? { date } : undefined) as any;
+      },
+      requestOtp: async (dto: RequestOtpDto) => {
+        return this.api.publicServicesRequestOtp(config.orgSlug, dto) as any;
+      },
+      verifyOtp: async (dto: VerifyOtpDto) => {
+        return this.api.publicServicesVerifyOtp(config.orgSlug, dto) as any;
+      },
+      createPublicBooking: async (dto: PublicBookingDto) => {
+        return this.api.publicServicesCreatePublicBooking(config.orgSlug, dto) as any;
       },
     };
   }
