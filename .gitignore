@@ -40,6 +40,10 @@ tsconfig.tsbuildinfo
 
 # generated SDK files
 packages/v3-sdk/src/generated/
+target/
+**/target/
+.openapi-generator/
+**/.openapi-generator/
 
 # android / gradle
 .gradle/
