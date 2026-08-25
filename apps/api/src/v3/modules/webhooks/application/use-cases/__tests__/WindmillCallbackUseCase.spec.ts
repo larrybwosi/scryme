@@ -51,6 +51,21 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
     await expect(useCase.verifySignature(mockOrganizationId, signature, mockPayload)).resolves.not.toThrow();
   });
 
+  it('should verify a valid signature with sha256= prefix', async () => {
+    vi.spyOn(prismaService.client.windmillConfiguration, 'findUnique').mockResolvedValue({
+      webhookSecret: mockSecret,
+    } as any);
+
+    const rawSignature = crypto
+      .createHmac('sha256', mockSecret)
+      .update(JSON.stringify(mockPayload))
+      .digest('hex');
+
+    const prefixedSignature = `sha256=${rawSignature}`;
+
+    await expect(useCase.verifySignature(mockOrganizationId, prefixedSignature, mockPayload)).resolves.not.toThrow();
+  });
+
   it('should throw UnauthorizedException for an invalid signature', async () => {
     vi.spyOn(prismaService.client.windmillConfiguration, 'findUnique').mockResolvedValue({
       webhookSecret: mockSecret,
@@ -94,7 +109,7 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
   });
 });
 
-describe('WindmillCallbackUseCase - Tenant Isolation', () => {
+describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
   let useCase: WindmillCallbackUseCase;
   let mockPrisma: any;
 
@@ -108,6 +123,16 @@ describe('WindmillCallbackUseCase - Tenant Isolation', () => {
           findFirst: vi.fn(),
           updateMany: vi.fn(),
         },
+        purchase: {
+          update: vi.fn(),
+        },
+        expense: {
+          update: vi.fn(),
+        },
+        batch: {
+          update: vi.fn(),
+        },
+        $transaction: vi.fn((cb) => cb(mockPrisma.client)),
       },
     };
 
@@ -149,20 +174,67 @@ describe('WindmillCallbackUseCase - Tenant Isolation', () => {
     });
   });
 
-  it('should return Execution not found if execution belongs to a different organization', async () => {
-    mockPrisma.client.windmillExecution.findFirst.mockResolvedValue(null);
+  it('should process handleApprovalCallback for PurchaseOrder', async () => {
+    mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.client.purchase.update.mockResolvedValue({});
 
-    const result = await useCase.handleGeneralCallback({
+    const result = await useCase.handleApprovalCallback({
       jobId: mockJobId,
-      organizationId: 'other_org',
+      organizationId: mockOrgId,
+      entityType: 'PurchaseOrder',
+      entityId: 'po_100',
+      decision: 'APPROVED',
       status: 'COMPLETED',
       completedAt: new Date().toISOString(),
     } as any);
 
-    expect(result).toEqual({ success: false, message: 'Execution not found' });
-    expect(mockPrisma.client.windmillExecution.findFirst).toHaveBeenCalledWith({
-      where: { jobId: mockJobId, organizationId: 'other_org' },
+    expect(result).toEqual({ success: true });
+    expect(mockPrisma.client.purchase.update).toHaveBeenCalledWith({
+      where: { id: 'po_100', organizationId: mockOrgId },
+      data: { status: 'APPROVED' },
     });
-    expect(mockPrisma.client.windmillExecution.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('should process handleBakeryDisposalCallback for DISPOSE', async () => {
+    mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.client.batch.update.mockResolvedValue({});
+
+    const result = await useCase.handleBakeryDisposalCallback({
+      jobId: mockJobId,
+      organizationId: mockOrgId,
+      batchId: 'batch_777',
+      action: 'DISPOSE',
+      disposalReason: 'EXPIRED',
+      status: 'COMPLETED',
+      completedAt: new Date().toISOString(),
+    } as any);
+
+    expect(result).toEqual({ success: true });
+    expect(mockPrisma.client.batch.update).toHaveBeenCalledWith({
+      where: { id: 'batch_777', organizationId: mockOrgId },
+      data: expect.objectContaining({
+        expirationStatus: 'DISPOSED',
+      }),
+    });
+  });
+
+  it('should process handleOutcomeCallback', async () => {
+    mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await useCase.handleOutcomeCallback({
+      jobId: mockJobId,
+      organizationId: mockOrgId,
+      status: 'COMPLETED',
+      summary: 'Processed successfully',
+      completedAt: new Date().toISOString(),
+    } as any);
+
+    expect(result).toEqual({ success: true });
+    expect(mockPrisma.client.windmillExecution.updateMany).toHaveBeenCalledWith({
+      where: { jobId: mockJobId, organizationId: mockOrgId },
+      data: expect.objectContaining({
+        summary: 'Processed successfully',
+      }),
+    });
   });
 });
