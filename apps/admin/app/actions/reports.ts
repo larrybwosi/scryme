@@ -30,7 +30,7 @@ export async function getSystemReportsAndAnalytics() {
     }),
     db.transaction.count(),
     db.transaction.aggregate({
-      _sum: { totalAmount: true },
+      _sum: { finalTotal: true },
     }),
     db.organization.findMany({
       where: { deletedAt: null },
@@ -78,7 +78,7 @@ export async function getSystemReportsAndAnalytics() {
   ]);
 
   const totalStorageBytes = storageUsageAggregate._sum.sizeBytes || 0;
-  const totalVolume = Number(transactionVolumeAggregate._sum.totalAmount || 0);
+  const totalVolume = Number(transactionVolumeAggregate._sum.finalTotal || 0);
 
   const formattedOrgStorage = organizationStorageBreakdown.map((org) => {
     const usedBytes = org.attachments.reduce(

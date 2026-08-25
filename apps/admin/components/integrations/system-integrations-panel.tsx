@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, MessageSquare, Workflow, ShieldAlert, CheckCircle2, Save, Sparkles } from "lucide-react"
+import { Loader2, MessageSquare, Workflow, ShieldAlert, CheckCircle2, Save, Sparkles, Bot } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
@@ -12,6 +12,7 @@ import { Badge } from "@repo/ui/components/ui/badge"
 import {
   updateSystemIntegrationSettings,
   provisionAdminChatWorkspace,
+  testHermesConnection,
   type SystemIntegrationSettings,
 } from "@/app/actions/integrations"
 
@@ -23,6 +24,7 @@ export function SystemIntegrationsPanel({
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [isProvisioning, setIsProvisioning] = useState(false)
+  const [isTestingHermes, setIsTestingHermes] = useState(false)
 
   // Scryme Chat Credentials
   const [scrymeChatClientId, setScrymeChatClientId] = useState(settings.scrymeChatClientId ?? "")
@@ -33,6 +35,12 @@ export function SystemIntegrationsPanel({
   const [windmillBaseUrl, setWindmillBaseUrl] = useState(settings.windmillBaseUrl ?? "http://windmill:8000")
   const [windmillAdminApiKey, setWindmillAdminApiKey] = useState(settings.windmillAdminApiKey ?? "")
   const [windmillWebhookSecret, setWindmillWebhookSecret] = useState(settings.windmillWebhookSecret ?? "")
+
+  // Hermes Agent Credentials & Configurations
+  const [hermesApiKey, setHermesApiKey] = useState(settings.hermesApiKey ?? "")
+  const [hermesBaseUrl, setHermesBaseUrl] = useState(settings.hermesBaseUrl ?? "http://hermes:8080")
+  const [hermesModel, setHermesModel] = useState(settings.hermesModel ?? "hermes-3-llama-3.1-8b")
+  const [hermesEnabled, setHermesEnabled] = useState(settings.hermesEnabled ?? false)
 
   // System Admin Chat Workspace
   const [adminWorkspaceName, setAdminWorkspaceName] = useState(settings.adminWorkspaceName ?? "System Admin Workspace")
@@ -51,6 +59,10 @@ export function SystemIntegrationsPanel({
         windmillBaseUrl,
         windmillAdminApiKey,
         windmillWebhookSecret,
+        hermesApiKey,
+        hermesBaseUrl,
+        hermesModel,
+        hermesEnabled,
         adminWorkspaceName,
         adminWorkspaceSlug,
         adminChannelSlug,
@@ -61,6 +73,22 @@ export function SystemIntegrationsPanel({
       toast.error(error instanceof Error ? error.message : "Failed to save settings")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleTestHermes() {
+    setIsTestingHermes(true)
+    try {
+      const res = await testHermesConnection()
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test Hermes connection")
+    } finally {
+      setIsTestingHermes(false)
     }
   }
 
@@ -185,6 +213,83 @@ export function SystemIntegrationsPanel({
               onChange={(e) => setWindmillWebhookSecret(e.target.value)}
               placeholder="••••••••••••••••"
             />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Hermes Agent Credentials Card */}
+      <Card className="border-border bg-card">
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600">
+              <Bot className="size-5" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold text-foreground">Hermes Agent Integration</CardTitle>
+              <CardDescription>
+                System-wide credentials and configuration for Hermes autonomous agent execution and automated task orchestration.
+              </CardDescription>
+            </div>
+          </div>
+          <Badge
+            variant={hermesApiKey ? "secondary" : "outline"}
+            className={hermesApiKey ? "bg-emerald-500/10 text-emerald-600" : ""}
+          >
+            {hermesApiKey ? "Configured" : "Missing API Key"}
+          </Badge>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="hermes-base-url">Hermes Agent Base URL</Label>
+            <Input
+              id="hermes-base-url"
+              value={hermesBaseUrl}
+              onChange={(e) => setHermesBaseUrl(e.target.value)}
+              placeholder="http://hermes:8080"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="hermes-api-key">API Key</Label>
+            <Input
+              id="hermes-api-key"
+              type="password"
+              value={hermesApiKey}
+              onChange={(e) => setHermesApiKey(e.target.value)}
+              placeholder="••••••••••••••••"
+            />
+          </div>
+          <div className="flex flex-col gap-2 sm:col-span-2">
+            <Label htmlFor="hermes-model">Default LLM Model / Agent Engine</Label>
+            <Input
+              id="hermes-model"
+              value={hermesModel}
+              onChange={(e) => setHermesModel(e.target.value)}
+              placeholder="hermes-3-llama-3.1-8b"
+            />
+          </div>
+          <div className="flex items-center justify-between pt-2 sm:col-span-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="hermes-enabled"
+                checked={hermesEnabled}
+                onChange={(e) => setHermesEnabled(e.target.checked)}
+                className="size-4 rounded border-input bg-background text-primary focus:ring-ring"
+              />
+              <Label htmlFor="hermes-enabled" className="cursor-pointer font-medium">
+                Enable Hermes Agent for Automated Background Tasks
+              </Label>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isTestingHermes}
+              onClick={handleTestHermes}
+              className="gap-2"
+            >
+              {isTestingHermes ? <Loader2 className="size-4 animate-spin" /> : <Bot className="size-4 text-amber-500" />}
+              Test Connection
+            </Button>
           </div>
         </CardContent>
       </Card>
