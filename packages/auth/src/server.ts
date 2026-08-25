@@ -51,6 +51,9 @@ export async function getServerAuth(
   }
 
   const user = session.user;
+  const sessionData = session.session as any;
+  const userData = user as any;
+
   const organizationId =
     (session.session as any).activeOrganizationId || (user as any).activeOrganizationId;
 

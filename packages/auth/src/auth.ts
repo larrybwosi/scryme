@@ -16,6 +16,8 @@ export interface ExtendedUser extends User {
   systemRole?: UserRole | string;
   orgRole?: MemberRole | string;
   username?: string;
+  activeOrganizationId?: string | null;
+  memberId?: string;
 }
 
 // Extended Session interface including activeOrganizationId
@@ -201,6 +203,8 @@ export const auth = betterAuth({
                 role: systemRole, // Maintain system role for admin plugin checks
                 systemRole,
                 orgRole: parsedCache.orgRole,
+                activeOrganizationId: parsedCache.activeOrganizationId ?? null,
+                memberId: parsedCache.memberId,
               },
               session: {
                 ...session,
@@ -289,6 +293,8 @@ export const auth = betterAuth({
             role: systemRole, // Preserves system role explicitly for the admin plugin
             systemRole,
             orgRole: memberData.role,
+            activeOrganizationId,
+            memberId: memberData.memberId,
           },
           session: {
             ...session,

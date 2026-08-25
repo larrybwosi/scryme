@@ -99,8 +99,8 @@ export class V3AuthGuard implements CanActivate {
             },
           });
           if (session) {
-            const user = session.user;
-            const orgId = organization?.id || user.activeOrganizationId;
+            const user = session.user as any;
+            const orgId = organization?.id || user.activeOrganizationId || (session.session as any).activeOrganizationId;
             if (orgId) {
               const customer = await this.prisma.client.customer.findUnique({
                 where: {
