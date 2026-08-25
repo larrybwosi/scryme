@@ -4,6 +4,7 @@
   "version": "9.69.0",
   "type": "module",
   "scripts": {
+    "prebuild": "pnpm --filter @scryme/sdk generate:rust",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

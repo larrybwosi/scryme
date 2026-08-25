@@ -251,6 +251,50 @@ impl AuthState {
         Ok(request_builder)
     }
 
+    /// Constructs a `scryme_sdk::ScrymeClient` using the current device config and active auth state.
+    pub fn build_sdk_client(&self) -> Result<scryme_sdk::ScrymeClient, String> {
+        let (base_url, org_slug) = {
+            let override_guard = self
+                .base_url_override
+                .lock()
+                .map_err(|_| "Failed to lock base url override")?;
+
+            let config_guard = self
+                .device_config
+                .lock()
+                .map_err(|_| "Failed to lock device config")?;
+
+            let url = if let Some(over) = override_guard.as_ref() {
+                over.clone()
+            } else if let Some(config) = config_guard.as_ref() {
+                config.base_url.clone()
+            } else {
+                let dev_url = if cfg!(debug_assertions) {
+                    "http://localhost:3002"
+                } else {
+                    "https://api.scryme.tech"
+                };
+                dev_url.to_string()
+            };
+
+            let slug = config_guard.as_ref().map(|c| c.org_slug.clone()).unwrap_or_default();
+            (url, slug)
+        };
+
+        let token = self.get_active_token().ok().flatten();
+
+        let mut builder = scryme_sdk::ScrymeClient::builder()
+            .base_url(base_url)
+            .org_slug(org_slug)
+            .client(self.client.clone());
+
+        if let Some(t) = token {
+            builder = builder.bearer_token(t);
+        }
+
+        Ok(builder.build())
+    }
+
     pub fn get_active_token(&self) -> Result<Option<String>, String> {
         let active_id = self.active_member_id.lock().map_err(|_| "Lock error")?;
         if let Some(id) = active_id.as_ref() {

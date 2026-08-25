@@ -251,27 +251,34 @@ pub async fn run_sync(
 ) -> Result<usize> {
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
 
-    let query_params = vec![("limit", "2000".to_string())];
+    let sdk_client = auth_state.build_sdk_client().map_err(|e| anyhow::anyhow!(e))?;
+    let customers_list = scryme_sdk::apis::v3_customers_api::customers_get_customers(
+        &sdk_client.config,
+        &sdk_client.org_slug,
+        None,
+        Some(2000.0),
+        None,
+    ).await.map_err(|e| anyhow::anyhow!("SDK get_customers failed: {}", e))?;
 
-    let request = auth_state.build_request(reqwest::Method::GET, crate::api_config::routes::CUSTOMERS)
-        .map_err(|e| anyhow::anyhow!(e))?;
-
-    let response = request.query(&query_params).send().await.map_err(|e| anyhow::anyhow!(e))?;
-
-    if !response.status().is_success() {
-        return Err(anyhow::anyhow!("Server returned error: {}", response.status()));
-    }
-
-    let v2_resp = response.json::<crate::models::V2Response<CustomersSyncResponse>>().await.map_err(|e| anyhow::anyhow!(e))?;
-    let res_body = v2_resp.data;
-
-    let incoming_count = res_body.data.len();
+    let incoming_count = customers_list.len();
     let mut tx = pool.begin().await.map_err(|e| anyhow::anyhow!(e))?;
 
-    // Clear local customers before full sync if it's a full sync
+    // Clear local customers before full sync
     sqlx::query("DELETE FROM customers").execute(&mut *tx).await.map_err(|e| anyhow::anyhow!(e))?;
 
-    for customer in res_body.data {
+    for cust_dto in customers_list {
+        let customer = PosCustomer {
+            id: cust_dto.id,
+            name: cust_dto.name,
+            phone: cust_dto.phone,
+            email: cust_dto.email,
+            company: cust_dto.company,
+            customer_type: None,
+            tax_id: None,
+            insurance_provider: None,
+            policy_number: None,
+        };
+
         let search_text = build_search_text(&customer);
         let encrypted_payload = encrypt_payload(&customer).await?;
 
@@ -290,11 +297,6 @@ pub async fn run_sync(
             .execute(&mut *tx)
             .await.map_err(|e| anyhow::anyhow!(e))?;
     }
-
-    sqlx::query("INSERT OR REPLACE INTO customer_sync_meta (id, last_sync) VALUES (1, ?1)")
-        .bind(&res_body.next_sync_token)
-        .execute(&mut *tx)
-        .await.map_err(|e| anyhow::anyhow!(e))?;
 
     tx.commit().await.map_err(|e| anyhow::anyhow!(e))?;
 

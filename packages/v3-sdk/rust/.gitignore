@@ -1,3 +1,11 @@
 /target/
+**/target/
+*.rlib
+*.rmeta
+*.so
+*.dylib
+*.dll
+*.a
+*.o
 **/*.rs.bk
 Cargo.lock
