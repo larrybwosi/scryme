@@ -189,7 +189,12 @@ export function SegmentsView() {
                       : "1 hour ago"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Segment options"
+                      title="Segment options"
+                    >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
                   </TableCell>

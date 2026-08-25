@@ -145,6 +145,13 @@ interface AnnouncementApiService {
     ): Response<ApiEnvelope<Unit>>
 }
 
+interface DeviceApiService {
+    @POST("/api/v2/devices/provision")
+    suspend fun provisionDevice(
+        @Body request: Map<String, String> // setupToken
+    ): Response<ApiEnvelope<DeviceProvisionResponseDto>>
+}
+
 interface ExpenseApiService {
     @GET("/api/android/finance/expenses")
     suspend fun getExpenses(

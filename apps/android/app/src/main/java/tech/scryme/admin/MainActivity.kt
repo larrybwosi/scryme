@@ -26,16 +26,19 @@ import tech.scryme.admin.data.api.ApprovalsApiService
 import tech.scryme.admin.data.api.AnalyticsApiService
 import tech.scryme.admin.data.api.AnnouncementApiService
 import tech.scryme.admin.data.api.ExpenseApiService
+import tech.scryme.admin.data.api.DeviceApiService
 import tech.scryme.admin.data.repository.PresenceRepositoryImpl
 import tech.scryme.admin.data.repository.ApprovalsRepositoryImpl
 import tech.scryme.admin.data.repository.AnalyticsRepositoryImpl
 import tech.scryme.admin.data.repository.AnnouncementRepositoryImpl
 import tech.scryme.admin.data.repository.ExpenseRepositoryImpl
+import tech.scryme.admin.data.repository.DeviceRepositoryImpl
 import tech.scryme.admin.presentation.viewmodel.PresenceViewModel
 import tech.scryme.admin.presentation.viewmodel.ApprovalsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnalyticsViewModel
 import tech.scryme.admin.presentation.viewmodel.AnnouncementViewModel
 import tech.scryme.admin.presentation.viewmodel.ExpenseViewModel
+import tech.scryme.admin.presentation.viewmodel.DeviceAuthViewModel
 import tech.scryme.admin.presentation.theme.ScrymeTheme
 import tech.scryme.admin.presentation.components.LoginScreen
 import tech.scryme.admin.presentation.components.AdminDashboard
@@ -48,6 +51,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var analyticsViewModel: AnalyticsViewModel
     private lateinit var announcementViewModel: AnnouncementViewModel
     private lateinit var expenseViewModel: ExpenseViewModel
+    private lateinit var deviceAuthViewModel: DeviceAuthViewModel
     private lateinit var sessionManager: SessionManagerImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -92,6 +96,10 @@ class MainActivity : ComponentActivity() {
         val expenseRepository = ExpenseRepositoryImpl(expenseApiService)
         expenseViewModel = ExpenseViewModel(expenseRepository)
 
+        val deviceApiService = retrofit.create(DeviceApiService::class.java)
+        val deviceRepository = DeviceRepositoryImpl(deviceApiService)
+        deviceAuthViewModel = DeviceAuthViewModel(deviceRepository)
+
         setContent {
             val themePreference by sessionManager.themePreference.collectAsState()
             ScrymeTheme(themeName = themePreference) {
@@ -106,6 +114,7 @@ class MainActivity : ComponentActivity() {
                         analyticsViewModel = analyticsViewModel,
                         announcementViewModel = announcementViewModel,
                         expenseViewModel = expenseViewModel,
+                        deviceAuthViewModel = deviceAuthViewModel,
                         sessionManager = sessionManager
                     )
                 }
@@ -122,6 +131,7 @@ fun AppNavigation(
     analyticsViewModel: AnalyticsViewModel,
     announcementViewModel: AnnouncementViewModel,
     expenseViewModel: ExpenseViewModel,
+    deviceAuthViewModel: DeviceAuthViewModel,
     sessionManager: SessionManagerImpl
 ) {
     val isAuthenticated by authViewModel.isAuthenticated.collectAsState()
@@ -155,6 +165,7 @@ fun AppNavigation(
             analyticsViewModel = analyticsViewModel,
             announcementViewModel = announcementViewModel,
             expenseViewModel = expenseViewModel,
+            deviceAuthViewModel = deviceAuthViewModel,
             sessionManager = sessionManager,
             onSignOut = { authViewModel.logout() }
         )

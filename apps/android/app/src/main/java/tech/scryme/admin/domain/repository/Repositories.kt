@@ -48,3 +48,7 @@ interface ExpenseRepository {
     suspend fun createExpense(description: String, amount: Double, categoryId: String, paymentMethod: String, notes: String? = null): Result<ExpenseDto>
     suspend fun approveExpense(id: String): Result<Unit>
 }
+
+interface DeviceRepository {
+    suspend fun provisionDevice(setupToken: String): Result<DeviceProvisionResponseDto>
+}

@@ -33,6 +33,15 @@ export class PurchaseOrderUseCase {
   ) {
     const purchaseNumber = `PO-${Date.now()}`;
 
+    // SECURITY (Sentinel): Validate that supplierId belongs to the caller's organizationId
+    // to prevent cross-tenant IDOR resource association.
+    const supplier = await this.prisma.client.supplier.findFirst({
+      where: { id: dto.supplierId, organizationId },
+    });
+    if (!supplier) {
+      throw new NotFoundException("Supplier not found");
+    }
+
     return this.prisma.client.$transaction(async (tx) => {
       let subTotal = 0;
       for (const item of dto.items) {

@@ -301,5 +301,60 @@ describe("StrapiProductSyncUseCase", () => {
         },
       });
     });
+
+    it("should process inbound products in chunked parallel batches and deduplicate category resolution", async () => {
+      const orgId = "org-1";
+      const connId = "conn-1";
+
+      mockConnectionUseCase.getConnectionOrThrow.mockResolvedValue({ id: connId });
+      mockConnectionUseCase.getConfigOrThrow.mockResolvedValue({
+        strapiUrl: "http://strapi.local",
+        apiToken: "token-1",
+        graphqlPath: "/graphql",
+      });
+
+      mockPrismaClient.ecommerceSyncLog.create.mockResolvedValue({ id: "sync-log-3" });
+      mockPrismaClient.ecommerceConnection.update.mockResolvedValue({});
+      mockPrismaClient.category.findMany.mockResolvedValue([]);
+
+      // Return 15 Strapi products share the same brand new category "Beverages"
+      const mockStrapiData = Array.from({ length: 15 }, (_, i) => ({
+        id: 200 + i,
+        attributes: {
+          name: `Drink ${i}`,
+          sku: `DRINK-${i}`,
+          categories: {
+            data: [{ attributes: { name: "Beverages" } }],
+          },
+        },
+      }));
+
+      mockStrapiProvider.getProducts.mockResolvedValue({
+        data: mockStrapiData,
+        meta: {
+          pagination: { page: 1, pageSize: 100, pageCount: 1, total: 15 },
+        },
+      });
+
+      mockPrismaClient.ecommerceProductMapping.findMany.mockResolvedValue([]);
+      mockPrismaClient.category.findFirst.mockResolvedValue(null);
+      mockPrismaClient.category.create.mockResolvedValue({ id: "cat-bev", name: "Beverages" });
+      mockPrismaClient.product.create.mockImplementation((args) =>
+        Promise.resolve({ id: `prod-${args.data.name}` })
+      );
+      mockPrismaClient.productVariant.create.mockResolvedValue({ id: "variant-1" });
+      mockPrismaClient.ecommerceProductMapping.create.mockResolvedValue({});
+      mockPrismaClient.ecommerceSyncLog.update.mockResolvedValue({});
+
+      const result = await useCase.syncInbound(orgId, connId);
+
+      expect(result.totalItems).toBe(15);
+      expect(result.successCount).toBe(15);
+      expect(result.failureCount).toBe(0);
+
+      // Category "Beverages" should only be created ONCE despite 15 concurrent items
+      expect(mockPrismaClient.category.create).toHaveBeenCalledTimes(1);
+      expect(mockPrismaClient.product.create).toHaveBeenCalledTimes(15);
+    });
   });
 });

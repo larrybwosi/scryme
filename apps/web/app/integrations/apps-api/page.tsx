@@ -970,7 +970,10 @@ function AppsApiContent() {
                     <div className="flex flex-col items-center gap-4">
                       <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
                         <QRCodeSVG
-                          value={deviceTokenResult.rawToken}
+                          value={JSON.stringify({
+                            type: "POS_PROVISION",
+                            token: deviceTokenResult.rawToken,
+                          })}
                           size={160}
                           level="H"
                           includeMargin={false}
