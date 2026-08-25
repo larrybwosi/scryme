@@ -1,0 +1,43 @@
+@import "@repo/ui/globals.css";
+
+@source "../../../packages/ui/src";
+
+/* Platform admin console: dark, high-signal operator theme */
+.dark {
+  --background: oklch(0.16 0.006 285);
+  --foreground: oklch(0.96 0.002 285);
+  --card: oklch(0.19 0.007 285);
+  --card-foreground: oklch(0.96 0.002 285);
+  --popover: oklch(0.19 0.007 285);
+  --popover-foreground: oklch(0.96 0.002 285);
+  --primary: oklch(0.74 0.15 65);
+  --primary-foreground: oklch(0.16 0.006 285);
+  --secondary: oklch(0.24 0.008 285);
+  --secondary-foreground: oklch(0.96 0.002 285);
+  --muted: oklch(0.22 0.007 285);
+  --muted-foreground: oklch(0.63 0.01 285);
+  --accent: oklch(0.24 0.008 285);
+  --accent-foreground: oklch(0.96 0.002 285);
+  --destructive: oklch(0.62 0.21 25);
+  --destructive-foreground: oklch(0.96 0.002 285);
+  --border: oklch(0.27 0.008 285);
+  --input: oklch(0.27 0.008 285);
+  --ring: oklch(0.74 0.15 65);
+}
+
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
+}

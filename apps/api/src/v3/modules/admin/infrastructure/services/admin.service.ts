@@ -3,6 +3,8 @@ import { PrismaService } from "@/prisma/prisma.service";
 import {
   CreateOrganizationDto,
   UpdateOrganizationDto,
+  SuspendOrganizationDto,
+  SetQuotaOverridesDto,
   BanUserDto,
   SetGlobalSettingDto,
   DefineTierDto,
@@ -127,6 +129,73 @@ export class AdminService {
         deletedAt: new Date(),
       },
     });
+  }
+
+  // --- Organization Suspension ---
+
+  async suspendOrganization(id: string, dto: SuspendOrganizationDto) {
+    // Verify it exists
+    await this.getOrganizationDetails(id);
+
+    return this.prisma.client.organization.update({
+      where: { id },
+      data: {
+        isSuspended: true,
+        suspendedAt: new Date(),
+        suspensionReason: dto.reason || "Suspended by platform administrator",
+      },
+    });
+  }
+
+  async reactivateOrganization(id: string) {
+    // Verify it exists
+    await this.getOrganizationDetails(id);
+
+    return this.prisma.client.organization.update({
+      where: { id },
+      data: {
+        isSuspended: false,
+        suspendedAt: null,
+        suspensionReason: null,
+      },
+    });
+  }
+
+  // --- Organization Quota Overrides ---
+
+  async getEffectiveQuota(id: string) {
+    const org = await this.getOrganizationDetails(id);
+    const subscription = await this.prisma.client.subscription.findUnique({
+      where: { organizationId: id },
+    });
+
+    const tierSlug = subscription?.dodoPriceId || "free";
+    const tiers = await this.listTiers();
+    const tier = tiers.find((t) => t.slug === tierSlug);
+    const baseLimits = tier?.limits || {};
+    const overrides = (org.quotaOverrides as Record<string, any>) || {};
+
+    return {
+      organizationId: id,
+      tierSlug,
+      baseLimits,
+      overrides,
+      effectiveLimits: { ...baseLimits, ...overrides },
+    };
+  }
+
+  async setQuotaOverrides(id: string, dto: SetQuotaOverridesDto) {
+    // Verify it exists
+    await this.getOrganizationDetails(id);
+
+    await this.prisma.client.organization.update({
+      where: { id },
+      data: {
+        quotaOverrides: dto.overrides,
+      },
+    });
+
+    return this.getEffectiveQuota(id);
   }
 
   // --- Member Operations ---

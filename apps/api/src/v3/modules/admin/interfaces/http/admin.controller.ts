@@ -17,6 +17,8 @@ import { AdminService } from "../../infrastructure/services/admin.service";
 import {
   CreateOrganizationDto,
   UpdateOrganizationDto,
+  SuspendOrganizationDto,
+  SetQuotaOverridesDto,
   BanUserDto,
   SetGlobalSettingDto,
   DefineTierDto,
@@ -74,6 +76,40 @@ export class AdminController {
   @ApiOperation({ summary: "Soft-delete an organization system-wide" })
   async deleteOrganization(@Param("id") id: string) {
     return this.adminService.deleteOrganization(id);
+  }
+
+  // --- Organization Suspension ---
+
+  @Post("organizations/:id/suspend")
+  @ApiOperation({ summary: "Suspend an organization, blocking its members from the platform" })
+  async suspendOrganization(
+    @Param("id") id: string,
+    @Body() dto: SuspendOrganizationDto,
+  ) {
+    return this.adminService.suspendOrganization(id, dto);
+  }
+
+  @Post("organizations/:id/reactivate")
+  @ApiOperation({ summary: "Reactivate a suspended organization" })
+  async reactivateOrganization(@Param("id") id: string) {
+    return this.adminService.reactivateOrganization(id);
+  }
+
+  // --- Organization Quota Overrides ---
+
+  @Get("organizations/:id/quota")
+  @ApiOperation({ summary: "Get the effective quota (tier limits merged with overrides) for an organization" })
+  async getEffectiveQuota(@Param("id") id: string) {
+    return this.adminService.getEffectiveQuota(id);
+  }
+
+  @Put("organizations/:id/quota-overrides")
+  @ApiOperation({ summary: "Set per-organization quota overrides" })
+  async setQuotaOverrides(
+    @Param("id") id: string,
+    @Body() dto: SetQuotaOverridesDto,
+  ) {
+    return this.adminService.setQuotaOverrides(id, dto);
   }
 
   // --- Member Operations ---
