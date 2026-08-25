@@ -1,14 +1,6 @@
-pub mod configuration {
-    #[derive(Clone, Debug, Default)]
-    pub struct Configuration {
-        pub base_path: String,
-        pub user_agent: Option<String>,
-        pub bearer_access_token: Option<String>,
-    }
-}
+pub use crate::configuration as configuration;
 
 pub mod v3_customers_api {
-    use crate::client::ScrymeClient;
     use crate::Configuration;
     use serde_json::Value;
 
@@ -23,7 +15,6 @@ pub mod v3_customers_api {
 }
 
 pub mod v3_members_terminal_api {
-    use crate::client::ScrymeClient;
     use crate::Configuration;
     use serde_json::Value;
 
