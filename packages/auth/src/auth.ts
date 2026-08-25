@@ -14,6 +14,7 @@ import { env } from "@repo/env";
 export interface ExtendedUser extends User {
   role?: UserRole | string;
   systemRole?: UserRole | string;
+  orgRole?: MemberRole | string;
   username?: string;
 }
 
@@ -21,13 +22,15 @@ export interface ExtendedUser extends User {
 export interface ExtendedSession extends Session {
   activeOrganizationId?: string | null;
   isOrgSuspended?: boolean;
+  memberId?: string;
+  orgRole?: MemberRole | string;
 }
 
 // Session cache interface
 interface CachedUserData {
   activeOrganizationId?: string | null;
   memberId?: string;
-  role?: MemberRole | UserRole | string;
+  orgRole?: MemberRole | string;
   systemRole?: UserRole | string;
   isOrgSuspended?: boolean;
 }
@@ -190,16 +193,21 @@ export const auth = betterAuth({
                 ? (JSON.parse(cached) as CachedUserData)
                 : (cached as CachedUserData);
 
+              const systemRole = parsedCache.systemRole || user.role || user.systemRole;
+
             return {
               user: {
                 ...user,
-                ...parsedCache,
-                systemRole: parsedCache.systemRole || user.systemRole || user.role,
+                role: systemRole, // Maintain system role for admin plugin checks
+                systemRole,
+                orgRole: parsedCache.orgRole,
               },
               session: {
                 ...session,
                 activeOrganizationId: parsedCache.activeOrganizationId ?? null,
                 isOrgSuspended: parsedCache.isOrgSuspended ?? false,
+                memberId: parsedCache.memberId,
+                orgRole: parsedCache.orgRole,
               } as ExtendedSession,
             };
           }
@@ -213,12 +221,10 @@ export const auth = betterAuth({
           select: { activeOrganizationId: true, role: true },
         });
 
-        const systemRole = usr?.role || user.systemRole || user.role;
+        const systemRole = usr?.role || user.role || user.systemRole;
+        let activeOrganizationId: string | null = usr?.activeOrganizationId || null;
 
-        let activeOrganizationId: string | null =
-          usr?.activeOrganizationId || null;
-
-        // If activeOrganizationId is not set, try to fallback to their first active membership
+        // Fallback to first active membership if not explicitly set (READ-ONLY)
         if (!activeOrganizationId) {
           const firstMembership = await db.member.findFirst({
             where: { userId: user.id, deletedAt: null },
@@ -227,11 +233,6 @@ export const auth = betterAuth({
 
           if (firstMembership) {
             activeOrganizationId = firstMembership.organizationId;
-            // Persist the resolved activeOrganizationId in the database
-            await db.user.update({
-              where: { id: user.id },
-              data: { activeOrganizationId },
-            });
           }
         }
 
@@ -241,7 +242,6 @@ export const auth = betterAuth({
           role: MemberRole | undefined;
         } = { memberId: undefined, role: undefined };
 
-        // Default suspension state
         let isOrgSuspended = false;
 
         // Fetch membership details if active org exists
@@ -271,26 +271,31 @@ export const auth = betterAuth({
         const customUserData: CachedUserData = {
           activeOrganizationId,
           memberId: memberData.memberId,
-          role: memberData.role || systemRole,
+          orgRole: memberData.role,
           systemRole,
           isOrgSuspended,
         };
 
         try {
           const redis = await getRedisClient();
-          // Store as JSON string with 1 minute TTL
           await redis.setex(cacheKey, 60, JSON.stringify(customUserData));
         } catch (e: unknown) {
           console.error("Redis cache error:", e);
         }
 
-        // Return combined data with activeOrganizationId included on both user and session
         return {
-          user: { ...user, ...customUserData },
+          user: {
+            ...user,
+            role: systemRole, // Preserves system role explicitly for the admin plugin
+            systemRole,
+            orgRole: memberData.role,
+          },
           session: {
             ...session,
             activeOrganizationId,
             isOrgSuspended,
+            memberId: memberData.memberId,
+            orgRole: memberData.role,
           } as ExtendedSession,
         };
       },
