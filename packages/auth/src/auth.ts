@@ -13,6 +13,7 @@ import { env } from "@repo/env";
 // Extended User interface matching custom schema attributes
 export interface ExtendedUser extends User {
   role?: UserRole | string;
+  systemRole?: UserRole | string;
   username?: string;
 }
 
@@ -27,6 +28,7 @@ interface CachedUserData {
   activeOrganizationId?: string | null;
   memberId?: string;
   role?: MemberRole | UserRole | string;
+  systemRole?: UserRole | string;
   isOrgSuspended?: boolean;
 }
 
@@ -189,7 +191,11 @@ export const auth = betterAuth({
                 : (cached as CachedUserData);
 
             return {
-              user: { ...user, ...parsedCache },
+              user: {
+                ...user,
+                ...parsedCache,
+                systemRole: parsedCache.systemRole || user.systemRole || user.role,
+              },
               session: {
                 ...session,
                 activeOrganizationId: parsedCache.activeOrganizationId ?? null,
@@ -204,8 +210,10 @@ export const auth = betterAuth({
         // Fetch from Database
         const usr = await db.user.findUnique({
           where: { id: user.id },
-          select: { activeOrganizationId: true },
+          select: { activeOrganizationId: true, role: true },
         });
+
+        const systemRole = usr?.role || user.systemRole || user.role;
 
         let activeOrganizationId: string | null =
           usr?.activeOrganizationId || null;
@@ -263,7 +271,8 @@ export const auth = betterAuth({
         const customUserData: CachedUserData = {
           activeOrganizationId,
           memberId: memberData.memberId,
-          role: memberData.role || user.role,
+          role: memberData.role || systemRole,
+          systemRole,
           isOrgSuspended,
         };
 
