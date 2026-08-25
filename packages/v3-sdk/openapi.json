@@ -10640,14 +10640,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "X-Standalone-Key",
-            "in": "header",
-            "description": "The long-lived standalone device key",
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -11585,7 +11577,7 @@
     },
     "/v3/webhooks/strapi/{connectionId}": {
       "post": {
-        "description": "Public endpoint. Configure this URL in your Strapi Settings → Webhooks panel. Signature verification uses HMAC-SHA256 via the X-Strapi-Signature header when a webhookSecret is configured.",
+        "description": "Public endpoint. Configure this URL in your Strapi Settings \u2192 Webhooks panel. Signature verification uses HMAC-SHA256 via the X-Strapi-Signature header when a webhookSecret is configured.",
         "operationId": "Strapi_ReceiveWebhook",
         "parameters": [
           {
@@ -15938,7 +15930,7 @@
           },
           "apiToken": {
             "type": "string",
-            "description": "Full-access API token from Strapi admin → API Tokens"
+            "description": "Full-access API token from Strapi admin \u2192 API Tokens"
           },
           "publicToken": {
             "type": "string",
@@ -16096,7 +16088,7 @@
           },
           "apiToken": {
             "type": "string",
-            "description": "Full-access API token from Strapi admin → API Tokens"
+            "description": "Full-access API token from Strapi admin \u2192 API Tokens"
           },
           "publicToken": {
             "type": "string",
