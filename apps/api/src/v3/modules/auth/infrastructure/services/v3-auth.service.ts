@@ -9,7 +9,7 @@ export class V3AuthService {
     return this.authCore.provisionDevice(token);
   }
 
-  async validateClient(clientId: string, clientSecret: string) {
+  async validateClient(clientId: string, clientSecret?: string) {
     return this.authCore.validateClient(clientId, clientSecret);
   }
 

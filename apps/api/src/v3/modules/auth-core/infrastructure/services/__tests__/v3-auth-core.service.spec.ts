@@ -146,8 +146,15 @@ describe("V3AuthCoreService", () => {
       await expect(
         service.validateClient("client-missing", "secret"),
       ).rejects.toThrow(new UnauthorizedException("Invalid client credentials"));
+    });
 
-      expect(validateV3ApiSecret).toHaveBeenCalledWith("client-missing", "secret");
+    it("should return client without validating secret when clientSecret is omitted", async () => {
+      const mockClient = { id: "client-1", isActive: true };
+      (prisma.client.v3ApiClient.findUnique as any).mockResolvedValue(mockClient);
+
+      const result = await service.validateClient("client-1");
+      expect(result).toBe(mockClient);
+      expect(validateV3ApiSecret).not.toHaveBeenCalled();
     });
 
     it("should throw unified UnauthorizedException('Invalid client credentials') when secret is invalid", async () => {

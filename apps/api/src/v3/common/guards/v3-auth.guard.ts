@@ -8,6 +8,7 @@ import { V3AuthCoreService } from "../../modules/auth-core/infrastructure/servic
 import { PrismaService } from "@/prisma/prisma.service";
 import { ModuleRef, Reflector } from "@nestjs/core";
 import { ALLOW_PUBLIC_KEY } from "@/common/decorators/auth.decorator";
+import { REQUIRE_MEMBER_KEY } from "@/v3/common/decorators/require-member.decorator";
 import { AuthService } from "@/auth/auth.service";
 import { CustomerAuthService } from "@/customer-auth/customer-auth.service";
 import { env } from "@repo/env";
@@ -251,6 +252,18 @@ export class V3AuthGuard implements CanActivate {
         name: payload.customerName,
         isCustomer: true,
       };
+    }
+
+    // Check if route explicitly requires a member token (sensitive operations)
+    const requireMember = this.reflector.getAllAndOverride<boolean>(
+      REQUIRE_MEMBER_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
+    if (requireMember && !payload.memberId) {
+      throw new UnauthorizedException(
+        "Member authentication required for this operation",
+      );
     }
 
     // Set request.organization for MultiTenancyGuard compatibility

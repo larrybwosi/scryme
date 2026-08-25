@@ -5,7 +5,7 @@ import { V3AuthService } from "../../infrastructure/services/v3-auth.service";
 export class ExchangeTokenUseCase {
   constructor(private readonly v3AuthService: V3AuthService) {}
 
-  async execute(clientId: string, clientSecret: string) {
+  async execute(clientId: string, clientSecret?: string) {
     const client = await this.v3AuthService.validateClient(
       clientId,
       clientSecret,
