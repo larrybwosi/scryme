@@ -1,44 +1,30 @@
 import type {StructureResolver} from 'sanity/structure'
 
-// https://www.sanity.io/docs/structure-builder-cheat-sheet
+const singleton = (S: Parameters<StructureResolver>[0], title: string, schemaType: string, documentId: string) =>
+  S.listItem().title(title).child(S.document().schemaType(schemaType).documentId(documentId).title(title))
+
 export const structure: StructureResolver = (S) =>
   S.list()
-    .title('Content')
+    .title('Scryme content')
     .items([
-      S.listItem()
-        .title('Blog')
-        .child(
-          S.list()
-            .title('Blog Content')
-            .items([
-              S.documentTypeListItem('post').title('Posts'),
-              S.documentTypeListItem('category').title('Categories'),
-              S.documentTypeListItem('author').title('Authors'),
-            ])
-        ),
+      singleton(S, 'Site settings', 'siteSettings', 'siteSettings'),
       S.divider(),
-      S.listItem()
-        .title('Home Page')
-        .child(
-          S.document()
-            .schemaType('homePage')
-            .documentId('homePage')
-            .title('Home Page Content')
-        ),
-      S.listItem()
-        .title('About Page')
-        .child(
-          S.document()
-            .schemaType('aboutPage')
-            .documentId('aboutPage')
-            .title('About Page Content')
-        ),
-      S.listItem()
-        .title('Pricing Page')
-        .child(
-          S.document()
-            .schemaType('pricingPage')
-            .documentId('pricingPage')
-            .title('Pricing Page Content')
-        ),
+      S.listItem().title('Pages').child(
+        S.list().title('Pages').items([
+          singleton(S, 'Home', 'homePage', 'homePage'),
+          singleton(S, 'About', 'aboutPage', 'aboutPage'),
+          singleton(S, 'Pricing', 'pricingPage', 'pricingPage'),
+          S.documentTypeListItem('page').title('Marketing, resource & legal pages'),
+        ]),
+      ),
+      S.documentTypeListItem('productPage').title('Products'),
+      S.listItem().title('Blog').child(
+        S.list().title('Blog').items([
+          S.documentTypeListItem('post').title('Posts'),
+          S.documentTypeListItem('category').title('Categories'),
+          S.documentTypeListItem('author').title('Authors'),
+        ]),
+      ),
     ])
+
+export const singletonTypes = new Set(['siteSettings', 'homePage', 'aboutPage', 'pricingPage'])

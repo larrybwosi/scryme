@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
@@ -80,12 +81,12 @@ export default function IntegrationsPage() {
                   {i.desc}
                 </p>
               </div>
-              <a
+              <Link
                 href="/docs"
                 className="text-xs font-semibold hover:underline font-mono text-[#C89A4B]"
               >
                 Configuration Guide →
-              </a>
+              </Link>
             </div>
           ))}
         </div>

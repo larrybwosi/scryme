@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getPosts } from "../lib/sanity";
+import { getCmsRoutes, getPosts } from "../lib/sanity";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://scryme.tech";
@@ -25,7 +25,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   const dynamicBlogRoutes = posts.map((post) => `/blog/${post.slug.current}`);
-  const allRoutes = [...staticRoutes, ...dynamicBlogRoutes];
+  const cmsRoutes = (await getCmsRoutes()).filter((route) => !route.noIndex);
+  const allRoutes = [...staticRoutes, ...dynamicBlogRoutes, ...cmsRoutes.map((route) => `/${route.slug}`)];
 
   // Remove potential duplicates
   const uniqueRoutes = Array.from(new Set(allRoutes));
