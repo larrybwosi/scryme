@@ -6,10 +6,12 @@ import {
   getOrganizationDetails,
   getOrganizationMembers,
   getEffectiveQuota,
+  getOrganizationStorageUsage,
 } from "@/app/actions/organizations"
 import { getOrganizationSubscription, listTiers } from "@/app/actions/billing"
 import { SuspensionControl } from "@/components/organizations/suspension-control"
 import { QuotaEditor } from "@/components/organizations/quota-editor"
+import { StorageControl } from "@/components/organizations/storage-control"
 import { SubscriptionEditor } from "@/components/organizations/subscription-editor"
 import { MembersTable } from "@/components/organizations/members-table"
 
@@ -23,11 +25,12 @@ export default async function OrganizationDetailPage({
   const org = await getOrganizationDetails(id).catch(() => null)
   if (!org) notFound()
 
-  const [members, quota, subscription, tiers] = await Promise.all([
+  const [members, quota, subscription, tiers, storage] = await Promise.all([
     getOrganizationMembers(id),
     getEffectiveQuota(id),
     getOrganizationSubscription(id),
     listTiers(),
+    getOrganizationStorageUsage(id),
   ])
 
   return (
@@ -64,6 +67,8 @@ export default async function OrganizationDetailPage({
           />
         </div>
       </div>
+
+      <StorageControl organizationId={org.id} storage={storage} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <SubscriptionEditor organizationId={org.id} subscription={subscription} tiers={tiers} />

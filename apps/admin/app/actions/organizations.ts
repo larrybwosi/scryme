@@ -178,7 +178,80 @@ export async function setQuotaOverrides(id: string, overrides: Record<string, an
   });
 
   revalidatePath(`/organizations/${id}`);
+  revalidatePath("/reports");
   return getEffectiveQuota(id);
+}
+
+export async function getOrganizationStorageUsage(id: string) {
+  await requireSuperAdmin();
+  await getOrganizationDetails(id);
+
+  const [aggregate, org] = await Promise.all([
+    db.attachment.aggregate({
+      where: { organizationId: id },
+      _sum: { sizeBytes: true },
+      _count: { id: true },
+    }),
+    db.organization.findUnique({
+      where: { id },
+      select: { quotaOverrides: true },
+    }),
+  ]);
+
+  const usedBytes = aggregate._sum.sizeBytes || 0;
+  const fileCount = aggregate._count.id || 0;
+  const overrides = (org?.quotaOverrides as Record<string, any>) || {};
+
+  const limitMB =
+    overrides.storageLimitMB != null
+      ? Number(overrides.storageLimitMB)
+      : overrides.storageLimitBytes != null
+      ? Number(overrides.storageLimitBytes) / (1024 * 1024)
+      : null;
+
+  const isStorageDisabled = Boolean(overrides.storageDisabled);
+
+  return {
+    organizationId: id,
+    usedBytes,
+    usedMB: Math.round((usedBytes / (1024 * 1024)) * 100) / 100,
+    usedGB: Math.round((usedBytes / (1024 * 1024 * 1024)) * 100) / 100,
+    fileCount,
+    limitMB,
+    isStorageDisabled,
+  };
+}
+
+export async function updateOrganizationStorageSettings(
+  id: string,
+  settings: { limitMB?: number | null; disableStorage?: boolean },
+) {
+  await requireSuperAdmin();
+  const org = await getOrganizationDetails(id);
+
+  const currentOverrides = (org.quotaOverrides as Record<string, any>) || {};
+  const updatedOverrides = { ...currentOverrides };
+
+  if (settings.limitMB === null || settings.limitMB === undefined) {
+    delete updatedOverrides.storageLimitMB;
+    delete updatedOverrides.storageLimitBytes;
+  } else {
+    updatedOverrides.storageLimitMB = settings.limitMB;
+    updatedOverrides.storageLimitBytes = settings.limitMB * 1024 * 1024;
+  }
+
+  if (settings.disableStorage !== undefined) {
+    updatedOverrides.storageDisabled = settings.disableStorage;
+  }
+
+  await db.organization.update({
+    where: { id },
+    data: { quotaOverrides: updatedOverrides },
+  });
+
+  revalidatePath(`/organizations/${id}`);
+  revalidatePath("/reports");
+  return getOrganizationStorageUsage(id);
 }
 
 export async function getOrganizationMembers(organizationId: string) {
