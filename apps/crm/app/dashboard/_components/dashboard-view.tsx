@@ -105,7 +105,13 @@ function ChartCard({
           </CardDescription>
         </div>
         {action ?? (
-          <Button variant="ghost" size="icon" className="h-7 w-7">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            aria-label="More chart options"
+            title="More chart options"
+          >
             <MoreVertical size={14} />
           </Button>
         )}
