@@ -291,8 +291,9 @@ export class StrapiSyncProcessor extends WorkerHost {
 
     const config = await this.getClientConfig(organizationId, connectionId);
 
+    // SECURITY (Sentinel): Scope product mapping lookup by organizationId to enforce tenant isolation
     const mapping = await this.prisma.client.ecommerceProductMapping.findFirst({
-      where: { connectionId, productId },
+      where: { connectionId, productId, organizationId },
     });
 
     if (!mapping) {
@@ -321,6 +322,17 @@ export class StrapiSyncProcessor extends WorkerHost {
     organizationId: string,
     connectionId: string,
   ): Promise<StrapiClientConfig> {
+    // SECURITY (Sentinel): First verify connection ownership by organizationId to prevent cross-tenant IDOR access
+    const connection = await this.prisma.client.ecommerceConnection.findFirst({
+      where: { id: connectionId, organizationId },
+    });
+
+    if (!connection) {
+      throw new Error(
+        `EcommerceConnection ${connectionId} not found or access denied for organization ${organizationId}`,
+      );
+    }
+
     const strapiConfig = await this.prisma.client.strapiConnectionConfig.findUnique({
       where: { connectionId },
     });
