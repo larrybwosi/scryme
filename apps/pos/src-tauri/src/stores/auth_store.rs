@@ -171,7 +171,7 @@ impl AuthState {
         method: reqwest::Method,
         path: &str,
     ) -> Result<reqwest::RequestBuilder, String> {
-        let (base_url, device_key) = {
+        let (base_url, device_key, org_slug) = {
             let override_guard = self
                 .base_url_override
                 .lock()
@@ -197,8 +197,9 @@ impl AuthState {
             };
 
             let key = config_guard.as_ref().map(|c| c.device_key.clone());
+            let slug = config_guard.as_ref().map(|c| c.org_slug.clone());
 
-            (url, key)
+            (url, key, slug)
         };
 
         let token = {
@@ -215,10 +216,20 @@ impl AuthState {
         let full_url = if path.starts_with("http") {
             path.to_string()
         } else {
+            let clean_path = path.trim_start_matches('/');
+            let resolved_path = if clean_path.contains(":orgSlug") || clean_path.contains("{orgSlug}") {
+                if let Some(ref slug) = org_slug {
+                    clean_path.replace(":orgSlug", slug).replace("{orgSlug}", slug)
+                } else {
+                    clean_path.to_string()
+                }
+            } else {
+                clean_path.to_string()
+            };
             format!(
                 "{}/{}",
                 base_url.trim_end_matches('/'),
-                path.trim_start_matches('/')
+                resolved_path
             )
         };
 

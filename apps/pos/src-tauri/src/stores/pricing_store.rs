@@ -6,7 +6,6 @@ use aes_gcm::{
 use anyhow::Result;
 use chrono::Utc;
 use log::{error, info};
-use reqwest::header::{HeaderMap, HeaderValue};
 use sha2::{Digest, Sha256};
 use sqlx::{Row, SqlitePool};
 use std::collections::{HashMap};
@@ -16,7 +15,6 @@ use tauri_plugin_sql::{DbInstances, DbPool};
 
 const PRICING_FILENAME: &str = "secure_pricing.bin";
 const MAIN_DB_NAME: &str = "sqlite:pos_main.db";
-const TIMEOUT_SECONDS: u64 = 30;
 
 static LEGACY_SECRET: OnceLock<String> = OnceLock::new();
 
@@ -211,34 +209,20 @@ pub async fn run_sync(
 ) -> Result<String> {
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
 
-    let (base_url, device_key) = {
-        let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
-        let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
-        (config.base_url.clone(), config.device_key.clone())
-    };
-
-    let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
-
     let last_sync: Option<String> = sqlx::query("SELECT last_sync FROM pricing_sync_meta WHERE id = 1")
         .fetch_optional(&pool).await.map_err(|e| anyhow::anyhow!(e))?.map(|r| r.get("last_sync"));
 
-    let target_url = if last_sync.is_some() {
-        format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::PRICING_SYNC)
+    let route = if last_sync.is_some() {
+        crate::api_config::routes::PRICING_SYNC
     } else {
-        format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::PRICING)
+        crate::api_config::routes::PRICING
     };
 
-    let mut headers = HeaderMap::new();
-    headers.insert("X-API-KEY", HeaderValue::from_str(&device_key).map_err(|e| anyhow::anyhow!(e))?);
-    if let Some(token) = member_token {
-        headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(&token).map_err(|e| anyhow::anyhow!(e))?);
-    }
-
-    let client = reqwest::Client::builder().default_headers(headers).timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS)).build().map_err(|e| anyhow::anyhow!(e))?;
+    let request = auth_state.build_request(reqwest::Method::GET, route).map_err(|e| anyhow::anyhow!(e))?;
     let mut query_params = vec![];
     if let Some(token) = &last_sync { query_params.push(("lastSync", token.clone())); }
 
-    let response = client.get(&target_url).query(&query_params).send().await.map_err(|e| anyhow::anyhow!(e))?;
+    let response = request.query(&query_params).send().await.map_err(|e| anyhow::anyhow!(e))?;
     if !response.status().is_success() {
         return Err(anyhow::anyhow!("Server returned error: {}", response.status()));
     }

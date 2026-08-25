@@ -6,7 +6,6 @@ use aes_gcm::{
 use anyhow::Result;
 use log::{error, info};
 use rand::RngCore;
-use reqwest::header::{HeaderMap, HeaderValue};
 use sha2::{Digest, Sha256};
 use sqlx::{Row, SqlitePool};
 use std::sync::OnceLock;
@@ -15,7 +14,6 @@ use tauri_plugin_sql::{DbInstances, DbPool};
 
 const CUSTOMER_FILENAME: &str = "secure_customers.bin";
 const MAIN_DB_NAME: &str = "sqlite:pos_main.db";
-const TIMEOUT_SECONDS: u64 = 15;
 
 static LEGACY_SECRET: OnceLock<String> = OnceLock::new();
 
@@ -253,45 +251,12 @@ pub async fn run_sync(
 ) -> Result<usize> {
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
 
-    let (base_url, device_key) = {
-        let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
-        let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
-        (config.base_url.clone(), config.device_key.clone())
-    };
+    let query_params = vec![("limit", "2000".to_string())];
 
-    let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
+    let request = auth_state.build_request(reqwest::Method::GET, crate::api_config::routes::CUSTOMERS)
+        .map_err(|e| anyhow::anyhow!(e))?;
 
-    if base_url.is_empty() { return Err(anyhow::anyhow!("Base URL is empty")); }
-
-    let target_url = format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::CUSTOMERS);
-
-    let _last_sync: Option<String> = sqlx::query("SELECT last_sync FROM customer_sync_meta WHERE id = 1")
-        .fetch_optional(&pool)
-        .await.map_err(|e| anyhow::anyhow!(e))?
-        .map(|r| r.get("last_sync"));
-
-    let mut headers = HeaderMap::new();
-    let mut val = HeaderValue::from_str(&device_key).map_err(|_| anyhow::anyhow!("Invalid Device Key"))?;
-    val.set_sensitive(true);
-    headers.insert("X-API-KEY", val);
-
-    if let Some(token) = member_token {
-        let mut val = HeaderValue::from_str(&token).map_err(|_| anyhow::anyhow!("Invalid Token"))?;
-        val.set_sensitive(true);
-        headers.insert("X-MEMBER-TOKEN", val);
-    }
-
-    let client = reqwest::Client::builder()
-        .default_headers(headers)
-        .timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS))
-        .build().map_err(|e| anyhow::anyhow!(e))?;
-
-    let mut query_params = vec![("limit", "2000".to_string())];
-
-    // We want a full sync to ensure local copy is up to date with API
-    // lastSync is removed to force a full refresh of active customers
-
-    let response = client.get(&target_url).query(&query_params).send().await.map_err(|e| anyhow::anyhow!(e))?;
+    let response = request.query(&query_params).send().await.map_err(|e| anyhow::anyhow!(e))?;
 
     if !response.status().is_success() {
         return Err(anyhow::anyhow!("Server returned error: {}", response.status()));
@@ -423,24 +388,9 @@ pub async fn create_customer_cloud(
     auth_state: &AuthState,
     payload: serde_json::Value,
 ) -> Result<PosCustomer> {
-    let (base_url, device_key) = {
-        let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
-        let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
-        (config.base_url.clone(), config.device_key.clone())
-    };
-
-    let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
-
-    let target_url = format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::CUSTOMERS);
-
-    let mut headers = HeaderMap::new();
-    headers.insert("X-API-KEY", HeaderValue::from_str(&device_key).map_err(|e| anyhow::anyhow!(e))?);
-    if let Some(token) = member_token {
-        headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(&token).map_err(|e| anyhow::anyhow!(e))?);
-    }
-
-    let client = reqwest::Client::builder().default_headers(headers).build().map_err(|e| anyhow::anyhow!(e))?;
-    let response = client.post(&target_url).json(&payload).send().await.map_err(|e| anyhow::anyhow!(e))?;
+    let request = auth_state.build_request(reqwest::Method::POST, crate::api_config::routes::CUSTOMERS)
+        .map_err(|e| anyhow::anyhow!(e))?;
+    let response = request.json(&payload).send().await.map_err(|e| anyhow::anyhow!(e))?;
 
     if !response.status().is_success() {
         return Err(anyhow::anyhow!("Server error: {}", response.status()));
@@ -513,24 +463,10 @@ pub async fn update_customer_cloud(
     id: String,
     payload: serde_json::Value,
 ) -> Result<PosCustomer> {
-    let (base_url, device_key) = {
-        let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
-        let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
-        (config.base_url.clone(), config.device_key.clone())
-    };
-
-    let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
-
-    let target_url = format!("{}/{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::CUSTOMERS, id);
-
-    let mut headers = HeaderMap::new();
-    headers.insert("X-API-KEY", HeaderValue::from_str(&device_key).map_err(|e| anyhow::anyhow!(e))?);
-    if let Some(token) = member_token {
-        headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(&token).map_err(|e| anyhow::anyhow!(e))?);
-    }
-
-    let client = reqwest::Client::builder().default_headers(headers).build().map_err(|e| anyhow::anyhow!(e))?;
-    let response = client.patch(&target_url).json(&payload).send().await.map_err(|e| anyhow::anyhow!(e))?;
+    let path = format!("{}/{}", crate::api_config::routes::CUSTOMERS, id);
+    let request = auth_state.build_request(reqwest::Method::PATCH, &path)
+        .map_err(|e| anyhow::anyhow!(e))?;
+    let response = request.json(&payload).send().await.map_err(|e| anyhow::anyhow!(e))?;
 
     if !response.status().is_success() {
         return Err(anyhow::anyhow!("Server error: {}", response.status()));

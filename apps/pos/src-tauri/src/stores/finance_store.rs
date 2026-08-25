@@ -150,9 +150,9 @@ async fn push_petty_cash(
     _org_slug: &str,
     payload: &serde_json::Value,
 ) -> Result<serde_json::Value> {
-    let path = "api/v2/pos/petty-cash";
+    let path = "api/v3/:orgSlug/pos/petty-cash";
     let req = auth_state
-        .build_request(reqwest::Method::POST, &path)
+        .build_request(reqwest::Method::POST, path)
         .map_err(|e| anyhow::anyhow!(e))?
         .json(payload);
 

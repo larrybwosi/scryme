@@ -194,8 +194,8 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
       applyApiUrl: async () => {
         const { rawApiUrl } = get();
-        // Sanitize URL: remove trailing /api/v2 and trailing slashes
-        const sanitizedUrl = rawApiUrl.replace(/\/api\/v2\/?$/, '').replace(/\/+$/, '');
+        // Sanitize URL: remove trailing /api/v2 or /api/v3 and trailing slashes
+        const sanitizedUrl = rawApiUrl.replace(/\/api\/(v2|v3)\/?$/, '').replace(/\/+$/, '');
 
         set({ apiUrl: sanitizedUrl });
 
@@ -306,8 +306,8 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
         const response = await invoke<any>('authenticated_api_request', {
           method: 'POST',
-          path: 'api/v2/devices/provision',
-          body: { setupToken },
+          path: 'api/v3/:orgSlug/pos/provision',
+          body: { setupToken, token: setupToken },
         });
 
         const isWrapped = response && response.success !== undefined;
