@@ -158,11 +158,10 @@ export const useSessionActivityListener = () => {
         // We can use authenticated_api_request to ping and verify token
         const response = await invoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: `api/v2/pos/attendance/status`,
+          path: `api/v3/:orgSlug/pos/me`,
         });
 
-        // The API returns { success: true, data: { isCheckedIn: true, ... } }
-        if (response.success && response.data?.isCheckedIn) {
+        if (response.success && (response.data?.isCheckedIn || response.data?.memberId || response.data?.activeMember)) {
           // Session is valid, update the local activity timer
           refreshSession();
         } else {

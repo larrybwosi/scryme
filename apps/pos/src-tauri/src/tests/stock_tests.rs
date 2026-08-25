@@ -10,7 +10,7 @@ mod tests {
             quantity: 10,
         };
         let request = TransferRequest {
-            to_location_id: "loc2".to_string(),
+            to_location_id: Some("loc2".to_string()),
             items: vec![item.clone()],
             notes: Some("Test note".to_string()),
             documents: Some(vec!["doc1".to_string()]),
@@ -25,7 +25,7 @@ mod tests {
         };
 
         assert_eq!(api_payload.from_location_id, "loc1");
-        assert_eq!(api_payload.to_location_id, "loc2");
+        assert_eq!(api_payload.to_location_id.unwrap(), "loc2");
         assert_eq!(api_payload.items.len(), 1);
         assert_eq!(api_payload.notes.unwrap(), "Test note");
         assert_eq!(api_payload.documents.unwrap().len(), 1);
