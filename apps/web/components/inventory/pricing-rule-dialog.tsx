@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Sheet,
   SheetContent,
@@ -45,6 +45,13 @@ export function PricingRuleDialog({
 }: PricingRuleDialogProps) {
   const symbol = getCurrencySymbol(currency);
   const [loading, setLoading] = useState(false);
+
+  // ⚡ Bolt Optimization: Memoize extracted product variants.
+  // Replaces inline O(P * V) array flatMap allocation on every component re-render with memoized array reference.
+  const allVariants = useMemo(() => {
+    if (!products) return [];
+    return products.flatMap(p => p.variants || []);
+  }, [products]);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -175,7 +182,7 @@ export function PricingRuleDialog({
                   <SelectValue placeholder="Choose a product" />
                 </SelectTrigger>
                 <SelectContent>
-                  {products.flatMap(p => p.variants).map((v: any) => (
+                  {allVariants.map((v: any) => (
                     <SelectItem key={v.id} value={v.id}>{v.name === "Default" ? v.product.name : v.name} ({v.sku})</SelectItem>
                   ))}
                 </SelectContent>
