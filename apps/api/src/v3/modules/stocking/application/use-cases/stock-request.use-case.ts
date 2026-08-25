@@ -210,6 +210,15 @@ export class StockRequestUseCase {
         );
       }
 
+      // SECURITY (Sentinel): Validate that supplierId belongs to the caller's organizationId
+      // to prevent cross-tenant IDOR resource association.
+      const supplier = await tx.supplier.findFirst({
+        where: { id: dto.supplierId, organizationId },
+      });
+      if (!supplier) {
+        throw new NotFoundException("Supplier not found");
+      }
+
       const purchaseNumber = `PO-REQ-${request.requestNumber}-${Date.now()}`;
 
       let subTotal = 0;
