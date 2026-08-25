@@ -232,12 +232,14 @@ export async function updateOrganizationStorageSettings(
   const currentOverrides = (org.quotaOverrides as Record<string, any>) || {};
   const updatedOverrides = { ...currentOverrides };
 
-  if (settings.limitMB === null || settings.limitMB === undefined) {
-    delete updatedOverrides.storageLimitMB;
-    delete updatedOverrides.storageLimitBytes;
-  } else {
-    updatedOverrides.storageLimitMB = settings.limitMB;
-    updatedOverrides.storageLimitBytes = settings.limitMB * 1024 * 1024;
+  if (settings.limitMB !== undefined) {
+    if (settings.limitMB === null) {
+      delete updatedOverrides.storageLimitMB;
+      delete updatedOverrides.storageLimitBytes;
+    } else {
+      updatedOverrides.storageLimitMB = settings.limitMB;
+      updatedOverrides.storageLimitBytes = settings.limitMB * 1024 * 1024;
+    }
   }
 
   if (settings.disableStorage !== undefined) {

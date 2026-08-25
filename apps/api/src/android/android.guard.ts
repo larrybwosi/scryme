@@ -91,7 +91,7 @@ export class AndroidAuthGuard implements CanActivate {
       }
 
       const user = session.user;
-      const orgId = user.activeOrganizationId;
+      const orgId = (user as any).activeOrganizationId;
 
       if (!orgId) {
         throw new UnauthorizedException("No active organization selected for user");
