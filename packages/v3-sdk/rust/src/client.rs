@@ -1,4 +1,4 @@
-use crate::apis::{self, configuration::Configuration};
+use crate::configuration::Configuration;
 
 /// Builder for constructing a [`ScrymeClient`].
 #[derive(Debug, Clone, Default)]
