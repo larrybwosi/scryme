@@ -39,7 +39,6 @@ src/apis/v3_strapi_webhooks_api.rs
 src/apis/v3_units_api.rs
 src/apis/v3_webhooks_api.rs
 src/apis/v3_windmill_webhooks_api.rs
-src/lib.rs
 src/models/accept_invitation_dto.rs
 src/models/activate_device_dto.rs
 src/models/add_department_member_dto.rs
