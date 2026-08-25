@@ -10,5 +10,8 @@ extern crate reqwest;
 pub mod client;
 pub mod configuration;
 
+pub mod apis;
+pub mod models;
+
 pub use client::{ScrymeClient, ScrymeClientBuilder};
 pub use configuration::Configuration;
