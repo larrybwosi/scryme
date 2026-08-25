@@ -78,6 +78,7 @@ vi.mock("@repo/db", async (importOriginal) => ({
 import { PurchaseOrderUseCase } from "./purchase-order.use-case";
 import { StockTransferUseCase } from "./stock-transfer.use-case";
 import { PurchaseStatus, StockTransferStatus, MovementType } from "@repo/db";
+import { NotFoundException } from "@nestjs/common";
 
 describe("Stocking Flow Verification", () => {
   let purchaseOrderUseCase: PurchaseOrderUseCase;
@@ -165,8 +166,19 @@ describe("Stocking Flow Verification", () => {
         productVariant: {
           count: vi.fn(),
         },
+        supplier: {
+          findFirst: vi.fn(),
+        },
       },
     };
+
+    // Default mock supplier lookup to succeed for mockOrgId and mockSupplierId
+    prisma.client.supplier.findFirst.mockImplementation(({ where }: any) => {
+      if (where.id === mockSupplierId && where.organizationId === mockOrgId) {
+        return Promise.resolve({ id: mockSupplierId, organizationId: mockOrgId });
+      }
+      return Promise.resolve(null);
+    });
 
     const pricingManagementService = {
       handleCostChange: vi.fn().mockResolvedValue({}),
@@ -391,5 +403,16 @@ describe("Stocking Flow Verification", () => {
     );
 
     expect(inventoryMovementService.recordMovement).toHaveBeenCalledTimes(4);
+  });
+
+  it("should throw NotFoundException when creating PO with unowned supplierId", async () => {
+    const createPoDto = {
+      supplierId: "other-org-supplier",
+      items: [{ variantId: "v1", orderedQuantity: 10, unitCost: 100 }],
+    };
+
+    await expect(
+      purchaseOrderUseCase.create(mockOrgId, mockMemberId, createPoDto),
+    ).rejects.toThrow(NotFoundException);
   });
 });
