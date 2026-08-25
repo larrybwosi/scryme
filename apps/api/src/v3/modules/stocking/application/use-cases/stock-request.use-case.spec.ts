@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { StockRequestUseCase } from "./stock-request.use-case";
+import { NotFoundException } from "@nestjs/common";
 import {
   StockRequestStatus,
   StockTransferStatus,
@@ -48,6 +49,9 @@ describe("StockRequestUseCase", () => {
       },
       purchase: {
         create: vi.fn(),
+      },
+      supplier: {
+        findFirst: vi.fn(),
       },
       stockRequestItem: {
         updateMany: vi.fn(),
@@ -130,6 +134,10 @@ describe("StockRequestUseCase", () => {
       status: StockRequestStatus.APPROVED,
       items: [{ variantId: "v1", unitCostAtRequest: 100 }],
     });
+    mockTx.supplier.findFirst.mockResolvedValue({
+      id: "sup-1",
+      organizationId: mockOrgId,
+    });
 
     const dto = {
       supplierId: "sup-1",
@@ -159,5 +167,30 @@ describe("StockRequestUseCase", () => {
         data: { allocatedQuantity: { increment: 10 } },
       }),
     );
+  });
+
+  it("should throw NotFoundException when fulfilling from purchase with unowned supplierId", async () => {
+    mockTx.stockRequest.findFirst.mockResolvedValue({
+      id: mockRequestId,
+      requestNumber: "REQ-001",
+      organizationId: mockOrgId,
+      status: StockRequestStatus.APPROVED,
+      items: [{ variantId: "v1", unitCostAtRequest: 100 }],
+    });
+    mockTx.supplier.findFirst.mockResolvedValue(null);
+
+    const dto = {
+      supplierId: "other-org-supplier",
+      items: [{ variantId: "v1", orderedQuantity: 10, unitCost: 90 }],
+    };
+
+    await expect(
+      stockRequestUseCase.fulfillFromPurchase(
+        mockOrgId,
+        mockMemberId,
+        mockRequestId,
+        dto,
+      ),
+    ).rejects.toThrow(NotFoundException);
   });
 });

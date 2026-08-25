@@ -112,6 +112,7 @@ export type MethodsWithOrgSlug =
   | "webhooksCreate"
   | "webhooksList"
   | "webhooksDelete"
+  | "paymentsCheckout"
   | "catalogGetProducts"
   | "catalogGetProduct"
   | "catalogCreateProduct"
@@ -141,8 +142,10 @@ export type MethodsWithOrgSlug =
   | "servicesCreateBooking"
   | "servicesGetBookings"
   | "servicesGetBooking"
+  | "servicesGetAvailability"
   | "servicesUpdateBookingStatus"
   | "servicesCompleteBooking"
+  | "servicesCancelBookingSeries"
   | "servicesCreateShift"
   | "servicesGetStaffShifts"
   | "servicesAddBreak"
@@ -317,6 +320,7 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "webhooksCreate",
   "webhooksList",
   "webhooksDelete",
+  "paymentsCheckout",
   "catalogGetProducts",
   "catalogGetProduct",
   "catalogCreateProduct",
@@ -346,8 +350,10 @@ export const methodsWithOrgSlugSet = new Set<string>([
   "servicesCreateBooking",
   "servicesGetBookings",
   "servicesGetBooking",
+  "servicesGetAvailability",
   "servicesUpdateBookingStatus",
   "servicesCompleteBooking",
+  "servicesCancelBookingSeries",
   "servicesCreateShift",
   "servicesGetStaffShifts",
   "servicesAddBreak",
@@ -548,7 +554,14 @@ export const ordersMapping = {
   clearCart: "cartControllerClearCart",
   addToCart: "cartControllerAddToCart",
   removeFromCart: "cartControllerRemoveFromCart",
+  checkout: "paymentsCheckout",
   handleStkCallback: "paymentsControllerHandleStkCallback",
+} as const;
+
+export const webhooksMapping = {
+  create: "webhooksCreate",
+  list: "webhooksList",
+  delete: "webhooksDelete",
 } as const;
 
 export const crmMapping = {
@@ -714,8 +727,10 @@ export const servicesMapping = {
   createBookingAdmin: "servicesCreateBooking",
   getBookings: "servicesGetBookings",
   getBookingAdmin: "servicesGetBooking",
+  getAvailabilityAdmin: "servicesGetAvailability",
   updateBookingStatus: "servicesUpdateBookingStatus",
   completeBooking: "servicesCompleteBooking",
+  cancelBookingSeries: "servicesCancelBookingSeries",
   createShift: "servicesCreateShift",
   getStaffShifts: "servicesGetStaffShifts",
   addBreak: "servicesAddBreak",
@@ -796,6 +811,7 @@ export type POSModule = SDKModule<typeof posMapping>;
 export type AccountingModule = SDKModule<typeof accountingMapping>;
 export type LoyaltyModule = SDKModule<typeof loyaltyMapping>;
 export type MembersModule = SDKModule<typeof membersMapping>;
+export type WebhooksModule = SDKModule<typeof webhooksMapping>;
 export type AdminModule = SDKModule<typeof adminMapping>;
 
 export type PublicServicesModule = SDKModule<typeof publicServicesMapping>;

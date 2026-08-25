@@ -68,7 +68,13 @@ export function CampaignAnalyticsView({
     <div className="p-8 space-y-8 bg-slate-50/50 min-h-screen">
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => router.back()}>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => router.back()}
+            aria-label="Go back"
+            title="Go back"
+          >
             <ArrowLeft size={16} />
           </Button>
           <div>
