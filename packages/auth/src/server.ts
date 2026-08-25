@@ -20,6 +20,7 @@ export async function getServerAuth(
   organizationId: string | null | undefined;
   memberId: string | undefined;
   role: string | undefined;
+  systemRole: string | undefined;
 } | null>;
 
 export async function getServerAuth(
@@ -30,6 +31,7 @@ export async function getServerAuth(
   organizationId: string;
   memberId: string;
   role: string | undefined;
+  systemRole: string | undefined;
 } | null>;
 
 export async function getServerAuth(
@@ -64,9 +66,11 @@ export async function getServerAuth(
   }
 
   const role = user.role;
+  const systemRole = (user as any).systemRole || user.role;
 
   if (options.permission) {
-    if (!role || !hasMemberPermission(role, options.permission)) {
+    const isSuperAdmin = systemRole === "SUPER_ADMIN";
+    if (!isSuperAdmin && (!role || !hasMemberPermission(role, options.permission))) {
       redirect("/unauthorized");
     }
   }
@@ -77,6 +81,7 @@ export async function getServerAuth(
     organizationId: organizationId as any,
     memberId: memberId as any,
     role,
+    systemRole,
   };
 }
 
