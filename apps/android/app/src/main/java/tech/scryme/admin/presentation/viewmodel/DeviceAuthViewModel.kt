@@ -30,11 +30,21 @@ class DeviceAuthViewModel(
     }
 
     fun authorizeDevice(setupToken: String) {
+        val trimmedToken = setupToken.trim()
+        if (trimmedToken.isBlank()) {
+            _uiState.value = UiState.Error("Setup token cannot be empty.")
+            return
+        }
+
         viewModelScope.launch {
             _uiState.value = UiState.Loading
-            deviceRepository.provisionDevice(setupToken)
+            deviceRepository.provisionDevice(trimmedToken)
                 .onSuccess { response ->
-                    _uiState.value = UiState.Success(response)
+                    if (response.apiKey.isNullOrBlank() && response.deviceRegistryId.isNullOrBlank()) {
+                        _uiState.value = UiState.Error("Provisioning failed: Invalid or empty response from server.")
+                    } else {
+                        _uiState.value = UiState.Success(response)
+                    }
                 }
                 .onFailure { error ->
                     _uiState.value = UiState.Error(error.message ?: "Failed to authorize POS device")
@@ -51,10 +61,17 @@ class DeviceAuthViewModel(
         if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
             try {
                 val jsonObject = JsonParser.parseString(trimmed).asJsonObject
-                if (jsonObject.has("token")) {
-                    return jsonObject.get("token").asString
-                } else if (jsonObject.has("setupToken")) {
-                    return jsonObject.get("setupToken").asString
+                if (jsonObject.has("token") && !jsonObject.get("token").isJsonNull) {
+                    val token = jsonObject.get("token").asString.trim()
+                    if (token.isNotEmpty()) return token
+                }
+                if (jsonObject.has("setupToken") && !jsonObject.get("setupToken").isJsonNull) {
+                    val setupToken = jsonObject.get("setupToken").asString.trim()
+                    if (setupToken.isNotEmpty()) return setupToken
+                }
+                if (jsonObject.has("rawToken") && !jsonObject.get("rawToken").isJsonNull) {
+                    val rawToken = jsonObject.get("rawToken").asString.trim()
+                    if (rawToken.isNotEmpty()) return rawToken
                 }
             } catch (e: Exception) {
                 // Fallback to raw string if JSON parsing fails

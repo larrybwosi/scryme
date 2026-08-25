@@ -286,7 +286,7 @@ class DeviceRepositoryImpl(
 ) : DeviceRepository {
 
     override suspend fun provisionDevice(setupToken: String): Result<DeviceProvisionResponseDto> {
-        return safeApiCallEnvelope {
+        return safeApiCallDirectOrEnvelope {
             api.provisionDevice(mapOf("setupToken" to setupToken))
         }
     }
@@ -385,6 +385,38 @@ private suspend inline fun <reified T> safeApiCallEnvelope(
                     }
                 } else {
                     Result.failure(Exception(envelope.error?.message ?: "Unknown API error occurred"))
+                }
+            } else {
+                Result.failure(Exception("Response body was empty"))
+            }
+        } else {
+            Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
+        }
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+}
+
+private suspend inline fun <reified T> safeApiCallDirectOrEnvelope(
+    crossinline call: suspend () -> Response<ApiEnvelope<T>>
+): Result<T> {
+    return try {
+        val response = call()
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body != null) {
+                val data = body.data
+                if (data != null) {
+                    Result.success(data)
+                } else if (body.success) {
+                    if (Unit is T) {
+                        @Suppress("UNCHECKED_CAST")
+                        Result.success(Unit as T)
+                    } else {
+                        Result.failure(Exception("Expected data was null/missing in API response"))
+                    }
+                } else {
+                    Result.failure(Exception(body.error?.message ?: "Unknown API error occurred"))
                 }
             } else {
                 Result.failure(Exception("Response body was empty"))
