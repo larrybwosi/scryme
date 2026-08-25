@@ -55,9 +55,9 @@ export async function getServerAuth(
   const userData = user as any;
 
   const organizationId =
-    sessionData.activeOrganizationId || userData.activeOrganizationId;
+    (session.session as any).activeOrganizationId || (user as any).activeOrganizationId;
 
-  const memberId = sessionData.memberId || userData.memberId;
+  const memberId = (user as any).memberId;
   // Ensure organizationId is present before proceeding
   if (!options.allowNoOrg && (!organizationId || !memberId)) {
     redirect("/create-org");
