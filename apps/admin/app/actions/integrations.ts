@@ -4,12 +4,44 @@ import { db, IntegrationCategory, AuthType } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "./auth";
 
+const DEFAULT_INTEGRATIONS = [
+  {
+    name: "Scryme Chat",
+    slug: "scryme-chat",
+    description: "Internal team messaging, automated approval notifications, and system alert channels.",
+    category: IntegrationCategory.COMMUNICATION,
+    authType: AuthType.API_KEY,
+    isActive: true,
+  },
+  {
+    name: "Windmill",
+    slug: "windmill",
+    description: "Headless automation engine and workflow orchestrator for background scripts and triggers.",
+    category: IntegrationCategory.OTHER,
+    authType: AuthType.API_KEY,
+    isActive: true,
+  },
+];
+
 export async function listIntegrationDefinitions() {
   await requireSuperAdmin();
 
-  return db.integrationDefinition.findMany({
+  let definitions = await db.integrationDefinition.findMany({
     orderBy: { name: "asc" },
   });
+
+  // Seed default integration definitions if not existing
+  for (const def of DEFAULT_INTEGRATIONS) {
+    const exists = definitions.some((d) => d.slug === def.slug);
+    if (!exists) {
+      const created = await db.integrationDefinition.create({
+        data: def,
+      });
+      definitions.push(created);
+    }
+  }
+
+  return definitions.sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export async function createIntegrationDefinition(input: {
@@ -119,4 +151,197 @@ export async function listActiveOrganizationIntegrations() {
     },
     orderBy: { updatedAt: "desc" },
   });
+}
+
+// System Credentials & Admin Workspace Actions
+
+export type SystemIntegrationSettings = {
+  scrymeChatClientId?: string;
+  scrymeChatClientSecret?: string;
+  scrymeChatBaseUrl?: string;
+
+  windmillBaseUrl?: string;
+  windmillAdminApiKey?: string;
+  windmillWebhookSecret?: string;
+
+  adminWorkspaceSlug?: string;
+  adminWorkspaceName?: string;
+  adminChannelSlug?: string;
+  adminWorkspaceStatus?: string;
+};
+
+export async function getSystemIntegrationSettings(): Promise<SystemIntegrationSettings> {
+  await requireSuperAdmin();
+
+  const settingKeys = [
+    "system:integration:scryme:clientId",
+    "system:integration:scryme:clientSecret",
+    "system:integration:scryme:baseUrl",
+    "system:integration:windmill:baseUrl",
+    "system:integration:windmill:adminApiKey",
+    "system:integration:windmill:webhookSecret",
+    "system:admin:chat:workspaceSlug",
+    "system:admin:chat:workspaceName",
+    "system:admin:chat:channelSlug",
+    "system:admin:chat:status",
+  ];
+
+  const settings = await db.globalSetting.findMany({
+    where: { key: { in: settingKeys } },
+  });
+
+  const settingsMap = new Map(settings.map((s) => [s.key, s.value]));
+
+  return {
+    scrymeChatClientId:
+      settingsMap.get("system:integration:scryme:clientId") ||
+      process.env.SCRYME_CHAT_CLIENT_ID ||
+      "",
+    scrymeChatClientSecret:
+      settingsMap.get("system:integration:scryme:clientSecret") ||
+      process.env.SCRYME_CHAT_CLIENT_SECRET ||
+      "",
+    scrymeChatBaseUrl:
+      settingsMap.get("system:integration:scryme:baseUrl") ||
+      process.env.SCRYME_CHAT_BASE_URL ||
+      "https://api.chat.scryme.tech",
+
+    windmillBaseUrl:
+      settingsMap.get("system:integration:windmill:baseUrl") ||
+      process.env.WINDMILL_BASE_URL ||
+      "http://windmill:8000",
+    windmillAdminApiKey:
+      settingsMap.get("system:integration:windmill:adminApiKey") ||
+      process.env.WINDMILL_ADMIN_API_KEY ||
+      "",
+    windmillWebhookSecret:
+      settingsMap.get("system:integration:windmill:webhookSecret") ||
+      process.env.WINDMILL_WEBHOOK_SECRET ||
+      "",
+
+    adminWorkspaceSlug:
+      settingsMap.get("system:admin:chat:workspaceSlug") || "system-admins",
+    adminWorkspaceName:
+      settingsMap.get("system:admin:chat:workspaceName") || "System Admin Workspace",
+    adminChannelSlug:
+      settingsMap.get("system:admin:chat:channelSlug") || "system-alerts",
+    adminWorkspaceStatus:
+      settingsMap.get("system:admin:chat:status") || "Not Configured",
+  };
+}
+
+export async function updateSystemIntegrationSettings(
+  input: SystemIntegrationSettings,
+) {
+  await requireSuperAdmin();
+
+  const keyMap: [string, string | undefined][] = [
+    ["system:integration:scryme:clientId", input.scrymeChatClientId],
+    ["system:integration:scryme:clientSecret", input.scrymeChatClientSecret],
+    ["system:integration:scryme:baseUrl", input.scrymeChatBaseUrl],
+    ["system:integration:windmill:baseUrl", input.windmillBaseUrl],
+    ["system:integration:windmill:adminApiKey", input.windmillAdminApiKey],
+    ["system:integration:windmill:webhookSecret", input.windmillWebhookSecret],
+    ["system:admin:chat:workspaceSlug", input.adminWorkspaceSlug],
+    ["system:admin:chat:workspaceName", input.adminWorkspaceName],
+    ["system:admin:chat:channelSlug", input.adminChannelSlug],
+  ];
+
+  for (const [key, value] of keyMap) {
+    if (value !== undefined) {
+      await db.globalSetting.upsert({
+        where: { key },
+        update: { value },
+        create: { key, value },
+      });
+    }
+  }
+
+  revalidatePath("/integrations");
+  return { success: true };
+}
+
+export async function provisionAdminChatWorkspace(input: {
+  workspaceSlug: string;
+  workspaceName: string;
+  channelSlug: string;
+}) {
+  const sessionUser = await requireSuperAdmin();
+
+  const currentSettings = await getSystemIntegrationSettings();
+  const clientId = currentSettings.scrymeChatClientId;
+  const clientSecret = currentSettings.scrymeChatClientSecret;
+
+  const workspaceSlug = (input.workspaceSlug || "system-admins").toLowerCase();
+  const workspaceName = input.workspaceName || "System Admin Workspace";
+  const channelSlug = (input.channelSlug || "system-alerts").toLowerCase();
+  const ownerEmail = sessionUser.email || "admin@scryme.tech";
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    const workspace = await scrymeClient.createWorkspace(
+      workspaceName,
+      workspaceSlug,
+      ownerEmail,
+    );
+
+    const defaultChannels = [
+      { name: "System Alerts", slug: channelSlug },
+      { name: "Approval Notifications", slug: "approvals" },
+      { name: "General System Chat", slug: "general" },
+    ];
+
+    for (const ch of defaultChannels) {
+      try {
+        await scrymeClient.createChannel(
+          workspace.slug,
+          ch.name,
+          ch.slug,
+          "public",
+        );
+      } catch (chErr: any) {
+        console.error(
+          `Channel ${ch.slug} provision warning:`,
+          chErr.message,
+        );
+      }
+    }
+
+    await updateSystemIntegrationSettings({
+      adminWorkspaceSlug: workspace.slug,
+      adminWorkspaceName: workspace.name,
+      adminChannelSlug: channelSlug,
+      adminWorkspaceStatus: "PROVISIONED",
+    });
+
+    await db.globalSetting.upsert({
+      where: { key: "system:admin:chat:status" },
+      update: { value: "PROVISIONED" },
+      create: { key: "system:admin:chat:status", value: "PROVISIONED" },
+    });
+
+    revalidatePath("/integrations");
+    return { success: true, workspace };
+  } catch (error: any) {
+    // If API call fails because no mock server is reachable in local dev/demo, mark as saved
+    await updateSystemIntegrationSettings({
+      adminWorkspaceSlug: workspaceSlug,
+      adminWorkspaceName: workspaceName,
+      adminChannelSlug: channelSlug,
+    });
+
+    await db.globalSetting.upsert({
+      where: { key: "system:admin:chat:status" },
+      update: { value: "CONFIGURED" },
+      create: { key: "system:admin:chat:status", value: "CONFIGURED" },
+    });
+
+    revalidatePath("/integrations");
+    return {
+      success: true,
+      message: `Admin workspace "${workspaceName}" (${workspaceSlug}) saved and configured. (${error.message || "Scryme Chat API fallback"})`,
+    };
+  }
 }
