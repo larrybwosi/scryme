@@ -90,8 +90,8 @@ export class AndroidAuthGuard implements CanActivate {
         throw new UnauthorizedException("Session invalid or expired");
       }
 
-      const user = session.user;
-      const orgId = user.activeOrganizationId;
+      const user = session.user as any;
+      const orgId = user.activeOrganizationId || (session.session as any).activeOrganizationId;
 
       if (!orgId) {
         throw new UnauthorizedException("No active organization selected for user");
