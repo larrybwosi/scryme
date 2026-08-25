@@ -310,13 +310,38 @@ export async function upsertBudgetAlert(data: {
 export async function getWindmillScripts() {
   const { auth } = await checkPermission(["OWNER", "ADMIN"], true);
 
-  // This is a placeholder for retrieving windmill scripts
-  // In a real implementation, you'd fetch this from the Windmill service or db
-  return [
-    { path: "f/finance/approve_expense", name: "Approve Expense" },
-    { path: "f/finance/notify_slack", name: "Notify Slack" },
-    { path: "f/finance/check_fraud", name: "Fraud Check" },
-  ];
+  try {
+    const { WindmillTemplateService } = await import("@repo/windmill");
+    const [templates, provisioned] = await Promise.all([
+      WindmillTemplateService.getTemplates(),
+      db.windmillWorkflow.findMany({
+        where: { organizationId: auth.organizationId },
+      }),
+    ]);
+
+    const scriptsMap = new Map<string, { path: string; name: string }>();
+
+    for (const t of templates) {
+      const fullPath = `f/dealio/${t.path}`;
+      scriptsMap.set(fullPath, { path: fullPath, name: t.name });
+    }
+
+    for (const w of provisioned) {
+      if (!scriptsMap.has(w.path)) {
+        scriptsMap.set(w.path, { path: w.path, name: w.name });
+      }
+    }
+
+    return Array.from(scriptsMap.values());
+  } catch (err) {
+    console.warn("Failed to dynamically fetch Windmill scripts, using fallback templates:", err);
+    return [
+      { path: "f/dealio/core/expense-approval", name: "Expense Approval" },
+      { path: "f/dealio/core/purchase-approval", name: "Purchase Approval" },
+      { path: "f/dealio/finance/budget-exceeded", name: "Budget Exceeded Alert" },
+      { path: "f/dealio/finance/high-value-alert", name: "High Value Alert" },
+    ];
+  }
 }
 
 export async function testWorkflowAction(
