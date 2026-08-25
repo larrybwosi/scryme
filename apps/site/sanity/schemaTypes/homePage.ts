@@ -6,6 +6,12 @@ export const homePageType = defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'sections',
+      title: 'Premium page sections',
+      description: 'When sections are added, the site renders this curated layout. Existing fields below remain available during migration.',
+      type: 'pageBuilder',
+    }),
+    defineField({
       name: 'heroTitle',
       title: 'Hero Title',
       type: 'string',
