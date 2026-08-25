@@ -139,6 +139,10 @@ const clientSchema = z.object({
     (val) => (val === "" ? undefined : val),
     z.url().default("http://localhost:3001"),
   ),
+  NEXT_PUBLIC_ADMIN_URL: z.preprocess(
+    (val) => (val === "" ? undefined : val),
+    z.url().default("http://localhost:3007"),
+  ),
   NEXT_PUBLIC_COOKIE_DOMAIN: z.string().optional(),
 
   // Realtime Configuration
@@ -311,6 +315,7 @@ function getRawEnv() {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
     NEXT_PUBLIC_WEB_URL: process.env.NEXT_PUBLIC_WEB_URL,
     NEXT_PUBLIC_CRM_URL: process.env.NEXT_PUBLIC_CRM_URL,
+    NEXT_PUBLIC_ADMIN_URL: process.env.NEXT_PUBLIC_ADMIN_URL,
     NEXT_PUBLIC_COOKIE_DOMAIN: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
     NEXT_PUBLIC_REALTIME_PROVIDER: process.env.NEXT_PUBLIC_REALTIME_PROVIDER,
     NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,

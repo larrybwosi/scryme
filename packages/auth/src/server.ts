@@ -58,6 +58,11 @@ export async function getServerAuth(
     redirect("/create-org");
   }
 
+  // Block access for organizations suspended by a platform administrator
+  if (organizationId && session.session.isOrgSuspended) {
+    redirect("/suspended");
+  }
+
   const role = user.role;
 
   if (options.permission) {

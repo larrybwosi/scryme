@@ -55,6 +55,19 @@ export class UpdateOrganizationDto {
   description?: string;
 }
 
+export class SuspendOrganizationDto {
+  @ApiPropertyOptional({ description: "Reason for suspending the organization" })
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}
+
+export class SetQuotaOverridesDto {
+  @ApiProperty({ description: "Per-organization override merged over the org's tier limits" })
+  @IsNotEmpty()
+  overrides: Record<string, any>;
+}
+
 export class BanUserDto {
   @ApiPropertyOptional({ description: "The reason for banning the user" })
   @IsString()

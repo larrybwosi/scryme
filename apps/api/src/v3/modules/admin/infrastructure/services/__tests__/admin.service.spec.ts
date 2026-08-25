@@ -223,6 +223,140 @@ describe("AdminService", () => {
     });
   });
 
+  describe("suspendOrganization", () => {
+    it("should suspend organization with reason", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.organization.update.mockResolvedValue({
+        id: "org-1",
+        isSuspended: true,
+        suspensionReason: "Non-payment",
+      });
+
+      const result = await service.suspendOrganization("org-1", {
+        reason: "Non-payment",
+      });
+
+      expect(result.isSuspended).toBe(true);
+      expect(mockPrisma.client.organization.update).toHaveBeenCalledWith({
+        where: { id: "org-1" },
+        data: {
+          isSuspended: true,
+          suspendedAt: expect.any(Date),
+          suspensionReason: "Non-payment",
+        },
+      });
+    });
+
+    it("should default reason when not supplied", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.organization.update.mockResolvedValue({ id: "org-1" });
+
+      await service.suspendOrganization("org-1", {});
+
+      expect(mockPrisma.client.organization.update).toHaveBeenCalledWith({
+        where: { id: "org-1" },
+        data: {
+          isSuspended: true,
+          suspendedAt: expect.any(Date),
+          suspensionReason: "Suspended by platform administrator",
+        },
+      });
+    });
+
+    it("should throw NotFoundException if organization not found", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue(null);
+
+      await expect(service.suspendOrganization("non-existent", {})).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe("reactivateOrganization", () => {
+    it("should clear suspension fields", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.organization.update.mockResolvedValue({
+        id: "org-1",
+        isSuspended: false,
+      });
+
+      const result = await service.reactivateOrganization("org-1");
+
+      expect(result.isSuspended).toBe(false);
+      expect(mockPrisma.client.organization.update).toHaveBeenCalledWith({
+        where: { id: "org-1" },
+        data: {
+          isSuspended: false,
+          suspendedAt: null,
+          suspensionReason: null,
+        },
+      });
+    });
+  });
+
+  describe("quotaOverrides", () => {
+    it("should merge base tier limits with overrides for effective quota", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({
+        id: "org-1",
+        quotaOverrides: { members: 25 },
+      });
+      mockPrisma.client.subscription.findUnique.mockResolvedValue({
+        dodoPriceId: "growth",
+      });
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue({
+        key: "system:tiers",
+        value: JSON.stringify([
+          { slug: "growth", name: "Growth", price: 49, limits: { members: 10, products: 100 } },
+        ]),
+      });
+
+      const result = await service.getEffectiveQuota("org-1");
+
+      expect(result).toEqual({
+        organizationId: "org-1",
+        tierSlug: "growth",
+        baseLimits: { members: 10, products: 100 },
+        overrides: { members: 25 },
+        effectiveLimits: { members: 25, products: 100 },
+      });
+    });
+
+    it("should default to free tier and empty overrides when none exist", async () => {
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.subscription.findUnique.mockResolvedValue(null);
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue(null);
+
+      const result = await service.getEffectiveQuota("org-1");
+
+      expect(result).toEqual({
+        organizationId: "org-1",
+        tierSlug: "free",
+        baseLimits: {},
+        overrides: {},
+        effectiveLimits: {},
+      });
+    });
+
+    it("should set quota overrides and return updated effective quota", async () => {
+      mockPrisma.client.organization.findUnique
+        .mockResolvedValueOnce({ id: "org-1" })
+        .mockResolvedValueOnce({ id: "org-1", quotaOverrides: { members: 50 } });
+      mockPrisma.client.organization.update.mockResolvedValue({ id: "org-1" });
+      mockPrisma.client.subscription.findUnique.mockResolvedValue(null);
+      mockPrisma.client.globalSetting.findUnique.mockResolvedValue(null);
+
+      const result = await service.setQuotaOverrides("org-1", {
+        overrides: { members: 50 },
+      });
+
+      expect(mockPrisma.client.organization.update).toHaveBeenCalledWith({
+        where: { id: "org-1" },
+        data: { quotaOverrides: { members: 50 } },
+      });
+      expect(result.overrides).toEqual({ members: 50 });
+    });
+  });
+
   describe("listMembers", () => {
     it("should list members with filters if supplied", async () => {
       mockPrisma.client.member.findMany.mockResolvedValue([
