@@ -44,6 +44,13 @@ target/
 **/target/
 .openapi-generator/
 **/.openapi-generator/
+*.rlib
+*.rmeta
+*.so
+*.dylib
+*.dll
+*.a
+*.o
 
 # android / gradle
 .gradle/
