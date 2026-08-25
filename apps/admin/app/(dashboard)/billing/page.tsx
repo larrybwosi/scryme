@@ -35,7 +35,7 @@ export default async function BillingPage() {
           <SubscriptionsPanel subscriptions={subscriptions} />
         </TabsContent>
         <TabsContent value="payments" className="mt-6">
-          <PaymentsPanel payments={payments} />
+          <PaymentsPanel payments={payments} organizations={organizations} tiers={tiers} />
         </TabsContent>
       </Tabs>
     </div>
