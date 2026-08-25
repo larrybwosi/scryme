@@ -4,6 +4,7 @@ import {
   Req,
   Res,
   BadRequestException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { storageService, StorageCoreService } from "@repo/shared/storage";
 import { v7 as uuidv7 } from "uuid";
@@ -27,12 +28,47 @@ export class UploadController {
       throw new BadRequestException("Organization context missing");
     }
 
+    const org = await this.prisma.client.organization.findUnique({
+      where: { id: organizationId },
+      select: { quotaOverrides: true },
+    });
+
+    const overrides = (org?.quotaOverrides as Record<string, any>) || {};
+
+    if (overrides.storageDisabled) {
+      throw new ForbiddenException(
+        "Storage access disabled for this organization",
+      );
+    }
+
+    const buffer = await data.toBuffer();
+    const incomingSizeBytes = buffer.length;
+
+    if (overrides.storageLimitBytes != null || overrides.storageLimitMB != null) {
+      const limitBytes =
+        overrides.storageLimitBytes != null
+          ? Number(overrides.storageLimitBytes)
+          : Number(overrides.storageLimitMB) * 1024 * 1024;
+
+      const currentUsage = await this.prisma.client.attachment.aggregate({
+        where: { organizationId },
+        _sum: { sizeBytes: true },
+      });
+
+      const usedBytes = currentUsage._sum.sizeBytes || 0;
+
+      if (usedBytes + incomingSizeBytes > limitBytes) {
+        throw new ForbiddenException(
+          "Storage limit exceeded for this organization",
+        );
+      }
+    }
+
     const fileName = StorageCoreService.generateStorageFileName(
       data.filename,
       uuidv7(),
     );
 
-    const buffer = await data.toBuffer();
     const result = await storageService.upload(buffer, fileName, data.mimetype, {
       organizationId,
     });
@@ -47,6 +83,7 @@ export class UploadController {
         shortCode,
         shortUrl,
         mimeType: data.mimetype,
+        sizeBytes: incomingSizeBytes,
         isPublic: true, // Defaulting to public for now, as per requirement "Public but obfuscated links by default"
         organizationId,
         memberId: memberId || "system",

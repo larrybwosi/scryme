@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   Building2,
+  BarChart3,
   CreditCard,
   Users,
   Plug,
@@ -18,6 +19,7 @@ import { authClient } from "@/lib/auth-client"
 
 const NAV_ITEMS = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/reports", label: "Reports & Analytics", icon: BarChart3 },
   { href: "/organizations", label: "Organizations", icon: Building2 },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/users", label: "Users", icon: Users },
