@@ -1,0 +1,48 @@
+services:
+  admin:
+    build:
+      context: ../..
+      dockerfile: apps/admin/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+        NEXT_PUBLIC_ADMIN_URL: ${NEXT_PUBLIC_ADMIN_URL:-https://admin.scryme.tech}
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+    image: ghcr.io/larrybwosi/scryme/admin:${SCRYME_VERSION:-latest}
+    container_name: scryme-admin
+    restart: always
+    ports:
+      - "${ADMIN_PORT:-3007}:3007"
+    env_file:
+      - path: .env
+        required: false
+      - path: ../../.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=${ADMIN_PORT:-3007}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+      - NEXT_PUBLIC_ADMIN_URL=${NEXT_PUBLIC_ADMIN_URL:-http://localhost:3007}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3007}
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:${ADMIN_PORT:-3007}/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - scryme-network
+
+networks:
+  scryme-network:
+    name: ${SCRYME_NETWORK:-scryme-network}
+    external: true

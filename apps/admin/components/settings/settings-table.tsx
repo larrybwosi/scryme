@@ -136,7 +136,7 @@ export function SettingsTable({ settings }: { settings: GlobalSettingRow[] }) {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete setting "{deleteTarget?.key}"?</AlertDialogTitle>
+            <AlertDialogTitle>Delete setting &quot;{deleteTarget?.key}&quot;?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this setting? Features relying on this global key may fall back to default behavior.
             </AlertDialogDescription>
