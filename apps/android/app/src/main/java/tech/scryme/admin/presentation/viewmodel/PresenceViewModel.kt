@@ -34,6 +34,9 @@ class PresenceViewModel(
     private val _memberSalesList = MutableStateFlow<List<MemberSalesDto>>(emptyList())
     val memberSalesList: StateFlow<List<MemberSalesDto>> = _memberSalesList.asStateFlow()
 
+    private val _organizationTransactions = MutableStateFlow<UiState<List<TransactionDto>>>(UiState.Idle)
+    val organizationTransactions: StateFlow<UiState<List<TransactionDto>>> = _organizationTransactions.asStateFlow()
+
     init {
         viewModelScope.launch {
             repository.monitorActivePresence().collect { activeMembers ->
@@ -49,6 +52,19 @@ class PresenceViewModel(
             repository.getLocations()
                 .onSuccess { locations ->
                     _branches.value = locations
+                }
+        }
+    }
+
+    fun fetchOrganizationTransactions(locationId: String? = null) {
+        _organizationTransactions.value = UiState.Loading
+        viewModelScope.launch {
+            repository.getTransactions(locationId, null, null)
+                .onSuccess { txns ->
+                    _organizationTransactions.value = UiState.Success(txns)
+                }
+                .onFailure { error ->
+                    _organizationTransactions.value = UiState.Error(error.message ?: "Failed to fetch transactions")
                 }
         }
     }
@@ -122,7 +138,7 @@ class PresenceViewModel(
 
             repository.getTransactions(locationId, null, null)
                 .onSuccess { txns ->
-                    val totalSales = txns.sumOf { it.amount ?: 0.0 }
+                    val totalSales = txns.sumOf { it.effectiveAmount() }
                     _branchSales.value = totalSales
 
                     val groupedByMember = txns.groupBy { it.memberId ?: "unknown" }
@@ -131,7 +147,7 @@ class PresenceViewModel(
                             memberId = memberId,
                             memberName = memberTxns.firstOrNull()?.memberId ?: "Staff Member",
                             salesCount = memberTxns.size,
-                            totalAmount = memberTxns.sumOf { it.amount ?: 0.0 }
+                            totalAmount = memberTxns.sumOf { it.effectiveAmount() }
                         )
                     }
                     _memberSalesList.value = memberSales

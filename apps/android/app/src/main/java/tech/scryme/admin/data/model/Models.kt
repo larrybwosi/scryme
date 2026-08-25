@@ -260,15 +260,42 @@ data class PettyCashTransactionDto(
     @SerializedName("member") val member: MemberResponseSummary? = null
 )
 
+data class CustomerSummaryDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String? = null
+)
+
 data class TransactionDto(
     @SerializedName("id") val id: String,
     @SerializedName("amount") val amount: Double? = null,
+    @SerializedName("finalTotal") val finalTotal: Double? = null,
+    @SerializedName("subtotal") val subtotal: Double? = null,
+    @SerializedName("currencyCode") val currencyCode: String? = "USD",
+    @SerializedName("type") val type: String? = null,
     @SerializedName("locationId") val locationId: String? = null,
+    @SerializedName("locationName") val locationName: String? = null,
     @SerializedName("memberId") val memberId: String? = null,
+    @SerializedName("customer") val customer: CustomerSummaryDto? = null,
     @SerializedName("status") val status: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null,
     @SerializedName("items") val items: List<TransactionItemDto>? = null
-)
+) {
+    fun effectiveAmount(): Double {
+        return finalTotal ?: amount ?: subtotal ?: 0.0
+    }
+}
+
+fun formatCurrency(amount: Double, currencyCode: String? = "USD"): String {
+    val code = currencyCode?.uppercase() ?: "USD"
+    val symbol = when (code) {
+        "USD" -> "$"
+        "KES" -> "KSh "
+        "EUR" -> "€"
+        "GBP" -> "£"
+        else -> "$code "
+    }
+    return String.format("%s%.2f", symbol, amount)
+}
 
 data class TransactionItemDto(
     @SerializedName("id") val id: String,
