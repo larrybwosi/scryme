@@ -233,8 +233,7 @@ impl BakeryAuthState {
 
         let mut builder = scryme_sdk::ScrymeClient::builder()
             .base_url(base_url)
-            .org_slug(org_slug)
-            .client(self.client.clone());
+            .org_slug(org_slug);
 
         if let Some(t) = token {
             builder = builder.bearer_token(t);
@@ -480,8 +479,8 @@ pub async fn login_cloud_command(
 
     let member = MemberProfile {
         id: member_dto.id.clone(),
-        name: member_dto.name.clone(),
-        role: member_dto.role.clone(),
+        name: member_dto.user.name.clone(),
+        role: Some(format!("{:?}", member_dto.role)),
     };
 
     let data = serde_json::json!({

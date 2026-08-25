@@ -285,8 +285,7 @@ impl AuthState {
 
         let mut builder = scryme_sdk::ScrymeClient::builder()
             .base_url(base_url)
-            .org_slug(org_slug)
-            .client(self.client.clone());
+            .org_slug(org_slug);
 
         if let Some(t) = token {
             builder = builder.bearer_token(t);

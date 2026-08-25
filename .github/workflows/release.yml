@@ -454,6 +454,12 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-packages
+          path: packages
+
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 

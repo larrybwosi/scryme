@@ -1,4 +1,4 @@
-use crate::models::{CustomersSyncResponse, PosCustomer};
+use crate::models::PosCustomer;
 use aes_gcm::{
     aead::{Aead, KeyInit, OsRng},
     Aes256Gcm, Nonce,
@@ -270,11 +270,20 @@ pub async fn run_sync(
         let customer = PosCustomer {
             id: cust_dto.id,
             name: cust_dto.name,
-            phone: cust_dto.phone,
-            email: cust_dto.email,
+            phone: Some(cust_dto.phone),
+            email: Some(cust_dto.email),
             company: cust_dto.company,
-            customer_type: None,
-            tax_id: None,
+            customer_type: cust_dto.customer_type,
+            business_account_id: None,
+            loyalty_points: None,
+            city: None,
+            primary_address: None,
+            updated_at: None,
+            gender: None,
+            date_of_birth: cust_dto.date_of_birth,
+            medical_history: None,
+            allergies: None,
+            chronic_conditions: None,
             insurance_provider: None,
             policy_number: None,
         };
