@@ -7,8 +7,8 @@ extern crate serde_json;
 extern crate url;
 extern crate reqwest;
 
-pub mod apis;
 pub mod client;
-pub mod models;
+pub mod configuration;
 
 pub use client::{ScrymeClient, ScrymeClientBuilder};
+pub use configuration::Configuration;
