@@ -18,15 +18,18 @@ private val DeepNavyDarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF0284C7),
-    secondary = Color(0xFF0EA5E9),
-    tertiary = Color(0xFF6366F1),
+    primary = Color(0xFF2563EB),
+    secondary = Color(0xFF3B82F6),
+    tertiary = Color(0xFF10B981),
     background = Color(0xFFF8FAFC),
     surface = Color.White,
+    surfaceVariant = Color(0xFFF1F5F9),
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onBackground = Color(0xFF0F172A),
-    onSurface = Color(0xFF0F172A)
+    onBackground = Color(0xFF1E293B),
+    onSurface = Color(0xFF0F172A),
+    outline = Color(0xFFE2E8F0),
+    outlineVariant = Color(0xFFF1F5F9)
 )
 
 @Composable
