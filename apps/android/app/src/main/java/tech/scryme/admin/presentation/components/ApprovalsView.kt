@@ -59,8 +59,9 @@ fun ApprovalsView(
                     }
                 } else {
                     items(requests) { req ->
-                        val productName = req.variant?.product?.name ?: req.variant?.name ?: "Variant ${req.variantId.takeLast(8)}"
-                        val skuText = req.variant?.sku?.let { " (SKU: $it)" } ?: ""
+                        val variantObj = req.effectiveVariant()
+                        val productName = variantObj?.product?.name ?: variantObj?.name ?: req.variantId?.takeLast(8)?.let { "Variant $it" } ?: "Request #${req.id.takeLast(8)}"
+                        val skuText = variantObj?.sku?.let { " (SKU: $it)" } ?: ""
 
                         ElevatedCard(
                             modifier = Modifier.fillMaxWidth(),

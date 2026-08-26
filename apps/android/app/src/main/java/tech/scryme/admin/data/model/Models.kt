@@ -153,18 +153,27 @@ data class OrganizationDetailsDto(
 
 // --- Approvals & Catalog Models ---
 
+data class PriceListItemDto(
+    @SerializedName("variant") val variant: StockAdjustmentVariantDto? = null
+)
+
 data class PriceChangeRequestDto(
     @SerializedName("id") val id: String,
-    @SerializedName("variantId") val variantId: String,
-    @SerializedName("requestedBy") val requestedBy: String,
+    @SerializedName("variantId") val variantId: String? = null,
+    @SerializedName("requestedBy") val requestedBy: String? = null,
     @SerializedName("oldPrice") val oldPrice: Double,
     @SerializedName("newPrice") val newPrice: Double,
     @SerializedName("status") val status: String, // PENDING, APPROVED, REJECTED
     @SerializedName("rejectionReason") val rejectionReason: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null,
     @SerializedName("requestedAt") val requestedAt: String? = null,
-    @SerializedName("variant") val variant: StockAdjustmentVariantDto? = null
-)
+    @SerializedName("variant") val variant: StockAdjustmentVariantDto? = null,
+    @SerializedName("priceListItem") val priceListItem: PriceListItemDto? = null
+) {
+    fun effectiveVariant(): StockAdjustmentVariantDto? {
+        return variant ?: priceListItem?.variant
+    }
+}
 
 data class PriceChangeReviewDto(
     @SerializedName("status") val status: String, // APPROVED, REJECTED

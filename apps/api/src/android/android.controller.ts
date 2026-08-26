@@ -12,6 +12,7 @@ import {
   Res,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from "@nestjs/common";
 import { AndroidAuthGuard } from "./android.guard";
 import { AllowPublic } from "../common/decorators/auth.decorator";
@@ -419,12 +420,16 @@ export class AndroidController {
     const data = await this.prisma.client.priceChangeRequest.findMany({
       where: { organizationId: req.v3Context.organizationId },
       include: {
-        variant: {
+        priceListItem: {
           select: {
-            id: true,
-            name: true,
-            sku: true,
-            product: { select: { name: true } },
+            variant: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                product: { select: { name: true } },
+              },
+            },
           },
         },
       },
