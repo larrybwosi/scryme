@@ -26,6 +26,7 @@
     "build": "tsc",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
+    "test": "vitest run",
     "dev": "tsc --watch"
   }
 }

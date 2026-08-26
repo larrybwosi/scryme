@@ -24,6 +24,8 @@ import {
   IntegrationDefinitionDialog,
   type IntegrationDefinitionRow,
 } from "./integration-definition-dialog"
+import Image from "next/image"
+
 
 export function IntegrationsList({
   integrations,
@@ -73,7 +75,7 @@ export function IntegrationsList({
               <CardHeader className="flex flex-row items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   {item.logoUrl ? (
-                    <img src={item.logoUrl} alt={item.name} className="size-9 rounded border object-contain p-1" />
+                    <Image src={item.logoUrl} alt={item.name} width={24} height={24} className="size-9 rounded border object-contain p-1" />
                   ) : (
                     <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
                       <Plug className="size-4 text-primary" aria-hidden="true" />

@@ -3,6 +3,7 @@ import { ScrymeChatApiClient } from "./scryme-chat";
 import * as fs from "fs/promises";
 import { Dirent } from "fs";
 import * as path from "path";
+import * as crypto from "crypto";
 import { db as prisma } from "@repo/db";
 import { WindmillTemplate } from "../types";
 
@@ -74,14 +75,22 @@ export class WindmillTemplateService {
       }
 
       const encryptedApiKey = encrypt(adminApiKey);
+      const generatedWebhookSecret = crypto.randomBytes(32).toString("hex");
 
       config = await prisma.windmillConfiguration.create({
         data: {
           organizationId,
           windmillBaseUrl: baseUrl,
           windmillApiKey: encryptedApiKey,
+          webhookSecret: generatedWebhookSecret,
           isActive: true,
         },
+      });
+    } else if (!config.webhookSecret) {
+      const generatedWebhookSecret = crypto.randomBytes(32).toString("hex");
+      config = await prisma.windmillConfiguration.update({
+        where: { organizationId },
+        data: { webhookSecret: generatedWebhookSecret },
       });
     }
 

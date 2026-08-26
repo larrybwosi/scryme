@@ -22,6 +22,7 @@ describe("AssemblyUseCase Security Hardening", () => {
         assembly: {
           create: vi.fn(),
           findUnique: vi.fn(),
+          findFirst: vi.fn(),
           update: vi.fn(),
         },
         inventoryLocation: {
@@ -91,9 +92,23 @@ describe("AssemblyUseCase Security Hardening", () => {
       ).rejects.toThrow(NotFoundException);
     });
 
+    it("should throw NotFoundException if assembly belongs to another organization", async () => {
+      prisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: "own-location" });
+      prisma.client.assembly.findFirst.mockResolvedValue(null);
+
+      await expect(
+        useCase.complete("org-1", "member-1", "foreign-assembly", "own-location"),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prisma.client.assembly.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-assembly", organizationId: "org-1" },
+        include: { items: true, variant: true },
+      });
+    });
+
     it("should use updateMany with organizationId scoping for batch deduction", async () => {
       prisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: "own-location" });
-      prisma.client.assembly.findUnique.mockResolvedValue({
+      prisma.client.assembly.findFirst.mockResolvedValue({
         id: "assembly-1",
         organizationId: "org-1",
         status: "PLANNED",

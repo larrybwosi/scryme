@@ -289,6 +289,10 @@ export class LoyaltyService {
         },
       });
 
+      if (updatedCustomer.loyaltyPoints < 0) {
+        throw new Error("Insufficient points");
+      }
+
       // 2. Record transaction
       await tx.loyaltyTransaction.create({
         data: {
@@ -380,7 +384,7 @@ export class LoyaltyService {
       throw new Error("Invalid or expired voucher");
     }
 
-    if (voucher.expiresAt < new Date()) {
+    if (voucher.expiresAt && voucher.expiresAt < new Date()) {
       throw new Error("Voucher has expired");
     }
 
@@ -391,7 +395,7 @@ export class LoyaltyService {
     return {
       valid: true,
       code: voucher.code,
-      reward: voucher.reward.name,
+      reward: voucher.reward?.name ?? "Reward",
       expiresAt: voucher.expiresAt,
     };
   }
