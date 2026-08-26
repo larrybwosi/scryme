@@ -21,6 +21,14 @@ const DEFAULT_INTEGRATIONS = [
     authType: AuthType.API_KEY,
     isActive: true,
   },
+  {
+    name: "Hermes Agent",
+    slug: "hermes-agent",
+    description: "Autonomous AI agent for automated tasks, system monitoring, and operational workflows.",
+    category: IntegrationCategory.OTHER,
+    authType: AuthType.API_KEY,
+    isActive: true,
+  },
 ];
 
 export async function listIntegrationDefinitions() {
@@ -164,6 +172,11 @@ export type SystemIntegrationSettings = {
   windmillAdminApiKey?: string;
   windmillWebhookSecret?: string;
 
+  hermesApiKey?: string;
+  hermesBaseUrl?: string;
+  hermesModel?: string;
+  hermesEnabled?: boolean;
+
   adminWorkspaceSlug?: string;
   adminWorkspaceName?: string;
   adminChannelSlug?: string;
@@ -180,6 +193,10 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
     "system:integration:windmill:baseUrl",
     "system:integration:windmill:adminApiKey",
     "system:integration:windmill:webhookSecret",
+    "system:integration:hermes:apiKey",
+    "system:integration:hermes:baseUrl",
+    "system:integration:hermes:model",
+    "system:integration:hermes:enabled",
     "system:admin:chat:workspaceSlug",
     "system:admin:chat:workspaceName",
     "system:admin:chat:channelSlug",
@@ -219,6 +236,23 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       process.env.WINDMILL_WEBHOOK_SECRET ||
       "",
 
+    hermesApiKey:
+      settingsMap.get("system:integration:hermes:apiKey") ||
+      process.env.HERMES_API_KEY ||
+      "",
+    hermesBaseUrl:
+      settingsMap.get("system:integration:hermes:baseUrl") ||
+      process.env.HERMES_BASE_URL ||
+      "http://hermes:8080",
+    hermesModel:
+      settingsMap.get("system:integration:hermes:model") ||
+      process.env.HERMES_MODEL ||
+      "hermes-3-llama-3.1-8b",
+    hermesEnabled:
+      settingsMap.has("system:integration:hermes:enabled")
+        ? settingsMap.get("system:integration:hermes:enabled") === "true"
+        : process.env.HERMES_ENABLED === "true",
+
     adminWorkspaceSlug:
       settingsMap.get("system:admin:chat:workspaceSlug") || "system-admins",
     adminWorkspaceName:
@@ -242,6 +276,13 @@ export async function updateSystemIntegrationSettings(
     ["system:integration:windmill:baseUrl", input.windmillBaseUrl],
     ["system:integration:windmill:adminApiKey", input.windmillAdminApiKey],
     ["system:integration:windmill:webhookSecret", input.windmillWebhookSecret],
+    ["system:integration:hermes:apiKey", input.hermesApiKey],
+    ["system:integration:hermes:baseUrl", input.hermesBaseUrl],
+    ["system:integration:hermes:model", input.hermesModel],
+    [
+      "system:integration:hermes:enabled",
+      input.hermesEnabled !== undefined ? String(input.hermesEnabled) : undefined,
+    ],
     ["system:admin:chat:workspaceSlug", input.adminWorkspaceSlug],
     ["system:admin:chat:workspaceName", input.adminWorkspaceName],
     ["system:admin:chat:channelSlug", input.adminChannelSlug],
@@ -261,6 +302,52 @@ export async function updateSystemIntegrationSettings(
   return { success: true };
 }
 
+export async function testHermesConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  if (!settings.hermesBaseUrl) {
+    throw new Error("Hermes Base URL is not configured");
+  }
+
+  try {
+    const url = `${settings.hermesBaseUrl.replace(/\/$/, "")}/health`;
+    const headers: Record<string, string> = {};
+    if (settings.hermesApiKey) {
+      headers["Authorization"] = `Bearer ${settings.hermesApiKey}`;
+      headers["X-API-Key"] = settings.hermesApiKey;
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      const rootResponse = await fetch(`${settings.hermesBaseUrl.replace(/\/$/, "")}/`, {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!rootResponse.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    return {
+      success: true,
+      message: "Successfully connected to Hermes Agent endpoint.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to connect to Hermes Agent: ${error.message || "Endpoint unreachable"}`,
+    };
+  }
+}
+
 export async function provisionAdminChatWorkspace(input: {
   workspaceSlug: string;
   workspaceName: string;
@@ -275,7 +362,7 @@ export async function provisionAdminChatWorkspace(input: {
   const workspaceSlug = (input.workspaceSlug || "system-admins").toLowerCase();
   const workspaceName = input.workspaceName || "System Admin Workspace";
   const channelSlug = (input.channelSlug || "system-alerts").toLowerCase();
-  const ownerEmail = sessionUser.email || "admin@scryme.tech";
+  const ownerEmail = sessionUser.user?.email || "admin@scryme.tech";
 
   try {
     const { ScrymeChatApiClient } = await import("@repo/chat");
