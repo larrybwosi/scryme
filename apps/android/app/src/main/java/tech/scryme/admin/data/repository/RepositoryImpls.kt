@@ -126,11 +126,12 @@ class PresenceRepositoryImpl(
         role: String?,
         status: String?,
         isActive: Boolean?,
+        isCheckedIn: Boolean?,
         search: String?
     ): Result<List<MemberResponseDto>> {
         val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
         return safeApiCallEnvelope {
-            api.getMembers(slug, role, status, isActive, search)
+            api.getMembers(slug, role, status, isActive, isCheckedIn, search)
         }
     }
 
@@ -191,7 +192,7 @@ class PresenceRepositoryImpl(
 
     override fun monitorActivePresence(pollIntervalMs: Long): Flow<List<MemberResponseDto>> = flow {
         while (true) {
-            getMembers(status = "ONLINE").onSuccess { list ->
+            getMembers(isCheckedIn = true).onSuccess { list ->
                 emit(list)
             }.onFailure {
                 // emit empty or previous list on failure
@@ -365,10 +366,10 @@ private suspend inline fun <reified T> safeApiCall(
                 }
             }
         } else {
-            Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
+            Result.failure(Exception(parseErrorMessage(response.code(), response.message())))
         }
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.failure(Exception(getFriendlyNetworkErrorMessage(e)))
     }
 }
 
@@ -393,16 +394,16 @@ private suspend inline fun <reified T> safeApiCallEnvelope(
                         }
                     }
                 } else {
-                    Result.failure(Exception(envelope.error?.message ?: "Unknown API error occurred"))
+                    Result.failure(Exception(envelope.error?.message ?: "An unexpected error occurred. Please try again."))
                 }
             } else {
                 Result.failure(Exception("Response body was empty"))
             }
         } else {
-            Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
+            Result.failure(Exception(parseErrorMessage(response.code(), response.message())))
         }
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.failure(Exception(getFriendlyNetworkErrorMessage(e)))
     }
 }
 
@@ -425,15 +426,40 @@ private suspend inline fun <reified T> safeApiCallDirectOrEnvelope(
                         Result.failure(Exception("Expected data was null/missing in API response"))
                     }
                 } else {
-                    Result.failure(Exception(body.error?.message ?: "Unknown API error occurred"))
+                    Result.failure(Exception(body.error?.message ?: "An unexpected error occurred. Please try again."))
                 }
             } else {
                 Result.failure(Exception("Response body was empty"))
             }
         } else {
-            Result.failure(Exception("HTTP ${response.code()}: ${response.message()}"))
+            Result.failure(Exception(parseErrorMessage(response.code(), response.message())))
         }
     } catch (e: Exception) {
-        Result.failure(e)
+        Result.failure(Exception(getFriendlyNetworkErrorMessage(e)))
+    }
+}
+
+private fun parseErrorMessage(code: Int, rawMessage: String?): String {
+    return when (code) {
+        400 -> "The request could not be processed. Please check your inputs and try again."
+        401 -> "Session expired or unauthorized access. Please sign in again."
+        403 -> "You do not have permission to perform this action."
+        404 -> "The requested resource could not be found."
+        409 -> "Conflict encountered with current server state."
+        422 -> "Validation failed. Please verify your data."
+        429 -> "Too many requests. Please wait a moment before trying again."
+        in 500..599 -> "Server error occurred. Please try again later."
+        else -> if (!rawMessage.isNullOrBlank()) rawMessage else "An unexpected error occurred. Please try again."
+    }
+}
+
+private fun getFriendlyNetworkErrorMessage(e: Throwable): String {
+    val msg = e.message ?: ""
+    return when {
+        msg.contains("ConnectException", ignoreCase = true) || msg.contains("UnknownHostException", ignoreCase = true) ->
+            "Unable to connect to the server. Please check your internet connection."
+        msg.contains("SocketTimeoutException", ignoreCase = true) || msg.contains("timeout", ignoreCase = true) ->
+            "Connection timed out. Please try again."
+        else -> msg.ifBlank { "An unexpected error occurred. Please try again." }
     }
 }

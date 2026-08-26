@@ -36,6 +36,7 @@ interface PresenceApiService {
         @Query("role") role: String? = null,
         @Query("membershipStatus") status: String? = null,
         @Query("isActive") isActive: Boolean? = null,
+        @Query("isCheckedIn") isCheckedIn: Boolean? = null,
         @Query("search") search: String? = null
     ): Response<ApiEnvelope<List<MemberResponseDto>>>
 

@@ -13,7 +13,7 @@ interface AuthRepository {
 
 interface PresenceRepository {
     suspend fun getLocations(): Result<List<LocationDto>>
-    suspend fun getMembers(role: String? = null, status: String? = null, isActive: Boolean? = null, search: String? = null): Result<List<MemberResponseDto>>
+    suspend fun getMembers(role: String? = null, status: String? = null, isActive: Boolean? = null, isCheckedIn: Boolean? = null, search: String? = null): Result<List<MemberResponseDto>>
     suspend fun getAttendanceLogs(page: Int, limit: Int, memberId: String? = null, locationId: String? = null): Result<AttendanceLogsResponse>
     suspend fun checkIn(locationId: String, notes: String? = null): Result<AttendanceLogDto>
     suspend fun checkOut(locationId: String? = null, notes: String? = null): Result<AttendanceLogDto>

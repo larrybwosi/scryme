@@ -95,7 +95,9 @@ fun ApprovalsView(
                 }
             }
             is UiState.Error -> item {
-                Text(priceChangeRequestsState.message, color = MaterialTheme.colorScheme.error)
+                ErrorComponent(
+                    message = priceChangeRequestsState.message
+                )
             }
             UiState.Idle -> {}
         }
@@ -164,7 +166,9 @@ fun ApprovalsView(
                 }
             }
             is UiState.Error -> item {
-                Text(stockAdjustmentsState.message, color = MaterialTheme.colorScheme.error)
+                ErrorComponent(
+                    message = stockAdjustmentsState.message
+                )
             }
             UiState.Idle -> {}
         }

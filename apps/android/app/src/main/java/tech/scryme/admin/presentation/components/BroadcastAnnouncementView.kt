@@ -132,9 +132,13 @@ fun BroadcastAnnouncementView(
                         fontWeight = FontWeight.Bold
                     )
                 } else if (announcementState is UiState.Error) {
-                    Text(
-                        (announcementState as UiState.Error).message,
-                        color = MaterialTheme.colorScheme.error
+                    ErrorComponent(
+                        message = (announcementState as UiState.Error).message,
+                        onRetry = {
+                            if (title.isNotBlank() && message.isNotBlank()) {
+                                announcementViewModel.broadcastAnnouncement(title, message, selectedBranchId, severity)
+                            }
+                        }
                     )
                 }
             }

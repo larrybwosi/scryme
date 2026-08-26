@@ -14,6 +14,8 @@ import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { emitEvent } from "@repo/windmill/server";
 import { IsString, IsOptional } from "class-validator";
+import { PrismaService } from "@/prisma/prisma.service";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 export class AnnouncementDto {
   @ApiProperty()
@@ -42,6 +44,10 @@ export class AnnouncementDto {
 @Controller(":orgSlug/announcements")
 @ApiParam({ name: "orgSlug", type: "string" })
 export class AnnouncementController {
+  private readonly scrymeClient = new ScrymeChatApiClient();
+
+  constructor(private readonly prisma: PrismaService) {}
+
   @Post()
   @Permissions("announcements:write")
   @ApiOperation({ summary: "Broadcast an announcement" })
@@ -54,6 +60,22 @@ export class AnnouncementController {
       severity: dto.severity || "INFO",
       broadcastBy: req.v3Context.memberId,
     });
+
+    try {
+      const config = await this.prisma.client.scrymeConfiguration.findUnique({
+        where: { organizationId },
+      });
+      if (config && config.isActive && config.workspaceSlug) {
+        const severityTag = dto.severity ? `[${dto.severity.toUpperCase()}] ` : "";
+        const formattedMessage = `📢 **${dto.title}** ${severityTag}\n\n${dto.message}`;
+        await this.scrymeClient.sendMessage(config.workspaceSlug, "announcements", {
+          content: formattedMessage,
+        });
+      }
+    } catch (err: any) {
+      // Swallowed so announcement completion isn't blocked if chat workspace is inactive
+    }
+
     return null;
   }
 }

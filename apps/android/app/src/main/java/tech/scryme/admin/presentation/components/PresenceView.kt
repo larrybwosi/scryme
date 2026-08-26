@@ -125,7 +125,9 @@ fun PresenceView(
                 }
             }
             is UiState.Error -> item {
-                Text(presenceState.message, color = MaterialTheme.colorScheme.error)
+                ErrorComponent(
+                    message = presenceState.message
+                )
             }
             UiState.Idle -> {}
         }
