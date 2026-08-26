@@ -23,19 +23,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog"
-import { recordCustomPayment, type Tier } from "@/app/actions/billing"
-
-interface Organization {
-  id: string
-  name: string
-}
-
 import {
   initiateAdminMpesaPayment,
   checkAdminMpesaPaymentStatus,
   recordCustomPayment,
   type Tier,
 } from "@/app/actions/billing"
+
+interface Organization {
+  id: string
+  name: string
+}
 
 export function RecordPaymentDialog({
   open,
