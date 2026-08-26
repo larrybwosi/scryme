@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -25,15 +26,26 @@ import tech.scryme.admin.data.model.*
 import tech.scryme.admin.data.session.SessionManagerImpl
 import tech.scryme.admin.presentation.viewmodel.*
 
-data class DrawerMenuItem(val title: String, val icon: androidx.compose.ui.graphics.vector.ImageVector, val isSelected: Boolean = false)
-data class TaskAlertItem(val type: String, val title: String, val status: String, val due: String)
+data class DrawerMenuItem(
+    val title: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector,
+    val targetTab: Int
+)
+
+data class TaskAlertItem(
+    val type: String,
+    val title: String,
+    val status: String,
+    val due: String
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminDashboard(
     userName: String,
     userEmail: String,
-    activeOrg: String,
+    activeOrgName: String,
+    activeOrgSlug: String,
     sessionToken: String,
     presenceViewModel: PresenceViewModel,
     approvalsViewModel: ApprovalsViewModel,
@@ -47,7 +59,6 @@ fun AdminDashboard(
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
     var selectedTab by remember { mutableIntStateOf(0) }
-    var selectedDrawerItem by remember { mutableStateOf("Dashboard") }
     var showQrScanner by remember { mutableStateOf(false) }
     var showAiAssistantSheet by remember { mutableStateOf(false) }
 
@@ -64,6 +75,10 @@ fun AdminDashboard(
     val stockAdjustmentsState by approvalsViewModel.stockAdjustments.collectAsState()
 
     val analyticsState by analyticsViewModel.analyticsState.collectAsState()
+    val expensesState by expenseViewModel.expensesState.collectAsState()
+    val categoriesState by expenseViewModel.categoriesState.collectAsState()
+
+    val activeOrgId by sessionManager.activeOrgId.collectAsState()
 
     LaunchedEffect(Unit) {
         presenceViewModel.fetchBranches()
@@ -72,23 +87,18 @@ fun AdminDashboard(
         approvalsViewModel.loadPriceChangeRequests()
         approvalsViewModel.loadStockAdjustments()
         analyticsViewModel.loadDashboardAnalytics()
+        expenseViewModel.loadExpenses()
+        expenseViewModel.loadCategories()
     }
 
     val drawerItems = listOf(
-        DrawerMenuItem("Dashboard", Icons.Default.GridView, selectedDrawerItem == "Dashboard"),
-        DrawerMenuItem("People", Icons.Default.PeopleOutline, selectedDrawerItem == "People"),
-        DrawerMenuItem("Prayer Time", Icons.Default.Schedule, selectedDrawerItem == "Prayer Time"),
-        DrawerMenuItem("Events", Icons.Default.Event, selectedDrawerItem == "Events"),
-        DrawerMenuItem("Programs", Icons.Default.FolderOpen, selectedDrawerItem == "Programs"),
-        DrawerMenuItem("Donations", Icons.Default.VolunteerActivism, selectedDrawerItem == "Donations"),
-        DrawerMenuItem("Assistance", Icons.Default.Support, selectedDrawerItem == "Assistance"),
-        DrawerMenuItem("Website", Icons.Default.Language, selectedDrawerItem == "Website"),
-        DrawerMenuItem("Facility", Icons.Default.Apartment, selectedDrawerItem == "Facility"),
-        DrawerMenuItem("Posts", Icons.Default.Article, selectedDrawerItem == "Posts"),
-        DrawerMenuItem("Shop", Icons.Default.ShoppingBag, selectedDrawerItem == "Shop"),
-        DrawerMenuItem("Service", Icons.Default.Build, selectedDrawerItem == "Service"),
-        DrawerMenuItem("Announcements", Icons.Default.Campaign, selectedDrawerItem == "Announcements"),
-        DrawerMenuItem("Settings", Icons.Default.Settings, selectedDrawerItem == "Settings")
+        DrawerMenuItem("Dashboard", Icons.Default.GridView, targetTab = 0),
+        DrawerMenuItem("Transactions", Icons.Default.ShoppingBag, targetTab = 1),
+        DrawerMenuItem("Approvals", Icons.Default.Event, targetTab = 2),
+        DrawerMenuItem("Staff & Presence", Icons.Default.PeopleOutline, targetTab = 3),
+        DrawerMenuItem("Expenses", Icons.Default.ReceiptLong, targetTab = 4),
+        DrawerMenuItem("Announcements", Icons.Default.Campaign, targetTab = 5),
+        DrawerMenuItem("Settings", Icons.Default.Settings, targetTab = 6)
     )
 
     ModalNavigationDrawer(
@@ -96,7 +106,7 @@ fun AdminDashboard(
         drawerContent = {
             ModalDrawerSheet(
                 modifier = Modifier.width(300.dp),
-                drawerContainerColor = Color.White
+                drawerContainerColor = MaterialTheme.colorScheme.surface
             ) {
                 Column(
                     modifier = Modifier
@@ -119,20 +129,32 @@ fun AdminDashboard(
                                 Icon(
                                     imageVector = Icons.Default.GridView,
                                     contentDescription = "Logo",
-                                    tint = Color.White,
+                                    tint = MaterialTheme.colorScheme.onPrimary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text(
-                                text = if (activeOrg.isNotBlank() && activeOrg != "The Operating Ledger") activeOrg else "Scryme Admin",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
+                            Column {
+                                Text(
+                                    text = activeOrgName.ifBlank { "Scryme Admin" },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = "Slug: $activeOrgSlug",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                         IconButton(onClick = { scope.launch { drawerState.close() } }) {
-                            Icon(imageVector = Icons.Default.Close, contentDescription = "Close Menu")
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Close Menu",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
 
@@ -142,7 +164,7 @@ fun AdminDashboard(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFFF8FAFC))
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -150,45 +172,62 @@ fun AdminDashboard(
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape)
-                                .background(Color(0xFFCBD5E1)),
+                                .background(MaterialTheme.colorScheme.primary),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = userName.take(1).uppercase(),
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF334155)
+                                color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(text = userName, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text(text = "Admin", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Text(
+                                text = userName,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = userEmail,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1
+                            )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
-                    HorizontalDivider(color = Color(0xFFF1F5F9))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     LazyColumn(modifier = Modifier.weight(1f)) {
                         items(drawerItems) { item ->
+                            val isSelected = selectedTab == item.targetTab
                             NavigationDrawerItem(
-                                icon = { Icon(item.icon, contentDescription = item.title) },
-                                label = { Text(item.title, fontWeight = if (item.isSelected) FontWeight.Bold else FontWeight.Normal) },
-                                selected = item.isSelected,
+                                icon = {
+                                    Icon(
+                                        item.icon,
+                                        contentDescription = item.title,
+                                        tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        item.title,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                },
+                                selected = isSelected,
                                 onClick = {
-                                    selectedDrawerItem = item.title
+                                    selectedTab = item.targetTab
                                     scope.launch { drawerState.close() }
-                                    when (item.title) {
-                                        "Dashboard" -> selectedTab = 0
-                                        "Shop" -> selectedTab = 1
-                                        "Events", "Donations" -> selectedTab = 2
-                                        "People", "Prayer Time" -> selectedTab = 3
-                                    }
                                 },
                                 modifier = Modifier.padding(vertical = 2.dp),
                                 colors = NavigationDrawerItemDefaults.colors(
-                                    selectedContainerColor = Color(0xFFEFF6FF),
+                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                                     selectedIconColor = MaterialTheme.colorScheme.primary,
                                     selectedTextColor = MaterialTheme.colorScheme.primary
                                 )
@@ -196,7 +235,7 @@ fun AdminDashboard(
                         }
                     }
 
-                    HorizontalDivider(color = Color(0xFFF1F5F9))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
@@ -210,10 +249,14 @@ fun AdminDashboard(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                             contentDescription = "Sign Out",
-                            tint = Color(0xFF64748B)
+                            tint = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Sign Out", color = Color(0xFF64748B), fontWeight = FontWeight.Medium)
+                        Text(
+                            "Sign Out",
+                            color = MaterialTheme.colorScheme.error,
+                            fontWeight = FontWeight.Medium
+                        )
                     }
                 }
             }
@@ -223,15 +266,35 @@ fun AdminDashboard(
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(
-                            text = "Dashboard",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Column {
+                            Text(
+                                text = when (selectedTab) {
+                                    0 -> "Dashboard Overview"
+                                    1 -> "Transactions & Sales"
+                                    2 -> "Administrative Approvals"
+                                    3 -> "Staff Presence & Attendance"
+                                    4 -> "Expenses Management"
+                                    5 -> "Broadcast Announcements"
+                                    6 -> "Settings & Preferences"
+                                    else -> "Dashboard"
+                                },
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = activeOrgName,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     },
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(imageVector = Icons.Default.Menu, contentDescription = "Open Drawer")
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = "Open Drawer",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     },
                     actions = {
@@ -245,25 +308,26 @@ fun AdminDashboard(
                         IconButton(onClick = { showQrScanner = true }) {
                             Icon(
                                 imageVector = Icons.Default.QrCodeScanner,
-                                contentDescription = "Scan POS QR"
+                                contentDescription = "Scan POS QR",
+                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White
+                        containerColor = MaterialTheme.colorScheme.surface
                     )
                 )
             },
             bottomBar = {
                 NavigationBar(
-                    containerColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.surface,
                     tonalElevation = 8.dp
                 ) {
                     NavigationBarItem(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
                         icon = { Icon(Icons.Default.GridView, contentDescription = "Dashboard") },
-                        label = { Text("Dashboard") }
+                        label = { Text("Overview") }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 1,
@@ -281,8 +345,8 @@ fun AdminDashboard(
                             approvalsViewModel.loadPriceChangeRequests()
                             approvalsViewModel.loadStockAdjustments()
                         },
-                        icon = { Icon(Icons.Default.Event, contentDescription = "Events") },
-                        label = { Text("Events") }
+                        icon = { Icon(Icons.Default.Event, contentDescription = "Approvals") },
+                        label = { Text("Approvals") }
                     )
                     NavigationBarItem(
                         selected = selectedTab == 3,
@@ -290,8 +354,14 @@ fun AdminDashboard(
                             selectedTab = 3
                             presenceViewModel.fetchCheckedInMembers()
                         },
-                        icon = { Icon(Icons.Default.Schedule, contentDescription = "Prayer Time") },
-                        label = { Text("Prayer Time") }
+                        icon = { Icon(Icons.Default.PeopleOutline, contentDescription = "Presence") },
+                        label = { Text("Presence") }
+                    )
+                    NavigationBarItem(
+                        selected = selectedTab == 6,
+                        onClick = { selectedTab = 6 },
+                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                        label = { Text("Settings") }
                     )
                 }
             }
@@ -299,7 +369,7 @@ fun AdminDashboard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFFF8FAFC))
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(paddingValues)
                     .padding(16.dp)
             ) {
@@ -307,7 +377,7 @@ fun AdminDashboard(
                     0 -> OverviewDashboardView(
                         userName = userName,
                         userEmail = userEmail,
-                        activeOrg = activeOrg,
+                        activeOrg = activeOrgName,
                         branches = branches,
                         selectedBranchId = selectedBranchId,
                         branchSales = branchSales,
@@ -339,6 +409,24 @@ fun AdminDashboard(
                         onForceCheckout = { memberId ->
                             presenceViewModel.forceCheckoutMember(memberId)
                         }
+                    )
+                    4 -> ExpenseManagementView(
+                        expensesState = expensesState,
+                        categoriesState = categoriesState,
+                        expenseViewModel = expenseViewModel
+                    )
+                    5 -> BroadcastAnnouncementView(
+                        branches = branches,
+                        announcementViewModel = announcementViewModel
+                    )
+                    6 -> SettingsView(
+                        userName = userName,
+                        userEmail = userEmail,
+                        activeOrgName = activeOrgName,
+                        activeOrgSlug = activeOrgSlug,
+                        activeOrgId = activeOrgId ?: "N/A",
+                        sessionManager = sessionManager,
+                        onSignOut = onSignOut
                     )
                 }
             }
@@ -423,11 +511,11 @@ fun OverviewDashboardView(
 ) {
     val taskAlerts = remember {
         listOf(
-            TaskAlertItem("Pending Approval", "Review new donation...", "Awaiting", "Today"),
-            TaskAlertItem("Pending Approval", "Finalize donation...", "Pending", "Today"),
-            TaskAlertItem("Upcoming Event", "Finalize donation...", "Not Done", "Today"),
-            TaskAlertItem("New Message", "Finalize donation...", "Now", "Tomorrow"),
-            TaskAlertItem("System Setup", "Finalize donation...", "Awaiting", "This Week")
+            TaskAlertItem("Pending Approval", "Review new price request...", "Awaiting", "Today"),
+            TaskAlertItem("Stock Adjustment", "Stock variance at Main Branch...", "Pending", "Today"),
+            TaskAlertItem("POS Sync", "Terminal authorization active...", "Active", "Today"),
+            TaskAlertItem("Attendance", "Staff shift starting soon...", "Scheduled", "Tomorrow"),
+            TaskAlertItem("System Audit", "Monthly organization check...", "Completed", "This Week")
         )
     }
 
@@ -442,35 +530,35 @@ fun OverviewDashboardView(
             ) {
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Donations", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                        Text("Organization Revenue", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("$12,867", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text(formatCurrency(12867.0, "USD"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.TrendingUp, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(14.dp))
+                            Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("8.2% Last Week", fontSize = 11.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Medium)
+                            Text("+8.2% vs Last Week", fontSize = 11.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Medium)
                         }
                     }
                 }
 
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Active Campaigns", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                        Text("Active Branches", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("18", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("${branches.size}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Zakat, Renovation, Education...", fontSize = 11.sp, color = Color.Gray, maxLines = 1)
+                        Text(if (branches.isNotEmpty()) branches.first().name else "No active locations", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                     }
                 }
             }
@@ -483,32 +571,32 @@ fun OverviewDashboardView(
             ) {
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Upcoming Events", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                        Text("Pending Approvals", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("3", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("3", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Family Night", fontSize = 11.sp, color = Color.Gray)
+                        Text("Price & Inventory Review", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
                 Card(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     shape = RoundedCornerShape(12.dp),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                 ) {
                     Column(modifier = Modifier.padding(14.dp)) {
-                        Text("Active Members", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                        Text("Active Members", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("1,867", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("1,867", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.TrendingUp, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(14.dp))
+                            Icon(Icons.AutoMirrored.Filled.TrendingUp, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(14.dp))
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("52 New this week", fontSize = 11.sp, color = Color(0xFF10B981), fontWeight = FontWeight.Medium)
                         }
@@ -520,51 +608,7 @@ fun OverviewDashboardView(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(12.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column {
-                            Text("Fajar", fontSize = 11.sp, color = Color.Gray)
-                            Text("5:32 AM", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("Khateeb", fontSize = 11.sp, color = Color.Gray)
-                            Text("Imam Kareem", fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text("12:30 PM", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Next Salah", fontSize = 11.sp, color = Color.Gray)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        listOf("Fajar 5:32 AM", "Dhuhr 12:30 PM", "Asr 4:30 PM", "Magrib 6:42 PM", "Isha 8:30 PM").forEach { item ->
-                            val parts = item.split(" ")
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(parts[0], fontSize = 10.sp, color = Color.Gray)
-                                Text(parts[1] + " " + parts[2], fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
@@ -574,7 +618,7 @@ fun OverviewDashboardView(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("To-Do & Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("To-Do & Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         TextButton(onClick = {}) {
                             Text("View All", fontSize = 12.sp)
                         }
@@ -588,13 +632,13 @@ fun OverviewDashboardView(
                             .padding(vertical = 6.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Type", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.weight(1.2f))
-                        Text("Title", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.weight(1.5f))
-                        Text("Status", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.weight(1f))
-                        Text("Due", fontSize = 11.sp, color = Color.Gray, modifier = Modifier.weight(0.8f))
+                        Text("Type", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.2f))
+                        Text("Title", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.5f))
+                        Text("Status", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
+                        Text("Due", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.8f))
                     }
 
-                    HorizontalDivider(color = Color(0xFFF1F5F9))
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                     taskAlerts.forEach { task ->
                         Row(
@@ -608,21 +652,21 @@ fun OverviewDashboardView(
                                     modifier = Modifier
                                         .size(8.dp)
                                         .clip(CircleShape)
-                                        .background(Color.Gray)
+                                        .background(MaterialTheme.colorScheme.primary)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text(task.type, fontSize = 11.sp, maxLines = 1)
+                                Text(task.type, fontSize = 11.sp, maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
                             }
 
-                            Text(task.title, fontSize = 11.sp, modifier = Modifier.weight(1.5f), maxLines = 1)
+                            Text(task.title, fontSize = 11.sp, modifier = Modifier.weight(1.5f), maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
 
                             Box(modifier = Modifier.weight(1f)) {
                                 val statusColor = when (task.status) {
                                     "Awaiting" -> Color(0xFF3B82F6)
                                     "Pending" -> Color(0xFFF59E0B)
-                                    "Not Done" -> Color(0xFF64748B)
-                                    "Now" -> Color(0xFF10B981)
-                                    else -> Color.Gray
+                                    "Active" -> Color(0xFF10B981)
+                                    "Completed" -> Color(0xFF10B981)
+                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
                                 }
                                 Text(
                                     text = "• " + task.status,
@@ -632,9 +676,9 @@ fun OverviewDashboardView(
                                 )
                             }
 
-                            Text(task.due, fontSize = 11.sp, color = Color.Gray, modifier = Modifier.weight(0.8f))
+                            Text(task.due, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.8f))
                         }
-                        HorizontalDivider(color = Color(0xFFF8FAFC))
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     }
                 }
             }
@@ -643,12 +687,12 @@ fun OverviewDashboardView(
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Organization Branches (${branches.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("Organization Branches (${branches.size})", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Button(
@@ -667,16 +711,19 @@ fun OverviewDashboardView(
 
                     if (branches.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        branches.take(3).forEach { branch ->
+                        branches.forEach { branch ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { onSelectBranch(branch.id) }
-                                    .padding(vertical = 6.dp),
+                                    .padding(vertical = 8.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(branch.name, fontWeight = FontWeight.Medium, fontSize = 13.sp)
+                                Column {
+                                    Text(branch.name, fontWeight = FontWeight.Medium, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
+                                    Text(if (branch.isActive) "Active Location" else "Inactive", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                                 Text(
                                     if (branch.id == selectedBranchId) "Selected" else "View",
                                     color = MaterialTheme.colorScheme.primary,
@@ -684,6 +731,7 @@ fun OverviewDashboardView(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         }
                     }
                 }
@@ -698,7 +746,7 @@ fun AiAssistantModalSheet(onDismiss: () -> Unit) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color.White
+        containerColor = MaterialTheme.colorScheme.surface
     ) {
         Column(
             modifier = Modifier
@@ -716,23 +764,23 @@ fun AiAssistantModalSheet(onDismiss: () -> Unit) {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.size(28.dp)
                 )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Welcome Scryme AI", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("Welcome Scryme AI", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Text(
                 "Streamline tasks, automate workflows, and grow your organization intelligently.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp),
                 fontSize = 13.sp
             )
 
             Spacer(modifier = Modifier.height(20.dp))
-            Text("What's Next?", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            Text("What's Next?", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -747,7 +795,7 @@ fun AiAssistantModalSheet(onDismiss: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(28.dp))
-                    .background(Color(0xFFF1F5F9))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -760,7 +808,7 @@ fun AiAssistantModalSheet(onDismiss: () -> Unit) {
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     "Request AI Assist...",
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp,
                     modifier = Modifier.weight(1f)
                 )
@@ -774,121 +822,13 @@ fun AiAssistantModalSheet(onDismiss: () -> Unit) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.Send,
                         contentDescription = "Send",
-                        tint = Color.White,
+                        tint = MaterialTheme.colorScheme.onPrimary,
                         modifier = Modifier.size(16.dp)
                     )
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-        }
-    }
-}
-
-@Composable
-fun BranchesView(
-    userName: String,
-    userEmail: String,
-    activeOrg: String,
-    branches: List<LocationDto>,
-    selectedBranchId: String?,
-    branchSales: Double,
-    memberSalesList: List<MemberSalesDto>,
-    onSelectBranch: (String) -> Unit,
-    onOpenQrScanner: () -> Unit
-) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        item {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("User: $userName", style = MaterialTheme.typography.titleMedium)
-                    Text("Email: $userEmail", style = MaterialTheme.typography.bodyMedium)
-                    Text("Organization: $activeOrg", style = MaterialTheme.typography.bodyMedium)
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Button(
-                        onClick = onOpenQrScanner,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Authorize POS Terminal (Scan QR)")
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Organization Branches (${branches.size})", style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        if (branches.isEmpty()) {
-            item {
-                Text("No branches found or loaded.", style = MaterialTheme.typography.bodyMedium)
-            }
-        } else {
-            items(branches) { branch ->
-                val isSelected = branch.id == selectedBranchId
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { onSelectBranch(branch.id) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text(branch.name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
-                            Text(if (branch.isActive) "Active Branch" else "Inactive", color = MaterialTheme.colorScheme.secondary)
-                        }
-                        if (isSelected) {
-                            Text("Selected", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
-        }
-
-        if (selectedBranchId != null) {
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Branch Sales Inspector", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text("Total Sales: ${formatCurrency(branchSales, "USD")}", style = MaterialTheme.typography.bodyLarge)
-
-                        if (memberSalesList.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Text("Sales Breakdown by Staff:", style = MaterialTheme.typography.labelLarge)
-                            memberSalesList.forEach { mSales ->
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Text("${mSales.memberName} (${mSales.salesCount} sales)")
-                                    Text(formatCurrency(mSales.totalAmount, "USD"), fontWeight = FontWeight.Bold)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -902,7 +842,7 @@ fun OrganizationTransactionsView(
     var selectedBranchFilter by remember { mutableStateOf<String?>(null) }
 
     Column(modifier = Modifier.fillMaxSize()) {
-        Text("Transactions Across Branches", style = MaterialTheme.typography.titleLarge)
+        Text("Transactions Across Branches", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(
@@ -938,21 +878,22 @@ fun OrganizationTransactionsView(
             is UiState.Success -> {
                 val transactions = transactionsState.data
                 if (transactions.isEmpty()) {
-                    Text("No transactions found.", style = MaterialTheme.typography.bodyMedium)
+                    Text("No transactions found for this selection.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize()) {
                         items(transactions) { tx ->
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 4.dp)
+                                    .padding(vertical = 4.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text("ID: ${tx.id.takeLast(8)}", fontWeight = FontWeight.Bold)
+                                        Text("TX #${tx.id.takeLast(8)}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                                         Text(
                                             formatCurrency(tx.effectiveAmount(), tx.currencyCode),
                                             fontWeight = FontWeight.Bold,
@@ -964,8 +905,8 @@ fun OrganizationTransactionsView(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text("Status: ${tx.status ?: "COMPLETED"}", style = MaterialTheme.typography.bodySmall)
-                                        Text(tx.createdAt ?: "", style = MaterialTheme.typography.bodySmall)
+                                        Text("Status: ${tx.status ?: "COMPLETED"}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Text(tx.createdAt ?: "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
                             }
@@ -974,7 +915,7 @@ fun OrganizationTransactionsView(
                 }
             }
             is UiState.Error -> Text(transactionsState.message, color = MaterialTheme.colorScheme.error)
-            UiState.Idle -> Text("Select a filter to load transactions.")
+            UiState.Idle -> Text("Select a branch filter to inspect transactions.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -988,9 +929,9 @@ fun ApprovalsView(
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
-            Text("Pending Administrative Approvals", style = MaterialTheme.typography.titleLarge)
+            Text("Pending Administrative Approvals", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(12.dp))
-            Text("Price Change Requests", style = MaterialTheme.typography.titleMedium)
+            Text("Price Change Requests", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -999,17 +940,18 @@ fun ApprovalsView(
             is UiState.Success -> {
                 val requests = priceChangeRequestsState.data
                 if (requests.isEmpty()) {
-                    item { Text("No pending price change requests.", style = MaterialTheme.typography.bodySmall) }
+                    item { Text("No pending price change requests.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 } else {
                     items(requests) { req ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp)
+                                .padding(vertical = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Variant ID: ${req.variantId}", fontWeight = FontWeight.Bold)
-                                Text("Old Price: $${req.oldPrice} -> New Price: $${req.newPrice}")
+                                Text("Variant ID: ${req.variantId}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Old Price: $${req.oldPrice} -> New Price: $${req.newPrice}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End
@@ -1028,7 +970,7 @@ fun ApprovalsView(
 
         item {
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Stock Adjustments", style = MaterialTheme.typography.titleMedium)
+            Text("Stock Adjustments", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(8.dp))
         }
 
@@ -1037,17 +979,18 @@ fun ApprovalsView(
             is UiState.Success -> {
                 val adjustments = stockAdjustmentsState.data
                 if (adjustments.isEmpty()) {
-                    item { Text("No pending stock adjustments.", style = MaterialTheme.typography.bodySmall) }
+                    item { Text("No pending stock adjustments.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 } else {
                     items(adjustments) { adj ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp)
+                                .padding(vertical = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Column(modifier = Modifier.padding(12.dp)) {
-                                Text("Adjustment: ${adj.reason}", fontWeight = FontWeight.Bold)
-                                Text("Quantity: ${adj.quantity}")
+                                Text("Adjustment: ${adj.reason}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                Text("Quantity: ${adj.quantity}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.End
@@ -1074,7 +1017,7 @@ fun PresenceView(
 ) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         item {
-            Text("Staff Presence & Active Roster", style = MaterialTheme.typography.titleLarge)
+            Text("Staff Presence & Active Roster", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(modifier = Modifier.height(12.dp))
         }
 
@@ -1082,9 +1025,12 @@ fun PresenceView(
             is UiState.Success -> {
                 val stats = analyticsState.data
                 item {
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            Text("Total Checked In Now: ${stats.totalCheckedInNow}", fontWeight = FontWeight.Bold)
+                            Text("Total Checked In Now: ${stats.totalCheckedInNow}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
                         }
                     }
                     Spacer(modifier = Modifier.height(12.dp))
@@ -1098,13 +1044,14 @@ fun PresenceView(
             is UiState.Success -> {
                 val members = presenceState.data
                 if (members.isEmpty()) {
-                    item { Text("No active staff online.", style = MaterialTheme.typography.bodyMedium) }
+                    item { Text("No active staff online currently.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                 } else {
                     items(members) { member ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 4.dp)
+                                .padding(vertical = 4.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -1114,8 +1061,8 @@ fun PresenceView(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column {
-                                    Text(member.user.name ?: member.user.email, fontWeight = FontWeight.Bold)
-                                    Text("Role: ${member.role}", style = MaterialTheme.typography.bodySmall)
+                                    Text(member.user.name ?: member.user.email, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                    Text("Role: ${member.role}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                                 Button(onClick = { onForceCheckout(member.id) }) {
                                     Text("Force Checkout")
@@ -1127,6 +1074,315 @@ fun PresenceView(
             }
             is UiState.Error -> item { Text(presenceState.message, color = MaterialTheme.colorScheme.error) }
             UiState.Idle -> {}
+        }
+    }
+}
+
+@Composable
+fun ExpenseManagementView(
+    expensesState: UiState<List<ExpenseDto>>,
+    categoriesState: UiState<List<ExpenseCategoryDto>>,
+    expenseViewModel: ExpenseViewModel
+) {
+    var showCreateModal by remember { mutableStateOf(false) }
+    var description by remember { mutableStateOf("") }
+    var amountText by remember { mutableStateOf("") }
+    var selectedCategoryId by remember { mutableStateOf("") }
+    var paymentMethod by remember { mutableStateOf("CASH") }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Organization Expenses", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Button(onClick = { showCreateModal = true }) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("New Expense")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        when (expensesState) {
+            is UiState.Loading -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            is UiState.Success -> {
+                val list = expensesState.data
+                if (list.isEmpty()) {
+                    Text("No recorded expenses.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    LazyColumn(modifier = Modifier.fillMaxSize()) {
+                        items(list) { exp ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                            ) {
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(exp.description, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                                        Text(formatCurrency(exp.amount, "USD"), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Category: ${exp.category?.name ?: "General"} • Status: ${exp.status}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        if (exp.status.equals("PENDING", ignoreCase = true)) {
+                                            TextButton(onClick = { expenseViewModel.approveExpense(exp.id) }) {
+                                                Text("Approve")
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            is UiState.Error -> Text(expensesState.message, color = MaterialTheme.colorScheme.error)
+            UiState.Idle -> {}
+        }
+    }
+
+    if (showCreateModal) {
+        AlertDialog(
+            onDismissRequest = { showCreateModal = false },
+            title = { Text("Create Expense Request") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = description,
+                        onValueChange = { description = it },
+                        label = { Text("Description") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = amountText,
+                        onValueChange = { amountText = it },
+                        label = { Text("Amount ($)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = paymentMethod,
+                        onValueChange = { paymentMethod = it },
+                        label = { Text("Payment Method (CASH/MPESA/CARD)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val amount = amountText.toDoubleOrNull() ?: 0.0
+                        val catId = selectedCategoryId.ifEmpty {
+                            if (categoriesState is UiState.Success && categoriesState.data.isNotEmpty()) {
+                                categoriesState.data.first().id
+                            } else "general"
+                        }
+                        expenseViewModel.createExpense(description, amount, catId, paymentMethod)
+                        showCreateModal = false
+                        description = ""
+                        amountText = ""
+                    }
+                ) {
+                    Text("Submit Expense")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCreateModal = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun BroadcastAnnouncementView(
+    branches: List<LocationDto>,
+    announcementViewModel: AnnouncementViewModel
+) {
+    var title by remember { mutableStateOf("") }
+    var message by remember { mutableStateOf("") }
+    var selectedBranchId by remember { mutableStateOf<String?>(null) }
+    var severity by remember { mutableStateOf("INFO") }
+
+    val announcementState by announcementViewModel.announcementState.collectAsState()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        Text("Broadcast Announcement", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = message,
+                    onValueChange = { message = it },
+                    label = { Text("Announcement Message") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("INFO", "WARNING", "URGENT").forEach { level ->
+                        FilterChip(
+                            selected = severity == level,
+                            onClick = { severity = level },
+                            label = { Text(level) }
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        if (title.isNotBlank() && message.isNotBlank()) {
+                            announcementViewModel.broadcastAnnouncement(title, message, selectedBranchId, severity)
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = announcementState !is UiState.Loading
+                ) {
+                    if (announcementState is UiState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = MaterialTheme.colorScheme.onPrimary)
+                    } else {
+                        Icon(Icons.Default.Campaign, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Broadcast Announcement")
+                    }
+                }
+
+                if (announcementState is UiState.Success) {
+                    Text("Announcement successfully sent!", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                } else if (announcementState is UiState.Error) {
+                    Text((announcementState as UiState.Error).message, color = MaterialTheme.colorScheme.error)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsView(
+    userName: String,
+    userEmail: String,
+    activeOrgName: String,
+    activeOrgSlug: String,
+    activeOrgId: String,
+    sessionManager: SessionManagerImpl,
+    onSignOut: () -> Unit
+) {
+    val currentTheme by sessionManager.themePreference.collectAsState()
+    val syncInterval by sessionManager.syncIntervalSeconds.collectAsState()
+    val notificationsEnabled by sessionManager.notificationsEnabled.collectAsState()
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Text("Settings & Customization", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Appearance & Theme", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf("Light", "Dark", "System").forEach { themeMode ->
+                            FilterChip(
+                                selected = currentTheme.equals(themeMode, ignoreCase = true),
+                                onClick = { sessionManager.saveThemePreference(themeMode) },
+                                label = { Text(themeMode) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Active Session & Organization", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text("User: $userName ($userEmail)", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Organization Name: $activeOrgName", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Organization Slug: $activeOrgSlug", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Organization ID: $activeOrgId", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("System Preferences", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Enable Background Sync", color = MaterialTheme.colorScheme.onSurface)
+                        Switch(
+                            checked = notificationsEnabled,
+                            onCheckedChange = { sessionManager.saveNotificationsEnabled(it) }
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Button(
+                onClick = onSignOut,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Sign Out")
+            }
         }
     }
 }

@@ -99,10 +99,18 @@ export class AndroidController {
     }
 
     res.status(200);
+    const orgId = json.user?.activeOrganizationId;
+    const org = orgId
+      ? await this.prisma.client.organization.findUnique({ where: { id: orgId } })
+      : null;
     return res.send({
       success: true,
       token: token || null,
-      user: json.user,
+      user: {
+        ...json.user,
+        activeOrganizationSlug: org?.slug || null,
+        activeOrganizationName: org?.name || null,
+      },
     });
   }
 
@@ -111,6 +119,9 @@ export class AndroidController {
     const user = await this.prisma.client.user.findUnique({
       where: { id: req.user.id },
     });
+    const org = user?.activeOrganizationId
+      ? await this.prisma.client.organization.findUnique({ where: { id: user.activeOrganizationId } })
+      : req.organization;
     return {
       success: true,
       token: req.androidToken,
@@ -119,6 +130,8 @@ export class AndroidController {
         email: user.email,
         name: user.name,
         activeOrganizationId: user.activeOrganizationId,
+        activeOrganizationSlug: org?.slug || null,
+        activeOrganizationName: org?.name || null,
       },
     };
   }
