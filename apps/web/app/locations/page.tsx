@@ -6,8 +6,12 @@ import { Plus, MapPin } from "lucide-react";
 import { LocationSheet } from "../../components/locations/location-sheet";
 
 export default async function LocationsPage() {
-  const locations = await getLocations();
-  const members = await getMembersForSelect();
+  // ⚡ Bolt Optimization: Parallelize independent database queries using Promise.all
+  // Collapses 2 sequential network roundtrips into 1 concurrent roundtrip (~50% latency reduction)
+  const [locations, members] = await Promise.all([
+    getLocations(),
+    getMembersForSelect(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
