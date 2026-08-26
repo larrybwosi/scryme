@@ -44,6 +44,7 @@ const ProductManagementPage = lazy(() => import('./pages/product-management'));
 const StandaloneSetup = lazy(() => import('./pages/standalone-setup'));
 const BarcodePrintingPage = lazy(() => import('./pages/barcode-printing-page'));
 const LogsPage = lazy(() => import('./pages/logs-page'));
+const PrescriptionsPage = lazy(() => import('./pages/prescriptions-page'));
 
 // Loading component for Suspense
 const PageLoader = () => (
@@ -168,6 +169,7 @@ const AppRoutes = () => {
 
         <Route path="/product-management" element={<ProductManagementPage />} />
         <Route path="/barcodes" element={<BarcodePrintingPage />} />
+        <Route path="/prescriptions" element={<PrescriptionsPage />} />
         <Route path="/logs" element={<LogsPage />} />
       </Route>
 
