@@ -55,6 +55,8 @@ export class WindmillCallbackUseCase {
       throw new UnauthorizedException("Missing signature");
     }
 
+    const cleanSignature = signature.replace(/^sha256=/, "");
+
     const expectedSignature = crypto
       .createHmac("sha256", secret)
       .update(JSON.stringify(payload))
@@ -68,7 +70,7 @@ export class WindmillCallbackUseCase {
       .digest();
     const actualHash = crypto
       .createHash("sha256")
-      .update(signature || "")
+      .update(cleanSignature)
       .digest();
 
     if (!crypto.timingSafeEqual(expectedHash, actualHash)) {

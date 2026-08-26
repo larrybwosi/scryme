@@ -85,7 +85,8 @@ export class AssemblyUseCase {
       });
       if (!location) throw new NotFoundException("Location not found or unauthorized");
 
-      const assembly = await tx.assembly.findUnique({
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because Assembly model lacks composite unique index on [id, organizationId]
+      const assembly = await tx.assembly.findFirst({
         where: { id: assemblyId, organizationId },
         include: { items: true, variant: true },
       });

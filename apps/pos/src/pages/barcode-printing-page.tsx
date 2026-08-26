@@ -325,11 +325,13 @@ function PrintLabelsPanel() {
                         <Button
                           size="icon"
                           variant="secondary"
+                          aria-label={`Add ${product.productName} to print queue`}
+                          title={`Add ${product.productName} to print queue`}
                           onClick={(e) => {
                             e.stopPropagation();
                             addToQueue(product);
                           }}
-                          className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                          className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
                         >
                           <Plus className="h-4 w-4" />
                         </Button>
@@ -915,7 +917,13 @@ function RegisterBarcodePanel({ onRegistered }: { onRegistered?: () => void }) {
                       }}
                       autoFocus
                     />
-                    <Button variant="outline" size="icon" onClick={generateRandomBarcode} title="Generate Random">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={generateRandomBarcode}
+                      aria-label="Generate random barcode"
+                      title="Generate random barcode"
+                    >
                       <RefreshCw className="h-4 w-4" />
                     </Button>
                   </div>
