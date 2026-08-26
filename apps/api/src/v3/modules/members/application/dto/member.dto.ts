@@ -35,6 +35,16 @@ export class MemberQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  status?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsBoolean()
+  isCheckedIn?: boolean;
 }
 
 export class CreateMemberDto {
@@ -205,6 +215,9 @@ export class MemberResponseDto {
 
   @ApiProperty({ enum: Status })
   status: Status;
+
+  @ApiPropertyOptional()
+  isCheckedIn?: boolean;
 
   @ApiPropertyOptional()
   cardId?: string;

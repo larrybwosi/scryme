@@ -12,6 +12,7 @@ import {
   Res,
   UnauthorizedException,
   BadRequestException,
+  NotFoundException,
 } from "@nestjs/common";
 import { AndroidAuthGuard } from "./android.guard";
 import { AllowPublic } from "../common/decorators/auth.decorator";
@@ -30,10 +31,12 @@ import {
 } from "../v3/modules/inventory/application/use-cases/adjustment-workflow.use-case";
 import { emitEvent } from "@repo/windmill/server";
 import { db } from "@repo/db";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 @UseGuards(AndroidAuthGuard)
 @Controller("android")
 export class AndroidController {
+  private readonly scrymeClient = new ScrymeChatApiClient();
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
@@ -99,10 +102,18 @@ export class AndroidController {
     }
 
     res.status(200);
+    const orgId = json.user?.activeOrganizationId;
+    const org = orgId
+      ? await this.prisma.client.organization.findUnique({ where: { id: orgId } })
+      : null;
     return res.send({
       success: true,
       token: token || null,
-      user: json.user,
+      user: {
+        ...json.user,
+        activeOrganizationSlug: org?.slug || null,
+        activeOrganizationName: org?.name || null,
+      },
     });
   }
 
@@ -111,6 +122,9 @@ export class AndroidController {
     const user = await this.prisma.client.user.findUnique({
       where: { id: req.user.id },
     });
+    const org = user?.activeOrganizationId
+      ? await this.prisma.client.organization.findUnique({ where: { id: user.activeOrganizationId } })
+      : req.organization;
     return {
       success: true,
       token: req.androidToken,
@@ -119,6 +133,8 @@ export class AndroidController {
         email: user.email,
         name: user.name,
         activeOrganizationId: user.activeOrganizationId,
+        activeOrganizationSlug: org?.slug || null,
+        activeOrganizationName: org?.name || null,
       },
     };
   }
@@ -212,6 +228,64 @@ export class AndroidController {
     });
   }
 
+  // --- ORGANIZATION DETAILS ---
+
+  @Get(":orgSlug/organization")
+  async getOrganizationDetails(@Req() req: any) {
+    const orgId = req.v3Context.organizationId;
+    const [org, locationsCount, membersCount] = await Promise.all([
+      this.prisma.client.organization.findUnique({
+        where: { id: orgId },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          email: true,
+          phone: true,
+          address: true,
+          taxId: true,
+          registrationNumber: true,
+          logo: true,
+          createdAt: true,
+          settings: {
+            select: {
+              defaultCurrency: true,
+            },
+          },
+        },
+      }),
+      this.prisma.client.inventoryLocation.count({
+        where: { organizationId: orgId, isActive: true },
+      }),
+      this.prisma.client.member.count({
+        where: { organizationId: orgId, deletedAt: null },
+      }),
+    ]);
+
+    if (!org) {
+      throw new NotFoundException("Organization not found");
+    }
+
+    return {
+      success: true,
+      data: {
+        id: org.id,
+        name: org.name,
+        slug: org.slug,
+        email: org.email || null,
+        phone: org.phone || null,
+        address: org.address || null,
+        taxId: org.taxId || null,
+        registrationNumber: org.registrationNumber || null,
+        logo: org.logo || null,
+        createdAt: org.createdAt ? org.createdAt.toISOString() : null,
+        currencyCode: org.settings?.defaultCurrency || "USD",
+        locationsCount,
+        membersCount,
+      },
+    };
+  }
+
   // --- MEMBERS & PRESENCE ENDPOINTS ---
 
   @Get(":orgSlug/locations")
@@ -236,10 +310,13 @@ export class AndroidController {
 
   @Get(":orgSlug/members")
   async getMembers(@Req() req: any, @Query() query: any) {
+    const isCheckedIn = query.isCheckedIn === "true" || query.isCheckedIn === true ? true : query.isCheckedIn === "false" || query.isCheckedIn === false ? false : undefined;
     const data = await this.memberUseCase.getMembers(req.v3Context.organizationId, {
       role: query.role,
       membershipStatus: query.membershipStatus,
       isActive: query.isActive === "true" || query.isActive === true ? true : query.isActive === "false" || query.isActive === false ? false : undefined,
+      status: query.status,
+      isCheckedIn,
       search: query.search,
       page: query.page ? parseInt(query.page, 10) : undefined,
       limit: query.limit ? parseInt(query.limit, 10) : undefined,
@@ -342,6 +419,20 @@ export class AndroidController {
     const skip = query.offset ? parseInt(query.offset, 10) : 0;
     const data = await this.prisma.client.priceChangeRequest.findMany({
       where: { organizationId: req.v3Context.organizationId },
+      include: {
+        priceListItem: {
+          select: {
+            variant: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                product: { select: { name: true } },
+              },
+            },
+          },
+        },
+      },
       orderBy: { requestedAt: "desc" },
       take: limit,
       skip,
@@ -507,6 +598,22 @@ export class AndroidController {
       severity: dto.severity || "INFO",
       broadcastBy: req.v3Context.memberId,
     });
+
+    try {
+      const config = await this.prisma.client.scrymeConfiguration.findUnique({
+        where: { organizationId },
+      });
+      if (config && config.isActive && config.workspaceSlug) {
+        const severityTag = dto.severity ? `[${dto.severity.toUpperCase()}] ` : "";
+        const formattedMessage = `📢 **${dto.title}** ${severityTag}\n\n${dto.message}`;
+        await this.scrymeClient.sendMessage(config.workspaceSlug, "announcements", {
+          content: formattedMessage,
+        });
+      }
+    } catch (err: any) {
+      // Swallowed so announcement completion isn't blocked if chat workspace is inactive
+    }
+
     return {
       success: true,
       data: null,
@@ -535,9 +642,20 @@ export class AndroidController {
 
   @Post("finance/expenses")
   async createExpense(@Req() req: any, @Body() dto: any) {
+    let memberId = req.v3Context.memberId;
+    if (!memberId) {
+      const firstMember = await this.prisma.client.member.findFirst({
+        where: { organizationId: req.v3Context.organizationId, deletedAt: null },
+      });
+      if (firstMember) {
+        memberId = firstMember.id;
+      } else {
+        throw new BadRequestException("No active member found for this organization to submit expense");
+      }
+    }
     const data = await this.expenseUseCase.createExpense(
       req.v3Context.organizationId,
-      req.v3Context.memberId,
+      memberId,
       dto,
     );
     return {
@@ -548,9 +666,16 @@ export class AndroidController {
 
   @Post("finance/expenses/:id/approve")
   async approveExpense(@Req() req: any, @Param("id") id: string) {
+    let memberId = req.v3Context.memberId;
+    if (!memberId) {
+      const firstMember = await this.prisma.client.member.findFirst({
+        where: { organizationId: req.v3Context.organizationId, deletedAt: null },
+      });
+      if (firstMember) memberId = firstMember.id;
+    }
     const data = await this.expenseUseCase.approveExpense(
       req.v3Context.organizationId,
-      req.v3Context.memberId,
+      memberId,
       id,
     );
     return {

@@ -8,7 +8,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -16,7 +15,6 @@ import tech.scryme.admin.data.api.AuthApiService
 import tech.scryme.admin.data.api.AuthInterceptor
 import tech.scryme.admin.data.api.MultiTenancyInterceptor
 import tech.scryme.admin.data.api.DynamicBaseUrlInterceptor
-import tech.scryme.admin.data.model.BetterAuthSessionResponse
 import tech.scryme.admin.data.repository.AuthRepositoryImpl
 import tech.scryme.admin.data.session.SessionManagerImpl
 import tech.scryme.admin.presentation.viewmodel.AuthViewModel
@@ -141,10 +139,13 @@ fun AppNavigation(
         val savedEmail by sessionManager.userEmail.collectAsState()
         val savedName by sessionManager.userName.collectAsState()
         val savedOrgId by sessionManager.activeOrgId.collectAsState()
+        val savedOrgSlug by sessionManager.activeOrgSlug.collectAsState()
+        val savedOrgName by sessionManager.activeOrgName.collectAsState()
 
         var userEmail = savedEmail ?: "admin@scryme.tech"
         var userName = savedName ?: "System Administrator"
-        var activeOrg = savedOrgId ?: "The Operating Ledger"
+        var activeOrgName = savedOrgName ?: savedOrgSlug ?: savedOrgId ?: "The Operating Ledger"
+        var activeOrgSlug = savedOrgSlug ?: savedOrgId ?: "default"
 
         // Safely extract active session details if available in State
         val state = loginState
@@ -152,14 +153,15 @@ fun AppNavigation(
             val data = state.data
             userEmail = data.user?.email ?: userEmail
             userName = data.user?.name ?: userName
-            activeOrg = data.user?.activeOrganizationId ?: activeOrg
+            activeOrgName = data.user?.activeOrganizationName ?: data.user?.activeOrganizationSlug ?: data.user?.activeOrganizationId ?: activeOrgName
+            activeOrgSlug = data.user?.activeOrganizationSlug ?: data.user?.activeOrganizationId ?: activeOrgSlug
         }
 
         AdminDashboard(
             userName = userName,
             userEmail = userEmail,
-            activeOrg = activeOrg,
-            sessionToken = sessionManager.token.collectAsState().value ?: "",
+            activeOrgName = activeOrgName,
+            activeOrgSlug = activeOrgSlug,
             presenceViewModel = presenceViewModel,
             approvalsViewModel = approvalsViewModel,
             analyticsViewModel = analyticsViewModel,
