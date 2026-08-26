@@ -30,10 +30,12 @@ import {
 } from "../v3/modules/inventory/application/use-cases/adjustment-workflow.use-case";
 import { emitEvent } from "@repo/windmill/server";
 import { db } from "@repo/db";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 @UseGuards(AndroidAuthGuard)
 @Controller("android")
 export class AndroidController {
+  private readonly scrymeClient = new ScrymeChatApiClient();
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
@@ -249,10 +251,13 @@ export class AndroidController {
 
   @Get(":orgSlug/members")
   async getMembers(@Req() req: any, @Query() query: any) {
+    const isCheckedIn = query.isCheckedIn === "true" || query.isCheckedIn === true ? true : query.isCheckedIn === "false" || query.isCheckedIn === false ? false : undefined;
     const data = await this.memberUseCase.getMembers(req.v3Context.organizationId, {
       role: query.role,
       membershipStatus: query.membershipStatus,
       isActive: query.isActive === "true" || query.isActive === true ? true : query.isActive === "false" || query.isActive === false ? false : undefined,
+      status: query.status,
+      isCheckedIn,
       search: query.search,
       page: query.page ? parseInt(query.page, 10) : undefined,
       limit: query.limit ? parseInt(query.limit, 10) : undefined,
@@ -520,6 +525,22 @@ export class AndroidController {
       severity: dto.severity || "INFO",
       broadcastBy: req.v3Context.memberId,
     });
+
+    try {
+      const config = await this.prisma.client.scrymeConfiguration.findUnique({
+        where: { organizationId },
+      });
+      if (config && config.isActive && config.workspaceSlug) {
+        const severityTag = dto.severity ? `[${dto.severity.toUpperCase()}] ` : "";
+        const formattedMessage = `📢 **${dto.title}** ${severityTag}\n\n${dto.message}`;
+        await this.scrymeClient.sendMessage(config.workspaceSlug, "announcements", {
+          content: formattedMessage,
+        });
+      }
+    } catch (err: any) {
+      // Swallowed so announcement completion isn't blocked if chat workspace is inactive
+    }
+
     return {
       success: true,
       data: null,

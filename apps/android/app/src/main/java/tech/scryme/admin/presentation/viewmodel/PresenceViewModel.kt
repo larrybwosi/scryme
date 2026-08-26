@@ -92,7 +92,7 @@ class PresenceViewModel(
     fun fetchCheckedInMembers() {
         viewModelScope.launch {
             _presenceState.value = UiState.Loading
-            repository.getMembers(status = "ONLINE", search = null)
+            repository.getMembers(isCheckedIn = true, search = null)
                 .onSuccess { members ->
                     _presenceState.value = UiState.Success(members)
                 }

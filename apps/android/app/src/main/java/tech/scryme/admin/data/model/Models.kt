@@ -30,6 +30,7 @@ data class MemberResponseDto(
     @SerializedName("membershipStatus") val membershipStatus: MembershipStatus,
     @SerializedName("isActive") val isActive: Boolean,
     @SerializedName("status") val status: PresenceStatus,
+    @SerializedName("isCheckedIn") val isCheckedIn: Boolean? = null,
     @SerializedName("cardId") val cardId: String? = null,
     @SerializedName("phone") val phone: String? = null,
     @SerializedName("createdAt") val createdAt: String,

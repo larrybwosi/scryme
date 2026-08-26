@@ -125,7 +125,10 @@ fun ExpenseManagementView(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(expensesState.message, color = MaterialTheme.colorScheme.error)
+                ErrorComponent(
+                    message = expensesState.message,
+                    onRetry = { expenseViewModel.loadExpenses() }
+                )
             }
             UiState.Idle -> {}
         }

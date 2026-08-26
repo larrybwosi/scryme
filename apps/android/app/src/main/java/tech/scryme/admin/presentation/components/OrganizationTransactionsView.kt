@@ -140,7 +140,10 @@ fun OrganizationTransactionsView(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(transactionsState.message, color = MaterialTheme.colorScheme.error)
+                ErrorComponent(
+                    message = transactionsState.message,
+                    onRetry = { onFilterByBranch(selectedBranchFilter) }
+                )
             }
             UiState.Idle -> Box(
                 modifier = Modifier.fillMaxSize(),
