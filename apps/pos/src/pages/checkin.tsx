@@ -8,7 +8,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Terminal,
   ShieldCheck,
   Zap,
   Settings,

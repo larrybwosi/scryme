@@ -373,6 +373,20 @@ export interface CustomerDisplayConfig {
   showCompanyLogo: boolean;
 }
 
+export interface PharmacyConfig {
+  pharmacistName: string;
+  pharmacistLicense: string;
+  facilityRegistrationNo: string;
+  requirePharmacistVerification: boolean;
+  drugInteractionAlerts: boolean;
+  genericSubstitutionPolicy: 'always_ask' | 'auto_suggest' | 'disabled';
+  allowInsuranceClaims: boolean;
+  defaultInsuranceCopayPercent: number;
+  controlledSubstanceLedger: boolean;
+  dispensingLabelHeader: string;
+  warningDisclaimerText: string;
+}
+
 export interface ThemeConfig {
   mode: 'light' | 'dark' | 'system';
   primaryColor: string;
@@ -454,6 +468,8 @@ export interface BusinessSettings {
   heldOrderExpiryHours?: number;
   requireHoldReason: boolean;
   forcedImmediateSyncThreshold: number;
+
+  pharmacyConfig: PharmacyConfig;
 }
 
 export interface Customer {
@@ -650,6 +666,8 @@ interface PosStore {
 
   updateThemeConfig: (config: Partial<ThemeConfig>) => void;
 
+  updatePharmacyConfig: (config: Partial<PharmacyConfig>) => void;
+
   updateSecurityConfig: (config: Partial<SecurityConfig>) => void;
 
   updateAutoPrintConfig: (config: Partial<AutoPrintConfig>) => void;
@@ -834,6 +852,20 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
   // Signature
   showSignatureLine: false,
   signatureLineText: 'Customer Signature',
+});
+
+export const getDefaultPharmacyConfig = (): PharmacyConfig => ({
+  pharmacistName: 'Dr. Jane Doe, PharmD',
+  pharmacistLicense: 'PH-98765432',
+  facilityRegistrationNo: 'PHARM-2025-001',
+  requirePharmacistVerification: true,
+  drugInteractionAlerts: true,
+  genericSubstitutionPolicy: 'auto_suggest',
+  allowInsuranceClaims: true,
+  defaultInsuranceCopayPercent: 20,
+  controlledSubstanceLedger: true,
+  dispensingLabelHeader: 'OFFICIAL DISPENSING LABEL',
+  warningDisclaimerText: 'Take as directed by your physician. Keep out of reach of children.',
 });
 
 export const getDefaultKitchenTicketConfig = (): KitchenTicketConfig => ({
@@ -1029,6 +1061,7 @@ export const usePosStore = create<PosStore>()(
             },
           ],
         },
+        pharmacyConfig: getDefaultPharmacyConfig(),
         kitchenTicketConfig: getDefaultKitchenTicketConfig(),
         cashDrawerPort: '', // No port configured by default
         enableAutoStart: false,
@@ -1316,6 +1349,7 @@ export const usePosStore = create<PosStore>()(
                 },
               ],
             },
+            pharmacyConfig: getDefaultPharmacyConfig(),
             kitchenTicketConfig: getDefaultKitchenTicketConfig(),
             cashDrawerPort: '',
             enableAutoStart: false,
@@ -1837,6 +1871,14 @@ export const usePosStore = create<PosStore>()(
           settings: {
             ...state.settings,
             themeConfig: { ...state.settings.themeConfig, ...config },
+          },
+        })),
+
+      updatePharmacyConfig: (config: Partial<PharmacyConfig>) =>
+        set(state => ({
+          settings: {
+            ...state.settings,
+            pharmacyConfig: { ...state.settings.pharmacyConfig, ...config },
           },
         })),
 
