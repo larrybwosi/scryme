@@ -1,0 +1,31 @@
+{
+  "name": "create-scryme-app",
+  "version": "9.69.0",
+  "description": "CLI to bootstrap a Scryme-powered Next.js application",
+  "bin": {
+    "create-scryme-app": "./bin/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "bin",
+    "dist",
+    "template"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "echo \"no lint script defined\"",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "kolorist": "^1.8.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.33",
+    "@types/prompts": "^2.4.9",
+    "tsup": "^8.5.1",
+    "typescript": "5.7.3"
+  }
+}
