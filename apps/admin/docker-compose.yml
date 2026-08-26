@@ -39,10 +39,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
-    networks:
-      - scryme-network
-
-networks:
-  scryme-network:
-    name: ${SCRYME_NETWORK:-scryme-network}
-    external: true
