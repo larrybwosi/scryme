@@ -40,6 +40,7 @@ fun AdminDashboard(
     val branches by presenceViewModel.branches.collectAsState()
     val presenceState by presenceViewModel.presenceState.collectAsState()
     val selectedBranchId by presenceViewModel.selectedBranchId.collectAsState()
+    val orgDetailsState by presenceViewModel.organizationDetails.collectAsState()
 
     val orgTransactionsState by presenceViewModel.organizationTransactions.collectAsState()
 
@@ -53,6 +54,7 @@ fun AdminDashboard(
     val activeOrgId by sessionManager.activeOrgId.collectAsState()
 
     LaunchedEffect(Unit) {
+        presenceViewModel.fetchOrganizationDetails()
         presenceViewModel.fetchBranches()
         presenceViewModel.fetchCheckedInMembers()
         presenceViewModel.fetchOrganizationTransactions()
@@ -192,6 +194,11 @@ fun AdminDashboard(
                 when (selectedTab) {
                     0 -> OverviewDashboardView(
                         branches = branches,
+                        orgDetailsState = orgDetailsState,
+                        transactionsState = orgTransactionsState,
+                        priceChangeRequestsState = priceChangeRequestsState,
+                        stockAdjustmentsState = stockAdjustmentsState,
+                        presenceState = presenceState,
                         selectedBranchId = selectedBranchId,
                         onSelectBranch = { branchId -> presenceViewModel.selectBranchForDetail(branchId) },
                         onOpenQrScanner = { showQrScanner = true }
@@ -235,6 +242,7 @@ fun AdminDashboard(
                         activeOrgName = activeOrgName,
                         activeOrgSlug = activeOrgSlug,
                         activeOrgId = activeOrgId ?: "N/A",
+                        orgDetailsState = orgDetailsState,
                         sessionManager = sessionManager,
                         onSignOut = onSignOut
                     )

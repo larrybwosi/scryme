@@ -11,7 +11,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import tech.scryme.admin.data.model.OrganizationDetailsDto
 import tech.scryme.admin.data.session.SessionManagerImpl
+import tech.scryme.admin.presentation.viewmodel.UiState
 
 @Composable
 fun SettingsView(
@@ -20,6 +22,7 @@ fun SettingsView(
     activeOrgName: String,
     activeOrgSlug: String,
     activeOrgId: String,
+    orgDetailsState: UiState<OrganizationDetailsDto> = UiState.Idle,
     sessionManager: SessionManagerImpl,
     onSignOut: () -> Unit
 ) {
@@ -91,9 +94,37 @@ fun SettingsView(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    Text("Organization Name: $activeOrgName", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Organization Slug: $activeOrgSlug", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Organization ID: $activeOrgId", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    val orgDetails = (orgDetailsState as? UiState.Success)?.data
+
+                    Text(
+                        "Organization Details",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Text("Organization Name: ${orgDetails?.name ?: activeOrgName}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Organization Slug: ${orgDetails?.slug ?: activeOrgSlug}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Organization ID: ${orgDetails?.id ?: activeOrgId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                    orgDetails?.let { details ->
+                        Spacer(modifier = Modifier.height(6.dp))
+                        if (!details.email.isNullOrBlank()) {
+                            Text("Email: ${details.email}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (!details.phone.isNullOrBlank()) {
+                            Text("Phone: ${details.phone}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (!details.address.isNullOrBlank()) {
+                            Text("Address: ${details.address}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        if (!details.taxId.isNullOrBlank()) {
+                            Text("Tax ID: ${details.taxId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text("Default Currency: ${details.currencyCode}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Active Locations: ${details.locationsCount} • Total Members: ${details.membersCount}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }

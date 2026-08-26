@@ -37,6 +37,9 @@ class PresenceViewModel(
     private val _organizationTransactions = MutableStateFlow<UiState<List<TransactionDto>>>(UiState.Idle)
     val organizationTransactions: StateFlow<UiState<List<TransactionDto>>> = _organizationTransactions.asStateFlow()
 
+    private val _organizationDetails = MutableStateFlow<UiState<OrganizationDetailsDto>>(UiState.Idle)
+    val organizationDetails: StateFlow<UiState<OrganizationDetailsDto>> = _organizationDetails.asStateFlow()
+
     init {
         viewModelScope.launch {
             repository.monitorActivePresence().collect { activeMembers ->
@@ -44,6 +47,19 @@ class PresenceViewModel(
                     _presenceState.value = UiState.Success(activeMembers)
                 }
             }
+        }
+    }
+
+    fun fetchOrganizationDetails() {
+        viewModelScope.launch {
+            _organizationDetails.value = UiState.Loading
+            repository.getOrganizationDetails()
+                .onSuccess { details ->
+                    _organizationDetails.value = UiState.Success(details)
+                }
+                .onFailure { error ->
+                    _organizationDetails.value = UiState.Error(error.message ?: "Failed to load organization details")
+                }
         }
     }
 
