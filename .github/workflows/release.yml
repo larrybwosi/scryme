@@ -11,12 +11,12 @@ permissions:
   pull-requests: write
 
 jobs:
-  # 1. Manages Changesets, bumps version tags on main, or falls back to traditional changeset publish
   release-management:
     name: Release Management
     runs-on: ubuntu-latest
     outputs:
-      published: ${{ steps.check-and-version.outputs.published }}
+      published: ${{ steps.changesets.outputs.published }}
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -36,36 +36,8 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Check Changesets and Version
-        id: check-and-version
-        run: |
-          CHANGESETS=$(find .changeset -name "*.md" ! -name "README.md")
-          if [ -n "$CHANGESETS" ]; then
-            echo "Changesets found:"
-            echo "$CHANGESETS"
-
-            # Configure Git
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-            # Version packages
-            pnpm version-packages
-
-            # Commit and push if changes exist
-            if [ -n "$(git status --porcelain)" ]; then
-              git add .
-              git commit -m "chore(release): version packages"
-              git push origin HEAD:main
-            fi
-
-            echo "published=true" >> $GITHUB_OUTPUT
-          else
-            echo "No changesets found."
-            echo "published=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Create Git Tags and GitHub Releases
-        if: steps.check-and-version.outputs.published == 'true'
+      - name: Create Release Pull Request or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
           publish: pnpm release
@@ -73,7 +45,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  # 2. Centralized package build to be shared across jobs
   build-packages:
     name: Build Packages
     runs-on: ubuntu-latest
@@ -105,11 +76,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: built-packages
-          path: |
-            packages/*/dist
-            packages/db/prisma
+          path: packages/
 
-  # Quick helper to extract version for multi-platform app matrix
   set-version:
     name: Set Version Output
     runs-on: ubuntu-latest
@@ -129,7 +97,6 @@ jobs:
           VERSION=$(node -p "require('./apps/pos/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-  # 3. Builds and Publishes POS to GitHub Releases (Matrix parallelization)
   publish-pos:
     name: Publish POS (${{ matrix.os }} - ${{ matrix.variant }})
     runs-on: ${{ matrix.os }}
@@ -140,21 +107,6 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest]
         variant: [pharmacy, retail, standalone, supermarket, restaurant]
-        include:
-          - os: windows-latest
-            args: --target x86_64-pc-windows-msvc
-          - os: ubuntu-latest
-            args: --target x86_64-unknown-linux-gnu
-          - variant: retail
-            features: retail
-          - variant: standalone
-            features: standalone
-          - variant: restaurant
-            features: restaurant
-          - variant: supermarket
-            features: supermarket
-          - variant: pharmacy
-            features: pharmacy
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -200,8 +152,15 @@ jobs:
           name: built-packages
           path: packages
 
-      - name: Build POS App
-        run: pnpm turbo build --filter=pos...
+      - name: Set OS specific args
+        id: target
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            echo "args=--target x86_64-pc-windows-msvc" >> $GITHUB_OUTPUT
+          else
+            echo "args=--target x86_64-unknown-linux-gnu" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build and Publish POS App
         uses: tauri-apps/tauri-action@v0
@@ -221,214 +180,7 @@ jobs:
           releaseBody: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
           prerelease: false
-          args: ${{ matrix.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.features }}
-
-  # 4. Builds and Publishes Bakery App (Matrix parallelization)
-  publish-bakery:
-    name: Publish Bakery App (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: [release-management, set-version, build-packages]
-    if: needs.release-management.outputs.published == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-        include:
-          - os: windows-latest
-            args: --target x86_64-pc-windows-msvc
-          - os: ubuntu-latest
-            args: --target x86_64-unknown-linux-gnu
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Setup Pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Install System Dependencies (Linux Only)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            libglib2.0-dev \
-            libudev-dev
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Download Package Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: built-packages
-          path: packages
-
-      - name: Build Bakery App
-        run: pnpm turbo build --filter=bakery...
-
-      - name: Build and Publish Bakery App
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
-        with:
-          projectPath: ./apps/bakery
-          tagName: v${{ needs.set-version.outputs.version }}
-          releaseName: "v${{ needs.set-version.outputs.version }}"
-          releaseBody: "Release v${{ needs.set-version.outputs.version }}"
-          releaseDraft: false
-          prerelease: false
-          args: ${{ matrix.args }}
-
-  # 5. Builds Docker Images (Runs after packages are verified)
-  docker-images:
-    name: Build & Push Docker Images
-    runs-on: ubuntu-latest
-    needs: [release-management, build-packages]
-    if: needs.release-management.outputs.published == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Convert repository name to lowercase
-        id: repo-lower
-        run: |
-          echo "repo_lower=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
-
-      - name: Get current version
-        id: get-version
-        run: |
-          VERSION=$(node -p "require('./apps/bakery/package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Build and push Docker images
-        uses: docker/bake-action@v7
-        env:
-          REPO_LOWER: ${{ steps.repo-lower.outputs.repo_lower }}
-          VERSION: ${{ steps.get-version.outputs.version }}
-        with:
-          files: |
-            ./docker-bake.hcl
-          targets: default
-          push: true
-          set: |
-            *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
-
-  publish-android:
-    name: Publish Android App
-    runs-on: ubuntu-latest
-    needs: [release-management, set-version]
-    if: needs.release-management.outputs.published == 'true'
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Setup JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: "21"
-          distribution: "zulu"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.8"
-
-      - name: Build Android Release APK
-        run: |
-          cd apps/android
-          gradle assembleRelease --no-daemon
-
-      - name: Prepare APK Asset
-        id: prepare-apk
-        run: |
-          APK_PATH=$(find apps/android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "Error: APK not found!"
-            exit 1
-          fi
-          echo "Found APK at: $APK_PATH"
-          cp "$APK_PATH" scryme-admin-release.apk
-          echo "apk_path=scryme-admin-release.apk" >> $GITHUB_OUTPUT
-
-      - name: Upload Android APK to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ needs.set-version.outputs.version }}
-          name: "v${{ needs.set-version.outputs.version }}"
-          draft: false
-          prerelease: false
-          files: |
-            scryme-admin-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-npm:
-    name: Publish SDK to NPM
-    runs-on: ubuntu-latest
-    needs: [release-management, build-packages]
-    if: needs.release-management.outputs.published == 'true'
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Setup Pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Install Dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Download Package Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: built-packages
-          path: packages
-
-      - name: Publish to NPM
-        run: pnpm release
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          args: ${{ steps.target.outputs.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.variant }}
 
   publish-crates:
     name: Publish Rust SDK to Crates.io
@@ -440,6 +192,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
+
+      - name: Setup Java (Required for openapi-generator-cli)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
