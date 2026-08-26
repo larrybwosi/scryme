@@ -264,6 +264,12 @@ export function StockImportModal({
   };
 
   // Perform Fuzzy Matching across all rows
+  /**
+   * OPTIMIZATION (Bolt ⚡): Pre-index system variants by SKU and Barcode into Map structures,
+   * and pre-compute display name strings prior to row iterations.
+   * This replaces linear O(N * V) array .find() scans for SKU/Barcode matching with O(1) constant-time lookups,
+   * and eliminates repeated string concatenations during fuzzy name matching.
+   */
   const performFuzzyMatching = () => {
     const productNameHeader = mappings.productName;
     const variantNameHeader = mappings.variantName;
@@ -274,6 +280,25 @@ export function StockImportModal({
     if (!productNameHeader || !stockHeader) {
       toast.error("Please map Product Name and New Total Stock columns");
       return;
+    }
+
+    // Pre-index SKU and Barcode for O(1) lookups
+    const skuMap = new Map<string, SystemVariant>();
+    const barcodeMap = new Map<string, SystemVariant>();
+    const precomputedVariants: { variant: SystemVariant; nameString: string }[] = [];
+
+    for (const v of systemVariants) {
+      if (v.sku) {
+        skuMap.set(v.sku.toLowerCase(), v);
+      }
+      if (v.barcode) {
+        barcodeMap.set(v.barcode.toLowerCase(), v);
+      }
+      const nameString =
+        v.variantName && v.variantName !== "Default"
+          ? `${v.name} ${v.variantName}`
+          : v.name;
+      precomputedVariants.push({ variant: v, nameString });
     }
 
     const matches: RowMatch[] = rawData.map((row, index) => {
@@ -287,11 +312,9 @@ export function StockImportModal({
       let highestScore = 0;
       let matchedVariantId: string | null = null;
 
-      // 1. Exact SKU Match (High priority)
+      // 1. Exact SKU Match (High priority - O(1) lookup)
       if (rawSku) {
-        const exactSku = systemVariants.find(
-          (v) => v.sku.toLowerCase() === rawSku.toLowerCase()
-        );
+        const exactSku = skuMap.get(rawSku.toLowerCase());
         if (exactSku) {
           matchedVariant = exactSku;
           highestScore = 1.0;
@@ -299,11 +322,9 @@ export function StockImportModal({
         }
       }
 
-      // 2. Exact Barcode Match (High priority)
+      // 2. Exact Barcode Match (High priority - O(1) lookup)
       if (!matchedVariantId && rawBarcode) {
-        const exactBarcode = systemVariants.find(
-          (v) => v.barcode && v.barcode.toLowerCase() === rawBarcode.toLowerCase()
-        );
+        const exactBarcode = barcodeMap.get(rawBarcode.toLowerCase());
         if (exactBarcode) {
           matchedVariant = exactBarcode;
           highestScore = 1.0;
@@ -311,26 +332,21 @@ export function StockImportModal({
         }
       }
 
-      // 3. Fuzzy Name Match
+      // 3. Fuzzy Name Match using pre-computed name strings
       if (!matchedVariantId && rawProductName) {
         const userSearchString = rawVariantName
           ? `${rawProductName} ${rawVariantName}`
           : rawProductName;
 
-        systemVariants.forEach((systemVar) => {
-          const sysNameString =
-            systemVar.variantName && systemVar.variantName !== "Default"
-              ? `${systemVar.name} ${systemVar.variantName}`
-              : systemVar.name;
-
+        for (const { variant, nameString } of precomputedVariants) {
           // Compute string similarity
-          const score = stringSimilarity(userSearchString, sysNameString);
+          const score = stringSimilarity(userSearchString, nameString);
           if (score > highestScore) {
             highestScore = score;
-            matchedVariant = systemVar;
-            matchedVariantId = systemVar.id;
+            matchedVariant = variant;
+            matchedVariantId = variant.id;
           }
-        });
+        }
       }
 
       return {
