@@ -59,34 +59,71 @@ fun ApprovalsView(
                     }
                 } else {
                     items(requests) { req ->
+                        val variantObj = req.effectiveVariant()
+                        val productName = variantObj?.product?.name ?: variantObj?.name ?: req.variantId?.takeLast(8)?.let { "Variant $it" } ?: "Request #${req.id.takeLast(8)}"
+                        val skuText = variantObj?.sku?.let { " (SKU: $it)" } ?: ""
+
                         ElevatedCard(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
-                                Text(
-                                    "Variant ID: ${req.variantId}",
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    "Old Price: $${req.oldPrice} -> New Price: $${req.newPrice}",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    OutlinedButton(onClick = { onReviewPrice(req.id, false, "Rejected by Admin") }) {
-                                        Text("Reject")
+                                    Text(
+                                        "$productName$skuText",
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = when (req.status.uppercase()) {
+                                            "APPROVED" -> MaterialTheme.colorScheme.primaryContainer
+                                            "REJECTED" -> MaterialTheme.colorScheme.errorContainer
+                                            else -> MaterialTheme.colorScheme.secondaryContainer
+                                        }
+                                    ) {
+                                        Text(
+                                            text = req.status,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
                                     }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Button(onClick = { onReviewPrice(req.id, true, null) }) {
-                                        Text("Approve")
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "Price Adjustment: $${req.oldPrice} ➔ $${req.newPrice}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                req.requestedAt?.let { date ->
+                                    Text(
+                                        "Requested: $date",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (req.status.equals("PENDING", ignoreCase = true)) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedButton(onClick = { onReviewPrice(req.id, false, "Rejected by Admin") }) {
+                                            Text("Reject")
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Button(onClick = { onReviewPrice(req.id, true, null) }) {
+                                            Text("Approve")
+                                        }
                                     }
                                 }
                             }
@@ -130,34 +167,67 @@ fun ApprovalsView(
                     }
                 } else {
                     items(adjustments) { adj ->
+                        val productName = adj.variant?.product?.name ?: adj.variant?.name ?: "Variant ${adj.variantId.takeLast(8)}"
+                        val locationName = adj.location?.name ?: "Location ${adj.locationId.takeLast(6)}"
+
                         ElevatedCard(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
-                                Text(
-                                    "Reason: ${adj.reason}",
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    "Quantity Adjustment: ${adj.quantity}",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    OutlinedButton(onClick = { onReviewStock(adj.id, false, "Rejected by Admin") }) {
-                                        Text("Reject")
+                                    Text(
+                                        productName,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = when (adj.status.uppercase()) {
+                                            "APPROVED" -> MaterialTheme.colorScheme.primaryContainer
+                                            "REJECTED" -> MaterialTheme.colorScheme.errorContainer
+                                            else -> MaterialTheme.colorScheme.secondaryContainer
+                                        }
+                                    ) {
+                                        Text(
+                                            text = adj.status,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
                                     }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Button(onClick = { onReviewStock(adj.id, true, null) }) {
-                                        Text("Approve")
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "Location: $locationName • Quantity: ${if (adj.quantity > 0) "+${adj.quantity}" else "${adj.quantity}"}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    "Reason: ${adj.reason}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                if (adj.status.equals("PENDING", ignoreCase = true)) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.End,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        OutlinedButton(onClick = { onReviewStock(adj.id, false, "Rejected by Admin") }) {
+                                            Text("Reject")
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Button(onClick = { onReviewStock(adj.id, true, null) }) {
+                                            Text("Approve")
+                                        }
                                     }
                                 }
                             }

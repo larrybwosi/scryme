@@ -20,7 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.admin.data.model.LocationDto
+import tech.scryme.admin.data.model.MemberResponseDto
+import tech.scryme.admin.data.model.OrganizationDetailsDto
+import tech.scryme.admin.data.model.PriceChangeRequestDto
+import tech.scryme.admin.data.model.StockAdjustmentResponseDto
+import tech.scryme.admin.data.model.TransactionDto
 import tech.scryme.admin.data.model.formatCurrency
+import tech.scryme.admin.presentation.viewmodel.UiState
 
 data class TaskAlertItem(
     val type: String,
@@ -32,18 +38,62 @@ data class TaskAlertItem(
 @Composable
 fun OverviewDashboardView(
     branches: List<LocationDto>,
+    orgDetailsState: UiState<OrganizationDetailsDto> = UiState.Idle,
+    transactionsState: UiState<List<TransactionDto>> = UiState.Idle,
+    priceChangeRequestsState: UiState<List<PriceChangeRequestDto>> = UiState.Idle,
+    stockAdjustmentsState: UiState<List<StockAdjustmentResponseDto>> = UiState.Idle,
+    presenceState: UiState<List<MemberResponseDto>> = UiState.Idle,
     selectedBranchId: String?,
     onSelectBranch: (String) -> Unit,
     onOpenQrScanner: () -> Unit
 ) {
-    val taskAlerts = remember {
-        listOf(
-            TaskAlertItem("Pending Approval", "Review new price request...", "Awaiting", "Today"),
-            TaskAlertItem("Stock Adjustment", "Stock variance at Main Branch...", "Pending", "Today"),
-            TaskAlertItem("POS Sync", "Terminal authorization active...", "Active", "Today"),
-            TaskAlertItem("Attendance", "Staff shift starting soon...", "Scheduled", "Tomorrow"),
-            TaskAlertItem("System Audit", "Monthly organization check...", "Completed", "This Week")
-        )
+    // 1. Calculate Real Revenue
+    val currencyCode = if (orgDetailsState is UiState.Success) orgDetailsState.data.currencyCode else "USD"
+    val totalRevenue = if (transactionsState is UiState.Success) {
+        transactionsState.data.sumOf { it.effectiveAmount() }
+    } else 0.0
+
+    // 2. Calculate Real Pending Approvals
+    val pendingPriceCount = if (priceChangeRequestsState is UiState.Success) {
+        priceChangeRequestsState.data.count { it.status.equals("PENDING", ignoreCase = true) }
+    } else 0
+
+    val pendingStockCount = if (stockAdjustmentsState is UiState.Success) {
+        stockAdjustmentsState.data.count { it.status.equals("PENDING", ignoreCase = true) }
+    } else 0
+
+    val totalPendingApprovals = pendingPriceCount + pendingStockCount
+
+    // 3. Calculate Real Active Staff / Members
+    val checkedInStaffCount = if (presenceState is UiState.Success) {
+        presenceState.data.count { it.isCheckedIn == true }
+    } else 0
+
+    val totalMembersCount = if (orgDetailsState is UiState.Success) {
+        orgDetailsState.data.membersCount
+    } else if (presenceState is UiState.Success) {
+        presenceState.data.size
+    } else 0
+
+    // 4. Generate Dynamic Real Priority Tasks
+    val taskAlerts = remember(pendingPriceCount, pendingStockCount, checkedInStaffCount, branches.size) {
+        val list = mutableListOf<TaskAlertItem>()
+        if (pendingPriceCount > 0) {
+            list.add(TaskAlertItem("Price Approval", "$pendingPriceCount pending price change review(s)", "Awaiting", "Today"))
+        }
+        if (pendingStockCount > 0) {
+            list.add(TaskAlertItem("Stock Adjustment", "$pendingStockCount pending inventory adjustment(s)", "Pending", "Today"))
+        }
+        if (checkedInStaffCount > 0) {
+            list.add(TaskAlertItem("Live Presence", "$checkedInStaffCount staff member(s) checked in", "Active", "Now"))
+        }
+        if (branches.isNotEmpty()) {
+            list.add(TaskAlertItem("Branch Oversight", "${branches.size} active location(s) operational", "Active", "Ongoing"))
+        }
+        if (list.isEmpty()) {
+            list.add(TaskAlertItem("System Audit", "All system approvals and rosters up to date", "Completed", "Today"))
+        }
+        list
     }
 
     LazyColumn(
@@ -69,27 +119,18 @@ fun OverviewDashboardView(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            formatCurrency(12867.0, "USD"),
+                            formatCurrency(totalRevenue, currencyCode),
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.TrendingUp,
-                                contentDescription = null,
-                                tint = Color(0xFF10B981),
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                "+8.2% vs Last Week",
-                                fontSize = 11.sp,
-                                color = Color(0xFF10B981),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+                        Text(
+                            "Live Transactions Sum",
+                            fontSize = 11.sp,
+                            color = Color(0xFF10B981),
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
 
@@ -143,14 +184,14 @@ fun OverviewDashboardView(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            "3",
+                            "$totalPendingApprovals",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            "Price & Stock Reviews",
+                            "Price: $pendingPriceCount • Stock: $pendingStockCount",
                             fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -171,27 +212,18 @@ fun OverviewDashboardView(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            "1,867",
+                            "$totalMembersCount",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.height(6.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.TrendingUp,
-                                contentDescription = null,
-                                tint = Color(0xFF10B981),
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                "52 New this week",
-                                fontSize = 11.sp,
-                                color = Color(0xFF10B981),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+                        Text(
+                            "$checkedInStaffCount Staff Checked-In Now",
+                            fontSize = 11.sp,
+                            color = Color(0xFF10B981),
+                            fontWeight = FontWeight.SemiBold
+                        )
                     }
                 }
             }

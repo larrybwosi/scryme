@@ -27,7 +27,7 @@ fun ExpenseManagementView(
     var showCreateModal by remember { mutableStateOf(false) }
     var description by remember { mutableStateOf("") }
     var amountText by remember { mutableStateOf("") }
-    val selectedCategoryId by remember { mutableStateOf("") }
+    var selectedCategoryId by remember { mutableStateOf("") }
     var paymentMethod by remember { mutableStateOf("CASH") }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -158,6 +158,27 @@ fun ExpenseManagementView(
                         label = { Text("Payment Method (CASH/MPESA/CARD)") },
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    if (categoriesState is UiState.Success && categoriesState.data.isNotEmpty()) {
+                        Text(
+                            "Select Category",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            categoriesState.data.take(3).forEach { cat ->
+                                FilterChip(
+                                    selected = selectedCategoryId == cat.id || (selectedCategoryId.isEmpty() && categoriesState.data.first().id == cat.id),
+                                    onClick = { selectedCategoryId = cat.id },
+                                    label = { Text(cat.name) }
+                                )
+                            }
+                        }
+                    }
                 }
             },
             confirmButton = {

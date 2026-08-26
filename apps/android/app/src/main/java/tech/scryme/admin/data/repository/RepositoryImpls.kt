@@ -115,6 +115,13 @@ class PresenceRepositoryImpl(
     private val sessionManager: SessionManager
 ) : PresenceRepository {
 
+    override suspend fun getOrganizationDetails(): Result<OrganizationDetailsDto> {
+        val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getOrganizationDetails(slug)
+        }
+    }
+
     override suspend fun getLocations(): Result<List<LocationDto>> {
         val slug = getOrgSlug() ?: return Result.failure(Exception("No active organization selected"))
         return safeApiCallEnvelope {
