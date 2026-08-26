@@ -8,7 +8,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -16,7 +15,6 @@ import tech.scryme.admin.data.api.AuthApiService
 import tech.scryme.admin.data.api.AuthInterceptor
 import tech.scryme.admin.data.api.MultiTenancyInterceptor
 import tech.scryme.admin.data.api.DynamicBaseUrlInterceptor
-import tech.scryme.admin.data.model.BetterAuthSessionResponse
 import tech.scryme.admin.data.repository.AuthRepositoryImpl
 import tech.scryme.admin.data.session.SessionManagerImpl
 import tech.scryme.admin.presentation.viewmodel.AuthViewModel
@@ -164,7 +162,6 @@ fun AppNavigation(
             userEmail = userEmail,
             activeOrgName = activeOrgName,
             activeOrgSlug = activeOrgSlug,
-            sessionToken = sessionManager.token.collectAsState().value ?: "",
             presenceViewModel = presenceViewModel,
             approvalsViewModel = approvalsViewModel,
             analyticsViewModel = analyticsViewModel,
