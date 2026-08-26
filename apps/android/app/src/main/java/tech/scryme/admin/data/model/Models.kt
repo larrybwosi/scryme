@@ -52,7 +52,9 @@ data class SessionUser(
     @SerializedName("email") val email: String,
     @SerializedName("name") val name: String? = null,
     @SerializedName("role") val role: String? = null,
-    @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null
+    @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null,
+    @SerializedName("activeOrganizationSlug") val activeOrganizationSlug: String? = null,
+    @SerializedName("activeOrganizationName") val activeOrganizationName: String? = null
 )
 
 data class SessionDto(

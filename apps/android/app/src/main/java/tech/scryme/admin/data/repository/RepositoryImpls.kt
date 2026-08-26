@@ -22,13 +22,16 @@ class AuthRepositoryImpl(
             onSuccess = { response ->
                 val token = response.token
                 if (!token.isNullOrBlank()) {
+                    val orgSlug = response.user?.activeOrganizationSlug ?: response.user?.activeOrganizationId
                     sessionManager.saveSession(
                         token = token,
-                        orgSlug = response.user?.activeOrganizationId,
+                        orgSlug = orgSlug,
                         orgId = response.user?.activeOrganizationId,
                         userEmail = response.user?.email,
-                        userName = response.user?.name
+                        userName = response.user?.name,
+                        orgName = response.user?.activeOrganizationName
                     )
+                    getSession()
                     Result.success(response)
                 } else {
                     Result.failure(Exception("Authentication failed: No session token returned from server"))
@@ -44,14 +47,16 @@ class AuthRepositoryImpl(
         return safeApiCall {
             api.getSession()
         }.onSuccess { response ->
-            val token = response.token
+            val token = response.token ?: sessionManager.token.value
             if (!token.isNullOrBlank()) {
+                val orgSlug = response.user?.activeOrganizationSlug ?: response.user?.activeOrganizationId
                 sessionManager.saveSession(
                     token = token,
-                    orgSlug = response.user?.activeOrganizationId,
+                    orgSlug = orgSlug,
                     orgId = response.user?.activeOrganizationId,
                     userEmail = response.user?.email,
-                    userName = response.user?.name
+                    userName = response.user?.name,
+                    orgName = response.user?.activeOrganizationName
                 )
             }
         }
@@ -64,7 +69,8 @@ class AuthRepositoryImpl(
             sessionManager.saveSession(
                 token = response.token,
                 orgSlug = sessionManager.activeOrgSlug.value,
-                orgId = sessionManager.activeOrgId.value
+                orgId = sessionManager.activeOrgId.value,
+                orgName = sessionManager.activeOrgName.value
             )
         }
     }
@@ -82,13 +88,16 @@ class AuthRepositoryImpl(
             onSuccess = { response ->
                 val token = response.token
                 if (!token.isNullOrBlank()) {
+                    val orgSlug = response.user?.activeOrganizationSlug ?: response.user?.activeOrganizationId
                     sessionManager.saveSession(
                         token = token,
-                        orgSlug = response.user?.activeOrganizationId,
+                        orgSlug = orgSlug,
                         orgId = response.user?.activeOrganizationId,
                         userEmail = response.user?.email,
-                        userName = response.user?.name
+                        userName = response.user?.name,
+                        orgName = response.user?.activeOrganizationName
                     )
+                    getSession()
                     Result.success(response)
                 } else {
                     Result.failure(Exception("Authentication failed: No session token returned from server"))

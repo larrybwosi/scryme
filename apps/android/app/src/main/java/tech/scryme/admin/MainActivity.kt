@@ -141,10 +141,13 @@ fun AppNavigation(
         val savedEmail by sessionManager.userEmail.collectAsState()
         val savedName by sessionManager.userName.collectAsState()
         val savedOrgId by sessionManager.activeOrgId.collectAsState()
+        val savedOrgSlug by sessionManager.activeOrgSlug.collectAsState()
+        val savedOrgName by sessionManager.activeOrgName.collectAsState()
 
         var userEmail = savedEmail ?: "admin@scryme.tech"
         var userName = savedName ?: "System Administrator"
-        var activeOrg = savedOrgId ?: "The Operating Ledger"
+        var activeOrgName = savedOrgName ?: savedOrgSlug ?: savedOrgId ?: "The Operating Ledger"
+        var activeOrgSlug = savedOrgSlug ?: savedOrgId ?: "default"
 
         // Safely extract active session details if available in State
         val state = loginState
@@ -152,13 +155,15 @@ fun AppNavigation(
             val data = state.data
             userEmail = data.user?.email ?: userEmail
             userName = data.user?.name ?: userName
-            activeOrg = data.user?.activeOrganizationId ?: activeOrg
+            activeOrgName = data.user?.activeOrganizationName ?: data.user?.activeOrganizationSlug ?: data.user?.activeOrganizationId ?: activeOrgName
+            activeOrgSlug = data.user?.activeOrganizationSlug ?: data.user?.activeOrganizationId ?: activeOrgSlug
         }
 
         AdminDashboard(
             userName = userName,
             userEmail = userEmail,
-            activeOrg = activeOrg,
+            activeOrgName = activeOrgName,
+            activeOrgSlug = activeOrgSlug,
             sessionToken = sessionManager.token.collectAsState().value ?: "",
             presenceViewModel = presenceViewModel,
             approvalsViewModel = approvalsViewModel,
