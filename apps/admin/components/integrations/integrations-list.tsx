@@ -73,6 +73,7 @@ export function IntegrationsList({
               <CardHeader className="flex flex-row items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   {item.logoUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={item.logoUrl} alt={item.name} className="size-9 rounded border object-contain p-1" />
                   ) : (
                     <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
