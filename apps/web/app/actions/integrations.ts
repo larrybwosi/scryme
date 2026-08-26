@@ -3,6 +3,7 @@
 import { db as prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
+import { randomBytes } from "crypto";
 
 export async function getIntegrationsStatus() {
   const context = await getOrganizationContext();
@@ -77,11 +78,25 @@ export async function updateWindmillConfig(data: {
     throw new Error("Unauthorized");
   }
 
+  const existingConfig = await prisma.windmillConfiguration.findUnique({
+    where: { organizationId: context.organizationId },
+  });
+
+  const webhookSecret =
+    data.webhookSecret ||
+    existingConfig?.webhookSecret ||
+    randomBytes(32).toString("hex");
+
+  const configData = {
+    ...data,
+    webhookSecret,
+  };
+
   await prisma.windmillConfiguration.upsert({
     where: { organizationId: context.organizationId },
-    update: data,
+    update: configData,
     create: {
-      ...data,
+      ...configData,
       organizationId: context.organizationId,
     },
   });

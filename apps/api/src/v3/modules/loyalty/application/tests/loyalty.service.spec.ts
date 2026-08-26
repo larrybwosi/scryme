@@ -87,4 +87,49 @@ describe("LoyaltyService", () => {
       expect(points).toBe(100);
     });
   });
+
+  describe("redeemPointsForVoucher", () => {
+    it("should throw error if concurrent deduction drops loyalty points below zero", async () => {
+      (mockPrisma.loyaltyReward.findFirst as any).mockResolvedValue({
+        id: "reward1",
+        name: "Free Coffee",
+        pointsRequired: 50,
+        isActive: true,
+        programId: "prog1",
+      });
+      (mockPrisma.customer.findFirst as any).mockResolvedValue({
+        id: "cust1",
+        loyaltyPoints: 50,
+      });
+      // Simulate concurrent deduction where customer points drop below 0 (-10)
+      (mockPrisma.customer.update as any).mockResolvedValue({
+        id: "cust1",
+        loyaltyPoints: -10,
+      });
+
+      await expect(
+        service.redeemPointsForVoucher("cust1", "reward1", "org1"),
+      ).rejects.toThrow("Insufficient points");
+    });
+  });
+
+  describe("validateVoucher", () => {
+    it("should validate voucher with null expiresAt (non-expiring voucher)", async () => {
+      (mockPrisma.loyaltyVoucher.findFirst as any).mockResolvedValue({
+        id: "vouch1",
+        code: "NOEXPIRATION",
+        status: "ACTIVE",
+        expiresAt: null,
+        customerId: "cust1",
+        reward: { name: "10% Off" },
+        program: { isActive: true },
+      });
+
+      const res = await service.validateVoucher("NOEXPIRATION", "cust1", "org1");
+      expect(res.valid).toBe(true);
+      expect(res.code).toBe("NOEXPIRATION");
+      expect(res.reward).toBe("10% Off");
+      expect(res.expiresAt).toBeNull();
+    });
+  });
 });

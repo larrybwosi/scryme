@@ -101,13 +101,19 @@ export function EditTransferForm({
   const [itemError, setItemError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const variants = products.map(p => ({
-    id: p.variantId,
-    name: p.variantName || "Default",
-    productName: p.name,
-    sku: p.sku,
-    stock: p.currentStock,
-  }));
+  // ⚡ Bolt Optimization: Memoize transformed variants array to prevent redundant
+  // array allocations and iterations on every form state update / re-render.
+  const variants = useMemo(
+    () =>
+      products.map(p => ({
+        id: p.variantId,
+        name: p.variantName || "Default",
+        productName: p.name,
+        sku: p.sku,
+        stock: p.currentStock,
+      })),
+    [products],
+  );
 
   const productByVariant = useMemo(() => {
     const map = new Map<string, Product>();
