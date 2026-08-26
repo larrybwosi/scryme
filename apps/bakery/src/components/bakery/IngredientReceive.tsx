@@ -264,7 +264,9 @@ function AttachmentZone({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-5 w-5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                aria-label={`Remove attachment ${f.name}`}
+                title={`Remove attachment ${f.name}`}
+                className="h-5 w-5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 focus-visible:ring-2 focus-visible:ring-red-500"
                 onClick={() => onRemove(f.id)}
               >
                 <X className="h-3 w-3" />
@@ -561,7 +563,15 @@ function BulkReceiveDialog({
                                     </div>
                                   </td>
                                   <td className="px-3 py-2 text-center pt-3">
-                                    <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100" onClick={() => remove(index)}>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      aria-label={`Remove line ${index + 1}`}
+                                      title={`Remove line ${index + 1}`}
+                                      className="h-6 w-6 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-red-500 rounded-sm transition-opacity"
+                                      onClick={() => remove(index)}
+                                    >
                                       <Trash2 className="h-3.5 w-3.5" />
                                     </Button>
                                   </td>
