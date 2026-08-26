@@ -1,0 +1,6 @@
+# Next.js App configuration files
+node_modules
+.next
+out
+.env*.local
+.DS_Store
