@@ -3900,6 +3900,75 @@
         ]
       }
     },
+    "/v3/{orgSlug}/services/{id}/availability": {
+      "get": {
+        "description": "Calculates available booking slots dynamically based on staff shifts, breaks, and overlapping booking schedules.",
+        "operationId": "Services_GetAvailability",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "The ID of the service",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Target date in YYYY-MM-DD format",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully generated slot availability"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Service not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get service slot availability",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
     "/v3/{orgSlug}/services/{id}/delete": {
       "post": {
         "description": "Deletes a service from the catalog. Associated future bookings will be cancelled or locked.",
@@ -4532,6 +4601,56 @@
           }
         ],
         "summary": "Complete a booking and consume materials",
+        "tags": [
+          "V3 Services"
+        ]
+      }
+    },
+    "/v3/{orgSlug}/services/bookings/recurrence/{recurrenceId}/cancel": {
+      "post": {
+        "description": "Cancels all scheduled and requested future bookings belonging to a recurring booking series.",
+        "operationId": "Services_CancelBookingSeries",
+        "parameters": [
+          {
+            "name": "recurrenceId",
+            "required": true,
+            "in": "path",
+            "description": "The recurrence rule ID of the booking series",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "orgSlug",
+            "required": true,
+            "in": "path",
+            "description": "The unique organization slug",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking series cancelled successfully"
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel recurring booking series",
         "tags": [
           "V3 Services"
         ]
@@ -11569,6 +11688,46 @@
           "V3 Analytics"
         ]
       }
+    },
+    "/v3/{orgSlug}/payments/checkout": {
+      "post": {
+        "tags": [
+          "Payments"
+        ],
+        "summary": "Process customer checkout and initiate payment",
+        "operationId": "Payments_Checkout",
+        "parameters": [
+          {
+            "name": "orgSlug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Checkout processed and payment initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "info": {
@@ -16031,6 +16190,50 @@
         "required": [
           "syncTypes"
         ]
+      },
+      "CheckoutDto": {
+        "type": "object",
+        "properties": {
+          "cartId": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "phoneNumber": {
+            "type": "string"
+          },
+          "locationId": {
+            "type": "string"
+          },
+          "notes": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "phoneNumber",
+          "locationId"
+        ]
+      },
+      "CheckoutResponseDto": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "paymentId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "merchantRequestID": {
+            "type": "string"
+          },
+          "checkoutRequestID": {
+            "type": "string"
+          }
+        }
       }
     }
   }
