@@ -30,6 +30,7 @@ data class MemberResponseDto(
     @SerializedName("membershipStatus") val membershipStatus: MembershipStatus,
     @SerializedName("isActive") val isActive: Boolean,
     @SerializedName("status") val status: PresenceStatus,
+    @SerializedName("isCheckedIn") val isCheckedIn: Boolean? = null,
     @SerializedName("cardId") val cardId: String? = null,
     @SerializedName("phone") val phone: String? = null,
     @SerializedName("createdAt") val createdAt: String,
@@ -52,7 +53,9 @@ data class SessionUser(
     @SerializedName("email") val email: String,
     @SerializedName("name") val name: String? = null,
     @SerializedName("role") val role: String? = null,
-    @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null
+    @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null,
+    @SerializedName("activeOrganizationSlug") val activeOrganizationSlug: String? = null,
+    @SerializedName("activeOrganizationName") val activeOrganizationName: String? = null
 )
 
 data class SessionDto(
@@ -130,18 +133,47 @@ data class PaginationMeta(
     @SerializedName("totalPages") val totalPages: Int
 )
 
+// --- Organization Models ---
+
+data class OrganizationDetailsDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("slug") val slug: String,
+    @SerializedName("email") val email: String? = null,
+    @SerializedName("phone") val phone: String? = null,
+    @SerializedName("address") val address: String? = null,
+    @SerializedName("taxId") val taxId: String? = null,
+    @SerializedName("registrationNumber") val registrationNumber: String? = null,
+    @SerializedName("logo") val logo: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("currencyCode") val currencyCode: String = "USD",
+    @SerializedName("locationsCount") val locationsCount: Int = 0,
+    @SerializedName("membersCount") val membersCount: Int = 0
+)
+
 // --- Approvals & Catalog Models ---
+
+data class PriceListItemDto(
+    @SerializedName("variant") val variant: StockAdjustmentVariantDto? = null
+)
 
 data class PriceChangeRequestDto(
     @SerializedName("id") val id: String,
-    @SerializedName("variantId") val variantId: String,
-    @SerializedName("requestedBy") val requestedBy: String,
+    @SerializedName("variantId") val variantId: String? = null,
+    @SerializedName("requestedBy") val requestedBy: String? = null,
     @SerializedName("oldPrice") val oldPrice: Double,
     @SerializedName("newPrice") val newPrice: Double,
     @SerializedName("status") val status: String, // PENDING, APPROVED, REJECTED
     @SerializedName("rejectionReason") val rejectionReason: String? = null,
-    @SerializedName("createdAt") val createdAt: String
-)
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("requestedAt") val requestedAt: String? = null,
+    @SerializedName("variant") val variant: StockAdjustmentVariantDto? = null,
+    @SerializedName("priceListItem") val priceListItem: PriceListItemDto? = null
+) {
+    fun effectiveVariant(): StockAdjustmentVariantDto? {
+        return variant ?: priceListItem?.variant
+    }
+}
 
 data class PriceChangeReviewDto(
     @SerializedName("status") val status: String, // APPROVED, REJECTED

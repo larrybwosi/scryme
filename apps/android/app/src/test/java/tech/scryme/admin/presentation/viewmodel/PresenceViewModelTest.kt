@@ -49,7 +49,7 @@ class PresenceViewModelTest {
             )
         )
 
-        coEvery { repository.getMembers(status = "ONLINE", search = null) } coAnswers {
+        coEvery { repository.getMembers(role = null, status = null, isActive = null, isCheckedIn = true, search = null) } coAnswers {
             delay(100)
             Result.success(members)
         }
@@ -68,14 +68,14 @@ class PresenceViewModelTest {
     @Test
     fun `forceCheckoutMember performs checkout and triggers list refresh`() = runTest(testDispatcher) {
         coEvery { repository.adminCheckOut("mem_1", any(), any()) } returns Result.success(mockk())
-        coEvery { repository.getMembers(status = "ONLINE", search = null) } returns Result.success(emptyList())
+        coEvery { repository.getMembers(role = null, status = null, isActive = null, isCheckedIn = true, search = null) } returns Result.success(emptyList())
 
         viewModel.forceCheckoutMember("mem_1", "Forgot checkout")
 
         runCurrent()
 
         coVerify { repository.adminCheckOut("mem_1", any(), any()) }
-        coVerify { repository.getMembers(status = "ONLINE", search = null) }
+        coVerify { repository.getMembers(role = null, status = null, isActive = null, isCheckedIn = true, search = null) }
     }
 
     @Test

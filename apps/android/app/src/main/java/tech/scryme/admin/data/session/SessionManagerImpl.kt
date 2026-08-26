@@ -3,7 +3,7 @@ package tech.scryme.admin.data.session
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKeys
+import androidx.security.crypto.MasterKey
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,15 +16,18 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
     private val encryptedPrefs: SharedPreferences? by lazy {
         context?.let { ctx ->
             try {
-                val masterKeyAlias = MasterKeys.getOrCreate(MasterKeys.AES256_GCM_SPEC)
+                val masterKey = MasterKey.Builder(ctx)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build()
                 EncryptedSharedPreferences.create(
-                    "secure_scryme_session",
-                    masterKeyAlias,
                     ctx,
+                    "secure_scryme_session",
+                    masterKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
                 )
             } catch (e: Exception) {
+                useFallback = true
                 null
             }
         }
@@ -129,6 +132,9 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
     private val _activeOrgId = MutableStateFlow<String?>(getStringSafely("ACTIVE_ORG_ID", null))
     override val activeOrgId: StateFlow<String?> = _activeOrgId.asStateFlow()
 
+    private val _activeOrgName = MutableStateFlow<String?>(getStringSafely("ACTIVE_ORG_NAME", null))
+    override val activeOrgName: StateFlow<String?> = _activeOrgName.asStateFlow()
+
     private val _baseUrl = MutableStateFlow<String?>(getStringSafely("BASE_URL", "https://api.scryme.tech/"))
     override val baseUrl: StateFlow<String?> = _baseUrl.asStateFlow()
 
@@ -171,13 +177,17 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
         orgSlug: String?,
         orgId: String?,
         userEmail: String?,
-        userName: String?
+        userName: String?,
+        orgName: String?
     ) {
         _token.value = token
         _activeOrgSlug.value = orgSlug
         _activeOrgId.value = orgId
         _userEmail.value = userEmail
         _userName.value = userName
+        if (orgName != null) {
+            _activeOrgName.value = orgName
+        }
 
         writeSafely {
             putString("TOKEN", token)
@@ -201,6 +211,9 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
             } else {
                 remove("USER_NAME")
             }
+            if (orgName != null) {
+                putString("ACTIVE_ORG_NAME", orgName)
+            }
         }
     }
 
@@ -208,6 +221,7 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
         _token.value = null
         _activeOrgSlug.value = null
         _activeOrgId.value = null
+        _activeOrgName.value = null
         _userEmail.value = null
         _userName.value = null
 
@@ -215,18 +229,25 @@ class SessionManagerImpl(private val context: Context? = null) : SessionManager 
             remove("TOKEN")
             remove("ACTIVE_ORG_SLUG")
             remove("ACTIVE_ORG_ID")
+            remove("ACTIVE_ORG_NAME")
             remove("USER_EMAIL")
             remove("USER_NAME")
         }
     }
 
-    override fun updateActiveOrg(orgSlug: String, orgId: String) {
+    override fun updateActiveOrg(orgSlug: String, orgId: String, orgName: String?) {
         _activeOrgSlug.value = orgSlug
         _activeOrgId.value = orgId
+        if (orgName != null) {
+            _activeOrgName.value = orgName
+        }
 
         writeSafely {
             putString("ACTIVE_ORG_SLUG", orgSlug)
             putString("ACTIVE_ORG_ID", orgId)
+            if (orgName != null) {
+                putString("ACTIVE_ORG_NAME", orgName)
+            }
         }
     }
 
