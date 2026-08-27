@@ -11,6 +11,10 @@ export async function provisionDeviceV3(prisma: any, token: string) {
       usedAt: null,
       expiresAt: { gt: new Date() },
     },
+    include: {
+      organization: true,
+      location: true,
+    },
   });
 
   if (!setupToken) {
@@ -31,7 +35,7 @@ export async function provisionDeviceV3(prisma: any, token: string) {
     },
   });
 
-  await (prisma.client || prisma).deviceRegistry.create({
+  const device = await (prisma.client || prisma).deviceRegistry.create({
     data: {
       organizationId: setupToken.organizationId,
       apiKeyId: client.id,
@@ -47,5 +51,21 @@ export async function provisionDeviceV3(prisma: any, token: string) {
     data: { usedAt: new Date(), redeemedApiKeyId: client.id },
   });
 
-  return { clientId, clientSecret: rawSecret };
+  return {
+    clientId,
+    clientSecret: rawSecret,
+    apiKey: `${clientId}.${rawSecret}`,
+    deviceRegistryId: device.id,
+    organization: setupToken.organization,
+    device: {
+      id: device.id,
+      deviceName: setupToken.deviceName,
+      deviceType: setupToken.deviceType,
+      locationId: setupToken.locationId,
+      permissions: setupToken.permissions,
+      environment: setupToken.environment,
+      location: setupToken.location,
+    },
+    createdAt: new Date(),
+  };
 }
