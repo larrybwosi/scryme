@@ -210,13 +210,22 @@ data class DashboardAnalyticsDto(
     @SerializedName("branchStats") val branchStats: List<BranchStatsDto>
 )
 
-// --- Broadcast Announcements ---
+// --- Broadcast Announcements & Messaging ---
 
 data class AnnouncementDto(
     @SerializedName("title") val title: String,
     @SerializedName("message") val message: String,
     @SerializedName("targetBranchId") val targetBranchId: String? = null, // null for all
+    @SerializedName("targetMemberId") val targetMemberId: String? = null, // target member if direct
+    @SerializedName("channelSlug") val channelSlug: String? = null, // e.g. "announcements", "shifts"
     @SerializedName("severity") val severity: String = "INFO" // INFO, WARNING, URGENT
+)
+
+data class DirectMessageDto(
+    @SerializedName("memberId") val memberId: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("message") val message: String,
+    @SerializedName("type") val type: String = "DIRECT_MESSAGE" // DIRECT_MESSAGE, SHIFT_NOTIFICATION, ALERT
 )
 
 // --- Generic API Response Envelope ---

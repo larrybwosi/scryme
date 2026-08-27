@@ -289,11 +289,43 @@ class AnnouncementRepositoryImpl(
         title: String,
         message: String,
         targetBranchId: String?,
+        targetMemberId: String?,
+        channelSlug: String?,
         severity: String
     ): Result<Unit> {
         val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
         return safeApiCallEnvelope {
-            api.broadcastAnnouncement(slug, AnnouncementDto(title, message, targetBranchId, severity))
+            api.broadcastAnnouncement(
+                slug,
+                AnnouncementDto(
+                    title = title,
+                    message = message,
+                    targetBranchId = targetBranchId,
+                    targetMemberId = targetMemberId,
+                    channelSlug = channelSlug,
+                    severity = severity
+                )
+            )
+        }
+    }
+
+    override suspend fun sendMessageToMember(
+        memberId: String,
+        title: String,
+        message: String,
+        type: String
+    ): Result<Unit> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.sendMessageToMember(
+                slug,
+                DirectMessageDto(
+                    memberId = memberId,
+                    title = title,
+                    message = message,
+                    type = type
+                )
+            )
         }
     }
 }

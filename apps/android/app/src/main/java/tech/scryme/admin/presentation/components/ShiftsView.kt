@@ -118,18 +118,34 @@ fun ShiftsView(
                         }
                     }
 
-                    Button(
-                        onClick = { showCreateShiftDialog = true },
-                        shape = RoundedCornerShape(12.dp),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "New Shift",
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text("Add Shift")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(
+                            onClick = { shiftsViewModel.broadcastRosterUpdate(selectedDayOfWeek) },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Notify Roster",
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Notify Roster", fontSize = 12.sp)
+                        }
+
+                        Button(
+                            onClick = { showCreateShiftDialog = true },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = "New Shift",
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Add Shift")
+                        }
                     }
                 }
 
@@ -329,7 +345,8 @@ fun ShiftsView(
                             ShiftCard(
                                 shift = shift,
                                 onAddBreak = { selectedShiftForBreak = shift },
-                                onClickDetail = { selectedShiftForDetail = shift }
+                                onClickDetail = { selectedShiftForDetail = shift },
+                                onNotifyMember = { shiftsViewModel.notifyMemberOfShift(it) }
                             )
                         }
                     }
@@ -405,7 +422,8 @@ private fun MetricItem(label: String, value: String) {
 private fun ShiftCard(
     shift: StaffShiftDto,
     onAddBreak: () -> Unit,
-    onClickDetail: () -> Unit
+    onClickDetail: () -> Unit,
+    onNotifyMember: (StaffShiftDto) -> Unit
 ) {
     val dayName = daysList.find { it.first == shift.dayOfWeek }?.second ?: "Day ${shift.dayOfWeek}"
     val memberName = shift.member?.user?.name ?: "Staff Member"
@@ -492,19 +510,33 @@ private fun ShiftCard(
                     )
                 }
 
-                OutlinedButton(
-                    onClick = onAddBreak,
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
-                    modifier = Modifier.height(30.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FreeBreakfast,
-                        contentDescription = "Add Break",
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Add Break", fontSize = 11.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    IconButton(
+                        onClick = { onNotifyMember(shift) },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Send,
+                            contentDescription = "Remind Shift",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = onAddBreak,
+                        shape = RoundedCornerShape(8.dp),
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                        modifier = Modifier.height(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FreeBreakfast,
+                            contentDescription = "Add Break",
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Break", fontSize = 11.sp)
+                    }
                 }
             }
 

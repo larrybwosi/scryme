@@ -149,6 +149,12 @@ interface AnnouncementApiService {
         @Path("orgSlug") orgSlug: String,
         @Body dto: AnnouncementDto
     ): Response<ApiEnvelope<Unit>>
+
+    @POST("/api/android/{orgSlug}/members/messages")
+    suspend fun sendMessageToMember(
+        @Path("orgSlug") orgSlug: String,
+        @Body dto: DirectMessageDto
+    ): Response<ApiEnvelope<Unit>>
 }
 
 interface DeviceApiService {
