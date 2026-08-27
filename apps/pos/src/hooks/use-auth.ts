@@ -161,8 +161,14 @@ export const useSessionActivityListener = () => {
           path: `api/v2/pos/attendance/status`,
         });
 
-        // The API returns { success: true, data: { isCheckedIn: true, ... } }
-        if (response.success && response.data?.isCheckedIn) {
+        // The API can return { success: true, data: { isCheckedIn: true, ... } } or raw { isCheckedIn: true, ... }
+        const statusData = response?.data ?? response;
+        const isCheckedIn =
+          typeof statusData?.isCheckedIn === 'boolean'
+            ? statusData.isCheckedIn
+            : Boolean(response?.success && response?.data?.isCheckedIn);
+
+        if (isCheckedIn) {
           // Session is valid, update the local activity timer
           refreshSession();
         } else {
