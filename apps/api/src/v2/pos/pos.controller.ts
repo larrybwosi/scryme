@@ -75,7 +75,8 @@ export class PosController {
   @Permissions("pos:auth")
   @ApiOperation({ summary: "Get member attendance status" })
   async getAttendanceStatus(@v2Context() ctx: V2ApiContext) {
-    return this.posService.getAttendanceStatus(ctx);
+    const data = await this.posService.getAttendanceStatus(ctx);
+    return { success: true, data };
   }
 
   @Get("locations")
