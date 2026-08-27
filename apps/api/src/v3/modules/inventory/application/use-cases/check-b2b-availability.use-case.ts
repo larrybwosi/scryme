@@ -12,17 +12,19 @@ export class CheckB2BAvailabilityUseCase {
 
     if (!locationId) {
       if (dto.customerId) {
-        const customer = await this.prisma.client.customer.findUnique({
-          where: { id: dto.customerId },
+        // SECURITY (Sentinel): Using findFirst instead of findUnique to scope by organizationId and prevent IDOR.
+        const customer = await this.prisma.client.customer.findFirst({
+          where: { id: dto.customerId, organizationId },
           select: { defaultLocationId: true },
         });
         locationId = customer?.defaultLocationId || undefined;
       }
 
       if (!locationId && dto.businessAccountId) {
+        // SECURITY (Sentinel): Using findFirst instead of findUnique to scope by organizationId and prevent IDOR.
         const businessAccount =
-          await this.prisma.client.businessAccount.findUnique({
-            where: { id: dto.businessAccountId },
+          await this.prisma.client.businessAccount.findFirst({
+            where: { id: dto.businessAccountId, organizationId },
             select: { defaultLocationId: true },
           });
         locationId = businessAccount?.defaultLocationId || undefined;

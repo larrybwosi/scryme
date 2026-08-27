@@ -8,8 +8,8 @@ describe("CheckB2BAvailabilityUseCase", () => {
   beforeEach(() => {
     prisma = {
       client: {
-        customer: { findUnique: vi.fn() },
-        businessAccount: { findUnique: vi.fn() },
+        customer: { findFirst: vi.fn() },
+        businessAccount: { findFirst: vi.fn() },
         inventoryLocation: { findFirst: vi.fn() },
         productVariantStock: { findMany: vi.fn() },
       },
@@ -35,5 +35,45 @@ describe("CheckB2BAvailabilityUseCase", () => {
       { variantId: "v1", locationId, availableStock: 10 },
       { variantId: "v2", locationId, availableStock: 0 },
     ]);
+  });
+
+  it("should scope customer lookup by organizationId to prevent IDOR", async () => {
+    const organizationId = "org-1";
+    const customerId = "cust-1";
+
+    prisma.client.customer.findFirst.mockResolvedValue({
+      defaultLocationId: "loc-cust",
+    });
+    prisma.client.productVariantStock.findMany.mockResolvedValue([]);
+
+    await useCase.execute(organizationId, {
+      variantIds: ["v1"],
+      customerId,
+    });
+
+    expect(prisma.client.customer.findFirst).toHaveBeenCalledWith({
+      where: { id: customerId, organizationId },
+      select: { defaultLocationId: true },
+    });
+  });
+
+  it("should scope businessAccount lookup by organizationId to prevent IDOR", async () => {
+    const organizationId = "org-1";
+    const businessAccountId = "biz-1";
+
+    prisma.client.businessAccount.findFirst.mockResolvedValue({
+      defaultLocationId: "loc-biz",
+    });
+    prisma.client.productVariantStock.findMany.mockResolvedValue([]);
+
+    await useCase.execute(organizationId, {
+      variantIds: ["v1"],
+      businessAccountId,
+    });
+
+    expect(prisma.client.businessAccount.findFirst).toHaveBeenCalledWith({
+      where: { id: businessAccountId, organizationId },
+      select: { defaultLocationId: true },
+    });
   });
 });
