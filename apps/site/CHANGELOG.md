@@ -1,5 +1,11 @@
 # site
 
+## 1.16.0-next.0
+
+### Minor Changes
+
+- eac6c2d: Update
+
 ## 1.15.0
 
 ### Minor Changes
