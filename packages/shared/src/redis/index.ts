@@ -8,6 +8,7 @@ interface RedisClient {
   del: (...keys: string[]) => Promise<number>;
   keys: (pattern: string) => Promise<string[]>;
   incr: (key: string) => Promise<number>;
+  incrby: (key: string, amount: number) => Promise<number>;
   expire: (key: string, ttl: number) => Promise<number>;
   ttl: (key: string) => Promise<number>;
 }
@@ -72,6 +73,10 @@ export const getRedisClient = async (): Promise<RedisClient> => {
         const result = await upstashRedisClient.incr(key);
         return result;
       },
+      incrby: async (key: string, amount: number) => {
+        const result = await upstashRedisClient.incrby(key, amount);
+        return result;
+      },
       expire: async (key: string, ttl: number) => {
         const result = await upstashRedisClient.expire(key, ttl);
         return result;
@@ -103,6 +108,7 @@ export const getRedisClient = async (): Promise<RedisClient> => {
       del: (...keys: string[]) => ioredis.del(...keys),
       keys: (pattern: string) => ioredis.keys(pattern),
       incr: (key: string) => ioredis.incr(key),
+      incrby: (key: string, amount: number) => ioredis.incrby(key, amount),
       expire: (key: string, ttl: number) => ioredis.expire(key, ttl),
       ttl: (key: string) => ioredis.ttl(key),
     };
