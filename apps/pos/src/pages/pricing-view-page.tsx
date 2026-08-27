@@ -281,6 +281,19 @@ export default function PricingViewPage() {
     return { productMap, customerMap };
   }, [products, customers]);
 
+  // ⚡ Bolt Optimization: Pre-index price lists by ID in an in-memory Map.
+  // This replaces an O(N * M) linear array scan (.find()) inside the customer allocations list mapping
+  // with an O(1) constant-time Map lookup.
+  const priceListMap = useMemo(() => {
+    const map = new Map<string, ClientPriceList>();
+    if (data?.lists) {
+      for (const list of data.lists) {
+        map.set(list.id, list);
+      }
+    }
+    return map;
+  }, [data?.lists]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -495,7 +508,7 @@ export default function PricingViewPage() {
                           <td className="py-3.5 px-5">
                             <div className="flex flex-wrap gap-1.5">
                               {lists.map(lid => {
-                                const listName = data?.lists.find(l => l.id === lid)?.code || lid.slice(0, 8) + '…';
+                                const listName = priceListMap.get(lid)?.code || lid.slice(0, 8) + '…';
                                 return (
                                   <span
                                     key={lid}
