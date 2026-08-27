@@ -1,7 +1,7 @@
 import { memo, useState, useMemo, useEffect, useCallback } from 'react';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
-import { Minus, Plus, ShoppingCart, Package, ImageOff, Tag } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Package, ImageOff, Tag, Wrench } from 'lucide-react';
 import { cn, useFormattedCurrency } from '@/lib/utils';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { convertFileSrc } from '@tauri-apps/api/core';
@@ -33,6 +33,8 @@ interface Product {
   totalStock: number;
   variants: Variant[];
   activeIngredient?: string;
+  isService?: boolean;
+  durationMinutes?: number;
 }
 
 interface ProductProps {
@@ -73,9 +75,10 @@ export const ProductListItem = memo(({ product, onAddToCart, onSelectProduct, pr
     [currentVariant, selectedUnitId]
   );
 
-  const stock = currentVariant?.stock || 0;
-  const isOutOfStock = stock <= 0;
-  const isLowStock = stock > 0 && stock < 10;
+  const isService = product.isService || product.category?.toLowerCase() === 'services' || product.category?.toLowerCase() === 'service';
+  const stock = isService ? 999999 : (currentVariant?.stock || 0);
+  const isOutOfStock = !isService && stock <= 0;
+  const isLowStock = !isService && stock > 0 && stock < 10;
 
   const hasMultipleUnits = useMemo(() => {
     if (product.variants.length > 1) return true;
@@ -205,7 +208,12 @@ export const ProductListItem = memo(({ product, onAddToCart, onSelectProduct, pr
               <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded-sm">
                 {product.category}
               </span>
-              {pricingMode === 'wholesale' && (
+              {isService && (
+                <Badge className="h-4 px-1 bg-purple-600 text-white text-[9px] gap-0.5 font-bold uppercase">
+                  <Wrench className="w-2.5 h-2.5" /> Service
+                </Badge>
+              )}
+              {pricingMode === 'wholesale' && !isService && (
                 <Badge className="h-4 px-1 bg-blue-600 text-white text-[9px] gap-0.5">
                   <Tag className="w-2.5 h-2.5" /> Wholesale
                 </Badge>
