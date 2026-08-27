@@ -45,6 +45,8 @@ export interface PosProduct {
   variants: (Variant & { batches?: Batch[] })[];
   updatedAt?: string;
   activeIngredient?: string;
+  isService?: boolean;
+  durationMinutes?: number;
 }
 
 interface UsePosProductsParams {
