@@ -1,5 +1,11 @@
 # docs
 
+## 1.7.0
+
+### Minor Changes
+
+- 7d149b1: Release
+
 ## 1.6.0
 
 ### Minor Changes
