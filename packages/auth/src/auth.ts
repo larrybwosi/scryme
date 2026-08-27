@@ -368,7 +368,7 @@ export const auth = betterAuth({
         }
         return claims;
       },
-    }),
+    }) as any,
     nextCookies(),
   ],
 });
