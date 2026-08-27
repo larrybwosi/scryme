@@ -137,11 +137,13 @@ export default function BakerManager() {
               key={baker.id}
               className="group relative overflow-hidden transition-all duration-200 hover:shadow-md border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950"
             >
-              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-2">
+              <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-10 flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 focus-visible:opacity-100"
+                  aria-label={`Edit operator ${baker.name}`}
+                  title={`Edit operator ${baker.name}`}
                   onClick={() => handleEditBaker(baker)}
                 >
                   <Edit className="h-4 w-4" />
