@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - nextgen
 
 permissions:
   contents: write
@@ -17,6 +18,7 @@ jobs:
     outputs:
       published: ${{ steps.changesets.outputs.published }}
       hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+      isPrerelease: ${{ steps.branch-check.outputs.isPrerelease }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -36,6 +38,29 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
+      - name: Determine Release Type
+        id: branch-check
+        run: |
+          if [ "${{ github.ref_name }}" = "nextgen" ]; then
+            echo "isPrerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "isPrerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enter Prerelease Mode
+        if: steps.branch-check.outputs.isPrerelease == 'true'
+        run: |
+          if [ ! -f .changeset/pre.json ]; then
+            npx changeset pre enter next
+          fi
+
+      - name: Exit Prerelease Mode (safety net for main)
+        if: steps.branch-check.outputs.isPrerelease == 'false'
+        run: |
+          if [ -f .changeset/pre.json ]; then
+            npx changeset pre exit
+          fi
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
@@ -54,7 +79,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -89,7 +114,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: Get version from package.json
         id: get-version
@@ -111,7 +136,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -179,7 +204,7 @@ jobs:
           releaseName: "v${{ needs.set-version.outputs.version }}"
           releaseBody: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
-          prerelease: false
+          prerelease: ${{ needs.release-management.outputs.isPrerelease }}
           args: ${{ steps.target.outputs.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.variant }}
 
   publish-crates:
@@ -191,7 +216,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: Setup Java (Required for openapi-generator-cli)
         uses: actions/setup-java@v4
@@ -225,5 +250,5 @@ jobs:
         run: pnpm --filter @scryme/sdk generate:rust
 
       - name: Publish to Crates.io
-        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ needs.release-management.outputs.isPrerelease == 'true' && '--allow-dirty' || '' }}
         working-directory: packages/v3-sdk/rust
