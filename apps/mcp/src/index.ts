@@ -13,7 +13,7 @@ export const server = new McpServer({
 });
 
 // V3 API client factory from our monorepo SDK, initialized with the local axios instance
-const v3 = getScrymeV3API(axios);
+const v3 = getScrymeV3API(axios as any);
 
 // Token caching and refresh logic
 let cachedToken: string | null = null;

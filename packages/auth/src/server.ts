@@ -64,7 +64,7 @@ export async function getServerAuth(
   }
 
   // Block access for organizations suspended by a platform administrator
-  if (organizationId && session.session.isOrgSuspended) {
+  if (organizationId && (session.session as any).isOrgSuspended) {
     redirect("/suspended");
   }
 

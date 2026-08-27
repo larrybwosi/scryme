@@ -61,6 +61,26 @@ jobs:
             npx changeset pre exit
           fi
 
+      - name: Check for Pending Changesets
+        id: check-changesets
+        run: |
+          COUNT=$(find .changeset -maxdepth 1 -name "*.md" ! -name "README.md" | wc -l)
+          if [ "$COUNT" -gt 0 ]; then
+            echo "hasChangesets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hasChangesets=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Directly Version Prerelease on Nextgen
+        if: steps.branch-check.outputs.isPrerelease == 'true' && steps.check-changesets.outputs.hasChangesets == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          pnpm version-packages
+          git add .
+          git commit -m "chore(release): version prerelease packages"
+          git push origin nextgen
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1

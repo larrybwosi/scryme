@@ -175,7 +175,7 @@ export const auth = betterAuth({
         return 0;
       }
     },
-  },
+  } as any,
   plugins: [
     jwt(),
     bearer(),
@@ -368,7 +368,7 @@ export const auth = betterAuth({
         }
         return claims;
       },
-    }),
+    }) as any,
     nextCookies(),
   ],
 });
