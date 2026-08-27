@@ -359,9 +359,21 @@ export class ExpenseUseCase {
   }
 
   async getExpenseCategories(organizationId: string) {
-    return await this.prisma.client.expenseCategory.findMany({
+    const categories = await this.prisma.client.expenseCategory.findMany({
       where: { organizationId, isActive: true },
     });
+    if (categories.length === 0) {
+      const defaultCategory = await this.prisma.client.expenseCategory.create({
+        data: {
+          name: "General Expenses",
+          description: "Default category for organization expenses",
+          organizationId,
+          isActive: true,
+        },
+      });
+      return [defaultCategory];
+    }
+    return categories;
   }
 
   async approveExpense(

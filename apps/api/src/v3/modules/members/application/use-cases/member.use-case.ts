@@ -48,6 +48,8 @@ export class MemberUseCase {
       isActive,
       departmentId,
       search,
+      status,
+      isCheckedIn,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -59,6 +61,8 @@ export class MemberUseCase {
     if (role) where.role = role;
     if (membershipStatus) where.membershipStatus = membershipStatus;
     if (isActive !== undefined) where.isActive = isActive;
+    if (status) where.status = status;
+    if (isCheckedIn !== undefined) where.isCheckedIn = isCheckedIn;
     if (departmentId) {
       where.departmentMemberships = {
         some: { departmentId },
@@ -92,6 +96,7 @@ export class MemberUseCase {
           membershipStatus: true,
           isActive: true,
           status: true,
+          isCheckedIn: true,
           cardId: true,
           phone: true,
           createdAt: true,
@@ -189,6 +194,7 @@ export class MemberUseCase {
       membershipStatus: member.membershipStatus,
       isActive: member.isActive,
       status: member.status,
+      isCheckedIn: member.isCheckedIn,
       cardId: member.cardId,
       phone: member.phone,
       createdAt: member.createdAt,

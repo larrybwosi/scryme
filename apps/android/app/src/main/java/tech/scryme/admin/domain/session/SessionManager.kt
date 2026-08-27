@@ -6,6 +6,7 @@ interface SessionManager {
     val token: StateFlow<String?>
     val activeOrgSlug: StateFlow<String?>
     val activeOrgId: StateFlow<String?>
+    val activeOrgName: StateFlow<String?>
     val baseUrl: StateFlow<String?>
     val userEmail: StateFlow<String?>
     val userName: StateFlow<String?>
@@ -21,10 +22,11 @@ interface SessionManager {
         orgSlug: String?,
         orgId: String?,
         userEmail: String? = null,
-        userName: String? = null
+        userName: String? = null,
+        orgName: String? = null
     )
     fun clearSession()
-    fun updateActiveOrg(orgSlug: String, orgId: String)
+    fun updateActiveOrg(orgSlug: String, orgId: String, orgName: String? = null)
     fun saveBaseUrl(url: String?)
 
     // Setters for settings
