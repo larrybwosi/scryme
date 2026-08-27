@@ -146,7 +146,7 @@ function OrderSuccessView({
             <Button
               variant="outline"
               className="h-12 gap-2 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all"
-              onClick={() => navigate(`/pending-transactions?id=${orderId}`)}
+              onClick={() => navigate(`/transactions?id=${orderId}`)}
             >
               <ExternalLink className="h-4 w-4" />
               Details

@@ -17,7 +17,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@repo/ui/components/ui/dialog';
-import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck, Wrench, UserCheck } from 'lucide-react';
+import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck, Wrench, UserCheck, AlertTriangle } from 'lucide-react';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Kbd } from '@/components/ui/kbd';
 import PaymentModal from '@/components/pos/payment-dialog';
@@ -222,15 +222,6 @@ export function Cart() {
     const variant = (product?.variants as any[])?.find(v => v.variantId === editingItem.variantId);
     const unit = variant?.sellableUnits.find((u: any) => u.unitId === editUnitId);
     const newUnit = unit || editingItem.selectedUnit;
-
-    // Recalculate price based on the current pricing mode (if needed, although store usually handles it on add)
-    // Here we should probably just use the unit's price as the default,
-    // but the store expect `price` at the root of OrderItem too.
-
-    // We check the URL or state to see if we are in wholesale mode.
-    // In this component, we don't have a direct `pricingMode` state like POS.tsx,
-    // but we can infer it from the item itself if it was already marked as wholesale,
-    // or better, check if the business supports it.
 
     const isWholesale = editingItem.isWholesale;
     let newPrice = Number(newUnit.price);
