@@ -84,6 +84,7 @@ interface PosAuthActions {
   // Async initialization
   initializeFromBackend: () => Promise<void>;
   provisionDevice: (setupToken: string) => Promise<void>;
+  authorizeFromPairingPayload: (payload: any) => Promise<void>;
   registerDevice: (apiKey: string, location: InventoryLocation, orgSlug: string) => Promise<void>;
   switchLocation: (location: InventoryLocation) => Promise<void>;
   setAllowNegativeStock: (allow: boolean) => Promise<void>;
@@ -293,6 +294,40 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         } catch (error) {
           set({ isInitialized: true, isConfigured: false });
         }
+      },
+
+      authorizeFromPairingPayload: async (payload: any) => {
+        const { apiUrl } = get();
+        const { apiKey, device, organization } = payload || {};
+        if (!apiKey || !device || !organization) {
+          throw new Error('Invalid pairing payload structure');
+        }
+
+        const locationId = device.locationId || device.location_id;
+        const orgSlug = organization.slug || organization.orgSlug || organization.org_slug;
+
+        if (!locationId || !orgSlug) {
+          throw new Error('Required configuration parameters missing in pairing response');
+        }
+
+        await invoke('set_device_config', {
+          baseUrl: apiUrl,
+          locationId,
+          deviceKey: apiKey,
+          orgSlug,
+        });
+
+        const location = device.location;
+
+        set({
+          currentLocation:
+            location ||
+            ({
+              ...device,
+              id: locationId,
+              name: device.name || device.deviceName || 'Terminal',
+            } as any),
+        });
       },
 
       provisionDevice: async (setupToken: string) => {
