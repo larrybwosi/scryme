@@ -311,7 +311,7 @@ export class AndroidController {
   @Get(":orgSlug/members")
   async getMembers(@Req() req: any, @Query() query: any) {
     const isCheckedIn = query.isCheckedIn === "true" || query.isCheckedIn === true ? true : query.isCheckedIn === "false" || query.isCheckedIn === false ? false : undefined;
-    const data = await this.memberUseCase.getMembers(req.v3Context.organizationId, {
+    const res = await this.memberUseCase.getMembers(req.v3Context.organizationId, {
       role: query.role,
       membershipStatus: query.membershipStatus,
       isActive: query.isActive === "true" || query.isActive === true ? true : query.isActive === "false" || query.isActive === false ? false : undefined,
@@ -323,7 +323,7 @@ export class AndroidController {
     });
     return {
       success: true,
-      data,
+      data: res.items,
     };
   }
 
@@ -468,10 +468,10 @@ export class AndroidController {
 
   @Get(":orgSlug/inventory/adjustments")
   async getStockAdjustments(@Req() req: any, @Query() query: any) {
-    const data = await this.getStockAdjustmentsUseCase.execute(req.v3Context, query);
+    const res = await this.getStockAdjustmentsUseCase.execute(req.v3Context.organizationId, query);
     return {
       success: true,
-      data,
+      data: res.items,
     };
   }
 
