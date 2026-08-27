@@ -1,5 +1,11 @@
 # [3.3.0-nextgen.22](https://github.com/larrybwosi/scryme/compare/v3.3.0-nextgen.21...v3.3.0-nextgen.22) (2026-05-08)
 
+## 9.71.0
+
+### Minor Changes
+
+- eac6c2d: Update
+
 ## 9.70.0
 
 ### Minor Changes
