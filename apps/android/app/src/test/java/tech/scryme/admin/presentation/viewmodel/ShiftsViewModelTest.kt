@@ -16,13 +16,15 @@ class ShiftsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakeShiftsRepository
+    private lateinit var fakeAnnouncementRepository: FakeAnnouncementRepository
     private lateinit var viewModel: ShiftsViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeRepository = FakeShiftsRepository()
-        viewModel = ShiftsViewModel(fakeRepository)
+        fakeAnnouncementRepository = FakeAnnouncementRepository()
+        viewModel = ShiftsViewModel(fakeRepository, fakeAnnouncementRepository)
     }
 
     @After
@@ -81,6 +83,62 @@ class ShiftsViewModelTest {
         val actionState = viewModel.addBreakState.value
         assertTrue(actionState is UiState.Success)
         assertEquals("break-new", (actionState as UiState.Success).data.id)
+    }
+
+    @Test
+    fun notifyMemberOfShift_success_updatesNotifyShiftState() = runTest {
+        val shift = StaffShiftDto(
+            id = "shift-1",
+            memberId = "mem-100",
+            organizationId = "org-1",
+            dayOfWeek = 1,
+            startTime = "09:00",
+            endTime = "17:00"
+        )
+
+        viewModel.notifyMemberOfShift(shift)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val notifyState = viewModel.notifyShiftState.value
+        assertTrue(notifyState is UiState.Success)
+        assertEquals("mem-100", fakeAnnouncementRepository.lastSentMemberId)
+    }
+
+    @Test
+    fun broadcastRosterUpdate_success_updatesNotifyShiftState() = runTest {
+        viewModel.broadcastRosterUpdate(dayOfWeek = 1)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val notifyState = viewModel.notifyShiftState.value
+        assertTrue(notifyState is UiState.Success)
+        assertEquals("shifts", fakeAnnouncementRepository.lastChannelSlug)
+    }
+}
+
+private class FakeAnnouncementRepository : tech.scryme.admin.domain.repository.AnnouncementRepository {
+    var lastSentMemberId: String? = null
+    var lastChannelSlug: String? = null
+
+    override suspend fun broadcastAnnouncement(
+        title: String,
+        message: String,
+        targetBranchId: String?,
+        targetMemberId: String?,
+        channelSlug: String?,
+        severity: String
+    ): Result<Unit> {
+        lastChannelSlug = channelSlug
+        return Result.success(Unit)
+    }
+
+    override suspend fun sendMessageToMember(
+        memberId: String,
+        title: String,
+        message: String,
+        type: String
+    ): Result<Unit> {
+        lastSentMemberId = memberId
+        return Result.success(Unit)
     }
 }
 

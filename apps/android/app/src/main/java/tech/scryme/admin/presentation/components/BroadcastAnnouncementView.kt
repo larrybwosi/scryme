@@ -107,6 +107,26 @@ fun BroadcastAnnouncementView(
                     )
                 }
 
+                var selectedChannelSlug by remember { mutableStateOf("announcements") }
+
+                Text(
+                    "Target Channel",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    listOf("announcements" to "Announcements", "general" to "General", "shifts" to "Shifts Roster").forEach { (slug, label) ->
+                        FilterChip(
+                            selected = selectedChannelSlug == slug,
+                            onClick = { selectedChannelSlug = slug },
+                            label = { Text(label) }
+                        )
+                    }
+                }
+
                 if (branches.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         FieldLabel("TARGET BRANCH · OPTIONAL")
@@ -167,7 +187,13 @@ fun BroadcastAnnouncementView(
                 Button(
                     onClick = {
                         if (title.isNotBlank() && message.isNotBlank()) {
-                            announcementViewModel.broadcastAnnouncement(title, message, selectedBranchId, severity)
+                            announcementViewModel.broadcastAnnouncement(
+                                title = title,
+                                message = message,
+                                targetBranchId = selectedBranchId,
+                                channelSlug = selectedChannelSlug,
+                                severity = severity
+                            )
                         }
                     },
                     modifier = Modifier
@@ -196,7 +222,13 @@ fun BroadcastAnnouncementView(
                         message = (announcementState as UiState.Error).message,
                         onRetry = {
                             if (title.isNotBlank() && message.isNotBlank()) {
-                                announcementViewModel.broadcastAnnouncement(title, message, selectedBranchId, severity)
+                                announcementViewModel.broadcastAnnouncement(
+                                    title = title,
+                                    message = message,
+                                    targetBranchId = selectedBranchId,
+                                    channelSlug = selectedChannelSlug,
+                                    severity = severity
+                                )
                             }
                         }
                     )

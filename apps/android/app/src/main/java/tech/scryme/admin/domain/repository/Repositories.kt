@@ -40,7 +40,21 @@ interface AnalyticsRepository {
 }
 
 interface AnnouncementRepository {
-    suspend fun broadcastAnnouncement(title: String, message: String, targetBranchId: String? = null, severity: String = "INFO"): Result<Unit>
+    suspend fun broadcastAnnouncement(
+        title: String,
+        message: String,
+        targetBranchId: String? = null,
+        targetMemberId: String? = null,
+        channelSlug: String? = null,
+        severity: String = "INFO"
+    ): Result<Unit>
+
+    suspend fun sendMessageToMember(
+        memberId: String,
+        title: String,
+        message: String,
+        type: String = "DIRECT_MESSAGE"
+    ): Result<Unit>
 }
 
 interface ExpenseRepository {
