@@ -54,6 +54,8 @@ import { toast } from 'sonner';
 import posthog from 'posthog-js';
 import GeneralSettings from '@/components/settings/general-tab';
 import LogsTab from '@/components/settings/logs-tab';
+import PharmacyTab from '@/components/settings/pharmacy-tab';
+import { Stethoscope } from 'lucide-react';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { motion } from 'framer-motion';
 
@@ -314,6 +316,14 @@ export default function SettingsPage() {
               >
                 <LayoutGrid className="h-4 w-4 mr-2" /> General
               </TabsTrigger>
+              {(businessType === 'pharmacy' || currentConfig.features.prescriptionManagement) && (
+                <TabsTrigger
+                  value="pharmacy"
+                  className="flex-1 min-w-[100px] h-10 data-[state=active]:bg-emerald-500/10 data-[state=active]:text-emerald-600 data-[state=active]:shadow-none transition-all"
+                >
+                  <Stethoscope className="h-4 w-4 mr-2" /> Pharmacy
+                </TabsTrigger>
+              )}
               <TabsTrigger
                 value="theme"
                 className="flex-1 min-w-[100px] h-10 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
@@ -411,6 +421,12 @@ export default function SettingsPage() {
           </TabsContent>
 
           <LogsTab />
+
+          {(businessType === 'pharmacy' || currentConfig.features.prescriptionManagement) && (
+            <TabsContent value="pharmacy">
+              <PharmacyTab />
+            </TabsContent>
+          )}
 
           <TabsContent
             value="theme"

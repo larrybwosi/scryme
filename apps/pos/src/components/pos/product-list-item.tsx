@@ -200,6 +200,11 @@ export const ProductListItem = memo(({ product, onAddToCart, onSelectProduct, pr
         <div className="flex items-start justify-between">
           <div className="flex flex-col">
             <div className="flex items-center gap-2">
+              {(product.category?.toLowerCase().includes('prescription') || product.category?.toLowerCase().includes('medicine') || isPharmacy) && (
+                <Badge variant="outline" className="h-4 px-1 bg-emerald-600 text-white border-none text-[9px] font-extrabold uppercase">
+                  Rx
+                </Badge>
+              )}
               {product.activeIngredient && (
                 <Badge variant="outline" className="h-4 px-1 bg-emerald-50 text-emerald-700 border-emerald-200 text-[9px] font-bold uppercase">
                   {product.activeIngredient}

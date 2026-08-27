@@ -1,5 +1,11 @@
 # site
 
+## 1.15.0
+
+### Minor Changes
+
+- 7d149b1: Release
+
 ## 1.14.0
 
 ### Minor Changes

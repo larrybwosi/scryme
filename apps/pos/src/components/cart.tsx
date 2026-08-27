@@ -514,6 +514,15 @@ export function Cart() {
 
           {/* --- Cart Items List --- */}
           <div className="flex-1 overflow-y-auto bg-muted/5 p-2 space-y-2">
+            {/* Pharmacy Allergy Warning Banner */}
+            {businessConfig.type === 'pharmacy' && (activeCustomer as any)?.allergies && (
+              <div className="flex items-center gap-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 rounded-md text-xs font-medium mb-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <div>
+                  <span className="font-bold">Patient Allergy Alert:</span> {(activeCustomer as any).allergies}
+                </div>
+              </div>
+            )}
             {currentOrder.items.length > 0 ? (
               currentOrder.items.map((item, index) => {
                 const unitId = item.selectedUnit?.unitId || 'default';
