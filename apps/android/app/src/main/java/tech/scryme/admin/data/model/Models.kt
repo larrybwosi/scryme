@@ -264,6 +264,54 @@ data class StockAdjustmentLocationDto(
     @SerializedName("name") val name: String
 )
 
+// --- Staff Shift & Roster Models ---
+
+data class StaffBreakDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("shiftId") val shiftId: String,
+    @SerializedName("startTime") val startTime: String, // "HH:mm"
+    @SerializedName("endTime") val endTime: String,     // "HH:mm"
+    @SerializedName("description") val description: String? = null
+)
+
+data class ShiftUserDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("email") val email: String? = null
+)
+
+data class ShiftMemberDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("role") val role: String? = null,
+    @SerializedName("user") val user: ShiftUserDto? = null
+)
+
+data class StaffShiftDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("memberId") val memberId: String,
+    @SerializedName("organizationId") val organizationId: String,
+    @SerializedName("dayOfWeek") val dayOfWeek: Int, // 0 (Sunday) to 6 (Saturday)
+    @SerializedName("startTime") val startTime: String, // "HH:mm"
+    @SerializedName("endTime") val endTime: String,     // "HH:mm"
+    @SerializedName("isActive") val isActive: Boolean = true,
+    @SerializedName("breaks") val breaks: List<StaffBreakDto> = emptyList(),
+    @SerializedName("member") val member: ShiftMemberDto? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("updatedAt") val updatedAt: String? = null
+)
+
+data class CreateShiftRequestDto(
+    @SerializedName("dayOfWeek") val dayOfWeek: Int,
+    @SerializedName("startTime") val startTime: String,
+    @SerializedName("endTime") val endTime: String
+)
+
+data class CreateBreakRequestDto(
+    @SerializedName("startTime") val startTime: String,
+    @SerializedName("endTime") val endTime: String,
+    @SerializedName("description") val description: String? = null
+)
+
 // --- Device Authorization & Provisioning Models ---
 
 data class DeviceProvisionResponseDto(

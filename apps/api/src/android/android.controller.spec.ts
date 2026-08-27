@@ -13,6 +13,7 @@ import {
   ApproveStockAdjustmentUseCase,
   RejectStockAdjustmentUseCase,
 } from "../v3/modules/inventory/application/use-cases/adjustment-workflow.use-case";
+import { StaffSchedulingService } from "../v3/modules/services/application/services/staff-scheduling.service";
 
 describe("AndroidController", () => {
   let controller: AndroidController;
@@ -42,6 +43,11 @@ describe("AndroidController", () => {
   const mockGetStockAdjustmentsUseCase = {};
   const mockApproveStockAdjustmentUseCase = {};
   const mockRejectStockAdjustmentUseCase = {};
+  const mockStaffSchedulingService = {
+    getShifts: vi.fn(),
+    createShift: vi.fn(),
+    addBreak: vi.fn(),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -58,6 +64,7 @@ describe("AndroidController", () => {
         { provide: GetStockAdjustmentsUseCase, useValue: mockGetStockAdjustmentsUseCase },
         { provide: ApproveStockAdjustmentUseCase, useValue: mockApproveStockAdjustmentUseCase },
         { provide: RejectStockAdjustmentUseCase, useValue: mockRejectStockAdjustmentUseCase },
+        { provide: StaffSchedulingService, useValue: mockStaffSchedulingService },
       ],
     }).compile();
 

@@ -298,6 +298,47 @@ class AnnouncementRepositoryImpl(
     }
 }
 
+class ShiftsRepositoryImpl(
+    private val api: ShiftsApiService,
+    private val sessionManager: SessionManager
+) : ShiftsRepository {
+
+    override suspend fun getShifts(
+        memberId: String?,
+        dayOfWeek: Int?,
+        isActive: Boolean?
+    ): Result<List<StaffShiftDto>> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getShifts(slug, memberId, dayOfWeek, isActive)
+        }
+    }
+
+    override suspend fun createShift(
+        memberId: String,
+        dayOfWeek: Int,
+        startTime: String,
+        endTime: String
+    ): Result<StaffShiftDto> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.createShift(slug, memberId, CreateShiftRequestDto(dayOfWeek, startTime, endTime))
+        }
+    }
+
+    override suspend fun addBreak(
+        shiftId: String,
+        startTime: String,
+        endTime: String,
+        description: String?
+    ): Result<StaffBreakDto> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.addBreak(slug, shiftId, CreateBreakRequestDto(startTime, endTime, description))
+        }
+    }
+}
+
 class DeviceRepositoryImpl(
     private val api: DeviceApiService
 ) : DeviceRepository {

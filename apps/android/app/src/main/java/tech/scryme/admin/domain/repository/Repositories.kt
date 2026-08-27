@@ -53,3 +53,9 @@ interface ExpenseRepository {
 interface DeviceRepository {
     suspend fun provisionDevice(setupToken: String): Result<DeviceProvisionResponseDto>
 }
+
+interface ShiftsRepository {
+    suspend fun getShifts(memberId: String? = null, dayOfWeek: Int? = null, isActive: Boolean? = null): Result<List<StaffShiftDto>>
+    suspend fun createShift(memberId: String, dayOfWeek: Int, startTime: String, endTime: String): Result<StaffShiftDto>
+    suspend fun addBreak(shiftId: String, startTime: String, endTime: String, description: String? = null): Result<StaffBreakDto>
+}
