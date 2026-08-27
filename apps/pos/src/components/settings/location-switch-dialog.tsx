@@ -37,7 +37,7 @@ export function LocationSwitchDialog({ open, onOpenChange }: LocationSwitchDialo
   const handleConfirm = async () => {
     if (!selectedLocationId) return;
 
-    const location = locations.find(l => l.id === selectedLocationId);
+    const location = locations.find((l: any) => l.id === selectedLocationId);
     if (!location) return;
 
     setIsSubmitting(true);
@@ -97,7 +97,7 @@ export function LocationSwitchDialog({ open, onOpenChange }: LocationSwitchDialo
           ) : (
             <ScrollArea className="h-[300px] pr-4">
               <div className="space-y-3">
-                {locations.map(loc => {
+                {locations.map((loc: any) => {
                   const Icon = getLocationIcon(loc.locationType);
                   const isSelected = selectedLocationId === loc.id;
                   const isCurrent = currentLocation?.id === loc.id;

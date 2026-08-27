@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus,
@@ -219,6 +219,24 @@ export function OrderForm({
   const [createdOrder, setCreatedOrder] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+
+  // ⚡ Bolt Optimization: Pre-index relational arrays into Map structures using useMemo.
+  // This replaces linear O(N) array .find() scans inside render callbacks and select change handlers
+  // with O(1) constant-time lookups on every form re-render and keystroke.
+  const variantMap = useMemo(
+    () => new Map(variants.map(v => [v.id, v])),
+    [variants],
+  );
+
+  const customerMap = useMemo(
+    () => new Map(customers.map(c => [c.id, c])),
+    [customers],
+  );
+
+  const businessMap = useMemo(
+    () => new Map((businessAccounts || []).map(b => [b.id, b])),
+    [businessAccounts],
+  );
 
   const {
     register,
@@ -563,12 +581,12 @@ export function OrderForm({
                         render={({ field }) => {
                           const selectedCustomerId = watch("customerId");
                           const selectedBusinessId = watch("businessAccountId");
-                          const customer = customers.find(
-                            c => c.id === selectedCustomerId,
-                          );
-                          const business = businessAccounts.find(
-                            b => b.id === selectedBusinessId,
-                          );
+                          const customer = selectedCustomerId
+                            ? customerMap.get(selectedCustomerId)
+                            : undefined;
+                          const business = selectedBusinessId
+                            ? businessMap.get(selectedBusinessId)
+                            : undefined;
                           const addresses = [
                             ...(customer?.addresses || []),
                             ...(business?.addresses || []),
@@ -668,9 +686,7 @@ export function OrderForm({
                                   value={variantField.value}
                                   onValueChange={val => {
                                     variantField.onChange(val);
-                                    const variant = variants.find(
-                                      v => v.id === val,
-                                    );
+                                    const variant = variantMap.get(val);
                                     if (variant) {
                                       setValue(
                                         `items.${index}.unitPrice`,

@@ -1,5 +1,11 @@
 # bakery
 
+## 9.70.0
+
+### Minor Changes
+
+- 7d149b1: Release
+
 ## 9.69.0
 
 ### Minor Changes

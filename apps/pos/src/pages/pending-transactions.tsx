@@ -288,7 +288,7 @@ export default function PendingTransactionsPage() {
   // Define all outstanding/pending transactions for the branch
   const outstandingTx = transactions.filter(t => {
     const isDispatched = t.status === 'dispatched';
-    const isUnpaid = t.status === 'unpaid' || t.status === 'pending' || t.status === 'partially_paid';
+    const isUnpaid = t.status === 'pending' || t.status === 'partially_paid';
     const hasBalance = t.paidAmount < t.totalAmount;
     return isDispatched || isUnpaid || hasBalance;
   });
