@@ -186,6 +186,11 @@ export const ProductCard = memo(({ product, onAddToCart, onSelectProduct, pricin
 
           {/* Status Badges Overlay */}
           <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+            {(product.category?.toLowerCase().includes('prescription') || product.category?.toLowerCase().includes('medicine') || isPharmacy) && (
+              <Badge variant="outline" className="bg-emerald-600 text-white border-none shadow-sm text-[9px] font-extrabold uppercase">
+                Rx
+              </Badge>
+            )}
             {product.activeIngredient && (
               <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm text-[9px] font-bold uppercase truncate max-w-[120px]">
                 {product.activeIngredient}

@@ -7,8 +7,8 @@ export enum TransactionStatus {
 }
 
 export const OrderItemSchema = z.object({
-  variantId: z.string().cuid('Invalid variant ID'),
-  sellingUnitId: z.string().cuid('Invalid selling unit ID').optional(),
+  variantId: z.string(),
+  sellingUnitId: z.string().optional(),
   quantity: z.number().int().positive('Quantity must be a positive integer'),
   unitPrice: z.number().nonnegative('Price cannot be negative').optional(),
   _maxStock: z.number().optional(),
@@ -24,26 +24,22 @@ export const OrderItemSchema = z.object({
 });
 
 export const OrderPaymentSchema = z.object({
-  method: z.nativeEnum(PaymentMethod, {
-    errorMap: () => ({ message: 'Invalid payment method' }),
-  }),
+  method: z.nativeEnum(PaymentMethod),
   amount: z.number().positive('Payment amount must be positive'),
   status: z.nativeEnum(PaymentStatus).default(PaymentStatus.PENDING),
 });
 
 export const OrderFulfillmentSchema = z.object({
-  type: z.nativeEnum(FulfillmentType, {
-    errorMap: () => ({ message: 'Invalid fulfillment type' }),
-  }),
-  shippingAddressId: z.string().cuid('Invalid shipping address ID').optional(),
-  pickupLocationId: z.string().cuid('Invalid pickup location ID').optional(),
+  type: z.nativeEnum(FulfillmentType),
+  shippingAddressId: z.string().optional(),
+  pickupLocationId: z.string().optional(),
   tableNumber: z.string().optional(),
 });
 
 export const CreateOrderSchema = z.object({
-  customerId: z.string().cuid('Invalid customer ID'),
+  customerId: z.string(),
   memberId: z.string().optional(),
-  locationId: z.string().cuid('Invalid location ID'),
+  locationId: z.string(),
   type: z.nativeEnum(TransactionType).refine(type => type !== TransactionType.POS_SALE, {
     message: 'Use the POS sale endpoint for POS transactions',
   }),
@@ -71,31 +67,25 @@ export const ProcessSaleInputSchema = z
   .object({
     cartItems: z
       .array(
-        z.object(
-          {
-            productId: z.string({ required_error: 'Product ID is required' }).min(1, 'Product ID cannot be empty'),
-            productName: z.string().optional(),
-            variantId: z.string({ required_error: 'Variant ID is required' }).min(1, 'Variant ID cannot be empty'),
-            variantName: z.string().optional(),
-            quantity: z
-              .number({
-                required_error: 'Quantity is required',
-                invalid_type_error: 'Quantity must be a number',
-              })
-              .int('Quantity must be a whole number')
-              .positive('Quantity must be greater than zero'),
-            sellingUnitId: z
-              .string({ required_error: 'Selling unit ID is required' })
-              .min(1, 'Selling unit ID cannot be empty'),
-            sellingUnitName: z.string().optional(),
-            unitPrice: z.number().optional(),
-          },
-          { required_error: 'Cart items are required' }
-        )
+        z.object({
+          productId: z.string().min(1, 'Product ID cannot be empty'),
+          productName: z.string().optional(),
+          variantId: z.string().min(1, 'Variant ID cannot be empty'),
+          variantName: z.string().optional(),
+          quantity: z
+            .number()
+            .int('Quantity must be a whole number')
+            .positive('Quantity must be greater than zero'),
+          sellingUnitId: z
+            .string()
+            .min(1, 'Selling unit ID cannot be empty'),
+          sellingUnitName: z.string().optional(),
+          unitPrice: z.number().optional(),
+        })
       )
       .min(1, 'At least one cart item is required'),
 
-    locationId: z.string({ required_error: 'Location ID is required' }).min(1, 'Location ID cannot be empty'),
+    locationId: z.string().min(1, 'Location ID cannot be empty'),
     memberId: z.string().optional(),
     saleNumber: z.string().optional().nullable(),
     isWholesale: z.boolean().optional().default(false),
@@ -117,23 +107,17 @@ export const ProcessSaleInputSchema = z
       }),
 
     // Payment Details
-    paymentMethod: z.nativeEnum(PaymentMethod, {
-      required_error: 'Payment method is required',
-      invalid_type_error: 'Invalid payment method',
-    }),
+    paymentMethod: z.nativeEnum(PaymentMethod),
 
     // Multi-Tender / Split Payment Breakdown
     payments: z.array(z.object({
       method: z.nativeEnum(PaymentMethod),
       amount: z.number().nonnegative(),
       reference: z.string().optional(), // e.g. M-Pesa Code, Gift Card Code
-      meta: z.record(z.any()).optional()
+      meta: z.record(z.string(), z.any()).optional()
     })).optional(),
 
-    paymentStatus: z.nativeEnum(PaymentStatus, {
-      required_error: 'Payment status is required',
-      invalid_type_error: 'Invalid payment status',
-    }),
+    paymentStatus: z.nativeEnum(PaymentStatus),
 
     // M-Pesa Specific
     mpesaType: z.nativeEnum(MpesaFlowType).optional().nullable(),
@@ -149,23 +133,17 @@ export const ProcessSaleInputSchema = z
     total: z.number().optional(),
 
     amountReceived: z
-      .number({
-        invalid_type_error: 'Amount received must be a number',
-      })
+      .number()
       .nonnegative('Amount received cannot be negative')
       .optional(),
 
     change: z
-      .number({
-        invalid_type_error: 'Change amount must be a number',
-      })
+      .number()
       .nonnegative('Change amount cannot be negative')
       .optional(),
 
     discountAmount: z
-      .number({
-        invalid_type_error: 'Discount amount must be a number',
-      })
+      .number()
       .nonnegative('Discount amount cannot be negative')
       .default(0)
       .nullable(),
@@ -180,22 +158,14 @@ export const ProcessSaleInputSchema = z
 
     notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional().nullable(),
 
-    enableStockTracking: z.boolean({
-      required_error: 'Stock tracking preference is required',
-      invalid_type_error: 'Stock tracking must be a boolean',
-    }),
+    enableStockTracking: z.boolean(),
 
     taxIds: z
-      .array(z.string().min(1, 'Tax ID cannot be empty'), {
-        invalid_type_error: 'Tax IDs must be an array of strings',
-      })
+      .array(z.string().min(1, 'Tax ID cannot be empty'))
       .optional(),
 
     saleDate: z
-      .date({
-        required_error: 'Sale date is required',
-        invalid_type_error: 'Invalid date format',
-      })
+      .date()
       .max(new Date(), 'Sale date cannot be in the future')
       .optional(),
   })
