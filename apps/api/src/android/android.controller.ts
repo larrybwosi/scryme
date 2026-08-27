@@ -29,6 +29,7 @@ import {
   ApproveStockAdjustmentUseCase,
   RejectStockAdjustmentUseCase,
 } from "../v3/modules/inventory/application/use-cases/adjustment-workflow.use-case";
+import { StaffSchedulingService } from "../v3/modules/services/application/services/staff-scheduling.service";
 import { emitEvent } from "@repo/windmill/server";
 import { db } from "@repo/db";
 import { ScrymeChatApiClient } from "@repo/chat";
@@ -49,6 +50,7 @@ export class AndroidController {
     private readonly getStockAdjustmentsUseCase: GetStockAdjustmentsUseCase,
     private readonly approveStockAdjustmentUseCase: ApproveStockAdjustmentUseCase,
     private readonly rejectStockAdjustmentUseCase: RejectStockAdjustmentUseCase,
+    private readonly staffSchedulingService: StaffSchedulingService,
   ) {}
 
   // --- AUTH ENDPOINTS ---
@@ -678,6 +680,71 @@ export class AndroidController {
       memberId,
       id,
     );
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  // --- STAFF SHIFTS & ROSTER ENDPOINTS ---
+
+  @Get(":orgSlug/shifts")
+  async getShifts(
+    @Req() req: any,
+    @Query("memberId") memberId?: string,
+    @Query("dayOfWeek") dayOfWeek?: string,
+    @Query("isActive") isActive?: string,
+  ) {
+    const filters: { memberId?: string; dayOfWeek?: number; isActive?: boolean } = {};
+    if (memberId) filters.memberId = memberId;
+    if (dayOfWeek !== undefined && dayOfWeek !== null && dayOfWeek !== "") {
+      filters.dayOfWeek = parseInt(dayOfWeek, 10);
+    }
+    if (isActive !== undefined && isActive !== null && isActive !== "") {
+      filters.isActive = isActive === "true";
+    }
+
+    const data = await this.staffSchedulingService.getShifts(
+      req.v3Context.organizationId,
+      filters,
+    );
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Post(":orgSlug/staff/:memberId/shifts")
+  async createShift(
+    @Req() req: any,
+    @Param("memberId") memberId: string,
+    @Body() dto: { dayOfWeek: number; startTime: string; endTime: string },
+  ) {
+    const data = await this.staffSchedulingService.createShift(
+      req.v3Context.organizationId,
+      memberId,
+      dto,
+    );
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Post(":orgSlug/shifts/:shiftId/breaks")
+  async addBreak(
+    @Req() req: any,
+    @Param("shiftId") shiftId: string,
+    @Body() dto: { startTime: string; endTime: string; description?: string },
+  ) {
+    const data = await this.staffSchedulingService.addBreak(
+      req.v3Context.organizationId,
+      shiftId,
+      dto,
+    );
+
     return {
       success: true,
       data,
