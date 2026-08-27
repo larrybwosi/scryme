@@ -1,5 +1,11 @@
 # docs
 
+## 1.8.0-next.0
+
+### Minor Changes
+
+- eac6c2d: Update
+
 ## 1.7.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # web
 
+## 6.41.0-next.0
+
+### Minor Changes
+
+- eac6c2d: Update
+
 ## 6.40.0
 
 ### Minor Changes
