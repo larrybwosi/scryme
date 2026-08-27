@@ -588,15 +588,19 @@ export class AndroidController {
     };
   }
 
-  // --- ANNOUNCEMENT ENDPOINTS ---
+  // --- ANNOUNCEMENT & MESSAGING ENDPOINTS ---
 
   @Post(":orgSlug/announcements")
   async broadcastAnnouncement(@Req() req: any, @Body() dto: any) {
     const organizationId = req.v3Context.organizationId;
+    const channelSlug = dto.channelSlug || "announcements";
+
     await emitEvent(organizationId, "announcement.broadcast", {
       title: dto.title,
       message: dto.message,
       targetBranchId: dto.targetBranchId,
+      targetMemberId: dto.targetMemberId,
+      channelSlug,
       severity: dto.severity || "INFO",
       broadcastBy: req.v3Context.memberId,
     });
@@ -608,12 +612,57 @@ export class AndroidController {
       if (config && config.isActive && config.workspaceSlug) {
         const severityTag = dto.severity ? `[${dto.severity.toUpperCase()}] ` : "";
         const formattedMessage = `📢 **${dto.title}** ${severityTag}\n\n${dto.message}`;
-        await this.scrymeClient.sendMessage(config.workspaceSlug, "announcements", {
+        await this.scrymeClient.sendMessage(config.workspaceSlug, channelSlug, {
           content: formattedMessage,
         });
       }
     } catch (err: any) {
       // Swallowed so announcement completion isn't blocked if chat workspace is inactive
+    }
+
+    return {
+      success: true,
+      data: null,
+    };
+  }
+
+  @Post(":orgSlug/members/messages")
+  async sendMessageToMember(@Req() req: any, @Body() dto: { memberId: string; title: string; message: string; type?: string }) {
+    const organizationId = req.v3Context.organizationId;
+    if (!dto.memberId) {
+      throw new BadRequestException("Member ID is required to send direct member message");
+    }
+
+    await emitEvent(organizationId, "member.message.sent", {
+      memberId: dto.memberId,
+      title: dto.title,
+      message: dto.message,
+      type: dto.type || "DIRECT_MESSAGE",
+      sentBy: req.v3Context.memberId,
+    });
+
+    try {
+      const targetMember = await this.prisma.client.member.findUnique({
+        where: { id: dto.memberId },
+        include: { user: { select: { email: true } } },
+      });
+      const config = await this.prisma.client.scrymeConfiguration.findUnique({
+        where: { organizationId },
+      });
+      if (config && config.isActive && config.workspaceSlug && targetMember?.user?.email) {
+        const scrymeUser = await this.scrymeClient.findUserByEmail(config.workspaceSlug, targetMember.user.email);
+        if (scrymeUser?.id) {
+          const dmChannel = await this.scrymeClient.getDirectMessageChannel(config.workspaceSlug, scrymeUser.id);
+          if (dmChannel?.slug) {
+            const formattedMessage = `💬 **${dto.title}**\n${dto.message}`;
+            await this.scrymeClient.sendMessage(config.workspaceSlug, dmChannel.slug, {
+              content: formattedMessage,
+            });
+          }
+        }
+      }
+    } catch (err: any) {
+      // Swallowed so direct messaging isn't blocked if chat workspace is inactive
     }
 
     return {
