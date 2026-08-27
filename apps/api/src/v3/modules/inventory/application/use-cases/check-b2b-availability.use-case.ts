@@ -10,19 +10,30 @@ export class CheckB2BAvailabilityUseCase {
     // 1. Resolve Location
     let locationId = dto.locationId;
 
-    if (!locationId) {
+    if (locationId) {
+      // SECURITY (Sentinel): Verify location ownership when explicitly provided to prevent cross-tenant location probing
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: locationId, organizationId },
+        select: { id: true },
+      });
+      if (!location) {
+        throw new BadRequestException("Location not found or access denied.");
+      }
+    } else {
       if (dto.customerId) {
-        const customer = await this.prisma.client.customer.findUnique({
-          where: { id: dto.customerId },
+        // SECURITY (Sentinel): Use findFirst with organizationId filter to ensure strict multi-tenant isolation
+        const customer = await this.prisma.client.customer.findFirst({
+          where: { id: dto.customerId, organizationId },
           select: { defaultLocationId: true },
         });
         locationId = customer?.defaultLocationId || undefined;
       }
 
       if (!locationId && dto.businessAccountId) {
+        // SECURITY (Sentinel): Use findFirst with organizationId filter to ensure strict multi-tenant isolation
         const businessAccount =
-          await this.prisma.client.businessAccount.findUnique({
-            where: { id: dto.businessAccountId },
+          await this.prisma.client.businessAccount.findFirst({
+            where: { id: dto.businessAccountId, organizationId },
             select: { defaultLocationId: true },
           });
         locationId = businessAccount?.defaultLocationId || undefined;
