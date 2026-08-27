@@ -152,6 +152,7 @@ export function DispatchDialog({ transactionId, drivers, open, onOpenChange }: D
                       type="number"
                       step="0.01"
                       {...field}
+                      value={(field.value as any) ?? 0}
                       className="bg-background border-input text-foreground"
                     />
                   </FormControl>
