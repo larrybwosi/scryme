@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { usePosStore } from '@/store/store';
-import { useNavigate } from 'react-router';
 import {
   FileText,
   Search,
@@ -10,7 +9,6 @@ import {
   CheckCircle2,
   Clock,
   Pill,
-  ShoppingBag,
   Printer,
   ShieldCheck,
   User,
@@ -48,67 +46,29 @@ export interface PrescriptionRecord {
   notes?: string;
 }
 
-export function PrescriptionsPage() {
-  const navigate = useNavigate();
-  const pharmacyConfig = usePosStore(state => state.settings.pharmacyConfig);
-  const products = usePosStore(state => state.products);
-  const addItemToOrder = usePosStore(state => state.addItemToOrder);
+const STORAGE_KEY = 'scryme_prescriptions';
 
-  // Mock initial prescription queue
-  const [prescriptions, setPrescriptions] = useState<PrescriptionRecord[]>([
-    {
-      id: 'rx_101',
-      rxNumber: 'RX-2025-8801',
-      patientName: 'John Miller',
-      patientPhone: '+254712345678',
-      doctorName: 'Dr. Sarah Jenkins, MD',
-      doctorLicense: 'MED-45892',
-      dateWritten: '2025-02-18',
-      medicationName: 'Amoxicillin 500mg Capsules',
-      dosageForm: 'Capsule',
-      quantity: 30,
-      sig: 'Take 1 capsule 3 times daily with water for 10 days',
-      refillsAllowed: 2,
-      refillsRemaining: 2,
-      status: 'pending_verification',
-    },
-    {
-      id: 'rx_102',
-      rxNumber: 'RX-2025-8802',
-      patientName: 'Alice Wanjiku',
-      patientPhone: '+254722998877',
-      doctorName: 'Dr. Robert Chen, MD',
-      doctorLicense: 'MED-12903',
-      dateWritten: '2025-02-17',
-      medicationName: 'Metformin 850mg Tablets',
-      dosageForm: 'Tablet',
-      quantity: 60,
-      sig: 'Take 1 tablet twice daily after meals',
-      refillsAllowed: 5,
-      refillsRemaining: 4,
-      status: 'ready_for_dispense',
-      pharmacistVerifiedBy: pharmacyConfig?.pharmacistName || 'Dr. Jane Doe, PharmD',
-      verifiedAt: '2025-02-18 09:15',
-    },
-    {
-      id: 'rx_103',
-      rxNumber: 'RX-2025-8803',
-      patientName: 'David Omondi',
-      patientPhone: '+254733112233',
-      doctorName: 'Dr. Sarah Jenkins, MD',
-      doctorLicense: 'MED-45892',
-      dateWritten: '2025-02-16',
-      medicationName: 'Lisinopril 10mg Tablets',
-      dosageForm: 'Tablet',
-      quantity: 30,
-      sig: 'Take 1 tablet every morning',
-      refillsAllowed: 3,
-      refillsRemaining: 1,
-      status: 'dispensed',
-      pharmacistVerifiedBy: pharmacyConfig?.pharmacistName || 'Dr. Jane Doe, PharmD',
-      verifiedAt: '2025-02-16 14:30',
-    },
-  ]);
+export function PrescriptionsPage() {
+  const pharmacyConfig = usePosStore(state => state.settings.pharmacyConfig);
+
+  // Load initial prescription data from localStorage (or empty array)
+  const [prescriptions, setPrescriptions] = useState<PrescriptionRecord[]>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Save changes to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(prescriptions));
+    } catch (e) {
+      console.error('Failed to save prescriptions to storage', e);
+    }
+  }, [prescriptions]);
 
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -161,35 +121,6 @@ export function PrescriptionsPage() {
     toast.success('Prescription verified by Pharmacist');
   };
 
-  const handleDispenseToCart = (rx: PrescriptionRecord) => {
-    // Find matching product or create virtual item
-    const matchedProduct = products.find(p => p.productName.toLowerCase().includes(rx.medicationName.toLowerCase().split(' ')[0]));
-
-    if (matchedProduct) {
-      const unit = matchedProduct.sellableUnits[0] || { unitId: 'u1', unitName: 'Box', price: 150 };
-      addItemToOrder(matchedProduct, matchedProduct.variantId || 'v1', unit, 1);
-    }
-
-    usePosStore.setState(state => ({
-      currentOrder: {
-        ...state.currentOrder,
-        customerName: rx.patientName,
-        customerPhone: rx.patientPhone,
-        prescriptionId: rx.rxNumber,
-        doctorName: rx.doctorName,
-        isPharmacistVerified: true,
-        instructions: `Rx ${rx.rxNumber}: ${rx.sig}`,
-      },
-    }));
-
-    setPrescriptions(prev =>
-      prev.map(r => (r.id === rx.id ? { ...r, status: 'dispensed' } : r))
-    );
-
-    toast.success(`Loaded Rx ${rx.rxNumber} into checkout cart!`);
-    navigate('/');
-  };
-
   const handleLogPrescription = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPatientName || !newMedicationName || !newDoctorName) {
@@ -238,7 +169,7 @@ export function PrescriptionsPage() {
           </div>
           <h1 className="text-3xl font-bold tracking-tight">Prescriptions</h1>
           <p className="text-muted-foreground text-sm">
-            Manage incoming doctor prescriptions, clinical verification, and dispensing
+            Manage doctor prescriptions, clinical verification, and records
           </p>
         </div>
         <Button onClick={() => setIsLogRxOpen(true)} size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-md">
@@ -266,7 +197,7 @@ export function PrescriptionsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase font-bold tracking-wider text-emerald-700 dark:text-emerald-400">
-                Ready For Dispensing
+                Verified Prescriptions
               </p>
               <h3 className="text-2xl font-bold mt-1 text-emerald-900 dark:text-emerald-200">{readyCount}</h3>
             </div>
@@ -285,7 +216,7 @@ export function PrescriptionsPage() {
               <h3 className="text-2xl font-bold mt-1 text-blue-900 dark:text-blue-200">{dispensedCount}</h3>
             </div>
             <div className="p-3 bg-blue-100 dark:bg-blue-900/50 text-blue-600 rounded-lg">
-              <ShoppingBag className="w-5 h-5" />
+              <Pill className="w-5 h-5" />
             </div>
           </div>
         </Card>
@@ -396,16 +327,6 @@ export function PrescriptionsPage() {
                           className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 text-xs gap-1"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" /> Sign-off
-                        </Button>
-                      )}
-
-                      {rx.status === 'ready_for_dispense' && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleDispenseToCart(rx)}
-                          className="bg-primary text-primary-foreground h-8 text-xs gap-1"
-                        >
-                          <ShoppingBag className="w-3.5 h-3.5" /> Load Cart
                         </Button>
                       )}
 
