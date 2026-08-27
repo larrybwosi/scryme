@@ -1,5 +1,11 @@
 # web
 
+## 6.40.0
+
+### Minor Changes
+
+- 7d149b1: Release
+
 ## 6.39.0
 
 ### Minor Changes
