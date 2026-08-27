@@ -3,7 +3,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { Member, useAuthStore } from '@/store/pos-auth-store';
 import { toast } from 'sonner';
 import { useEffect, useMemo } from 'react';
-// import { trackEvent } from "@aptabase/tauri";
 import throttle from 'lodash/throttle';
 import posthog from 'posthog-js';
 
@@ -161,7 +160,14 @@ export const useSessionActivityListener = () => {
           path: `api/v3/:orgSlug/pos/me`,
         });
 
-        if (response.success && (response.data?.isCheckedIn || response.data?.memberId || response.data?.activeMember)) {
+        // The API can return { success: true, data: { isCheckedIn: true, ... } } or raw { isCheckedIn: true, ... }
+        const statusData = response?.data ?? response;
+        const isCheckedIn =
+          typeof statusData?.isCheckedIn === 'boolean'
+            ? statusData.isCheckedIn
+            : Boolean(response?.success && response?.data?.isCheckedIn);
+
+        if (isCheckedIn) {
           // Session is valid, update the local activity timer
           refreshSession();
         } else {

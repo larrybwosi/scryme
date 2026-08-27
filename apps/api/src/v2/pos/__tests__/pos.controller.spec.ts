@@ -62,13 +62,13 @@ describe("PosController", () => {
   describe("getAttendanceStatus", () => {
     it("should delegate to posService.getAttendanceStatus", async () => {
       const mockCtx: any = { organizationId: "org_1", memberId: "member_1" };
-      const expectedResult = { id: "member_1", isCheckedIn: true };
+      const memberData = { id: "member_1", isCheckedIn: true };
 
-      vi.mocked(posService.getAttendanceStatus).mockResolvedValue(expectedResult);
+      vi.mocked(posService.getAttendanceStatus).mockResolvedValue(memberData);
 
       const result = await controller.getAttendanceStatus(mockCtx);
 
-      expect(result).toEqual(expectedResult);
+      expect(result).toEqual({ success: true, data: memberData });
       expect(posService.getAttendanceStatus).toHaveBeenCalledWith(mockCtx);
     });
   });
