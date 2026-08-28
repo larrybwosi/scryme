@@ -12,27 +12,27 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.4.1",
-    "@nestjs/common": "^11.1.27",
-    "@nestjs/core": "^11.1.27",
-    "@nestjs/platform-express": "^11.1.27",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@nestjs/common": "^11.2.3",
+    "@nestjs/core": "^11.2.3",
+    "@nestjs/platform-express": "^11.2.3",
     "@scryme/sdk": "workspace:*",
-    "axios": "^1.18.1",
-    "express": "^4.21.2",
+    "axios": "^1.20.0",
+    "express": "^4.22.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@nestjs/cli": "^11.0.23",
+    "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.1.0",
-    "@nestjs/testing": "^11.1.27",
+    "@nestjs/testing": "^11.2.3",
     "@repo/typescript-config": "workspace:*",
     "@swc/cli": "^0.6.0",
-    "@swc/core": "^1.15.43",
-    "@types/express": "^4.17.21",
-    "@types/node": "^22.20.0",
+    "@swc/core": "^1.16.1",
+    "@types/express": "^4.17.25",
+    "@types/node": "^22.20.1",
     "typescript": "5.7.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.11"
   }
 }

@@ -156,7 +156,7 @@ export default function WorkflowsPage() {
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: true,
-      dedupingInterval: 5000, // Frequent refresh for history
+      dedupingInterval: 5000,
     },
   );
 
@@ -187,7 +187,7 @@ export default function WorkflowsPage() {
       if (response.success) {
         toast.success("Workflow provisioned successfully");
         setIsProvisionDialogOpen(false);
-        mutateWorkflows(); // Refresh workflows list
+        mutateWorkflows();
       } else {
         toast.error(response.error || "Failed to provision workflow");
       }
@@ -214,7 +214,7 @@ export default function WorkflowsPage() {
       if (response.success) {
         toast.success("Workflow execution started");
         setSelectedWorkflow(workflow);
-        mutateHistory(); // Refresh history
+        mutateHistory();
         setIsHistorySheetOpen(true);
       } else {
         toast.error(response.error || "Failed to trigger workflow");
@@ -279,7 +279,6 @@ export default function WorkflowsPage() {
     const properties = workflow.schema?.properties;
     if (properties) {
       Object.entries(properties).forEach(([key, prop]: [string, any]) => {
-        // Priority: Current provisioned setting > Schema default > empty string
         initialValues[key] =
           workflow.settings?.[key] ??
           prop.default ??
@@ -310,25 +309,25 @@ export default function WorkflowsPage() {
     switch (status) {
       case "COMPLETED":
         return (
-          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">
+          <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 border-none">
             <CheckCircle2 className="w-3 h-3 mr-1" /> Completed
           </Badge>
         );
       case "FAILED":
         return (
-          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 border-none">
+          <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/10 border-none">
             <XCircle className="w-3 h-3 mr-1" /> Failed
           </Badge>
         );
       case "RUNNING":
         return (
-          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">
+          <Badge className="bg-primary/10 text-primary hover:bg-primary/10 border-none">
             <Loader2 className="w-3 h-3 mr-1 animate-spin" /> Running
           </Badge>
         );
       default:
         return (
-          <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-100 border-none">
+          <Badge className="bg-muted text-muted-foreground hover:bg-muted border-none">
             <Clock className="w-3 h-3 mr-1" /> {status}
           </Badge>
         );
@@ -340,7 +339,7 @@ export default function WorkflowsPage() {
       <div className="p-8 max-w-[1400px] mx-auto">
         <Card>
           <CardContent className="py-8">
-            <div className="text-center text-red-600">
+            <div className="text-center text-destructive">
               <AlertCircle className="h-12 w-12 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">
                 Error loading workflows
@@ -360,7 +359,7 @@ export default function WorkflowsPage() {
   }
 
   return (
-    <div className="p-8 max-w-[1400px] mx-auto space-y-8">
+    <div className="p-8 max-w-[1400px] mx-auto space-y-8 bg-background">
       <Breadcrumbs
         items={[
           { label: "Automations", href: "/workflows" },
@@ -376,10 +375,10 @@ export default function WorkflowsPage() {
         />
         <div className="flex items-center gap-3">
           <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search workflows..."
-              className="pl-9 bg-white"
+              className="pl-9 bg-background border-border"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -387,16 +386,17 @@ export default function WorkflowsPage() {
           <Button
             variant="outline"
             onClick={() => mutateWorkflows()}
-            disabled={workflowsLoading}>
+            disabled={workflowsLoading}
+            className="border-border">
             <History className="w-4 h-4 mr-2" />
             {workflowsLoading ? "Loading..." : "Refresh"}
           </Button>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm">
+      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
         <Table>
-          <TableHeader className="bg-gray-50">
+          <TableHeader className="bg-muted/30">
             <TableRow>
               <TableHead className="w-[300px]">Workflow</TableHead>
               <TableHead>Description</TableHead>
@@ -409,8 +409,8 @@ export default function WorkflowsPage() {
               <TableRow>
                 <TableCell colSpan={4} className="h-48 text-center">
                   <div className="flex flex-col items-center justify-center gap-2">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#34A853]" />
-                    <p className="text-sm text-gray-500">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">
                       Loading workflows...
                     </p>
                   </div>
@@ -420,7 +420,7 @@ export default function WorkflowsPage() {
               <TableRow>
                 <TableCell
                   colSpan={4}
-                  className="h-48 text-center text-gray-500">
+                  className="h-48 text-center text-muted-foreground">
                   {searchTerm
                     ? "No workflows found matching your search."
                     : "No workflows available. Check back later."}
@@ -430,34 +430,34 @@ export default function WorkflowsPage() {
               filteredWorkflows.map((workflow: Workflow) => (
                 <TableRow
                   key={workflow.path}
-                  className="group hover:bg-gray-50/50 transition-colors">
+                  className="group hover:bg-muted/30 transition-colors">
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                      <div className="p-2 bg-primary/10 text-primary rounded-lg group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                         <Zap className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="text-gray-900">{workflow.name}</div>
-                        <div className="text-[11px] text-gray-400 font-mono mt-0.5">
+                        <div className="text-foreground">{workflow.name}</div>
+                        <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
                           {workflow.path}
                         </div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-gray-500 text-sm max-w-[400px]">
+                  <TableCell className="text-muted-foreground text-sm max-w-[400px]">
                     {workflow.description}
                   </TableCell>
                   <TableCell>
                     {workflow.isProvisioned ? (
                       <Badge
                         variant="outline"
-                        className="text-green-600 border-green-200 bg-green-50">
+                        className="text-emerald-600 dark:text-emerald-400 border-emerald-500/20 bg-emerald-500/10">
                         Provisioned
                       </Badge>
                     ) : (
                       <Badge
                         variant="outline"
-                        className="text-gray-400 border-gray-200">
+                        className="text-muted-foreground border-border">
                         Not Active
                       </Badge>
                     )}
@@ -469,18 +469,20 @@ export default function WorkflowsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleOpenHistory(workflow)}>
+                            onClick={() => handleOpenHistory(workflow)}
+                            className="text-muted-foreground hover:text-foreground hover:bg-accent">
                             <History className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleOpenProvision(workflow)}>
+                            onClick={() => handleOpenProvision(workflow)}
+                            className="text-muted-foreground hover:text-foreground hover:bg-accent">
                             <Settings2 className="w-4 h-4" />
                           </Button>
                           <Button
                             size="sm"
-                            className="bg-[#34A853] hover:bg-[#2d9248]"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground"
                             onClick={() => handleTrigger(workflow)}
                             disabled={isTriggering}>
                             {isTriggering ? (
@@ -495,7 +497,8 @@ export default function WorkflowsPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleOpenProvision(workflow)}>
+                          onClick={() => handleOpenProvision(workflow)}
+                          className="border-border">
                           <Plus className="w-4 h-4 mr-2" /> Provision
                         </Button>
                       )}
@@ -512,21 +515,21 @@ export default function WorkflowsPage() {
       <Dialog
         open={isProvisionDialogOpen}
         onOpenChange={setIsProvisionDialogOpen}>
-        <DialogContent className="sm:max-w-[550px] overflow-y-auto">
+        <DialogContent className="sm:max-w-[550px] overflow-y-auto bg-card border-border">
           <DialogHeader className="space-y-4">
-            <div className="flex items-center gap-2 text-[#34A853]">
+            <div className="flex items-center gap-2 text-primary">
               <Settings className="w-5 h-5" />
               <span className="text-xs font-bold uppercase tracking-wider">
                 Workflow Configuration
               </span>
             </div>
-            <DialogTitle className="text-2xl font-bold">
+            <DialogTitle className="text-2xl font-bold text-foreground">
               {selectedWorkflow?.isProvisioned
                 ? "Edit Settings"
                 : "Provision Workflow"}
             </DialogTitle>
-            <DialogDescription className="text-base">
-              Configure <strong>{selectedWorkflow?.name}</strong> to match your
+            <DialogDescription className="text-base text-muted-foreground">
+              Configure <strong className="text-foreground">{selectedWorkflow?.name}</strong> to match your
               organization&apos;s needs.
             </DialogDescription>
           </DialogHeader>
@@ -535,7 +538,7 @@ export default function WorkflowsPage() {
             {Object.entries(groupedFields).map(([groupName, fields]) => (
               <div key={groupName} className="space-y-6">
                 <div className="flex items-center gap-3">
-                  <h3 className="text-sm font-semibold text-gray-900 whitespace-nowrap">
+                  <h3 className="text-sm font-semibold text-foreground whitespace-nowrap">
                     {groupName}
                   </h3>
                   <Separator className="flex-1" />
@@ -545,12 +548,12 @@ export default function WorkflowsPage() {
                   {fields.map(([key, prop]: [string, any]) => (
                     <div key={key} className="space-y-2.5">
                       <div className="flex justify-between items-center">
-                        <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <label className="text-sm font-medium text-foreground flex items-center gap-2">
                           {prop.title || key}
                           {prop.description && (
                             <div className="group relative">
-                              <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
-                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50">
+                              <Info className="w-3.5 h-3.5 text-muted-foreground cursor-help" />
+                              <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-48 p-2 bg-popover text-popover-foreground text-[10px] rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 border border-border">
                                 {prop.description}
                               </div>
                             </div>
@@ -579,8 +582,8 @@ export default function WorkflowsPage() {
                           className={cn(
                             "flex items-center justify-between p-3 rounded-lg border transition-all cursor-pointer",
                             configValues[key]
-                              ? "bg-green-50 border-green-200"
-                              : "bg-gray-50 border-gray-200",
+                              ? "bg-primary/10 border-primary/30"
+                              : "bg-muted/30 border-border",
                           )}
                           onClick={() =>
                             setConfigValues({
@@ -588,19 +591,19 @@ export default function WorkflowsPage() {
                               [key]: !configValues[key],
                             })
                           }>
-                          <span className="text-sm font-medium text-gray-600">
+                          <span className="text-sm font-medium text-foreground">
                             {configValues[key] ? "Enabled" : "Disabled"}
                           </span>
                           <div
                             className={cn(
                               "w-10 h-5 rounded-full relative transition-colors p-1",
                               configValues[key]
-                                ? "bg-[#34A853]"
-                                : "bg-gray-300",
+                                ? "bg-primary"
+                                : "bg-muted-foreground/30",
                             )}>
                             <div
                               className={cn(
-                                "w-3 h-3 bg-white rounded-full transition-transform",
+                                "w-3 h-3 bg-background rounded-full transition-transform",
                                 configValues[key]
                                   ? "translate-x-5"
                                   : "translate-x-0",
@@ -624,7 +627,7 @@ export default function WorkflowsPage() {
                                   : e.target.value,
                             })
                           }
-                          className="h-11 bg-white focus:ring-[#34A853] focus:border-[#34A853]"
+                          className="h-11 bg-background border-border focus-visible:ring-ring focus-visible:border-ring"
                         />
                       )}
                     </div>
@@ -634,15 +637,15 @@ export default function WorkflowsPage() {
             ))}
           </div>
 
-          <DialogFooter className="pt-6 border-t mt-auto">
+          <DialogFooter className="pt-6 border-t border-border mt-auto">
             <Button
               variant="ghost"
               onClick={() => setIsProvisionDialogOpen(false)}
-              className="px-6">
+              className="px-6 text-muted-foreground hover:text-foreground hover:bg-accent">
               Cancel
             </Button>
             <Button
-              className="bg-[#34A853] hover:bg-[#2d9248] px-8 h-11"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 h-11"
               onClick={handleProvision}
               disabled={isProvisioning}>
               {isProvisioning ? (
@@ -660,17 +663,17 @@ export default function WorkflowsPage() {
 
       {/* History Dialog */}
       <Sheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen}>
-        <SheetContent className="sm:max-w-[700px] overflow-y-auto">
-          <SheetHeader className="pb-6 border-b">
-            <SheetTitle className="flex items-center gap-2 text-xl">
-              <div className="p-2 bg-gray-100 rounded-lg">
-                <History className="w-5 h-5 text-gray-600" />
+        <SheetContent className="sm:max-w-[700px] overflow-y-auto bg-card border-border">
+          <SheetHeader className="pb-6 border-b border-border">
+            <SheetTitle className="flex items-center gap-2 text-xl text-foreground">
+              <div className="p-2 bg-muted rounded-lg">
+                <History className="w-5 h-5 text-muted-foreground" />
               </div>
               Execution History
             </SheetTitle>
-            <SheetDescription>
+            <SheetDescription className="text-muted-foreground">
               Recent automated runs for{" "}
-              <strong>{selectedWorkflow?.name}</strong>.
+              <strong className="text-foreground">{selectedWorkflow?.name}</strong>.
             </SheetDescription>
           </SheetHeader>
 
@@ -679,7 +682,7 @@ export default function WorkflowsPage() {
               value={statusFilter}
               onValueChange={setStatusFilter}
               className="w-full">
-              <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsList className="grid w-full grid-cols-5 mb-6 bg-muted">
                 <TabsTrigger value="ALL">All</TabsTrigger>
                 <TabsTrigger value="RUNNING">Running</TabsTrigger>
                 <TabsTrigger value="COMPLETED">Completed</TabsTrigger>
@@ -690,20 +693,20 @@ export default function WorkflowsPage() {
               <div className="space-y-6">
                 {historyLoading ? (
                   <div className="flex flex-col items-center justify-center py-24 gap-4">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#34A853]" />
-                    <p className="text-sm text-gray-500 animate-pulse">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground animate-pulse">
                       Fetching latest runs...
                     </p>
                   </div>
                 ) : history.length === 0 ? (
-                  <div className="text-center py-20 px-6 border-2 border-dashed rounded-2xl bg-gray-50/50">
-                    <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-                      <Clock className="w-6 h-6 text-gray-300" />
+                  <div className="text-center py-20 px-6 border-2 border-dashed rounded-2xl bg-muted/30">
+                    <div className="mx-auto w-12 h-12 bg-card rounded-full flex items-center justify-center shadow-sm mb-4">
+                      <Clock className="w-6 h-6 text-muted-foreground/30" />
                     </div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-1">
+                    <h4 className="text-sm font-semibold text-foreground mb-1">
                       No history yet
                     </h4>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       Runs will appear here once the workflow is triggered
                       manually or by system events.
                     </p>
@@ -713,16 +716,16 @@ export default function WorkflowsPage() {
                     {history.map((run: WorkflowHistory) => (
                       <div
                         key={run.id}
-                        className="p-5 rounded-xl border border-gray-100 bg-white hover:border-gray-200 transition-all shadow-sm space-y-4">
+                        className="p-5 rounded-xl border border-border bg-card hover:border-muted-foreground/30 transition-all shadow-sm space-y-4">
                         <div className="flex justify-between items-start">
                           <div className="space-y-1.5">
-                            <div className="text-sm font-bold flex items-center gap-2 text-gray-900">
+                            <div className="text-sm font-bold flex items-center gap-2 text-foreground">
                               Job Instance
-                              <span className="font-mono text-[10px] bg-gray-100 px-1.5 py-0.5 rounded text-gray-500">
+                              <span className="font-mono text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">
                                 {run.jobId}
                               </span>
                             </div>
-                            <div className="text-xs text-gray-500 flex items-center gap-1.5">
+                            <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                               <Clock className="w-3 h-3" />
                               {new Date(run.createdAt).toLocaleString(
                                 undefined,
@@ -740,7 +743,7 @@ export default function WorkflowsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 text-red-600 border-red-100 hover:bg-red-50"
+                                className="h-7 text-destructive border-destructive/20 hover:bg-destructive/10"
                                 onClick={() => handleCancelJob(run.jobId)}
                                 disabled={isCancelling === run.jobId}>
                                 {isCancelling === run.jobId ? (
@@ -754,11 +757,11 @@ export default function WorkflowsPage() {
                         </div>
 
                         {run.result && (
-                          <div className="rounded-lg bg-gray-900 p-4 relative group">
-                            <div className="absolute right-3 top-3 text-[10px] text-gray-500 font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="rounded-lg bg-muted p-4 relative group">
+                            <div className="absolute right-3 top-3 text-[10px] text-muted-foreground font-mono uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
                               JSON Result
                             </div>
-                            <pre className="text-[11px] font-mono text-blue-300 overflow-x-auto max-h-40 custom-scrollbar">
+                            <pre className="text-[11px] font-mono text-foreground/80 overflow-x-auto max-h-40 custom-scrollbar">
                               {JSON.stringify(run.result, null, 2)}
                             </pre>
                           </div>
@@ -768,7 +771,7 @@ export default function WorkflowsPage() {
                           <Button
                             variant="link"
                             size="sm"
-                            className="h-auto p-0 text-xs text-blue-600 font-semibold gap-1"
+                            className="h-auto p-0 text-xs text-primary font-semibold gap-1"
                             onClick={() => handleViewLogs(run.jobId)}
                             disabled={isLoadingLogs}>
                             {isLoadingLogs ? (
@@ -782,7 +785,7 @@ export default function WorkflowsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-[10px] h-6"
+                              className="text-[10px] h-6 text-muted-foreground hover:text-foreground hover:bg-accent"
                               onClick={() => setSelectedJobLogs(null)}>
                               Hide Logs
                             </Button>
@@ -790,11 +793,11 @@ export default function WorkflowsPage() {
                         </div>
 
                         {selectedJobLogs?.jobId === run.jobId && (
-                          <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 mt-2">
-                            <div className="text-[10px] text-gray-400 font-mono uppercase mb-2">
+                          <div className="rounded-lg bg-muted/30 border border-border p-4 mt-2">
+                            <div className="text-[10px] text-muted-foreground font-mono uppercase mb-2">
                               Stdout / Stderr
                             </div>
-                            <pre className="text-[11px] font-mono text-gray-700 whitespace-pre-wrap max-h-60 overflow-y-auto custom-scrollbar">
+                            <pre className="text-[11px] font-mono text-foreground whitespace-pre-wrap max-h-60 overflow-y-auto custom-scrollbar">
                               {selectedJobLogs.logs ||
                                 "No logs available for this run."}
                             </pre>
