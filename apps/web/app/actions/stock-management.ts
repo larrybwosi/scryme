@@ -838,24 +838,26 @@ export async function createStockRequest(data: {
   const result = await db.$transaction(async tx => {
     let totalEstimatedCost = new Decimal(0);
 
-    const itemsData = await Promise.all(
-      data.items.map(async item => {
-        const variant = await tx.productVariant.findUnique({
-          where: { id: item.variantId },
-          select: { buyingPrice: true },
-        });
-        const unitCost = variant?.buyingPrice || new Decimal(0);
-        totalEstimatedCost = totalEstimatedCost.add(
-          unitCost.mul(item.quantity),
-        );
+    // ⚡ Bolt Optimization: Batch variant buying price lookup to eliminate N+1 queries during stock request creation.
+    const variantIds = Array.from(new Set(data.items.map(i => i.variantId)));
+    const variants = await tx.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      select: { id: true, buyingPrice: true },
+    });
+    const priceMap = new Map(variants.map(v => [v.id, v.buyingPrice]));
 
-        return {
-          variantId: item.variantId,
-          requestedQuantity: new Decimal(item.quantity),
-          unitCostAtRequest: unitCost,
-        };
-      }),
-    );
+    const itemsData = data.items.map(item => {
+      const unitCost = priceMap.get(item.variantId) || new Decimal(0);
+      totalEstimatedCost = totalEstimatedCost.add(
+        unitCost.mul(item.quantity),
+      );
+
+      return {
+        variantId: item.variantId,
+        requestedQuantity: new Decimal(item.quantity),
+        unitCostAtRequest: unitCost,
+      };
+    });
 
     const request = await tx.stockRequest.create({
       data: {
