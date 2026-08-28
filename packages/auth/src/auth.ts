@@ -13,20 +13,27 @@ import { env } from "@repo/env";
 // Extended User interface matching custom schema attributes
 export interface ExtendedUser extends User {
   role?: UserRole | string;
+  systemRole?: UserRole | string;
+  orgRole?: MemberRole | string;
   username?: string;
+  activeOrganizationId?: string | null;
+  memberId?: string;
 }
 
 // Extended Session interface including activeOrganizationId
 export interface ExtendedSession extends Session {
   activeOrganizationId?: string | null;
   isOrgSuspended?: boolean;
+  memberId?: string;
+  orgRole?: MemberRole | string;
 }
 
 // Session cache interface
 interface CachedUserData {
   activeOrganizationId?: string | null;
   memberId?: string;
-  role?: MemberRole | UserRole | string;
+  orgRole?: MemberRole | string;
+  systemRole?: UserRole | string;
   isOrgSuspended?: boolean;
 }
 
@@ -144,31 +151,31 @@ export const auth = betterAuth({
         console.error("Redis delete error:", e);
       }
     },
-
-    consume: async (
-      key: string,
-      limit?: number,
-      window?: number,
-    ): Promise<number> => {
+    getAndDelete: async (key: string): Promise<string | null> => {
       try {
         const redis = await getRedisClient();
-
-        // Atomic increment in Redis
-        const current = await redis.incr(key);
-
-        // If this is the first hit, set expiration based on the window (default 60s)
-        if (current === 1) {
-          const ttl = window && window > 0 ? window : 60;
-          await redis.expire(key, ttl);
+        const value = await redis.get(key);
+        if (value !== null && value !== undefined) {
+          await redis.del(key);
         }
-
-        return current;
+        if (value === null || value === undefined) return null;
+        if (typeof value === "string") return value;
+        return JSON.stringify(value);
       } catch (e: unknown) {
-        console.error("Redis consume error:", e);
+        console.error("Redis getAndDelete error:", e);
+        return null;
+      }
+    },
+    increment: async (key: string, amount: number = 1): Promise<number> => {
+      try {
+        const redis = await getRedisClient();
+        return await redis.incrby(key, amount);
+      } catch (e: unknown) {
+        console.error("Redis increment error:", e);
         return 0;
       }
     },
-  },
+  } as any,
   plugins: [
     jwt(),
     bearer(),
@@ -188,12 +195,23 @@ export const auth = betterAuth({
                 ? (JSON.parse(cached) as CachedUserData)
                 : (cached as CachedUserData);
 
+              const systemRole = parsedCache.systemRole || user.role || user.systemRole;
+
             return {
-              user: { ...user, ...parsedCache },
+              user: {
+                ...user,
+                role: systemRole, // Maintain system role for admin plugin checks
+                systemRole,
+                orgRole: parsedCache.orgRole,
+                activeOrganizationId: parsedCache.activeOrganizationId ?? null,
+                memberId: parsedCache.memberId,
+              },
               session: {
                 ...session,
                 activeOrganizationId: parsedCache.activeOrganizationId ?? null,
                 isOrgSuspended: parsedCache.isOrgSuspended ?? false,
+                memberId: parsedCache.memberId,
+                orgRole: parsedCache.orgRole,
               } as ExtendedSession,
             };
           }
@@ -204,13 +222,13 @@ export const auth = betterAuth({
         // Fetch from Database
         const usr = await db.user.findUnique({
           where: { id: user.id },
-          select: { activeOrganizationId: true },
+          select: { activeOrganizationId: true, role: true },
         });
 
-        let activeOrganizationId: string | null =
-          usr?.activeOrganizationId || null;
+        const systemRole = usr?.role || user.role || user.systemRole;
+        let activeOrganizationId: string | null = usr?.activeOrganizationId || null;
 
-        // If activeOrganizationId is not set, try to fallback to their first active membership
+        // Fallback to first active membership if not explicitly set (READ-ONLY)
         if (!activeOrganizationId) {
           const firstMembership = await db.member.findFirst({
             where: { userId: user.id, deletedAt: null },
@@ -219,11 +237,6 @@ export const auth = betterAuth({
 
           if (firstMembership) {
             activeOrganizationId = firstMembership.organizationId;
-            // Persist the resolved activeOrganizationId in the database
-            await db.user.update({
-              where: { id: user.id },
-              data: { activeOrganizationId },
-            });
           }
         }
 
@@ -233,7 +246,6 @@ export const auth = betterAuth({
           role: MemberRole | undefined;
         } = { memberId: undefined, role: undefined };
 
-        // Default suspension state
         let isOrgSuspended = false;
 
         // Fetch membership details if active org exists
@@ -263,25 +275,33 @@ export const auth = betterAuth({
         const customUserData: CachedUserData = {
           activeOrganizationId,
           memberId: memberData.memberId,
-          role: memberData.role || user.role,
+          orgRole: memberData.role,
+          systemRole,
           isOrgSuspended,
         };
 
         try {
           const redis = await getRedisClient();
-          // Store as JSON string with 1 minute TTL
           await redis.setex(cacheKey, 60, JSON.stringify(customUserData));
         } catch (e: unknown) {
           console.error("Redis cache error:", e);
         }
 
-        // Return combined data with activeOrganizationId included on both user and session
         return {
-          user: { ...user, ...customUserData },
+          user: {
+            ...user,
+            role: systemRole, // Preserves system role explicitly for the admin plugin
+            systemRole,
+            orgRole: memberData.role,
+            activeOrganizationId,
+            memberId: memberData.memberId,
+          },
           session: {
             ...session,
             activeOrganizationId,
             isOrgSuspended,
+            memberId: memberData.memberId,
+            orgRole: memberData.role,
           } as ExtendedSession,
         };
       },
@@ -348,7 +368,7 @@ export const auth = betterAuth({
         }
         return claims;
       },
-    }),
+    }) as any,
     nextCookies(),
   ],
 });

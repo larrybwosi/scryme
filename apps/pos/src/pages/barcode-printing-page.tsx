@@ -715,7 +715,7 @@ function RegisterBarcodePanel({ onRegistered }: { onRegistered?: () => void }) {
       const targetVariantId = selectedVariant.variantId || selectedVariant.id;
       await invoke("authenticated_api_request", {
         method: "POST",
-        path: "api/v2/pos/inventory/barcode",
+        path: "api/v3/:orgSlug/inventory/barcode",
         body: {
           variantId: targetVariantId,
           barcode,

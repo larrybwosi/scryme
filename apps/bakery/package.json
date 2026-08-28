@@ -1,10 +1,11 @@
 {
   "name": "bakery",
   "private": true,
-  "version": "9.71.0",
+  "version": "9.71.2-next.0",
   "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {
+    "prebuild": "pnpm --filter @scryme/sdk generate:rust",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

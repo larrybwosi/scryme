@@ -25,7 +25,7 @@ export const useMpesaSearch = (query: string) => {
       if (!organizationId || query.length < 3) return [];
       const response = await invoke<UnclaimedPayment[]>('authenticated_api_request', {
         method: 'GET',
-        path: `api/v2/payments/mpesa/search-unclaimed?q=${encodeURIComponent(query)}`,
+        path: `api/v3/:orgSlug/payments/mpesa/search-unclaimed?q=${encodeURIComponent(query)}`,
       });
       return response;
     },
@@ -45,7 +45,7 @@ export const useMpesaClaim = () => {
     }) => {
       const response = await invoke<any>('authenticated_api_request', {
         method: 'POST',
-        path: 'api/v2/payments/mpesa/claim',
+        path: 'api/v3/:orgSlug/payments/mpesa/claim',
         body: {
           ...params,
           memberId,
@@ -73,7 +73,7 @@ export const useMpesaVerifySafaricom = () => {
     mutationFn: async (params: { transactionCode: string }) => {
       const response = await invoke<any>('authenticated_api_request', {
         method: 'POST',
-        path: 'api/v2/payments/mpesa/verify-safaricom',
+        path: 'api/v3/:orgSlug/payments/mpesa/verify-safaricom',
         body: {
           ...params,
           memberId,

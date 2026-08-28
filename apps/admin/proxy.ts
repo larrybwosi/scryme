@@ -32,8 +32,8 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
   }
 
   // Only SUPER_ADMIN accounts may use the platform admin console
-  const role = (session.user as any).role;
-  if (role !== "SUPER_ADMIN" && !exemptFromRoleCheck.includes(pathname)) {
+  const systemRole = (session.user as any).systemRole || (session.user as any).role;
+  if (systemRole !== "SUPER_ADMIN" && !exemptFromRoleCheck.includes(pathname)) {
     return NextResponse.redirect(new URL("/forbidden", request.url));
   }
 

@@ -244,6 +244,15 @@ export function ThermalReceiptPreview({
                       {item.variantName && item.variantName !== 'Default Variant' && (
                         <p className="text-[10px] opacity-70 italic">({item.variantName})</p>
                       )}
+                      {(item as any).isService && (
+                        <p className="text-[9px] font-semibold opacity-90 uppercase">[SERVICE]</p>
+                      )}
+                      {(item as any).providerName && (
+                        <p className="text-[9px] opacity-80">Staff/Provider: {(item as any).providerName}</p>
+                      )}
+                      {(item as any).serviceNotes && (
+                        <p className="text-[9px] italic opacity-80 pl-1 border-l border-zinc-300">* Details: {(item as any).serviceNotes}</p>
+                      )}
                       {config.showItemSku && item.sku && <p className="text-[9px] opacity-60">SKU: {item.sku}</p>}
                       {config.showItemTax && (
                         <p className="text-[8px] opacity-50">TAX INC.</p>

@@ -18,6 +18,7 @@ Our application ecosystem contains specialized desktop, web, mobile, and service
 - **[Scryme Customer Portal](./apps/portal)**: Client-facing Next.js portal enabling merchant customers to browse catalogs, handle shopping carts, track active orders, and view account statuses.
 - **[Scryme Storefront & Marketing Site](./apps/site)**: The public landing page and public shopfront, powered by Next.js and Headless Sanity CMS.
 - **[Scryme API Docs](./apps/docs)**: Light, static Vite-based OpenAPI documentation explorer hosting and presenting Scryme's RESTful API endpoints.
+- **[Scryme Admin Web App](./apps/admin)**: Central Next.js administrative console for platform management, organization overrides, billing, and system configurations. See the **[Admin App Deployment Guide](./apps/admin/README.md)**.
 - **[Scryme Admin Android App](./apps/android)**: Native Kotlin & Jetpack Compose mobile administrator dashboard for tracking real-time sales progress, active staff attendance polling, petty cash transactions, and broadcasting messages.
 - **[Scryme MCP Server](./apps/mcp)**: Model Context Protocol (MCP) server securely exposing Scryme's catalog, inventory, and CRM endpoints to LLM tools (such as Claude Desktop or Cursor).
 
@@ -27,6 +28,7 @@ Our application ecosystem contains specialized desktop, web, mobile, and service
 If you are developing connected applications or integrating a third-party portal to authenticate customers using our Single Sign-On (SSO), see our comprehensive:
 - **[Customer Single Sign-On & Authentication Guide](./docs/customer-authentication.md)**
 - **[Connected Apps & V3 Catalog Guide](./docs/v3-connected-apps-catalog.md)**
+- **[Admin App Deployment & DB Guide](./docs/admin-deployment.md)**
 
 ---
 

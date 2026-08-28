@@ -20,6 +20,7 @@ export async function getServerAuth(
   organizationId: string | null | undefined;
   memberId: string | undefined;
   role: string | undefined;
+  systemRole: string | undefined;
 } | null>;
 
 export async function getServerAuth(
@@ -30,6 +31,7 @@ export async function getServerAuth(
   organizationId: string;
   memberId: string;
   role: string | undefined;
+  systemRole: string | undefined;
 } | null>;
 
 export async function getServerAuth(
@@ -49,24 +51,29 @@ export async function getServerAuth(
   }
 
   const user = session.user;
-  const organizationId =
-    session.session.activeOrganizationId || user.activeOrganizationId;
+  const sessionData = session.session as any;
+  const userData = user as any;
 
-  const memberId = user.memberId;
+  const organizationId =
+    (session.session as any).activeOrganizationId || (user as any).activeOrganizationId;
+
+  const memberId = (user as any).memberId;
   // Ensure organizationId is present before proceeding
   if (!options.allowNoOrg && (!organizationId || !memberId)) {
     redirect("/create-org");
   }
 
   // Block access for organizations suspended by a platform administrator
-  if (organizationId && session.session.isOrgSuspended) {
+  if (organizationId && (session.session as any).isOrgSuspended) {
     redirect("/suspended");
   }
 
   const role = user.role;
+  const systemRole = (user as any).systemRole || user.role;
 
   if (options.permission) {
-    if (!role || !hasMemberPermission(role, options.permission)) {
+    const isSuperAdmin = systemRole === "SUPER_ADMIN";
+    if (!isSuperAdmin && (!role || !hasMemberPermission(role, options.permission))) {
       redirect("/unauthorized");
     }
   }
@@ -77,6 +84,7 @@ export async function getServerAuth(
     organizationId: organizationId as any,
     memberId: memberId as any,
     role,
+    systemRole,
   };
 }
 

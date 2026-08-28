@@ -1,6 +1,6 @@
 # mcp
 
-## 1.2.0
+## 1.2.0-next.0
 
 ### Minor Changes
 

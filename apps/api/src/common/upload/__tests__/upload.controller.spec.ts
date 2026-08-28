@@ -25,11 +25,15 @@ describe("UploadController", () => {
   let controller: UploadController;
   const mockPrisma = {
     client: {
+      organization: {
+        findUnique: vi.fn().mockResolvedValue({ quotaOverrides: {} }),
+      },
       attachment: {
         create: vi.fn().mockResolvedValue({
           id: "test-id",
           shortUrl: "http://api.test.com/s/short",
         }),
+        aggregate: vi.fn().mockResolvedValue({ _sum: { sizeBytes: 0 } }),
       },
     },
   };

@@ -25,6 +25,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
+scryme-sdk = { path = "../../../packages/v3-sdk/rust" }
 tauri = { version = "2.10.1", features = ["protocol-asset", "tray-icon"] }
 tauri-plugin-opener = "2.5.3"
 serde = { version = "1", features = ["derive"] }

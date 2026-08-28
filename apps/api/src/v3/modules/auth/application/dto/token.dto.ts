@@ -1,5 +1,5 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsString, IsNotEmpty } from "class-validator";
+import { IsString, IsNotEmpty, IsOptional } from "class-validator";
 
 export class TokenRequestDto {
   @ApiProperty({
@@ -12,11 +12,12 @@ export class TokenRequestDto {
 
   @ApiProperty({
     example: "client_secret_456",
-    description: "The Client Secret",
+    description: "The Client Secret (optional for client devices like POS/Bakery)",
+    required: false,
   })
   @IsString()
-  @IsNotEmpty()
-  clientSecret: string;
+  @IsOptional()
+  clientSecret?: string;
 }
 
 export class TokenResponseDto {

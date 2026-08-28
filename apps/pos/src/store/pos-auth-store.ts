@@ -84,6 +84,7 @@ interface PosAuthActions {
   // Async initialization
   initializeFromBackend: () => Promise<void>;
   provisionDevice: (setupToken: string) => Promise<void>;
+  authorizeFromPairingPayload: (payload: any) => Promise<void>;
   registerDevice: (apiKey: string, location: InventoryLocation, orgSlug: string) => Promise<void>;
   switchLocation: (location: InventoryLocation) => Promise<void>;
   setAllowNegativeStock: (allow: boolean) => Promise<void>;
@@ -194,8 +195,8 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
       applyApiUrl: async () => {
         const { rawApiUrl } = get();
-        // Sanitize URL: remove trailing /api/v2 and trailing slashes
-        const sanitizedUrl = rawApiUrl.replace(/\/api\/v2\/?$/, '').replace(/\/+$/, '');
+        // Sanitize URL: remove trailing /api/v2 or /api/v3 and trailing slashes
+        const sanitizedUrl = rawApiUrl.replace(/\/api\/(v2|v3)\/?$/, '').replace(/\/+$/, '');
 
         set({ apiUrl: sanitizedUrl });
 
@@ -295,6 +296,40 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         }
       },
 
+      authorizeFromPairingPayload: async (payload: any) => {
+        const { apiUrl } = get();
+        const { apiKey, device, organization } = payload || {};
+        if (!apiKey || !device || !organization) {
+          throw new Error('Invalid pairing payload structure');
+        }
+
+        const locationId = device.locationId || device.location_id;
+        const orgSlug = organization.slug || organization.orgSlug || organization.org_slug;
+
+        if (!locationId || !orgSlug) {
+          throw new Error('Required configuration parameters missing in pairing response');
+        }
+
+        await invoke('set_device_config', {
+          baseUrl: apiUrl,
+          locationId,
+          deviceKey: apiKey,
+          orgSlug,
+        });
+
+        const location = device.location;
+
+        set({
+          currentLocation:
+            location ||
+            ({
+              ...device,
+              id: locationId,
+              name: device.name || device.deviceName || 'Terminal',
+            } as any),
+        });
+      },
+
       provisionDevice: async (setupToken: string) => {
         const { apiUrl } = get();
         // Always make sure backend has the latest api URL before making authenticated API request
@@ -306,8 +341,8 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
         const response = await invoke<any>('authenticated_api_request', {
           method: 'POST',
-          path: 'api/v2/devices/provision',
-          body: { setupToken },
+          path: 'api/v3/:orgSlug/pos/provision',
+          body: { setupToken, token: setupToken },
         });
 
         const isWrapped = response && response.success !== undefined;

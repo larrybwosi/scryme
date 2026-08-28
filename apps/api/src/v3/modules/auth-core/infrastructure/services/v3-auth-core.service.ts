@@ -26,21 +26,27 @@ export class V3AuthCoreService {
     }
   }
 
-  async validateClient(clientId: string, clientSecret: string) {
+  async validateClient(clientId: string, clientSecret?: string) {
     const client = await this.prisma.client.v3ApiClient.findUnique({
       where: { clientId },
       include: { organization: true },
     });
 
-    let isSecretValid = false;
-    try {
-      isSecretValid = await validateV3ApiSecret(clientId, clientSecret);
-    } catch {
-      isSecretValid = false;
+    if (!client || !client.isActive) {
+      throw new UnauthorizedException("Invalid client credentials");
     }
 
-    if (!client || !client.isActive || !isSecretValid) {
-      throw new UnauthorizedException("Invalid client credentials");
+    if (clientSecret) {
+      let isSecretValid = false;
+      try {
+        isSecretValid = await validateV3ApiSecret(clientId, clientSecret);
+      } catch {
+        isSecretValid = false;
+      }
+
+      if (!isSecretValid) {
+        throw new UnauthorizedException("Invalid client credentials");
+      }
     }
 
     return client;

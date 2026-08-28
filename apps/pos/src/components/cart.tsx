@@ -17,7 +17,8 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@repo/ui/components/ui/dialog';
-import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck, Wrench, UserCheck, AlertTriangle } from 'lucide-react';
+import { Badge } from '@repo/ui/components/ui/badge';
 import { Kbd } from '@/components/ui/kbd';
 import PaymentModal from '@/components/pos/payment-dialog';
 import { CustomerSelector } from '@/components/customer-selector';
@@ -60,6 +61,8 @@ export function Cart() {
   const [editQuantity, setEditQuantity] = useState(1);
   const [editNotes, setEditNotes] = useState('');
   const [editDosageInstructions, setEditDosageInstructions] = useState('');
+  const [editServiceNotes, setEditServiceNotes] = useState('');
+  const [editProviderName, setEditProviderName] = useState('');
   const [editUnitId, setEditUnitId] = useState('');
 
   // --- UI Control States ---
@@ -205,6 +208,8 @@ export function Cart() {
     setEditQuantity(item.quantity);
     setEditNotes(item.notes || '');
     setEditDosageInstructions(item.dosageInstructions || '');
+    setEditServiceNotes(item.serviceNotes || '');
+    setEditProviderName(item.providerName || '');
     setEditUnitId(item.selectedUnit?.unitId || '');
     setIsEditDialogOpen(true);
   };
@@ -218,15 +223,6 @@ export function Cart() {
     const unit = variant?.sellableUnits.find((u: any) => u.unitId === editUnitId);
     const newUnit = unit || editingItem.selectedUnit;
 
-    // Recalculate price based on the current pricing mode (if needed, although store usually handles it on add)
-    // Here we should probably just use the unit's price as the default,
-    // but the store expect `price` at the root of OrderItem too.
-
-    // We check the URL or state to see if we are in wholesale mode.
-    // In this component, we don't have a direct `pricingMode` state like POS.tsx,
-    // but we can infer it from the item itself if it was already marked as wholesale,
-    // or better, check if the business supports it.
-
     const isWholesale = editingItem.isWholesale;
     let newPrice = Number(newUnit.price);
     if (isWholesale && newUnit.wholesalePrice) {
@@ -238,6 +234,8 @@ export function Cart() {
       quantity: editQuantity,
       notes: editNotes,
       dosageInstructions: editDosageInstructions,
+      serviceNotes: editServiceNotes,
+      providerName: editProviderName,
       price: newPrice, // CRITICAL: Update the root price
       selectedUnit: newUnit,
       originalUnitId: editingItem.selectedUnit?.unitId,
@@ -551,11 +549,26 @@ export function Cart() {
                           <h4 className="font-semibold text-sm truncate text-foreground leading-tight">
                             {item.productName}
                           </h4>
-                          <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-2 gap-y-0.5 mt-0.5">
+                          <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-2 gap-y-0.5 items-center mt-0.5">
+                            {item.isService && (
+                              <Badge className="bg-purple-600 hover:bg-purple-700 text-white text-[9px] px-1 py-0 h-4 gap-0.5 font-bold uppercase">
+                                <Wrench className="w-2.5 h-2.5" /> Service
+                              </Badge>
+                            )}
                             <span className="truncate max-w-[100px]">{item.variantName}</span>
                             <span className="text-border mx-1">|</span>
                             <span>{unitName}</span>
                           </div>
+                          {item.providerName && (
+                            <div className="text-[10px] text-purple-700 dark:text-purple-300 font-medium flex items-center gap-1 mt-0.5">
+                              <UserCheck className="w-3 h-3 text-purple-600" /> Staff: {item.providerName}
+                            </div>
+                          )}
+                          {item.serviceNotes && (
+                            <div className="text-[10px] text-purple-600 italic bg-purple-50 dark:bg-purple-950/30 px-1 py-0.5 rounded mt-0.5 inline-block truncate max-w-full">
+                              Details: "{item.serviceNotes}"
+                            </div>
+                          )}
                           {item.notes && (
                             <div className="text-[10px] text-amber-600 italic bg-amber-50 dark:bg-amber-950/30 px-1 py-0.5 rounded mt-1 inline-block truncate max-w-full">
                               Note: "{item.notes}"
@@ -881,6 +894,36 @@ export function Cart() {
                   rows={2}
                 />
               </div>
+            )}
+
+            {(editingItem?.isService || businessConfig.features.serviceBilling) && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="providerName" className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                    <UserCheck className="w-3.5 h-3.5" /> Assigned Provider / Staff Member
+                  </Label>
+                  <Input
+                    id="providerName"
+                    value={editProviderName}
+                    onChange={e => setEditProviderName(e.target.value)}
+                    placeholder="e.g. Dr. Smith / Technician John"
+                    className="border-purple-200 focus-visible:ring-purple-500"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="serviceNotes" className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                    <Wrench className="w-3.5 h-3.5" /> Service / Appointment Notes
+                  </Label>
+                  <Textarea
+                    id="serviceNotes"
+                    value={editServiceNotes}
+                    onChange={e => setEditServiceNotes(e.target.value)}
+                    placeholder="e.g., Appointment scheduled for 2:00 PM, includes 30 min consultation..."
+                    className="resize-none border-purple-200 focus-visible:ring-purple-500"
+                    rows={2}
+                  />
+                </div>
+              </>
             )}
           </div>
           <DialogFooter>

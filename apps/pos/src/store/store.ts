@@ -60,6 +60,10 @@ export interface Product {
   stock: number;
   sellableUnits: SellableUnit[];
   variants?: Variant[];
+
+  // Service billing features
+  isService?: boolean;
+  durationMinutes?: number;
 }
 
 export interface Variant {
@@ -84,6 +88,12 @@ export interface OrderItem {
   requiresPrescription?: boolean;
   dosageInstructions?: string;
   pharmacistVerified?: boolean;
+
+  // Service billing specific
+  isService?: boolean;
+  serviceNotes?: string;
+  providerName?: string;
+  durationMinutes?: number;
 }
 
 export interface Order {
@@ -1156,6 +1166,8 @@ export const usePosStore = create<PosStore>()(
             quantity,
             imageUrl: product.imageUrl,
             isWholesale: options?.isWholesale || false,
+            isService: product.isService || product.category?.toLowerCase() === 'services' || product.category?.toLowerCase() === 'service',
+            durationMinutes: product.durationMinutes,
             // Pharmacy Check: if category is "Prescription" or "Medicine"
             requiresPrescription: product.category.toLowerCase().includes('prescription') || product.category.toLowerCase().includes('medicine'),
           };
@@ -1667,12 +1679,16 @@ export const usePosStore = create<PosStore>()(
           let updated = false;
 
           for (const item of items) {
+            if (item.isService) continue; // Skip stock deduction for services
+
             const productIndex = newProducts.findIndex(p => p.productId === item.productId);
             if (productIndex !== -1) {
+              const product = newProducts[productIndex];
+              if (product.isService) continue; // Skip if product itself is marked as service
+
               const conversion = item.selectedUnit?.conversion || 1;
               const deductedAmount = item.quantity * conversion;
 
-              const product = newProducts[productIndex];
               newProducts[productIndex] = {
                 ...product,
                 stock: Math.max(0, product.stock - deductedAmount),
@@ -1690,7 +1706,7 @@ export const usePosStore = create<PosStore>()(
       getLowStockProducts: () => {
         const state = get();
         return state.products
-          .filter(p => p.stock <= state.settings.lowStockThreshold)
+          .filter(p => !p.isService && p.stock <= state.settings.lowStockThreshold)
           .map(p => ({
             productId: p.productId,
             productName: p.productName,

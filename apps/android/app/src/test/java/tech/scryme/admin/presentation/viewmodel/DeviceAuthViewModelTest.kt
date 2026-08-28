@@ -34,7 +34,7 @@ class DeviceAuthViewModelTest {
     }
 
     @Test
-    fun `parseSetupToken handles raw strings and JSON payloads correctly`() {
+    fun `parseSetupToken and parsePairingSessionId handle payloads correctly`() {
         val rawToken = "setup_token_abc_123"
         assertEquals(rawToken, viewModel.parseSetupToken(rawToken))
 
@@ -43,6 +43,41 @@ class DeviceAuthViewModelTest {
 
         val jsonSetupTokenKey = """{"setupToken":"setup_token_789"}"""
         assertEquals("setup_token_789", viewModel.parseSetupToken(jsonSetupTokenKey))
+
+        val jsonPairingSession = """{"type":"POS_PAIRING","sessionId":"pair_session_999"}"""
+        assertEquals("pair_session_999", viewModel.parsePairingSessionId(jsonPairingSession))
+
+        val rawPairingId = "pair_session_888"
+        assertEquals("pair_session_888", viewModel.parsePairingSessionId(rawPairingId))
+    }
+
+    @Test
+    fun `onQrCodeScanned with POS_PAIRING JSON triggers session authorization successfully`() = runTest(testDispatcher) {
+        val qrContent = """{"type":"POS_PAIRING","sessionId":"pair_session_123"}"""
+        val mockResponse = DeviceProvisionResponseDto(
+            apiKey = "dealio_pk_live_key_pairing",
+            deviceRegistryId = "dev_pair_123",
+            device = DeviceSummaryDto(
+                deviceName = "POS Terminal 1",
+                deviceType = "MAIN_HUB",
+                locationId = "loc_hq"
+            )
+        )
+
+        coEvery { repository.authorizePairingSession("pair_session_123") } coAnswers {
+            delay(100)
+            Result.success(mockResponse)
+        }
+
+        viewModel.onQrCodeScanned(qrContent)
+
+        runCurrent()
+        assertEquals(UiState.Loading, viewModel.uiState.value)
+
+        advanceTimeBy(150)
+
+        assertTrue(viewModel.uiState.value is UiState.Success)
+        assertEquals(mockResponse, (viewModel.uiState.value as UiState.Success).data)
     }
 
     @Test

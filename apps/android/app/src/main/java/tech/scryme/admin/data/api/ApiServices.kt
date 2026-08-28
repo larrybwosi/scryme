@@ -156,6 +156,11 @@ interface DeviceApiService {
     suspend fun provisionDevice(
         @Body request: Map<String, String> // setupToken
     ): Response<ApiEnvelope<DeviceProvisionResponseDto>>
+
+    @POST("/api/v2/devices/pairing/authorize")
+    suspend fun authorizePairingSession(
+        @Body request: Map<String, String> // sessionId
+    ): Response<ApiEnvelope<DeviceProvisionResponseDto>>
 }
 
 interface ExpenseApiService {

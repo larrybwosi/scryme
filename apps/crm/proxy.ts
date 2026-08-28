@@ -59,7 +59,8 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
 
   // Check for organization
   const organizationId =
-    session.session.activeOrganizationId || session.user.activeOrganizationId;
+    (session.session as any).activeOrganizationId ||
+    (session.user as any).activeOrganizationId;
 
   const isExcludedFromOrgCheck = ["/banned", "/forbidden"].includes(pathname);
 

@@ -1,6 +1,6 @@
 # web
 
-## 6.41.0
+## 6.41.0-next.0
 
 ### Minor Changes
 

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - nextgen
 
 permissions:
   contents: write
@@ -11,12 +12,13 @@ permissions:
   pull-requests: write
 
 jobs:
-  # 1. Manages Changesets, bumps version tags on main, or falls back to traditional changeset publish
   release-management:
     name: Release Management
     runs-on: ubuntu-latest
     outputs:
-      published: ${{ steps.check-and-version.outputs.published }}
+      published: ${{ steps.changesets.outputs.published }}
+      hasChangesets: ${{ steps.changesets.outputs.hasChangesets }}
+      isPrerelease: ${{ steps.branch-check.outputs.isPrerelease }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -36,36 +38,51 @@ jobs:
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Check Changesets and Version
-        id: check-and-version
+      - name: Determine Release Type
+        id: branch-check
         run: |
-          CHANGESETS=$(find .changeset -name "*.md" ! -name "README.md")
-          if [ -n "$CHANGESETS" ]; then
-            echo "Changesets found:"
-            echo "$CHANGESETS"
-
-            # Configure Git
-            git config --global user.name "github-actions[bot]"
-            git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-            # Version packages
-            pnpm version-packages
-
-            # Commit and push if changes exist
-            if [ -n "$(git status --porcelain)" ]; then
-              git add .
-              git commit -m "chore(release): version packages"
-              git push origin HEAD:main
-            fi
-
-            echo "published=true" >> $GITHUB_OUTPUT
+          if [ "${{ github.ref_name }}" = "nextgen" ]; then
+            echo "isPrerelease=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No changesets found."
-            echo "published=false" >> $GITHUB_OUTPUT
+            echo "isPrerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create Git Tags and GitHub Releases
-        if: steps.check-and-version.outputs.published == 'true'
+      - name: Enter Prerelease Mode
+        if: steps.branch-check.outputs.isPrerelease == 'true'
+        run: |
+          if [ ! -f .changeset/pre.json ]; then
+            npx changeset pre enter next
+          fi
+
+      - name: Exit Prerelease Mode (safety net for main)
+        if: steps.branch-check.outputs.isPrerelease == 'false'
+        run: |
+          if [ -f .changeset/pre.json ]; then
+            npx changeset pre exit
+          fi
+
+      - name: Check for Pending Changesets
+        id: check-changesets
+        run: |
+          COUNT=$(find .changeset -maxdepth 1 -name "*.md" ! -name "README.md" | wc -l)
+          if [ "$COUNT" -gt 0 ]; then
+            echo "hasChangesets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "hasChangesets=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Directly Version Prerelease on Nextgen
+        if: steps.branch-check.outputs.isPrerelease == 'true' && steps.check-changesets.outputs.hasChangesets == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          pnpm version-packages
+          git add .
+          git commit -m "chore(release): version prerelease packages"
+          git push origin nextgen
+
+      - name: Create Release Pull Request or Publish
+        id: changesets
         uses: changesets/action@v1
         with:
           publish: pnpm release
@@ -73,7 +90,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  # 2. Centralized package build to be shared across jobs
   build-packages:
     name: Build Packages
     runs-on: ubuntu-latest
@@ -83,7 +99,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -105,11 +121,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: built-packages
-          path: |
-            packages/*/dist
-            packages/db/prisma
+          path: packages/
 
-  # Quick helper to extract version for multi-platform app matrix
   set-version:
     name: Set Version Output
     runs-on: ubuntu-latest
@@ -121,7 +134,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: Get version from package.json
         id: get-version
@@ -129,7 +142,6 @@ jobs:
           VERSION=$(node -p "require('./apps/pos/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-  # 3. Builds and Publishes POS to GitHub Releases (Matrix parallelization)
   publish-pos:
     name: Publish POS (${{ matrix.os }} - ${{ matrix.variant }})
     runs-on: ${{ matrix.os }}
@@ -138,28 +150,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest]
         variant: [pharmacy, retail, standalone, supermarket, restaurant]
-        include:
-          - os: windows-latest
-            args: --target x86_64-pc-windows-msvc
-          - os: ubuntu-latest
-            args: --target x86_64-unknown-linux-gnu
-          - variant: retail
-            features: retail
-          - variant: standalone
-            features: standalone
-          - variant: restaurant
-            features: restaurant
-          - variant: supermarket
-            features: supermarket
-          - variant: pharmacy
-            features: pharmacy
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -171,26 +168,6 @@ jobs:
         with:
           version: 9
 
-      - name: Install System Dependencies (Linux Only)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            librsvg2-dev \
-            patchelf \
-            libglib2.0-dev \
-            libudev-dev \
-            libpcsclite-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev
-
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
@@ -200,8 +177,15 @@ jobs:
           name: built-packages
           path: packages
 
-      - name: Build POS App
-        run: pnpm turbo build --filter=pos...
+      - name: Set OS specific args
+        id: target
+        shell: bash
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            echo "args=--target x86_64-pc-windows-msvc" >> $GITHUB_OUTPUT
+          else
+            echo "args=--target x86_64-unknown-linux-gnu" >> $GITHUB_OUTPUT
+          fi
 
       - name: Build and Publish POS App
         uses: tauri-apps/tauri-action@v0
@@ -220,194 +204,30 @@ jobs:
           releaseName: "v${{ needs.set-version.outputs.version }}"
           releaseBody: "Release v${{ needs.set-version.outputs.version }}"
           releaseDraft: false
-          prerelease: false
-          args: ${{ matrix.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.features }}
+          prerelease: ${{ needs.release-management.outputs.isPrerelease }}
+          args: ${{ steps.target.outputs.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.variant }}
 
-  # 4. Builds and Publishes Bakery App (Matrix parallelization)
-  publish-bakery:
-    name: Publish Bakery App (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: [release-management, set-version, build-packages]
-    if: needs.release-management.outputs.published == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-latest]
-        include:
-          - os: windows-latest
-            args: --target x86_64-pc-windows-msvc
-          - os: ubuntu-latest
-            args: --target x86_64-unknown-linux-gnu
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Setup Pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 9
-
-      - name: Install System Dependencies (Linux Only)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev \
-            libwebkit2gtk-4.1-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            libglib2.0-dev \
-            libudev-dev
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Download Package Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: built-packages
-          path: packages
-
-      - name: Build Bakery App
-        run: pnpm turbo build --filter=bakery...
-
-      - name: Build and Publish Bakery App
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
-        with:
-          projectPath: ./apps/bakery
-          tagName: v${{ needs.set-version.outputs.version }}
-          releaseName: "v${{ needs.set-version.outputs.version }}"
-          releaseBody: "Release v${{ needs.set-version.outputs.version }}"
-          releaseDraft: false
-          prerelease: false
-          args: ${{ matrix.args }}
-
-  # 5. Builds Docker Images (Runs after packages are verified)
-  docker-images:
-    name: Build & Push Docker Images
+  publish-crates:
+    name: Publish Rust SDK to Crates.io
     runs-on: ubuntu-latest
     needs: [release-management, build-packages]
-    if: needs.release-management.outputs.published == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: main
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Convert repository name to lowercase
-        id: repo-lower
-        run: |
-          echo "repo_lower=${GITHUB_REPOSITORY,,}" >> $GITHUB_OUTPUT
-
-      - name: Get current version
-        id: get-version
-        run: |
-          VERSION=$(node -p "require('./apps/bakery/package.json').version")
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Build and push Docker images
-        uses: docker/bake-action@v7
-        env:
-          REPO_LOWER: ${{ steps.repo-lower.outputs.repo_lower }}
-          VERSION: ${{ steps.get-version.outputs.version }}
-        with:
-          files: |
-            ./docker-bake.hcl
-          targets: default
-          push: true
-          set: |
-            *.args.NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-            *.args.BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
-
-  publish-android:
-    name: Publish Android App
-    runs-on: ubuntu-latest
-    needs: [release-management, set-version]
     if: needs.release-management.outputs.published == 'true'
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.ref_name }}
 
-      - name: Setup JDK 21
+      - name: Setup Java (Required for openapi-generator-cli)
         uses: actions/setup-java@v4
         with:
-          java-version: "21"
-          distribution: "zulu"
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: "8.8"
-
-      - name: Build Android Release APK
-        run: |
-          cd apps/android
-          gradle assembleRelease --no-daemon
-
-      - name: Prepare APK Asset
-        id: prepare-apk
-        run: |
-          APK_PATH=$(find apps/android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
-          if [ -z "$APK_PATH" ]; then
-            echo "Error: APK not found!"
-            exit 1
-          fi
-          echo "Found APK at: $APK_PATH"
-          cp "$APK_PATH" scryme-admin-release.apk
-          echo "apk_path=scryme-admin-release.apk" >> $GITHUB_OUTPUT
-
-      - name: Upload Android APK to GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ needs.set-version.outputs.version }}
-          name: "v${{ needs.set-version.outputs.version }}"
-          draft: false
-          prerelease: false
-          files: |
-            scryme-admin-release.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-npm:
-    name: Publish SDK to NPM
-    runs-on: ubuntu-latest
-    needs: [release-management, build-packages]
-    if: needs.release-management.outputs.published == 'true'
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          ref: main
+          distribution: 'zulu'
+          java-version: '21'
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          registry-url: "https://registry.npmjs.org"
 
       - name: Setup Pnpm
         uses: pnpm/action-setup@v3
@@ -423,9 +243,43 @@ jobs:
           name: built-packages
           path: packages
 
-      - name: Publish to NPM
-        run: pnpm release
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Generate Rust SDK
+        run: pnpm --filter @scryme/sdk generate:rust
+
+      - name: Publish to Crates.io
+        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ needs.release-management.outputs.isPrerelease == 'true' && '--allow-dirty' || '' }}
+        working-directory: packages/v3-sdk/rust
+
+  publish-docker:
+    name: Publish Docker Images
+    runs-on: ubuntu-latest
+    needs: [release-management, set-version]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Images
+        uses: docker/bake-action@v5
+        with:
+          files: docker-bake.hcl
+          push: true
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.set-version.outputs.version }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
