@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
+import { isSafeUrl } from "@repo/shared/server";
 import axios from "axios";
 import * as crypto from "crypto";
 
@@ -34,6 +35,25 @@ export class WebhookDispatcherService {
     if (secret) {
       const signature = crypto.createHmac("sha256", secret).update(payloadString).digest("hex");
       requestHeaders["X-Workflow-Signature"] = `sha256=${signature}`;
+    }
+
+    if (!(await isSafeUrl(endpointUrl))) {
+      const errorMessage = `Webhook dispatch blocked: URL '${endpointUrl}' failed SSRF security validation.`;
+      this.logger.warn(errorMessage);
+      await (this.prisma.client as any).workflowEngineAuditLog.create({
+        data: {
+          organizationId,
+          executionId,
+          jobId,
+          action: "WEBHOOK_DISPATCH_BLOCKED",
+          level: "ERROR",
+          details: {
+            endpointUrl,
+            error: errorMessage,
+          },
+        },
+      });
+      throw new Error(errorMessage);
     }
 
     const startTime = Date.now();

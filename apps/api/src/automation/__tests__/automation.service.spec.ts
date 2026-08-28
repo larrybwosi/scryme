@@ -111,4 +111,28 @@ describe("AutomationService", () => {
     expect(result.execution.id).toBe("exec_2");
     expect(mockWebhookDispatcher.verifyIncomingSignature).toHaveBeenCalled();
   });
+
+  it("should provision workflow definitions with organization custom configs", async () => {
+    mockPrisma.client.workflowEngineDefinition.upsert.mockImplementation((args: any) =>
+      Promise.resolve({
+        id: "def_upserted",
+        organizationId: args.create.organizationId,
+        key: args.create.key,
+        config: args.create.config,
+      }),
+    );
+
+    const customConfigs = {
+      lowstock_alert: { threshold: 5, notificationEmail: "custom@example.com" },
+    };
+
+    const results = await service.provisionDefinitions("org_1", customConfigs);
+
+    expect(results.length).toBeGreaterThan(0);
+    const lowStockDef = results.find((r) => r.key === "lowstock_alert");
+    expect(lowStockDef?.config).toEqual({
+      threshold: 5,
+      notificationEmail: "custom@example.com",
+    });
+  });
 });
