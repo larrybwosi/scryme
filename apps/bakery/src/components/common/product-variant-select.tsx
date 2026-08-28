@@ -105,26 +105,40 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
     search: debouncedSearchTerm,
   }) as any;
 
-  // Combine excluded variant IDs
-  const allExcludedIds = useMemo(
-    () => [...(excludeVariant ? [excludeVariant] : []), ...excludeVariantIds],
+  // Combine excluded variant IDs into a Set for O(1) membership lookups
+  const excludedSet = useMemo(
+    () =>
+      new Set(
+        [...(excludeVariant ? [excludeVariant] : []), ...excludeVariantIds].filter(
+          Boolean,
+        ),
+      ),
     [excludeVariant, excludeVariantIds],
   );
 
-  // Filter out excluded variants
+  // ⚡ Bolt Optimization: Filter out excluded variants using O(1) Set lookup
   const filteredVariants = useMemo(() => {
     if (!productVariants) return [];
-    return allExcludedIds.length > 0
+    return excludedSet.size > 0
       ? productVariants.filter(
-          (variant: any) => !allExcludedIds.includes(variant.id),
+          (variant: any) => !excludedSet.has(variant.id),
         )
       : productVariants;
-  }, [productVariants, allExcludedIds]);
+  }, [productVariants, excludedSet]);
 
-  // Find the currently selected variant object for display
+  // ⚡ Bolt Optimization: Pre-index variants into an in-memory Map by ID.
+  // This replaces linear O(N) .find() scans inside render with O(1) constant-time map lookup.
+  const variantMap = useMemo(() => {
+    return new Map<string, ProductVariant>(
+      filteredVariants.map((v: any) => [v.id, v]),
+    );
+  }, [filteredVariants]);
+
+  // Find the currently selected variant object for display in O(1) time
   const selectedVariant = useMemo(() => {
-    return filteredVariants.find((v: any) => v.id === value);
-  }, [filteredVariants, value]);
+    if (!value) return undefined;
+    return variantMap.get(value);
+  }, [variantMap, value]);
 
   // Group variants by product type if type is 'ALL'
   const groupedVariants = useMemo(() => {
