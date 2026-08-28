@@ -47,6 +47,24 @@ export class AutomationService {
     });
   }
 
+  async provisionDefinitions(organizationId: string, customConfigs?: Record<string, any>) {
+    const results = [];
+    for (const builtIn of this.builtInDefinitions) {
+      const customConfig = customConfigs?.[builtIn.key] || {};
+      const mergedConfig = {
+        ...(builtIn.config || {}),
+        ...customConfig,
+      };
+
+      const definition = await this.createDefinition(organizationId, {
+        ...builtIn,
+        config: mergedConfig,
+      });
+      results.push(definition);
+    }
+    return results;
+  }
+
   async createDefinition(organizationId: string, dto: CreateWorkflowDefinitionDto) {
     return (this.prisma.client as any).workflowEngineDefinition.upsert({
       where: {

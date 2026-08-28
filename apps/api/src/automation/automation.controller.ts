@@ -19,6 +19,14 @@ export class AutomationController {
     return this.automationService.createDefinition(ctx.organizationId, dto);
   }
 
+  @Post("definitions/provision")
+  async provisionDefinitions(
+    @v2Context() ctx: V2ApiContext,
+    @Body() body?: { customConfigs?: Record<string, any> },
+  ) {
+    return this.automationService.provisionDefinitions(ctx.organizationId, body?.customConfigs);
+  }
+
   @Post("trigger")
   async triggerWorkflow(@v2Context() ctx: V2ApiContext, @Body() dto: TriggerWorkflowDto) {
     return this.automationService.triggerWorkflow(ctx.organizationId, dto);

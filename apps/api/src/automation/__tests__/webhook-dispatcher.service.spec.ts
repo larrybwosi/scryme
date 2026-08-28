@@ -3,7 +3,20 @@ import { WebhookDispatcherService } from "../webhook-dispatcher.service";
 import * as crypto from "crypto";
 import axios from "axios";
 
-vi.mock("axios");
+vi.mock("axios", () => {
+  const mockAxios: any = {
+    post: vi.fn(),
+    create: vi.fn(),
+    interceptors: {
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
+    },
+  };
+  mockAxios.create.mockReturnValue(mockAxios);
+  return {
+    default: mockAxios,
+  };
+});
 
 describe("WebhookDispatcherService", () => {
   let service: WebhookDispatcherService;
@@ -62,6 +75,27 @@ describe("WebhookDispatcherService", () => {
         data: expect.objectContaining({
           action: "WEBHOOK_DISPATCHED",
           level: "INFO",
+        }),
+      }),
+    );
+  });
+
+  it("should block dispatch and log audit error when endpointUrl fails SSRF validation", async () => {
+    await expect(
+      service.dispatchOutgoingWebhook({
+        organizationId: "org_1",
+        executionId: "exec_1",
+        jobId: "job_1",
+        endpointUrl: "http://127.0.0.1:3000/internal",
+        payload: { data: "test" },
+      }),
+    ).rejects.toThrow("SSRF security validation");
+
+    expect(mockPrisma.client.workflowEngineAuditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "WEBHOOK_DISPATCH_BLOCKED",
+          level: "ERROR",
         }),
       }),
     );
