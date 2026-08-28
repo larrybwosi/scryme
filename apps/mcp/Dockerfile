@@ -44,10 +44,9 @@ COPY --from=pruner /app/out/full/ .
 # Generate Prisma Client and Orval SDK
 RUN pnpm turbo run generate
 
-# Build the MCP app and its internal workspace dependencies
-ENV NODE_OPTIONS="--max-old-space-size=4096"
+# Build the MCP app and its internal workspace dependencies with optimized Nest SWC build
 RUN --mount=type=cache,id=turbo,target=/app/.turbo \
-    pnpm turbo build --filter=mcp... --concurrency=1
+    pnpm turbo build --filter=mcp...
 
 # ---------------------------------------------------------
 # Stage 4: Runner (Production execution)
@@ -82,4 +81,4 @@ USER mcpser
 EXPOSE 3001
 
 ENTRYPOINT ["./entrypoint.sh"]
-CMD ["node", "apps/mcp/dist/index.js"]
+CMD ["node", "apps/mcp/dist/src/main.js"]
