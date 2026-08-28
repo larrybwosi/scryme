@@ -16,7 +16,7 @@
     "@nestjs/common": "^11.1.27",
     "@nestjs/core": "^11.1.27",
     "@nestjs/platform-fastify": "^11.1.27",
-    "@scryme/sdk": "workspace:*",
+    "@scryme/sdk": "^9.71.0",
     "axios": "^1.18.1",
     "fastify": "^5.2.1",
     "reflect-metadata": "^0.2.2",
