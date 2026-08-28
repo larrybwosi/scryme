@@ -16,6 +16,8 @@ export class McpServerService implements OnModuleInit {
 
   onModuleInit() {
     this.registerTools();
+    this.registerResources();
+    this.registerPrompts();
   }
 
   public async startStdioTransport() {
@@ -641,6 +643,77 @@ export class McpServerService implements OnModuleInit {
       async ({ orgSlug, sessionId }) => {
         return callSdk(orgSlug, (config) => v3.cartControllerClearCart(orgSlug, { sessionId } as any, config));
       }
+    );
+  }
+
+  private registerResources() {
+    this.server.registerResource(
+      "system_status",
+      "scryme://system/status",
+      {
+        description: "Retrieve current Scryme V3 MCP Server status and engine details",
+        mimeType: "application/json",
+      },
+      async (uri) => ({
+        contents: [
+          {
+            uri: uri.href,
+            text: JSON.stringify({
+              server: "scryme-v3",
+              status: "online",
+              framework: "NestJS Fastify",
+              mcpVersion: "1.0.0",
+              timestamp: new Date().toISOString(),
+            }, null, 2),
+          },
+        ],
+      })
+    );
+  }
+
+  private registerPrompts() {
+    this.server.registerPrompt(
+      "sales_analysis",
+      {
+        description: "Generate an analysis prompt for organization sales and profit/loss reports",
+        argsSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          period: z.string().optional().describe("Time period e.g., monthly, quarterly, annual"),
+        },
+      },
+      ({ orgSlug, period }) => ({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Please provide a detailed sales and profit/loss financial report for organization '${orgSlug}' covering the ${period || "current"} period.`,
+            },
+          },
+        ],
+      })
+    );
+
+    this.server.registerPrompt(
+      "inventory_audit",
+      {
+        description: "Generate a prompt for conducting an inventory stock level audit",
+        argsSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          locationId: z.string().optional().describe("Specific location or warehouse UUID"),
+        },
+      },
+      ({ orgSlug, locationId }) => ({
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Perform a comprehensive inventory stock level audit and batch trace for organization '${orgSlug}'${locationId ? ` at location '${locationId}'` : ""}. Identify low stock items and expiring batches.`,
+            },
+          },
+        ],
+      })
     );
   }
 }

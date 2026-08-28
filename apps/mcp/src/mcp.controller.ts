@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Req, Res, Query, Logger } from "@nestjs/common";
-import { Request, Response } from "express";
+import { FastifyRequest, FastifyReply } from "fastify";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { McpServerService } from "./mcp-server.service";
 
@@ -11,13 +11,13 @@ export class McpController {
   constructor(private readonly mcpServerService: McpServerService) {}
 
   @Get("sse")
-  async handleSse(@Req() req: Request, @Res() res: Response) {
+  async handleSse(@Req() req: FastifyRequest, @Res() res: FastifyReply) {
     this.logger.log("Establish SSE connection request received.");
-    const transport = new SSEServerTransport("/messages", res);
+    const transport = new SSEServerTransport("/messages", res.raw);
     this.logger.log(`New SSE session initialized: ${transport.sessionId}`);
     this.transports[transport.sessionId] = transport;
 
-    res.on("close", () => {
+    res.raw.on("close", () => {
       this.logger.log(`SSE session closed: ${transport.sessionId}`);
       delete this.transports[transport.sessionId];
     });
@@ -27,8 +27,8 @@ export class McpController {
 
   @Post("messages")
   async handleMessages(
-    @Req() req: Request,
-    @Res() res: Response,
+    @Req() req: FastifyRequest,
+    @Res() res: FastifyReply,
     @Query("sessionId") sessionId: string
   ) {
     this.logger.log(`Post message received on SSE session: ${sessionId}`);
@@ -43,6 +43,6 @@ export class McpController {
       return;
     }
 
-    await transport.handlePostMessage(req, res, req.body);
+    await transport.handlePostMessage(req.raw, res.raw, req.body);
   }
 }

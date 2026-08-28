@@ -14,7 +14,7 @@ This server uses the V3 SDK of the Scryme Monorepo, implementing multi-tenant se
 - **Dynamic Credentials & Token Exchange**: Seamlessly exchanges client credentials (`SCRYME_CLIENT_ID` and `SCRYME_CLIENT_SECRET`) for JWT access tokens.
 - **Dual Transport Mechanisms**:
   - **`stdio`**: Standard input/output transport via NestJS ApplicationContext, optimized for single-user desktop applications like Claude Desktop.
-  - **`sse`**: Server-Sent Events (SSE) web server via NestJS Express Controller, ideal for multi-connection network integrations.
+  - **`sse`**: Server-Sent Events (SSE) web server via NestJS Fastify Controller, ideal for multi-connection network integrations.
 
 ---
 
