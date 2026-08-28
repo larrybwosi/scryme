@@ -78,6 +78,15 @@ describe("Scryme V3 MCP Server NestJS Architecture & Tool Suite", () => {
       expect(tool.description).toBeDefined();
       expect(tool.inputSchema).toBeDefined();
     }
+
+    const registeredResources: Record<string, any> = (mcpServerService.server as any)._registeredResources;
+    expect(registeredResources).toBeDefined();
+    expect(Object.keys(registeredResources)).toContain("scryme://system/status");
+
+    const registeredPrompts: Record<string, any> = (mcpServerService.server as any)._registeredPrompts;
+    expect(registeredPrompts).toBeDefined();
+    expect(Object.keys(registeredPrompts)).toContain("sales_analysis");
+    expect(Object.keys(registeredPrompts)).toContain("inventory_audit");
   });
 
   it("should validate and execute the token exchange flow via AuthService", async () => {

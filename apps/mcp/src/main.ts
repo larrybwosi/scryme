@@ -1,4 +1,5 @@
 import { NestFactory } from "@nestjs/core";
+import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { McpModule } from "./mcp.module";
 import { McpServerService } from "./mcp-server.service";
 import { LoggerService } from "@nestjs/common";
@@ -29,9 +30,13 @@ async function bootstrap() {
   const useSse = transportArg === "sse" || process.env.SCRYME_MCP_TRANSPORT === "sse";
 
   if (useSse) {
-    const app = await NestFactory.create(McpModule, { logger });
-    const port = process.env.SCRYME_MCP_PORT || process.env.PORT || 3001;
-    await app.listen(port);
+    const app = await NestFactory.create<NestFastifyApplication>(
+      McpModule,
+      new FastifyAdapter(),
+      { logger }
+    );
+    const port = Number(process.env.SCRYME_MCP_PORT || process.env.PORT || 3001);
+    await app.listen({ port, host: "0.0.0.0" });
     logger.log(`Scryme V3 MCP NestJS Server listening on SSE port ${port}`);
   } else {
     // In stdio mode, stdout is strictly reserved for raw JSON-RPC protocol transport.
