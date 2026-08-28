@@ -5,6 +5,7 @@ import {
   UseGuards,
   UseInterceptors,
   Request,
+  BadRequestException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
@@ -53,6 +54,17 @@ export class AnnouncementController {
   @ApiOperation({ summary: "Broadcast an announcement" })
   async broadcastAnnouncement(@Request() req: any, @Body() dto: AnnouncementDto) {
     const organizationId = req.v3Context.organizationId;
+
+    // SECURITY (Sentinel): Validate targetBranchId belongs to organizationId to prevent cross-tenant IDOR.
+    if (dto.targetBranchId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: dto.targetBranchId, organizationId },
+      });
+      if (!location) {
+        throw new BadRequestException("Target branch location not found");
+      }
+    }
+
     await emitEvent(organizationId, "announcement.broadcast", {
       title: dto.title,
       message: dto.message,
