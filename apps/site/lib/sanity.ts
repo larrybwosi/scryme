@@ -394,6 +394,16 @@ export interface HomePageContent {
     url?: string;
     alt?: string;
   };
+  heroVideo?: {
+    url?: string;
+    mimeType?: string;
+    ariaLabel?: string;
+    poster?: {
+      asset?: { _ref: string; _type: "reference" };
+      url?: string;
+      alt?: string;
+    };
+  };
   reconciledToday: number;
   brands: string[];
   modules: Array<{
@@ -987,6 +997,12 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       heroTitle,
       heroSubtitle,
       heroImage,
+      "heroVideo": {
+        "url": heroVideo.file.asset->url,
+        "mimeType": heroVideo.file.asset->mimeType,
+        "poster": heroVideo.poster,
+        "ariaLabel": heroVideo.ariaLabel
+      },
       reconciledToday,
       brands,
       modules,
@@ -1015,6 +1031,7 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       heroTitle: data.heroTitle || DEFAULT_HOME_CONTENT.heroTitle,
       heroSubtitle: data.heroSubtitle || DEFAULT_HOME_CONTENT.heroSubtitle,
       heroImage: data.heroImage || DEFAULT_HOME_CONTENT.heroImage,
+      heroVideo: data.heroVideo?.url ? data.heroVideo : undefined,
       reconciledToday: data.reconciledToday ?? DEFAULT_HOME_CONTENT.reconciledToday,
       brands: data.brands && data.brands.length > 0 ? data.brands : DEFAULT_HOME_CONTENT.brands,
       modules: data.modules && data.modules.length > 0 ? data.modules : DEFAULT_HOME_CONTENT.modules,
