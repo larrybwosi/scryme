@@ -205,6 +205,13 @@ model Organization {
   cycleCountConfigs  CycleCountConfig[]
   serialNumbers      SerialNumber[]
 
+  // Custom Workflows Automation Engine
+  workflowEngineDefinitions WorkflowEngineDefinition[]
+  workflowEngineExecutions  WorkflowEngineExecution[]
+  workflowEngineJobs        WorkflowEngineJob[]
+  workflowEngineAuditLogs   WorkflowEngineAuditLog[]
+  workflowEngineWebhooks    WorkflowEngineWebhook[]
+
   // Windmill Integration
   windmillConfiguration WindmillConfiguration?
   windmillExecutions    WindmillExecution[]
