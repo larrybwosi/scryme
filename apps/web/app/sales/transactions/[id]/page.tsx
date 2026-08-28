@@ -19,16 +19,18 @@ export default async function TransactionDetailPage({
     notFound();
   }
 
-  // Get configuration timestamps for cache invalidation when downloading documents
-  const invoiceConfig = await db.invoiceConfig.findUnique({
-    where: { organizationId: transaction.organizationId },
-    select: { updatedAt: true },
-  });
-
-  const receiptConfig = await db.receiptConfig.findUnique({
-    where: { organizationId: transaction.organizationId },
-    select: { updatedAt: true },
-  });
+  // Performance optimization: Parallelize independent invoice and receipt configuration queries
+  // to reduce server-side database roundtrips from 2 sequential calls down to 1 concurrent Promise.all call.
+  const [invoiceConfig, receiptConfig] = await Promise.all([
+    db.invoiceConfig.findUnique({
+      where: { organizationId: transaction.organizationId },
+      select: { updatedAt: true },
+    }),
+    db.receiptConfig.findUnique({
+      where: { organizationId: transaction.organizationId },
+      select: { updatedAt: true },
+    }),
+  ]);
 
   return (
     <TransactionDetailClient
