@@ -1,23 +1,85 @@
 # Customer Single Sign-On (SSO) & Authentication Guide
 
-This guide provides developers with the details required to integrate customer authentication and Single Sign-On (SSO) into third-party systems. By using these endpoints, integrating systems can seamlessly provision identity configurations, register customers, and allow them to authenticate securely using standard OpenID Connect (OIDC).
+This guide provides developers with the details required to integrate customer authentication and Single Sign-On (SSO) into storefronts, mobile apps, and third-party systems. By using these endpoints, integrating applications can seamlessly register customers, authenticate via direct email/password credentials, manage active sessions, or delegate identity via OpenID Connect (OIDC).
 
 ---
 
 ## 🔒 Customer Authentication Architecture
 
-Customer authentication uses **OpenID Connect (OIDC)** and **Standard API Registration** flows. This allows developers to:
-1. **Provision SSO connection** for a business/organization with one click.
-2. **Register/Sync customers** directly from their platforms to our ERP CRM.
-3. **Log customers in** using a unified, secure SSO portal.
+Customer authentication in Scryme V3 is designed for complete multi-tenant isolation, security, and developer flexibility. It supports two primary authentication modes:
+
+1. **Local Customer Credentials & Session Management**:
+   Customers authenticate directly using email and password against `/v3/:orgSlug/customers/auth/login`. The system returns an `HS256` Bearer JWT token while creating an active, manageable session in Redis.
+2. **Federated OpenID Connect (OIDC) Single Sign-On**:
+   Customers authenticate via a standard OIDC identity provider authorization code flow, exchanging tokens and linking identities to local Customer records.
 
 ---
+
+## 🔑 1. Local Customer Authentication & Sessions
+
+### Customer Sign-Up & Password Registration
+Customers can self-register using `POST /v3/:orgSlug/customers/register`. Providing a `password` in the registration payload hashes the password securely with `bcrypt` and provisions or links a global `User` identity for local authentication.
+
+### Customer Login Flow
+- **Endpoint**: `POST /v3/:orgSlug/customers/auth/login`
+- **Authentication**: Public (`@AllowPublic()`)
+- **Headers**:
+  ```http
+  Content-Type: application/json
+  ```
+- **Request Body**:
+  ```json
+  {
+    "email": "customer@example.com",
+    "password": "securepassword123"
+  }
+  ```
+- **Response (`200 OK`)**:
+  ```json
+  {
+    "success": true,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "session": {
+      "id": "sess_8f3a1b2c-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+      "customerId": "cust_abc123",
+      "email": "customer@example.com",
+      "name": "Jane Smith",
+      "createdAt": "2026-08-05T10:00:00.000Z",
+      "expiresAt": "2026-08-12T10:00:00.000Z"
+    },
+    "user": {
+      "id": "cust_abc123",
+      "name": "Jane Smith",
+      "email": "customer@example.com",
+      "phone": "+254700000123",
+      "company": "Acme Commerce Inc"
+    }
+  }
+  ```
+
+#### Timing Attack Mitigation
+`CustomerController.login` performs a cryptographically heavy `bcrypt.compare` against a valid dummy hash even if the requested email or customer profile is not found. This eliminates timing side-channels and username/email enumeration vulnerabilities.
+
+### Session Token Refresh
+Extend active customer session JWT tokens before expiration without requiring re-entry of credentials.
+
+- **Endpoint**: `POST /v3/:orgSlug/customers/auth/refresh`
+- **Headers**: `Authorization: Bearer <token>`
+- **Response (`200 OK`)**: Returns a fresh `HS256` Bearer JWT and updated session object with a renewed 7-day TTL.
+
+### Active Session Management & Revocation
+Customers can inspect and control all active concurrent sessions across devices:
+- **Get Active Session & Profile**: `GET /v3/:orgSlug/customers/auth/session`
+- **List All Concurrent Sessions**: `GET /v3/:orgSlug/customers/auth/sessions`
+- **Revoke Specific Session**: `DELETE /v3/:orgSlug/customers/auth/sessions/:sessionId`
+- **Revoke Other Concurrent Sessions**: `DELETE /v3/:orgSlug/customers/auth/sessions?mode=other`
+- **Revoke All Sessions**: `DELETE /v3/:orgSlug/customers/auth/sessions`
 
 ---
 
 ## 👤 2. Registering and Connecting Customers Directly
 
-When your system registers a customer or when a customer registers on an integrating storefront, you should register them directly in our system. If they also exist on an external Identity Provider, you can link them by passing the identity user identifier.
+When your system registers a customer or when a customer registers on an integrating storefront, you should register them directly in our system.
 
 ### Endpoint: Register Customer
 - **URL**: `/api/v3/:orgSlug/customers/register`
@@ -33,6 +95,7 @@ When your system registers a customer or when a customer registers on an integra
 {
   "name": "Jane Smith",
   "email": "jane.smith@example.com",
+  "password": "securepassword123",
   "phone": "+254700000123",
   "company": "Acme Commerce Inc",
   "customerType": "B2B_PREMIUM",
@@ -116,17 +179,17 @@ grant_type=authorization_code
 
 ---
 
-## 🛠️ 4. Accessing Scryme APIs on Behalf of Customers
+## 🛠️ 4. Request Authentication & Scoping in `V3AuthGuard`
 
-Integrating systems can invoke ERP and Catalog endpoints on behalf of the customer by supplying their authenticated Bearer token in the request headers:
+Integrating systems can invoke ERP, Catalog, Cart, and Customer endpoints on behalf of the customer by supplying their authenticated Bearer token in the request headers:
 
 ```http
 GET /api/v3/my-organization/catalog/products
 Authorization: Bearer <customer_access_token>
 ```
 
-Our system will:
-1. **Introspect and verify** the session token.
-2. **Parse the customer claims** (`sub`, `email`).
-3. **Synchronize or fetch** the corresponding customer mapping from the database.
-4. **Expose the request context** securely as a `customer` entity, enforcing multi-tenant isolation and secure data boundaries.
+Our system (`V3AuthGuard`) will:
+1. **Verify Token**: Validates `HS256` customer JWT signatures or introspects session tokens.
+2. **Verify Session Active State**: Checks Redis (`customer_session:<sub/customerId>:<sessionId>`) to confirm the session has not been revoked.
+3. **Establish Context**: Sets `req.v3Context` with resolved `customerId`, `sessionId`, `customer` profile, and `organization`.
+4. **Multi-Tenant Isolation**: Enforces organization slug boundaries (`orgSlug`), guaranteeing that customers only access data belonging to their authenticated organization.
