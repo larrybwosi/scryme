@@ -45,7 +45,7 @@ describe("ImageController", () => {
     expect(res.status).toHaveBeenCalledWith(HttpStatus.OK);
   });
 
-  it("should return private image with secure Cache-Control if authorized", async () => {
+  it("should return private image with secure Cache-Control if authorized via v2Context", async () => {
     const mockAttachment = {
       id: "img-1",
       organizationId: "org-1",
@@ -61,6 +61,30 @@ describe("ImageController", () => {
     };
     const req = {
       v2Context: { organizationId: "org-1" },
+    };
+
+    await controller.getImage("img-1", req as any, res as any);
+
+    expect(res.header).toHaveBeenCalledWith("Cache-Control", "private, no-cache, no-store, must-revalidate");
+    expect(res.status).toHaveBeenCalledWith(HttpStatus.OK);
+  });
+
+  it("should return private image with secure Cache-Control if authorized via v3Context", async () => {
+    const mockAttachment = {
+      id: "img-1",
+      organizationId: "org-1",
+      isPublic: false,
+      organization: { settings: { forcePrivateAttachments: false } },
+    };
+    mockPrisma.client.attachment.findUnique.mockResolvedValue(mockAttachment);
+
+    const res = {
+      header: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    };
+    const req = {
+      v3Context: { organizationId: "org-1" },
     };
 
     await controller.getImage("img-1", req as any, res as any);
