@@ -1,0 +1,170 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// CUSTOM WORKFLOWS AUTOMATION ENGINE MODULE
+// PostgreSQL-backed workflow definitions, executions, async jobs, webhooks, and audit logs.
+// ─────────────────────────────────────────────────────────────────────────────
+
+model WorkflowEngineDefinition {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  key         String // Identifier key (e.g., "lowstock_alert", "customer_onboarding", "custom_webhook_event")
+  name        String
+  description String?
+  triggerType WorkflowTriggerType @default(EVENT) // EVENT, WEBHOOK, SCHEDULED, MANUAL
+  config      Json // Configuration parameters (thresholds, email targets, etc.)
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  executions WorkflowEngineExecution[]
+  jobs       WorkflowEngineJob[]
+  webhooks   WorkflowEngineWebhook[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId, isActive])
+  @@map("workflow_engine_definition")
+}
+
+enum WorkflowTriggerType {
+  EVENT
+  WEBHOOK
+  SCHEDULED
+  MANUAL
+}
+
+model WorkflowEngineExecution {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  definitionId String
+  definition   WorkflowEngineDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  triggerEvent  String // Event name or trigger path
+  correlationId String
+  status        WorkflowExecutionStatus @default(PENDING)
+  payload       Json?
+  result        Json?
+  error         String?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobs      WorkflowEngineJob[]
+  auditLogs WorkflowEngineAuditLog[]
+
+  @@index([organizationId, triggerEvent])
+  @@index([correlationId])
+  @@index([status])
+  @@map("workflow_engine_execution")
+}
+
+enum WorkflowExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model WorkflowEngineJob {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  executionId String
+  execution   WorkflowEngineExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  definitionId String
+  definition   WorkflowEngineDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+
+  handler      String // Handler identifier, e.g. "lowstock_alert", "customer_onboarding", "outgoing_webhook"
+  payload      Json
+  status       WorkflowJobStatus @default(QUEUED)
+  attempts     Int               @default(0)
+  maxAttempts  Int               @default(5)
+  backoffMs    Int               @default(1000)
+  nextRunAt    DateTime          @default(now())
+  lockedBy     String?
+  lockedAt     DateTime?
+  lastError    String?
+
+  processedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  auditLogs WorkflowEngineAuditLog[]
+
+  @@index([organizationId, status])
+  @@index([status, nextRunAt])
+  @@index([executionId])
+  @@map("workflow_engine_job")
+}
+
+enum WorkflowJobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  RETRYING
+  CANCELLED
+}
+
+model WorkflowEngineWebhook {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  definitionId String?
+  definition   WorkflowEngineDefinition? @relation(fields: [definitionId], references: [id], onDelete: SetNull)
+
+  name         String
+  direction    WebhookDirection @default(INCOMING)
+  endpointUrl  String // URL for outgoing or secret token endpoint for incoming
+  secret       String? // Signing secret or verification header
+  headers      Json? // Custom HTTP headers for outgoing webhooks
+  isActive     Boolean          @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, direction])
+  @@map("workflow_engine_webhook")
+}
+
+enum WebhookDirection {
+  INCOMING
+  OUTGOING
+}
+
+model WorkflowEngineAuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  executionId String?
+  execution   WorkflowEngineExecution? @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  jobId String?
+  job   WorkflowEngineJob? @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  action    String // e.g., "EXECUTION_STARTED", "JOB_RETRIED", "WEBHOOK_DISPATCHED", "JOB_FAILED"
+  level     AuditLogLevel @default(INFO)
+  details   Json?
+  createdAt DateTime      @default(now())
+
+  @@index([organizationId, action])
+  @@index([executionId])
+  @@index([jobId])
+  @@map("workflow_engine_audit_log")
+}
+
+enum AuditLogLevel {
+  INFO
+  WARN
+  ERROR
+}
