@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { db, WindmillExecutionStatus } from "@repo/db";
 import { randomBytes } from "crypto";
 // @ts-ignore
@@ -267,7 +268,16 @@ export async function GET(
   { params }: { params: Promise<{ slug?: string[] }> },
 ) {
   try {
-    const auth = await getServerAuth();
+    let auth;
+    try {
+      auth = await getServerAuth({ allowNoOrg: true });
+    } catch (authError: any) {
+      if (isRedirectError(authError)) {
+        throw authError;
+      }
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     if (!auth?.organizationId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -310,6 +320,9 @@ export async function GET(
 
     return NextResponse.json({ error: "Not Found" }, { status: 404 });
   } catch (error: any) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
     console.error("Workflow API Error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Internal Server Error" },
@@ -323,7 +336,16 @@ export async function POST(
   { params }: { params: Promise<{ slug?: string[] }> },
 ) {
   try {
-    const auth = await getServerAuth();
+    let auth;
+    try {
+      auth = await getServerAuth({ allowNoOrg: true });
+    } catch (authError: any) {
+      if (isRedirectError(authError)) {
+        throw authError;
+      }
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     if (!auth?.organizationId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -361,6 +383,9 @@ export async function POST(
 
     return NextResponse.json({ error: "Not Found" }, { status: 404 });
   } catch (error: any) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
     console.error("Workflow API Error:", error);
     return NextResponse.json(
       { success: false, error: error.message || "Internal Server Error" },
