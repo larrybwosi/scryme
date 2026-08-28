@@ -198,6 +198,49 @@ impl BakeryAuthState {
 
         Ok(request_builder)
     }
+
+    /// Constructs a `scryme_sdk::ScrymeClient` using the current device config and active auth state.
+    pub fn build_sdk_client(&self) -> BackendResult<scryme_sdk::ScrymeClient> {
+        let (base_url, org_slug) = {
+            let override_guard = self.base_url_override.lock().map_err(|_| BackendError::Internal("Failed to lock base url override".to_string()))?;
+            let config_guard = self.device_config.lock().map_err(|_| BackendError::Internal("Failed to lock device config".to_string()))?;
+
+            let url = if let Some(over) = override_guard.as_ref() {
+                over.clone()
+            } else if let Some(config) = config_guard.as_ref() {
+                config.base_url.clone()
+            } else {
+                if cfg!(debug_assertions) {
+                    "http://localhost:3002".to_string()
+                } else {
+                    "https://api.scryme.tech".to_string()
+                }
+            };
+
+            let slug = config_guard.as_ref().map(|c| c.org_slug.clone()).unwrap_or_default();
+            (url, slug)
+        };
+
+        let token = {
+            let active_id_guard = self.active_member_id.lock().map_err(|_| BackendError::Internal("Failed to lock active id".to_string()))?;
+            if let Some(id) = active_id_guard.as_ref() {
+                let sessions_guard = self.sessions.lock().map_err(|_| BackendError::Internal("Failed to lock sessions".to_string()))?;
+                sessions_guard.get(id).map(|s| s.token.clone())
+            } else {
+                None
+            }
+        };
+
+        let mut builder = scryme_sdk::ScrymeClient::builder()
+            .base_url(base_url)
+            .org_slug(org_slug);
+
+        if let Some(t) = token {
+            builder = builder.bearer_token(t);
+        }
+
+        Ok(builder.build())
+    }
 }
 
 // --- Commands ---
@@ -415,47 +458,45 @@ pub async fn login_cloud_command(
     state: State<'_, BakeryAuthState>,
     card_id: String,
     pin: String,
-    location_id: Option<String>,
+    _location_id: Option<String>,
 ) -> BackendResult<serde_json::Value> {
-    let request = state.build_request(reqwest::Method::POST, "/members/login")?;
+    let sdk_client = state.build_sdk_client()?;
 
-    let body = serde_json::json!({
-        "cardId": card_id,
-        "pin": pin,
-        "locationId": location_id
+    let terminal_login_dto = scryme_sdk::models::TerminalLoginDto {
+        card_id,
+        pin,
+    };
+
+    let login_res = scryme_sdk::apis::v3_members_terminal_api::terminal_members_controller_login(
+        &sdk_client.config,
+        terminal_login_dto,
+    )
+    .await
+    .map_err(|e| BackendError::Auth(format!("Login failed: {}", e)))?;
+
+    let token = login_res.token.clone();
+    let member_dto = login_res.member.clone();
+
+    let member = MemberProfile {
+        id: member_dto.id.clone(),
+        name: member_dto.user.name.clone(),
+        role: Some(format!("{:?}", member_dto.role)),
+    };
+
+    let data = serde_json::json!({
+        "member": member,
+        "restoredSession": login_res.restored_session.unwrap_or(false),
     });
 
-    let res = request.json(&body).send().await.map_err(BackendError::Network)?;
+    let mut active_id_guard = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+    let mut sessions_guard = state.sessions.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
 
-    let status = res.status();
-    let text = res.text().await.map_err(|e| BackendError::Internal(format!("Failed to read response body: {}", e)))?;
+    sessions_guard.insert(member.id.clone(), AuthSession {
+        token,
+        user: member.clone(),
+    });
 
-    if !status.is_success() {
-        return Err(BackendError::Auth(format!("Login failed: {} - {}", status, text)));
-    }
-
-    let json_res: serde_json::Value = serde_json::from_str(&text).map_err(BackendError::Serialization)?;
-    let mut data = json_res["data"].clone();
-
-    // Store token in state
-    if let Some(token) = data["token"].as_str() {
-        let member: MemberProfile = serde_json::from_value(data["member"].clone()).map_err(BackendError::Serialization)?;
-
-        let mut active_id_guard = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
-        let mut sessions_guard = state.sessions.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
-
-        sessions_guard.insert(member.id.clone(), AuthSession {
-            token: token.to_string(),
-            user: member.clone(),
-        });
-
-        *active_id_guard = Some(member.id);
-
-        // Remove token from response sent to frontend
-        if let Some(obj) = data.as_object_mut() {
-            obj.remove("token");
-        }
-    }
+    *active_id_guard = Some(member.id);
 
     Ok(data)
 }

@@ -1,8 +1,6 @@
 use crate::auth_store::AuthState;
 use log::{error, info};
-use reqwest::header::{HeaderMap, HeaderValue};
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 use tauri::State;
 
 // --- Error Handling Structures ---
@@ -91,69 +89,6 @@ pub struct TransferApiPayload {
 
 // --- Internal Helpers ---
 
-fn build_client_with_context(
-    auth_state: &State<'_, AuthState>,
-) -> Result<(reqwest::Client, String, String), CommandError> {
-    // 1. Get Config (Base URL & Current Location)
-    let (base_url, device_key, location_id) = {
-        let config_guard = auth_state.device_config.lock().map_err(|_| {
-            CommandError::new(ErrorKind::Configuration, "Failed to lock device config")
-        })?;
-
-        let config = config_guard.as_ref().ok_or_else(|| {
-            CommandError::new(ErrorKind::Configuration, "Device is not configured")
-        })?;
-
-        (
-            config.base_url.clone(),
-            config.device_key.clone(),
-            config.location_id.clone(),
-        )
-    };
-
-    // 2. Get Auth Token
-    let token = auth_state.get_active_token().map_err(|e| {
-        CommandError::new(ErrorKind::Authentication, format!("Failed to get token: {}", e))
-    })?;
-
-    let clean_base = base_url.trim_end_matches('/').to_string();
-    let mut headers = HeaderMap::new();
-
-    let mut val = HeaderValue::from_str(&device_key).map_err(|e| {
-        CommandError::new(
-            ErrorKind::Configuration,
-            format!("Invalid Device Key format: {}", e),
-        )
-    })?;
-    val.set_sensitive(true);
-    headers.insert("X-API-KEY", val);
-
-    if let Some(t) = &token {
-        let mut val = HeaderValue::from_str(t).map_err(|e| {
-            CommandError::new(
-                ErrorKind::Authentication,
-                format!("Invalid Token format: {}", e),
-            )
-        })?;
-        val.set_sensitive(true);
-        headers.insert("X-MEMBER-TOKEN", val);
-    }
-
-
-    let client = reqwest::Client::builder()
-        .default_headers(headers)
-        .timeout(Duration::from_secs(60))
-        .build()
-        .map_err(|e| {
-            CommandError::new(
-                ErrorKind::Configuration,
-                format!("Failed to build HTTP client: {}", e),
-            )
-        })?;
-
-    Ok((client, clean_base, location_id))
-}
-
 async fn handle_response<T: for<'de> Deserialize<'de>>(
     response: reqwest::Response,
     context: &str,
@@ -208,17 +143,16 @@ pub async fn submit_stock_transfer(
     auth_state: State<'_, AuthState>,
     payload: TransferRequest,
 ) -> Result<serde_json::Value, CommandError> {
-    // 1. Build Client & Fetch Current Location from State
-    let (client, base_url, current_location_id) = build_client_with_context(&auth_state)?;
+    let current_location_id = {
+        let config_guard = auth_state.device_config.lock().map_err(|_| {
+            CommandError::new(ErrorKind::Configuration, "Failed to lock device config")
+        })?;
+        let config = config_guard.as_ref().ok_or_else(|| {
+            CommandError::new(ErrorKind::Configuration, "Device is not configured")
+        })?;
+        config.location_id.clone()
+    };
 
-    // 2. Prepare API URL
-    let url = format!(
-        "{}/{}",
-        base_url,
-        crate::api_config::routes::INVENTORY_TRANSFERS
-    );
-
-    // 3. Construct Full Payload
     let api_payload = TransferApiPayload {
         from_location_id: current_location_id.clone(),
         to_location_id: payload.to_location_id,
@@ -232,9 +166,10 @@ pub async fn submit_stock_transfer(
         current_location_id, api_payload.to_location_id
     );
 
-    // 4. Send Request
-    let resp = client
-        .post(&url)
+    let req = auth_state.build_request(reqwest::Method::POST, crate::api_config::routes::INVENTORY_TRANSFERS)
+        .map_err(|e| CommandError::new(ErrorKind::Configuration, e))?;
+
+    let resp = req
         .json(&api_payload)
         .send()
         .await
@@ -251,17 +186,16 @@ pub async fn submit_stock_request(
     auth_state: State<'_, AuthState>,
     payload: TransferRequest,
 ) -> Result<serde_json::Value, CommandError> {
-    // 1. Build Client & Fetch Current Location from State
-    let (client, base_url, current_location_id) = build_client_with_context(&auth_state)?;
+    let current_location_id = {
+        let config_guard = auth_state.device_config.lock().map_err(|_| {
+            CommandError::new(ErrorKind::Configuration, "Failed to lock device config")
+        })?;
+        let config = config_guard.as_ref().ok_or_else(|| {
+            CommandError::new(ErrorKind::Configuration, "Device is not configured")
+        })?;
+        config.location_id.clone()
+    };
 
-    // 2. Prepare API URL
-    let url = format!(
-        "{}/{}",
-        base_url,
-        crate::api_config::routes::INVENTORY_REQUESTS
-    );
-
-    // 3. Construct Full Payload
     let api_payload = TransferApiPayload {
         from_location_id: current_location_id.clone(),
         to_location_id: payload.to_location_id,
@@ -275,9 +209,10 @@ pub async fn submit_stock_request(
         current_location_id, api_payload.to_location_id
     );
 
-    // 4. Send Request
-    let resp = client
-        .post(&url)
+    let req = auth_state.build_request(reqwest::Method::POST, crate::api_config::routes::INVENTORY_REQUESTS)
+        .map_err(|e| CommandError::new(ErrorKind::Configuration, e))?;
+
+    let resp = req
         .json(&api_payload)
         .send()
         .await

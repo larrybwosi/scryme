@@ -1,6 +1,6 @@
 {
   "name": "@scryme/sdk",
-  "version": "9.71.0",
+  "version": "9.71.2-next.0",
   "publishConfig": {
     "access": "public"
   },
@@ -38,7 +38,9 @@
     }
   },
   "scripts": {
-    "generate": "orval",
+    "generate": "pnpm run generate:ts && pnpm run generate:rust",
+    "generate:ts": "orval",
+    "generate:rust": "openapi-generator-cli generate -i ./openapi.json -g rust -o ./rust --additional-properties=packageName=scryme-sdk,packageVersion=9.69.0 --global-property apiDocs=false,modelDocs=false",
     "build": "tsup src/index.ts src/client.tsx src/server.ts --format cjs,esm --dts",
     "dev": "tsup src/index.ts src/client.tsx src/server.ts --format cjs,esm --dts --watch",
     "test": "jest",
@@ -59,6 +61,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/jest": "^29.5.14",
     "@types/react": "^19.2.14",
+    "@openapitools/openapi-generator-cli": "^2.18.0",
     "jest": "^29.7.0",
     "orval": "^8.23.0",
     "react": "^19.2.14",

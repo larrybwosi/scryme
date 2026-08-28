@@ -33,6 +33,7 @@ import {
 } from "../../application/dto/pos.dto";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { RequireMember } from "@/v3/common/decorators/require-member.decorator";
 
 @ApiTags("V3 POS")
 @Controller(":orgSlug/pos")
@@ -103,6 +104,7 @@ export class PosController {
   }
 
   @Post("sale")
+  @RequireMember()
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
   @ApiOperation({
@@ -147,6 +149,7 @@ export class PosController {
   }
 
   @Post("petty-cash")
+  @RequireMember()
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
   @ApiOperation({

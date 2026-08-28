@@ -24,6 +24,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    // Check Organization Storage Quota & Limits
+    const org = await db.organization.findUnique({
+      where: { id: auth.organizationId },
+      select: { quotaOverrides: true },
+    });
+
+    const overrides = (org?.quotaOverrides as Record<string, any>) || {};
+
+    if (overrides.storageDisabled) {
+      return NextResponse.json(
+        { error: "Storage access disabled for this organization" },
+        { status: 403 },
+      );
+    }
+
+    if (overrides.storageLimitBytes != null || overrides.storageLimitMB != null) {
+      const limitBytes =
+        overrides.storageLimitBytes != null
+          ? Number(overrides.storageLimitBytes)
+          : Number(overrides.storageLimitMB) * 1024 * 1024;
+
+      const currentUsage = await db.attachment.aggregate({
+        where: { organizationId: auth.organizationId },
+        _sum: { sizeBytes: true },
+      });
+
+      const usedBytes = currentUsage._sum.sizeBytes || 0;
+
+      if (usedBytes + file.size > limitBytes) {
+        return NextResponse.json(
+          { error: "Storage limit exceeded for this organization" },
+          { status: 403 },
+        );
+      }
+    }
+
     // 3. Dynamic imports for shared storage and utility utilities
     const { storageService, StorageCoreService } =
       await import("@repo/shared/storage");

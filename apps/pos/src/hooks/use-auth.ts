@@ -3,7 +3,6 @@ import { invoke } from '@tauri-apps/api/core';
 import { Member, useAuthStore } from '@/store/pos-auth-store';
 import { toast } from 'sonner';
 import { useEffect, useMemo } from 'react';
-// import { trackEvent } from "@aptabase/tauri";
 import throttle from 'lodash/throttle';
 import posthog from 'posthog-js';
 
@@ -158,7 +157,7 @@ export const useSessionActivityListener = () => {
         // We can use authenticated_api_request to ping and verify token
         const response = await invoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: `api/v2/pos/attendance/status`,
+          path: `api/v3/:orgSlug/pos/me`,
         });
 
         // The API can return { success: true, data: { isCheckedIn: true, ... } } or raw { isCheckedIn: true, ... }

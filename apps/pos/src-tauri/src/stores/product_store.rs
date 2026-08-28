@@ -14,14 +14,10 @@ use sqlx::{Row, SqlitePool};
 use std::path::PathBuf;
 use std::sync::OnceLock;
 use tauri::{AppHandle, Manager, Emitter};
-#[cfg(not(feature = "standalone"))]
-use reqwest::header::{HeaderMap, HeaderValue};
 use tauri_plugin_sql::{DbInstances, DbPool};
 
 use crate::auth_store::AuthState;
 
-#[cfg(not(feature = "standalone"))]
-const TIMEOUT_SECONDS: u64 = 60;
 const MAIN_DB_NAME: &str = "sqlite:pos_main.db";
 
 static LEGACY_SECRET: OnceLock<String> = OnceLock::new();
@@ -259,28 +255,23 @@ pub async fn run_sync(
     force_full_sync: bool,
 ) -> Result<usize> {
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
-    let (base_url, location_id, device_key) = {
+    let location_id = {
         let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
         let config = config_guard.as_ref().ok_or_else(|| anyhow::anyhow!("Device not configured"))?;
-        (config.base_url.clone(), config.location_id.clone(), config.device_key.clone())
+        config.location_id.clone()
     };
-    let member_token = auth_state.get_active_token().map_err(|e| anyhow::anyhow!(e))?;
-    if base_url.is_empty() { return Err(anyhow::anyhow!("Base URL is empty")); }
-    let target_url = format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::PRODUCTS);
 
     let last_sync_time: Option<String> = if force_full_sync { None } else {
         sqlx::query("SELECT last_sync FROM product_sync_meta WHERE location_id = ?1").bind(&location_id).fetch_optional(&pool).await?.map(|r| r.get("last_sync"))
     };
 
-    let mut headers = HeaderMap::new();
-    headers.insert("X-API-KEY", HeaderValue::from_str(&device_key)?);
-    if let Some(token) = member_token { headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(&token)?); }
-
-    let client = reqwest::Client::builder().default_headers(headers).timeout(std::time::Duration::from_secs(TIMEOUT_SECONDS)).build()?;
     let mut query_params = vec![("locationId", location_id.clone()), ("page", "1".to_string()), ("limit", "2000".to_string()), ("categoryId", "all".to_string())];
     if let Some(ts) = &last_sync_time { query_params.push(("lastSync", ts.clone())); }
 
-    let response = client.get(&target_url).query(&query_params).send().await?;
+    let request = auth_state.build_request(reqwest::Method::GET, crate::api_config::routes::PRODUCTS)
+        .map_err(|e| anyhow::anyhow!(e))?;
+
+    let response = request.query(&query_params).send().await?;
     if !response.status().is_success() { return Err(anyhow::anyhow!("Server returned error: {}", response.status())); }
 
     let v2_resp = response.json::<crate::models::V2Response<ProductsSyncResponse>>().await?;

@@ -1,6 +1,6 @@
 # crm
 
-## 7.41.0
+## 7.41.0-next.0
 
 ### Minor Changes
 

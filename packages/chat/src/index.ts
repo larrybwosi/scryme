@@ -102,6 +102,7 @@ export class ScrymeChatApiClient {
       ownerEmail: ownerEmail || "admin@scryme.tech",
       ...(initialMembers ? { initialMembers } : {}),
     });
+      console.log(data)
     const workspace = data?.data?.workspace || data?.data?.workspace;
     return {
       id: workspace.id,

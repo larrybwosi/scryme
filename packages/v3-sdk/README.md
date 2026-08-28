@@ -1,171 +1,331 @@
 # Scryme V3 SDK
 
-The official TypeScript SDK for the **Scryme V3 API**—engineered for scalability, security, and developer convenience. This SDK provides complete, type-safe coverage of all Scryme V3 services, allowing developers to seamlessly integrate their applications with the Scryme ecosystem.
+The official TypeScript SDK for the **Scryme V3 API**—engineered for scalability, security, type safety, and developer convenience. This SDK provides complete, type-safe coverage of all Scryme V3 services, allowing developers to seamlessly integrate storefronts, mobile apps, connected applications, and server-side workflows with the Scryme ecosystem.
 
 For the complete, interactive documentation, live sandbox playgrounds, and detailed OpenAPI schemas, please visit our documentation portal:
 👉 **[https://docs.scryme.tech](https://docs.scryme.tech)**
 
+---
+
 ## 🚀 Features
 
 - **End-to-End Type Safety**: Direct compilation from the core OpenAPI 3.0 specification.
-- **Axios-Based Client**: Built-in support for request/response interceptors, customizable base URLs, and timeout configurations.
 - **Strictly Isolated Client & Server SDKs**: Prevents request state and session pollution in multi-tenant environments.
-- **Comprehensive API Coverage**:
-  - **Auth**: Token exchange (Client Credentials Flow) & OAuth2 proxy support.
-  - **Inventory**: Stock queries, multi-branch listings, batch tracking (trace, split, merge), B2B availability checks, and integrity verify/fix logic.
-  - **Orders & B2B**: Quote requests, quote-to-order conversions, and order management.
-  - **CRM & Customers**: Customer registration, custom CRM definitions, custom fields, relationships, associations, notes, and activity timelines.
-  - **Loyalty**: Loyalty status (tiers & points), voucher validation, and reward redemption.
-  - **Finance**: Corporate expenses, utility account tracking, and petty cash fund management (allocations, transactions, top-ups).
-  - **POS**: POS device provisioning, staff login, and petty cash expense logging.
-  - **Members & Roles**: Staff rosters, custom roles, permission sets, departments, and attendance logging (check-in/check-out).
-  - **Services & Bookings**: Resource utilization, booking funnel, public-facing OTP-verified booking, shifts, and materials consumption.
-  - **Integrations & Webhooks**: Subscription management and Strapi E-commerce integration (storefront customer registration, storefront token exchange, sync queues).
+- **Stateful Customer Engine & Auth**: Full support for customer registration (`signUp`), credential sign-in (`signIn`), proactive/reactive token refresh, active session tracking, multi-session revocation, and reactive React hooks (`useSession`).
+- **Stateful Shopping Cart**: Dynamic `customerId` resolution, automatic line item difference calculations (`cart.update`), totals metrics, guest-to-customer cart deep-merging (`mergeGuestCart`), and multi-location checkout.
+- **Axios-Based Network Layer**: Interceptor-based automatic token exchange, proactive/reactive expiration handling, and multi-tenant `orgSlug` auto-injection.
+- **Comprehensive Domain Coverage**:
+  - **Auth & Customer Engine**: Customer login, token refresh, active session management, address directory, and client credentials flow.
+  - **Catalog & Services**: Products, services, CMS customizations, product reviews with auto-resolved customer context, service categories, resources, availability slots, and public OTP booking flows.
+  - **Orders & Cart**: Stateful shopping cart, sales orders, quote requests, B2B quotes, STK push payments, and checkout.
+  - **Inventory**: Stock queries, multi-branch listings, batch tracking (trace, split, merge), B2B availability checks, physical reconciliation, assemblies, and lead time/waste analysis.
+  - **CRM**: Custom CRM record definitions, custom fields, relationships, associations, notes logging, and timeline activities.
+  - **Loyalty**: Loyalty status (tiers & points), voucher validation, customer favorites, and reward redemption.
+  - **Finance & Accounting**: Invoices, corporate expenses, utility account tracking, petty cash funds, Profit & Loss reports, balance sheets, and cash flow analysis.
+  - **POS**: POS device provisioning, standalone POS keys, staff login, terminal sync, and petty cash expense logging.
+  - **Members & Roles**: Staff rosters, custom roles, permission sets, departments, invitations, and attendance logging (check-in/check-out).
+  - **Integrations & Webhooks**: Subscription management, Strapi E-commerce integration, and Windmill workflow callback orchestration.
 
 ---
 
 ## 📦 Installation
 
-To use the Scryme V3 SDK in your project, install it from the workspace repository:
+Install `@scryme/sdk` into your project:
 
 ```bash
 pnpm add @scryme/sdk
+# or
+npm install @scryme/sdk
+# or
+yarn add @scryme/sdk
 ```
 
 ---
 
-## 🔑 Client & Server SDK Isolation
+## 🔑 Client & Server SDK Architecture
 
-The SDK supports distinct, fully isolated client-side and server-side setup options to prevent request state and session pollution in multi-tenant environments.
+The SDK provides distinct, fully isolated client-side (`@scryme/sdk/client`) and server-side (`@scryme/sdk/server`) constructors to prevent request state and session pollution in multi-tenant environments.
 
-### 🌐 Server-Side Setup (`@scryme/sdk/server`)
-Strictly isolates requests and Axios instances. Ideal for Next.js API routes, edge functions, backend microservices, or Windmill workflows.
+---
 
-#### Class-Based Constructor (`ScrymeServerSDK`)
-Requires `clientId`, `clientSecret`, and `orgSlug` strictly to initialize correctly:
+## 📱 Client-Side Setup (`@scryme/sdk/client`)
+
+The `ScrymeClientSDK` provides stateful session persistence (`localStorage` or custom `StorageProvider`), reactive auth event listeners, and stateful customer cart operations.
+
+### Initialization
 
 ```typescript
-import { ScrymeServerSDK } from "@scryme/sdk/server";
+import { ScrymeClientSDK, createClientSDK } from "@scryme/sdk/client";
+
+// Class-based constructor
+const scrymeClient = new ScrymeClientSDK({
+  clientId: "storefront_client_id",
+  orgSlug: "my-organization",
+  baseURL: "https://api.scryme.tech", // Optional, defaults to https://api.scryme.tech
+});
+
+// Or using factory helper
+const scrymeClientAlt = createClientSDK({
+  clientId: "storefront_client_id",
+  orgSlug: "my-organization",
+});
+```
+
+---
+
+## 👤 Customer Authentication & Session Engine (`scrymeClient.customer.auth`)
+
+`ScrymeClientSDK` includes a stateful Customer Authentication engine that manages customer login credentials, local session storage, JWT auto-refresh, active session tracking, and reactive UI hooks.
+
+### Customer Registration & Sign-Up (`signUp`)
+
+Registers a new customer profile. If a `password` is provided, `signUp` automatically signs the customer in and initializes an active customer session:
+
+```typescript
+const response = await scrymeClient.customer.auth.signUp({
+  name: "Jane Smith",
+  email: "jane.smith@example.com",
+  password: "securepassword123", // Establishes customer login credentials
+  phone: "+254700000123",
+  company: "Acme Commerce Inc",
+  customerType: "B2B_PREMIUM",
+  taxId: "PIN-KRA-123456",
+  address: {
+    label: "Headquarters",
+    street1: "123 Commercial Way",
+    city: "Nairobi",
+    country: "Kenya",
+    isDefault: true,
+  },
+});
+
+console.log("Customer registered:", response.data);
+```
+
+### Customer Sign-In (`signIn`)
+
+Authenticates a customer using email and password, starting an active session in Redis, saving the JWT token to storage, and firing a `SIGNED_IN` event:
+
+```typescript
+try {
+  const authResponse = await scrymeClient.customer.auth.signIn({
+    email: "jane.smith@example.com",
+    password: "securepassword123",
+  });
+
+  console.log("Bearer Token:", authResponse.token);
+  console.log("Session Metadata:", authResponse.session);
+  console.log("Customer Profile:", authResponse.user);
+} catch (error) {
+  console.error("Login failed:", error);
+}
+```
+
+### Sign-Out (`signOut`)
+
+Clears persisted session tokens, resets memory state, and fires a `SIGNED_OUT` event:
+
+```typescript
+await scrymeClient.customer.auth.signOut();
+```
+
+### Session Refresh & Inspection
+
+```typescript
+// Explicitly refresh the current customer session
+const freshSession = await scrymeClient.customer.auth.refreshSession();
+
+// Get internal session state synchronously/asynchronously
+const sessionState = await scrymeClient.customer.auth.getSession();
+console.log("Token:", sessionState.token);
+console.log("Active User:", sessionState.user);
+
+// Listen for authentication state changes (SIGNED_IN, SIGNED_OUT, INITIAL_SESSION)
+const { unsubscribe } = scrymeClient.customer.auth.onAuthStateChange((event, session) => {
+  console.log(`Auth state event: ${event}`, session);
+});
+// Clean up listener when done
+unsubscribe();
+```
+
+### Concurrent Session Revocation
+
+Customers can view and destroy active sessions across devices:
+
+```typescript
+// List all active concurrent sessions
+const sessions = await scrymeClient.customer.auth.getSessions();
+console.log("Active sessions count:", sessions.length);
+
+// Revoke a specific session by ID
+await scrymeClient.customer.auth.revokeSession("sess_abc12345");
+
+// Revoke all other sessions except the active one
+await scrymeClient.customer.auth.revokeAllSessions("other");
+
+// Revoke all sessions
+await scrymeClient.customer.auth.revokeAllSessions();
+```
+
+### Reactive React Hook (`useSession`)
+
+React storefront components can use `useSession` for immediate, real-time synchronization with customer authentication state:
+
+```tsx
+import React from "react";
+import { scrymeClient } from "./scryme";
+
+export function UserProfileHeader() {
+  const { data, isPending, error, refetch } = scrymeClient.customer.auth.useSession();
+
+  if (isPending) return <div>Loading customer session...</div>;
+  if (error) return <div>Error loading session: {error.message}</div>;
+  if (!data?.user) return <div>Welcome, Guest! <button onClick={() => scrymeClient.customer.auth.signIn(...)}>Sign In</button></div>;
+
+  return (
+    <div>
+      <span>Welcome back, {data.user.name}!</span>
+      <button onClick={() => scrymeClient.customer.auth.signOut()}>Sign Out</button>
+    </div>
+  );
+}
+```
+
+---
+
+## 👤 Customer Profile & Address Directory (`scrymeClient.customer`)
+
+Manage the logged-in customer's profile details and address book:
+
+```typescript
+// Fetch current logged-in customer profile
+const profile = await scrymeClient.customer.getProfile();
+console.log("Profile:", profile);
+
+// Update profile details
+const updated = await scrymeClient.customer.updateProfile({
+  phone: "+254799999999",
+  company: "Acme Holdings Ltd",
+});
+
+// Manage saved addresses
+const addresses = await scrymeClient.customer.getAddresses();
+await scrymeClient.customer.addAddress({
+  label: "Office Branch",
+  street1: "45 Westlands Rd",
+  city: "Nairobi",
+  country: "Kenya",
+  isDefault: false,
+});
+```
+
+---
+
+## 🛒 Stateful Shopping Cart Engine (`scrymeClient.cart`)
+
+The SDK provides a stateful shopping cart submodule with automatic `customerId` resolution from active customer sessions, line item quantity delta calculation, and guest-to-customer cart deep merging.
+
+### Dynamic `customerId` Resolution
+For operations such as `cart.add`, `cart.remove`, `cart.update`, and `bookings.create`, the SDK automatically resolves `customerId` from the active user session (`user?.customerId || user?.id || user?.customer?.id`) if omitted from call arguments. If no authenticated customer session exists and no explicit `customerId` is passed, operations requiring customer context safely throw an error.
+
+### Cart Mutations & Updates
+
+```typescript
+// 1. Fetch current active cart
+const cartResponse = await scrymeClient.cart.get({ sessionId: "guest_session_123" });
+
+// 2. Add product variant or service to cart
+await scrymeClient.cart.add({
+  productId: "prod_sourdough_bread",
+  variantId: "var_large_500g",
+  quantity: 2,
+  sessionId: "guest_session_123", // Optional if customer is signed in
+});
+
+// 3. Smart quantity update (computes delta, calls add/remove appropriately)
+await scrymeClient.cart.update({
+  productId: "prod_sourdough_bread",
+  variantId: "var_large_500g",
+  quantity: 5, // Automatically increments by +3
+});
+
+// 4. Retrieve flat array of cart items
+const items = await scrymeClient.cart.getItems();
+
+// 5. Calculate summary metrics and total item count
+const totals = await scrymeClient.cart.getTotals();
+console.log("Total Items Count:", totals.itemsCount);
+```
+
+### Guest-to-Customer Cart Deep-Merging (`mergeGuestCart`)
+
+When an anonymous guest customer signs in, call `mergeGuestCart` to aggregate their guest items into their permanent customer cart and clear the guest cart:
+
+```typescript
+// Sign in customer
+await scrymeClient.customer.auth.signIn({
+  email: "john@example.com",
+  password: "password123",
+});
+
+// Merge guest cart items into customer cart
+const mergedCart = await scrymeClient.cart.mergeGuestCart(
+  "guest_session_123", // Guest session ID
+  "cust_abc123"        // Target customer ID
+);
+
+console.log("Merged Cart Items:", mergedCart.data.items);
+```
+
+### Checkout & Sales Order Generation (`checkout`)
+
+Converts the active shopping cart into an official enterprise Sales Order and deducts inventory at the target location:
+
+```typescript
+const order = await scrymeClient.cart.checkout({
+  locationId: "loc_nairobi_main",
+  notes: "Deliver before 2 PM",
+  channel: "ONLINE_STOREFRONT",
+});
+
+console.log("Sales Order Created:", order.id);
+```
+
+---
+
+## 🌐 Server-Side Setup (`@scryme/sdk/server`)
+
+The `ScrymeServerSDK` strictly isolates requests and Axios instances for multi-tenant server environments (Next.js Server Components, API routes, Windmill workflows, backend services).
+
+### Initialization
+
+```typescript
+import { ScrymeServerSDK, createServerSDK } from "@scryme/sdk/server";
 
 const scrymeServer = new ScrymeServerSDK({
   baseURL: "https://api.scryme.tech",
-  orgSlug: "your-org-slug", // Automatic orgSlug injection on all API calls!
+  orgSlug: "my-organization",
   clientId: "your_client_id_123",
   clientSecret: "your_client_secret_456",
 });
 
-async function run() {
-  // 1. Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!
+async function runServerFlow() {
+  // Call APIs directly—the SDK handles Client Credentials token exchange and orgSlug auto-injection!
   const products = await scrymeServer.catalog.getProducts({ limit: 10 });
-  console.log("Server Products:", products.data);
+  const customers = await scrymeServer.admin.getCustomers({ limit: 20 });
+  console.log("Products count:", products.data.length);
 }
-```
-
-Or use the helper factory `createServerSDK`, which provides fallback defaults:
-
-```typescript
-import { createServerSDK } from "@scryme/sdk/server";
-
-const scrymeServer = createServerSDK({
-  baseURL: "https://api.scryme.tech",
-  orgSlug: "your-org-slug",
-  clientId: "your_client_id_123",
-  clientSecret: "your_client_secret_456",
-});
-```
-
-### 📱 Client-Side Setup (`@scryme/sdk/client`)
-Provides stateful and reactive state persistence (localStorage / StorageProviders) with login listeners and automatic session recoveries.
-
-#### Class-Based Constructor (`ScrymeClientSDK`)
-Requires `clientId`, `clientSecret`, and `orgSlug` strictly to initialize correctly:
-
-```typescript
-import { ScrymeClientSDK } from "@scryme/sdk/client";
-
-const scrymeClient = new ScrymeClientSDK({
-  orgSlug: "your-org-slug",
-  clientId: "your_client_id_123",
-  clientSecret: "your_client_secret_456",
-});
-
-// Reactively listen to auth state changes
-scrymeClient.auth.onAuthStateChange((event, session) => {
-  console.log(`Auth Event: ${event}`, session);
-});
-
-async function runClient() {
-  // Call APIs directly—the SDK handles token retrieval, refresh, and auto-injection of orgSlug automatically!
-  const stock = await scrymeClient.inventory.getInventory({ limit: 5 });
-  console.log("Client Stock:", stock.data);
-}
-```
-
-Or use the helper factory `createClientSDK`, which provides fallback defaults:
-
-```typescript
-import { createClientSDK } from "@scryme/sdk/client";
-
-const scrymeClient = createClientSDK({
-  orgSlug: "your-org-slug",
-  clientId: "your_client_id_123",
-  clientSecret: "your_client_secret_456",
-});
 ```
 
 ---
 
-## 🔑 Global / Legacy API client (`getScrymeV3API`)
+## 🔒 Best Practices & Security
 
-Alternatively, if you prefer utilizing a global request client or overriding behavior manually, you can initialize the custom Orval proxy with `getScrymeV3API`. It supports optional auto-injection of `orgSlug` from environment variables (`SCRYME_ORG_SLUG`, etc.) or custom default configurations.
+### Multi-Tenant Organization Scoping
+All domain resources are isolated by organization. The SDK automatically injects the configured `orgSlug` parameter into all API calls.
 
-### Complete Initialization Example:
-
-```typescript
-import { getScrymeV3API } from "@scryme/sdk";
-import axios from "axios";
-
-// 1. Initialize the API instance (optionally passing a custom Axios instance)
-const apiBaseUrl = process.env.SCRYME_API_URL || "https://api.scryme.tech";
-axios.defaults.baseURL = apiBaseUrl;
-
-const scryme = getScrymeV3API(axios);
-
-async function runFlow() {
-  try {
-    // 2. Perform Client Credentials flow to retrieve access token
-    const tokenResponse = await scryme.authExchangeToken({
-      clientId: process.env.SCRYME_CLIENT_ID || "your_id",
-      clientSecret: process.env.SCRYME_CLIENT_SECRET || "your_secret"
-    });
-
-    const accessToken = tokenResponse.data.accessToken;
-    console.log("Successfully logged in! Token retrieved.");
-
-    // 3. Register the token in the Axios headers
-    axios.defaults.headers.common["Authorization"] = `Bearer ${accessToken}`;
-
-    // 4. Perform type-safe V3 operations (orgSlug is auto-injected from environment!)
-    const products = await scryme.catalogGetProducts({ limit: 10 });
-    console.log("Catalog Products:", products.data);
-  } catch (error) {
-    console.error("SDK execution failed:", error);
-  }
-}
-```
-
-For more domain examples, detailed schemas, and active playgrounds, head over to:
-👉 **[docs.scryme.tech](https://docs.scryme.tech)**
-
----
-
-## 🔒 Best Practices
-
-### Multi-tenant Organization Scoping
-All core resources are strictly isolated by organization. Ensure you always pass the correct `orgSlug` parameter as required by the endpoints. Passing an invalid or unauthorized `orgSlug` will yield a `401 Unauthorized` or `404 Not Found` response.
-
-### Secure Webhook Verification
-When receiving webhook callbacks from Scryme, always verify the webhook signature before processing the payload to prevent spoofing attacks.
+### Webhook Verification
+When receiving webhooks from Scryme, verify payload HMAC signatures to prevent spoofing:
 
 ```typescript
 import * as crypto from "crypto";
@@ -175,41 +335,14 @@ function verifySignature(
   signature: string,
   webhookSecret: string
 ): boolean {
-  // Generate the expected HMAC signature
   const hmac = crypto.createHmac("sha256", webhookSecret);
   const expectedSignature = hmac.update(payload).digest("hex");
 
-  // Pre-hash both signatures using SHA-256 to ensure identical 32-byte buffer length.
-  // This prevents timing side-channels, signature length leakage, and RangeError exceptions on unequal buffer lengths.
-  const expectedHash = crypto
-    .createHash("sha256")
-    .update(expectedSignature)
-    .digest();
-  const actualHash = crypto
-    .createHash("sha256")
-    .update(signature || "")
-    .digest();
+  // Pre-hash signatures to SHA-256 to guarantee equal length buffers and prevent timing attacks
+  const expectedHash = crypto.createHash("sha256").update(expectedSignature).digest();
+  const actualHash = crypto.createHash("sha256").update(signature || "").digest();
 
   return crypto.timingSafeEqual(expectedHash, actualHash);
-}
-```
-
-### Robust Error Handling
-Scryme V3 API returns standardized error structures. Always wrap your SDK calls in `try/catch` blocks and parse the error fields to display helpful messages to users.
-
-```typescript
-import { isAxiosError } from "axios";
-
-try {
-  await scrymeClient.inventory.getInventory({ limit: 5 });
-} catch (error) {
-  if (isAxiosError(error) && error.response) {
-    const apiError = error.response.data;
-    console.error(`Error (${apiError.error.code}): ${apiError.error.message}`);
-    console.error("Details:", apiError.error.details);
-  } else {
-    console.error("Unexpected Error:", error);
-  }
 }
 ```
 
@@ -217,4 +350,4 @@ try {
 
 ## 📄 License
 
-This package is licensed under the GNU Affero General Public License version 3 (AGPL-3.0). Please see the [LICENSE](../../LICENSE) file for more details.
+This package is licensed under the GNU Affero General Public License version 3 (AGPL-3.0). Please see the [LICENSE](../../LICENSE) file for details.

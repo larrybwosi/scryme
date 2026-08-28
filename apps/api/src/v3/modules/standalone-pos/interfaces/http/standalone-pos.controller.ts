@@ -41,10 +41,6 @@ export class StandalonePosController {
 
   @Get("validate")
   @ApiOperation({ summary: "Validate a long-lived standalone device key" })
-  @ApiHeader({
-    name: "X-Standalone-Key",
-    description: "The long-lived standalone device key",
-  })
   async validateKey(@Headers("x-standalone-key") key: string) {
     if (!key) {
       throw new UnauthorizedException("Missing X-Standalone-Key header");

@@ -2,7 +2,6 @@ use crate::auth_store::AuthState;
 use crate::models::{Shift, ShiftSyncPayload};
 use chrono::Utc;
 use log::error;
-use reqwest::header::{HeaderMap, HeaderValue};
 use sha2::{Digest, Sha256};
 use sqlx::{Row, SqlitePool};
 use std::sync::Mutex;
@@ -386,12 +385,11 @@ pub async fn sync_pending_shifts_cloud(
 
     if rows.is_empty() { return Ok("No pending shifts to sync".to_string()); }
 
-    let (base_url, location_id, device_key) = {
+    let location_id = {
         let config_guard = auth_state.device_config.lock().map_err(|_| "Lock error".to_string())?;
         let config = config_guard.as_ref().ok_or("Device not configured".to_string())?;
-        (config.base_url.clone(), config.location_id.clone(), config.device_key.clone())
+        config.location_id.clone()
     };
-    let member_token = auth_state.get_active_token()?;
 
     for row in rows {
         let shift_id: String = row.get("id");
@@ -417,12 +415,9 @@ pub async fn sync_pending_shifts_cloud(
             closing_operator_id: row.get("closing_operator_id"),
         };
 
-        let mut headers = HeaderMap::new();
-        headers.insert("X-API-KEY", HeaderValue::from_str(&device_key).map_err(|e| e.to_string())?);
-        if let Some(token) = &member_token { headers.insert("X-MEMBER-TOKEN", HeaderValue::from_str(token).map_err(|e| e.to_string())?); }
-
-        let client = reqwest::Client::builder().default_headers(headers).build().map_err(|e| e.to_string())?;
-        let res = client.post(format!("{}/{}", base_url.trim_end_matches('/'), crate::api_config::routes::SHIFT_SYNC)).json(&payload).send().await.map_err(|e| e.to_string())?;
+        let request = auth_state.build_request(reqwest::Method::POST, crate::api_config::routes::SHIFT_SYNC)
+            .map_err(|e| e.to_string())?;
+        let res = request.json(&payload).send().await.map_err(|e| e.to_string())?;
 
         if res.status().is_success() {
             sqlx::query("UPDATE shifts SET is_synced = 1 WHERE id = ?1").bind(&shift_id).execute(&pool).await.map_err(|e| e.to_string())?;

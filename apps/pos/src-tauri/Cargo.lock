@@ -5900,10 +5900,13 @@ dependencies = [
  "http-body-util",
  "hyper",
  "hyper-rustls",
+ "hyper-tls",
  "hyper-util",
  "js-sys",
  "log",
  "mime",
+ "mime_guess",
+ "native-tls",
  "percent-encoding",
  "pin-project-lite",
  "quinn",
@@ -5912,8 +5915,10 @@ dependencies = [
  "rustls-platform-verifier",
  "serde",
  "serde_json",
+ "serde_urlencoded",
  "sync_wrapper",
  "tokio",
+ "tokio-native-tls",
  "tokio-rustls",
  "tokio-util",
  "tower",
@@ -6330,6 +6335,7 @@ dependencies = [
  "pcsc",
  "rand 0.8.6",
  "reqwest 0.12.28",
+ "scryme-sdk",
  "sentry",
  "serde",
  "serde_json",
@@ -6366,6 +6372,19 @@ dependencies = [
  "urlencoding",
  "uuid",
  "windows 0.62.2",
+]
+
+[[package]]
+name = "scryme-sdk"
+version = "9.69.0"
+dependencies = [
+ "chrono",
+ "reqwest 0.13.4",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "url",
 ]
 
 [[package]]

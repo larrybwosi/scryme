@@ -9,6 +9,7 @@ import { Label } from "@repo/ui/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@repo/ui/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
 import { Input } from "@repo/ui/components/ui/input"
+import { RecordPaymentDialog } from "@/components/billing/record-payment-dialog"
 import { updateOrganizationSubscription, type Tier } from "@/app/actions/billing"
 
 interface SubscriptionEditorProps {
@@ -25,6 +26,7 @@ interface SubscriptionEditorProps {
 export function SubscriptionEditor({ organizationId, subscription, tiers }: SubscriptionEditorProps) {
   const router = useRouter()
   const [isPending, setIsPending] = useState(false)
+  const [mpesaDialogOpen, setMpesaDialogOpen] = useState(false)
   const [tierSlug, setTierSlug] = useState(subscription.tierSlug)
   const [periodEnd, setPeriodEnd] = useState(
     subscription.dodoCurrentPeriodEnd
@@ -90,7 +92,15 @@ export function SubscriptionEditor({ organizationId, subscription, tiers }: Subs
             Provider subscription ID: {subscription.dodoSubscriptionId}
           </p>
         ) : null}
-        <div className="flex justify-end pt-1">
+        <div className="flex justify-between items-center pt-1">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setMpesaDialogOpen(true)}
+            className="gap-2"
+          >
+            M-Pesa Payment
+          </Button>
           <Button size="sm" onClick={handleSave} disabled={isPending} className="gap-2">
             {isPending ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
@@ -100,6 +110,14 @@ export function SubscriptionEditor({ organizationId, subscription, tiers }: Subs
             Save subscription
           </Button>
         </div>
+
+        <RecordPaymentDialog
+          open={mpesaDialogOpen}
+          onOpenChange={setMpesaDialogOpen}
+          organizations={[]}
+          tiers={tiers}
+          defaultOrgId={organizationId}
+        />
       </CardContent>
     </Card>
   )

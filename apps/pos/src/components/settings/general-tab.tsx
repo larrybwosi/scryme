@@ -89,9 +89,9 @@ function ConnectionTestCard() {
     try {
       const response = await invoke<any>('authenticated_api_request', {
         method: 'GET',
-        path: 'api/v2/health/ping',
+        path: 'api/v3/:orgSlug/pos/me',
       });
-      if (response?.message === 'pong') {
+      if (response?.success || response?.message === 'pong' || response?.data) {
         setStatus('SUCCESS');
         toast.success('Connection to Scryme API successful');
       } else {

@@ -5,10 +5,8 @@ use crate::stock_acceptance_models::{
 };
 use base64::{engine::general_purpose, Engine as _};
 use log::{error, info, warn};
-use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::multipart::{Form, Part};
 use std::path::Path;
-use std::time::Duration;
 use tauri::{AppHandle, Manager, State};
 use uuid::Uuid;
 
@@ -23,63 +21,6 @@ impl From<anyhow::Error> for CommandError {
         error!("Internal Error: {:?}", err);
         CommandError::new(ErrorKind::Unknown, err.to_string())
     }
-}
-
-fn build_client(
-    auth_state: &State<'_, AuthState>,
-) -> Result<(reqwest::Client, String), CommandError> {
-    let (base_url, device_key) = {
-        let config_guard = auth_state.device_config.lock().map_err(|_| {
-            CommandError::new(ErrorKind::Configuration, "Failed to lock device config")
-        })?;
-
-        let config = config_guard.as_ref().ok_or_else(|| {
-            CommandError::new(ErrorKind::Configuration, "Device is not configured")
-        })?;
-
-        (config.base_url.clone(), config.device_key.clone())
-    };
-
-    let token = auth_state.get_active_token().map_err(|e| {
-        CommandError::new(ErrorKind::Authentication, format!("Failed to get token: {}", e))
-    })?;
-
-    let clean_base = base_url.trim_end_matches('/').to_string();
-    let mut headers = HeaderMap::new();
-
-    let mut val = HeaderValue::from_str(&device_key).map_err(|e| {
-        CommandError::new(
-            ErrorKind::Configuration,
-            format!("Invalid Device Key format: {}", e),
-        )
-    })?;
-    val.set_sensitive(true);
-    headers.insert("X-API-KEY", val);
-
-    if let Some(t) = &token {
-        let mut val = HeaderValue::from_str(t).map_err(|e| {
-            CommandError::new(
-                ErrorKind::Authentication,
-                format!("Invalid Token format: {}", e),
-            )
-        })?;
-        val.set_sensitive(true);
-        headers.insert("X-MEMBER-TOKEN", val);
-    }
-
-
-    let client = reqwest::Client::builder()
-        .default_headers(headers)
-        .timeout(Duration::from_secs(120)) // Increased timeout for file uploads
-        .build()
-        .map_err(|e| {
-            CommandError::new(
-                ErrorKind::Configuration,
-                format!("Failed to build HTTP client: {}", e),
-            )
-        })?;
-
-    Ok((client, clean_base))
 }
 
 async fn handle_response<T: for<'de> serde::Deserialize<'de>>(
@@ -193,19 +134,15 @@ pub async fn submit_stock_process(
     auth_state: State<'_, AuthState>,
     payload: StockProcessRequest,
 ) -> Result<serde_json::Value, CommandError> {
-    let (client, base_url) = build_client(&auth_state)?;
-    let url = format!(
-        "{}/{}",
-        base_url,
-        crate::api_config::routes::INVENTORY_PROCESS
-    );
-
     info!(
         "[StockAcceptance] Submitting process for batch {} - Action: {}",
         payload.batch_id, payload.action
     );
 
-    let resp = client.post(&url).json(&payload).send().await.map_err(|e| {
+    let req = auth_state.build_request(reqwest::Method::POST, crate::api_config::routes::INVENTORY_PROCESS)
+        .map_err(|e| CommandError::new(ErrorKind::Configuration, e))?;
+
+    let resp = req.json(&payload).send().await.map_err(|e| {
         CommandError::new(ErrorKind::Network, "Failed to submit decision")
             .with_details(e.to_string())
     })?;
@@ -218,20 +155,15 @@ pub async fn fetch_incoming_shipments(
     auth_state: State<'_, AuthState>,
     location_id: String,
 ) -> Result<IncomingResponse, CommandError> {
-    let (client, base_url) = build_client(&auth_state)?;
-    let url = format!(
-        "{}/{}",
-        base_url,
-        crate::api_config::routes::INCOMING_SHIPMENTS
-    );
-
     info!(
         "[StockAcceptance] Fetching incoming shipments for location: {}",
         location_id
     );
 
-    let resp = client
-        .get(&url)
+    let req = auth_state.build_request(reqwest::Method::GET, crate::api_config::routes::INCOMING_SHIPMENTS)
+        .map_err(|e| CommandError::new(ErrorKind::Configuration, e))?;
+
+    let resp = req
         .query(&[("locationId", &location_id)])
         .send()
         .await
@@ -252,13 +184,10 @@ pub async fn receive_purchase_order(
     payload: ReceivePurchaseRequest,
     file_paths: Option<Vec<String>>,
 ) -> Result<serde_json::Value, CommandError> {
-    let (client, base_url) = build_client(&auth_state)?;
     let encoded_id = urlencoding::encode(&purchase_id);
-    let url = format!(
-        "{}/{}",
-        base_url,
-        crate::api_config::routes::purchase_receive(&encoded_id)
-    );
+    let route = crate::api_config::routes::purchase_receive(&encoded_id);
+    let req = auth_state.build_request(reqwest::Method::POST, &route)
+        .map_err(|e| CommandError::new(ErrorKind::Configuration, e))?;
 
     info!(
         "[StockAcceptance] Submitting Receipt for PO: {}",
@@ -324,8 +253,7 @@ pub async fn receive_purchase_order(
     }
 
     // 4. Send Request
-    let resp = client
-        .post(&url)
+    let resp = req
         .multipart(form)
         .send()
         .await
@@ -344,13 +272,10 @@ pub async fn receive_stock_transfer(
     payload: ReceiveTransferRequest,
     file_paths: Option<Vec<String>>,
 ) -> Result<serde_json::Value, CommandError> {
-    let (client, base_url) = build_client(&auth_state)?;
     let encoded_id = urlencoding::encode(&transfer_id);
-    let url = format!(
-        "{}/{}",
-        base_url,
-        crate::api_config::routes::transfer_receive(&encoded_id)
-    );
+    let route = crate::api_config::routes::transfer_receive(&encoded_id);
+    let req = auth_state.build_request(reqwest::Method::POST, &route)
+        .map_err(|e| CommandError::new(ErrorKind::Configuration, e))?;
 
     info!(
         "[StockAcceptance] Submitting Receipt for Transfer: {}",
@@ -413,8 +338,7 @@ pub async fn receive_stock_transfer(
     }
 
     // 4. Send Request
-    let resp = client
-        .post(&url)
+    let resp = req
         .multipart(form)
         .send()
         .await

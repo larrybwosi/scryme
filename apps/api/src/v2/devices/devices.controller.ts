@@ -1,6 +1,8 @@
-import { Controller, Post, Body, Get, ForbiddenException } from "@nestjs/common";
+import { Controller, Post, Body, Get, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { DevicesService } from "./devices.service";
+import { PosPairingService } from "../../v3/modules/pos/application/services/pos-pairing.service";
+import { PrismaService } from "../../prisma/prisma.service";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
 import { type V2ApiContext } from "@repo/shared/api/v2";
@@ -8,13 +10,51 @@ import { type V2ApiContext } from "@repo/shared/api/v2";
 @ApiTags("Devices")
 @Controller("devices")
 export class DevicesController {
-  constructor(private readonly devicesService: DevicesService) {}
+  constructor(
+    private readonly devicesService: DevicesService,
+    private readonly pairingService: PosPairingService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @AllowPublic()
   @Post("provision")
   @ApiOperation({ summary: "Provision a new device using a setup token" })
   async provision(@v2Context() ctx: V2ApiContext, @Body() body: any) {
     return this.devicesService.provision(ctx, body);
+  }
+
+  @Post("pairing/authorize")
+  @ApiOperation({ summary: "Authorize temporary POS pairing session from Android App" })
+  async authorizePairingSession(@v2Context() ctx: V2ApiContext, @Body() body: any) {
+    const sessionId = body?.sessionId || body?.sessionId;
+    if (!sessionId) {
+      throw new BadRequestException("sessionId is required");
+    }
+
+    const orgId = ctx?.organizationId || body?.organizationId;
+    if (!orgId) {
+      throw new BadRequestException("Organization context required");
+    }
+
+    let memberId = ctx?.memberId || body?.memberId;
+    if (!memberId) {
+      const activeMember = await this.prisma.client.member.findFirst({
+        where: { organizationId: orgId, isActive: true },
+        orderBy: { createdAt: "asc" },
+      });
+      if (!activeMember) {
+        throw new BadRequestException("No active member found for organization");
+      }
+      memberId = activeMember.id;
+    }
+
+    return this.pairingService.authorizeSession(
+      sessionId,
+      orgId,
+      memberId,
+      this.prisma,
+      body
+    );
   }
 
   @Get("me")
