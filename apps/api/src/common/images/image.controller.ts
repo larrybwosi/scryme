@@ -56,8 +56,12 @@ export class ImageController {
         !attachment.isPublic;
 
       if (isPrivate) {
-        const v2Context = req.v2Context;
-        if (!v2Context || v2Context.organizationId !== attachment.organizationId) {
+        // SECURITY (Sentinel): Extract organizationId from V3 context, V2 context, or request organization
+        const requestOrgId =
+          req.v3Context?.organizationId ||
+          req.v2Context?.organizationId ||
+          req.organization?.id;
+        if (!requestOrgId || requestOrgId !== attachment.organizationId) {
           return res
             .status(HttpStatus.UNAUTHORIZED)
             .send("Unauthorized: Private image");
