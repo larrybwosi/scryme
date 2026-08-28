@@ -13,7 +13,7 @@ export class AutomationService {
     private readonly webhookDispatcher: WebhookDispatcherService,
   ) {}
 
-  private readonly builtInDefinitions = [
+  private readonly builtInDefinitions: CreateWorkflowDefinitionDto[] = [
     {
       key: "lowstock_alert",
       name: "Low Stock Alert Workflow",

@@ -3,7 +3,7 @@ import { AutomationService } from "./automation.service";
 import { CreateWorkflowDefinitionDto, TriggerWorkflowDto, CreateWebhookDto } from "./dto/automation.dto";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 import { v2Context } from "../common/decorators/v2-context.decorator";
-import type { V2ApiContext } from "@repo/shared/api/v2";
+import { V2ApiContext } from "@repo/shared/api/v2";
 
 @Controller("v3/automation")
 export class AutomationController {
