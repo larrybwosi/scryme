@@ -1,9 +1,9 @@
 import { Controller, Get, Post, Body, Param, Query, Req, Headers, UseGuards } from "@nestjs/common";
 import { AutomationService } from "./automation.service";
-import { CreateWorkflowDefinitionDto, TriggerWorkflowDto, CreateWebhookDto } from "./dto/automation.dto";
+import type { CreateWorkflowDefinitionDto, TriggerWorkflowDto, CreateWebhookDto } from "./dto/automation.dto";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 import { v2Context } from "../common/decorators/v2-context.decorator";
-import { V2ApiContext } from "@repo/shared/api/v2";
+import type { V2ApiContext } from "@repo/shared/api/v2";
 
 @Controller("v3/automation")
 export class AutomationController {
