@@ -1,7 +1,6 @@
 import {
   Injectable,
   Logger,
-  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 import * as crypto from "crypto";
@@ -18,6 +17,7 @@ import {
   ExpirationStatus,
   DisposalReason,
   AdjustmentStatus,
+  WorkflowExecutionStatus,
 } from "@repo/db";
 
 @Injectable()
@@ -31,22 +31,22 @@ export class WindmillCallbackUseCase {
     signature: string,
     payload: any,
   ) {
-    const config = await this.prisma.client.windmillConfiguration.findUnique({
-      where: { organizationId },
+    const webhook = await (this.prisma.client as any).workflowEngineWebhook.findFirst({
+      where: { organizationId, direction: "INCOMING" },
     });
 
-    const secret = config?.webhookSecret;
+    const secret = webhook?.secret;
     const isProduction = process.env.NODE_ENV === "production";
 
     if (!secret) {
       if (isProduction) {
         this.logger.error(
-          `Windmill webhook secret not configured for org ${organizationId} in production`,
+          `Webhook secret not configured for org ${organizationId} in production`,
         );
         throw new UnauthorizedException("Webhooks disabled: secret missing");
       }
       this.logger.warn(
-        `Windmill webhook secret not configured for org ${organizationId}. Skipping verification in dev.`,
+        `Webhook secret not configured for org ${organizationId}. Skipping verification in dev.`,
       );
       return;
     }
@@ -62,8 +62,6 @@ export class WindmillCallbackUseCase {
       .update(JSON.stringify(payload))
       .digest("hex");
 
-    // Use SHA-256 pre-hashing to ensure both buffers have identical length,
-    // preventing timing attacks and leakage of the secret signature length.
     const expectedHash = crypto
       .createHash("sha256")
       .update(expectedSignature)
@@ -74,19 +72,18 @@ export class WindmillCallbackUseCase {
       .digest();
 
     if (!crypto.timingSafeEqual(expectedHash, actualHash)) {
-      this.logger.warn(`Invalid Windmill signature for org ${organizationId}`);
+      this.logger.warn(`Invalid signature for org ${organizationId}`);
       throw new UnauthorizedException("Invalid signature");
     }
   }
 
   async handleGeneralCallback(payload: WindmillCallbackPayload) {
     this.logger.log(
-      `Processing general Windmill callback for job ${payload.jobId}`,
+      `Processing workflow callback for job ${payload.jobId}`,
     );
 
-    // SECURITY (Sentinel): Use findFirst with organizationId filter to ensure strict multi-tenant isolation.
-    const execution = await this.prisma.client.windmillExecution.findFirst({
-      where: { jobId: payload.jobId, organizationId: payload.organizationId },
+    const execution = await (this.prisma.client as any).workflowEngineExecution.findFirst({
+      where: { id: payload.jobId, organizationId: payload.organizationId },
     });
 
     if (!execution) {
@@ -94,10 +91,10 @@ export class WindmillCallbackUseCase {
       return { success: false, message: "Execution not found" };
     }
 
-    await this.prisma.client.windmillExecution.updateMany({
-      where: { jobId: payload.jobId, organizationId: payload.organizationId },
+    await (this.prisma.client as any).workflowEngineExecution.updateMany({
+      where: { id: payload.jobId, organizationId: payload.organizationId },
       data: {
-        status: payload.status as any,
+        status: (payload.status as WorkflowExecutionStatus) || WorkflowExecutionStatus.COMPLETED,
         result: payload.result ?? undefined,
         error: payload.error ?? null,
         completedAt: new Date(payload.completedAt),
@@ -111,21 +108,14 @@ export class WindmillCallbackUseCase {
     this.logger.log(`Processing outcome callback for job ${payload.jobId}`);
 
     const updateData: any = {
-      status: payload.status as any,
+      status: (payload.status as WorkflowExecutionStatus) || WorkflowExecutionStatus.COMPLETED,
       result: payload.result ?? undefined,
       error: payload.errorMessage ?? payload.error ?? null,
       completedAt: new Date(payload.completedAt),
-      summary: payload.summary,
     };
 
-    if (payload.relatedEntityType)
-      updateData.relatedEntityType = payload.relatedEntityType;
-    if (payload.relatedEntityId)
-      updateData.relatedEntityId = payload.relatedEntityId;
-
-    // SECURITY (Sentinel): Enforce organizationId scoping on execution updates.
-    await this.prisma.client.windmillExecution.updateMany({
-      where: { jobId: payload.jobId, organizationId: payload.organizationId },
+    await (this.prisma.client as any).workflowEngineExecution.updateMany({
+      where: { id: payload.jobId, organizationId: payload.organizationId },
       data: updateData,
     });
 
@@ -137,23 +127,17 @@ export class WindmillCallbackUseCase {
       `Processing approval callback for ${payload.entityType} ${payload.entityId}`,
     );
 
-    return this.prisma.client.$transaction(async (tx) => {
-      // 1. Update the windmillExecution record (Consolidation)
-      // SECURITY (Sentinel): Enforce organizationId scoping on execution updates.
-      await tx.windmillExecution.updateMany({
-        where: { jobId: payload.jobId, organizationId: payload.organizationId },
+    return (this.prisma.client as any).$transaction(async (tx: any) => {
+      await tx.workflowEngineExecution.updateMany({
+        where: { id: payload.jobId, organizationId: payload.organizationId },
         data: {
-          status: payload.status as any,
+          status: (payload.status as WorkflowExecutionStatus) || WorkflowExecutionStatus.COMPLETED,
           result: payload.result ?? undefined,
           error: payload.error ?? null,
           completedAt: new Date(payload.completedAt),
-          summary: `Approval Decision: ${payload.decision} by ${payload.decidedBy || "Automation"}`,
-          relatedEntityType: payload.entityType,
-          relatedEntityId: payload.entityId,
         },
       });
 
-      // 2. Business Logic based on entity type
       if (payload.entityType === "PurchaseOrder") {
         const statusMap: Record<string, PurchaseStatus> = {
           APPROVED: PurchaseStatus.APPROVED,
@@ -211,23 +195,17 @@ export class WindmillCallbackUseCase {
       `Processing bakery disposal callback for batch ${payload.batchId}`,
     );
 
-    return this.prisma.client.$transaction(async (tx) => {
-      // 1. Update Execution
-      // SECURITY (Sentinel): Enforce organizationId scoping on execution updates.
-      await tx.windmillExecution.updateMany({
-        where: { jobId: payload.jobId, organizationId: payload.organizationId },
+    return (this.prisma.client as any).$transaction(async (tx: any) => {
+      await tx.workflowEngineExecution.updateMany({
+        where: { id: payload.jobId, organizationId: payload.organizationId },
         data: {
-          status: payload.status as any,
+          status: (payload.status as WorkflowExecutionStatus) || WorkflowExecutionStatus.COMPLETED,
           result: payload.result ?? undefined,
           error: payload.error ?? null,
           completedAt: new Date(payload.completedAt),
-          summary: `Bakery Action: ${payload.action} by ${payload.decidedBy || "Automation"}`,
-          relatedEntityType: "Batch",
-          relatedEntityId: payload.batchId,
         },
       });
 
-      // 2. Business Logic
       if (payload.action === "DISPOSE") {
         await tx.batch.update({
           where: {

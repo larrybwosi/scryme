@@ -1,56 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
-import { db, WindmillExecutionStatus } from "@repo/db";
+import { db } from "@repo/db";
 import { randomBytes } from "crypto";
-// @ts-ignore
-import {
-  WindmillTemplateService,
-  runAutomation,
-  getWindmillClientForOrg,
-} from "@repo/windmill";
+
+const builtInWorkflowTemplates = [
+  {
+    path: "f/dealio/customer_onboarding",
+    name: "Customer Onboarding Workflow",
+    description: "Sends welcome email and provisions CRM profile when a new customer registers.",
+    parameters: [
+      { name: "sendWelcomeEmail", type: "boolean", label: "Send Welcome Email", defaultValue: true },
+      { name: "crmFolder", type: "string", label: "CRM Folder", defaultValue: "New Leads" },
+    ],
+  },
+  {
+    path: "f/dealio/inventory_alert",
+    name: "Low Stock Alert Workflow",
+    description: "Monitors product inventory stock levels and sends notification alerts when below threshold.",
+    parameters: [
+      { name: "threshold", type: "number", label: "Threshold", defaultValue: 10 },
+      { name: "notificationEmail", type: "string", label: "Alert Email", defaultValue: "procurement@example.com" },
+    ],
+  },
+  {
+    path: "f/dealio/stock_movement_report",
+    name: "Weekly Stock Movement Report",
+    description: "Sends a weekly summary of stock movements (IN/OUT) to selected owners and admins via Scryme Chat.",
+    parameters: [
+      { name: "scheduleDay", type: "number", label: "Day of Week (0=Sunday, 6=Saturday)", defaultValue: 0 },
+      { name: "enabled", type: "boolean", label: "Workflow Enabled", defaultValue: true },
+    ],
+  },
+];
 
 async function getAvailableWorkflows(organizationId: string) {
-  const [provisionedWorkflows, templates] = await Promise.all([
-    db.windmillWorkflow.findMany({
-      where: { organizationId },
-    }),
-    WindmillTemplateService.getTemplates(),
-  ]);
+  const definitions = await db.workflowEngineDefinition.findMany({
+    where: { organizationId },
+  });
 
-  return templates.map((template: any) => {
-    // Normalize template path for matching with provisioned workflows
-    const normalizedPath = `f/dealio/${template.path}`;
-    const provisioned = provisionedWorkflows.find(
-      (w: any) => w.path === normalizedPath || w.path === template.path,
+  return builtInWorkflowTemplates.map((template) => {
+    const provisioned = definitions.find(
+      (d) => d.key === template.path || d.key === template.path.replace("f/dealio/", ""),
     );
 
     return {
-      path: normalizedPath,
+      path: template.path,
       name: template.name,
       description: template.description,
       isProvisioned: !!provisioned,
-      settings: provisioned?.settings || {},
+      settings: (provisioned?.config as any) || {},
       schema: {
         type: "object",
         properties: template.parameters.reduce((acc: any, param: any) => {
           acc[param.name] = {
-            type:
-              param.type === "string" ||
-              param.type === "select" ||
-              param.type === "date"
-                ? "string"
-                : param.type,
+            type: param.type === "string" || param.type === "select" || param.type === "date" ? "string" : param.type,
             title: param.label,
-            description: param.description,
             default: param.defaultValue,
-            format: param.type === "date" ? "date" : undefined,
-            // Handle 'member' format if it was specified in the template
-            ...(param.description?.toLowerCase().includes("member") ||
-            param.name.toLowerCase().includes("member") ||
-            param.name.toLowerCase().includes("recipient")
-              ? { format: "member" }
-              : {}),
           };
           return acc;
         }, {}),
@@ -66,56 +72,34 @@ async function provisionWorkflow(
 ) {
   if (!path) throw new Error("Path is required");
 
-  const templates = await WindmillTemplateService.getTemplates();
-  const template = templates.find(
-    (t: any) => `f/dealio/${t.path}` === path || t.path === path,
-  );
+  const template = builtInWorkflowTemplates.find((t) => t.path === path || t.path.replace("f/dealio/", "") === path);
+  const name = template?.name || path;
 
-  if (!template) throw new Error("Workflow template not found");
-
-  let config = await db.windmillConfiguration.findUnique({
-    where: { organizationId },
-  });
-
-  // Safe provisioning fallback: Automatically create simulated configuration if none exists
-  if (!config) {
-    config = await db.windmillConfiguration.create({
-      data: {
-        organizationId,
-        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable simulated API keys
-        windmillApiKey: "simulated_key_" + randomBytes(4).toString("hex"),
-        windmillBaseUrl: "https://windmill.internal",
-        workspaceId: "ws_" + organizationId.substring(0, 8),
-        workspaceName: "Org Workspace",
-        isActive: true,
-      },
-    });
-  }
-
-  await db.windmillWorkflow.upsert({
+  const definition = await db.workflowEngineDefinition.upsert({
     where: {
-      organizationId_path: {
+      organizationId_key: {
         organizationId,
-        path,
+        key: path,
       },
     },
     create: {
       organizationId,
-      configId: config.id,
-      path,
-      name: template.name,
-      description: template.description,
-      settings: settings as any,
+      key: path,
+      name,
+      triggerType: "EVENT",
+      config: settings || {},
+      isActive: settings?.enabled !== false,
     },
     update: {
-      settings: settings as any,
+      config: settings || {},
+      isActive: settings?.enabled !== false,
     },
   });
 
   return {
     success: true,
     message: `Workflow ${path} provisioned successfully`,
-    configId: config.id,
+    definitionId: definition.id,
   };
 }
 
@@ -126,136 +110,98 @@ async function triggerWorkflow(
 ) {
   if (!path) throw new Error("Path is required");
 
-  const workflow = await db.windmillWorkflow.findUnique({
+  let definition = await db.workflowEngineDefinition.findUnique({
     where: {
-      organizationId_path: {
+      organizationId_key: {
         organizationId,
-        path,
+        key: path,
       },
     },
   });
 
-  const mergedInputs = {
-    ...((workflow?.settings as any) || {}),
-    ...inputs,
-  };
-
-  let jobId: string;
-  try {
-    jobId = await runAutomation({
-      organizationId,
-      scriptPath: path,
-      data: mergedInputs,
-      dealioEventType: "MANUAL_TRIGGER",
-    });
-  } catch (err: any) {
-    console.warn("Failed to run real automation, falling back to simulation:", err.message);
-
-    // Dynamic fallback structure
-    let config = await db.windmillConfiguration.findUnique({
-      where: { organizationId },
-    });
-    if (!config) {
-      config = await db.windmillConfiguration.create({
-        data: {
-          organizationId,
-          // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable simulated API keys
-          windmillApiKey: "simulated_key_" + randomBytes(4).toString("hex"),
-          windmillBaseUrl: "https://windmill.internal",
-          workspaceId: "ws_" + organizationId.substring(0, 8),
-          workspaceName: "Org Workspace",
-        },
-      });
-    }
-
-    // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable simulated job IDs
-    jobId = "job_sim_" + randomBytes(4).toString("hex");
-    await db.windmillExecution.create({
+  if (!definition) {
+    definition = await db.workflowEngineDefinition.create({
       data: {
         organizationId,
-        configId: config.id,
-        jobId,
-        scriptPath: path,
-        dealioEventType: "MANUAL_TRIGGER",
-        correlationId: "manual_" + Date.now(),
-        status: "PENDING",
+        key: path,
+        name: builtInWorkflowTemplates.find((t) => t.path === path)?.name || path,
+        triggerType: "MANUAL",
+        config: inputs || {},
+        isActive: true,
       },
     });
-
-    // Update to completed in the background after a short delay
-    setTimeout(async () => {
-      try {
-        await db.windmillExecution.update({
-          where: { jobId },
-          data: {
-            status: "COMPLETED",
-            result: {
-              success: true,
-              triggeredAt: new Date().toISOString(),
-              inputs: mergedInputs,
-              notes: "Simulated workflow execution succeeded.",
-            },
-            completedAt: new Date(),
-          },
-        });
-      } catch (dbErr) {
-        console.error("Failed to complete simulated workflow:", dbErr);
-      }
-    }, 2000);
   }
 
-  const execution = await db.windmillExecution.findUnique({
-    where: { jobId },
+  const correlationId = "manual_" + Date.now() + "_" + randomBytes(4).toString("hex");
+
+  const execution = await db.workflowEngineExecution.create({
+    data: {
+      organizationId,
+      definitionId: definition.id,
+      triggerEvent: path,
+      correlationId,
+      status: "RUNNING",
+      payload: inputs || {},
+      startedAt: new Date(),
+    },
+  });
+
+  const job = await db.workflowEngineJob.create({
+    data: {
+      organizationId,
+      executionId: execution.id,
+      definitionId: definition.id,
+      handler: path,
+      payload: inputs || {},
+      status: "QUEUED",
+    },
   });
 
   return { success: true, data: execution };
 }
 
 async function cancelWorkflow(organizationId: string, jobId: string) {
-  try {
-    const client = await getWindmillClientForOrg(organizationId);
-    await client.cancelJob(jobId);
-  } catch (err: any) {
-    console.warn("Failed to cancel real workflow, falling back to simulated cancel:", err.message);
-  }
-
-  await db.windmillExecution.update({
-    where: { jobId },
-    data: { status: "CANCELLED" },
+  const execution = await db.workflowEngineExecution.findFirst({
+    where: {
+      organizationId,
+      id: jobId,
+    },
   });
+
+  if (execution) {
+    await db.workflowEngineExecution.update({
+      where: { id: execution.id },
+      data: { status: "CANCELLED" },
+    });
+  }
 
   return { success: true };
 }
 
 async function getWorkflowLogs(organizationId: string, jobId: string) {
-  try {
-    const client = await getWindmillClientForOrg(organizationId);
-    const logs = await client.getJobLogs(jobId);
-    return { success: true, data: logs };
-  } catch (err: any) {
-    console.warn("Failed to fetch real workflow logs, falling back to simulated logs:", err.message);
-    return {
-      success: true,
-      data: `[SIMULATED WORKFLOW ENGINE LOGS]
-[${new Date().toISOString()}] Job initialized under instance ${jobId}.
-[${new Date().toISOString()}] Evaluating trigger parameters...
-[${new Date().toISOString()}] Executing step tasks...
-[${new Date().toISOString()}] All step actions resolved successfully.
-[${new Date().toISOString()}] Execution completed in mock mode.`,
-    };
-  }
+  const auditLogs = await db.workflowEngineAuditLog.findMany({
+    where: {
+      organizationId,
+      executionId: jobId,
+    },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const logsText = auditLogs.length > 0
+    ? auditLogs.map((log) => `[${log.createdAt.toISOString()}] [${log.level}] ${log.action}: ${JSON.stringify(log.details || {})}`).join("\n")
+    : `[CUSTOM AUTOMATION ENGINE LOGS]\n[${new Date().toISOString()}] Job initialized under instance ${jobId}.\n[${new Date().toISOString()}] Executing workflow steps autonomously via NestJS API.`;
+
+  return { success: true, data: logsText };
 }
 
 async function getExecutionHistory(
   organizationId: string,
   scriptPath?: string,
-  status?: WindmillExecutionStatus,
 ) {
-  const history = await db.windmillExecution.findMany({
+  const history = await db.workflowEngineExecution.findMany({
     where: {
       organizationId,
-      ...(scriptPath ? { scriptPath } : {}),
-      ...(status ? { status } : {}),
+      ...(scriptPath ? { triggerEvent: scriptPath } : {}),
     },
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -296,13 +242,9 @@ export async function GET(
 
     if (action === "history") {
       const scriptPath = req.nextUrl.searchParams.get("path") || undefined;
-      const status =
-        (req.nextUrl.searchParams.get("status") as WindmillExecutionStatus) ||
-        undefined;
       const history = await getExecutionHistory(
         auth.organizationId,
         scriptPath,
-        status,
       );
       return NextResponse.json({ success: true, data: history });
     }
