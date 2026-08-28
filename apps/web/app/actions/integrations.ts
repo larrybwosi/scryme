@@ -164,6 +164,8 @@ export async function provisionScryme() {
       initialMembers,
     );
 
+      console.log(scrymeWorkspace)
+
     // Create default channels for announcements, alerts, and general
     const channels = [
       { name: "Announcements", slug: "announcements" },
