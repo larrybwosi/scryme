@@ -740,6 +740,17 @@ export default function KDSPage() {
   const [operator, setOperator] = useState<string>(localStorage.getItem('ASSIGNED_USER_NAME') || '');
   const [etaQueryTarget, setEtaQueryTarget] = useState<string | null>(null);
 
+  // ⚡ Bolt Optimization: Pre-index active orders into an in-memory Map keyed by order.id.
+  // Replaces O(N) linear array .find() scans across event handlers, keyboard listeners,
+  // and component renders with O(1) constant-time Map lookups.
+  const ordersMap = useMemo(() => {
+    const map = new Map<string, Order>();
+    for (const o of orders) {
+      map.set(o.id, o);
+    }
+    return map;
+  }, [orders]);
+
   useEffect(() => {
     const handler = (e: any) => {
       setOperator(e.detail.userName || '');
@@ -752,14 +763,14 @@ export default function KDSPage() {
     const handler = (e: any) => {
       const { orderId } = e.detail;
       setEtaQueryTarget(orderId);
-      toast.info(`ETA Query for Order #${orders.find(o => o.id === orderId)?.num}`, {
+      toast.info(`ETA Query for Order #${ordersMap.get(orderId)?.num}`, {
         description: "Hub is asking for an ETA",
         duration: 5000,
       });
     };
     window.addEventListener('order-eta-query', handler);
     return () => window.removeEventListener('order-eta-query', handler);
-  }, [orders]);
+  }, [ordersMap]);
 
   const autoPrintKds = usePosStore(state => state.settings.kitchenTicketConfig.autoPrintKds);
   const [bumped, setBumped] = useState<Order[]>([]);
@@ -846,19 +857,19 @@ export default function KDSPage() {
     (id: string) => {
       useKdsStore.getState().updateOrderStatus(id, "in_progress");
       updateOrderStatusInKitchen(id, "in_progress");
-      const o = orders.find((x) => x.id === id);
+      const o = ordersMap.get(id);
       if (o)
         toast.info(`Order ${o.num} started`, {
           description: `${o.table} · Begin cooking`,
           duration: 2500,
         });
     },
-    [orders]
+    [ordersMap]
   );
 
   const bumpOrder = useCallback(
     (id: string) => {
-      const o = orders.find((x) => x.id === id);
+      const o = ordersMap.get(id);
       useKdsStore.getState().bumpOrder(id);
       updateOrderStatusInKitchen(id, "done");
       if (o) {
@@ -874,7 +885,7 @@ export default function KDSPage() {
         });
       }
     },
-    [orders]
+    [ordersMap]
   );
 
   const recallOrder = useCallback(
@@ -900,7 +911,7 @@ export default function KDSPage() {
     (id: string) => {
       useKdsStore.getState().updateOrderStatus(id, "voided");
       updateOrderStatusInKitchen(id, "voided");
-      const o = orders.find((x) => x.id === id);
+      const o = ordersMap.get(id);
       if (o)
         toast.error(`Order ${o.num} voided`, {
           description: `${o.table} · Order cancelled`,
@@ -908,7 +919,7 @@ export default function KDSPage() {
         });
       setVoidTarget(null);
     },
-    [orders]
+    [ordersMap]
   );
 
   const handleSendEta = (minutes: number) => {
@@ -951,14 +962,14 @@ export default function KDSPage() {
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
         if (selectedId) {
-          const o = orders.find((x) => x.id === selectedId);
+          const o = ordersMap.get(selectedId);
           if (o && ["new", "in_progress", "urgent"].includes(o.status))
             bumpOrder(selectedId);
         }
       }
       if (e.key === "s" || e.key === "S") {
         if (selectedId) {
-          const o = orders.find((x) => x.id === selectedId);
+          const o = ordersMap.get(selectedId);
           if (o && (o.status === "new" || o.status === "urgent"))
             startOrder(selectedId);
         }
@@ -975,7 +986,7 @@ export default function KDSPage() {
       }
       if (e.key === "Delete" || e.key === "Backspace") {
         if (selectedId) {
-          const o = orders.find((x) => x.id === selectedId);
+          const o = ordersMap.get(selectedId);
           if (o) setVoidTarget(o);
         }
       }
@@ -1473,7 +1484,7 @@ export default function KDSPage() {
           <div className="flex-1" />
           {selectedId && (
             <span className="text-[10px] text-[#3b9eff] font-mono hidden sm:inline">
-              {orders.find((o) => o.id === selectedId)?.num} selected
+              {ordersMap.get(selectedId)?.num} selected
             </span>
           )}
           <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#2ecc71]">
@@ -1534,7 +1545,7 @@ export default function KDSPage() {
           <DialogHeader>
             <DialogTitle>Send ETA to Hub</DialogTitle>
             <DialogDescription className="text-[#555b68]">
-              How many minutes until Order #{orders.find(o => o.id === etaQueryTarget)?.num} is ready?
+              How many minutes until Order #{ordersMap.get(etaQueryTarget!)?.num} is ready?
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-4">
