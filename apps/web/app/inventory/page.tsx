@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import {
   getInventoryProducts,
@@ -21,6 +22,12 @@ import { ProductSheet } from "../../components/inventory/product-sheet";
 import { ProductImport } from "../../components/inventory/product-import";
 import Link from "next/link";
 import { getOrganizationSettings } from "../actions/organization";
+
+export const metadata: Metadata = {
+  title: "Inventory Overview",
+  description: "Comprehensive stock control, catalog item tracking, pricing, and branch inventory distribution.",
+};
+
 
 export default async function InventoryPage({
   searchParams,

@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { Receipt, Plus } from "lucide-react";
 import { PageHeader } from "../../../components/page-header";
 import { ExpenseFilters } from "../../../components/finance/expense-filters";
@@ -9,6 +10,12 @@ import {
 import { ExpenseTable } from "../../../components/finance/expense-table";
 import { ExpenseDialog } from "../../../components/finance/expense-dialog";
 import { Button } from "@repo/ui/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Expense Tracking",
+  description: "Record and categorize operating expenses, receipts, and recurring vendor bills.",
+};
+
 
 export default async function ExpensesPage(props: {
   searchParams: Promise<{

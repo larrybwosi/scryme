@@ -1,5 +1,12 @@
+import { Metadata } from "next";
 import { PageHeader } from "../../../../components/page-header";
 import { Scale } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Balance Sheet Report",
+  description: "View statement of financial position, total assets, liabilities, and equity balance.",
+};
+
 
 export default function BalanceSheetPage() {
   return (

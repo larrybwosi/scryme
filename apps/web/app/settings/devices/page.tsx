@@ -1,7 +1,14 @@
+import { Metadata } from "next";
 import { Smartphone } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { getDevices } from "@/app/actions/devices";
 import { DeviceList } from "@/components/settings/device-list";
+
+export const metadata: Metadata = {
+  title: "Device Management",
+  description: "Pair POS terminals, card scanners, barcode readers, and authorization tokens.",
+};
+
 
 export default async function DevicesPage() {
   const devices = await getDevices();

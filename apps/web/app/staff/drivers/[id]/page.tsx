@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { getDriverDetail } from "../../../actions/drivers";
 import { notFound } from "next/navigation";
@@ -124,3 +125,8 @@ export default async function DriverDetailPage({
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Driver Profile",
+  description: "View driver activity logs, assigned deliveries, and vehicle assignments.",
+};
