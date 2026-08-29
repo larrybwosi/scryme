@@ -4,5 +4,4 @@
 // No Node.js dependencies — zero runtime weight for type imports.
 // ============================================================
 
-// @ts-ignore
-export * from "../generated/index-browser";
+export * from "../generated/browser";
