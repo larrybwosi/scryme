@@ -1,5 +1,11 @@
 # docs
 
+## 1.8.0-next.1
+
+### Minor Changes
+
+- 5cbf61c: Update
+
 ## 1.8.0-next.0
 
 ### Minor Changes

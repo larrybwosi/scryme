@@ -265,3 +265,4 @@ pub async fn auth_update_o_auth_client(configuration: &configuration::Configurat
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
+
