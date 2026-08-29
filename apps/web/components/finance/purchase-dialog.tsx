@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useMemo } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -93,12 +93,22 @@ export function PurchaseDialog({
     });
   }
 
-  // Products returned from getInventoryProducts are already flattened variants
-  const variants = products.map((p: any) => ({
-    id: p.variantId,
-    name: `${p.name} ${p.variantName !== "Default" ? `(${p.variantName})` : ""}`,
-    unitCost: Number(p.unitPrice || 0), // Adjusting based on user input for buying price
-  }));
+  // Memoize products transformation to avoid redundant array allocations & string formatting on every re-render
+  const variants = useMemo(
+    () =>
+      products.map((p: any) => ({
+        id: p.variantId,
+        name: `${p.name} ${p.variantName !== "Default" ? `(${p.variantName})` : ""}`,
+        unitCost: Number(p.unitPrice || 0), // Adjusting based on user input for buying price
+      })),
+    [products],
+  );
+
+  // Pre-index variants into a Map to replace O(N) linear array searches with O(1) constant-time lookups
+  const variantMap = useMemo(
+    () => new Map(variants.map(v => [v.id, v])),
+    [variants],
+  );
 
   if (!mounted) return null;
 
@@ -169,7 +179,7 @@ export function PurchaseDialog({
                           <Select
                             onValueChange={val => {
                               field.onChange(val);
-                              const variant = variants.find(v => v.id === val);
+                              const variant = variantMap.get(val);
                               if (variant) {
                                 form.setValue(
                                   `items.${index}.unitCost`,
