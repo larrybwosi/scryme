@@ -1020,7 +1020,7 @@ export default function WorkflowsPage() {
 
       {/* History Dialog */}
       <Sheet open={isHistorySheetOpen} onOpenChange={setIsHistorySheetOpen}>
-        <SheetContent className="sm:max-w-[700px] overflow-y-auto bg-card border-border">
+        <SheetContent className="sm:max-w-175 overflow-y-auto bg-card border-border">
           <SheetHeader className="pb-6 border-b border-border">
             <SheetTitle className="flex items-center gap-2 text-xl text-foreground">
               <div className="p-2 bg-muted rounded-lg">
@@ -1155,7 +1155,7 @@ export default function WorkflowsPage() {
                               Stdout / Stderr
                             </div>
                             <pre className="text-[11px] font-mono text-foreground whitespace-pre-wrap max-h-60 overflow-y-auto custom-scrollbar">
-                              {selectedJobLogs.logs ||
+                              {selectedJobLogs?.logs ||
                                 "No logs available for this run."}
                             </pre>
                           </div>

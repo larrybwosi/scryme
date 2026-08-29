@@ -80,6 +80,7 @@ export const auth = betterAuth({
       "app.scryme.tech",
       "crm.scryme.tech",
       "api.scryme.tech",
+      "admin.scryme.tech",
       "*.scryme.tech",
     ],
     protocol: env.NODE_ENV === "development" ? "http" : "https",
