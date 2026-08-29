@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { authClient, signIn, signUp } from "./auth-client";
 
 export interface ApiKeyItem {
@@ -67,15 +67,18 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
   const [oauthClients, setOauthClients] = useState<OAuthClientItem[]>([]);
 
-  const user: DeveloperUser | null = session?.data?.user
-    ? {
-        id: session.data.user.id,
-        name: session.data.user.name || session.data.user.email.split("@")[0],
-        email: session.data.user.email,
-        organizationName: (session.data.user as any).organizationName || "Developer Workspace",
-        role: (session.data.user as any).role || "Developer",
-      }
-    : null;
+  const sessionUser = session?.data?.user;
+
+  const user: DeveloperUser | null = useMemo(() => {
+    if (!sessionUser) return null;
+    return {
+      id: sessionUser.id,
+      name: sessionUser.name || sessionUser.email.split("@")[0],
+      email: sessionUser.email,
+      organizationName: (sessionUser as any).organizationName || "Developer Workspace",
+      role: (sessionUser as any).role || "Developer",
+    };
+  }, [sessionUser]);
 
   const isLoading = session.isPending;
 
@@ -122,13 +125,15 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
+  const userId = user?.id;
+
   useEffect(() => {
-    if (user) {
+    if (userId) {
       fetchOAuthClients();
     } else {
       setOauthClients([]);
     }
-  }, [user, fetchOAuthClients]);
+  }, [userId, fetchOAuthClients]);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
