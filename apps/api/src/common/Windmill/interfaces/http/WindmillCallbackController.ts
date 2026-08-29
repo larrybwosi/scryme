@@ -26,8 +26,8 @@ export class WindmillCallbackController {
     );
 
     try {
-      const execution = await this.prisma.client.windmillExecution.findUnique({
-        where: { jobId: payload.jobId },
+      const execution = await (this.prisma.client as any).workflowEngineExecution.findFirst({
+        where: { id: payload.jobId },
       });
 
       if (!execution) {
@@ -36,8 +36,8 @@ export class WindmillCallbackController {
         );
       }
 
-      await this.prisma.client.windmillExecution.update({
-        where: { jobId: payload.jobId },
+      await (this.prisma.client as any).workflowEngineExecution.update({
+        where: { id: execution.id },
         data: {
           status: payload.status as any,
           result: payload.result ?? undefined,

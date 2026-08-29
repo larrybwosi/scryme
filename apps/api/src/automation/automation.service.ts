@@ -321,7 +321,7 @@ export class AutomationService {
     });
   }
 
-  async triggerWorkflow(organizationId: string, dto: TriggerWorkflowDto | { path?: string; key?: string; inputs?: any; payload?: any }) {
+  async triggerWorkflow(organizationId: string, dto: TriggerWorkflowDto | { path?: string; key?: string; inputs?: any; payload?: any; correlationId?: string }) {
     const pathOrKey = dto.key || (dto as any).path;
     if (!pathOrKey) {
       throw new BadRequestException("Workflow path or key is required.");
@@ -329,7 +329,7 @@ export class AutomationService {
 
     const template = this.builtInTemplates.find((t) => t.path === pathOrKey || t.key === pathOrKey);
     const resolvedKey = template?.path || pathOrKey;
-    const inputs = (dto as any).inputs || dto.payload || {};
+    const inputs = (dto as any).inputs || (dto as any).payload || {};
 
     let definition = await (this.prisma.client as any).workflowEngineDefinition.findUnique({
       where: {
@@ -357,7 +357,7 @@ export class AutomationService {
       throw new BadRequestException(`Workflow definition '${resolvedKey}' is inactive.`);
     }
 
-    const correlationId = dto.correlationId || `manual_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+    const correlationId = (dto as any).correlationId || `manual_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
 
     const execution = await (this.prisma.client as any).workflowEngineExecution.create({
       data: {
