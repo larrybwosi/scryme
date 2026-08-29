@@ -308,34 +308,13 @@ export class WindmillApiClient {
 export async function getWindmillClientForOrg(
   organizationId: string,
 ): Promise<WindmillApiClient> {
-  const config = await prisma.windmillConfiguration.findUnique({
-    where: { organizationId },
+  const webhook = await (prisma as any).workflowEngineWebhook.findFirst({
+    where: { organizationId, direction: "INCOMING" },
   });
 
-  if (!config) {
-    throw new Error(
-      `Windmill not configured for organization ${organizationId}`,
-    );
-  }
-
-  if (!config.workspaceId) {
-    throw new Error(
-      `Windmill workspace not provisioned for organization ${organizationId}`,
-    );
-  }
-
-  let apiKey = config.windmillApiKey;
-  try {
-    apiKey = decrypt(apiKey);
-  } catch (err) {
-    console.warn(
-      `Failed to decrypt API key for org ${organizationId}, using as-is`,
-    );
-  }
-
   return new WindmillApiClient(
-    config.windmillBaseUrl,
-    apiKey,
-    config.workspaceId,
+    process.env.WINDMILL_BASE_URL || "http://localhost:8000",
+    webhook?.secret || "simulated_key",
+    organizationId,
   );
 }
