@@ -1,5 +1,11 @@
 # bakery
 
+## 9.72.0-next.2
+
+### Minor Changes
+
+- 02bff17: Release
+
 ## 9.71.0-next.0
 
 ### Minor Changes
