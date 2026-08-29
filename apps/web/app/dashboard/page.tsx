@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { getServerAuth } from "@repo/auth/server";
 import { redirect } from "next/navigation";
 import { getDashboardData } from "../actions/dashboard";
@@ -11,6 +12,12 @@ import { TotalSessionsChart } from "../../components/dashboard/total-sessions-ch
 import { format } from "date-fns";
 import { Suspense } from "react";
 import { db } from "@repo/db";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "View organization key performance indicators, recent activity, revenue trends, and operational metrics.",
+};
+
 
 export default async function DashboardPage(props: {
   searchParams: Promise<{ timeframe?: string }>;

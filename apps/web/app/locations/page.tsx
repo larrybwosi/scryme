@@ -1,9 +1,16 @@
+import { Metadata } from "next";
 import React from "react";
 import { getLocations, getMembersForSelect } from "../actions/locations";
 import { LocationTable } from "../../components/locations/location-table";
 import { Button } from "@repo/ui/components/ui/button";
 import { Plus, MapPin } from "lucide-react";
 import { LocationSheet } from "../../components/locations/location-sheet";
+
+export const metadata: Metadata = {
+  title: "Branches & Locations",
+  description: "Manage physical retail stores, warehouse locations, and branch parameters.",
+};
+
 
 export default async function LocationsPage() {
   // ⚡ Bolt Optimization: Parallelize independent database queries using Promise.all

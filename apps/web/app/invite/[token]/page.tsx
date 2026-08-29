@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { getInvitationByToken } from "@/app/actions/invitations";
 import { getServerAuth } from "@repo/auth/server";
@@ -6,6 +7,12 @@ import { Card } from "@repo/ui/components/ui/card";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Organization Invitation",
+  description: "Accept your invitation to join an organization on Scryme.",
+};
+
 
 interface PageProps {
   params: Promise<{ token: string }>;

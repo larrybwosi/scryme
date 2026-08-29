@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -97,3 +98,8 @@ export default async function EditTransferPage({
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Edit Stock Transfer",
+  description: "Modify items and quantities on pending stock transfers.",
+};

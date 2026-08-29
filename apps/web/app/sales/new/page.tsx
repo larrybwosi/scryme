@@ -1,8 +1,15 @@
+import { Metadata } from "next";
 import { PackagePlus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { OrderForm } from "@/components/sales/order-form";
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
+
+export const metadata: Metadata = {
+  title: "New Order & Sale",
+  description: "Create a new direct sales order, issue quotation, or bill a customer.",
+};
+
 
 export default async function NewOrderPage() {
   const auth = await getServerAuth();

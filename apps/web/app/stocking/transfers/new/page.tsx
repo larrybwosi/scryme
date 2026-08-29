@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "../../../../components/page-header";
 import {
@@ -10,6 +11,12 @@ import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { NewTransferForm } from "../../../../components/stocking/new-transfer-form";
+
+export const metadata: Metadata = {
+  title: "New Stock Transfer",
+  description: "Initiate an inter-warehouse stock transfer movement.",
+};
+
 
 export default async function NewTransferPage() {
   const [locations, products] = await Promise.all([

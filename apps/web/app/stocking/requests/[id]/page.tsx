@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -272,3 +273,8 @@ export default async function StockRequestDetailsPage({
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Stock Request Details",
+  description: "View internal stock replenishment request status and items.",
+};

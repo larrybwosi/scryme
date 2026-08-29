@@ -93,7 +93,7 @@ export function WorkflowManager({
   const [trialAmount, setTrialAmount] = useState<string>("");
   const [trialLocationId, setTrialLocationId] = useState<string>("");
   const [trialCategoryId, setTrialCategoryId] = useState<string>("");
-  const [trialResults, setTrialResults] = useState<any | null>(null);
+  const [trialResults, setTrialResults] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
   const [scrymeChannel, setScrymeChannel] = useState<string>("notifications");

@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { ReceiptText, Plus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { FilterBar } from "@/components/filter-bar";
@@ -13,6 +14,12 @@ import { RealtimeTransactionWrapper } from "@/components/sales/realtime-transact
 import { Suspense } from "react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { db } from "@repo/db";
+
+export const metadata: Metadata = {
+  title: "Sales Transactions",
+  description: "Browse order history, transaction status, receipt printouts, and payment modes.",
+};
+
 
 async function TransactionList({
   searchParams,
