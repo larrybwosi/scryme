@@ -9,28 +9,158 @@ const builtInWorkflowTemplates = [
     path: "f/dealio/customer_onboarding",
     name: "Customer Onboarding Workflow",
     description: "Sends welcome email and provisions CRM profile when a new customer registers.",
-    parameters: [
-      { name: "sendWelcomeEmail", type: "boolean", label: "Send Welcome Email", defaultValue: true },
-      { name: "crmFolder", type: "string", label: "CRM Folder", defaultValue: "New Leads" },
-    ],
+    schema: {
+      type: "object",
+      properties: {
+        sendWelcomeEmail: {
+          type: "boolean",
+          title: "Send Welcome Email",
+          default: true,
+          description: "Automatically dispatch a welcome message upon registration.",
+          group: "General Settings",
+        },
+        crmFolder: {
+          type: "string",
+          title: "CRM Folder Name",
+          default: "New Leads",
+          description: "CRM bucket where new lead records will be assigned.",
+          group: "General Settings",
+        },
+        startDate: {
+          type: "string",
+          format: "date",
+          title: "Campaign Start Date",
+          default: new Date().toISOString().split("T")[0],
+          description: "Date from which onboarding triggers are active.",
+          group: "Timing & Schedule",
+        },
+        delayDuration: {
+          type: "string",
+          format: "duration",
+          title: "Email Delay Duration",
+          default: "15m",
+          description: "Delay prior to dispatching welcome notification email.",
+          group: "Timing & Schedule",
+        },
+      },
+    },
   },
   {
     path: "f/dealio/inventory_alert",
     name: "Low Stock Alert Workflow",
     description: "Monitors product inventory stock levels and sends notification alerts when below threshold.",
-    parameters: [
-      { name: "threshold", type: "number", label: "Threshold", defaultValue: 10 },
-      { name: "notificationEmail", type: "string", label: "Alert Email", defaultValue: "procurement@example.com" },
-    ],
+    schema: {
+      type: "object",
+      properties: {
+        threshold: {
+          type: "number",
+          title: "Default Threshold",
+          default: 10,
+          description: "Trigger alert when stock drops below this quantity.",
+          group: "Alert Triggers",
+        },
+        alertFrequency: {
+          type: "string",
+          format: "select",
+          enum: ["IMMEDIATE", "HOURLY", "DAILY_DIGEST"],
+          enumNames: ["Immediate", "Hourly Digest", "Daily Digest"],
+          title: "Notification Frequency",
+          default: "IMMEDIATE",
+          description: "Frequency for sending stock warning summaries.",
+          group: "Alert Triggers",
+        },
+        notificationEmail: {
+          type: "string",
+          title: "Alert Email",
+          default: "procurement@example.com",
+          description: "Primary email endpoint for critical inventory alerts.",
+          group: "Notifications",
+        },
+        quietHoursStart: {
+          type: "string",
+          format: "time",
+          title: "Quiet Hours Start Time",
+          default: "22:00",
+          description: "Do not trigger non-urgent emails after this time.",
+          group: "Timing & Schedule",
+        },
+      },
+    },
+  },
+  {
+    path: "f/dealio/daily_sales_report",
+    name: "Daily Sales Report",
+    description: "Generates and emails a summary of daily sales to the management team.",
+    schema: {
+      type: "object",
+      properties: {
+        recipients: {
+          type: "string",
+          title: "Recipient Emails (comma separated)",
+          default: "admin@example.com",
+          description: "Comma-separated list of executive email addresses.",
+          group: "Distribution",
+        },
+        reportTime: {
+          type: "string",
+          format: "time",
+          title: "Daily Scheduled Dispatch Time",
+          default: "18:00",
+          description: "Local time at which the daily summary is computed.",
+          group: "Timing & Schedule",
+        },
+        includeCharts: {
+          type: "boolean",
+          title: "Include Visual Charts",
+          default: true,
+          description: "Attach PDF graphs detailing revenue and units sold.",
+          group: "Report Formatting",
+        },
+      },
+    },
   },
   {
     path: "f/dealio/stock_movement_report",
     name: "Weekly Stock Movement Report",
     description: "Sends a weekly summary of stock movements (IN/OUT) to selected owners and admins via Scryme Chat.",
-    parameters: [
-      { name: "scheduleDay", type: "number", label: "Day of Week (0=Sunday, 6=Saturday)", defaultValue: 0 },
-      { name: "enabled", type: "boolean", label: "Workflow Enabled", defaultValue: true },
-    ],
+    schema: {
+      type: "object",
+      properties: {
+        recipients: {
+          type: "array",
+          items: { type: "string" },
+          title: "Report Recipients",
+          format: "members",
+          description: "Selected members will receive the weekly report in Scryme Chat.",
+          group: "Distribution",
+        },
+        scheduleDay: {
+          type: "string",
+          format: "select",
+          enum: ["0", "1", "2", "3", "4", "5", "6"],
+          enumNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+          title: "Day of Week",
+          default: "0",
+          description: "Scheduled day of the week to run weekly compilation.",
+          group: "Timing & Schedule",
+        },
+        dispatchTime: {
+          type: "string",
+          format: "time",
+          title: "Dispatch Time",
+          default: "09:00",
+          description: "Time of day to publish weekly summary to Scryme Chat.",
+          group: "Timing & Schedule",
+        },
+        enabled: {
+          type: "boolean",
+          title: "Workflow Enabled",
+          default: true,
+          description: "Enable or pause this automated schedule.",
+          group: "General Settings",
+        },
+      },
+    },
   },
 ];
 
@@ -50,17 +180,7 @@ async function getAvailableWorkflows(organizationId: string) {
       description: template.description,
       isProvisioned: !!provisioned,
       settings: (provisioned?.config as any) || {},
-      schema: {
-        type: "object",
-        properties: template.parameters.reduce((acc: any, param: any) => {
-          acc[param.name] = {
-            type: param.type === "string" || param.type === "select" || param.type === "date" ? "string" : param.type,
-            title: param.label,
-            default: param.defaultValue,
-          };
-          return acc;
-        }, {}),
-      },
+      schema: template.schema,
     };
   });
 }
