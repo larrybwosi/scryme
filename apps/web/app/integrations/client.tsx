@@ -31,7 +31,14 @@ import { cn } from "@repo/ui/lib/utils";
 import {
   getIntegrationsStatus,
   provisionScryme,
+  getScrymeWorkspaceDetails,
+  createScrymeWorkspaceChannel,
+  addScrymeWorkspaceMember,
+  removeScrymeWorkspaceMember,
 } from "../actions/integrations";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Hash, Lock, Users, Plus, Trash2, Shield, UserPlus, RefreshCw, MessageSquare } from "lucide-react";
 
 const INTEGRATIONS = [
   {
@@ -77,9 +84,38 @@ export default function IntegrationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isScrymeProvisioning, setIsScrymeProvisioning] = useState(false);
 
+  // Scryme Workspace Management Details
+  const [scrymeTab, setScrymeTab] = useState<"overview" | "channels" | "members">("overview");
+  const [scrymeDetails, setScrymeDetails] = useState<any>(null);
+  const [isLoadingScrymeDetails, setIsLoadingScrymeDetails] = useState(false);
+  const [newChannelName, setNewChannelName] = useState("");
+  const [newChannelType, setNewChannelType] = useState<"public" | "private">("public");
+  const [isCreatingChannel, setIsCreatingChannel] = useState(false);
+  const [newMemberEmail, setNewMemberEmail] = useState("");
+  const [newMemberRole, setNewMemberRole] = useState<"admin" | "member">("member");
+  const [isAddingMember, setIsAddingMember] = useState(false);
+
   useEffect(() => {
     loadStatuses();
   }, []);
+
+  const loadScrymeDetails = async () => {
+    setIsLoadingScrymeDetails(true);
+    try {
+      const data = await getScrymeWorkspaceDetails();
+      setScrymeDetails(data);
+    } catch {
+      toast.error("Failed to fetch Scryme Chat workspace details");
+    } finally {
+      setIsLoadingScrymeDetails(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedIntegration?.id === "scryme" && statuses.scryme?.connected) {
+      loadScrymeDetails();
+    }
+  }, [selectedIntegration, statuses.scryme?.connected]);
 
   const loadStatuses = async () => {
     setIsLoading(true);
@@ -154,27 +190,264 @@ export default function IntegrationsPage() {
           </div>
         );
       case "scryme":
-        return (
-          <div className="py-4">
-            <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 rounded-xl p-4">
-              <h4 className="font-semibold text-purple-900 dark:text-purple-300 text-sm mb-1">
-                One-Click Automatic Provisioning
-              </h4>
-              <p className="text-purple-700 dark:text-purple-400/80 text-xs mb-3">
-                Let Scryme automatically spin up a dedicated Chat workspace and
-                configure default channels (Announcements, Alerts, General) for
-                your organization.
-              </p>
-              <Button
-                type="button"
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white h-10 text-xs font-semibold"
-                disabled={isScrymeProvisioning}
-                onClick={handleScrymeProvision}>
-                {isScrymeProvisioning
-                  ? "Provisioning..."
-                  : "Provision Automatically"}
-              </Button>
+        const isProvisioned = statuses.scryme?.connected;
+        if (!isProvisioned) {
+          return (
+            <div className="py-4">
+              <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 rounded-xl p-4">
+                <h4 className="font-semibold text-purple-900 dark:text-purple-300 text-sm mb-1">
+                  One-Click Automatic Provisioning
+                </h4>
+                <p className="text-purple-700 dark:text-purple-400/80 text-xs mb-3">
+                  Let Scryme automatically spin up a dedicated Chat workspace and
+                  configure default channels (Announcements, Alerts, General) for
+                  your organization.
+                </p>
+                <Button
+                  type="button"
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white h-10 text-xs font-semibold"
+                  disabled={isScrymeProvisioning}
+                  onClick={handleScrymeProvision}>
+                  {isScrymeProvisioning
+                    ? "Provisioning..."
+                    : "Provision Automatically"}
+                </Button>
+              </div>
             </div>
+          );
+        }
+
+        return (
+          <div className="py-2 flex flex-col gap-4">
+            {/* Tabs Bar */}
+            <div className="flex border-b border-border">
+              <button
+                type="button"
+                className={cn(
+                  "px-3 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5",
+                  scrymeTab === "overview"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => setScrymeTab("overview")}>
+                <MessageSquare className="w-3.5 h-3.5" /> Overview
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "px-3 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5",
+                  scrymeTab === "channels"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => setScrymeTab("channels")}>
+                <Hash className="w-3.5 h-3.5" /> Channels ({scrymeDetails?.channels?.length || 0})
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "px-3 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5",
+                  scrymeTab === "members"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => setScrymeTab("members")}>
+                <Users className="w-3.5 h-3.5" /> Members Access ({scrymeDetails?.members?.length || 0})
+              </button>
+            </div>
+
+            {/* Tab: Overview */}
+            {scrymeTab === "overview" && (
+              <div className="flex flex-col gap-3 pt-2">
+                <div className="bg-muted/50 rounded-lg p-3 text-xs flex flex-col gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground font-medium">Workspace Slug:</span>
+                    <Badge variant="outline" className="font-mono text-[11px]">
+                      {statuses.scryme?.config?.workspaceSlug || "org-workspace"}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground font-medium">Integration Status:</span>
+                    <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600">
+                      Active Workspace
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-xs text-muted-foreground">Re-sync workspace data</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    disabled={isLoadingScrymeDetails}
+                    onClick={loadScrymeDetails}>
+                    <RefreshCw className={cn("w-3 h-3", isLoadingScrymeDetails && "animate-spin")} />
+                    Sync
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Tab: Channels */}
+            {scrymeTab === "channels" && (
+              <div className="flex flex-col gap-4 pt-2">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newChannelName.trim()) return;
+                    setIsCreatingChannel(true);
+                    try {
+                      const res = await createScrymeWorkspaceChannel({
+                        name: newChannelName.trim(),
+                        type: newChannelType,
+                      });
+                      if (res.message) toast.info(res.message);
+                      else toast.success(`Channel #${newChannelName} created!`);
+                      setNewChannelName("");
+                      loadScrymeDetails();
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to create channel");
+                    } finally {
+                      setIsCreatingChannel(false);
+                    }
+                  }}
+                  className="flex gap-2 items-end">
+                  <div className="flex-1 flex flex-col gap-1">
+                    <Label className="text-[11px]">Channel Name</Label>
+                    <Input
+                      placeholder="e.g. logistics"
+                      value={newChannelName}
+                      onChange={(e) => setNewChannelName(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-28">
+                    <Label className="text-[11px]">Type</Label>
+                    <select
+                      value={newChannelType}
+                      onChange={(e) => setNewChannelType(e.target.value as any)}
+                      className="h-8 rounded-md border border-input bg-background px-2 text-xs">
+                      <option value="public">Public</option>
+                      <option value="private">Private</option>
+                    </select>
+                  </div>
+                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={isCreatingChannel}>
+                    <Plus className="w-3 h-3" /> Add
+                  </Button>
+                </form>
+
+                <div className="max-h-48 overflow-y-auto flex flex-col gap-1.5 border border-border rounded-lg p-2 bg-muted/20">
+                  {scrymeDetails?.channels?.length ? (
+                    scrymeDetails.channels.map((ch: any) => (
+                      <div key={ch.id || ch.slug} className="flex items-center justify-between p-2 rounded-md bg-card border border-border text-xs">
+                        <div className="flex items-center gap-2">
+                          {ch.type === "private" ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <Hash className="w-3.5 h-3.5 text-primary" />}
+                          <span className="font-semibold text-foreground">{ch.name || ch.slug}</span>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                          {ch.type || "public"}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-xs text-muted-foreground">
+                      No custom channels found.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tab: Members */}
+            {scrymeTab === "members" && (
+              <div className="flex flex-col gap-4 pt-2">
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newMemberEmail.trim()) return;
+                    setIsAddingMember(true);
+                    try {
+                      const res = await addScrymeWorkspaceMember({
+                        email: newMemberEmail.trim(),
+                        role: newMemberRole,
+                      });
+                      if (res.message) toast.info(res.message);
+                      else toast.success(`Granted ${newMemberEmail} access to workspace`);
+                      setNewMemberEmail("");
+                      loadScrymeDetails();
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to add member");
+                    } finally {
+                      setIsAddingMember(false);
+                    }
+                  }}
+                  className="flex gap-2 items-end">
+                  <div className="flex-1 flex flex-col gap-1">
+                    <Label className="text-[11px]">Member Email</Label>
+                    <Input
+                      placeholder="colleague@company.com"
+                      value={newMemberEmail}
+                      onChange={(e) => setNewMemberEmail(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-24">
+                    <Label className="text-[11px]">Role</Label>
+                    <select
+                      value={newMemberRole}
+                      onChange={(e) => setNewMemberRole(e.target.value as any)}
+                      className="h-8 rounded-md border border-input bg-background px-2 text-xs">
+                      <option value="member">Member</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={isAddingMember}>
+                    <UserPlus className="w-3 h-3" /> Add
+                  </Button>
+                </form>
+
+                <div className="max-h-48 overflow-y-auto flex flex-col gap-1.5 border border-border rounded-lg p-2 bg-muted/20">
+                  {scrymeDetails?.members?.length ? (
+                    scrymeDetails.members.map((m: any) => (
+                      <div key={m.id || m.email} className="flex items-center justify-between p-2 rounded-md bg-card border border-border text-xs">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground">{m.name || m.email}</span>
+                          <span className="text-[10px] text-muted-foreground">{m.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                            {m.role || "member"}
+                          </Badge>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-destructive hover:bg-destructive/10"
+                            onClick={async () => {
+                              try {
+                                const res = await removeScrymeWorkspaceMember(m.id || m.email);
+                                if (res.message) toast.info(res.message);
+                                else toast.success("Removed member access");
+                                loadScrymeDetails();
+                              } catch (err: any) {
+                                toast.error(err.message || "Failed to remove member");
+                              }
+                            }}>
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-4 text-xs text-muted-foreground">
+                      No members configured.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         );
       default:
