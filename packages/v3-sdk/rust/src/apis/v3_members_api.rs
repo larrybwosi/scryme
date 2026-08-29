@@ -242,7 +242,7 @@ pub async fn members_controller_get_member_activity(configuration: &configuratio
     }
 }
 
-pub async fn members_controller_get_members(configuration: &configuration::Configuration, org_slug: &str, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, role: Option<&str>, membership_status: Option<&str>, is_active: Option<bool>, department_id: Option<&str>, search: Option<&str>) -> Result<Vec<models::MemberResponseDto>, Error<MembersControllerGetMembersError>> {
+pub async fn members_controller_get_members(configuration: &configuration::Configuration, org_slug: &str, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, role: Option<&str>, membership_status: Option<&str>, is_active: Option<bool>, department_id: Option<&str>, search: Option<&str>, status: Option<&str>, is_checked_in: Option<bool>) -> Result<Vec<models::MemberResponseDto>, Error<MembersControllerGetMembersError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_org_slug = org_slug;
     let p_query_page = page;
@@ -254,6 +254,8 @@ pub async fn members_controller_get_members(configuration: &configuration::Confi
     let p_query_is_active = is_active;
     let p_query_department_id = department_id;
     let p_query_search = search;
+    let p_query_status = status;
+    let p_query_is_checked_in = is_checked_in;
 
     let uri_str = format!("{}/v3/{orgSlug}/members", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -284,6 +286,12 @@ pub async fn members_controller_get_members(configuration: &configuration::Confi
     }
     if let Some(ref param_value) = p_query_search {
         req_builder = req_builder.query(&[("search", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = req_builder.query(&[("status", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_checked_in {
+        req_builder = req_builder.query(&[("isCheckedIn", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

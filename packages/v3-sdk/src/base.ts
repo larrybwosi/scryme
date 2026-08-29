@@ -494,6 +494,11 @@ export const catalogMapping = {
 
 export const authMapping = {
   exchangeToken: "authExchangeToken",
+  createOAuthClient: "authCreateOAuthClient",
+  listOAuthClients: "authListOAuthClients",
+  getOAuthClient: "authGetOAuthClient",
+  updateOAuthClient: "authUpdateOAuthClient",
+  deleteOAuthClient: "authDeleteOAuthClient",
   handleOAuth2: "authControllerHandleOAuth2",
 } as const;
 
@@ -747,6 +752,10 @@ export const adminMapping = {
   getOrganizationDetails: "adminControllerGetOrganizationDetails",
   updateOrganization: "adminControllerUpdateOrganization",
   deleteOrganization: "adminControllerDeleteOrganization",
+  suspendOrganization: "adminControllerSuspendOrganization",
+  reactivateOrganization: "adminControllerReactivateOrganization",
+  getEffectiveQuota: "adminControllerGetEffectiveQuota",
+  setQuotaOverrides: "adminControllerSetQuotaOverrides",
   listMembers: "adminControllerListMembers",
   listUsers: "adminControllerListUsers",
   banUser: "adminControllerBanUser",
@@ -771,10 +780,6 @@ export const adminMapping = {
   createWebhook: "webhooksCreate",
   listWebhooks: "webhooksList",
   deleteWebhook: "webhooksDelete",
-  handleWindmillCallback: "windmillCallbackControllerHandleCallback",
-  handleWindmillApprovalCallback: "windmillCallbackControllerHandleApprovalCallback",
-  handleWindmillBakeryDisposalCallback: "windmillCallbackControllerHandleBakeryDisposalCallback",
-  handleWindmillOutcomeCallback: "windmillCallbackControllerHandleOutcomeCallback",
   getCustomers: "customersGetCustomers",
   registerCustomer: "customersRegister",
   updateCustomer: "customersUpdate",

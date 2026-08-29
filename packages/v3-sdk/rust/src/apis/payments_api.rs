@@ -19,6 +19,7 @@ use super::{Error, configuration, ContentType};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum PaymentsCheckoutError {
+    Status400(models::ApiErrorResponseDto),
     UnknownValue(serde_json::Value),
 }
 
@@ -30,7 +31,7 @@ pub enum PaymentsControllerHandleStkCallbackError {
 }
 
 
-pub async fn payments_checkout(configuration: &configuration::Configuration, org_slug: &str, checkout_dto: Option<models::CheckoutDto>) -> Result<models::CheckoutResponseDto, Error<PaymentsCheckoutError>> {
+pub async fn payments_checkout(configuration: &configuration::Configuration, org_slug: &str, checkout_dto: models::CheckoutDto) -> Result<models::CheckoutResponseDto, Error<PaymentsCheckoutError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_org_slug = org_slug;
     let p_body_checkout_dto = checkout_dto;
@@ -41,6 +42,9 @@ pub async fn payments_checkout(configuration: &configuration::Configuration, org
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
     req_builder = req_builder.json(&p_body_checkout_dto);
 
     let req = req_builder.build()?;
@@ -79,6 +83,9 @@ pub async fn payments_controller_handle_stk_callback(configuration: &configurati
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;

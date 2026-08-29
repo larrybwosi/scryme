@@ -25,6 +25,8 @@ pub struct MemberResponseDto {
     pub is_active: bool,
     #[serde(rename = "status")]
     pub status: Status,
+    #[serde(rename = "isCheckedIn", skip_serializing_if = "Option::is_none")]
+    pub is_checked_in: Option<bool>,
     #[serde(rename = "cardId", skip_serializing_if = "Option::is_none")]
     pub card_id: Option<String>,
     #[serde(rename = "phone", skip_serializing_if = "Option::is_none")]
@@ -50,6 +52,7 @@ impl MemberResponseDto {
             membership_status,
             is_active,
             status,
+            is_checked_in: None,
             card_id: None,
             phone: None,
             created_at,

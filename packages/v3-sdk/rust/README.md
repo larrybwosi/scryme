@@ -40,6 +40,7 @@ Class | Method | HTTP request | Description
 *V3AdminApi* | [**admin_controller_delete_integration_definition**](docs/V3AdminApi.md#admin_controller_delete_integration_definition) | **DELETE** /v3/admin/integrations/definitions/{id} | Delete a global integration definition
 *V3AdminApi* | [**admin_controller_delete_organization**](docs/V3AdminApi.md#admin_controller_delete_organization) | **DELETE** /v3/admin/organizations/{id} | Soft-delete an organization system-wide
 *V3AdminApi* | [**admin_controller_delete_tier**](docs/V3AdminApi.md#admin_controller_delete_tier) | **DELETE** /v3/admin/tiers/{slug} | Delete a global plan / tier definition
+*V3AdminApi* | [**admin_controller_get_effective_quota**](docs/V3AdminApi.md#admin_controller_get_effective_quota) | **GET** /v3/admin/organizations/{id}/quota | Get the effective quota (tier limits merged with overrides) for an organization
 *V3AdminApi* | [**admin_controller_get_organization_details**](docs/V3AdminApi.md#admin_controller_get_organization_details) | **GET** /v3/admin/organizations/{id} | Get single organization details
 *V3AdminApi* | [**admin_controller_get_organization_subscription**](docs/V3AdminApi.md#admin_controller_get_organization_subscription) | **GET** /v3/admin/organizations/{id}/subscription | Get subscription details for a specific organization
 *V3AdminApi* | [**admin_controller_get_stats**](docs/V3AdminApi.md#admin_controller_get_stats) | **GET** /v3/admin/stats | Get system-wide metrics and stats
@@ -53,8 +54,11 @@ Class | Method | HTTP request | Description
 *V3AdminApi* | [**admin_controller_list_system_payments**](docs/V3AdminApi.md#admin_controller_list_system_payments) | **GET** /v3/admin/payments | List all system payments for organization plans
 *V3AdminApi* | [**admin_controller_list_tiers**](docs/V3AdminApi.md#admin_controller_list_tiers) | **GET** /v3/admin/tiers | List all system-wide organization plans and tiers
 *V3AdminApi* | [**admin_controller_list_users**](docs/V3AdminApi.md#admin_controller_list_users) | **GET** /v3/admin/users | List all users system-wide
+*V3AdminApi* | [**admin_controller_reactivate_organization**](docs/V3AdminApi.md#admin_controller_reactivate_organization) | **POST** /v3/admin/organizations/{id}/reactivate | Reactivate a suspended organization
 *V3AdminApi* | [**admin_controller_record_custom_payment**](docs/V3AdminApi.md#admin_controller_record_custom_payment) | **POST** /v3/admin/payments/record | Record a custom plan payment (e.g. M-Pesa / Manual verification)
 *V3AdminApi* | [**admin_controller_set_global_setting**](docs/V3AdminApi.md#admin_controller_set_global_setting) | **POST** /v3/admin/settings | Set or update a global system setting
+*V3AdminApi* | [**admin_controller_set_quota_overrides**](docs/V3AdminApi.md#admin_controller_set_quota_overrides) | **PUT** /v3/admin/organizations/{id}/quota-overrides | Set per-organization quota overrides
+*V3AdminApi* | [**admin_controller_suspend_organization**](docs/V3AdminApi.md#admin_controller_suspend_organization) | **POST** /v3/admin/organizations/{id}/suspend | Suspend an organization, blocking its members from the platform
 *V3AdminApi* | [**admin_controller_unban_user**](docs/V3AdminApi.md#admin_controller_unban_user) | **POST** /v3/admin/users/{id}/unban | Globally unban a user and reactivate associated members
 *V3AdminApi* | [**admin_controller_update_integration_definition**](docs/V3AdminApi.md#admin_controller_update_integration_definition) | **PATCH** /v3/admin/integrations/definitions/{id} | Update a global integration definition
 *V3AdminApi* | [**admin_controller_update_organization**](docs/V3AdminApi.md#admin_controller_update_organization) | **PATCH** /v3/admin/organizations/{id} | Update organization details system-wide
@@ -63,7 +67,12 @@ Class | Method | HTTP request | Description
 *V3AnalyticsApi* | [**analytics_controller_get_resource_utilization**](docs/V3AnalyticsApi.md#analytics_controller_get_resource_utilization) | **GET** /v3/{orgSlug}/analytics/utilization | Get resource utilization
 *V3AnnouncementsApi* | [**announcement_controller_broadcast_announcement**](docs/V3AnnouncementsApi.md#announcement_controller_broadcast_announcement) | **POST** /v3/{orgSlug}/announcements | Broadcast an announcement
 *V3AuthApi* | [**auth_controller_handle_o_auth2**](docs/V3AuthApi.md#auth_controller_handle_o_auth2) | **GET** /v3/auth/oauth2/{path} | Handle OAuth2 provider requests
+*V3AuthApi* | [**auth_create_o_auth_client**](docs/V3AuthApi.md#auth_create_o_auth_client) | **POST** /v3/auth/oauth/clients | Register a new OAuth Application Client for Sign in with Scryme
+*V3AuthApi* | [**auth_delete_o_auth_client**](docs/V3AuthApi.md#auth_delete_o_auth_client) | **DELETE** /v3/auth/oauth/clients/{id} | Delete an OAuth Application Client
 *V3AuthApi* | [**auth_exchange_token**](docs/V3AuthApi.md#auth_exchange_token) | **POST** /v3/auth/token | Exchange client credentials for an access token
+*V3AuthApi* | [**auth_get_o_auth_client**](docs/V3AuthApi.md#auth_get_o_auth_client) | **GET** /v3/auth/oauth/clients/{id} | Get OAuth Application Client details
+*V3AuthApi* | [**auth_list_o_auth_clients**](docs/V3AuthApi.md#auth_list_o_auth_clients) | **GET** /v3/auth/oauth/clients | List registered OAuth Application Clients
+*V3AuthApi* | [**auth_update_o_auth_client**](docs/V3AuthApi.md#auth_update_o_auth_client) | **PUT** /v3/auth/oauth/clients/{id} | Update OAuth Application Client configuration
 *V3B2BApi* | [**b2_b_create_order**](docs/V3B2BApi.md#b2_b_create_order) | **POST** /v3/{orgSlug}/b2b/orders | Create a new B2B order
 *V3B2BApi* | [**b2_b_create_quote**](docs/V3B2BApi.md#b2_b_create_quote) | **POST** /v3/{orgSlug}/b2b/quotes | Request a B2B quote
 *V3B2BApi* | [**b2_b_get_catalog**](docs/V3B2BApi.md#b2_b_get_catalog) | **GET** /v3/{orgSlug}/b2b/catalog | Get B2B product catalog
@@ -209,6 +218,9 @@ Class | Method | HTTP request | Description
 *V3PosApi* | [**p_os_provision**](docs/V3PosApi.md#p_os_provision) | **POST** /v3/{orgSlug}/pos/provision | Provision a new POS device using a setup token
 *V3PosApi* | [**p_os_register_petty_cash**](docs/V3PosApi.md#p_os_register_petty_cash) | **POST** /v3/{orgSlug}/pos/petty-cash | Register a new petty cash expense
 *V3PosApi* | [**p_os_sync**](docs/V3PosApi.md#p_os_sync) | **GET** /v3/{orgSlug}/pos/sync | Full or delta POS sync
+*V3PosPairingApi* | [**p_os_authorize_pairing_session**](docs/V3PosPairingApi.md#p_os_authorize_pairing_session) | **POST** /v3/pos/pairing/session/{sessionId}/authorize | Authorize a temporary POS pairing session from Android App
+*V3PosPairingApi* | [**p_os_create_pairing_session**](docs/V3PosPairingApi.md#p_os_create_pairing_session) | **POST** /v3/pos/pairing/session | Request a temporary pairing session for unprovisioned POS device
+*V3PosPairingApi* | [**p_os_get_pairing_session_status**](docs/V3PosPairingApi.md#p_os_get_pairing_session_status) | **GET** /v3/pos/pairing/session/{sessionId}/status | Poll pairing session status
 *V3PublicServicesApi* | [**public_services_create_public_booking**](docs/V3PublicServicesApi.md#public_services_create_public_booking) | **POST** /v3/public/{orgSlug}/services/bookings | Create a public booking
 *V3PublicServicesApi* | [**public_services_get_availability**](docs/V3PublicServicesApi.md#public_services_get_availability) | **GET** /v3/public/{orgSlug}/services/{id}/availability | Get service slot availability
 *V3PublicServicesApi* | [**public_services_get_categories**](docs/V3PublicServicesApi.md#public_services_get_categories) | **GET** /v3/public/{orgSlug}/services/categories | List public service categories
@@ -295,10 +307,6 @@ Class | Method | HTTP request | Description
 *V3WebhooksApi* | [**webhooks_create**](docs/V3WebhooksApi.md#webhooks_create) | **POST** /v3/{orgSlug}/webhooks | Register a new webhook subscription
 *V3WebhooksApi* | [**webhooks_delete**](docs/V3WebhooksApi.md#webhooks_delete) | **DELETE** /v3/{orgSlug}/webhooks/{id} | Delete a webhook
 *V3WebhooksApi* | [**webhooks_list**](docs/V3WebhooksApi.md#webhooks_list) | **GET** /v3/{orgSlug}/webhooks | List all webhooks
-*V3WindmillWebhooksApi* | [**windmill_callback_controller_handle_approval_callback**](docs/V3WindmillWebhooksApi.md#windmill_callback_controller_handle_approval_callback) | **POST** /v3/webhooks/windmill/approval | Handle approval callbacks from Windmill (V3)
-*V3WindmillWebhooksApi* | [**windmill_callback_controller_handle_bakery_disposal_callback**](docs/V3WindmillWebhooksApi.md#windmill_callback_controller_handle_bakery_disposal_callback) | **POST** /v3/webhooks/windmill/bakery/disposal | Handle bakery disposal callbacks from Windmill (V3)
-*V3WindmillWebhooksApi* | [**windmill_callback_controller_handle_callback**](docs/V3WindmillWebhooksApi.md#windmill_callback_controller_handle_callback) | **POST** /v3/webhooks/windmill | Handle status callbacks from Windmill (V3)
-*V3WindmillWebhooksApi* | [**windmill_callback_controller_handle_outcome_callback**](docs/V3WindmillWebhooksApi.md#windmill_callback_controller_handle_outcome_callback) | **POST** /v3/webhooks/windmill/outcome | Handle generic outcome callbacks from Windmill (V3)
 
 
 ## Documentation For Models
@@ -311,6 +319,7 @@ Class | Method | HTTP request | Description
  - [AnnouncementDto](docs/AnnouncementDto.md)
  - [ApiErrorResponseDto](docs/ApiErrorResponseDto.md)
  - [ApiResponseDto](docs/ApiResponseDto.md)
+ - [AuthCreateOAuthClient201Response](docs/AuthCreateOAuthClient201Response.md)
  - [AuthExchangeToken201Response](docs/AuthExchangeToken201Response.md)
  - [B2BCatalogProductDto](docs/B2BCatalogProductDto.md)
  - [B2BOrderItemDto](docs/B2BOrderItemDto.md)
@@ -345,6 +354,7 @@ Class | Method | HTTP request | Description
  - [CreateIntegrationDefinitionDto](docs/CreateIntegrationDefinitionDto.md)
  - [CreateInvitationDto](docs/CreateInvitationDto.md)
  - [CreateMemberDto](docs/CreateMemberDto.md)
+ - [CreateOAuthClientDto](docs/CreateOAuthClientDto.md)
  - [CreateOrderDto](docs/CreateOrderDto.md)
  - [CreateOrganizationDto](docs/CreateOrganizationDto.md)
  - [CreatePartnerDto](docs/CreatePartnerDto.md)
@@ -383,6 +393,7 @@ Class | Method | HTTP request | Description
  - [MemberDepartmentDto](docs/MemberDepartmentDto.md)
  - [MemberResponseDto](docs/MemberResponseDto.md)
  - [MemberRoleDto](docs/MemberRoleDto.md)
+ - [OAuthClientResponseDto](docs/OAuthClientResponseDto.md)
  - [OrderItemDto](docs/OrderItemDto.md)
  - [OrderResponseDto](docs/OrderResponseDto.md)
  - [PaginatedB2BCatalogDto](docs/PaginatedB2BCatalogDto.md)
@@ -427,10 +438,12 @@ Class | Method | HTTP request | Description
  - [ServicesRegisterCustomerAppRequest](docs/ServicesRegisterCustomerAppRequest.md)
  - [ServicesUpdateBookingStatusRequest](docs/ServicesUpdateBookingStatusRequest.md)
  - [SetGlobalSettingDto](docs/SetGlobalSettingDto.md)
+ - [SetQuotaOverridesDto](docs/SetQuotaOverridesDto.md)
  - [ShipTransferDto](docs/ShipTransferDto.md)
  - [ShipTransferItemDto](docs/ShipTransferItemDto.md)
  - [StrapiConnectionResponseDto](docs/StrapiConnectionResponseDto.md)
  - [SubmitReconciliationDto](docs/SubmitReconciliationDto.md)
+ - [SuspendOrganizationDto](docs/SuspendOrganizationDto.md)
  - [TerminalLoginDto](docs/TerminalLoginDto.md)
  - [TerminalLoginResponseDto](docs/TerminalLoginResponseDto.md)
  - [TokenRequestDto](docs/TokenRequestDto.md)
@@ -443,6 +456,7 @@ Class | Method | HTTP request | Description
  - [UpdateDepartmentDto](docs/UpdateDepartmentDto.md)
  - [UpdateIntegrationDefinitionDto](docs/UpdateIntegrationDefinitionDto.md)
  - [UpdateMemberDto](docs/UpdateMemberDto.md)
+ - [UpdateOAuthClientDto](docs/UpdateOAuthClientDto.md)
  - [UpdateOrderStatusDto](docs/UpdateOrderStatusDto.md)
  - [UpdateOrganizationDto](docs/UpdateOrganizationDto.md)
  - [UpdatePartnerDto](docs/UpdatePartnerDto.md)

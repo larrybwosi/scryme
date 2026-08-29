@@ -135,6 +135,7 @@ pub mod v3_members_api;
 pub mod v3_members_terminal_api;
 pub mod v3_orders_api;
 pub mod v3_pos_api;
+pub mod v3_pos_pairing_api;
 pub mod v3_public_services_api;
 pub mod v3_role_management_api;
 pub mod v3_services_api;
@@ -144,6 +145,5 @@ pub mod v3_strapi_integration_api;
 pub mod v3_strapi_webhooks_api;
 pub mod v3_units_api;
 pub mod v3_webhooks_api;
-pub mod v3_windmill_webhooks_api;
 
 pub mod configuration;

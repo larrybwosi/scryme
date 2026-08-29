@@ -31,6 +31,7 @@ import CmsCustomizationGuide, {
 import GlobalResponseGuide from "./components/GlobalResponseGuide";
 import InstallationSetupGuide from "./components/InstallationSetupGuide";
 import CustomerAuthGuide from "./components/CustomerAuthGuide";
+import SignInWithScrymeGuide from "./components/SignInWithScrymeGuide";
 import WorkflowAutomationGuide from "./components/WorkflowAutomationGuide";
 import UserGuides from "./components/UserGuides";
 
@@ -1408,6 +1409,8 @@ export default function App() {
       "customer registration".includes(query) ||
       "session management".includes(query) ||
       "customer auth".includes(query) ||
+      "sign in with scryme".includes(query) ||
+      "oauth2".includes(query) ||
       "workflow automation".includes(query) ||
       "automation engine".includes(query)
     );
@@ -1888,6 +1891,11 @@ export default function App() {
         name: "Customer Auth & Sessions",
       },
       {
+        id: "signin-scryme-guide",
+        type: "guide",
+        name: "Sign in with Scryme",
+      },
+      {
         id: "workflow-automation-guide",
         type: "guide",
         name: "Workflow & Automation",
@@ -2278,6 +2286,20 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => {
+                    setActiveEndpointId("signin-scryme-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left text-[13px] transition-all duration-150 cursor-pointer ${
+                    activeEndpointId === "signin-scryme-guide"
+                      ? "bg-brass/[0.14] text-paper font-semibold"
+                      : "text-light-text hover:text-paper hover:bg-ink-card/70"
+                  }`}
+                >
+                  <Fingerprint size={14} className="text-brass shrink-0" />
+                  <span className="truncate">Sign in with Scryme</span>
+                </button>
+                <button
+                  onClick={() => {
                     setActiveEndpointId("workflow-automation-guide");
                     setSidebarOpen(false);
                   }}
@@ -2389,6 +2411,10 @@ export default function App() {
                 />
               ) : activeEndpointId === "customer-registration-guide" ? (
                 <CustomerAuthGuide
+                  renderHighlightedCode={renderHighlightedCode}
+                />
+              ) : activeEndpointId === "signin-scryme-guide" ? (
+                <SignInWithScrymeGuide
                   renderHighlightedCode={renderHighlightedCode}
                 />
               ) : activeEndpointId === "workflow-automation-guide" ? (
