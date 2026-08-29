@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WebhookDispatcherService } from "../webhook-dispatcher.service";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 export interface WorkflowJobHandlerContext {
   organizationId: string;
@@ -13,11 +14,37 @@ export interface WorkflowJobHandlerContext {
 @Injectable()
 export class WorkflowHandlers {
   private readonly logger = new Logger(WorkflowHandlers.name);
+  private readonly scrymeClient = new ScrymeChatApiClient();
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly webhookDispatcher: WebhookDispatcherService,
   ) {}
+
+  private async dispatchScrymeChatReport(
+    organizationId: string,
+    channelSlug: string,
+    messageContent: string,
+  ): Promise<boolean> {
+    try {
+      const config = await (this.prisma.client as any).scrymeConfiguration.findUnique({
+        where: { organizationId },
+      });
+
+      if (config && config.isActive && config.workspaceSlug) {
+        await this.scrymeClient.sendMessage(
+          config.workspaceSlug,
+          channelSlug || "notifications",
+          { content: messageContent },
+        );
+        this.logger.log(`Dispatched ScrymeChat report/info for org ${organizationId} to channel ${channelSlug || "notifications"}`);
+        return true;
+      }
+    } catch (error: any) {
+      this.logger.error(`Failed to dispatch ScrymeChat report for org ${organizationId}: ${error.message}`);
+    }
+    return false;
+  }
 
   async executeHandler(handler: string, ctx: WorkflowJobHandlerContext): Promise<any> {
     this.logger.log(`Executing handler '${handler}' for job ${ctx.jobId} (Org: ${ctx.organizationId})`);
@@ -45,9 +72,16 @@ export class WorkflowHandlers {
 
     this.logger.log(`[LowStockAlert] Product ${productId}: stock ${currentStock}, threshold ${threshold}. Alert triggered: ${isLowStock}`);
 
+    let scrymeSent = false;
+    if (isLowStock) {
+      const alertMsg = `⚠️ **Low Stock Alert Report**\nProduct ID: \`${productId || 'N/A'}\`\nCurrent Stock: **${currentStock}** (Threshold: ${threshold})`;
+      scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "inventory-alerts", alertMsg);
+    }
+
     return {
       success: true,
       alertTriggered: isLowStock,
+      scrymeNotificationSent: scrymeSent,
       details: {
         productId,
         currentStock,
@@ -66,9 +100,13 @@ export class WorkflowHandlers {
 
     this.logger.log(`[CustomerOnboarding] Processing onboarding for ${customerEmail} (ID: ${customerId})`);
 
+    const onboardingMsg = `🎉 **Customer Onboarding Report**\nNew Customer Onboarded: **${customerName}** (${customerEmail || 'N/A'})\nCustomer ID: \`${customerId || 'N/A'}\``;
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "customer-onboarding", onboardingMsg);
+
     return {
       success: true,
       welcomeEmailSent: sendWelcomeEmail,
+      scrymeNotificationSent: scrymeSent,
       crmProfileCreated: true,
       details: {
         customerId,
@@ -90,7 +128,7 @@ export class WorkflowHandlers {
       throw new Error("Outgoing webhook target URL is required");
     }
 
-    return await this.webhookDispatcher.dispatchOutgoingWebhook({
+    const webhookResult = await this.webhookDispatcher.dispatchOutgoingWebhook({
       organizationId: ctx.organizationId,
       executionId: ctx.executionId,
       jobId: ctx.jobId,
@@ -100,13 +138,27 @@ export class WorkflowHandlers {
       headers,
       payload: webhookData,
     });
+
+    const reportMsg = `🔗 **Outgoing Webhook Workflow Executed**\nEndpoint: \`${targetUrl}\`\nExecution ID: \`${ctx.executionId}\``;
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "workflow-reports", reportMsg);
+
+    return {
+      ...webhookResult,
+      scrymeNotificationSent: scrymeSent,
+    };
   }
 
   private async handleGenericEvent(ctx: WorkflowJobHandlerContext) {
     this.logger.log(`[GenericEvent] Processed payload for job ${ctx.jobId}`);
+
+    const eventType = ctx.payload?.eventType || "GENERIC_EVENT";
+    const reportMsg = `📋 **Workflow Event Report**\nEvent Type: **${eventType}**\nExecution ID: \`${ctx.executionId}\``;
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "workflow-reports", reportMsg);
+
     return {
       success: true,
-      event: ctx.payload?.eventType || "GENERIC_EVENT",
+      event: eventType,
+      scrymeNotificationSent: scrymeSent,
       processedAt: new Date().toISOString(),
       payload: ctx.payload,
     };
