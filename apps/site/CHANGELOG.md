@@ -1,5 +1,11 @@
 # site
 
+## 1.16.0-next.3
+
+### Minor Changes
+
+- 02bff17: Release
+
 ## 1.16.0-next.2
 
 ### Minor Changes
