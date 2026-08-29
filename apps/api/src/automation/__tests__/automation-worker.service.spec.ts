@@ -1,5 +1,16 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { AutomationWorkerService } from "../automation-worker.service";
+import { WorkflowHandlers } from "../handlers/workflow-handlers";
+
+// Mock the ScrymeChatApiClient
+const mockSendMessage = vi.fn().mockResolvedValue({ success: true });
+vi.mock("@repo/chat", () => {
+  return {
+    ScrymeChatApiClient: class {
+      sendMessage = mockSendMessage;
+    },
+  };
+});
 
 describe("AutomationWorkerService", () => {
   let workerService: AutomationWorkerService;
@@ -7,6 +18,8 @@ describe("AutomationWorkerService", () => {
   let mockWorkflowHandlers: any;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     mockPrisma = {
       client: {
         workflowEngineJob: {
@@ -23,6 +36,9 @@ describe("AutomationWorkerService", () => {
         },
         workflowEngineAuditLog: {
           create: vi.fn().mockResolvedValue({ id: "audit_1" }),
+        },
+        scrymeConfiguration: {
+          findUnique: vi.fn(),
         },
       },
     };
@@ -129,6 +145,34 @@ describe("AutomationWorkerService", () => {
           action: "JOB_RETRIED",
           level: "WARN",
         }),
+      }),
+    );
+  });
+
+  it("should send real messages via ScrymeChatApiClient when organization is connected to Scryme in workflow handlers", async () => {
+    mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+      organizationId: "org_scryme",
+      workspaceSlug: "scryme-org-workspace",
+      isActive: true,
+    });
+
+    const handlers = new WorkflowHandlers(mockPrisma as any, { dispatchOutgoingWebhook: vi.fn() } as any);
+
+    const result = await handlers.executeHandler("lowstock_alert", {
+      organizationId: "org_scryme",
+      executionId: "exec_scryme_1",
+      jobId: "job_scryme_1",
+      definitionConfig: { threshold: 10 },
+      payload: { productId: "item-123", currentStock: 2 },
+    });
+
+    expect(result.alertTriggered).toBe(true);
+    expect(result.scrymeNotificationSent).toBe(true);
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      "scryme-org-workspace",
+      "inventory-alerts",
+      expect.objectContaining({
+        content: expect.stringContaining("Low Stock Alert Report"),
       }),
     );
   });

@@ -30,6 +30,14 @@ vi.mock('@repo/db', () => ({
 vi.mock('axios', () => ({
   default: {
     post: vi.fn().mockResolvedValue({ status: 200 }),
+    create: vi.fn().mockReturnValue({
+      post: vi.fn().mockResolvedValue({ status: 200 }),
+      get: vi.fn().mockResolvedValue({ status: 200, data: {} }),
+      interceptors: {
+        request: { use: vi.fn(), eject: vi.fn() },
+        response: { use: vi.fn(), eject: vi.fn() },
+      },
+    }),
   },
 }));
 
