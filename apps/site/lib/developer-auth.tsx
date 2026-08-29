@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { authClient, signIn, signUp } from "./auth-client";
 
 export interface ApiKeyItem {
   id: string;
@@ -30,17 +31,17 @@ export interface DeveloperUser {
   id: string;
   name: string;
   email: string;
-  organizationName: string;
-  role: string;
+  organizationName?: string;
+  role?: string;
 }
 
 interface DeveloperAuthContextType {
   user: DeveloperUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, pass: string) => Promise<boolean>;
-  register: (name: string, email: string, orgName: string, pass: string) => Promise<boolean>;
-  logout: () => void;
+  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, orgName: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
   apiKeys: ApiKeyItem[];
   oauthClients: OAuthClientItem[];
   createApiKey: (name: string, environment: "LIVE" | "TEST") => Promise<ApiKeyItem>;
@@ -52,84 +53,30 @@ interface DeveloperAuthContextType {
   deleteOAuthClient: (id: string) => void;
 }
 
-const INITIAL_API_KEYS: ApiKeyItem[] = [
-  {
-    id: "key_1",
-    name: "Production Storefront API",
-    keyPrefix: "sk_live_8f3a_",
-    fullKey: "sk_live_8f3a_94b02e7a18f4d9c3e21067ab54f10a8d",
-    environment: "LIVE",
-    isActive: true,
-    createdAt: new Date(Date.now() - 30 * 86400000).toISOString(),
-    lastUsedAt: "2 mins ago",
-  },
-  {
-    id: "key_2",
-    name: "Staging Testing Key",
-    keyPrefix: "sk_test_1c9b_",
-    fullKey: "sk_test_1c9b_4490f11a8b910e5d42187a2234e90812",
-    environment: "TEST",
-    isActive: true,
-    createdAt: new Date(Date.now() - 10 * 86400000).toISOString(),
-    lastUsedAt: "1 hour ago",
-  },
-];
-
-const INITIAL_OAUTH_CLIENTS: OAuthClientItem[] = [
-  {
-    id: "oauth_1",
-    name: "Customer Loyalty Mobile App",
-    clientId: "v3_app_84920a1f9e83b21c",
-    clientSecret: "scryme_sec_994a20b9c3e7d8f1e0a92b3c4d5e6f7a",
-    redirectUris: ["https://loyalty.app.com/oauth/callback", "http://localhost:3000/callback"],
-    scopes: ["user.profile", "user.email", "loyalty.read"],
-    corsOrigins: ["https://loyalty.app.com", "http://localhost:3000"],
-    isActive: true,
-    createdAt: new Date(Date.now() - 15 * 86400000).toISOString(),
-  },
-  {
-    id: "oauth_2",
-    name: "Enterprise ERP Portal Integration",
-    clientId: "v3_erp_184729013cba72e1",
-    clientSecret: "scryme_sec_110293847566543210fedcba98765432",
-    redirectUris: ["https://erp.internal.org/auth/scryme/callback"],
-    scopes: ["user.profile", "user.email", "inventory.read", "orders.read", "finance.read"],
-    corsOrigins: ["https://erp.internal.org"],
-    isActive: true,
-    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-  },
-];
-
 const DeveloperAuthContext = createContext<DeveloperAuthContextType | undefined>(undefined);
 
-const DEV_USER_STORAGE_KEY = "scryme_dev_user";
 const DEV_KEYS_STORAGE_KEY = "scryme_dev_api_keys";
 const DEV_OAUTH_STORAGE_KEY = "scryme_dev_oauth_clients";
 
 export function DeveloperAuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<DeveloperUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>(INITIAL_API_KEYS);
-  const [oauthClients, setOauthClients] = useState<OAuthClientItem[]>(INITIAL_OAUTH_CLIENTS);
+  const session = authClient.useSession();
+  const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
+  const [oauthClients, setOauthClients] = useState<OAuthClientItem[]>([]);
+
+  const user: DeveloperUser | null = session?.data?.user
+    ? {
+        id: session.data.user.id,
+        name: session.data.user.name || session.data.user.email.split("@")[0],
+        email: session.data.user.email,
+        organizationName: (session.data.user as any).organizationName || "Developer Workspace",
+        role: (session.data.user as any).role || "Developer",
+      }
+    : null;
+
+  const isLoading = session.isPending;
 
   useEffect(() => {
     try {
-      const storedUser = localStorage.getItem(DEV_USER_STORAGE_KEY);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      } else {
-        // Default guest user session for smooth developer exploration
-        const defaultUser: DeveloperUser = {
-          id: "dev_usr_default",
-          name: "Alex Dev",
-          email: "alex@developer.scryme.tech",
-          organizationName: "Scryme Innovations Lab",
-          role: "Lead Platform Architect",
-        };
-        setUser(defaultUser);
-        localStorage.setItem(DEV_USER_STORAGE_KEY, JSON.stringify(defaultUser));
-      }
-
       const storedKeys = localStorage.getItem(DEV_KEYS_STORAGE_KEY);
       if (storedKeys) {
         setApiKeys(JSON.parse(storedKeys));
@@ -140,51 +87,51 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
         setOauthClients(JSON.parse(storedOAuth));
       }
     } catch (err) {
-      console.error("Failed loading developer auth session:", err);
-    } finally {
-      setIsLoading(false);
+      console.error("Failed loading developer credentials from storage:", err);
     }
   }, []);
 
-  const login = async (email: string): Promise<boolean> => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
+  const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const result = await signIn.email({
+        email,
+        password: pass,
+      });
 
-    const loggedUser: DeveloperUser = {
-      id: `dev_${Date.now()}`,
-      name: email.split("@")[0].toUpperCase(),
-      email,
-      organizationName: `${email.split("@")[0].toUpperCase()} Tech Org`,
-      role: "Application Developer",
-    };
+      if (result.error) {
+        return { success: false, error: result.error.message || "Invalid credentials." };
+      }
 
-    setUser(loggedUser);
-    localStorage.setItem(DEV_USER_STORAGE_KEY, JSON.stringify(loggedUser));
-    setIsLoading(false);
-    return true;
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "An authentication error occurred." };
+    }
   };
 
-  const register = async (name: string, email: string, orgName: string): Promise<boolean> => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 700));
+  const register = async (name: string, email: string, orgName: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const result = await signUp.email({
+        name,
+        email,
+        password: pass,
+      });
 
-    const newUser: DeveloperUser = {
-      id: `dev_${Date.now()}`,
-      name,
-      email,
-      organizationName: orgName || `${name}'s Workspace`,
-      role: "Platform Developer",
-    };
+      if (result.error) {
+        return { success: false, error: result.error.message || "Registration failed." };
+      }
 
-    setUser(newUser);
-    localStorage.setItem(DEV_USER_STORAGE_KEY, JSON.stringify(newUser));
-    setIsLoading(false);
-    return true;
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "An error occurred during registration." };
+    }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem(DEV_USER_STORAGE_KEY);
+  const logout = async () => {
+    try {
+      await authClient.signOut();
+    } catch (err) {
+      console.error("Error signing out:", err);
+    }
   };
 
   const createApiKey = async (name: string, environment: "LIVE" | "TEST"): Promise<ApiKeyItem> => {

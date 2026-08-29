@@ -108,14 +108,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/developer/dashboard"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm transition-all hover:scale-[1.02] bg-[#C89A4B] text-[#0B1220] shadow-[0_0_24px_rgba(200,154,75,0.3)]"
+              className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm transition-all hover:scale-[1.02] bg-[#C89A4B] text-[#0B1220] shadow-[0_0_24px_rgba(200,154,75,0.3)]"
             >
               <LayoutDashboard size={17} />
               <span>Open Developer Console</span>
             </Link>
             <Link
               href="/developer/register"
-              className="flex items-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm border transition-all hover:bg-[rgba(241,233,216,0.06)] border-[rgba(241,233,216,0.2)] text-[#F1E9D8]"
+              className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm border transition-all hover:bg-[rgba(241,233,216,0.06)] border-[rgba(241,233,216,0.2)] text-[#F1E9D8]"
             >
               <UserCheck size={17} />
               <span>Register Developer Account</span>
@@ -126,21 +126,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
       {/* Code Showcase Widget */}
       <section className="container mx-auto px-4 lg:px-8 py-10">
-        <div className="max-w-4xl mx-auto rounded-2xl border bg-[#121B2E] border-[rgba(241,233,216,0.12)] shadow-2xl overflow-hidden">
+        <div className="max-w-4xl mx-auto rounded-lg border bg-[#121B2E] border-[rgba(241,233,216,0.12)] shadow-xl overflow-hidden">
           {/* Code Header Bar */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-[rgba(241,233,216,0.1)] bg-[#0B1220]">
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1.5 mr-3">
-                <span className="w-3 h-3 rounded-full bg-rose-500/80" />
-                <span className="w-3 h-3 rounded-full bg-amber-500/80" />
-                <span className="w-3 h-3 rounded-full bg-emerald-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
               </div>
-              <div className="flex items-center gap-1 bg-[#162238] p-1 rounded-lg border border-[rgba(241,233,216,0.08)]">
+              <div className="flex items-center gap-1 bg-[#162238] p-1 rounded-md border border-[rgba(241,233,216,0.08)]">
                 {(["ts", "curl", "rust"] as const).map((lang) => (
                   <button
                     key={lang}
                     onClick={() => setSelectedLanguage(lang)}
-                    className={`px-3 py-1 rounded-md text-xs font-mono font-medium transition-colors ${
+                    className={`px-3 py-1 rounded text-xs font-mono font-medium transition-colors ${
                       selectedLanguage === lang
                         ? "bg-[#C89A4B] text-[#0B1220]"
                         : "text-[rgba(241,233,216,0.6)] hover:text-[#F1E9D8]"
@@ -187,9 +187,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {/* Card 1: Sign in with Scryme */}
-          <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
-            <div className="w-10 h-10 rounded-xl bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
-              <Lock size={20} />
+          <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
+            <div className="w-9 h-9 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
+              <Lock size={18} />
             </div>
             <h3 className="text-lg font-bold mb-2">Sign in with Scryme</h3>
             <p className="text-xs text-[rgba(241,233,216,0.65)] leading-relaxed mb-4">
@@ -206,9 +206,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           </div>
 
           {/* Card 2: V3 API Credentials */}
-          <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
-            <div className="w-10 h-10 rounded-xl bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
-              <Key size={20} />
+          <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
+            <div className="w-9 h-9 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
+              <Key size={18} />
             </div>
             <h3 className="text-lg font-bold mb-2">V3 API Keys Management</h3>
             <p className="text-xs text-[rgba(241,233,216,0.65)] leading-relaxed mb-4">
@@ -225,9 +225,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           </div>
 
           {/* Card 3: Realtime Webhooks */}
-          <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
-            <div className="w-10 h-10 rounded-xl bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
-              <Webhook size={20} />
+          <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
+            <div className="w-9 h-9 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
+              <Webhook size={18} />
             </div>
             <h3 className="text-lg font-bold mb-2">Event Webhook Subscriptions</h3>
             <p className="text-xs text-[rgba(241,233,216,0.65)] leading-relaxed mb-4">
@@ -244,9 +244,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           </div>
 
           {/* Card 4: Official Client SDKs */}
-          <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
-            <div className="w-10 h-10 rounded-xl bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
-              <Code2 size={20} />
+          <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
+            <div className="w-9 h-9 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
+              <Code2 size={18} />
             </div>
             <h3 className="text-lg font-bold mb-2">TypeScript & Rust SDKs</h3>
             <p className="text-xs text-[rgba(241,233,216,0.65)] leading-relaxed mb-4">
@@ -263,9 +263,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           </div>
 
           {/* Card 5: Enterprise Security */}
-          <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
-            <div className="w-10 h-10 rounded-xl bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
-              <Shield size={20} />
+          <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
+            <div className="w-9 h-9 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
+              <Shield size={18} />
             </div>
             <h3 className="text-lg font-bold mb-2">Multi-Tenant Isolation</h3>
             <p className="text-xs text-[rgba(241,233,216,0.65)] leading-relaxed mb-4">
@@ -282,9 +282,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           </div>
 
           {/* Card 6: Interactive Developer Console */}
-          <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
-            <div className="w-10 h-10 rounded-xl bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
-              <Terminal size={20} />
+          <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:border-[rgba(200,154,75,0.4)] transition-all">
+            <div className="w-9 h-9 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] mb-5">
+              <Terminal size={18} />
             </div>
             <h3 className="text-lg font-bold mb-2">Developer Portal Console</h3>
             <p className="text-xs text-[rgba(241,233,216,0.65)] leading-relaxed mb-4">
@@ -304,7 +304,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
       {/* CTA Footer Section */}
       <section className="container mx-auto px-4 lg:px-8 pt-12">
-        <div className="max-w-4xl mx-auto p-8 rounded-3xl border bg-gradient-to-r from-[#162238] to-[#0D1627] border-[rgba(200,154,75,0.3)] text-center">
+        <div className="max-w-4xl mx-auto p-8 rounded-lg border bg-gradient-to-r from-[#162238] to-[#0D1627] border-[rgba(200,154,75,0.3)] text-center">
           <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ fontFamily: fonts.display }}>
             Ready to integrate &quot;Sign in with Scryme&quot;?
           </h2>
@@ -314,7 +314,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/developer/dashboard"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm bg-[#C89A4B] text-[#0B1220] transition-colors hover:bg-[#d4a859]"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm bg-[#C89A4B] text-[#0B1220] transition-colors hover:bg-[#d4a859]"
             >
               <span>Go to Developer Dashboard</span>
               <ArrowRight size={16} />
