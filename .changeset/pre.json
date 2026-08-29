@@ -28,6 +28,7 @@
     "@scryme/sdk": "9.70.0"
   },
   "changesets": [
-    "afraid-places-learn"
+    "afraid-places-learn",
+    "eager-otters-kiss"
   ]
 }

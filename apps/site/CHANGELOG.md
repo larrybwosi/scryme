@@ -1,5 +1,11 @@
 # site
 
+## 1.16.0-next.2
+
+### Minor Changes
+
+- 5056a90: Update
+
 ## 1.16.0-next.1
 
 ### Minor Changes
