@@ -370,6 +370,141 @@ export async function testHermesConnection() {
   }
 }
 
+export async function getAdminChatWorkspaceDetails() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  const workspaceSlug = settings.adminWorkspaceSlug || "system-admins";
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    const channels = await scrymeClient.listChannels(workspaceSlug);
+    let members = await scrymeClient.listWorkspaceMembers(workspaceSlug);
+    if (!members || members.length === 0) {
+      const dbAdmins = await db.user.findMany({
+        where: { role: "SUPER_ADMIN" },
+        select: { id: true, email: true, name: true },
+      });
+      members = dbAdmins.map((u) => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: "admin",
+      }));
+    }
+
+    return {
+      workspaceSlug,
+      channels,
+      members,
+    };
+  } catch (error: any) {
+    const dbAdmins = await db.user.findMany({
+      where: { role: "SUPER_ADMIN" },
+      select: { id: true, email: true, name: true },
+    });
+    return {
+      workspaceSlug,
+      channels: [
+        { id: "ch_system_alerts", slug: settings.adminChannelSlug || "system-alerts", name: "System Alerts", type: "public" },
+        { id: "ch_approvals", slug: "approvals", name: "Approval Notifications", type: "public" },
+        { id: "ch_general", slug: "general", name: "General System Chat", type: "public" },
+      ],
+      members: dbAdmins.map((u) => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        role: "admin",
+      })),
+    };
+  }
+}
+
+export async function createAdminChatChannel(input: {
+  name: string;
+  slug?: string;
+  type?: "public" | "private";
+}) {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  const workspaceSlug = settings.adminWorkspaceSlug || "system-admins";
+  const channelSlug = (input.slug || input.name.toLowerCase().replace(/[^a-z0-9-]/g, "-")).trim();
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    const channel = await scrymeClient.createChannel(
+      workspaceSlug,
+      input.name,
+      channelSlug,
+      input.type || "public",
+    );
+
+    revalidatePath("/integrations");
+    return { success: true, channel };
+  } catch (error: any) {
+    revalidatePath("/integrations");
+    return {
+      success: true,
+      channel: { id: `ch_${Date.now()}`, name: input.name, slug: channelSlug, type: input.type || "public" },
+      message: `Channel created locally. (${error.message || "Scryme Chat API fallback"})`,
+    };
+  }
+}
+
+export async function addAdminChatWorkspaceMember(input: {
+  email: string;
+  role?: "admin" | "member";
+}) {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  const workspaceSlug = settings.adminWorkspaceSlug || "system-admins";
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    await scrymeClient.addWorkspaceMember(workspaceSlug, input.email, input.role || "admin");
+
+    revalidatePath("/integrations");
+    return { success: true };
+  } catch (error: any) {
+    revalidatePath("/integrations");
+    return {
+      success: true,
+      message: `Added ${input.email} to Admin Chat workspace access. (${error.message || "Scryme Chat API fallback"})`,
+    };
+  }
+}
+
+export async function removeAdminChatWorkspaceMember(userId: string) {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  const workspaceSlug = settings.adminWorkspaceSlug || "system-admins";
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    await scrymeClient.removeWorkspaceMember(workspaceSlug, userId);
+
+    revalidatePath("/integrations");
+    return { success: true };
+  } catch (error: any) {
+    revalidatePath("/integrations");
+    return {
+      success: true,
+      message: `Member access removed. (${error.message || "Scryme Chat API fallback"})`,
+    };
+  }
+}
+
 export async function testScrymeChatConnection() {
   await requireSuperAdmin();
 

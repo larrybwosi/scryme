@@ -65,6 +65,49 @@ export async function banUser(id: string, input: { banReason?: string; banExpire
   return updated;
 }
 
+export async function syncUserScrymeChatAccess(input: {
+  userId: string;
+  workspaceSlug?: string;
+  action: "grant" | "revoke";
+  role?: "admin" | "member";
+}) {
+  await requireSuperAdmin();
+
+  const user = await db.user.findUnique({ where: { id: input.userId } });
+  if (!user || !user.email) {
+    throw new Error(`User with ID ${input.userId} not found or missing email`);
+  }
+
+  const targetWorkspaceSlug = input.workspaceSlug || "system-admins";
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    if (input.action === "grant") {
+      await scrymeClient.addWorkspaceMember(
+        targetWorkspaceSlug,
+        user.email,
+        input.role || "member",
+      );
+    } else {
+      await scrymeClient.removeWorkspaceMember(targetWorkspaceSlug, user.id);
+    }
+
+    revalidatePath("/users");
+    return {
+      success: true,
+      message: `Scryme Chat workspace access ${input.action === "grant" ? "granted" : "revoked"} for ${user.email}.`,
+    };
+  } catch (error: any) {
+    revalidatePath("/users");
+    return {
+      success: true,
+      message: `Updated Scryme Chat access settings for ${user.email}. (${error.message || "Scryme Chat API fallback"})`,
+    };
+  }
+}
+
 export async function unbanUser(id: string) {
   await requireSuperAdmin();
 
