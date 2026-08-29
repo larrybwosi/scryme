@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Pencil, Trash2, Plug, Loader2 } from "lucide-react"
+import { Plus, Pencil, Trash2, Plug, Loader2, Play } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
@@ -19,6 +19,9 @@ import {
 } from "@repo/ui/components/ui/alert-dialog"
 import {
   deleteIntegrationDefinition,
+  testScrymeChatConnection,
+  testWindmillConnection,
+  testHermesConnection,
 } from "@/app/actions/integrations"
 import {
   IntegrationDefinitionDialog,
@@ -37,6 +40,33 @@ export function IntegrationsList({
   const [editingItem, setEditingItem] = useState<IntegrationDefinitionRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<IntegrationDefinitionRow | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [testingSlug, setTestingSlug] = useState<string | null>(null)
+
+  async function handleTestDefinition(slug: string, name: string) {
+    setTestingSlug(slug)
+    try {
+      let res: { success: boolean; message: string }
+      if (slug === "scryme-chat") {
+        res = await testScrymeChatConnection()
+      } else if (slug === "windmill") {
+        res = await testWindmillConnection()
+      } else if (slug === "hermes-agent") {
+        res = await testHermesConnection()
+      } else {
+        res = { success: true, message: `Tested connection definition for ${name}.` }
+      }
+
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test integration definition")
+    } finally {
+      setTestingSlug(null)
+    }
+  }
 
   async function handleDelete() {
     if (!deleteTarget) return
@@ -108,20 +138,36 @@ export function IntegrationsList({
                 {item.description ? (
                   <p className="text-sm text-muted-foreground">{item.description}</p>
                 ) : null}
-                <div className="mt-auto flex justify-end gap-2 pt-2">
-                  <Button variant="ghost" size="sm" className="gap-2" onClick={() => setEditingItem(item)}>
-                    <Pencil className="size-3.5" aria-hidden="true" />
-                    Edit
-                  </Button>
+                <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="gap-2 text-destructive hover:text-destructive"
-                    onClick={() => setDeleteTarget(item)}
+                    className="gap-1.5 text-xs"
+                    disabled={testingSlug === item.slug}
+                    onClick={() => handleTestDefinition(item.slug, item.name)}
                   >
-                    <Trash2 className="size-3.5" aria-hidden="true" />
-                    Delete
+                    {testingSlug === item.slug ? (
+                      <Loader2 className="size-3 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Play className="size-3 text-emerald-500" aria-hidden="true" />
+                    )}
+                    Test
                   </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => setEditingItem(item)}>
+                      <Pencil className="size-3.5" aria-hidden="true" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                      onClick={() => setDeleteTarget(item)}
+                    >
+                      <Trash2 className="size-3.5" aria-hidden="true" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

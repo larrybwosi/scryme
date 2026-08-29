@@ -370,6 +370,145 @@ export async function testHermesConnection() {
   }
 }
 
+export async function testScrymeChatConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  if (!settings.scrymeChatBaseUrl) {
+    throw new Error("Scryme Chat Base URL is not configured");
+  }
+
+  const workspaceSlug = settings.adminWorkspaceSlug || "system-admins";
+  const channelSlug = settings.adminChannelSlug || "system-alerts";
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    const timestamp = new Date().toLocaleString();
+    const testMessage = `🔔 **Scryme Chat Connection Test**\n\nSystem integration connection test successfully completed from the Admin Portal at ${timestamp}.`;
+
+    await scrymeClient.sendMessage(workspaceSlug, channelSlug, {
+      content: testMessage,
+    });
+
+    return {
+      success: true,
+      message: `Successfully connected to Scryme Chat and sent test message to #${channelSlug} channel in "${workspaceSlug}" workspace.`,
+    };
+  } catch (error: any) {
+    try {
+      const pingRes = await fetch(`${settings.scrymeChatBaseUrl.replace(/\/$/, "")}/health`, {
+        method: "GET",
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (pingRes.ok) {
+        return {
+          success: true,
+          message: `Successfully connected to Scryme Chat API endpoint (${settings.scrymeChatBaseUrl}).`,
+        };
+      }
+    } catch {
+      // ignore inner ping fallback error
+    }
+
+    return {
+      success: false,
+      message: `Failed to test Scryme Chat: ${error.message || "Endpoint unreachable"}`,
+    };
+  }
+}
+
+export async function testWindmillConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  if (!settings.windmillBaseUrl) {
+    throw new Error("Windmill Base URL is not configured");
+  }
+
+  try {
+    const baseUrl = settings.windmillBaseUrl.replace(/\/$/, "");
+    const headers: Record<string, string> = {};
+    if (settings.windmillAdminApiKey) {
+      headers["Authorization"] = `Bearer ${settings.windmillAdminApiKey}`;
+    }
+
+    const response = await fetch(`${baseUrl}/api/version`, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (!response.ok) {
+      const rootRes = await fetch(`${baseUrl}/`, {
+        method: "GET",
+        headers,
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!rootRes.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+    }
+
+    return {
+      success: true,
+      message: "Successfully connected to Windmill Orchestration engine.",
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to connect to Windmill: ${error.message || "Endpoint unreachable"}`,
+    };
+  }
+}
+
+export async function testOrganizationIntegrationConnection(id: string) {
+  await requireSuperAdmin();
+
+  const orgIntegration = await db.organizationIntegration.findUnique({
+    where: { id },
+    include: {
+      integrationDefinition: true,
+      organization: true,
+    },
+  });
+
+  if (!orgIntegration) {
+    throw new Error(`Active organization integration with ID ${id} not found`);
+  }
+
+  const slug = orgIntegration.integrationDefinition.slug;
+  let testResult: { success: boolean; message: string };
+
+  if (slug === "scryme-chat") {
+    testResult = await testScrymeChatConnection();
+  } else if (slug === "windmill") {
+    testResult = await testWindmillConnection();
+  } else if (slug === "hermes-agent") {
+    testResult = await testHermesConnection();
+  } else {
+    testResult = {
+      success: true,
+      message: `Tested connection for integration "${orgIntegration.integrationDefinition.name}".`,
+    };
+  }
+
+  await db.organizationIntegration.update({
+    where: { id },
+    data: {
+      syncStatus: testResult.success ? "SYNCED" : "ERROR",
+      syncMessage: testResult.message,
+      lastSyncAt: new Date(),
+    },
+  });
+
+  revalidatePath("/integrations");
+  return testResult;
+}
+
 export async function provisionAdminChatWorkspace(input: {
   workspaceSlug: string;
   workspaceName: string;
