@@ -300,6 +300,7 @@ export async function createScrymeWorkspaceChannel(data: {
     revalidatePath("/integrations");
     return { success: true, channel };
   } catch (error: any) {
+    console.error(error);
     revalidatePath("/integrations");
     return {
       success: true,
