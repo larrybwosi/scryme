@@ -59,6 +59,8 @@ export default function DeveloperDashboardPage() {
   const [newRedirectUris, setNewRedirectUris] = useState("https://yourapp.com/oauth/callback");
   const [newCorsOrigins, setNewCorsOrigins] = useState("https://yourapp.com");
   const [selectedScopes, setSelectedScopes] = useState<string[]>(["user.profile", "user.email"]);
+  const [isSubmittingOAuth, setIsSubmittingOAuth] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
   const [generatedOAuth, setGeneratedOAuth] = useState<OAuthClientItem | null>(null);
 
   // Copy helper state
@@ -82,24 +84,33 @@ export default function DeveloperDashboardPage() {
     e.preventDefault();
     if (!newAppName.trim()) return;
 
-    const uris = newRedirectUris
-      .split("\n")
-      .map((u) => u.trim())
-      .filter(Boolean);
-    const origins = newCorsOrigins
-      .split("\n")
-      .map((o) => o.trim())
-      .filter(Boolean);
+    setOauthError(null);
+    setIsSubmittingOAuth(true);
 
-    const created = await createOAuthClient({
-      name: newAppName.trim(),
-      redirectUris: uris,
-      corsOrigins: origins,
-      scopes: selectedScopes,
-    });
+    try {
+      const uris = newRedirectUris
+        .split("\n")
+        .map((u) => u.trim())
+        .filter(Boolean);
+      const origins = newCorsOrigins
+        .split("\n")
+        .map((o) => o.trim())
+        .filter(Boolean);
 
-    setGeneratedOAuth(created);
-    setNewAppName("");
+      const created = await createOAuthClient({
+        name: newAppName.trim(),
+        redirectUris: uris,
+        corsOrigins: origins,
+        scopes: selectedScopes,
+      });
+
+      setGeneratedOAuth(created);
+      setNewAppName("");
+    } catch (err: any) {
+      setOauthError(err?.message || "Failed to create OAuth application.");
+    } finally {
+      setIsSubmittingOAuth(false);
+    }
   };
 
   const scopeOptions = [
@@ -155,6 +166,7 @@ export default function DeveloperDashboardPage() {
             <button
               onClick={() => {
                 setGeneratedOAuth(null);
+                setOauthError(null);
                 setShowOAuthModal(true);
               }}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all shadow-sm"
@@ -365,6 +377,7 @@ export default function DeveloperDashboardPage() {
               <button
                 onClick={() => {
                   setGeneratedOAuth(null);
+                  setOauthError(null);
                   setShowOAuthModal(true);
                 }}
                 className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all"
@@ -413,8 +426,12 @@ export default function DeveloperDashboardPage() {
 
                         <button
                           onClick={async () => {
-                            const sec = await rotateOAuthSecret(client.id);
-                            alert(`New Client Secret generated for ${client.name}:\n\n${sec}\n\nPlease save this immediately.`);
+                            try {
+                              const sec = await rotateOAuthSecret(client.id);
+                              alert(`New Client Secret generated for ${client.name}:\n\n${sec}\n\nPlease save this immediately.`);
+                            } catch (err: any) {
+                              alert(`Failed to rotate secret: ${err?.message || "Error"}`);
+                            }
                           }}
                           className="px-2.5 py-1 rounded text-xs font-medium border border-[rgba(241,233,216,0.15)] text-[rgba(241,233,216,0.8)] hover:text-[#C89A4B] hover:border-[#C89A4B] transition-colors flex items-center gap-1.5"
                         >
@@ -768,11 +785,17 @@ code=AUTH_CODE_RECEIVED`}
               </button>
             </div>
 
+            {oauthError && (
+              <div className="mb-4 p-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                {oauthError}
+              </div>
+            )}
+
             {generatedOAuth ? (
               <div className="space-y-4 text-xs">
                 <div className="p-3 rounded-md border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
                   <span className="font-bold block mb-1">OAuth Application Registered!</span>
-                  <span>Credentials are ready for authenticating your users.</span>
+                  <span>Credentials are ready for authenticating your users. Save the secret key securely.</span>
                 </div>
 
                 <div>
@@ -782,18 +805,20 @@ code=AUTH_CODE_RECEIVED`}
                   </div>
                 </div>
 
-                <div>
-                  <label className="block font-medium text-[rgba(241,233,216,0.6)] mb-1">Client Secret</label>
-                  <div className="flex items-center gap-2 p-2.5 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] font-mono text-[#C89A4B]">
-                    <span className="truncate flex-1">{generatedOAuth.clientSecret}</span>
-                    <button
-                      onClick={() => copyToClipboard(generatedOAuth.clientSecret!, "new_oauth_sec")}
-                      className="px-2 py-1 rounded bg-[#C89A4B] text-[#0B1220] font-semibold hover:bg-[#d4a859]"
-                    >
-                      {copiedId === "new_oauth_sec" ? "Copied!" : "Copy"}
-                    </button>
+                {generatedOAuth.clientSecret && (
+                  <div>
+                    <label className="block font-medium text-[rgba(241,233,216,0.6)] mb-1">Client Secret</label>
+                    <div className="flex items-center gap-2 p-2.5 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] font-mono text-[#C89A4B]">
+                      <span className="truncate flex-1">{generatedOAuth.clientSecret}</span>
+                      <button
+                        onClick={() => copyToClipboard(generatedOAuth.clientSecret!, "new_oauth_sec")}
+                        className="px-2 py-1 rounded bg-[#C89A4B] text-[#0B1220] font-semibold hover:bg-[#d4a859]"
+                      >
+                        {copiedId === "new_oauth_sec" ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <button
                   onClick={() => setShowOAuthModal(false)}
@@ -880,9 +905,10 @@ code=AUTH_CODE_RECEIVED`}
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-md font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors"
+                  disabled={isSubmittingOAuth}
+                  className="w-full py-2.5 rounded-md font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors disabled:opacity-50"
                 >
-                  Register Application & Generate Keys
+                  {isSubmittingOAuth ? "Registering..." : "Register Application & Generate Keys"}
                 </button>
               </form>
             )}
