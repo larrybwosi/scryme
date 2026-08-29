@@ -63,6 +63,9 @@ describe("Stocking Edge Cases", () => {
       purchaseItem: {
         update: vi.fn(),
       },
+      inventoryLocation: {
+        findFirst: vi.fn().mockResolvedValue({ id: "loc-a", organizationId: "org-1" }),
+      },
       stockTransfer: {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
@@ -187,6 +190,10 @@ describe("Stocking Edge Cases", () => {
           variant: { sku: "SKU-V1" },
         },
       ],
+    });
+    mockTx.inventoryLocation.findFirst.mockResolvedValue({
+      id: mockLocationA,
+      organizationId: mockOrgId,
     });
 
     mockTx.stockBatch.findMany.mockResolvedValue([
