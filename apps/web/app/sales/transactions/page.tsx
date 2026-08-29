@@ -82,21 +82,23 @@ export default async function TransactionsPage(props: {
   const context = await getOrganizationContext();
   const suspenseKey = JSON.stringify(searchParams);
 
-  const locations = await getLocations();
-
-  const invoiceConfig = context?.organizationId
-    ? await db.invoiceConfig.findUnique({
-        where: { organizationId: context.organizationId },
-        select: { updatedAt: true },
-      })
-    : null;
-
-  const receiptConfig = context?.organizationId
-    ? await db.receiptConfig.findUnique({
-        where: { organizationId: context.organizationId },
-        select: { updatedAt: true },
-      })
-    : null;
+  // Performance optimization: Parallelize independent location and document config database queries
+  // to collapse 3 sequential roundtrips into a single concurrent database roundtrip.
+  const [locations, invoiceConfig, receiptConfig] = await Promise.all([
+    getLocations(),
+    context?.organizationId
+      ? db.invoiceConfig.findUnique({
+          where: { organizationId: context.organizationId },
+          select: { updatedAt: true },
+        })
+      : null,
+    context?.organizationId
+      ? db.receiptConfig.findUnique({
+          where: { organizationId: context.organizationId },
+          select: { updatedAt: true },
+        })
+      : null,
+  ]);
 
   return (
     <div className="mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
