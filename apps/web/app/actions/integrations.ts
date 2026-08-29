@@ -222,14 +222,8 @@ export async function getScrymeWorkspaceDetails() {
 
     const channels = await scrymeClient.listChannels(config.workspaceSlug);
 
-    // Attempt to fetch members using V3 SDK if available
-    let members: any[] = [];
-    try {
-      const { chat } = await import("@repo/chat/client");
-      const res = await chat.workspace.members.list(config.workspaceSlug);
-      members = res?.data?.members || res?.members || [];
-    } catch {
-      // Fallback: build member list from DB members for display
+    let members = await scrymeClient.listWorkspaceMembers(config.workspaceSlug);
+    if (!members || members.length === 0) {
       const dbMembers = await prisma.member.findMany({
         where: { organizationId: context.organizationId, isActive: true },
         include: { user: true },

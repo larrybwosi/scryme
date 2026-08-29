@@ -381,12 +381,8 @@ export async function getAdminChatWorkspaceDetails() {
     const scrymeClient = new ScrymeChatApiClient();
 
     const channels = await scrymeClient.listChannels(workspaceSlug);
-    let members: any[] = [];
-    try {
-      const { chat } = await import("@repo/chat/client");
-      const res = await chat.workspace.members.list(workspaceSlug);
-      members = res?.data?.members || res?.members || [];
-    } catch {
+    let members = await scrymeClient.listWorkspaceMembers(workspaceSlug);
+    if (!members || members.length === 0) {
       const dbAdmins = await db.user.findMany({
         where: { role: "SUPER_ADMIN" },
         select: { id: true, email: true, name: true },
