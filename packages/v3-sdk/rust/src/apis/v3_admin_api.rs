@@ -71,6 +71,13 @@ pub enum AdminControllerDeleteTierError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`admin_controller_get_effective_quota`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AdminControllerGetEffectiveQuotaError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`admin_controller_get_organization_details`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -162,6 +169,13 @@ pub enum AdminControllerListUsersError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`admin_controller_reactivate_organization`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AdminControllerReactivateOrganizationError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`admin_controller_record_custom_payment`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -173,6 +187,20 @@ pub enum AdminControllerRecordCustomPaymentError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AdminControllerSetGlobalSettingError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`admin_controller_set_quota_overrides`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AdminControllerSetQuotaOverridesError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`admin_controller_suspend_organization`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AdminControllerSuspendOrganizationError {
     UnknownValue(serde_json::Value),
 }
 
@@ -406,6 +434,31 @@ pub async fn admin_controller_delete_tier(configuration: &configuration::Configu
     } else {
         let content = resp.text().await?;
         let entity: Option<AdminControllerDeleteTierError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn admin_controller_get_effective_quota(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AdminControllerGetEffectiveQuotaError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+
+    let uri_str = format!("{}/v3/admin/organizations/{id}/quota", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AdminControllerGetEffectiveQuotaError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -720,6 +773,31 @@ pub async fn admin_controller_list_users(configuration: &configuration::Configur
     }
 }
 
+pub async fn admin_controller_reactivate_organization(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AdminControllerReactivateOrganizationError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+
+    let uri_str = format!("{}/v3/admin/organizations/{id}/reactivate", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AdminControllerReactivateOrganizationError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn admin_controller_record_custom_payment(configuration: &configuration::Configuration, record_custom_payment_dto: models::RecordCustomPaymentDto) -> Result<(), Error<AdminControllerRecordCustomPaymentError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_record_custom_payment_dto = record_custom_payment_dto;
@@ -768,6 +846,60 @@ pub async fn admin_controller_set_global_setting(configuration: &configuration::
     } else {
         let content = resp.text().await?;
         let entity: Option<AdminControllerSetGlobalSettingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn admin_controller_set_quota_overrides(configuration: &configuration::Configuration, id: &str, set_quota_overrides_dto: models::SetQuotaOverridesDto) -> Result<(), Error<AdminControllerSetQuotaOverridesError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_body_set_quota_overrides_dto = set_quota_overrides_dto;
+
+    let uri_str = format!("{}/v3/admin/organizations/{id}/quota-overrides", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_set_quota_overrides_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AdminControllerSetQuotaOverridesError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn admin_controller_suspend_organization(configuration: &configuration::Configuration, id: &str, suspend_organization_dto: models::SuspendOrganizationDto) -> Result<(), Error<AdminControllerSuspendOrganizationError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_body_suspend_organization_dto = suspend_organization_dto;
+
+    let uri_str = format!("{}/v3/admin/organizations/{id}/suspend", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_suspend_organization_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AdminControllerSuspendOrganizationError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

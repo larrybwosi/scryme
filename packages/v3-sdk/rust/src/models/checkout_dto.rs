@@ -13,26 +13,26 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CheckoutDto {
-    #[serde(rename = "cartId", skip_serializing_if = "Option::is_none")]
-    pub cart_id: Option<String>,
-    #[serde(rename = "sessionId", skip_serializing_if = "Option::is_none")]
-    pub session_id: Option<String>,
+    #[serde(rename = "cartId")]
+    pub cart_id: String,
+    #[serde(rename = "sessionId")]
+    pub session_id: String,
     #[serde(rename = "phoneNumber")]
     pub phone_number: String,
     #[serde(rename = "locationId")]
     pub location_id: String,
-    #[serde(rename = "notes", skip_serializing_if = "Option::is_none")]
-    pub notes: Option<String>,
+    #[serde(rename = "notes")]
+    pub notes: String,
 }
 
 impl CheckoutDto {
-    pub fn new(phone_number: String, location_id: String) -> CheckoutDto {
+    pub fn new(cart_id: String, session_id: String, phone_number: String, location_id: String, notes: String) -> CheckoutDto {
         CheckoutDto {
-            cart_id: None,
-            session_id: None,
+            cart_id,
+            session_id,
             phone_number,
             location_id,
-            notes: None,
+            notes,
         }
     }
 }
