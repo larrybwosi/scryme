@@ -181,6 +181,9 @@ export type SystemIntegrationSettings = {
   adminWorkspaceName?: string;
   adminChannelSlug?: string;
   adminWorkspaceStatus?: string;
+
+  errorAlertsEnabled?: boolean;
+  errorAlertsMinStatus?: number;
 };
 
 export async function getSystemIntegrationSettings(): Promise<SystemIntegrationSettings> {
@@ -201,6 +204,8 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
     "system:admin:chat:workspaceName",
     "system:admin:chat:channelSlug",
     "system:admin:chat:status",
+    "system:error:alerts:enabled",
+    "system:error:alerts:minStatus",
   ];
 
   const settings = await db.globalSetting.findMany({
@@ -261,6 +266,15 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       settingsMap.get("system:admin:chat:channelSlug") || "system-alerts",
     adminWorkspaceStatus:
       settingsMap.get("system:admin:chat:status") || "Not Configured",
+
+    errorAlertsEnabled:
+      settingsMap.has("system:error:alerts:enabled")
+        ? settingsMap.get("system:error:alerts:enabled") === "true"
+        : process.env.ERROR_ALERTS_ENABLED !== "false",
+    errorAlertsMinStatus:
+      settingsMap.has("system:error:alerts:minStatus")
+        ? parseInt(settingsMap.get("system:error:alerts:minStatus")!, 10)
+        : Number(process.env.ERROR_ALERTS_MIN_STATUS || 500),
   };
 }
 
@@ -286,6 +300,14 @@ export async function updateSystemIntegrationSettings(
     ["system:admin:chat:workspaceSlug", input.adminWorkspaceSlug],
     ["system:admin:chat:workspaceName", input.adminWorkspaceName],
     ["system:admin:chat:channelSlug", input.adminChannelSlug],
+    [
+      "system:error:alerts:enabled",
+      input.errorAlertsEnabled !== undefined ? String(input.errorAlertsEnabled) : undefined,
+    ],
+    [
+      "system:error:alerts:minStatus",
+      input.errorAlertsMinStatus !== undefined ? String(input.errorAlertsMinStatus) : undefined,
+    ],
   ];
 
   for (const [key, value] of keyMap) {
