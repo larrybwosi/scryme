@@ -103,6 +103,15 @@ export class PurchaseOrderUseCase {
     purchaseId: string,
     dto: ReceivePurchaseDto,
   ) {
+    // SECURITY (Sentinel): Validate that locationId belongs to the caller's organizationId
+    // to prevent cross-tenant IDOR resource association and inventory pollution.
+    const location = await this.prisma.client.inventoryLocation.findFirst({
+      where: { id: dto.locationId, organizationId },
+    });
+    if (!location) {
+      throw new NotFoundException("Location not found");
+    }
+
     return this.prisma.client.$transaction(async (tx) => {
       // SECURITY (Sentinel): Using findFirst instead of findUnique because
       // Purchase lacks a composite unique index on [id, organizationId].

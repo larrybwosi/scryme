@@ -172,6 +172,10 @@ describe("Stocking Flow Verification", () => {
         supplier: {
           findFirst: vi.fn(),
         },
+        inventoryLocation: {
+          count: vi.fn(),
+          findFirst: vi.fn(),
+        },
       },
     };
 
@@ -179,6 +183,14 @@ describe("Stocking Flow Verification", () => {
     prisma.client.supplier.findFirst.mockImplementation(({ where }: any) => {
       if (where.id === mockSupplierId && where.organizationId === mockOrgId) {
         return Promise.resolve({ id: mockSupplierId, organizationId: mockOrgId });
+      }
+      return Promise.resolve(null);
+    });
+
+    // Default mock location lookup to succeed for mockLocationA/B under mockOrgId
+    prisma.client.inventoryLocation.findFirst.mockImplementation(({ where }: any) => {
+      if ((where.id === mockLocationA || where.id === mockLocationB) && where.organizationId === mockOrgId) {
+        return Promise.resolve({ id: where.id, organizationId: mockOrgId });
       }
       return Promise.resolve(null);
     });
@@ -420,6 +432,22 @@ describe("Stocking Flow Verification", () => {
 
     await expect(
       purchaseOrderUseCase.create(mockOrgId, mockMemberId, createPoDto),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  it("should throw NotFoundException when receiving PO with unowned locationId", async () => {
+    const receivePoDto = {
+      locationId: "other-org-location",
+      items: [],
+    };
+
+    await expect(
+      purchaseOrderUseCase.receive(
+        mockOrgId,
+        mockMemberId,
+        "po-1",
+        receivePoDto,
+      ),
     ).rejects.toThrow(NotFoundException);
   });
 });

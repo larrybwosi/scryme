@@ -100,6 +100,12 @@ describe("Stocking Edge Cases", () => {
         purchase: mockTx.purchase,
         inventoryLocation: {
           count: vi.fn(),
+          findFirst: vi.fn().mockImplementation(({ where }: any) => {
+            if ((where.id === mockLocationA || where.id === mockLocationB) && where.organizationId === mockOrgId) {
+              return Promise.resolve({ id: where.id, organizationId: mockOrgId });
+            }
+            return Promise.resolve(null);
+          }),
         },
         productVariant: {
           count: vi.fn(),
