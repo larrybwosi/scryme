@@ -351,23 +351,34 @@ export async function createTransaction(data: {
     },
   });
 
-  // Snapshot item details (simplified for now, ideally done in the create or a service)
-  for (const item of data.items) {
-    const variant = await db.productVariant.findUnique({
-      where: { id: item.variantId },
-      include: { product: true },
-    });
-    if (variant) {
-      await db.transactionItem.updateMany({
-        where: { transactionId: transaction.id, variantId: item.variantId },
-        data: {
-          productName: variant.product.name,
-          variantName: variant.name || "Default",
-          sku: variant.sku,
-        },
-      });
-    }
-  }
+  // Performance Optimization: Batch fetch product variants and parallelize transaction item snapshot updates.
+  // Reduces O(N) sequential database queries (1 findUnique + 1 updateMany per item) down to 1 batched findMany
+  // and parallelized Promise.all updates, collapsing 2N sequential DB roundtrips to 2 concurrent roundtrips.
+  const variantIds = Array.from(new Set(data.items.map(item => item.variantId)));
+  const variants = variantIds.length > 0
+    ? await db.productVariant.findMany({
+        where: { id: { in: variantIds } },
+        include: { product: true },
+      })
+    : [];
+
+  const variantMap = new Map(variants.map(v => [v.id, v]));
+
+  await Promise.all(
+    variantIds.map(async variantId => {
+      const variant = variantMap.get(variantId);
+      if (variant) {
+        await db.transactionItem.updateMany({
+          where: { transactionId: transaction.id, variantId },
+          data: {
+            productName: variant.product.name,
+            variantName: variant.name || "Default",
+            sku: variant.sku,
+          },
+        });
+      }
+    }),
+  );
 
   revalidatePath("/sales/transactions");
   return transaction;
