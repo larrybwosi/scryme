@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -314,6 +314,18 @@ function BulkReceiveDialog({
   const { fields, append, remove } = useFieldArray({ control, name: 'lines' });
   const watchLines = useWatch({ control, name: 'lines' });
 
+  // ⚡ Bolt Optimization: Pre-index ingredients into an in-memory Map keyed by ID.
+  // This replaces linear O(N) .find() scans inside the fields.map render loop and event handlers with O(1) Map lookups.
+  const ingredientMap = useMemo(() => {
+    const map = new Map<string, Ingredient>();
+    if (ingredients) {
+      for (const ing of ingredients) {
+        map.set(ing.id, ing);
+      }
+    }
+    return map;
+  }, [ingredients]);
+
   const grandTotal = calculateGrandTotal(watchLines || []);
 
   const handleAddLine = () =>
@@ -474,12 +486,12 @@ function BulkReceiveDialog({
                             fields.map((field, index) => {
                               const line = watchLines?.[index];
                               const selectedIngId = line?.ingredientId;
-                              const ingredient = ingredients.find(i => i.id === selectedIngId);
+                              const ingredient = selectedIngId ? ingredientMap.get(selectedIngId) : undefined;
                               const useContainer = line?.useContainer;
 
                               const handleIngredientSelect = (val: string) => {
                                 setValue(`lines.${index}.ingredientId`, val);
-                                const matched = ingredients.find(i => i.id === val);
+                                const matched = ingredientMap.get(val);
 
                                 // Priority 1: Backend stocking unit
                                 if (matched?.stockingUnitId || matched?.stockingOrgUnitId) {
