@@ -24,7 +24,6 @@ const commonOptions: Options = {
     "@nestjs/common",
     "@repo/documents",
     "@repo/notifications",
-    "@repo/windmill",
     "@repo/chat",
     "@sanity/client",
     "@tanstack/react-query",

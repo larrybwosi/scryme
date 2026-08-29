@@ -49,7 +49,6 @@
     "@repo/notifications": "workspace:*",
     "@repo/chat": "workspace:*",
     "@repo/shared": "workspace:*",
-    "@repo/windmill": "workspace:*",
     "@sentry/nestjs": "^10.65.0",
     "@upstash/redis": "^1.38.0",
     "amqplib": "^0.10.9",

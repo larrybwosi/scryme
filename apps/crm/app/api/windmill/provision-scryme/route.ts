@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@repo/db';
 import { getServerAuth } from '@repo/auth/server';
-import { WindmillTemplateService } from '@repo/windmill/server';
 import { ScrymeChatApiClient } from '@repo/chat';
 import { PlaneApiClient } from '@repo/shared';
 
@@ -20,13 +19,6 @@ export async function POST() {
   }
 
   try {
-    // Provision Windmill
-    await WindmillTemplateService.provisionAndDeploy(
-      org.id,
-      org.name,
-      org.slug
-    );
-
     // Provision Scryme independently using V3 API
     if (process.env.SCRYME_CHAT_CLIENT_ID && process.env.SCRYME_CHAT_CLIENT_SECRET) {
       const scrymeClient = new ScrymeChatApiClient();

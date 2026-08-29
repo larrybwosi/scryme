@@ -1,10 +1,8 @@
 import { Module, Global, forwardRef } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { WebhookController } from "./interfaces/http/webhook.controller";
-import { WindmillCallbackController } from "./interfaces/http/WindmillCallbackController";
 import { WebhookService } from "./infrastructure/services/webhook.service";
 import { WebhookProcessor } from "./infrastructure/workers/webhook.processor";
-import { WindmillCallbackUseCase } from "./application/use-cases/WindmillCallbackUseCase";
 
 @Module({
   imports: [
@@ -12,8 +10,8 @@ import { WindmillCallbackUseCase } from "./application/use-cases/WindmillCallbac
       name: "webhooks",
     }),
   ],
-  controllers: [WebhookController, WindmillCallbackController],
-  providers: [WebhookService, WebhookProcessor, WindmillCallbackUseCase],
+  controllers: [WebhookController],
+  providers: [WebhookService, WebhookProcessor],
   exports: [WebhookService],
 })
 export class WebhooksModule {}

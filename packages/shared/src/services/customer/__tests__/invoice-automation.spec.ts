@@ -21,6 +21,16 @@ const { mockPrisma, mockNotify, mockRunAutomation } = vi.hoisted(() => {
       user: {
         findUnique: vi.fn(),
       },
+      workflowEngineDefinition: {
+        findUnique: vi.fn().mockResolvedValue({ id: "def-1" }),
+        create: vi.fn().mockResolvedValue({ id: "def-1" }),
+      },
+      workflowEngineExecution: {
+        create: vi.fn().mockResolvedValue({ id: "exec-1" }),
+      },
+      workflowEngineJob: {
+        create: vi.fn().mockResolvedValue({ id: "job-1" }),
+      },
     },
     mockNotify: vi.fn().mockResolvedValue({ id: "notif-123" }),
     mockRunAutomation: vi.fn().mockResolvedValue({ status: "success" }),
@@ -29,6 +39,7 @@ const { mockPrisma, mockNotify, mockRunAutomation } = vi.hoisted(() => {
 
 vi.mock("@repo/db", () => ({
   prisma: mockPrisma,
+  db: mockPrisma,
 }));
 
 vi.mock("@repo/notifications", () => ({
@@ -37,7 +48,7 @@ vi.mock("@repo/notifications", () => ({
   },
 }));
 
-vi.mock("@repo/windmill", () => ({
+vi.mock("../../automation", () => ({
   runAutomation: mockRunAutomation,
 }));
 

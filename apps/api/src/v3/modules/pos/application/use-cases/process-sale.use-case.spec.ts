@@ -7,7 +7,7 @@ import { InventoryMovementService } from "../../../inventory/application/service
 import { BadRequestException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("@repo/windmill/server", () => ({
+vi.mock("@repo/shared/server", () => ({
   emitLoyaltyPointsAwarded: vi.fn().mockResolvedValue({}),
   emitLoyaltyVoucherCreated: vi.fn().mockResolvedValue({}),
   emitPaymentCompleted: vi.fn().mockResolvedValue({}),

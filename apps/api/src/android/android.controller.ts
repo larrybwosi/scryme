@@ -29,7 +29,7 @@ import {
   ApproveStockAdjustmentUseCase,
   RejectStockAdjustmentUseCase,
 } from "../v3/modules/inventory/application/use-cases/adjustment-workflow.use-case";
-import { emitEvent } from "@repo/windmill/server";
+import { emitEvent } from "@repo/shared/server";
 import { db } from "@repo/db";
 import { ScrymeChatApiClient } from "@repo/chat";
 

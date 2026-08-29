@@ -9,7 +9,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 import type { V2ApiContext } from "@repo/shared/api/v2";
 import { TransactionType, TransactionStatus, PaymentStatus } from "@repo/db";
 import { z } from "zod";
-import { emitOrderPlaced } from "@repo/windmill/server";
+import { emitOrderPlaced } from "@repo/shared/server";
 
 const CreateOrderSchema = z.object({
   externalOrderId: z.string().min(1),

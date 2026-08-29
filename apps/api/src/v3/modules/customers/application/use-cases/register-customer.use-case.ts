@@ -10,7 +10,7 @@ import { RegisterCustomerDto } from "../dto/register-customer.dto";
 import { Customer } from "../../domain/entities/customer.entity";
 import { PrismaService } from "@/prisma/prisma.service";
 import { randomUUID } from "crypto";
-import { emitCustomerCreated } from "@repo/windmill/server";
+import { emitCustomerCreated } from "@repo/shared/server";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
 import * as bcrypt from "bcryptjs";

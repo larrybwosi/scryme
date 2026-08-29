@@ -20,7 +20,6 @@
     "@repo/chat": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@repo/windmill": "workspace:*",
     "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/pg": "^8.20.0",

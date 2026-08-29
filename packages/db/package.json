@@ -8,7 +8,8 @@
     ".": {
       "types": "./src/client.ts",
       "import": "./dist/client.mjs",
-      "require": "./dist/client.js"
+      "require": "./dist/client.js",
+      "default": "./dist/client.js"
     },
     "./client": {
       "types": "./src/browser.ts",
