@@ -15,33 +15,34 @@ export class WindmillTemplateService {
    * Deploys all templates in the 'templates' directory to an organization's Windmill workspace.
    */
   static async deployTemplatesToOrg(organizationId: string) {
-    const client = await getWindmillClientForOrg(organizationId);
     const templatesDir = path.join(__dirname, "../templates");
 
     await this.walkTemplates(
       templatesDir,
       "",
-      async (scriptPath, content, entry) => {
+      async (scriptPath, content) => {
         const normalizedPath = `f/dealio/${scriptPath.replace(/^(flows|schedules|resources|variables)\//, "")}`;
 
         try {
-          if (scriptPath.startsWith("flows/")) {
-            console.log(`Deploying Flow to Windmill: ${scriptPath}`);
-            await client.upsertFlow(normalizedPath, JSON.parse(content));
-          } else if (scriptPath.startsWith("schedules/")) {
-            console.log(`Deploying Schedule to Windmill: ${scriptPath}`);
-            await client.upsertSchedule(normalizedPath, JSON.parse(content));
-          } else if (scriptPath.startsWith("resources/")) {
-            console.log(`Deploying Resource to Windmill: ${scriptPath}`);
-            await client.upsertResource(normalizedPath, JSON.parse(content));
-          } else if (scriptPath.startsWith("variables/")) {
-            console.log(`Deploying Variable to Windmill: ${scriptPath}`);
-            const { value, isSecret } = JSON.parse(content);
-            await client.setVariable(normalizedPath, value, isSecret);
-          } else {
-            console.log(`Deploying Script to Windmill: ${scriptPath}`);
-            await client.upsertScript(`f/dealio/${scriptPath}`, content);
-          }
+          await (prisma as any).workflowEngineDefinition.upsert({
+            where: {
+              organizationId_key: {
+                organizationId,
+                key: normalizedPath,
+              },
+            },
+            create: {
+              organizationId,
+              key: normalizedPath,
+              name: scriptPath,
+              triggerType: "EVENT",
+              config: {},
+              isActive: true,
+            },
+            update: {
+              isActive: true,
+            },
+          });
         } catch (e) {
           console.error(`Failed to deploy ${scriptPath}:`, e);
         }
@@ -57,74 +58,25 @@ export class WindmillTemplateService {
     orgName: string,
     orgSlug: string,
   ) {
-    let config = await prisma.windmillConfiguration.findUnique({
-      where: { organizationId },
+    let webhook = await (prisma as any).workflowEngineWebhook.findFirst({
+      where: { organizationId, direction: "INCOMING" },
     });
 
-    if (!config) {
-      const baseUrl =
-        process.env.WINDMILL_BASE_URL ||
-        process.env.WINDMILL_INTERNAL_URL ||
-        "http://windmill:8000";
-      const adminApiKey = process.env.WINDMILL_ADMIN_API_KEY;
+    if (!webhook) {
+      const generatedSecret = crypto.randomBytes(32).toString("hex");
 
-      if (!adminApiKey) {
-        throw new Error(
-          `Windmill not configured for organization ${organizationId} and no global WINDMILL_ADMIN_API_KEY is available.`,
-        );
-      }
-
-      const encryptedApiKey = encrypt(adminApiKey);
-      const generatedWebhookSecret = crypto.randomBytes(32).toString("hex");
-
-      config = await prisma.windmillConfiguration.create({
+      webhook = await (prisma as any).workflowEngineWebhook.create({
         data: {
           organizationId,
-          windmillBaseUrl: baseUrl,
-          windmillApiKey: encryptedApiKey,
-          webhookSecret: generatedWebhookSecret,
+          name: `${orgName} Incoming Webhook`,
+          direction: "INCOMING",
+          endpointUrl: `/v3/automation/webhooks/incoming/${organizationId}/default`,
+          secret: generatedSecret,
           isActive: true,
         },
       });
-    } else if (!config.webhookSecret) {
-      const generatedWebhookSecret = crypto.randomBytes(32).toString("hex");
-      config = await prisma.windmillConfiguration.update({
-        where: { organizationId },
-        data: { webhookSecret: generatedWebhookSecret },
-      });
     }
 
-    if (!config.workspaceId) {
-      const workspaceSlug = `org-${orgSlug}`.toLowerCase();
-      const adminApiKey =
-        process.env.WINDMILL_ADMIN_API_KEY || config.windmillApiKey;
-
-      let decryptedAdminApiKey = adminApiKey;
-      try {
-        if (adminApiKey.includes(":")) {
-          decryptedAdminApiKey = decrypt(adminApiKey);
-        }
-      } catch (err) {
-        console.warn("Failed to decrypt apiKey when creating workspace, using as-is:", err);
-      }
-
-      await WindmillApiClient.createWorkspace(
-        config.windmillBaseUrl,
-        decryptedAdminApiKey,
-        orgName,
-        workspaceSlug,
-      );
-
-      config = await prisma.windmillConfiguration.update({
-        where: { organizationId },
-        data: {
-          workspaceId: workspaceSlug,
-          workspaceName: orgName,
-        },
-      });
-    }
-
-    // Ensure we deploy to the now-provisioned workspace
     await this.deployTemplatesToOrg(organizationId);
   }
 
@@ -132,44 +84,41 @@ export class WindmillTemplateService {
    * Deploys a specific template by its path to an organization's Windmill workspace.
    */
   static async deployTemplate(organizationId: string, templatePath: string) {
-    const client = await getWindmillClientForOrg(organizationId);
-    const templatesDir = path.join(__dirname, "../templates");
-    const fullPath = path.join(templatesDir, `${templatePath}.ts`);
-
-    try {
-      const content = await fs.readFile(fullPath, "utf-8");
-      console.log(`Deploying specific template to Windmill: ${templatePath}`);
-      await client.upsertScript(`f/dealio/${templatePath}`, content);
-    } catch (err: any) {
-      // Try with .js if .ts fails
-      if (err.code === "ENOENT") {
-        const jsPath = path.join(templatesDir, `${templatePath}.js`);
-        const content = await fs.readFile(jsPath, "utf-8");
-        console.log(`Deploying specific template to Windmill: ${templatePath}`);
-        await client.upsertScript(`f/dealio/${templatePath}`, content);
-      } else {
-        throw err;
-      }
-    }
+    const normalizedPath = `f/dealio/${templatePath}`;
+    await (prisma as any).workflowEngineDefinition.upsert({
+      where: {
+        organizationId_key: {
+          organizationId,
+          key: normalizedPath,
+        },
+      },
+      create: {
+        organizationId,
+        key: normalizedPath,
+        name: templatePath,
+        triggerType: "EVENT",
+        config: {},
+        isActive: true,
+      },
+      update: {
+        isActive: true,
+      },
+    });
   }
 
   /**
    * Scans the templates directory and returns a list of available templates with metadata.
    */
   static async getTemplates(): Promise<WindmillTemplate[]> {
-    // In some environments (like Next.js), __dirname might not point where we expect.
-    // We try to find the templates directory relative to the package root.
     let templatesDir = path.join(__dirname, "../templates");
 
     try {
       await fs.access(templatesDir);
     } catch (e) {
-      // Fallback for different build structures (e.g. if we are in dist/services/)
       templatesDir = path.join(process.cwd(), "../../packages/windmill/templates");
       try {
         await fs.access(templatesDir);
       } catch (e2) {
-        // Final fallback for monorepo root
         templatesDir = path.join(process.cwd(), "packages/windmill/templates");
       }
     }
@@ -214,7 +163,6 @@ export class WindmillTemplateService {
 
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      // Use forward slashes for Windmill paths regardless of OS
       const windmillPath = currentPath
         ? `${currentPath}/${entry.name}`
         : entry.name;

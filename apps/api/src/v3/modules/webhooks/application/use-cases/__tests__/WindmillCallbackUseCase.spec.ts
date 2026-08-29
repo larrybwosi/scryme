@@ -25,8 +25,8 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
           provide: PrismaService,
           useValue: {
             client: {
-              windmillConfiguration: {
-                findUnique: vi.fn(),
+              workflowEngineWebhook: {
+                findFirst: vi.fn(),
               },
             },
           },
@@ -39,8 +39,8 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
   });
 
   it('should verify a valid signature', async () => {
-    vi.spyOn(prismaService.client.windmillConfiguration, 'findUnique').mockResolvedValue({
-      webhookSecret: mockSecret,
+    vi.spyOn((prismaService.client as any).workflowEngineWebhook, 'findFirst').mockResolvedValue({
+      secret: mockSecret,
     } as any);
 
     const signature = crypto
@@ -52,8 +52,8 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
   });
 
   it('should verify a valid signature with sha256= prefix', async () => {
-    vi.spyOn(prismaService.client.windmillConfiguration, 'findUnique').mockResolvedValue({
-      webhookSecret: mockSecret,
+    vi.spyOn((prismaService.client as any).workflowEngineWebhook, 'findFirst').mockResolvedValue({
+      secret: mockSecret,
     } as any);
 
     const rawSignature = crypto
@@ -67,8 +67,8 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
   });
 
   it('should throw UnauthorizedException for an invalid signature', async () => {
-    vi.spyOn(prismaService.client.windmillConfiguration, 'findUnique').mockResolvedValue({
-      webhookSecret: mockSecret,
+    vi.spyOn((prismaService.client as any).workflowEngineWebhook, 'findFirst').mockResolvedValue({
+      secret: mockSecret,
     } as any);
 
     const invalidSignature = 'invalid_signature';
@@ -79,8 +79,8 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
   });
 
   it('should throw UnauthorizedException if signature is missing', async () => {
-    vi.spyOn(prismaService.client.windmillConfiguration, 'findUnique').mockResolvedValue({
-      webhookSecret: mockSecret,
+    vi.spyOn((prismaService.client as any).workflowEngineWebhook, 'findFirst').mockResolvedValue({
+      secret: mockSecret,
     } as any);
 
     await expect(useCase.verifySignature(mockOrganizationId, '', mockPayload)).rejects.toThrow(
@@ -90,8 +90,8 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
 
   it('should skip verification in development if secret is missing', async () => {
     process.env.NODE_ENV = 'development';
-    vi.spyOn(prismaService.client.windmillConfiguration, 'findUnique').mockResolvedValue({
-      webhookSecret: null,
+    vi.spyOn((prismaService.client as any).workflowEngineWebhook, 'findFirst').mockResolvedValue({
+      secret: null,
     } as any);
 
     await expect(useCase.verifySignature(mockOrganizationId, 'any', mockPayload)).resolves.not.toThrow();
@@ -99,8 +99,8 @@ describe('WindmillCallbackUseCase - Signature Verification', () => {
 
   it('should throw UnauthorizedException in production if secret is missing', async () => {
     process.env.NODE_ENV = 'production';
-    vi.spyOn(prismaService.client.windmillConfiguration, 'findUnique').mockResolvedValue({
-      webhookSecret: null,
+    vi.spyOn((prismaService.client as any).workflowEngineWebhook, 'findFirst').mockResolvedValue({
+      secret: null,
     } as any);
 
     await expect(useCase.verifySignature(mockOrganizationId, 'any', mockPayload)).rejects.toThrow(
@@ -119,7 +119,7 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
   beforeEach(async () => {
     mockPrisma = {
       client: {
-        windmillExecution: {
+        workflowEngineExecution: {
           findFirst: vi.fn(),
           updateMany: vi.fn(),
         },
@@ -150,12 +150,11 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
   });
 
   it('should scope handleGeneralCallback to organizationId', async () => {
-    mockPrisma.client.windmillExecution.findFirst.mockResolvedValue({
+    mockPrisma.client.workflowEngineExecution.findFirst.mockResolvedValue({
       id: 'exec_1',
-      jobId: mockJobId,
       organizationId: mockOrgId,
     });
-    mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.client.workflowEngineExecution.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await useCase.handleGeneralCallback({
       jobId: mockJobId,
@@ -165,17 +164,17 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
     } as any);
 
     expect(result).toEqual({ success: true });
-    expect(mockPrisma.client.windmillExecution.findFirst).toHaveBeenCalledWith({
-      where: { jobId: mockJobId, organizationId: mockOrgId },
+    expect(mockPrisma.client.workflowEngineExecution.findFirst).toHaveBeenCalledWith({
+      where: { id: mockJobId, organizationId: mockOrgId },
     });
-    expect(mockPrisma.client.windmillExecution.updateMany).toHaveBeenCalledWith({
-      where: { jobId: mockJobId, organizationId: mockOrgId },
+    expect(mockPrisma.client.workflowEngineExecution.updateMany).toHaveBeenCalledWith({
+      where: { id: mockJobId, organizationId: mockOrgId },
       data: expect.objectContaining({ status: 'COMPLETED' }),
     });
   });
 
   it('should process handleApprovalCallback for PurchaseOrder', async () => {
-    mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.client.workflowEngineExecution.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.client.purchase.update.mockResolvedValue({});
 
     const result = await useCase.handleApprovalCallback({
@@ -196,7 +195,7 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
   });
 
   it('should process handleBakeryDisposalCallback for DISPOSE', async () => {
-    mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.client.workflowEngineExecution.updateMany.mockResolvedValue({ count: 1 });
     mockPrisma.client.batch.update.mockResolvedValue({});
 
     const result = await useCase.handleBakeryDisposalCallback({
@@ -219,7 +218,7 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
   });
 
   it('should process handleOutcomeCallback', async () => {
-    mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.client.workflowEngineExecution.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await useCase.handleOutcomeCallback({
       jobId: mockJobId,
@@ -230,10 +229,10 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
     } as any);
 
     expect(result).toEqual({ success: true });
-    expect(mockPrisma.client.windmillExecution.updateMany).toHaveBeenCalledWith({
-      where: { jobId: mockJobId, organizationId: mockOrgId },
+    expect(mockPrisma.client.workflowEngineExecution.updateMany).toHaveBeenCalledWith({
+      where: { id: mockJobId, organizationId: mockOrgId },
       data: expect.objectContaining({
-        summary: 'Processed successfully',
+        status: 'COMPLETED',
       }),
     });
   });

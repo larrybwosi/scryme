@@ -18,30 +18,30 @@ export class StockMovementReportScheduler {
 
     const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
 
-    // Find all active organizations with the stock_movement_report workflow provisioned
-    const activeWorkflows = await this.prisma.client.windmillWorkflow.findMany({
+    // Find all active definitions for stock_movement_report
+    const activeDefinitions = await this.prisma.client.workflowEngineDefinition.findMany({
       where: {
-        path: "f/dealio/stock_movement_report",
+        key: "f/dealio/stock_movement_report",
         isActive: true,
       },
     });
 
-    for (const workflow of activeWorkflows) {
+    for (const definition of activeDefinitions) {
       try {
-        const settings = workflow.settings as any;
+        const settings = (definition.config as any) || {};
         const scheduleDay = settings.scheduleDay ?? 0; // Default to Sunday
 
         if (scheduleDay === today) {
           const recipients = settings.recipients || [];
           if (recipients.length > 0) {
-            this.logger.log(`Triggering scheduled report for org ${workflow.organizationId}`);
+            this.logger.log(`Triggering scheduled report for org ${definition.organizationId}`);
             // Fire and forget so one failing report doesn't block others
-            this.stockReportService.generateAndSendReport(workflow.organizationId, recipients, 7)
-              .catch(err => this.logger.error(`Error in scheduled report for org ${workflow.organizationId}: ${err.message}`));
+            this.stockReportService.generateAndSendReport(definition.organizationId, recipients, 7)
+              .catch(err => this.logger.error(`Error in scheduled report for org ${definition.organizationId}: ${err.message}`));
           }
         }
       } catch (error) {
-        this.logger.error(`Failed to process scheduled report for workflow ${workflow.id}: ${error.message}`);
+        this.logger.error(`Failed to process scheduled report for workflow ${definition.id}: ${error.message}`);
       }
     }
   }

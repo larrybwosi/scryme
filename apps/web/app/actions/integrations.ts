@@ -3,7 +3,6 @@
 import { db as prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
-import { randomBytes } from "crypto";
 
 export async function getIntegrationsStatus() {
   const context = await getOrganizationContext();
@@ -14,7 +13,6 @@ export async function getIntegrationsStatus() {
   const org = await prisma.organization.findUnique({
     where: { id: context.organizationId },
     include: {
-      windmillConfiguration: true,
       hulyConfiguration: true,
       planeConfiguration: true,
       scrymeConfiguration: true,
@@ -26,20 +24,6 @@ export async function getIntegrationsStatus() {
   }
 
   return {
-    windmill: {
-      connected: !!org.windmillConfiguration,
-      config: org.windmillConfiguration
-        ? {
-            ...org.windmillConfiguration,
-            windmillApiKey: org.windmillConfiguration.windmillApiKey
-              ? "••••••••"
-              : null,
-            webhookSecret: org.windmillConfiguration.webhookSecret
-              ? "••••••••"
-              : null,
-          }
-        : null,
-    },
     huly: {
       connected: !!org.hulyConfiguration,
       config: org.hulyConfiguration
@@ -66,43 +50,6 @@ export async function getIntegrationsStatus() {
       config: org.scrymeConfiguration,
     },
   };
-}
-
-export async function updateWindmillConfig(data: {
-  windmillBaseUrl: string;
-  windmillApiKey: string;
-  webhookSecret?: string;
-}) {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId) {
-    throw new Error("Unauthorized");
-  }
-
-  const existingConfig = await prisma.windmillConfiguration.findUnique({
-    where: { organizationId: context.organizationId },
-  });
-
-  const webhookSecret =
-    data.webhookSecret ||
-    existingConfig?.webhookSecret ||
-    randomBytes(32).toString("hex");
-
-  const configData = {
-    ...data,
-    webhookSecret,
-  };
-
-  await prisma.windmillConfiguration.upsert({
-    where: { organizationId: context.organizationId },
-    update: configData,
-    create: {
-      ...configData,
-      organizationId: context.organizationId,
-    },
-  });
-
-  revalidatePath("/integrations");
-  return { success: true };
 }
 
 export async function provisionScryme() {
@@ -134,7 +81,6 @@ export async function provisionScryme() {
   const workspaceSlug = `org-${org.slug}`.toLowerCase();
   const ownerEmail = context.user?.email || "admin@scryme.tech";
 
-  // Fetch organization members to add as initial members
   const dbMembers = await prisma.member.findMany({
     where: {
       organizationId: org.id,
@@ -164,9 +110,6 @@ export async function provisionScryme() {
       initialMembers,
     );
 
-      console.log(scrymeWorkspace)
-
-    // Create default channels for announcements, alerts, and general
     const channels = [
       { name: "Announcements", slug: "announcements" },
       { name: "Alerts", slug: "alerts" },
@@ -204,7 +147,6 @@ export async function provisionScryme() {
       },
     });
 
-    // Register workspace webhook for interactive action webhook processing
     const publicUrl =
       process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
     if (publicUrl) {
@@ -229,43 +171,6 @@ export async function provisionScryme() {
     throw new Error(
       error.message || "Failed to provision Scryme Chat workspace",
     );
-  }
-}
-
-export async function provisionWindmill() {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId) {
-    throw new Error("Unauthorized");
-  }
-
-  const org = await prisma.organization.findUnique({
-    where: { id: context.organizationId },
-  });
-
-  if (!org) {
-    throw new Error("Organization not found");
-  }
-
-  const adminApiKey = process.env.WINDMILL_ADMIN_API_KEY;
-  if (!adminApiKey) {
-    throw new Error(
-      "Windmill automatic provisioning is not configured on this server (WINDMILL_ADMIN_API_KEY is missing).",
-    );
-  }
-
-  const { WindmillTemplateService } = await import("@repo/windmill");
-
-  try {
-    await WindmillTemplateService.provisionAndDeploy(
-      org.id,
-      org.name,
-      org.slug,
-    );
-    revalidatePath("/integrations");
-    return { success: true };
-  } catch (error: any) {
-    console.error("Failed to provision Windmill for organization:", error);
-    throw new Error(error.message || "Failed to provision Windmill workspace");
   }
 }
 

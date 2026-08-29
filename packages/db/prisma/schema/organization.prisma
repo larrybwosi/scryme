@@ -212,10 +212,6 @@ model Organization {
   workflowEngineAuditLogs   WorkflowEngineAuditLog[]
   workflowEngineWebhooks    WorkflowEngineWebhook[]
 
-  // Windmill Integration
-  windmillConfiguration WindmillConfiguration?
-  windmillExecutions    WindmillExecution[]
-
   // Scryme Integration
   scrymeConfiguration ScrymeConfiguration?
   scrymeMessages      ScrymeMessage[]

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import {
   Boxes,
   Zap,
-  Shield,
   Layout,
   Terminal,
   CheckCircle2,
@@ -31,7 +30,6 @@ import { toast } from "sonner";
 import { cn } from "@repo/ui/lib/utils";
 import {
   getIntegrationsStatus,
-  provisionWindmill,
   provisionScryme,
 } from "../actions/integrations";
 
@@ -45,15 +43,6 @@ const INTEGRATIONS = [
     href: "/integrations/apps-api",
     category: "Infrastructure",
     isExternal: false,
-  },
-  {
-    id: "windmill",
-    title: "Windmill",
-    description:
-      "Headless automation engine for complex workflows and scripts.",
-    icon: <Zap className="w-8 h-8 text-yellow-500 dark:text-yellow-400" />,
-    category: "Automation",
-    isExternal: true,
   },
   {
     id: "huly",
@@ -86,7 +75,6 @@ export default function IntegrationsPage() {
   const [statuses, setStatuses] = useState<Record<string, any>>({});
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProvisioning, setIsProvisioning] = useState(false);
   const [isScrymeProvisioning, setIsScrymeProvisioning] = useState(false);
 
   useEffect(() => {
@@ -108,27 +96,6 @@ export default function IntegrationsPage() {
   const handleOpenConfig = (integration: any) => {
     if (!integration.isExternal) return;
     setSelectedIntegration(integration);
-  };
-
-  const handleProvision = async () => {
-    setIsProvisioning(true);
-    try {
-      const result = await provisionWindmill();
-      if (result.success) {
-        toast.success(
-          "Windmill workspace successfully provisioned and templates deployed!",
-        );
-        setSelectedIntegration(null);
-        loadStatuses();
-      }
-    } catch (error: any) {
-      toast.error(
-        error.message ||
-          "Failed to provision Windmill workspace automatically.",
-      );
-    } finally {
-      setIsProvisioning(false);
-    }
   };
 
   const handleScrymeProvision = async () => {
@@ -156,28 +123,6 @@ export default function IntegrationsPage() {
     if (!selectedIntegration) return null;
 
     switch (selectedIntegration.id) {
-      case "windmill":
-        return (
-          <div className="py-4">
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-4">
-              <h4 className="font-semibold text-amber-900 dark:text-amber-300 text-sm mb-1">
-                One-Click Automatic Provisioning
-              </h4>
-              <p className="text-amber-700 dark:text-amber-400/80 text-xs mb-3">
-                Let Scryme automatically spin up a dedicated Windmill tenant
-                workspace and deploy all automation templates for your
-                organization using global credentials.
-              </p>
-              <Button
-                type="button"
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white h-10 text-xs font-semibold"
-                disabled={isProvisioning}
-                onClick={handleProvision}>
-                {isProvisioning ? "Provisioning..." : "Provision Automatically"}
-              </Button>
-            </div>
-          </div>
-        );
       case "huly":
         return (
           <div className="py-4">
