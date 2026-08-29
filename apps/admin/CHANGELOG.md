@@ -1,5 +1,11 @@
 # admin
 
+## 1.2.0-next.4
+
+### Minor Changes
+
+- e08f4cd: new
+
 ## 1.2.0-next.3
 
 ### Minor Changes
