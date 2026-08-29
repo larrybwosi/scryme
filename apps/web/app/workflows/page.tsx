@@ -52,6 +52,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 import { PageHeader } from "../../components/page-header";
 import { Breadcrumbs } from "../../components/breadcrumbs";
 import { toast } from "sonner";
@@ -110,10 +117,14 @@ export default function WorkflowsPage() {
   );
   const [isProvisionDialogOpen, setIsProvisionDialogOpen] = useState(false);
   const [isHistorySheetOpen, setIsHistorySheetOpen] = useState(false);
+  const [isTestRunDialogOpen, setIsTestRunDialogOpen] = useState(false);
   const [isTriggering, setIsTriggering] = useState(false);
   const [isProvisioning, setIsProvisioning] = useState(false);
+  const [isTestRunning, setIsTestRunning] = useState(false);
   const [isCancelling, setIsCancelling] = useState<string | null>(null);
   const [configValues, setConfigValues] = useState<Record<string, any>>({});
+  const [testInputs, setTestInputs] = useState<Record<string, any>>({});
+  const [testRunResult, setTestRunResult] = useState<any | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [selectedJobLogs, setSelectedJobLogs] = useState<{
     jobId: string;
@@ -288,6 +299,62 @@ export default function WorkflowsPage() {
 
     setConfigValues(initialValues);
     setIsProvisionDialogOpen(true);
+  };
+
+  const handleOpenTestRun = (workflow: Workflow) => {
+    setSelectedWorkflow(workflow);
+    const initialInputs: Record<string, any> = {};
+
+    const properties = workflow.schema?.properties;
+    if (properties) {
+      Object.entries(properties).forEach(([key, prop]: [string, any]) => {
+        initialInputs[key] =
+          workflow.settings?.[key] ??
+          prop.default ??
+          (prop.type === "boolean" ? false : "");
+      });
+    }
+
+    setTestInputs(initialInputs);
+    setTestRunResult(null);
+    setIsTestRunDialogOpen(true);
+  };
+
+  const handleExecuteTestRun = async () => {
+    if (!selectedWorkflow) return;
+    setIsTestRunning(true);
+    setTestRunResult(null);
+
+    try {
+      const res = await fetch("/api/workflows/trigger", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: selectedWorkflow.path,
+          inputs: testInputs,
+        }),
+      });
+      const response = await res.json();
+
+      if (response.success && response.data) {
+        setTestRunResult({
+          status: response.data.status || "COMPLETED",
+          executionId: response.data.id,
+          correlationId: response.data.correlationId,
+          timestamp: new Date().toISOString(),
+          payloadSent: testInputs,
+          message: "Workflow test execution initiated successfully.",
+        });
+        toast.success("Test run executed successfully");
+        mutateHistory();
+      } else {
+        toast.error(response.error || "Failed to execute test run");
+      }
+    } catch (error) {
+      toast.error("An error occurred during test run execution");
+    } finally {
+      setIsTestRunning(false);
+    }
   };
 
   // Group fields by their "group" property
@@ -481,6 +548,13 @@ export default function WorkflowsPage() {
                             <Settings2 className="w-4 h-4" />
                           </Button>
                           <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-primary/30 text-primary hover:bg-primary/10"
+                            onClick={() => handleOpenTestRun(workflow)}>
+                            <Play className="w-4 h-4 mr-1 text-primary" /> Test Run
+                          </Button>
+                          <Button
                             size="sm"
                             className="bg-primary hover:bg-primary/90 text-primary-foreground"
                             onClick={() => handleTrigger(workflow)}
@@ -611,6 +685,90 @@ export default function WorkflowsPage() {
                             />
                           </div>
                         </div>
+                      ) : prop.format === "select" || prop.enum ? (
+                        <Select
+                          value={configValues[key]?.toString() ?? prop.default?.toString() ?? ""}
+                          onValueChange={val =>
+                            setConfigValues({ ...configValues, [key]: val })
+                          }>
+                          <SelectTrigger className="h-11 bg-background border-border">
+                            <SelectValue placeholder={`Select ${prop.title || key}...`} />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {prop.enum?.map((opt: string, idx: number) => (
+                              <SelectItem key={opt} value={opt}>
+                                {prop.enumNames?.[idx] || opt}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : prop.format === "date" ? (
+                        <Input
+                          type="date"
+                          value={configValues[key] ?? prop.default ?? ""}
+                          onChange={e =>
+                            setConfigValues({
+                              ...configValues,
+                              [key]: e.target.value,
+                            })
+                          }
+                          className="h-11 bg-background border-border"
+                        />
+                      ) : prop.format === "time" ? (
+                        <Input
+                          type="time"
+                          value={configValues[key] ?? prop.default ?? ""}
+                          onChange={e =>
+                            setConfigValues({
+                              ...configValues,
+                              [key]: e.target.value,
+                            })
+                          }
+                          className="h-11 bg-background border-border"
+                        />
+                      ) : prop.format === "duration" ? (
+                        <div className="flex gap-2 items-center">
+                          <Input
+                            type="text"
+                            placeholder="e.g. 15m, 1h, 2d"
+                            value={configValues[key] ?? prop.default ?? ""}
+                            onChange={e =>
+                              setConfigValues({
+                                ...configValues,
+                                [key]: e.target.value,
+                              })
+                            }
+                            className="h-11 bg-background border-border flex-1"
+                          />
+                          <Select
+                            value={
+                              configValues[key]?.endsWith("m")
+                                ? "minutes"
+                                : configValues[key]?.endsWith("h")
+                                ? "hours"
+                                : configValues[key]?.endsWith("d")
+                                ? "days"
+                                : "minutes"
+                            }
+                            onValueChange={unit => {
+                              const numVal = parseInt(configValues[key]) || 15;
+                              const unitSuffix =
+                                unit === "hours" ? "h" : unit === "days" ? "d" : "m";
+                              setConfigValues({
+                                ...configValues,
+                                [key]: `${numVal}${unitSuffix}`,
+                              });
+                            }}>
+                            <SelectTrigger className="h-11 w-32 bg-background border-border">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="minutes">Minutes</SelectItem>
+                              <SelectItem value="hours">Hours</SelectItem>
+                              <SelectItem value="days">Days</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       ) : (
                         <Input
                           type={prop.type === "number" ? "number" : "text"}
@@ -656,6 +814,205 @@ export default function WorkflowsPage() {
               {selectedWorkflow?.isProvisioned
                 ? "Update Configuration"
                 : "Activate Workflow"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Test Run Dialog */}
+      <Dialog open={isTestRunDialogOpen} onOpenChange={setIsTestRunDialogOpen}>
+        <DialogContent className="sm:max-w-[650px] overflow-y-auto bg-card border-border">
+          <DialogHeader className="space-y-4">
+            <div className="flex items-center gap-2 text-primary">
+              <Play className="w-5 h-5 text-primary" />
+              <span className="text-xs font-bold uppercase tracking-wider">
+                Workflow Test Sandbox
+              </span>
+            </div>
+            <DialogTitle className="text-2xl font-bold text-foreground">
+              Test Run: {selectedWorkflow?.name}
+            </DialogTitle>
+            <DialogDescription className="text-base text-muted-foreground">
+              Simulate and execute an isolated test run with custom parameter inputs.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-6 space-y-6">
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                Test Parameters & Payload
+              </h4>
+              <div className="grid grid-cols-1 gap-4">
+                {selectedWorkflow?.schema?.properties &&
+                  Object.entries(selectedWorkflow.schema.properties).map(
+                    ([key, prop]: [string, any]) => (
+                      <div key={key} className="space-y-2">
+                        <label className="text-xs font-semibold text-foreground flex items-center justify-between">
+                          <span>{prop.title || key}</span>
+                          <span className="text-[10px] font-mono text-muted-foreground">
+                            {prop.type || "string"}
+                          </span>
+                        </label>
+
+                        {prop.format === "members" ? (
+                          <MultiMemberSelector
+                            value={testInputs[key]}
+                            onValueChange={val =>
+                              setTestInputs({ ...testInputs, [key]: val })
+                            }
+                            placeholder={`Select test members for ${prop.title || key}...`}
+                          />
+                        ) : prop.format === "member" ? (
+                          <MemberSelector
+                            value={testInputs[key]}
+                            onValueChange={val =>
+                              setTestInputs({ ...testInputs, [key]: val })
+                            }
+                            placeholder={`Select test member for ${prop.title || key}...`}
+                          />
+                        ) : prop.type === "boolean" ? (
+                          <div
+                            className={cn(
+                              "flex items-center justify-between p-2.5 rounded-lg border transition-all cursor-pointer text-xs",
+                              testInputs[key]
+                                ? "bg-primary/10 border-primary/30"
+                                : "bg-muted/30 border-border",
+                            )}
+                            onClick={() =>
+                              setTestInputs({
+                                ...testInputs,
+                                [key]: !testInputs[key],
+                              })
+                            }>
+                            <span className="font-medium text-foreground">
+                              {testInputs[key] ? "True / Enabled" : "False / Disabled"}
+                            </span>
+                            <div
+                              className={cn(
+                                "w-8 h-4 rounded-full relative transition-colors p-0.5",
+                                testInputs[key]
+                                  ? "bg-primary"
+                                  : "bg-muted-foreground/30",
+                              )}>
+                              <div
+                                className={cn(
+                                  "w-3 h-3 bg-background rounded-full transition-transform",
+                                  testInputs[key]
+                                    ? "translate-x-4"
+                                    : "translate-x-0",
+                                )}
+                              />
+                            </div>
+                          </div>
+                        ) : prop.format === "select" || prop.enum ? (
+                          <Select
+                            value={testInputs[key]?.toString() ?? prop.default?.toString() ?? ""}
+                            onValueChange={val =>
+                              setTestInputs({ ...testInputs, [key]: val })
+                            }>
+                            <SelectTrigger className="h-10 bg-background border-border text-xs">
+                              <SelectValue placeholder={`Select ${prop.title || key}...`} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {prop.enum?.map((opt: string, idx: number) => (
+                                <SelectItem key={opt} value={opt}>
+                                  {prop.enumNames?.[idx] || opt}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : prop.format === "date" ? (
+                          <Input
+                            type="date"
+                            value={testInputs[key] ?? prop.default ?? ""}
+                            onChange={e =>
+                              setTestInputs({
+                                ...testInputs,
+                                [key]: e.target.value,
+                              })
+                            }
+                            className="h-10 bg-background border-border text-xs"
+                          />
+                        ) : prop.format === "time" ? (
+                          <Input
+                            type="time"
+                            value={testInputs[key] ?? prop.default ?? ""}
+                            onChange={e =>
+                              setTestInputs({
+                                ...testInputs,
+                                [key]: e.target.value,
+                              })
+                            }
+                            className="h-10 bg-background border-border text-xs"
+                          />
+                        ) : (
+                          <Input
+                            type={prop.type === "number" ? "number" : "text"}
+                            placeholder={
+                              prop.default?.toString() || `Test value for ${key}...`
+                            }
+                            value={testInputs[key] ?? ""}
+                            onChange={e =>
+                              setTestInputs({
+                                ...testInputs,
+                                [key]:
+                                  prop.type === "number"
+                                    ? Number(e.target.value)
+                                    : e.target.value,
+                              })
+                            }
+                            className="h-10 bg-background border-border text-xs"
+                          />
+                        )}
+                      </div>
+                    ),
+                  )}
+              </div>
+            </div>
+
+            {testRunResult && (
+              <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-primary flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Test Execution Result
+                  </span>
+                  {getStatusBadge(testRunResult.status)}
+                </div>
+                <p className="text-xs text-muted-foreground">{testRunResult.message}</p>
+                <div className="rounded-lg bg-card p-3 border border-border text-[11px] font-mono space-y-1">
+                  <div><span className="text-muted-foreground">Execution ID:</span> {testRunResult.executionId}</div>
+                  <div><span className="text-muted-foreground">Correlation ID:</span> {testRunResult.correlationId}</div>
+                  <div><span className="text-muted-foreground">Timestamp:</span> {testRunResult.timestamp}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-mono uppercase text-muted-foreground mb-1">
+                    Input Payload Delivered
+                  </div>
+                  <pre className="text-[11px] font-mono bg-card p-3 rounded-lg border border-border overflow-x-auto text-foreground/90">
+                    {JSON.stringify(testRunResult.payloadSent, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="pt-4 border-t border-border">
+            <Button
+              variant="ghost"
+              onClick={() => setIsTestRunDialogOpen(false)}
+              className="px-6 text-muted-foreground hover:text-foreground">
+              Close
+            </Button>
+            <Button
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 h-10"
+              onClick={handleExecuteTestRun}
+              disabled={isTestRunning}>
+              {isTestRunning ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Play className="w-4 h-4 mr-2" />
+              )}
+              Execute Test Run
             </Button>
           </DialogFooter>
         </DialogContent>
