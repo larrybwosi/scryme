@@ -1,5 +1,12 @@
+import { Metadata } from "next";
 import { PageHeader } from "../../../../components/page-header";
 import { Building2 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Tax Compliance Report",
+  description: "Prepare sales tax filings, VAT obligations, and tax deduction reports.",
+};
+
 
 export default function TaxCompliancePage() {
   return (

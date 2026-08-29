@@ -93,7 +93,7 @@ export function WorkflowManager({
   const [trialAmount, setTrialAmount] = useState<string>("");
   const [trialLocationId, setTrialLocationId] = useState<string>("");
   const [trialCategoryId, setTrialCategoryId] = useState<string>("");
-  const [trialResults, setTrialResults] = useState<any[] | null>(null);
+  const [trialResults, setTrialResults] = useState<any>(null);
   const [isSimulating, setIsSimulating] = useState(false);
 
   const [scrymeChannel, setScrymeChannel] = useState<string>("notifications");
@@ -1118,13 +1118,13 @@ export function WorkflowManager({
                     Fill in the test parameters on the left and click &quot;Run Workflow Simulation&quot; to see matches and actions.
                   </p>
                 </div>
-              ) : trialResults.length === 0 ? (
+              ) : Array.isArray(trialResults) && trialResults.length === 0 ? (
                 <div className="p-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/30 text-center">
                   <p className="text-xs text-zinc-500 italic">
                     No steps defined for this workflow, or no steps were triggered.
                   </p>
                 </div>
-              ) : (
+              ) : Array.isArray(trialResults) ? (
                 <div className="space-y-4">
                   {trialResults.map((stepResult: any, index: number) => (
                     <div
@@ -1210,6 +1210,13 @@ export function WorkflowManager({
                       )}
                     </div>
                   ))}
+                </div>
+              ) : (
+                <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2 text-xs">
+                  <p className="font-semibold text-zinc-900">{trialResults.message || "Test Execution Result"}</p>
+                  <pre className="text-[11px] font-mono bg-white p-2.5 rounded border border-zinc-200 overflow-x-auto">
+                    {JSON.stringify(trialResults, null, 2)}
+                  </pre>
                 </div>
               )}
             </div>

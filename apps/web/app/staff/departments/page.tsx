@@ -1,6 +1,13 @@
+import { Metadata } from "next";
 import React, { Suspense } from "react";
 import { getDepartments, getDepartmentStats } from "../../actions/department";
 import { DepartmentsClient } from "./departments-client";
+
+export const metadata: Metadata = {
+  title: "Departments",
+  description: "Organize staff members into functional operational departments.",
+};
+
 
 interface Props {
   searchParams: Promise<{ search?: string }>;

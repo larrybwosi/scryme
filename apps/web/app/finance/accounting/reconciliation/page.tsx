@@ -1,6 +1,13 @@
+import { Metadata } from "next";
 import { PageHeader } from "../../../../components/page-header";
 import { Landmark } from "lucide-react";
 import { ReconciliationClient } from "./reconciliation-client";
+
+export const metadata: Metadata = {
+  title: "Bank Reconciliation",
+  description: "Reconcile bank statements, M-Pesa transactions, and payment gateway payouts.",
+};
+
 
 export default function ReconciliationPage() {
   return (
