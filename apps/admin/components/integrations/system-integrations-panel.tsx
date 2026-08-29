@@ -13,6 +13,8 @@ import {
   updateSystemIntegrationSettings,
   provisionAdminChatWorkspace,
   testHermesConnection,
+  testScrymeChatConnection,
+  testWindmillConnection,
   type SystemIntegrationSettings,
 } from "@/app/actions/integrations"
 
@@ -25,6 +27,8 @@ export function SystemIntegrationsPanel({
   const [isSaving, setIsSaving] = useState(false)
   const [isProvisioning, setIsProvisioning] = useState(false)
   const [isTestingHermes, setIsTestingHermes] = useState(false)
+  const [isTestingChat, setIsTestingChat] = useState(false)
+  const [isTestingWindmill, setIsTestingWindmill] = useState(false)
 
   // Scryme Chat Credentials
   const [scrymeChatClientId, setScrymeChatClientId] = useState(settings.scrymeChatClientId ?? "")
@@ -79,6 +83,38 @@ export function SystemIntegrationsPanel({
       toast.error(error instanceof Error ? error.message : "Failed to save settings")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleTestChat() {
+    setIsTestingChat(true)
+    try {
+      const res = await testScrymeChatConnection()
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test Scryme Chat connection")
+    } finally {
+      setIsTestingChat(false)
+    }
+  }
+
+  async function handleTestWindmill() {
+    setIsTestingWindmill(true)
+    try {
+      const res = await testWindmillConnection()
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test Windmill connection")
+    } finally {
+      setIsTestingWindmill(false)
     }
   }
 
@@ -169,6 +205,18 @@ export function SystemIntegrationsPanel({
               placeholder="https://api.chat.scryme.tech"
             />
           </div>
+          <div className="flex justify-end pt-2 sm:col-span-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isTestingChat}
+              onClick={handleTestChat}
+              className="gap-2"
+            >
+              {isTestingChat ? <Loader2 className="size-4 animate-spin" /> : <MessageSquare className="size-4 text-blue-500" />}
+              Test Connection & Channel Message
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -219,6 +267,18 @@ export function SystemIntegrationsPanel({
               onChange={(e) => setWindmillWebhookSecret(e.target.value)}
               placeholder="••••••••••••••••"
             />
+          </div>
+          <div className="flex justify-end pt-2 sm:col-span-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isTestingWindmill}
+              onClick={handleTestWindmill}
+              className="gap-2"
+            >
+              {isTestingWindmill ? <Loader2 className="size-4 animate-spin" /> : <Workflow className="size-4 text-purple-500" />}
+              Test Connection
+            </Button>
           </div>
         </CardContent>
       </Card>

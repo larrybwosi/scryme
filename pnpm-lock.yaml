@@ -72,6 +72,9 @@ importers:
       '@repo/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@repo/chat':
+        specifier: workspace:*
+        version: link:../../packages/chat
       '@repo/db':
         specifier: workspace:^
         version: link:../../packages/db
@@ -250,9 +253,6 @@ importers:
       '@repo/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@repo/windmill':
-        specifier: workspace:*
-        version: link:../../packages/windmill
       '@sentry/nestjs':
         specifier: ^10.65.0
         version: 10.71.0(@nestjs/common@11.2.3(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.2.3)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))
@@ -615,9 +615,6 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
-      '@repo/windmill':
-        specifier: workspace:*
-        version: link:../../packages/windmill
       '@sentry/nextjs':
         specifier: ^10.65.0
         version: 10.71.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.110.0(@swc/core@1.16.1(@swc/helpers@0.5.23))(esbuild@0.28.2)(postcss@8.5.26))
@@ -1720,9 +1717,6 @@ importers:
       '@repo/notifications':
         specifier: workspace:*
         version: link:../notifications
-      '@repo/windmill':
-        specifier: workspace:*
-        version: link:../windmill
       '@sanity/client':
         specifier: ^7.22.1
         version: 7.26.2
@@ -1990,37 +1984,6 @@ importers:
       typescript:
         specifier: 5.7.3
         version: 5.7.3
-
-  packages/windmill:
-    dependencies:
-      '@repo/chat':
-        specifier: workspace:*
-        version: link:../chat
-      '@repo/db':
-        specifier: workspace:*
-        version: link:../db
-      axios:
-        specifier: ^1.15.2
-        version: 1.20.0
-      handlebars:
-        specifier: ^4.7.9
-        version: 4.7.9
-      nodemailer:
-        specifier: ^7.0.13
-        version: 7.0.13
-      tailwind-merge:
-        specifier: ^2.6.0
-        version: 2.6.1
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../config-typescript
-      '@types/node':
-        specifier: ^25.9.1
-        version: 25.9.5
-      server-only:
-        specifier: ^0.0.1
-        version: 0.0.1
 
 packages:
 
