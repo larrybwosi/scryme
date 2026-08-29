@@ -119,6 +119,15 @@ export class PurchaseOrderUseCase {
         throw new BadRequestException("Purchase order already received");
       }
 
+      // SECURITY (Sentinel): Validate that locationId belongs to the caller's organizationId
+      // to prevent cross-tenant IDOR stock receipt and location manipulation.
+      const location = await tx.inventoryLocation.findFirst({
+        where: { id: dto.locationId, organizationId },
+      });
+      if (!location) {
+        throw new NotFoundException("Inventory location not found");
+      }
+
       const receipt = await tx.stockReceipt.create({
         data: {
           organizationId,
