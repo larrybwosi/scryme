@@ -107,7 +107,13 @@ export default function TemplateManager() {
               className="pl-9 h-10 border-border/60 focus-visible:ring-primary/20 transition-all"
             />
           </div>
-          <Button variant="outline" size="icon" className="h-10 w-10 border-border/60">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-10 w-10 border-border/60"
+            aria-label="Filter templates"
+            title="Filter templates"
+          >
             <Filter className="h-4 w-4 text-muted-foreground" />
           </Button>
         </div>
@@ -203,7 +209,9 @@ export default function TemplateManager() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                              className="h-8 w-8 text-muted-foreground opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity"
+                              aria-label={`Actions for ${template.name}`}
+                              title={`Actions for ${template.name}`}
                             >
                               <MoreVertical className="h-4 w-4" />
                             </Button>
@@ -327,6 +335,8 @@ export default function TemplateManager() {
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => handleDuplicate(template.id)}
+                    aria-label={`Duplicate ${template.name}`}
+                    title={`Duplicate ${template.name}`}
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </Button>
@@ -338,6 +348,8 @@ export default function TemplateManager() {
                       setSelectedTemplate(template);
                       setIsEditDialogOpen(true);
                     }}
+                    aria-label={`Edit ${template.name}`}
+                    title={`Edit ${template.name}`}
                   >
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
