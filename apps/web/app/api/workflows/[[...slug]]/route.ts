@@ -3,6 +3,7 @@ import { getServerAuth } from "@repo/auth/server";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { db } from "@repo/db";
 import { randomBytes } from "crypto";
+import { env } from "@repo/env";
 
 const builtInWorkflowTemplates = [
   {
@@ -164,7 +165,49 @@ const builtInWorkflowTemplates = [
   },
 ];
 
-async function getAvailableWorkflows(organizationId: string) {
+async function fetchFromV3Api(
+  orgSlug: string,
+  path: string,
+  options: RequestInit = {},
+  authHeader?: string | null,
+  cookieHeader?: string | null,
+) {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+  const url = `${apiUrl}/v3/${orgSlug}/automation/${path}`;
+  try {
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "x-org-slug": orgSlug,
+        ...(authHeader ? { authorization: authHeader } : {}),
+        ...(cookieHeader ? { cookie: cookieHeader } : {}),
+        ...(options.headers || {}),
+      },
+      cache: "no-store",
+    });
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (error) {
+    // Fallback to local database handling if NestJS API is unreachable
+  }
+  return null;
+}
+
+async function getAvailableWorkflows(
+  organizationId: string,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
+) {
+  if (orgSlug) {
+    const v3Res = await fetchFromV3Api(orgSlug, "available", {}, authHeader, cookieHeader);
+    if (v3Res?.data) {
+      return v3Res.data;
+    }
+  }
+
   const definitions = await db.workflowEngineDefinition.findMany({
     where: { organizationId },
   });
@@ -189,8 +232,27 @@ async function provisionWorkflow(
   organizationId: string,
   path: string,
   settings: any,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
 ) {
   if (!path) throw new Error("Path is required");
+
+  if (orgSlug) {
+    const v3Res = await fetchFromV3Api(
+      orgSlug,
+      "provision",
+      {
+        method: "POST",
+        body: JSON.stringify({ path, settings }),
+      },
+      authHeader,
+      cookieHeader,
+    );
+    if (v3Res?.data || v3Res?.success) {
+      return v3Res;
+    }
+  }
 
   const template = builtInWorkflowTemplates.find((t) => t.path === path || t.path.replace("f/dealio/", "") === path);
   const name = template?.name || path;
@@ -227,8 +289,27 @@ async function triggerWorkflow(
   organizationId: string,
   path: string,
   inputs: any,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
 ) {
   if (!path) throw new Error("Path is required");
+
+  if (orgSlug) {
+    const v3Res = await fetchFromV3Api(
+      orgSlug,
+      "trigger",
+      {
+        method: "POST",
+        body: JSON.stringify({ path, inputs }),
+      },
+      authHeader,
+      cookieHeader,
+    );
+    if (v3Res?.data || v3Res?.success) {
+      return v3Res;
+    }
+  }
 
   let definition = await db.workflowEngineDefinition.findUnique({
     where: {
@@ -266,7 +347,7 @@ async function triggerWorkflow(
     },
   });
 
-  const job = await db.workflowEngineJob.create({
+  await db.workflowEngineJob.create({
     data: {
       organizationId,
       executionId: execution.id,
@@ -280,7 +361,29 @@ async function triggerWorkflow(
   return { success: true, data: execution };
 }
 
-async function cancelWorkflow(organizationId: string, jobId: string) {
+async function cancelWorkflow(
+  organizationId: string,
+  jobId: string,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
+) {
+  if (orgSlug) {
+    const v3Res = await fetchFromV3Api(
+      orgSlug,
+      "cancel",
+      {
+        method: "POST",
+        body: JSON.stringify({ jobId }),
+      },
+      authHeader,
+      cookieHeader,
+    );
+    if (v3Res?.success) {
+      return v3Res;
+    }
+  }
+
   const execution = await db.workflowEngineExecution.findFirst({
     where: {
       organizationId,
@@ -298,7 +401,26 @@ async function cancelWorkflow(organizationId: string, jobId: string) {
   return { success: true };
 }
 
-async function getWorkflowLogs(organizationId: string, jobId: string) {
+async function getWorkflowLogs(
+  organizationId: string,
+  jobId: string,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
+) {
+  if (orgSlug) {
+    const v3Res = await fetchFromV3Api(
+      orgSlug,
+      `logs?jobId=${encodeURIComponent(jobId)}`,
+      {},
+      authHeader,
+      cookieHeader,
+    );
+    if (v3Res?.data) {
+      return v3Res;
+    }
+  }
+
   const auditLogs = await db.workflowEngineAuditLog.findMany({
     where: {
       organizationId,
@@ -317,7 +439,24 @@ async function getWorkflowLogs(organizationId: string, jobId: string) {
 async function getExecutionHistory(
   organizationId: string,
   scriptPath?: string,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
 ) {
+  if (orgSlug) {
+    const query = scriptPath ? `?path=${encodeURIComponent(scriptPath)}` : "";
+    const v3Res = await fetchFromV3Api(
+      orgSlug,
+      `history${query}`,
+      {},
+      authHeader,
+      cookieHeader,
+    );
+    if (v3Res?.data) {
+      return v3Res.data;
+    }
+  }
+
   const history = await db.workflowEngineExecution.findMany({
     where: {
       organizationId,
@@ -354,9 +493,17 @@ export async function GET(
     }
 
     const action = slug[0];
+    const orgSlug = (auth as any).organizationSlug || auth.organizationId;
+    const authHeader = req.headers.get("authorization");
+    const cookieHeader = req.headers.get("cookie");
 
     if (action === "available") {
-      const workflows = await getAvailableWorkflows(auth.organizationId);
+      const workflows = await getAvailableWorkflows(
+        auth.organizationId,
+        orgSlug,
+        authHeader,
+        cookieHeader,
+      );
       return NextResponse.json({ success: true, data: workflows });
     }
 
@@ -365,6 +512,9 @@ export async function GET(
       const history = await getExecutionHistory(
         auth.organizationId,
         scriptPath,
+        orgSlug,
+        authHeader,
+        cookieHeader,
       );
       return NextResponse.json({ success: true, data: history });
     }
@@ -376,7 +526,13 @@ export async function GET(
           { error: "jobId is required" },
           { status: 400 },
         );
-      const result = await getWorkflowLogs(auth.organizationId, jobId);
+      const result = await getWorkflowLogs(
+        auth.organizationId,
+        jobId,
+        orgSlug,
+        authHeader,
+        cookieHeader,
+      );
       return NextResponse.json(result);
     }
 
@@ -419,12 +575,18 @@ export async function POST(
 
     const action = slug[0];
     const body = await req.json().catch(() => ({}));
+    const orgSlug = (auth as any).organizationSlug || auth.organizationId;
+    const authHeader = req.headers.get("authorization");
+    const cookieHeader = req.headers.get("cookie");
 
     if (action === "provision") {
       const result = await provisionWorkflow(
         auth.organizationId,
         body.path,
         body.settings,
+        orgSlug,
+        authHeader,
+        cookieHeader,
       );
       return NextResponse.json(result);
     }
@@ -434,12 +596,21 @@ export async function POST(
         auth.organizationId,
         body.path,
         body.inputs,
+        orgSlug,
+        authHeader,
+        cookieHeader,
       );
       return NextResponse.json(result);
     }
 
     if (action === "cancel") {
-      const result = await cancelWorkflow(auth.organizationId, body.jobId);
+      const result = await cancelWorkflow(
+        auth.organizationId,
+        body.jobId,
+        orgSlug,
+        authHeader,
+        cookieHeader,
+      );
       return NextResponse.json(result);
     }
 

@@ -2,6 +2,7 @@ import { AllExceptionsFilter } from "../all-exceptions.filter";
 import { ArgumentsHost, HttpException, HttpStatus, BadRequestException, NotFoundException, InternalServerErrorException } from "@nestjs/common";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as Sentry from "@sentry/nestjs";
+import { notifySystemAdminsOfError } from "@repo/notifications/system";
 
 vi.mock("@sentry/nestjs", () => ({
   captureException: vi.fn(),
@@ -13,6 +14,10 @@ vi.mock("@sentry/nestjs", () => ({
     };
     callback(mockScope);
   }),
+}));
+
+vi.mock("@repo/notifications/system", () => ({
+  notifySystemAdminsOfError: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("AllExceptionsFilter", () => {
@@ -79,6 +84,12 @@ describe("AllExceptionsFilter", () => {
 
     expect(consoleErrorSpy).not.toHaveBeenCalled();
     expect(responseMock.status).toHaveBeenCalledWith(400);
+    expect(notifySystemAdminsOfError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 400,
+        message: "Validation failed",
+      })
+    );
   });
 
   it("should log InternalServerErrorException (500) on console.error", () => {

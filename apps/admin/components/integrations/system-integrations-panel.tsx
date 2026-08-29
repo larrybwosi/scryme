@@ -48,6 +48,10 @@ export function SystemIntegrationsPanel({
   const [adminChannelSlug, setAdminChannelSlug] = useState(settings.adminChannelSlug ?? "system-alerts")
   const [adminWorkspaceStatus, setAdminWorkspaceStatus] = useState(settings.adminWorkspaceStatus ?? "Not Configured")
 
+  // Error Alerts in Scryme Chat & Sentry
+  const [errorAlertsEnabled, setErrorAlertsEnabled] = useState(settings.errorAlertsEnabled ?? true)
+  const [errorAlertsMinStatus, setErrorAlertsMinStatus] = useState(settings.errorAlertsMinStatus ?? 500)
+
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault()
     setIsSaving(true)
@@ -66,6 +70,8 @@ export function SystemIntegrationsPanel({
         adminWorkspaceName,
         adminWorkspaceSlug,
         adminChannelSlug,
+        errorAlertsEnabled,
+        errorAlertsMinStatus,
       })
       toast.success("System integration credentials saved successfully")
       router.refresh()
@@ -357,6 +363,40 @@ export function SystemIntegrationsPanel({
               {isProvisioning ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-emerald-500" />}
               Provision Admin Chat Workspace
             </Button>
+          </div>
+
+          {/* Realtime Scryme Chat Error Alert Controls */}
+          <div className="border-t border-border pt-4 mt-2 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="error-alerts-enabled"
+                  checked={errorAlertsEnabled}
+                  onChange={(e) => setErrorAlertsEnabled(e.target.checked)}
+                  className="size-4 rounded border-input bg-background text-primary focus:ring-ring"
+                />
+                <Label htmlFor="error-alerts-enabled" className="cursor-pointer font-medium">
+                  Dispatch System Exception Alerts to Scryme Chat Channel
+                </Label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="error-min-status">Minimum Status Code Threshold</Label>
+                <select
+                  id="error-min-status"
+                  value={errorAlertsMinStatus}
+                  onChange={(e) => setErrorAlertsMinStatus(Number(e.target.value))}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value={500}>500+ (Internal Server Errors Only)</option>
+                  <option value={400}>400+ (All Client & Server Errors)</option>
+                  <option value={503}>503+ (Service Unavailable & Critical Only)</option>
+                </select>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
