@@ -122,12 +122,12 @@ export default function DeveloperDashboardPage() {
       <div className="border-b border-[rgba(241,233,216,0.1)] bg-[#0B1220]/80 backdrop-blur-md sticky top-16 z-30">
         <div className="container mx-auto px-4 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[rgba(200,154,75,0.12)] border border-[rgba(200,154,75,0.3)] flex items-center justify-center text-[#C89A4B]">
-              <Code2 size={20} />
+            <div className="w-9 h-9 rounded-md bg-[rgba(200,154,75,0.12)] border border-[rgba(200,154,75,0.3)] flex items-center justify-center text-[#C89A4B]">
+              <Code2 size={18} />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold text-[#F1E9D8]" style={{ fontFamily: fonts.display }}>
+                <h1 className="text-base font-bold text-[#F1E9D8]" style={{ fontFamily: fonts.display }}>
                   Developer Console
                 </h1>
                 <span className="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -135,7 +135,7 @@ export default function DeveloperDashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-[rgba(241,233,216,0.6)]">
-                {user ? `${user.organizationName} (${user.name})` : "Developer Workspace"}
+                {user ? `${user.organizationName || "Developer Workspace"} (${user.name})` : "Developer Workspace"}
               </p>
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function DeveloperDashboardPage() {
                 setGeneratedKey(null);
                 setShowKeyModal(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#162238] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] hover:border-[#C89A4B] transition-all"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-[#162238] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] hover:border-[#C89A4B] transition-all"
             >
               <Plus size={14} className="text-[#C89A4B]" />
               <span>Create API Key</span>
@@ -157,7 +157,7 @@ export default function DeveloperDashboardPage() {
                 setGeneratedOAuth(null);
                 setShowOAuthModal(true);
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all shadow-md"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all shadow-sm"
             >
               <Plus size={14} />
               <span>Register OAuth App</span>
@@ -167,7 +167,7 @@ export default function DeveloperDashboardPage() {
               <button
                 onClick={logout}
                 title="Sign out"
-                className="p-2 rounded-xl border border-[rgba(241,233,216,0.1)] text-[rgba(241,233,216,0.6)] hover:text-rose-400 hover:border-rose-500/30 transition-colors"
+                className="p-1.5 rounded-md border border-[rgba(241,233,216,0.1)] text-[rgba(241,233,216,0.6)] hover:text-rose-400 hover:border-rose-500/30 transition-colors"
               >
                 <LogOut size={16} />
               </button>
@@ -216,7 +216,7 @@ export default function DeveloperDashboardPage() {
           <div className="space-y-8">
             {/* Quick Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              <div className="p-5 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
+              <div className="p-5 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
                 <div className="flex items-center justify-between text-[rgba(241,233,216,0.6)] text-xs mb-2">
                   <span>Registered OAuth Apps</span>
                   <Lock size={16} className="text-[#C89A4B]" />
@@ -230,7 +230,7 @@ export default function DeveloperDashboardPage() {
                 </div>
               </div>
 
-              <div className="p-5 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
+              <div className="p-5 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
                 <div className="flex items-center justify-between text-[rgba(241,233,216,0.6)] text-xs mb-2">
                   <span>Active API Credentials</span>
                   <Key size={16} className="text-[#C89A4B]" />
@@ -243,7 +243,7 @@ export default function DeveloperDashboardPage() {
                 </div>
               </div>
 
-              <div className="p-5 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
+              <div className="p-5 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
                 <div className="flex items-center justify-between text-[rgba(241,233,216,0.6)] text-xs mb-2">
                   <span>API Request Volume (24h)</span>
                   <Activity size={16} className="text-emerald-400" />
@@ -256,7 +256,7 @@ export default function DeveloperDashboardPage() {
                 </div>
               </div>
 
-              <div className="p-5 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
+              <div className="p-5 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
                 <div className="flex items-center justify-between text-[rgba(241,233,216,0.6)] text-xs mb-2">
                   <span>Avg Latency (v3 API)</span>
                   <Zap size={16} className="text-amber-400" />
@@ -271,7 +271,7 @@ export default function DeveloperDashboardPage() {
             </div>
 
             {/* Quickstart Integration CTA Card */}
-            <div className="p-6 rounded-2xl bg-gradient-to-r from-[#162238] to-[#0D1627] border border-[rgba(200,154,75,0.3)] flex flex-wrap items-center justify-between gap-6">
+            <div className="p-6 rounded-lg bg-gradient-to-r from-[#162238] to-[#0D1627] border border-[rgba(200,154,75,0.3)] flex flex-wrap items-center justify-between gap-6">
               <div className="max-w-xl">
                 <div className="flex items-center gap-2 text-[#C89A4B] text-xs font-mono font-semibold uppercase mb-1">
                   <Sparkles size={14} />
@@ -287,14 +287,14 @@ export default function DeveloperDashboardPage() {
 
               <button
                 onClick={() => setActiveTab("oauth")}
-                className="px-5 py-2.5 rounded-xl font-semibold text-xs bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors"
+                className="px-4 py-2 rounded-md font-semibold text-xs bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors"
               >
                 Setup OAuth Application
               </button>
             </div>
 
             {/* Application List Snippet */}
-            <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
+            <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base font-bold text-[#F1E9D8]">OAuth 2.0 Applications</h3>
                 <button
@@ -305,40 +305,46 @@ export default function DeveloperDashboardPage() {
                 </button>
               </div>
 
-              <div className="space-y-3">
-                {oauthClients.map((client) => (
-                  <div
-                    key={client.id}
-                    className="p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)] flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.2)] flex items-center justify-center text-[#C89A4B]">
-                        <Lock size={16} />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-[#F1E9D8]">{client.name}</div>
-                        <div className="text-[11px] font-mono text-[rgba(241,233,216,0.5)] mt-0.5">
-                          ID: {client.clientId}
+              {oauthClients.length === 0 ? (
+                <div className="p-8 text-center text-xs text-[rgba(241,233,216,0.5)] bg-[#0B1220] rounded-md border border-[rgba(241,233,216,0.08)]">
+                  No OAuth applications registered yet. Click &quot;Setup OAuth Application&quot; to get started.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {oauthClients.map((client) => (
+                    <div
+                      key={client.id}
+                      className="p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)] flex items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.2)] flex items-center justify-center text-[#C89A4B]">
+                          <Lock size={15} />
+                        </div>
+                        <div>
+                          <div className="text-xs font-bold text-[#F1E9D8]">{client.name}</div>
+                          <div className="text-[11px] font-mono text-[rgba(241,233,216,0.5)] mt-0.5">
+                            ID: {client.clientId}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-4">
-                      <div className="hidden sm:flex flex-wrap gap-1">
-                        {client.scopes.map((s) => (
-                          <span key={s} className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#162238] text-[rgba(241,233,216,0.7)]">
-                            {s}
-                          </span>
-                        ))}
+                      <div className="flex items-center gap-4">
+                        <div className="hidden sm:flex flex-wrap gap-1">
+                          {client.scopes.map((s) => (
+                            <span key={s} className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#162238] text-[rgba(241,233,216,0.7)]">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${client.isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
+                          {client.isActive ? "ACTIVE" : "DISABLED"}
+                        </span>
                       </div>
-
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${client.isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-                        {client.isActive ? "ACTIVE" : "DISABLED"}
-                      </span>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -346,9 +352,9 @@ export default function DeveloperDashboardPage() {
         {/* OAUTH APPLICATIONS TAB */}
         {activeTab === "oauth" && (
           <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4 p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
+            <div className="flex flex-wrap items-center justify-between gap-4 p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
               <div>
-                <h2 className="text-xl font-bold mb-1" style={{ fontFamily: fonts.display }}>
+                <h2 className="text-lg font-bold mb-1" style={{ fontFamily: fonts.display }}>
                   &quot;Sign in with Scryme&quot; OAuth 2.0 Applications
                 </h2>
                 <p className="text-xs text-[rgba(241,233,216,0.65)] max-w-2xl">
@@ -361,7 +367,7 @@ export default function DeveloperDashboardPage() {
                   setGeneratedOAuth(null);
                   setShowOAuthModal(true);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all"
               >
                 <Plus size={15} />
                 <span>New OAuth Application</span>
@@ -369,122 +375,128 @@ export default function DeveloperDashboardPage() {
             </div>
 
             {/* List of OAuth Apps */}
-            <div className="space-y-4">
-              {oauthClients.map((client) => (
-                <div
-                  key={client.id}
-                  className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.12)] space-y-4"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] shrink-0">
-                        <Lock size={18} />
+            {oauthClients.length === 0 ? (
+              <div className="p-12 text-center text-xs text-[rgba(241,233,216,0.5)] bg-[#121B2E] rounded-lg border border-[rgba(241,233,216,0.1)]">
+                No OAuth applications registered yet. Click &quot;New OAuth Application&quot; above.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {oauthClients.map((client) => (
+                  <div
+                    key={client.id}
+                    className="p-5 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.12)] space-y-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.25)] flex items-center justify-center text-[#C89A4B] shrink-0">
+                          <Lock size={16} />
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold text-[#F1E9D8]">{client.name}</h3>
+                          <p className="text-[11px] text-[rgba(241,233,216,0.5)] mt-0.5">
+                            Created {new Date(client.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="text-base font-bold text-[#F1E9D8]">{client.name}</h3>
-                        <p className="text-xs text-[rgba(241,233,216,0.5)] mt-0.5">
-                          Created {new Date(client.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => toggleOAuthClient(client.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                          client.isActive
-                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                            : "bg-amber-500/10 border-amber-500/30 text-amber-400"
-                        }`}
-                      >
-                        {client.isActive ? "Enabled" : "Disabled"}
-                      </button>
-
-                      <button
-                        onClick={async () => {
-                          const sec = await rotateOAuthSecret(client.id);
-                          alert(`New Client Secret generated for ${client.name}:\n\n${sec}\n\nPlease save this immediately.`);
-                        }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[rgba(241,233,216,0.15)] text-[rgba(241,233,216,0.8)] hover:text-[#C89A4B] hover:border-[#C89A4B] transition-colors flex items-center gap-1.5"
-                      >
-                        <RotateCw size={13} />
-                        <span>Rotate Secret</span>
-                      </button>
-
-                      <button
-                        onClick={() => deleteOAuthClient(client.id)}
-                        className="p-1.5 rounded-lg text-[rgba(241,233,216,0.4)] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                        title="Delete application"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Credentials & Configuration Box */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)] text-xs">
-                    <div>
-                      <span className="text-[rgba(241,233,216,0.5)] block mb-1">Client ID</span>
-                      <div className="flex items-center gap-2 font-mono text-[#F1E9D8]">
-                        <span className="truncate">{client.clientId}</span>
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => copyToClipboard(client.clientId, `cid_${client.id}`)}
-                          className="text-[rgba(241,233,216,0.4)] hover:text-[#C89A4B]"
+                          onClick={() => toggleOAuthClient(client.id)}
+                          className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+                            client.isActive
+                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                              : "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                          }`}
                         >
-                          {copiedId === `cid_${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                          {client.isActive ? "Enabled" : "Disabled"}
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            const sec = await rotateOAuthSecret(client.id);
+                            alert(`New Client Secret generated for ${client.name}:\n\n${sec}\n\nPlease save this immediately.`);
+                          }}
+                          className="px-2.5 py-1 rounded text-xs font-medium border border-[rgba(241,233,216,0.15)] text-[rgba(241,233,216,0.8)] hover:text-[#C89A4B] hover:border-[#C89A4B] transition-colors flex items-center gap-1.5"
+                        >
+                          <RotateCw size={13} />
+                          <span>Rotate Secret</span>
+                        </button>
+
+                        <button
+                          onClick={() => deleteOAuthClient(client.id)}
+                          className="p-1 rounded text-[rgba(241,233,216,0.4)] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          title="Delete application"
+                        >
+                          <Trash2 size={15} />
                         </button>
                       </div>
                     </div>
 
-                    <div>
-                      <span className="text-[rgba(241,233,216,0.5)] block mb-1">Client Secret</span>
-                      <div className="flex items-center gap-2 font-mono text-[#F1E9D8]">
-                        <span className="truncate">{client.clientSecret ? `${client.clientSecret.substring(0, 14)}••••••••` : "••••••••••••••••"}</span>
-                        {client.clientSecret && (
+                    {/* Credentials & Configuration Box */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)] text-xs">
+                      <div>
+                        <span className="text-[rgba(241,233,216,0.5)] block mb-1">Client ID</span>
+                        <div className="flex items-center gap-2 font-mono text-[#F1E9D8]">
+                          <span className="truncate">{client.clientId}</span>
                           <button
-                            onClick={() => copyToClipboard(client.clientSecret!, `sec_${client.id}`)}
+                            onClick={() => copyToClipboard(client.clientId, `cid_${client.id}`)}
                             className="text-[rgba(241,233,216,0.4)] hover:text-[#C89A4B]"
                           >
-                            {copiedId === `sec_${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                            {copiedId === `cid_${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
                           </button>
-                        )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="md:col-span-2 pt-2 border-t border-[rgba(241,233,216,0.06)]">
-                      <span className="text-[rgba(241,233,216,0.5)] block mb-1">Allowed Redirect URIs</span>
-                      <div className="flex flex-wrap gap-2">
-                        {client.redirectUris.map((uri) => (
-                          <span key={uri} className="px-2.5 py-1 rounded font-mono text-[11px] bg-[#162238] text-[rgba(241,233,216,0.8)] border border-[rgba(241,233,216,0.08)]">
-                            {uri}
-                          </span>
-                        ))}
+                      <div>
+                        <span className="text-[rgba(241,233,216,0.5)] block mb-1">Client Secret</span>
+                        <div className="flex items-center gap-2 font-mono text-[#F1E9D8]">
+                          <span className="truncate">{client.clientSecret ? `${client.clientSecret.substring(0, 14)}••••••••` : "••••••••••••••••"}</span>
+                          {client.clientSecret && (
+                            <button
+                              onClick={() => copyToClipboard(client.clientSecret!, `sec_${client.id}`)}
+                              className="text-[rgba(241,233,216,0.4)] hover:text-[#C89A4B]"
+                            >
+                              {copiedId === `sec_${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="md:col-span-2 pt-2 border-t border-[rgba(241,233,216,0.06)]">
-                      <span className="text-[rgba(241,233,216,0.5)] block mb-1">Authorized Scopes</span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {client.scopes.map((s) => (
-                          <span key={s} className="px-2 py-0.5 rounded text-[10px] font-mono bg-[rgba(200,154,75,0.1)] text-[#C89A4B] border border-[rgba(200,154,75,0.2)]">
-                            {s}
-                          </span>
-                        ))}
+                      <div className="md:col-span-2 pt-2 border-t border-[rgba(241,233,216,0.06)]">
+                        <span className="text-[rgba(241,233,216,0.5)] block mb-1">Allowed Redirect URIs</span>
+                        <div className="flex flex-wrap gap-2">
+                          {client.redirectUris.map((uri) => (
+                            <span key={uri} className="px-2 py-0.5 rounded font-mono text-[11px] bg-[#162238] text-[rgba(241,233,216,0.8)] border border-[rgba(241,233,216,0.08)]">
+                              {uri}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-2 pt-2 border-t border-[rgba(241,233,216,0.06)]">
+                        <span className="text-[rgba(241,233,216,0.5)] block mb-1">Authorized Scopes</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {client.scopes.map((s) => (
+                            <span key={s} className="px-2 py-0.5 rounded text-[10px] font-mono bg-[rgba(200,154,75,0.1)] text-[#C89A4B] border border-[rgba(200,154,75,0.2)]">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* API KEYS TAB */}
         {activeTab === "apikeys" && (
           <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4 p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
+            <div className="flex flex-wrap items-center justify-between gap-4 p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)]">
               <div>
-                <h2 className="text-xl font-bold mb-1" style={{ fontFamily: fonts.display }}>
+                <h2 className="text-lg font-bold mb-1" style={{ fontFamily: fonts.display }}>
                   V3 API Secret Keys
                 </h2>
                 <p className="text-xs text-[rgba(241,233,216,0.65)] max-w-2xl">
@@ -497,7 +509,7 @@ export default function DeveloperDashboardPage() {
                   setGeneratedKey(null);
                   setShowKeyModal(true);
                 }}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all"
               >
                 <Plus size={15} />
                 <span>Create Secret Key</span>
@@ -505,74 +517,80 @@ export default function DeveloperDashboardPage() {
             </div>
 
             {/* Keys Table / Card List */}
-            <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] space-y-3">
-              {apiKeys.map((key) => (
-                <div
-                  key={key.id}
-                  className="p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)] flex flex-wrap items-center justify-between gap-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.2)] flex items-center justify-center text-[#C89A4B]">
-                      <Key size={16} />
+            {apiKeys.length === 0 ? (
+              <div className="p-12 text-center text-xs text-[rgba(241,233,216,0.5)] bg-[#121B2E] rounded-lg border border-[rgba(241,233,216,0.1)]">
+                No API secret keys created yet. Click &quot;Create Secret Key&quot; above.
+              </div>
+            ) : (
+              <div className="p-5 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] space-y-3">
+                {apiKeys.map((key) => (
+                  <div
+                    key={key.id}
+                    className="p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)] flex flex-wrap items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-md bg-[rgba(200,154,75,0.1)] border border-[rgba(200,154,75,0.2)] flex items-center justify-center text-[#C89A4B]">
+                        <Key size={15} />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[#F1E9D8]">{key.name}</span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${key.environment === "LIVE" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}>
+                            {key.environment}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[11px] font-mono text-[rgba(241,233,216,0.6)]">
+                            {key.fullKey ? `${key.keyPrefix}••••••••••••••••` : key.keyPrefix}
+                          </span>
+                          {key.fullKey && (
+                            <button
+                              onClick={() => copyToClipboard(key.fullKey!, key.id)}
+                              className="text-[rgba(241,233,216,0.4)] hover:text-[#C89A4B]"
+                            >
+                              {copiedId === key.id ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-[#F1E9D8]">{key.name}</span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${key.environment === "LIVE" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}>
-                          {key.environment}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[11px] font-mono text-[rgba(241,233,216,0.6)]">
-                          {key.fullKey ? `${key.keyPrefix}••••••••••••••••` : key.keyPrefix}
-                        </span>
-                        {key.fullKey && (
-                          <button
-                            onClick={() => copyToClipboard(key.fullKey!, key.id)}
-                            className="text-[rgba(241,233,216,0.4)] hover:text-[#C89A4B]"
-                          >
-                            {copiedId === key.id ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
-                          </button>
-                        )}
-                      </div>
+
+                    <div className="flex items-center gap-4 text-xs">
+                      <span className="text-[rgba(241,233,216,0.5)]">
+                        Last used: {key.lastUsedAt || "Never"}
+                      </span>
+
+                      <button
+                        onClick={() => toggleApiKey(key.id)}
+                        className={`px-2.5 py-1 rounded text-xs font-medium border transition-colors ${
+                          key.isActive
+                            ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                            : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+                        }`}
+                      >
+                        {key.isActive ? "Active" : "Revoked"}
+                      </button>
+
+                      <button
+                        onClick={() => deleteApiKey(key.id)}
+                        className="p-1 rounded text-[rgba(241,233,216,0.4)] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                        title="Revoke and delete key"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-4 text-xs">
-                    <span className="text-[rgba(241,233,216,0.5)]">
-                      Last used: {key.lastUsedAt || "Never"}
-                    </span>
-
-                    <button
-                      onClick={() => toggleApiKey(key.id)}
-                      className={`px-3 py-1 rounded-lg font-medium border transition-colors ${
-                        key.isActive
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                          : "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                      }`}
-                    >
-                      {key.isActive ? "Active" : "Revoked"}
-                    </button>
-
-                    <button
-                      onClick={() => deleteApiKey(key.id)}
-                      className="p-1.5 rounded-lg text-[rgba(241,233,216,0.4)] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                      title="Revoke and delete key"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* WEBHOOKS TAB */}
         {activeTab === "webhooks" && (
-          <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] space-y-6">
+          <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] space-y-6">
             <div>
-              <h2 className="text-xl font-bold mb-1" style={{ fontFamily: fonts.display }}>
+              <h2 className="text-lg font-bold mb-1" style={{ fontFamily: fonts.display }}>
                 Webhook Endpoint Subscriptions
               </h2>
               <p className="text-xs text-[rgba(241,233,216,0.65)]">
@@ -580,7 +598,7 @@ export default function DeveloperDashboardPage() {
               </p>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)] flex items-center justify-between">
+            <div className="p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Webhook size={18} className="text-[#C89A4B]" />
                 <div>
@@ -588,7 +606,7 @@ export default function DeveloperDashboardPage() {
                   <div className="text-[11px] text-[rgba(241,233,216,0.5)]">Events: user.authenticated, order.created</div>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 ACTIVE
               </span>
             </div>
@@ -597,9 +615,9 @@ export default function DeveloperDashboardPage() {
 
         {/* QUICKSTART & DOCS TAB */}
         {activeTab === "quickstart" && (
-          <div className="p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.1)] space-y-6">
+          <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] space-y-6">
             <div>
-              <h2 className="text-xl font-bold mb-1" style={{ fontFamily: fonts.display }}>
+              <h2 className="text-lg font-bold mb-1" style={{ fontFamily: fonts.display }}>
                 &quot;Sign in with Scryme&quot; Integration Guide
               </h2>
               <p className="text-xs text-[rgba(241,233,216,0.65)]">
@@ -608,16 +626,16 @@ export default function DeveloperDashboardPage() {
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)]">
+              <div className="p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)]">
                 <h4 className="font-bold text-[#C89A4B] mb-1">Step 1: Register an OAuth Application</h4>
                 <p className="text-[rgba(241,233,216,0.7)]">
                   Use the &quot;Sign in with Scryme&quot; tab above to create an application and receive your <code className="text-[#C89A4B] font-mono">clientId</code> and <code className="text-[#C89A4B] font-mono">clientSecret</code>.
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)]">
+              <div className="p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)]">
                 <h4 className="font-bold text-[#C89A4B] mb-1">Step 2: Redirect User to Scryme Auth Endpoint</h4>
-                <pre className="p-3 rounded-lg bg-[#090E1A] font-mono text-[11px] text-[rgba(241,233,216,0.9)] overflow-x-auto mt-2">
+                <pre className="p-3 rounded-md bg-[#090E1A] font-mono text-[11px] text-[rgba(241,233,216,0.9)] overflow-x-auto mt-2">
                   <code>
 {`GET https://api.scryme.tech/v3/auth/oauth2/authorize?
   response_type=code&
@@ -628,9 +646,9 @@ export default function DeveloperDashboardPage() {
                 </pre>
               </div>
 
-              <div className="p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)]">
+              <div className="p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)]">
                 <h4 className="font-bold text-[#C89A4B] mb-1">Step 3: Exchange Authorization Code for Token</h4>
-                <pre className="p-3 rounded-lg bg-[#090E1A] font-mono text-[11px] text-[rgba(241,233,216,0.9)] overflow-x-auto mt-2">
+                <pre className="p-3 rounded-md bg-[#090E1A] font-mono text-[11px] text-[rgba(241,233,216,0.9)] overflow-x-auto mt-2">
                   <code>
 {`POST https://api.scryme.tech/v3/auth/oauth2/token
 Content-Type: application/x-www-form-urlencoded
@@ -650,9 +668,9 @@ code=AUTH_CODE_RECEIVED`}
       {/* CREATE API KEY MODAL */}
       {showKeyModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-lg p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.15)] shadow-2xl">
+          <div className="w-full max-w-lg p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.15)] shadow-xl">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[rgba(241,233,216,0.1)]">
-              <h3 className="text-base font-bold text-[#F1E9D8]">Create V3 API Secret Key</h3>
+              <h3 className="text-sm font-bold text-[#F1E9D8]">Create V3 API Secret Key</h3>
               <button onClick={() => setShowKeyModal(false)} className="text-[rgba(241,233,216,0.5)] hover:text-[#F1E9D8]">
                 ✕
               </button>
@@ -660,18 +678,18 @@ code=AUTH_CODE_RECEIVED`}
 
             {generatedKey ? (
               <div className="space-y-4 text-xs">
-                <div className="p-3.5 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
+                <div className="p-3 rounded-md border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
                   <span className="font-bold block mb-1">API Key Provisioned Successfully!</span>
                   <span>Save this key now. It will not be shown in full again for security reasons.</span>
                 </div>
 
                 <div>
                   <label className="block font-medium text-[rgba(241,233,216,0.6)] mb-1">Secret Key</label>
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] font-mono text-[#C89A4B]">
+                  <div className="flex items-center gap-2 p-2.5 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] font-mono text-[#C89A4B]">
                     <span className="truncate flex-1">{generatedKey.fullKey}</span>
                     <button
                       onClick={() => copyToClipboard(generatedKey.fullKey!, "new_key")}
-                      className="px-2.5 py-1 rounded bg-[#C89A4B] text-[#0B1220] font-semibold hover:bg-[#d4a859]"
+                      className="px-2 py-1 rounded bg-[#C89A4B] text-[#0B1220] font-semibold hover:bg-[#d4a859]"
                     >
                       {copiedId === "new_key" ? "Copied!" : "Copy"}
                     </button>
@@ -680,7 +698,7 @@ code=AUTH_CODE_RECEIVED`}
 
                 <button
                   onClick={() => setShowKeyModal(false)}
-                  className="w-full py-2.5 rounded-xl font-semibold bg-[#162238] border border-[rgba(241,233,216,0.1)] text-[#F1E9D8] hover:border-[#C89A4B]"
+                  className="w-full py-2 rounded-md font-semibold bg-[#162238] border border-[rgba(241,233,216,0.1)] text-[#F1E9D8] hover:border-[#C89A4B]"
                 >
                   Done & Close
                 </button>
@@ -695,7 +713,7 @@ code=AUTH_CODE_RECEIVED`}
                     onChange={(e) => setNewKeyName(e.target.value)}
                     placeholder="e.g. Production Mobile Backend"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] focus:outline-none focus:border-[#C89A4B]"
+                    className="w-full px-3 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] focus:outline-none focus:border-[#C89A4B]"
                   />
                 </div>
 
@@ -705,7 +723,7 @@ code=AUTH_CODE_RECEIVED`}
                     <button
                       type="button"
                       onClick={() => setNewKeyEnv("LIVE")}
-                      className={`p-3 rounded-xl border text-center font-semibold transition-all ${
+                      className={`p-2.5 rounded-md border text-center font-semibold transition-all ${
                         newKeyEnv === "LIVE"
                           ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
                           : "bg-[#0B1220] border-[rgba(241,233,216,0.1)] text-[rgba(241,233,216,0.6)]"
@@ -716,7 +734,7 @@ code=AUTH_CODE_RECEIVED`}
                     <button
                       type="button"
                       onClick={() => setNewKeyEnv("TEST")}
-                      className={`p-3 rounded-xl border text-center font-semibold transition-all ${
+                      className={`p-2.5 rounded-md border text-center font-semibold transition-all ${
                         newKeyEnv === "TEST"
                           ? "bg-amber-500/10 border-amber-500 text-amber-400"
                           : "bg-[#0B1220] border-[rgba(241,233,216,0.1)] text-[rgba(241,233,216,0.6)]"
@@ -729,7 +747,7 @@ code=AUTH_CODE_RECEIVED`}
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors"
+                  className="w-full py-2.5 rounded-md font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors"
                 >
                   Generate Secret Key
                 </button>
@@ -742,9 +760,9 @@ code=AUTH_CODE_RECEIVED`}
       {/* CREATE OAUTH APP MODAL */}
       {showOAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-xl p-6 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.15)] shadow-2xl overflow-y-auto max-h-[90vh]">
+          <div className="w-full max-w-xl p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.15)] shadow-xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[rgba(241,233,216,0.1)]">
-              <h3 className="text-base font-bold text-[#F1E9D8]">Register &quot;Sign in with Scryme&quot; Application</h3>
+              <h3 className="text-sm font-bold text-[#F1E9D8]">Register &quot;Sign in with Scryme&quot; Application</h3>
               <button onClick={() => setShowOAuthModal(false)} className="text-[rgba(241,233,216,0.5)] hover:text-[#F1E9D8]">
                 ✕
               </button>
@@ -752,25 +770,25 @@ code=AUTH_CODE_RECEIVED`}
 
             {generatedOAuth ? (
               <div className="space-y-4 text-xs">
-                <div className="p-3.5 rounded-xl border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
+                <div className="p-3 rounded-md border bg-emerald-500/10 border-emerald-500/30 text-emerald-300">
                   <span className="font-bold block mb-1">OAuth Application Registered!</span>
                   <span>Credentials are ready for authenticating your users.</span>
                 </div>
 
                 <div>
                   <label className="block font-medium text-[rgba(241,233,216,0.6)] mb-1">Client ID</label>
-                  <div className="p-3 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] font-mono text-[#F1E9D8]">
+                  <div className="p-2.5 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] font-mono text-[#F1E9D8]">
                     {generatedOAuth.clientId}
                   </div>
                 </div>
 
                 <div>
                   <label className="block font-medium text-[rgba(241,233,216,0.6)] mb-1">Client Secret</label>
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] font-mono text-[#C89A4B]">
+                  <div className="flex items-center gap-2 p-2.5 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] font-mono text-[#C89A4B]">
                     <span className="truncate flex-1">{generatedOAuth.clientSecret}</span>
                     <button
                       onClick={() => copyToClipboard(generatedOAuth.clientSecret!, "new_oauth_sec")}
-                      className="px-2.5 py-1 rounded bg-[#C89A4B] text-[#0B1220] font-semibold hover:bg-[#d4a859]"
+                      className="px-2 py-1 rounded bg-[#C89A4B] text-[#0B1220] font-semibold hover:bg-[#d4a859]"
                     >
                       {copiedId === "new_oauth_sec" ? "Copied!" : "Copy"}
                     </button>
@@ -779,7 +797,7 @@ code=AUTH_CODE_RECEIVED`}
 
                 <button
                   onClick={() => setShowOAuthModal(false)}
-                  className="w-full py-2.5 rounded-xl font-semibold bg-[#162238] border border-[rgba(241,233,216,0.1)] text-[#F1E9D8] hover:border-[#C89A4B]"
+                  className="w-full py-2 rounded-md font-semibold bg-[#162238] border border-[rgba(241,233,216,0.1)] text-[#F1E9D8] hover:border-[#C89A4B]"
                 >
                   Done & Close
                 </button>
@@ -794,7 +812,7 @@ code=AUTH_CODE_RECEIVED`}
                     onChange={(e) => setNewAppName(e.target.value)}
                     placeholder="e.g. Acme Customer Loyalty Mobile App"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] focus:outline-none focus:border-[#C89A4B]"
+                    className="w-full px-3 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] focus:outline-none focus:border-[#C89A4B]"
                   />
                 </div>
 
@@ -808,7 +826,7 @@ code=AUTH_CODE_RECEIVED`}
                     onChange={(e) => setNewRedirectUris(e.target.value)}
                     placeholder="https://yourapp.com/oauth/callback"
                     required
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] font-mono text-xs focus:outline-none focus:border-[#C89A4B]"
+                    className="w-full px-3 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] font-mono text-xs focus:outline-none focus:border-[#C89A4B]"
                   />
                 </div>
 
@@ -821,7 +839,7 @@ code=AUTH_CODE_RECEIVED`}
                     value={newCorsOrigins}
                     onChange={(e) => setNewCorsOrigins(e.target.value)}
                     placeholder="https://yourapp.com"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] font-mono text-xs focus:outline-none focus:border-[#C89A4B]"
+                    className="w-full px-3 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] font-mono text-xs focus:outline-none focus:border-[#C89A4B]"
                   />
                 </div>
 
@@ -833,7 +851,7 @@ code=AUTH_CODE_RECEIVED`}
                       return (
                         <label
                           key={scope.id}
-                          className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)] cursor-pointer hover:border-[rgba(200,154,75,0.3)] transition-colors"
+                          className="flex items-start gap-2.5 p-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)] cursor-pointer hover:border-[rgba(200,154,75,0.3)] transition-colors"
                         >
                           <input
                             type="checkbox"
@@ -862,7 +880,7 @@ code=AUTH_CODE_RECEIVED`}
 
                 <button
                   type="submit"
-                  className="w-full py-3 rounded-xl font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors"
+                  className="w-full py-2.5 rounded-md font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors"
                 >
                   Register Application & Generate Keys
                 </button>

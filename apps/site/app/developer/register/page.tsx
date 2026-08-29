@@ -34,11 +34,11 @@ export default function DeveloperRegisterPage() {
 
     try {
       setIsSubmitting(true);
-      const success = await register(name, email, orgName || `${name}'s Org`, password);
-      if (success) {
+      const res = await register(name, email, orgName || `${name}'s Org`, password);
+      if (res.success) {
         router.push("/developer/dashboard");
       } else {
-        setError("Failed to create developer account.");
+        setError(res.error || "Failed to create developer account.");
       }
     } catch (err: any) {
       setError(err?.message || "An error occurred during registration.");
@@ -60,28 +60,28 @@ export default function DeveloperRegisterPage() {
         <div className="text-center mb-8">
           <Link href="/developer" className="inline-flex items-center gap-2 mb-4">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center"
+              className="w-9 h-9 rounded-md flex items-center justify-center"
               style={{
                 backgroundColor: colors.brass,
-                boxShadow: "0 0 20px rgba(200, 154, 75, 0.3)",
+                boxShadow: "0 0 16px rgba(200, 154, 75, 0.25)",
               }}
             >
-              <BookText size={20} style={{ color: colors.inkBg }} />
+              <BookText size={18} style={{ color: colors.inkBg }} />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-[#F1E9D8]" style={{ fontFamily: fonts.display }}>
+            <span className="text-xl font-bold tracking-tight text-[#F1E9D8]" style={{ fontFamily: fonts.display }}>
               Scryme Devs
             </span>
           </Link>
-          <h1 className="text-2xl font-bold text-[#F1E9D8] tracking-tight">Create Developer Workspace</h1>
+          <h1 className="text-xl font-bold text-[#F1E9D8] tracking-tight">Create Developer Workspace</h1>
           <p className="text-xs text-[rgba(241,233,216,0.6)] mt-1.5">
             Provision API keys and OAuth 2.0 Client credentials in seconds
           </p>
         </div>
 
         {/* Form Card */}
-        <div className="p-7 rounded-2xl bg-[#121B2E] border border-[rgba(241,233,216,0.12)] shadow-2xl">
+        <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.12)] shadow-xl">
           {error && (
-            <div className="mb-5 p-3.5 rounded-xl border bg-rose-500/10 border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5">
+            <div className="mb-5 p-3 rounded-md border bg-rose-500/10 border-rose-500/30 text-rose-300 text-xs flex items-start gap-2.5">
               <AlertCircle size={16} className="shrink-0 mt-0.5 text-rose-400" />
               <span>{error}</span>
             </div>
@@ -93,14 +93,14 @@ export default function DeveloperRegisterPage() {
                 Full Name *
               </label>
               <div className="relative">
-                <User size={16} className="absolute left-3.5 top-3.5 text-[rgba(241,233,216,0.4)]" />
+                <User size={16} className="absolute left-3 top-3 text-[rgba(241,233,216,0.4)]" />
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Alex Dev"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-sm text-[#F1E9D8] placeholder-[rgba(241,233,216,0.3)] focus:outline-none focus:border-[#C89A4B] transition-colors"
+                  className="w-full pl-9 pr-3.5 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-sm text-[#F1E9D8] placeholder-[rgba(241,233,216,0.3)] focus:outline-none focus:border-[#C89A4B] transition-colors"
                 />
               </div>
             </div>
@@ -110,14 +110,14 @@ export default function DeveloperRegisterPage() {
                 Developer Email *
               </label>
               <div className="relative">
-                <Mail size={16} className="absolute left-3.5 top-3.5 text-[rgba(241,233,216,0.4)]" />
+                <Mail size={16} className="absolute left-3 top-3 text-[rgba(241,233,216,0.4)]" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="alex@developer.tech"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-sm text-[#F1E9D8] placeholder-[rgba(241,233,216,0.3)] focus:outline-none focus:border-[#C89A4B] transition-colors"
+                  className="w-full pl-9 pr-3.5 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-sm text-[#F1E9D8] placeholder-[rgba(241,233,216,0.3)] focus:outline-none focus:border-[#C89A4B] transition-colors"
                 />
               </div>
             </div>
@@ -127,13 +127,13 @@ export default function DeveloperRegisterPage() {
                 Organization / Company Name
               </label>
               <div className="relative">
-                <Building size={16} className="absolute left-3.5 top-3.5 text-[rgba(241,233,216,0.4)]" />
+                <Building size={16} className="absolute left-3 top-3 text-[rgba(241,233,216,0.4)]" />
                 <input
                   type="text"
                   value={orgName}
                   onChange={(e) => setOrgName(e.target.value)}
                   placeholder="Acme Labs Inc."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-sm text-[#F1E9D8] placeholder-[rgba(241,233,216,0.3)] focus:outline-none focus:border-[#C89A4B] transition-colors"
+                  className="w-full pl-9 pr-3.5 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-sm text-[#F1E9D8] placeholder-[rgba(241,233,216,0.3)] focus:outline-none focus:border-[#C89A4B] transition-colors"
                 />
               </div>
             </div>
@@ -143,14 +143,14 @@ export default function DeveloperRegisterPage() {
                 Password *
               </label>
               <div className="relative">
-                <Lock size={16} className="absolute left-3.5 top-3.5 text-[rgba(241,233,216,0.4)]" />
+                <Lock size={16} className="absolute left-3 top-3 text-[rgba(241,233,216,0.4)]" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="At least 8 characters"
                   required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-sm text-[#F1E9D8] placeholder-[rgba(241,233,216,0.3)] focus:outline-none focus:border-[#C89A4B] transition-colors"
+                  className="w-full pl-9 pr-3.5 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-sm text-[#F1E9D8] placeholder-[rgba(241,233,216,0.3)] focus:outline-none focus:border-[#C89A4B] transition-colors"
                 />
               </div>
             </div>
@@ -158,7 +158,7 @@ export default function DeveloperRegisterPage() {
             <button
               type="submit"
               disabled={isSubmitting || authLoading}
-              className="w-full mt-2 py-3 rounded-xl font-semibold text-sm bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full mt-2 py-2.5 rounded-md font-semibold text-sm bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span>Creating Workspace...</span>
@@ -171,7 +171,7 @@ export default function DeveloperRegisterPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-[rgba(241,233,216,0.1)] text-center text-xs text-[rgba(241,233,216,0.6)]">
+          <div className="mt-6 pt-4 border-t border-[rgba(241,233,216,0.1)] text-center text-xs text-[rgba(241,233,216,0.6)]">
             Already have a developer account?{" "}
             <Link href="/developer/login" className="text-[#C89A4B] font-semibold hover:underline">
               Sign In
