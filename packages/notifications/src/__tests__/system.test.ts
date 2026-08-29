@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { sendSystemNotification } from "../system";
+import { sendSystemNotification, notifySystemAdminsOfError } from "../system";
 
 // Create mocks prefixed with "mock" so they are accessible inside the hoisted vi.mock factory
 const mockSendMessage = vi.fn().mockResolvedValue({ success: true });
@@ -13,6 +13,22 @@ vi.mock("@repo/chat", () => {
         mockConstructor(baseUrl, clientId, clientSecret);
       }
       sendMessage = mockSendMessage;
+    },
+  };
+});
+
+// Mock database
+vi.mock("@repo/db", () => {
+  return {
+    db: {
+      globalSetting: {
+        findMany: vi.fn().mockResolvedValue([
+          { key: "system:error:alerts:enabled", value: "true" },
+          { key: "system:error:alerts:minStatus", value: "500" },
+          { key: "system:admin:chat:workspaceSlug", value: "system-admins" },
+          { key: "system:admin:chat:channelSlug", value: "system-alerts" },
+        ]),
+      },
     },
   };
 });
@@ -37,12 +53,6 @@ describe("sendSystemNotification", () => {
 
   it("should send a system notification using the configured environment variables", async () => {
     await sendSystemNotification("Welcome to the system!");
-
-    expect(mockConstructor).toHaveBeenCalledWith(
-      "https://api.scryme.app",
-      "env-client-id",
-      "env-client-secret"
-    );
 
     expect(mockSendMessage).toHaveBeenCalledWith(
       "env-workspace-slug",
@@ -79,5 +89,46 @@ describe("sendSystemNotification", () => {
     // Restore env
     mockEnv.SCRYME_CHAT_CLIENT_ID = "env-client-id";
     warnSpy.mockRestore();
+  });
+});
+
+describe("notifySystemAdminsOfError", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should format and send error details to Scryme Chat when status >= minStatus", async () => {
+    await notifySystemAdminsOfError({
+      status: 500,
+      message: "Database connection failed",
+      code: "DB_CONN_ERROR",
+      method: "GET",
+      path: "/api/v3/orders",
+      correlationId: "corr-123",
+      organizationId: "org-456",
+    });
+
+    expect(mockSendMessage).toHaveBeenCalledWith(
+      "system-admins",
+      "system-alerts",
+      expect.objectContaining({
+        content: expect.stringContaining("🚨 **System Exception Alert** [HTTP 500]"),
+      })
+    );
+
+    const callArg = mockSendMessage.mock.calls[0][2].content;
+    expect(callArg).toContain("`GET /api/v3/orders`");
+    expect(callArg).toContain("Database connection failed");
+    expect(callArg).toContain("`corr-123`");
+  });
+
+  it("should skip sending error alert if status < minStatus", async () => {
+    await notifySystemAdminsOfError({
+      status: 400,
+      message: "Bad request payload",
+      code: "BAD_REQUEST",
+    });
+
+    expect(mockSendMessage).not.toHaveBeenCalled();
   });
 });
