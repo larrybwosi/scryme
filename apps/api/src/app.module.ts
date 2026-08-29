@@ -21,7 +21,6 @@ import { AndroidModule } from "./android/android.module";
 
 import { UploadModule } from "./common/upload/upload.module";
 import { ImageModule } from "./common/images/image.module";
-import { WindmillModule } from "./common/Windmill/WindmillModule";
 import { MpesaModule } from "./common/mpesa.module";
 import { CommonModule } from "./common/common.module";
 import { V2AuthGuard } from "./auth/v2-auth.guard";
@@ -74,7 +73,6 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
     AndroidModule,
     UploadModule,
     ImageModule,
-    WindmillModule,
     MpesaModule,
     CommonModule,
     RouterModule.register([

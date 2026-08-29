@@ -15,7 +15,7 @@ import {
   emitStockTransferCreated,
   emitStockTransferShipped,
   emitStockTransferReceived,
-} from "@repo/windmill/server";
+} from "@repo/shared/server";
 import { MovementType, StockTransferStatus } from "@repo/db";
 
 @Injectable()

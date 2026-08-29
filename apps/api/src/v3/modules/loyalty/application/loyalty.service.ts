@@ -10,7 +10,7 @@ import {
 import {
   emitLoyaltyPointsAwarded,
   emitLoyaltyVoucherCreated,
-} from "@repo/windmill/server";
+} from "@repo/shared/server";
 
 @Injectable()
 export class LoyaltyService {

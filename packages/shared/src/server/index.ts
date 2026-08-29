@@ -7,3 +7,4 @@ export * from "../redis";
 export * from "../actions";
 export * from "../lib/images";
 export * from "../node-utils";
+export * from "../services/automation";

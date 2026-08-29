@@ -7,7 +7,7 @@ import {
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApprovalRequestType, ApprovalStatus } from "@repo/db";
 import { InventoryMovementService } from "../services/inventory-movement.service";
-import { emitStockAdjustment } from "@repo/windmill/server";
+import { emitStockAdjustment } from "@repo/shared/server";
 
 @Injectable()
 export class RequestStockAdjustmentUseCase {

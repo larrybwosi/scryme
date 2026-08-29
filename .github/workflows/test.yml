@@ -33,7 +33,6 @@ jobs:
       pkg_sdk: ${{ steps.changes.outputs.pkg_sdk }}
       pkg_shared: ${{ steps.changes.outputs.pkg_shared }}
       pkg_ui: ${{ steps.changes.outputs.pkg_ui }}
-      pkg_windmill: ${{ steps.changes.outputs.pkg_windmill }}
       workflow: ${{ steps.changes.outputs.workflow }}
       test_workflow: ${{ steps.changes.outputs.test_workflow }}
       android: ${{ steps.changes.outputs.android }}
@@ -83,8 +82,6 @@ jobs:
               - 'packages/shared/**'
             pkg_ui:
               - 'packages/ui/**'
-            pkg_windmill:
-              - 'packages/windmill/**'
             test_workflow:
               - '.github/workflows/test.yml'
             workflow:
@@ -281,7 +278,6 @@ jobs:
             if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ]; then FILTER="$FILTER --filter=@repo/sdk..."; fi
             if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ]; then FILTER="$FILTER --filter=@repo/shared..."; fi
             if [ "${{ needs.filter.outputs.pkg_ui }}" == "true" ]; then FILTER="$FILTER --filter=@repo/ui..."; fi
-            if [ "${{ needs.filter.outputs.pkg_windmill }}" == "true" ]; then FILTER="$FILTER --filter=@repo/windmill..."; fi
 
             if [ -n "$FILTER" ]; then
               echo "Running lint and type-check for changed packages..."

@@ -106,9 +106,6 @@ const serverSchema = z.object({
   SENTRY_ORG: z.string().optional(),
   SENTRY_PROJECT: z.string().optional(),
   SENTRY_AUTH_TOKEN: z.string().optional(),
-  // Windmill
-  WINDMILL_BASE_URL: z.string().default("http://windmill:8000"),
-  WINDMILL_ADMIN_API_KEY: z.string().optional(),
 
   // Scryme System Notifications
   SCRYME_CHAT_API_URL: z
@@ -300,9 +297,6 @@ function getRawEnv() {
     SENTRY_ORG: process.env.SENTRY_ORG,
     SENTRY_PROJECT: process.env.SENTRY_PROJECT,
     SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
-    // Windmill
-    WINDMILL_BASE_URL: process.env.WINDMILL_BASE_URL,
-    WINDMILL_ADMIN_API_KEY: process.env.WINDMILL_ADMIN_API_KEY,
     // Scryme System Notifications
     SCRYME_CHAT_API_URL: process.env.SCRYME_CHAT_API_URL,
     SCRYME_CHAT_CLIENT_ID: process.env.SCRYME_CHAT_CLIENT_ID,

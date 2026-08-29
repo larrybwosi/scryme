@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { RegisterCustomerUseCase } from "../register-customer.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 
-vi.mock("@repo/windmill/server", () => ({
+vi.mock("@repo/shared/server", () => ({
   emitCustomerCreated: vi.fn().mockResolvedValue({}),
 }));
 
