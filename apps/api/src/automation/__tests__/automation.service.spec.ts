@@ -5,6 +5,7 @@ describe("AutomationService", () => {
   let service: AutomationService;
   let mockPrisma: any;
   let mockWebhookDispatcher: any;
+  let mockStockReportService: any;
 
   beforeEach(() => {
     mockPrisma = {
@@ -18,9 +19,12 @@ describe("AutomationService", () => {
         workflowEngineExecution: {
           create: vi.fn(),
           findMany: vi.fn().mockResolvedValue([]),
+          findFirst: vi.fn(),
+          update: vi.fn(),
         },
         workflowEngineJob: {
           create: vi.fn(),
+          updateMany: vi.fn(),
         },
         workflowEngineAuditLog: {
           create: vi.fn(),
@@ -38,18 +42,50 @@ describe("AutomationService", () => {
       verifyIncomingSignature: vi.fn().mockReturnValue(true),
     };
 
-    service = new AutomationService(mockPrisma as any, mockWebhookDispatcher as any);
+    mockStockReportService = {
+      generateAndSendReport: vi.fn().mockResolvedValue(true),
+    };
+
+    service = new AutomationService(mockPrisma as any, mockWebhookDispatcher as any, mockStockReportService as any);
+  });
+
+  it("should get available workflow templates with provision status", async () => {
+    mockPrisma.client.workflowEngineDefinition.findMany.mockResolvedValue([
+      { key: "f/dealio/customer_onboarding", config: { sendWelcomeEmail: true } },
+    ]);
+
+    const available = await service.getAvailableWorkflows("org_1");
+    expect(available).toHaveLength(4);
+    const onboarding = available.find((a) => a.key === "customer_onboarding");
+    expect(onboarding?.isProvisioned).toBe(true);
+    expect(onboarding?.settings).toEqual({ sendWelcomeEmail: true });
+  });
+
+  it("should provision workflow and call stock report service if applicable", async () => {
+    mockPrisma.client.workflowEngineDefinition.upsert.mockResolvedValue({
+      id: "def_stock",
+      key: "f/dealio/stock_movement_report",
+    });
+
+    const result = await service.provisionWorkflow("org_1", "f/dealio/stock_movement_report", {
+      recipients: ["user_1"],
+      enabled: true,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.definitionId).toBe("def_stock");
+    expect(mockStockReportService.generateAndSendReport).toHaveBeenCalledWith("org_1", ["user_1"], 7);
   });
 
   it("should retrieve definitions and seed built-in definitions if missing", async () => {
     mockPrisma.client.workflowEngineDefinition.findUnique.mockResolvedValue(null);
     mockPrisma.client.workflowEngineDefinition.create.mockResolvedValue({
       id: "def_1",
-      key: "lowstock_alert",
+      key: "f/dealio/customer_onboarding",
       organizationId: "org_1",
     });
     mockPrisma.client.workflowEngineDefinition.findMany.mockResolvedValue([
-      { id: "def_1", key: "lowstock_alert", organizationId: "org_1" },
+      { id: "def_1", key: "f/dealio/customer_onboarding", organizationId: "org_1" },
     ]);
 
     const result = await service.getDefinitions("org_1");
@@ -88,6 +124,20 @@ describe("AutomationService", () => {
     expect(mockPrisma.client.workflowEngineAuditLog.create).toHaveBeenCalled();
   });
 
+  it("should cancel job instance", async () => {
+    mockPrisma.client.workflowEngineExecution.findFirst.mockResolvedValue({
+      id: "exec_100",
+      organizationId: "org_1",
+    });
+
+    const res = await service.cancelJob("org_1", "exec_100");
+    expect(res.success).toBe(true);
+    expect(mockPrisma.client.workflowEngineExecution.update).toHaveBeenCalledWith({
+      where: { id: "exec_100" },
+      data: { status: "CANCELLED" },
+    });
+  });
+
   it("should process incoming webhooks", async () => {
     const mockWebhook = {
       id: "wh_1",
@@ -110,29 +160,5 @@ describe("AutomationService", () => {
 
     expect(result.execution.id).toBe("exec_2");
     expect(mockWebhookDispatcher.verifyIncomingSignature).toHaveBeenCalled();
-  });
-
-  it("should provision workflow definitions with organization custom configs", async () => {
-    mockPrisma.client.workflowEngineDefinition.upsert.mockImplementation((args: any) =>
-      Promise.resolve({
-        id: "def_upserted",
-        organizationId: args.create.organizationId,
-        key: args.create.key,
-        config: args.create.config,
-      }),
-    );
-
-    const customConfigs = {
-      lowstock_alert: { threshold: 5, notificationEmail: "custom@example.com" },
-    };
-
-    const results = await service.provisionDefinitions("org_1", customConfigs);
-
-    expect(results.length).toBeGreaterThan(0);
-    const lowStockDef = results.find((r) => r.key === "lowstock_alert");
-    expect(lowStockDef?.config).toEqual({
-      threshold: 5,
-      notificationEmail: "custom@example.com",
-    });
   });
 });
