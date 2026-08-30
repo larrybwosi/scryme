@@ -77,7 +77,11 @@ export default async function EditTransferPage({
     <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <div className="flex items-center gap-4">
         <Link href={`/stocking/transfers/${id}`}>
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Back to transfer details"
+            title="Back to transfer details">
             <ArrowLeft size={20} />
           </Button>
         </Link>

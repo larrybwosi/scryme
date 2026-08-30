@@ -58,7 +58,11 @@ export default async function NewTransferPage() {
     <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
       <div className="flex items-center gap-4">
         <Link href="/stocking/transfers">
-          <Button variant="ghost" size="icon">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Back to stock transfers"
+            title="Back to stock transfers">
             <ArrowLeft size={20} />
           </Button>
         </Link>

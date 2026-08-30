@@ -195,7 +195,11 @@ export default function TransfersPage() {
                   <TableCell>{getStatusBadge(transfer.status)}</TableCell>
                   <TableCell className="text-right">
                     <Link href={`/stocking/transfers/${transfer.id}`}>
-                      <Button variant="ghost" size="icon">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="View transfer details"
+                        title="View transfer details">
                         <Eye size={16} />
                       </Button>
                     </Link>
