@@ -138,4 +138,56 @@ describe("V3AuthGuard POS Authentication & Authorization", () => {
     expect(canActivate).toBe(true);
     expect(v3AuthService.validateClient).toHaveBeenCalledWith("pos_terminal_456", "rawSecretToken123");
   });
+
+  it("should authenticate POS member request via X-MEMBER-TOKEN header without Bearer prefix", async () => {
+    const mockOrg = { id: "org-1", slug: "test-org" };
+    const mockPayload = {
+      type: "v3_hybrid",
+      clientId: "pos_123",
+      organizationId: "org-1",
+      memberId: "member-1",
+      deviceId: "device-1",
+      locationId: "loc-1",
+      scopes: ["*"],
+    };
+
+    vi.mocked(v3AuthService.verifyToken).mockResolvedValue(mockPayload as any);
+    vi.mocked(prisma.client.organization.findUnique as any).mockResolvedValue(mockOrg);
+
+    const context = createMockContext({
+      "x-member-token": "jwt_member_token_123",
+    });
+
+    const canActivate = await guard.canActivate(context);
+    expect(canActivate).toBe(true);
+    expect(v3AuthService.verifyToken).toHaveBeenCalledWith("jwt_member_token_123");
+
+    const req = context.switchToHttp().getRequest() as any;
+    expect(req.v3Context.memberId).toBe("member-1");
+    expect(req.v3Context.authType).toBe("v3_hybrid");
+  });
+
+  it("should authenticate POS member request via X-MEMBER-TOKEN header with Bearer prefix", async () => {
+    const mockOrg = { id: "org-1", slug: "test-org" };
+    const mockPayload = {
+      type: "v3_hybrid",
+      clientId: "pos_123",
+      organizationId: "org-1",
+      memberId: "member-1",
+      deviceId: "device-1",
+      locationId: "loc-1",
+      scopes: ["*"],
+    };
+
+    vi.mocked(v3AuthService.verifyToken).mockResolvedValue(mockPayload as any);
+    vi.mocked(prisma.client.organization.findUnique as any).mockResolvedValue(mockOrg);
+
+    const context = createMockContext({
+      "X-MEMBER-TOKEN": "Bearer jwt_member_token_456",
+    });
+
+    const canActivate = await guard.canActivate(context);
+    expect(canActivate).toBe(true);
+    expect(v3AuthService.verifyToken).toHaveBeenCalledWith("jwt_member_token_456");
+  });
 });
