@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -55,10 +55,30 @@ export function StockRequestForm({
 
   const router = useRouter();
 
+  // Performance Optimization: Pre-index variants into an in-memory Map for O(1) constant-time lookup
+  const variantMap = useMemo(() => {
+    return new Map<string, any>(
+      (variants || []).map((v) => [v.variantId, v])
+    );
+  }, [variants]);
+
+  // Performance Optimization: Memoize formatted variants array for ProductVariantSelect
+  // This avoids O(N) array transformations and object allocations on every form state re-render
+  const formattedSelectVariants = useMemo(() => {
+    return (variants || []).map((v) => ({
+      id: v.variantId,
+      name: v.variantName || "Default",
+      productName: v.name,
+      sku: v.sku,
+      stock: v.currentStock,
+    }));
+  }, [variants]);
+
   const handleAddItem = () => {
     if (!currentVariantId) return;
 
-    const variant = variants.find(v => v.variantId === currentVariantId);
+    // Performance Optimization: Replace linear O(V) array scan (.find) with O(1) Map lookup
+    const variant = variantMap.get(currentVariantId);
     if (!variant) return;
 
     const newItem: SelectedItem = {
@@ -121,13 +141,7 @@ export function StockRequestForm({
                   Search Product
                 </Label>
                 <ProductVariantSelect
-                  variants={variants.map(v => ({
-                    id: v.variantId,
-                    name: v.variantName || "Default",
-                    productName: v.name,
-                    sku: v.sku,
-                    stock: v.currentStock,
-                  }))}
+                  variants={formattedSelectVariants}
                   value={currentVariantId}
                   onValueChange={setCurrentVariantId}
                   allowZeroStock={true}
