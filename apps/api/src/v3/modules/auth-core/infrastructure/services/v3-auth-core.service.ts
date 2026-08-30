@@ -129,8 +129,9 @@ export class V3AuthCoreService {
   }
 
   private async validateLoginClient(clientId: string) {
+    const parsedClientId = clientId.includes(".") ? clientId.split(".")[0] : clientId;
     const client = await this.prisma.client.v3ApiClient.findUnique({
-      where: { clientId },
+      where: { clientId: parsedClientId },
       include: { organization: true },
     });
     if (!client || !client.isActive) throw new UnauthorizedException("Invalid client credentials");

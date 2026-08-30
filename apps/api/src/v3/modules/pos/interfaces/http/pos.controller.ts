@@ -6,6 +6,8 @@ import {
   UseGuards,
   UseInterceptors,
   Query,
+  Req,
+  BadRequestException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -82,9 +84,23 @@ export class PosController {
     type: ApiErrorResponseDto,
     description: "Invalid credentials",
   })
-  async login(@Body() body: PosLoginDto) {
+  async login(@Body() body: PosLoginDto, @Req() req: any) {
+    const apiKeyHeader = req.headers["x-api-key"] || req.headers["X-API-KEY"];
+    let clientId = body.clientId;
+    if (!clientId && apiKeyHeader) {
+      const apiKeyStr = Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
+      clientId = apiKeyStr.includes(".") ? apiKeyStr.split(".")[0] : apiKeyStr;
+    }
+    if (!clientId && (body as any).deviceKey) {
+      const devKey = (body as any).deviceKey;
+      clientId = devKey.includes(".") ? devKey.split(".")[0] : devKey;
+    }
+    if (!clientId) {
+      throw new BadRequestException("clientId or X-API-KEY header is required");
+    }
+
     const accessToken = await this.authCore.loginMember(
-      body.clientId,
+      clientId,
       body.pin,
       body.cardId,
     );
