@@ -25,6 +25,9 @@ describe("PurchaseOrderUseCase", () => {
           findFirst: vi.fn(),
           update: vi.fn(),
         },
+        inventoryLocation: {
+          findFirst: vi.fn(),
+        },
         $transaction: vi.fn((cb) => cb(prismaMock.tx)),
       },
       tx: {
@@ -90,6 +93,10 @@ describe("PurchaseOrderUseCase", () => {
     };
 
     it("should throw NotFoundException if purchase order does not exist or belongs to another org", async () => {
+      prismaMock.client.inventoryLocation.findFirst.mockResolvedValue({
+        id: mockLocationId,
+        organizationId: mockOrgId,
+      });
       prismaMock.tx.purchase.findFirst.mockResolvedValue(null);
 
       await expect(
@@ -103,25 +110,13 @@ describe("PurchaseOrderUseCase", () => {
     });
 
     it("should throw NotFoundException if locationId does not belong to the organization", async () => {
-      prismaMock.tx.purchase.findFirst.mockResolvedValue({
-        id: mockPurchaseId,
-        status: PurchaseStatus.ORDERED,
-        items: [
-          {
-            id: "item-1",
-            variantId: "var-1",
-            unitCost: 100,
-            variant: { productId: "prod-1" },
-          },
-        ],
-      });
-      prismaMock.tx.inventoryLocation.findFirst.mockResolvedValue(null);
+      prismaMock.client.inventoryLocation.findFirst.mockResolvedValue(null);
 
       await expect(
         useCase.receive(mockOrgId, mockMemberId, mockPurchaseId, receiveDto),
       ).rejects.toThrow(NotFoundException);
 
-      expect(prismaMock.tx.inventoryLocation.findFirst).toHaveBeenCalledWith({
+      expect(prismaMock.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
         where: { id: mockLocationId, organizationId: mockOrgId },
       });
       expect(prismaMock.tx.stockReceipt.create).not.toHaveBeenCalled();
@@ -145,6 +140,10 @@ describe("PurchaseOrderUseCase", () => {
         ],
       };
 
+      prismaMock.client.inventoryLocation.findFirst.mockResolvedValue({
+        id: mockLocationId,
+        organizationId: mockOrgId,
+      });
       prismaMock.tx.purchase.findFirst.mockResolvedValue(mockPurchase);
       prismaMock.tx.inventoryLocation.findFirst.mockResolvedValue({
         id: mockLocationId,
