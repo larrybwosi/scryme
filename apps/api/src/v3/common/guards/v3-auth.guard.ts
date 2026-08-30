@@ -35,10 +35,17 @@ export class V3AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+    const authHeader =
+      request.headers.authorization ||
+      request.headers["x-member-token"] ||
+      request.headers["X-MEMBER-TOKEN"];
     const apiKeyHeader = request.headers["x-api-key"] || request.headers["X-API-KEY"];
 
-    let token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+    let token: string | null = null;
+    if (authHeader) {
+      const authStr = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+      token = authStr.startsWith("Bearer ") ? authStr.substring(7).trim() : authStr.trim();
+    }
 
     if (!token && !apiKeyHeader) {
       throw new UnauthorizedException(

@@ -5,7 +5,6 @@
   "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {
-    "prebuild": "pnpm --filter @scryme/sdk generate:rust",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
@@ -14,7 +13,8 @@
     "tauri": "tauri",
     "preview": "vite preview",
     "test:frontend": "vitest run",
-    "type-check": "pnpm exec tsc --noEmit"
+    "type-check": "pnpm exec tsc --noEmit",
+    "prebuild": "pnpm --filter @scryme/sdk generate:rust"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
