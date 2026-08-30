@@ -260,7 +260,7 @@ fun AdminDashboard(
             onDismissRequest = { showQrScanner = false },
             onQrCodeScanned = { qr ->
                 showQrScanner = false
-                deviceAuthViewModel.onQrCodeScanned(qr)
+                deviceAuthViewModel.onQrCodeScanned(qr, selectedBranchId)
             }
         )
     }

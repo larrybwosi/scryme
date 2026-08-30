@@ -12,13 +12,13 @@ export class ProvisionDeviceDto {
 }
 
 export class PosLoginDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: "device_123",
     description: "The Client ID of the provisioned device",
   })
   @IsString()
-  @IsNotEmpty()
-  clientId: string;
+  @IsOptional()
+  clientId?: string;
 
   @ApiProperty({ example: "1234", description: "The staff PIN" })
   @IsString()
