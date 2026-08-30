@@ -29,7 +29,8 @@ import {
   ApproveStockAdjustmentUseCase,
   RejectStockAdjustmentUseCase,
 } from "../v3/modules/inventory/application/use-cases/adjustment-workflow.use-case";
-import { emitEvent } from "@repo/shared/server";
+import { StaffSchedulingService } from "../v3/modules/services/application/services/staff-scheduling.service";
+import { emitEvent } from "@repo/windmill/server";
 import { db } from "@repo/db";
 import { ScrymeChatApiClient } from "@repo/chat";
 
@@ -49,6 +50,7 @@ export class AndroidController {
     private readonly getStockAdjustmentsUseCase: GetStockAdjustmentsUseCase,
     private readonly approveStockAdjustmentUseCase: ApproveStockAdjustmentUseCase,
     private readonly rejectStockAdjustmentUseCase: RejectStockAdjustmentUseCase,
+    private readonly staffSchedulingService: StaffSchedulingService,
   ) {}
 
   // --- AUTH ENDPOINTS ---
@@ -311,7 +313,7 @@ export class AndroidController {
   @Get(":orgSlug/members")
   async getMembers(@Req() req: any, @Query() query: any) {
     const isCheckedIn = query.isCheckedIn === "true" || query.isCheckedIn === true ? true : query.isCheckedIn === "false" || query.isCheckedIn === false ? false : undefined;
-    const data = await this.memberUseCase.getMembers(req.v3Context.organizationId, {
+    const res = await this.memberUseCase.getMembers(req.v3Context.organizationId, {
       role: query.role,
       membershipStatus: query.membershipStatus,
       isActive: query.isActive === "true" || query.isActive === true ? true : query.isActive === "false" || query.isActive === false ? false : undefined,
@@ -323,7 +325,7 @@ export class AndroidController {
     });
     return {
       success: true,
-      data,
+      data: res.items,
     };
   }
 
@@ -468,10 +470,10 @@ export class AndroidController {
 
   @Get(":orgSlug/inventory/adjustments")
   async getStockAdjustments(@Req() req: any, @Query() query: any) {
-    const data = await this.getStockAdjustmentsUseCase.execute(req.v3Context, query);
+    const res = await this.getStockAdjustmentsUseCase.execute(req.v3Context.organizationId, query);
     return {
       success: true,
-      data,
+      data: res.items,
     };
   }
 
@@ -586,15 +588,19 @@ export class AndroidController {
     };
   }
 
-  // --- ANNOUNCEMENT ENDPOINTS ---
+  // --- ANNOUNCEMENT & MESSAGING ENDPOINTS ---
 
   @Post(":orgSlug/announcements")
   async broadcastAnnouncement(@Req() req: any, @Body() dto: any) {
     const organizationId = req.v3Context.organizationId;
+    const channelSlug = dto.channelSlug || "announcements";
+
     await emitEvent(organizationId, "announcement.broadcast", {
       title: dto.title,
       message: dto.message,
       targetBranchId: dto.targetBranchId,
+      targetMemberId: dto.targetMemberId,
+      channelSlug,
       severity: dto.severity || "INFO",
       broadcastBy: req.v3Context.memberId,
     });
@@ -606,12 +612,57 @@ export class AndroidController {
       if (config && config.isActive && config.workspaceSlug) {
         const severityTag = dto.severity ? `[${dto.severity.toUpperCase()}] ` : "";
         const formattedMessage = `📢 **${dto.title}** ${severityTag}\n\n${dto.message}`;
-        await this.scrymeClient.sendMessage(config.workspaceSlug, "announcements", {
+        await this.scrymeClient.sendMessage(config.workspaceSlug, channelSlug, {
           content: formattedMessage,
         });
       }
     } catch (err: any) {
       // Swallowed so announcement completion isn't blocked if chat workspace is inactive
+    }
+
+    return {
+      success: true,
+      data: null,
+    };
+  }
+
+  @Post(":orgSlug/members/messages")
+  async sendMessageToMember(@Req() req: any, @Body() dto: { memberId: string; title: string; message: string; type?: string }) {
+    const organizationId = req.v3Context.organizationId;
+    if (!dto.memberId) {
+      throw new BadRequestException("Member ID is required to send direct member message");
+    }
+
+    await emitEvent(organizationId, "member.message.sent", {
+      memberId: dto.memberId,
+      title: dto.title,
+      message: dto.message,
+      type: dto.type || "DIRECT_MESSAGE",
+      sentBy: req.v3Context.memberId,
+    });
+
+    try {
+      const targetMember = await this.prisma.client.member.findUnique({
+        where: { id: dto.memberId },
+        include: { user: { select: { email: true } } },
+      });
+      const config = await this.prisma.client.scrymeConfiguration.findUnique({
+        where: { organizationId },
+      });
+      if (config && config.isActive && config.workspaceSlug && targetMember?.user?.email) {
+        const scrymeUser = await this.scrymeClient.findUserByEmail(config.workspaceSlug, targetMember.user.email);
+        if (scrymeUser?.id) {
+          const dmChannel = await this.scrymeClient.getDirectMessageChannel(config.workspaceSlug, scrymeUser.id);
+          if (dmChannel?.slug) {
+            const formattedMessage = `💬 **${dto.title}**\n${dto.message}`;
+            await this.scrymeClient.sendMessage(config.workspaceSlug, dmChannel.slug, {
+              content: formattedMessage,
+            });
+          }
+        }
+      }
+    } catch (err: any) {
+      // Swallowed so direct messaging isn't blocked if chat workspace is inactive
     }
 
     return {
@@ -678,6 +729,71 @@ export class AndroidController {
       memberId,
       id,
     );
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  // --- STAFF SHIFTS & ROSTER ENDPOINTS ---
+
+  @Get(":orgSlug/shifts")
+  async getShifts(
+    @Req() req: any,
+    @Query("memberId") memberId?: string,
+    @Query("dayOfWeek") dayOfWeek?: string,
+    @Query("isActive") isActive?: string,
+  ) {
+    const filters: { memberId?: string; dayOfWeek?: number; isActive?: boolean } = {};
+    if (memberId) filters.memberId = memberId;
+    if (dayOfWeek !== undefined && dayOfWeek !== null && dayOfWeek !== "") {
+      filters.dayOfWeek = parseInt(dayOfWeek, 10);
+    }
+    if (isActive !== undefined && isActive !== null && isActive !== "") {
+      filters.isActive = isActive === "true";
+    }
+
+    const data = await this.staffSchedulingService.getShifts(
+      req.v3Context.organizationId,
+      filters,
+    );
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Post(":orgSlug/staff/:memberId/shifts")
+  async createShift(
+    @Req() req: any,
+    @Param("memberId") memberId: string,
+    @Body() dto: { dayOfWeek: number; startTime: string; endTime: string },
+  ) {
+    const data = await this.staffSchedulingService.createShift(
+      req.v3Context.organizationId,
+      memberId,
+      dto,
+    );
+
+    return {
+      success: true,
+      data,
+    };
+  }
+
+  @Post(":orgSlug/shifts/:shiftId/breaks")
+  async addBreak(
+    @Req() req: any,
+    @Param("shiftId") shiftId: string,
+    @Body() dto: { startTime: string; endTime: string; description?: string },
+  ) {
+    const data = await this.staffSchedulingService.addBreak(
+      req.v3Context.organizationId,
+      shiftId,
+      dto,
+    );
+
     return {
       success: true,
       data,

@@ -43,9 +43,7 @@ class PresenceViewModel(
     init {
         viewModelScope.launch {
             repository.monitorActivePresence().collect { activeMembers ->
-                if (_presenceState.value is UiState.Idle) {
-                    _presenceState.value = UiState.Success(activeMembers)
-                }
+                _presenceState.value = UiState.Success(activeMembers)
             }
         }
     }

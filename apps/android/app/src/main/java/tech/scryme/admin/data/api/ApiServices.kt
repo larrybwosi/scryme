@@ -149,6 +149,12 @@ interface AnnouncementApiService {
         @Path("orgSlug") orgSlug: String,
         @Body dto: AnnouncementDto
     ): Response<ApiEnvelope<Unit>>
+
+    @POST("/api/android/{orgSlug}/members/messages")
+    suspend fun sendMessageToMember(
+        @Path("orgSlug") orgSlug: String,
+        @Body dto: DirectMessageDto
+    ): Response<ApiEnvelope<Unit>>
 }
 
 interface DeviceApiService {
@@ -182,4 +188,28 @@ interface ExpenseApiService {
     suspend fun approveExpense(
         @Path("id") id: String
     ): Response<ApiEnvelope<Unit>>
+}
+
+interface ShiftsApiService {
+    @GET("/api/android/{orgSlug}/shifts")
+    suspend fun getShifts(
+        @Path("orgSlug") orgSlug: String,
+        @Query("memberId") memberId: String? = null,
+        @Query("dayOfWeek") dayOfWeek: Int? = null,
+        @Query("isActive") isActive: Boolean? = null
+    ): Response<ApiEnvelope<List<StaffShiftDto>>>
+
+    @POST("/api/android/{orgSlug}/staff/{memberId}/shifts")
+    suspend fun createShift(
+        @Path("orgSlug") orgSlug: String,
+        @Path("memberId") memberId: String,
+        @Body dto: CreateShiftRequestDto
+    ): Response<ApiEnvelope<StaffShiftDto>>
+
+    @POST("/api/android/{orgSlug}/shifts/{shiftId}/breaks")
+    suspend fun addBreak(
+        @Path("orgSlug") orgSlug: String,
+        @Path("shiftId") shiftId: String,
+        @Body dto: CreateBreakRequestDto
+    ): Response<ApiEnvelope<StaffBreakDto>>
 }

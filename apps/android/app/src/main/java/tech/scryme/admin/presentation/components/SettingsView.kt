@@ -106,7 +106,6 @@ fun SettingsView(
 
                     Text("Organization Name: ${orgDetails?.name ?: activeOrgName}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                     Text("Organization Slug: ${orgDetails?.slug ?: activeOrgSlug}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Organization ID: ${orgDetails?.id ?: activeOrgId}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
                     orgDetails?.let { details ->
                         Spacer(modifier = Modifier.height(6.dp))

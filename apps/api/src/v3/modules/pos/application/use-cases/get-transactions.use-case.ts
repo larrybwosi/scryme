@@ -15,7 +15,7 @@ export class GetTransactionsUseCase {
 
     // Contextual filtering
     if (locationId) where.locationId = locationId;
-    if (memberId && !ctx.permissions.includes("*")) {
+    if (memberId && (!ctx.permissions || !ctx.permissions.includes("*"))) {
       where.memberId = memberId;
     }
 
