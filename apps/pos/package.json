@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "prebuild": "pnpm --filter @scryme/sdk generate:rust",
     "dev:retail": "cross-env VITE_BUSINESS_MODE=retail tauri dev --config src-tauri/tauri.retail.conf.json --features retail",
     "dev:standalone": "tauri dev --config src-tauri/tauri.standalone.conf.json --features standalone",
     "dev:restaurant": "cross-env VITE_BUSINESS_MODE=restaurant tauri dev --config src-tauri/tauri.restaurant.conf.json --features restaurant",
