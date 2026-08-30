@@ -145,9 +145,15 @@ export class InventoryMovementService {
       }),
     ]);
 
+    // ⚡ Bolt Optimization: Pre-index stocks and batchSums into Map structures
+    // keyed by locationId. This converts linear O(N) .find() array scans inside
+    // the location loop to O(1) constant-time Map lookups.
+    const stockMap = new Map<string, any>(stocks.map((s: any) => [s.locationId, s]));
+    const batchSumMap = new Map<string, any>(batchSums.map((b: any) => [b.locationId, b]));
+
     for (const locationId of locationIds) {
-      const stock = stocks.find((s: any) => s.locationId === locationId);
-      const batchSum = batchSums.find((b: any) => b.locationId === locationId);
+      const stock = stockMap.get(locationId);
+      const batchSum = batchSumMap.get(locationId);
 
       const totalBatchQty = batchSum?._sum?.currentQuantity?.toNumber() || 0;
       const currentStock = stock?.currentStock?.toNumber() || 0;
