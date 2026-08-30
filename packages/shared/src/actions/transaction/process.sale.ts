@@ -368,8 +368,9 @@ export async function processSale(
             paymentSplit.method === PaymentMethod.MPESA &&
             paymentSplit.reference
           ) {
-            const unclaimed = await tx.unclaimedPayment.findUnique({
-              where: { transId: paymentSplit.reference },
+            // SECURITY (Sentinel): Scope unclaimed payment lookup by organizationId using findFirst to prevent cross-tenant IDOR/BOLA
+            const unclaimed = await tx.unclaimedPayment.findFirst({
+              where: { transId: paymentSplit.reference, organizationId },
             });
 
             if (unclaimed && !unclaimed.claimed) {
