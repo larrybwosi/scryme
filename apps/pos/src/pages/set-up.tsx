@@ -3,18 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Key,
   Check,
-  Store,
   Loader2,
   ShieldCheck,
   Info,
   ExternalLink,
   Laptop,
   Settings,
-  ClipboardCheck,
   ChevronLeft,
   Monitor,
   ChefHat,
   Tablet as TabletIcon,
+  QrCode,
+  RefreshCw,
+  CheckCircle2,
 } from 'lucide-react';
 
 // shadcn components
@@ -102,11 +103,122 @@ const SetupTokenStep = ({
   onNext: (t: string) => void;
   onShowInstructions: () => void;
 }) => {
+  const [authMode, setAuthMode] = useState<'qr' | 'token'>('qr');
   const [token, setToken] = useState('');
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [error, setError] = useState('');
   const [showApiSettings, setShowApiSettings] = useState(false);
-  const { provisionDevice, rawApiUrl, setApiUrl, applyApiUrl } = useAuthStore();
+
+  // QR Pairing Session State
+  const [pairingSessionId, setPairingSessionId] = useState<string | null>(null);
+  const [pairingExpiresAt, setPairingExpiresAt] = useState<Date | null>(null);
+  const [pairingStatus, setPairingStatus] = useState<'PENDING' | 'AUTHORIZED' | 'EXPIRED' | 'LOADING'>('PENDING');
+  const [timeLeftSec, setTimeLeftSec] = useState<number>(300);
+
+  const { provisionDevice, authorizeFromPairingPayload, rawApiUrl, apiUrl, setApiUrl, applyApiUrl } = useAuthStore();
+
+  // Helper to request a new pairing session
+  const initPairingSession = async () => {
+    setPairingStatus('LOADING');
+    setError('');
+    try {
+      let resData: any = null;
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        const response = await invoke<any>('authenticated_api_request', {
+          method: 'POST',
+          path: 'api/v3/pos/pairing/session',
+        });
+        resData = response?.success !== undefined ? response.data : response;
+      } catch {
+        const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session`, { method: 'POST' });
+        const json = await fallback.json();
+        resData = json.data || json;
+      }
+
+      if (resData?.sessionId) {
+        setPairingSessionId(resData.sessionId);
+        setPairingExpiresAt(resData.expiresAt ? new Date(resData.expiresAt) : new Date(Date.now() + 300000));
+        setPairingStatus('PENDING');
+      } else {
+        setError('Failed to initiate pairing session.');
+        setPairingStatus('EXPIRED');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error creating pairing QR code.');
+      setPairingStatus('EXPIRED');
+    }
+  };
+
+  // Initialize pairing session on mount when in QR mode
+  useEffect(() => {
+    if (authMode === 'qr') {
+      initPairingSession();
+    }
+  }, [authMode]);
+
+  // Poll pairing session status
+  useEffect(() => {
+    if (authMode !== 'qr' || !pairingSessionId || pairingStatus !== 'PENDING') return;
+
+    let isMounted = true;
+    const interval = setInterval(async () => {
+      try {
+        let statusData: any = null;
+        try {
+          const { invoke } = await import('@tauri-apps/api/core');
+          const response = await invoke<any>('authenticated_api_request', {
+            method: 'GET',
+            path: `api/v3/pos/pairing/session/${pairingSessionId}/status`,
+          });
+          statusData = response?.success !== undefined ? response.data : response;
+        } catch {
+          const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session/${pairingSessionId}/status`);
+          const json = await fallback.json();
+          statusData = json.data || json;
+        }
+
+        if (!isMounted) return;
+
+        if (statusData?.status === 'AUTHORIZED' && statusData?.payload) {
+          setPairingStatus('AUTHORIZED');
+          clearInterval(interval);
+          try {
+            await authorizeFromPairingPayload(statusData.payload);
+            onNext('pairing_authorized');
+          } catch (e: any) {
+            setError(e.message || 'Failed to apply authorized session credentials.');
+          }
+        } else if (statusData?.status === 'EXPIRED') {
+          setPairingStatus('EXPIRED');
+          clearInterval(interval);
+        }
+      } catch (err) {
+        // Continue polling silently on transient network errors
+      }
+    }, 2000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [authMode, pairingSessionId, pairingStatus, apiUrl, authorizeFromPairingPayload, onNext]);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (!pairingExpiresAt || pairingStatus !== 'PENDING') return;
+
+    const timer = setInterval(() => {
+      const diff = Math.max(0, Math.floor((pairingExpiresAt.getTime() - Date.now()) / 1000));
+      setTimeLeftSec(diff);
+      if (diff === 0) {
+        setPairingStatus('EXPIRED');
+        clearInterval(timer);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [pairingExpiresAt, pairingStatus]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -122,120 +234,223 @@ const SetupTokenStep = ({
       onNext(token);
     } catch (err: any) {
       setIsProvisioning(false);
-
-      // Extract specific error message if it's from our API
       const errorMessage = typeof err === 'string' ? err : err.message || 'Failed to provision device';
       setError(errorMessage);
     }
   };
 
+  const formatTimer = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 w-full max-w-md mx-auto">
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <Label
-            htmlFor="setupToken"
-            className="text-base font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider"
-          >
-            Setup Token
-          </Label>
+    <div className="space-y-6 w-full max-w-md mx-auto">
+      {/* Settings / API URL Toggle */}
+      <div className="flex justify-between items-center">
+        <div className="flex bg-zinc-100 dark:bg-zinc-900 p-1 border border-zinc-200 dark:border-zinc-800 w-full">
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => setShowApiSettings(!showApiSettings)}
-            className="h-8 text-[10px] uppercase font-bold text-zinc-500 hover:text-zinc-900"
+            onClick={() => {
+              setAuthMode('qr');
+              setError('');
+            }}
+            className={cn(
+              "flex-1 h-9 rounded-none text-xs font-bold uppercase tracking-wider transition-all",
+              authMode === 'qr'
+                ? "bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+            )}
           >
-            <Settings className="w-3 h-3 mr-1" /> API URL
+            <QrCode className="w-3.5 h-3.5 mr-1.5" /> Scan QR Code
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setAuthMode('token');
+              setError('');
+            }}
+            className={cn(
+              "flex-1 h-9 rounded-none text-xs font-bold uppercase tracking-wider transition-all",
+              authMode === 'token'
+                ? "bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200"
+            )}
+          >
+            <Key className="w-3.5 h-3.5 mr-1.5" /> Setup Token
           </Button>
         </div>
-
-        {showApiSettings && (
-          <div className="p-4 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-3 animate-in fade-in slide-in-from-top-2">
-            <Label htmlFor="apiUrl" className="text-[10px] font-bold uppercase text-zinc-500">
-              Backend API URL
-            </Label>
-            <div className="flex gap-2">
-              <Input
-                id="apiUrl"
-                type="url"
-                value={rawApiUrl}
-                onChange={e => setApiUrl(e.target.value)}
-                className="h-10 text-xs font-mono rounded-none border-zinc-200"
-                placeholder="https://api.example.com"
-              />
-              <Button
-                type="button"
-                size="sm"
-                onClick={async () => {
-                  await applyApiUrl();
-                  setShowApiSettings(false);
-                }}
-                className="h-10 rounded-none bg-zinc-800 text-white"
-              >
-                Apply
-              </Button>
-            </div>
-            <p className="text-[9px] text-zinc-400 italic">
-              Caution: Changing this affects all terminal requests.
-            </p>
-          </div>
-        )}
-        <div className="relative group">
-          <Input
-            id="setupToken"
-            type="password"
-            value={token}
-            onChange={e => setToken(e.target.value)}
-            className="pl-11 font-mono text-sm h-14 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-blue-600 rounded-none shadow-none transition-all"
-            placeholder="Paste your setup token here..."
-            autoFocus
-          />
-          <Key className="absolute left-4 top-4.5 h-5 w-5 text-zinc-400 group-focus-within:text-blue-600 transition-colors" />
-        </div>
-        {error && (
-          <p className="text-sm text-red-500 font-medium flex items-center gap-2 rounded-none">
-            <Info size={14} /> {error}
-          </p>
-        )}
-
-        {token.length >= 3 && (
-          <div className="flex flex-col items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 space-y-3 animate-in fade-in">
-            <div className="bg-white p-3 border border-zinc-200 shadow-sm">
-              <QRCodeSVG
-                value={JSON.stringify({ type: 'POS_PROVISION', token })}
-                size={140}
-                level="H"
-                includeMargin={false}
-              />
-            </div>
-            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold text-center">
-              Scan with Scryme Admin Mobile App to Authorize Device
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-4">
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full h-12 rounded-none text-base bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-none uppercase font-bold tracking-wide"
-          disabled={isProvisioning || !token}
-        >
-          {isProvisioning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Provision & Continue'}
-        </Button>
 
         <Button
           type="button"
           variant="ghost"
-          className="text-zinc-500 dark:text-zinc-400 text-sm hover:bg-transparent hover:text-blue-600 hover:underline rounded-none"
-          onClick={onShowInstructions}
+          size="sm"
+          onClick={() => setShowApiSettings(!showApiSettings)}
+          className="h-8 text-[10px] uppercase font-bold text-zinc-500 hover:text-zinc-900 shrink-0 ml-2"
         >
-          Where do I find my setup token?
+          <Settings className="w-3 h-3" />
         </Button>
       </div>
-    </form>
+
+      {showApiSettings && (
+        <div className="p-4 border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 space-y-3 animate-in fade-in slide-in-from-top-2">
+          <Label htmlFor="apiUrl" className="text-[10px] font-bold uppercase text-zinc-500">
+            Backend API URL
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              id="apiUrl"
+              type="url"
+              value={rawApiUrl}
+              onChange={e => setApiUrl(e.target.value)}
+              className="h-10 text-xs font-mono rounded-none border-zinc-200"
+              placeholder="https://api.example.com"
+            />
+            <Button
+              type="button"
+              size="sm"
+              onClick={async () => {
+                await applyApiUrl();
+                setShowApiSettings(false);
+                if (authMode === 'qr') initPairingSession();
+              }}
+              className="h-10 rounded-none bg-zinc-800 text-white"
+            >
+              Apply
+            </Button>
+          </div>
+          <p className="text-[9px] text-zinc-400 italic">
+            Caution: Changing this affects all terminal requests.
+          </p>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-sm text-red-500 font-medium flex items-center gap-2 rounded-none p-2 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900">
+          <Info size={14} /> {error}
+        </p>
+      )}
+
+      {/* MODE 1: QR CODE PAIRING */}
+      {authMode === 'qr' && (
+        <div className="flex flex-col items-center justify-center p-6 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 space-y-4 animate-in fade-in">
+          {pairingStatus === 'LOADING' ? (
+            <div className="flex flex-col items-center justify-center py-10 space-y-3">
+              <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+              <p className="text-xs uppercase font-semibold text-zinc-500">Generating Pairing QR...</p>
+            </div>
+          ) : pairingStatus === 'AUTHORIZED' ? (
+            <div className="flex flex-col items-center justify-center py-10 space-y-3 text-green-600">
+              <CheckCircle2 className="w-12 h-12" />
+              <p className="text-sm font-bold uppercase tracking-wider">Device Authorized!</p>
+            </div>
+          ) : pairingStatus === 'EXPIRED' ? (
+            <div className="flex flex-col items-center justify-center py-8 space-y-3 text-center">
+              <p className="text-xs font-semibold text-red-500 uppercase tracking-wider">Pairing Code Expired</p>
+              <Button
+                type="button"
+                onClick={initPairingSession}
+                className="h-10 rounded-none bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 font-bold uppercase tracking-wider text-xs"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" /> Refresh QR Code
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="bg-white p-4 border border-zinc-200 shadow-md relative group">
+                <QRCodeSVG
+                  value={JSON.stringify({ type: 'POS_PAIRING', sessionId: pairingSessionId })}
+                  size={180}
+                  level="H"
+                  includeMargin={false}
+                />
+              </div>
+
+              <div className="flex items-center gap-2 text-xs font-mono font-bold text-zinc-600 dark:text-zinc-400">
+                <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
+                <span>Expires in {formatTimer(timeLeftSec)}</span>
+              </div>
+
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold text-center leading-relaxed max-w-xs">
+                Scan with <span className="text-zinc-900 dark:text-zinc-100 font-bold">Scryme Mobile App</span> to automatically authorize terminal
+              </p>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={initPairingSession}
+                className="text-[10px] text-zinc-400 hover:text-zinc-900 uppercase font-mono tracking-wider h-6"
+              >
+                <RefreshCw className="w-3 h-3 mr-1" /> Regenerate Code
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* MODE 2: MANUAL SETUP TOKEN */}
+      {authMode === 'token' && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="relative group">
+              <Input
+                id="setupToken"
+                type="password"
+                value={token}
+                onChange={e => setToken(e.target.value)}
+                className="pl-11 font-mono text-sm h-14 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 focus-visible:ring-0 focus-visible:border-blue-600 rounded-none shadow-none transition-all"
+                placeholder="Paste your setup token here..."
+                autoFocus
+              />
+              <Key className="absolute left-4 top-4.5 h-5 w-5 text-zinc-400 group-focus-within:text-blue-600 transition-colors" />
+            </div>
+
+            {token.length >= 3 && (
+              <div className="flex flex-col items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 space-y-3 animate-in fade-in">
+                <div className="bg-white p-3 border border-zinc-200 shadow-sm">
+                  <QRCodeSVG
+                    value={JSON.stringify({ type: 'POS_PROVISION', token })}
+                    size={140}
+                    level="H"
+                    includeMargin={false}
+                  />
+                </div>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold text-center">
+                  Scan with Scryme Admin Mobile App to Authorize Device
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full h-12 rounded-none text-base bg-zinc-900 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-all shadow-none uppercase font-bold tracking-wide"
+              disabled={isProvisioning || !token}
+            >
+              {isProvisioning ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Provision & Continue'}
+            </Button>
+
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-zinc-500 dark:text-zinc-400 text-sm hover:bg-transparent hover:text-blue-600 hover:underline rounded-none"
+              onClick={onShowInstructions}
+            >
+              Where do I find my setup token?
+            </Button>
+          </div>
+        </form>
+      )}
+    </div>
   );
 };
 

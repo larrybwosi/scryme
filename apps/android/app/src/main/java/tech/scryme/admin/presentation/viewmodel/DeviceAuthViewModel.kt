@@ -20,6 +20,12 @@ class DeviceAuthViewModel(
     fun onQrCodeScanned(qrContent: String) {
         if (_uiState.value is UiState.Loading) return
 
+        val sessionId = parsePairingSessionId(qrContent)
+        if (!sessionId.isNullOrBlank()) {
+            authorizePairingSession(sessionId)
+            return
+        }
+
         val extractedToken = parseSetupToken(qrContent)
         if (extractedToken.isBlank()) {
             _uiState.value = UiState.Error("Invalid QR Code payload. Could not extract setup token.")
@@ -27,6 +33,25 @@ class DeviceAuthViewModel(
         }
 
         authorizeDevice(extractedToken)
+    }
+
+    fun authorizePairingSession(sessionId: String) {
+        val trimmedId = sessionId.trim()
+        if (trimmedId.isBlank()) {
+            _uiState.value = UiState.Error("Pairing session ID cannot be empty.")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = UiState.Loading
+            deviceRepository.authorizePairingSession(trimmedId)
+                .onSuccess { response ->
+                    _uiState.value = UiState.Success(response)
+                }
+                .onFailure { error ->
+                    _uiState.value = UiState.Error(error.message ?: "Failed to authorize POS pairing session")
+                }
+        }
     }
 
     fun authorizeDevice(setupToken: String) {
@@ -54,6 +79,24 @@ class DeviceAuthViewModel(
 
     fun resetState() {
         _uiState.value = UiState.Idle
+    }
+
+    fun parsePairingSessionId(content: String): String? {
+        val trimmed = content.trim()
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            try {
+                val jsonObject = JsonParser.parseString(trimmed).asJsonObject
+                if (jsonObject.has("sessionId") && !jsonObject.get("sessionId").isJsonNull) {
+                    val id = jsonObject.get("sessionId").asString.trim()
+                    if (id.isNotEmpty()) return id
+                }
+            } catch (e: Exception) {
+                // Ignore JSON parse error
+            }
+        } else if (trimmed.startsWith("pair_")) {
+            return trimmed
+        }
+        return null
     }
 
     fun parseSetupToken(content: String): String {

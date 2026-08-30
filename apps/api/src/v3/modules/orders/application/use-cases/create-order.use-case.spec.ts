@@ -18,7 +18,7 @@ vi.mock("@repo/shared/actions", () => ({
   }),
 }));
 
-vi.mock("@repo/windmill/server", () => ({
+vi.mock("@repo/shared/server", () => ({
   emitOrderPlaced: vi.fn().mockResolvedValue({}),
 }));
 

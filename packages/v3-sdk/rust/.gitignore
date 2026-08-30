@@ -1,18 +1,3 @@
 /target/
-**/target/
-*.rlib
-*.rmeta
-*.so
-*.dylib
-*.dll
-*.a
-*.o
 **/*.rs.bk
 Cargo.lock
-
-# Generated OpenAPI code
-/src/apis/
-/src/models/
-/.openapi-generator/
-/git_push.sh
-/.travis.yml

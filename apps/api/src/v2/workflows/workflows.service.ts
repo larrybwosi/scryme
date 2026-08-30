@@ -12,7 +12,6 @@ export class WorkflowsService {
     private readonly stockReportService: StockMovementReportService,
   ) {}
 
-  // Simulation of available scripts in Windmill
   private readonly mockScripts = [
     {
       path: "f/dealio/customer_onboarding",
@@ -26,11 +25,31 @@ export class WorkflowsService {
             type: "boolean",
             title: "Send Welcome Email",
             default: true,
+            description: "Automatically dispatch a welcome message upon registration.",
+            group: "General Settings",
           },
           crmFolder: {
             type: "string",
             title: "CRM Folder Name",
             default: "New Leads",
+            description: "CRM bucket where new lead records will be assigned.",
+            group: "General Settings",
+          },
+          startDate: {
+            type: "string",
+            format: "date",
+            title: "Campaign Start Date",
+            default: new Date().toISOString().split("T")[0],
+            description: "Date from which onboarding triggers are active.",
+            group: "Timing & Schedule",
+          },
+          delayDuration: {
+            type: "string",
+            format: "duration",
+            title: "Email Delay Duration",
+            default: "15m",
+            description: "Delay prior to dispatching welcome notification email.",
+            group: "Timing & Schedule",
           },
         },
       },
@@ -47,11 +66,33 @@ export class WorkflowsService {
             type: "number",
             title: "Default Threshold",
             default: 10,
+            description: "Trigger alert when stock drops below this quantity.",
+            group: "Alert Triggers",
+          },
+          alertFrequency: {
+            type: "string",
+            format: "select",
+            enum: ["IMMEDIATE", "HOURLY", "DAILY_DIGEST"],
+            enumNames: ["Immediate", "Hourly Digest", "Daily Digest"],
+            title: "Notification Frequency",
+            default: "IMMEDIATE",
+            description: "Frequency for sending stock warning summaries.",
+            group: "Alert Triggers",
           },
           notificationEmail: {
             type: "string",
             title: "Alert Email",
             default: "procurement@example.com",
+            description: "Primary email endpoint for critical inventory alerts.",
+            group: "Notifications",
+          },
+          quietHoursStart: {
+            type: "string",
+            format: "time",
+            title: "Quiet Hours Start Time",
+            default: "22:00",
+            description: "Do not trigger non-urgent emails after this time.",
+            group: "Timing & Schedule",
           },
         },
       },
@@ -68,11 +109,23 @@ export class WorkflowsService {
             type: "string",
             title: "Recipient Emails (comma separated)",
             default: "admin@example.com",
+            description: "Comma-separated list of executive email addresses.",
+            group: "Distribution",
+          },
+          reportTime: {
+            type: "string",
+            format: "time",
+            title: "Daily Scheduled Dispatch Time",
+            default: "18:00",
+            description: "Local time at which the daily summary is computed.",
+            group: "Timing & Schedule",
           },
           includeCharts: {
             type: "boolean",
             title: "Include Visual Charts",
             default: true,
+            description: "Attach PDF graphs detailing revenue and units sold.",
+            group: "Report Formatting",
           },
         },
       },
@@ -91,18 +144,32 @@ export class WorkflowsService {
             title: "Report Recipients",
             format: "members",
             description: "Selected members will receive the weekly report in Scryme Chat.",
+            group: "Distribution",
           },
           scheduleDay: {
-            type: "number",
-            title: "Day of Week (0=Sunday, 6=Saturday)",
-            default: 0,
-            minimum: 0,
-            maximum: 6,
+            type: "string",
+            format: "select",
+            enum: ["0", "1", "2", "3", "4", "5", "6"],
+            enumNames: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            title: "Day of Week",
+            default: "0",
+            description: "Scheduled day of the week to run weekly compilation.",
+            group: "Timing & Schedule",
+          },
+          dispatchTime: {
+            type: "string",
+            format: "time",
+            title: "Dispatch Time",
+            default: "09:00",
+            description: "Time of day to publish weekly summary to Scryme Chat.",
+            group: "Timing & Schedule",
           },
           enabled: {
             type: "boolean",
             title: "Workflow Enabled",
             default: true,
+            description: "Enable or pause this automated schedule.",
+            group: "General Settings",
           },
         },
       },
@@ -110,87 +177,48 @@ export class WorkflowsService {
   ];
 
   async getAvailableWorkflows(ctx: V2ApiContext) {
-    // In a real scenario, this would fetch from Windmill API or a shared library table
-    // For now, we return our mock scripts and mark if they are provisioned for this org
+    const definitions = await (this.prisma.client as any).workflowEngineDefinition.findMany({
+      where: { organizationId: ctx.organizationId },
+    });
 
-    // ⚡ Bolt Optimization: Parallelize independent database queries and use Map pre-indexing.
-    // 1) Fetch provisioned workflows and configuration concurrently via Promise.all.
-    // 2) Index provisionedWorkflows into a Map for O(1) constant-time lookups during array mapping,
-    //    reducing total lookup complexity from O(N * M) to O(N + M).
-    const [provisionedWorkflows, _config] = await Promise.all([
-      (this.prisma.client as any).windmillWorkflow.findMany({
-        where: { organizationId: ctx.organizationId },
-      }),
-      (this.prisma.client as any).windmillConfiguration.findUnique({
-        where: { organizationId: ctx.organizationId },
-      }),
-    ]);
-
-    const provisionedMap = new Map<string, any>(
-      provisionedWorkflows.map((w: any) => [w.path, w]),
+    const definitionsMap = new Map<string, any>(
+      definitions.map((d: any) => [d.key, d]),
     );
 
-    // Simulated: if config exists and has an API key, we consider it "active" for the org
     return this.mockScripts.map((script) => {
-      const provisioned = provisionedMap.get(script.path);
+      const definition = definitionsMap.get(script.path);
       return {
         ...script,
-        isProvisioned: !!provisioned,
-        settings: provisioned?.settings || {},
+        isProvisioned: !!definition,
+        settings: definition?.config || {},
       };
     });
   }
 
   async provisionWorkflow(ctx: V2ApiContext, path: string, settings: any) {
-    // Simulated: Ensure Windmill config exists for the org
-    let config = await (
-      this.prisma.client as any
-    ).windmillConfiguration.findUnique({
-      where: { organizationId: ctx.organizationId },
-    });
-
-    if (!config) {
-      const secureRandomKey = crypto.randomBytes(4).toString("hex");
-      config = await (this.prisma.client as any).windmillConfiguration.create({
-        data: {
-          organizationId: ctx.organizationId,
-          windmillApiKey:
-            "simulated_key_" + secureRandomKey,
-          windmillBaseUrl: "https://windmill.internal",
-          workspaceId: "ws_" + ctx.organizationId.substring(0, 8),
-          workspaceName: "Org Workspace",
-        },
-      });
-    }
-
-    // In a real scenario, you'd save these settings somewhere or deploy the script to the workspace
-
-    // Persist provisioned workflow
-    await (this.prisma.client as any).windmillWorkflow.upsert({
+    const definition = await (this.prisma.client as any).workflowEngineDefinition.upsert({
       where: {
-        organizationId_path: {
+        organizationId_key: {
           organizationId: ctx.organizationId,
-          path: path,
+          key: path,
         },
       },
       update: {
-        settings: settings,
+        config: settings || {},
         isActive: settings.enabled !== false,
       },
       create: {
         organizationId: ctx.organizationId,
-        configId: config.id,
-        path: path,
+        key: path,
         name: this.mockScripts.find((s) => s.path === path)?.name || path,
-        settings: settings,
+        triggerType: "EVENT",
+        config: settings || {},
         isActive: settings.enabled !== false,
       },
     });
 
-    // Trigger immediate report for Stock Movement Report if it's being provisioned
     if (path === "f/dealio/stock_movement_report") {
       const recipients = settings.recipients || [];
-      // Trigger in background
       this.stockReportService
         .generateAndSendReport(ctx.organizationId, recipients, 7)
         .catch((err) =>
@@ -201,67 +229,66 @@ export class WorkflowsService {
     return {
       success: true,
       message: `Workflow ${path} provisioned successfully`,
-      configId: config.id,
+      definitionId: definition.id,
     };
   }
 
   async triggerWorkflow(ctx: V2ApiContext, path: string, inputs: any) {
-    const config = await (
-      this.prisma.client as any
-    ).windmillConfiguration.findUnique({
-      where: { organizationId: ctx.organizationId },
-    });
-
-    if (!config) {
-      throw new NotFoundException(
-        "Windmill not configured for this organization",
-      );
-    }
-
-    // Simulate an execution record
-    const secureJobSuffix = crypto.randomBytes(4).toString("hex");
-    const execution = await (
-      this.prisma.client as any
-    ).windmillExecution.create({
-      data: {
-        organizationId: ctx.organizationId,
-        configId: config.id,
-        jobId: "job_" + secureJobSuffix,
-        scriptPath: path,
-        dealioEventType: "MANUAL_TRIGGER",
-        correlationId: "manual_" + Date.now(),
-        status: "PENDING",
+    let definition = await (this.prisma.client as any).workflowEngineDefinition.findUnique({
+      where: {
+        organizationId_key: {
+          organizationId: ctx.organizationId,
+          key: path,
+        },
       },
     });
 
-    // Simulate background processing
-    // NOTE: In production, this should be handled by a proper job queue like BullMQ
-    // to ensure reliability and prevent memory leaks/unhandled rejections.
-    setTimeout(() => {
-      (this.prisma.client as any).windmillExecution.update({
-        where: { id: execution.id },
+    if (!definition) {
+      definition = await (this.prisma.client as any).workflowEngineDefinition.create({
         data: {
-          status: "COMPLETED",
-          result: {
-            success: true,
-            triggeredAt: new Date().toISOString(),
-            inputs,
-          },
-          completedAt: new Date(),
+          organizationId: ctx.organizationId,
+          key: path,
+          name: this.mockScripts.find((s) => s.path === path)?.name || path,
+          triggerType: "MANUAL",
+          config: inputs || {},
+          isActive: true,
         },
-      }).catch((err: any) => {
-        console.error(`Failed to update windmill execution ${execution.id}:`, err);
       });
-    }, 2000).unref(); // unref() allows the process to exit even if the timer is active
+    }
+
+    const correlationId = "manual_" + Date.now() + "_" + crypto.randomBytes(4).toString("hex");
+
+    const execution = await (this.prisma.client as any).workflowEngineExecution.create({
+      data: {
+        organizationId: ctx.organizationId,
+        definitionId: definition.id,
+        triggerEvent: path,
+        correlationId,
+        status: "RUNNING",
+        payload: inputs || {},
+        startedAt: new Date(),
+      },
+    });
+
+    const job = await (this.prisma.client as any).workflowEngineJob.create({
+      data: {
+        organizationId: ctx.organizationId,
+        executionId: execution.id,
+        definitionId: definition.id,
+        handler: path,
+        payload: inputs || {},
+        status: "QUEUED",
+      },
+    });
 
     return execution;
   }
 
   async getExecutionHistory(ctx: V2ApiContext, scriptPath?: string) {
-    return (this.prisma.client as any).windmillExecution.findMany({
+    return (this.prisma.client as any).workflowEngineExecution.findMany({
       where: {
         organizationId: ctx.organizationId,
-        ...(scriptPath ? { scriptPath } : {}),
+        ...(scriptPath ? { triggerEvent: scriptPath } : {}),
       },
       orderBy: { createdAt: "desc" },
       take: 50,

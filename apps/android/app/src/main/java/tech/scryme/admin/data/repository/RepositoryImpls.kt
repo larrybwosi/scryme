@@ -380,6 +380,12 @@ class DeviceRepositoryImpl(
             api.provisionDevice(mapOf("setupToken" to setupToken))
         }
     }
+
+    override suspend fun authorizePairingSession(sessionId: String): Result<DeviceProvisionResponseDto> {
+        return safeApiCallDirectOrEnvelope {
+            api.authorizePairingSession(mapOf("sessionId" to sessionId))
+        }
+    }
 }
 
 class ExpenseRepositoryImpl(

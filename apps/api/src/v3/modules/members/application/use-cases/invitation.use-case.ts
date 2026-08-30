@@ -13,7 +13,7 @@ import {
 } from "../dto/invitation.dto";
 import { InvitationStatus, AuditLogAction, AuditEntityType } from "@repo/db";
 import { v4 as uuidv4 } from "uuid";
-import { emitEvent } from "@repo/windmill/server";
+import { emitEvent } from "@repo/shared/server";
 
 @Injectable()
 export class InvitationUseCase {

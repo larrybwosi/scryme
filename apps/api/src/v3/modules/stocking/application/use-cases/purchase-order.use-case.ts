@@ -13,7 +13,7 @@ import {
 } from "@repo/db";
 import { PaginationQueryDto, paginate } from "@/v3/common/utils/pagination";
 import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
-import { emitPurchaseApprovalRequested } from "@repo/windmill/server";
+import { emitPurchaseApprovalRequested } from "@repo/shared/server";
 import { PricingManagementService } from "../../../catalog/application/services/pricing-management.service";
 import { AccountingService } from "../../../finance/application/services/accounting.service";
 

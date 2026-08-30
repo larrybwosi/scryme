@@ -1,10 +1,10 @@
-import { Test, TestingModule } from "@nestjs/testing";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ScrymeService } from "../scryme.service";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { ScrymeApprovalService } from "../scryme-approval.service";
 import { createHmac } from "crypto";
 import { BadRequestException } from "@nestjs/common";
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { Test, TestingModule } from "@nestjs/testing";
 
 describe("ScrymeService", () => {
   let service: ScrymeService;
@@ -17,9 +17,10 @@ describe("ScrymeService", () => {
         findFirst: vi.fn(),
         upsert: vi.fn(),
       },
-      windmillExecution: {
+      workflowEngineExecution: {
         create: vi.fn(),
         findFirst: vi.fn(),
+        update: vi.fn(),
       },
       approvalDecision: {
         findUnique: vi.fn(),
@@ -76,14 +77,12 @@ describe("ScrymeService", () => {
 
       mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
         organizationId: "org-1",
-        organization: {
-          windmillConfiguration: { id: "wm-1" },
-        },
+        organization: {},
       });
 
       const result = await service.handleWebhook(signature, payload);
       expect(result.status).toBe("success");
-      expect(mockPrisma.client.windmillExecution.create).toHaveBeenCalled();
+      expect(mockPrisma.client.workflowEngineExecution.create).toHaveBeenCalled();
 
       delete process.env.SCRYME_WEBHOOK_SECRET;
     });
@@ -111,14 +110,10 @@ describe("ScrymeService", () => {
 
       // Mock configuration lookup
       mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
-        organizationId: "org-1", // Webhook belongs to org-1
-        organization: {
-          windmillConfiguration: { id: "wm-1" },
-        },
+        organizationId: "org-1",
+        organization: {},
       });
 
-      // Mock decision lookup with a mismatching organizationId
-      // In real scenario, findFirst would return null because of the relation filter
       mockPrisma.client.approvalDecision.findFirst.mockResolvedValue(null);
 
       await expect(
@@ -138,23 +133,18 @@ describe("ScrymeService", () => {
       };
 
       mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
-        organizationId: "org-1", // Webhook belongs to org-1
-        organization: {
-          windmillConfiguration: { id: "wm-1" },
-        },
+        organizationId: "org-1",
+        organization: {},
       });
 
-      // Mock execution findFirst to return null because of different organizationId
-      mockPrisma.client.windmillExecution.findFirst.mockResolvedValue(null);
+      mockPrisma.client.workflowEngineExecution.findFirst.mockResolvedValue(null);
 
-      // Mock updateMessage on scrymeClient
       vi.spyOn(service["scrymeClient"], "updateMessage").mockResolvedValue({} as any);
 
       const result = await service.handleWebhook("", resumePayload);
       expect(result.status).toBe("success");
-      // Verify findFirst was called with the correct scoped organizationId
-      expect(mockPrisma.client.windmillExecution.findFirst).toHaveBeenCalledWith({
-        where: { jobId: "job-123", organizationId: "org-1" },
+      expect(mockPrisma.client.workflowEngineExecution.findFirst).toHaveBeenCalledWith({
+        where: { id: "job-123", organizationId: "org-1" },
       });
     });
   });

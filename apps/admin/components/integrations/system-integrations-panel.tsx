@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, MessageSquare, Workflow, ShieldAlert, CheckCircle2, Save, Sparkles, Bot } from "lucide-react"
+import { Loader2, MessageSquare, Workflow, ShieldAlert, CheckCircle2, Save, Sparkles, Bot, Hash, Lock, Users, Plus, Trash2, UserPlus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
@@ -12,7 +12,13 @@ import { Badge } from "@repo/ui/components/ui/badge"
 import {
   updateSystemIntegrationSettings,
   provisionAdminChatWorkspace,
+  getAdminChatWorkspaceDetails,
+  createAdminChatChannel,
+  addAdminChatWorkspaceMember,
+  removeAdminChatWorkspaceMember,
   testHermesConnection,
+  testScrymeChatConnection,
+  testWindmillConnection,
   type SystemIntegrationSettings,
 } from "@/app/actions/integrations"
 
@@ -25,6 +31,8 @@ export function SystemIntegrationsPanel({
   const [isSaving, setIsSaving] = useState(false)
   const [isProvisioning, setIsProvisioning] = useState(false)
   const [isTestingHermes, setIsTestingHermes] = useState(false)
+  const [isTestingChat, setIsTestingChat] = useState(false)
+  const [isTestingWindmill, setIsTestingWindmill] = useState(false)
 
   // Scryme Chat Credentials
   const [scrymeChatClientId, setScrymeChatClientId] = useState(settings.scrymeChatClientId ?? "")
@@ -48,6 +56,36 @@ export function SystemIntegrationsPanel({
   const [adminChannelSlug, setAdminChannelSlug] = useState(settings.adminChannelSlug ?? "system-alerts")
   const [adminWorkspaceStatus, setAdminWorkspaceStatus] = useState(settings.adminWorkspaceStatus ?? "Not Configured")
 
+  // Error Alerts in Scryme Chat & Sentry
+  const [errorAlertsEnabled, setErrorAlertsEnabled] = useState(settings.errorAlertsEnabled ?? true)
+  const [errorAlertsMinStatus, setErrorAlertsMinStatus] = useState(settings.errorAlertsMinStatus ?? 500)
+
+  // System Admin Workspace Channels & Members Customization
+  const [workspaceDetails, setWorkspaceDetails] = useState<{ channels: any[]; members: any[] } | null>(null)
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false)
+  const [newChannelName, setNewChannelName] = useState("")
+  const [newChannelType, setNewChannelType] = useState<"public" | "private">("public")
+  const [isCreatingChannel, setIsCreatingChannel] = useState(false)
+  const [newMemberEmail, setNewMemberEmail] = useState("")
+  const [newMemberRole, setNewMemberRole] = useState<"admin" | "member">("admin")
+  const [isAddingMember, setIsAddingMember] = useState(false)
+
+  const loadAdminWorkspaceDetails = async () => {
+    setIsLoadingDetails(true)
+    try {
+      const details = await getAdminChatWorkspaceDetails()
+      setWorkspaceDetails(details)
+    } catch {
+      // ignore
+    } finally {
+      setIsLoadingDetails(false)
+    }
+  }
+
+  useEffect(() => {
+    loadAdminWorkspaceDetails()
+  }, [])
+
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault()
     setIsSaving(true)
@@ -66,6 +104,8 @@ export function SystemIntegrationsPanel({
         adminWorkspaceName,
         adminWorkspaceSlug,
         adminChannelSlug,
+        errorAlertsEnabled,
+        errorAlertsMinStatus,
       })
       toast.success("System integration credentials saved successfully")
       router.refresh()
@@ -73,6 +113,38 @@ export function SystemIntegrationsPanel({
       toast.error(error instanceof Error ? error.message : "Failed to save settings")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  async function handleTestChat() {
+    setIsTestingChat(true)
+    try {
+      const res = await testScrymeChatConnection()
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test Scryme Chat connection")
+    } finally {
+      setIsTestingChat(false)
+    }
+  }
+
+  async function handleTestWindmill() {
+    setIsTestingWindmill(true)
+    try {
+      const res = await testWindmillConnection()
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test Windmill connection")
+    } finally {
+      setIsTestingWindmill(false)
     }
   }
 
@@ -163,6 +235,18 @@ export function SystemIntegrationsPanel({
               placeholder="https://api.chat.scryme.tech"
             />
           </div>
+          <div className="flex justify-end pt-2 sm:col-span-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isTestingChat}
+              onClick={handleTestChat}
+              className="gap-2"
+            >
+              {isTestingChat ? <Loader2 className="size-4 animate-spin" /> : <MessageSquare className="size-4 text-blue-500" />}
+              Test Connection & Channel Message
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
@@ -213,6 +297,18 @@ export function SystemIntegrationsPanel({
               onChange={(e) => setWindmillWebhookSecret(e.target.value)}
               placeholder="••••••••••••••••"
             />
+          </div>
+          <div className="flex justify-end pt-2 sm:col-span-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isTestingWindmill}
+              onClick={handleTestWindmill}
+              className="gap-2"
+            >
+              {isTestingWindmill ? <Loader2 className="size-4 animate-spin" /> : <Workflow className="size-4 text-purple-500" />}
+              Test Connection
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -357,6 +453,231 @@ export function SystemIntegrationsPanel({
               {isProvisioning ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-emerald-500" />}
               Provision Admin Chat Workspace
             </Button>
+          </div>
+
+          {/* Workspace Channels & Members Customization Section */}
+          <div className="border-t border-border pt-4 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">Workspace Channels & Member Customization</h4>
+                <p className="text-xs text-muted-foreground">Manage channels, assign alert destinations, and control admin access.</p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoadingDetails}
+                onClick={loadAdminWorkspaceDetails}
+                className="gap-1.5 text-xs"
+              >
+                <RefreshCw className={`size-3.5 ${isLoadingDetails ? "animate-spin" : ""}`} />
+                Sync Details
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Channels Customization Card */}
+              <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Hash className="size-4 text-primary" /> Active Channels ({workspaceDetails?.channels?.length || 0})
+                  </span>
+                </div>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    if (!newChannelName.trim()) return
+                    setIsCreatingChannel(true)
+                    try {
+                      const res = await createAdminChatChannel({
+                        name: newChannelName.trim(),
+                        type: newChannelType,
+                      })
+                      if (res.message) toast.info(res.message)
+                      else toast.success(`Channel #${newChannelName} created`)
+                      setNewChannelName("")
+                      loadAdminWorkspaceDetails()
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to create channel")
+                    } finally {
+                      setIsCreatingChannel(false)
+                    }
+                  }}
+                  className="flex gap-2 items-end"
+                >
+                  <div className="flex-1 flex flex-col gap-1">
+                    <Label className="text-[11px]">New Channel</Label>
+                    <Input
+                      placeholder="e.g. security-alerts"
+                      value={newChannelName}
+                      onChange={(e) => setNewChannelName(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-24">
+                    <Label className="text-[11px]">Type</Label>
+                    <select
+                      value={newChannelType}
+                      onChange={(e) => setNewChannelType(e.target.value as any)}
+                      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                    >
+                      <option value="public">Public</option>
+                      <option value="private">Private</option>
+                    </select>
+                  </div>
+                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={isCreatingChannel}>
+                    <Plus className="size-3" /> Add
+                  </Button>
+                </form>
+
+                <div className="max-h-40 overflow-y-auto flex flex-col gap-1.5">
+                  {workspaceDetails?.channels?.length ? (
+                    workspaceDetails.channels.map((ch: any) => (
+                      <div key={ch.id || ch.slug} className="flex items-center justify-between p-2 rounded-md bg-card border border-border text-xs">
+                        <div className="flex items-center gap-2">
+                          {ch.type === "private" ? <Lock className="size-3.5 text-amber-500" /> : <Hash className="size-3.5 text-primary" />}
+                          <span className="font-semibold text-foreground">{ch.name || ch.slug}</span>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] font-mono uppercase">
+                          {ch.type || "public"}
+                        </Badge>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-xs text-muted-foreground text-center py-2">No channels found.</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Members Access Customization Card */}
+              <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                    <Users className="size-4 text-emerald-600" /> Admin Access Members ({workspaceDetails?.members?.length || 0})
+                  </span>
+                </div>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault()
+                    if (!newMemberEmail.trim()) return
+                    setIsAddingMember(true)
+                    try {
+                      const res = await addAdminChatWorkspaceMember({
+                        email: newMemberEmail.trim(),
+                        role: newMemberRole,
+                      })
+                      if (res.message) toast.info(res.message)
+                      else toast.success(`Granted ${newMemberEmail} admin chat access`)
+                      setNewMemberEmail("")
+                      loadAdminWorkspaceDetails()
+                    } catch (err: any) {
+                      toast.error(err.message || "Failed to add member")
+                    } finally {
+                      setIsAddingMember(false)
+                    }
+                  }}
+                  className="flex gap-2 items-end"
+                >
+                  <div className="flex-1 flex flex-col gap-1">
+                    <Label className="text-[11px]">Admin Email</Label>
+                    <Input
+                      placeholder="admin@scryme.tech"
+                      value={newMemberEmail}
+                      onChange={(e) => setNewMemberEmail(e.target.value)}
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-20">
+                    <Label className="text-[11px]">Role</Label>
+                    <select
+                      value={newMemberRole}
+                      onChange={(e) => setNewMemberRole(e.target.value as any)}
+                      className="h-8 rounded-md border border-input bg-background px-2 text-xs"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="member">Member</option>
+                    </select>
+                  </div>
+                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={isAddingMember}>
+                    <UserPlus className="size-3" /> Add
+                  </Button>
+                </form>
+
+                <div className="max-h-40 overflow-y-auto flex flex-col gap-1.5">
+                  {workspaceDetails?.members?.length ? (
+                    workspaceDetails.members.map((m: any) => (
+                      <div key={m.id || m.email} className="flex items-center justify-between p-2 rounded-md bg-card border border-border text-xs">
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-foreground">{m.name || m.email}</span>
+                          <span className="text-[10px] text-muted-foreground">{m.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-[10px] font-mono uppercase">
+                            {m.role || "admin"}
+                          </Badge>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="size-6 text-destructive hover:bg-destructive/10"
+                            onClick={async () => {
+                              try {
+                                const res = await removeAdminChatWorkspaceMember(m.id || m.email)
+                                if (res.message) toast.info(res.message)
+                                else toast.success("Access revoked")
+                                loadAdminWorkspaceDetails()
+                              } catch (err: any) {
+                                toast.error(err.message || "Failed to remove member")
+                              }
+                            }}
+                          >
+                            <Trash2 className="size-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <span className="text-xs text-muted-foreground text-center py-2">No admin members configured.</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Realtime Scryme Chat Error Alert Controls */}
+          <div className="border-t border-border pt-4 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="error-alerts-enabled"
+                  checked={errorAlertsEnabled}
+                  onChange={(e) => setErrorAlertsEnabled(e.target.checked)}
+                  className="size-4 rounded border-input bg-background text-primary focus:ring-ring"
+                />
+                <Label htmlFor="error-alerts-enabled" className="cursor-pointer font-medium">
+                  Dispatch System Exception Alerts to Scryme Chat Channel
+                </Label>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="error-min-status">Minimum Status Code Threshold</Label>
+                <select
+                  id="error-min-status"
+                  value={errorAlertsMinStatus}
+                  onChange={(e) => setErrorAlertsMinStatus(Number(e.target.value))}
+                  className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value={500}>500+ (Internal Server Errors Only)</option>
+                  <option value={400}>400+ (All Client & Server Errors)</option>
+                  <option value={503}>503+ (Service Unavailable & Critical Only)</option>
+                </select>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

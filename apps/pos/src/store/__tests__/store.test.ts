@@ -125,4 +125,74 @@ describe('usePosStore - Order Item Updates', () => {
     expect(finalItems[0].selectedUnit.unitId).toBe('u2');
     expect(finalItems[0].quantity).toBe(1);
   });
+
+  it('should set isService on OrderItem when adding a service product', () => {
+    const store = usePosStore.getState();
+    const serviceProduct = {
+      productId: 's1',
+      productName: 'General Consultation',
+      variantId: 'sv1',
+      variantName: 'Default',
+      category: 'Services',
+      sku: 'SRV-01',
+      stock: 0,
+      isService: true,
+      sellableUnits: [
+        { unitId: 'su1', unitName: 'Session', price: 50, conversion: 1, isBaseUnit: true },
+      ],
+      variants: [{ variantId: 'sv1', name: 'Default' }]
+    };
+
+    store.setProducts([serviceProduct as any]);
+    store.addItemToOrder(serviceProduct as any, 'sv1', serviceProduct.sellableUnits[0], 1);
+
+    const items = usePosStore.getState().currentOrder.items;
+    expect(items).toHaveLength(1);
+    expect(items[0].isService).toBe(true);
+    expect(items[0].productName).toBe('General Consultation');
+  });
+
+  it('should bypass stock deduction for service items', () => {
+    const store = usePosStore.getState();
+    const productItem = {
+      productId: 'p1',
+      productName: 'Physical Good',
+      stock: 10,
+      isService: false,
+      sellableUnits: [{ unitId: 'u1', unitName: 'Unit', price: 10, conversion: 1, isBaseUnit: true }]
+    };
+    const serviceItem = {
+      productId: 's1',
+      productName: 'Repair Service',
+      stock: 0,
+      isService: true,
+      sellableUnits: [{ unitId: 'su1', unitName: 'Service', price: 100, conversion: 1, isBaseUnit: true }]
+    };
+
+    store.setProducts([productItem, serviceItem] as any);
+
+    store.deductStockForOrderItems([
+      { productId: 'p1', quantity: 2, selectedUnit: { conversion: 1 } },
+      { productId: 's1', quantity: 1, isService: true, selectedUnit: { conversion: 1 } }
+    ]);
+
+    const products = usePosStore.getState().products;
+    const updatedProduct = products.find(p => p.productId === 'p1');
+    const updatedService = products.find(p => p.productId === 's1');
+
+    expect(updatedProduct?.stock).toBe(8); // 10 - 2
+    expect(updatedService?.stock).toBe(0); // Bypassed
+  });
+
+  it('should exclude service items from low stock alerts', () => {
+    const store = usePosStore.getState();
+    store.setProducts([
+      { productId: 'p1', productName: 'Low Stock Product', stock: 2, isService: false },
+      { productId: 's1', productName: 'Service Item', stock: 0, isService: true }
+    ] as any);
+
+    const alerts = store.getLowStockProducts();
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0].productId).toBe('p1');
+  });
 });

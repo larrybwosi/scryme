@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "crm",
-  "version": "7.39.0",
+  "version": "7.41.0-next.2",
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
@@ -20,7 +20,6 @@
     "@repo/chat": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@repo/windmill": "workspace:*",
     "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/pg": "^8.20.0",

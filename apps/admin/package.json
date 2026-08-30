@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "admin",
-  "version": "1.0.0",
+  "version": "1.2.0-next.4",
   "scripts": {
     "dev": "next dev --port 3007",
     "build": "next build",
@@ -13,6 +13,7 @@
     "@better-fetch/fetch": "^1.1.21",
     "@hookform/resolvers": "3.9.0",
     "@repo/auth": "workspace:*",
+    "@repo/chat": "workspace:*",
     "@repo/db": "workspace:^",
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",

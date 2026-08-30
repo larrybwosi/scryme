@@ -80,6 +80,7 @@ export const auth = betterAuth({
       "app.scryme.tech",
       "crm.scryme.tech",
       "api.scryme.tech",
+      "admin.scryme.tech",
       "*.scryme.tech",
     ],
     protocol: env.NODE_ENV === "development" ? "http" : "https",
@@ -151,31 +152,31 @@ export const auth = betterAuth({
         console.error("Redis delete error:", e);
       }
     },
-
-    consume: async (
-      key: string,
-      limit?: number,
-      window?: number,
-    ): Promise<number> => {
+    getAndDelete: async (key: string): Promise<string | null> => {
       try {
         const redis = await getRedisClient();
-
-        // Atomic increment in Redis
-        const current = await redis.incr(key);
-
-        // If this is the first hit, set expiration based on the window (default 60s)
-        if (current === 1) {
-          const ttl = window && window > 0 ? window : 60;
-          await redis.expire(key, ttl);
+        const value = await redis.get(key);
+        if (value !== null && value !== undefined) {
+          await redis.del(key);
         }
-
-        return current;
+        if (value === null || value === undefined) return null;
+        if (typeof value === "string") return value;
+        return JSON.stringify(value);
       } catch (e: unknown) {
-        console.error("Redis consume error:", e);
+        console.error("Redis getAndDelete error:", e);
+        return null;
+      }
+    },
+    increment: async (key: string, amount: number = 1): Promise<number> => {
+      try {
+        const redis = await getRedisClient();
+        return await redis.incrby(key, amount);
+      } catch (e: unknown) {
+        console.error("Redis increment error:", e);
         return 0;
       }
     },
-  },
+  } as any,
   plugins: [
     jwt(),
     bearer(),
@@ -368,7 +369,7 @@ export const auth = betterAuth({
         }
         return claims;
       },
-    }),
+    }) as any,
     nextCookies(),
   ],
 });

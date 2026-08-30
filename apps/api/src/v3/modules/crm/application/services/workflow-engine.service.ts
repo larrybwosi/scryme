@@ -1,6 +1,9 @@
 import { db } from "@repo/db";
+import { ScrymeChatApiClient } from "@repo/chat";
 
 export class WorkflowExecutionEngine {
+  private scrymeClient = new ScrymeChatApiClient();
+
   /**
    * Start a workflow for a specific record (Customer/BusinessAccount)
    */
@@ -83,22 +86,43 @@ export class WorkflowExecutionEngine {
     });
 
     if (node.type === "action") {
-      const { type, label } = node.data;
+      const { type, subType, label, content, channelId } = node.data;
 
       // Simulate action execution
-      console.log(`[ACTION] Executing ${type}: ${label}`);
+      console.log(`[ACTION] Executing ${type} (${subType}): ${label}`);
 
-      // If it's a task, we could create a CrmFollowUp here
-      if (type === "TASK") {
-        const instance = await db.campaignWorkflowInstance.findUnique({
-          where: { id: instanceId },
-          include: { workflow: { include: { organization: true } } },
+      const instance = await db.campaignWorkflowInstance.findUnique({
+        where: { id: instanceId },
+        include: { workflow: { include: { organization: true } } },
+      });
+
+      if (instance) {
+        const organizationId = instance.workflow.organizationId;
+        const scrymeConfig = await db.scrymeConfiguration.findUnique({
+          where: { organizationId },
         });
 
-        if (instance) {
+        // If subType is SCRYMECHAT or organization has connected ScrymeChat as default communication client
+        if (subType === "SCRYMECHAT" || (scrymeConfig?.isActive && scrymeConfig.workspaceSlug)) {
+          if (scrymeConfig?.isActive && scrymeConfig.workspaceSlug) {
+            try {
+              const targetChannel = channelId || "general";
+              const messageContent = content || `Workflow report alert: ${label} executed for record ${instance.recordId}`;
+              await this.scrymeClient.sendMessage(scrymeConfig.workspaceSlug, targetChannel, {
+                content: messageContent,
+              });
+              console.log(`[ScrymeChat] Message sent to workspace ${scrymeConfig.workspaceSlug}, channel ${targetChannel}`);
+            } catch (scrymeError: any) {
+              console.error(`Failed to send ScrymeChat message in workflow:`, scrymeError.message);
+            }
+          }
+        }
+
+        // If it's a task, create CrmFollowUp
+        if (type === "TASK" || subType === "TASK") {
           await db.crmFollowUp.create({
             data: {
-              organizationId: instance.workflow.organizationId,
+              organizationId,
               recordId: instance.recordId,
               title: label,
               description: `Automated task from workflow: ${instance.workflow.name}`,

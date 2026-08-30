@@ -1,5 +1,29 @@
 # bakery
 
+## 9.72.0-next.3
+
+### Minor Changes
+
+- e08f4cd: new
+
+## 9.72.0-next.2
+
+### Minor Changes
+
+- 02bff17: Release
+
+## 9.71.0-next.0
+
+### Minor Changes
+
+- eac6c2d: Update
+
+## 9.70.0
+
+### Minor Changes
+
+- 7d149b1: Release
+
 ## 9.69.0
 
 ### Minor Changes

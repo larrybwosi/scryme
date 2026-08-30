@@ -2,7 +2,7 @@ import { memo, useState, useMemo, useEffect, useCallback } from 'react';
 import { Card } from '@repo/ui/components/ui/card';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
-import { Minus, Plus, ShoppingCart, Package, ImageOff, Tag } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Package, ImageOff, Tag, Wrench } from 'lucide-react';
 import { cn, useFormattedCurrency } from '@/lib/utils';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Separator } from '@repo/ui/components/ui/separator';
@@ -34,6 +34,8 @@ interface Product {
   totalStock: number;
   variants: Variant[];
   activeIngredient?: string;
+  isService?: boolean;
+  durationMinutes?: number;
 }
 
 interface ProductProps {
@@ -74,9 +76,10 @@ export const ProductCard = memo(({ product, onAddToCart, onSelectProduct, pricin
     [currentVariant, selectedUnitId]
   );
 
-  const stock = currentVariant?.stock || 0;
-  const isOutOfStock = stock <= 0;
-  const isLowStock = stock > 0 && stock < 10;
+  const isService = product.isService || product.category?.toLowerCase() === 'services' || product.category?.toLowerCase() === 'service';
+  const stock = isService ? 999999 : (currentVariant?.stock || 0);
+  const isOutOfStock = !isService && stock <= 0;
+  const isLowStock = !isService && stock > 0 && stock < 10;
 
   const hasMultipleUnits = useMemo(() => {
     if (product.variants.length > 1) return true;
@@ -186,6 +189,11 @@ export const ProductCard = memo(({ product, onAddToCart, onSelectProduct, pricin
 
           {/* Status Badges Overlay */}
           <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+            {(product.category?.toLowerCase().includes('prescription') || product.category?.toLowerCase().includes('medicine') || isPharmacy) && (
+              <Badge variant="outline" className="bg-emerald-600 text-white border-none shadow-sm text-[9px] font-extrabold uppercase">
+                Rx
+              </Badge>
+            )}
             {product.activeIngredient && (
               <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm text-[9px] font-bold uppercase truncate max-w-[120px]">
                 {product.activeIngredient}
@@ -204,7 +212,12 @@ export const ProductCard = memo(({ product, onAddToCart, onSelectProduct, pricin
                 Only {stock} left
               </Badge>
             )}
-            {pricingMode === 'wholesale' && (
+            {isService && (
+              <Badge className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm w-fit text-[10px] gap-1 font-bold uppercase">
+                <Wrench className="w-3 h-3" /> Service
+              </Badge>
+            )}
+            {pricingMode === 'wholesale' && !isService && (
               <Badge className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm w-fit text-[10px] gap-1">
                 <Tag className="w-3 h-3" /> Wholesale
               </Badge>

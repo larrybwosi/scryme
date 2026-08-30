@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "../../../components/page-header";
 import {
@@ -35,6 +36,12 @@ import {
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format, subDays } from "date-fns";
 import { StockReportFilters } from "../../../components/stocking/reports/stock-report-filters";
+
+export const metadata: Metadata = {
+  title: "Stock Reports",
+  description: "Analyze inventory valuation, turnover rate, slow-moving items, and shrinkage metrics.",
+};
+
 
 export default async function ReportsPage({
   searchParams,

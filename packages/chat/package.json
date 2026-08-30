@@ -10,8 +10,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@scryme/chat": "^2.57.1",
-    "axios": "^1.6.2"
+    "@scryme/chat": "^2.91.15",
+    "axios": "latest"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

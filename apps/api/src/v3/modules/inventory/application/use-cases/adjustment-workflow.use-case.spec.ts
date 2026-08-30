@@ -6,7 +6,7 @@ import {
   RejectStockAdjustmentUseCase,
 } from "./adjustment-workflow.use-case";
 
-vi.mock("@repo/windmill/server", () => ({
+vi.mock("@repo/shared/server", () => ({
   emitStockAdjustment: vi.fn().mockResolvedValue({}),
 }));
 

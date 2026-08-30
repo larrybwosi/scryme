@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { getSupplierById } from "../../../actions/supplier";
 import { SupplierDetailsHeader } from "../../../../components/supplier/SupplierDetailsHeader";
 import { ProductCatalog } from "../../../../components/supplier/ProductCatalog";
@@ -26,6 +27,25 @@ interface SupplierDetailsPageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+export async function generateMetadata({
+  params,
+}: SupplierDetailsPageProps): Promise<Metadata> {
+  const resolvedParams = await params;
+  const supplier = await getSupplierById(resolvedParams.id);
+
+  if (!supplier) {
+    return {
+      title: "Supplier Not Found",
+      description: "The requested supplier record could not be found.",
+    };
+  }
+
+  return {
+    title: `${supplier.name} — Supplier Profile`,
+    description: `Supplier details, product catalog, purchase orders, and contact information for ${supplier.name}.`,
+  };
 }
 
 export default async function SupplierDetailsPage({

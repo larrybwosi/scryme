@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "web",
-  "version": "6.39.0",
+  "version": "6.41.0-next.2",
   "type": "module",
   "scripts": {
     "dev": "next dev",
@@ -22,7 +22,6 @@
     "@repo/sdk": "workspace:*",
     "@repo/shared": "workspace:^",
     "@repo/ui": "workspace:*",
-    "@repo/windmill": "workspace:*",
     "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.3.3",
     "argon2": "^0.44.0",
@@ -31,7 +30,7 @@
     "date-fns": "^4.4.0",
     "decimal.js": "^10.6.0",
     "lucide-react": "^1.17.0",
-    "next": "16.2.12",
+    "next": "16.3.3",
     "nextjs-toploader": "^3.7.15",
     "nuqs": "^2.9.0",
     "papaparse": "^5.5.2",

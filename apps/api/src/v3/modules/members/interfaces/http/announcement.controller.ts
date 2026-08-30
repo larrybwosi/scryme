@@ -12,7 +12,7 @@ import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
-import { emitEvent } from "@repo/windmill/server";
+import { emitEvent } from "@repo/shared/server";
 import { IsString, IsOptional } from "class-validator";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ScrymeChatApiClient } from "@repo/chat";

@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { Zap, Plus } from "lucide-react";
 import { PageHeader } from "../../../components/page-header";
 import { getUtilityAccounts } from "../../actions/finance";
@@ -12,6 +13,12 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
+
+export const metadata: Metadata = {
+  title: "Utility Management",
+  description: "Track facility overheads, utility bills, and energy expenditure across locations.",
+};
+
 
 export default async function UtilitiesPage() {
   const accounts = await getUtilityAccounts();

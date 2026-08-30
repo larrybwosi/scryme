@@ -636,7 +636,7 @@ const PaymentModal = ({
 
     const result = ProcessSaleInputSchema.safeParse(payload);
     if (!result.success) {
-      setValidationErrors(result.error.errors.map(e => e.message));
+      setValidationErrors((result.error as any).issues.map((e: any) => e.message));
       return;
     }
 

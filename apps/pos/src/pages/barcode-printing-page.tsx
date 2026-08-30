@@ -18,7 +18,6 @@ import {
   RefreshCw,
   Loader2,
   ScanLine,
-  X,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";

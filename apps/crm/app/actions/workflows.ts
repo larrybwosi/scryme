@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@repo/db';
+import { ScrymeChatApiClient } from '@repo/chat';
 
 export async function getWorkflow(id: string) {
   return await db.campaignWorkflow.findUnique({
@@ -27,6 +28,10 @@ export async function simulateWorkflow(workflowId: string, customerId: string) {
       return { success: false, error: "Customer not found" };
     }
 
+    const scrymeConfig = await db.scrymeConfiguration.findUnique({
+      where: { organizationId: customer.organizationId },
+    });
+
     const nodes = (workflow.nodes as any[]) || [];
     const edges = (workflow.edges as any[]) || [];
 
@@ -48,6 +53,7 @@ export async function simulateWorkflow(workflowId: string, customerId: string) {
     // 2. Sequentially traverse nodes based on edges
     let currentNodeId = triggerNode.id;
     let visited = new Set<string>([currentNodeId]);
+    const scrymeClient = new ScrymeChatApiClient();
 
     while (currentNodeId) {
       const outgoingEdges = edges.filter((e) => e.source === currentNodeId);
@@ -75,18 +81,34 @@ export async function simulateWorkflow(workflowId: string, customerId: string) {
       }
 
       if (nodeType === 'action') {
+        let sentRealScrymeMessage = false;
+
+        // If subType is SCRYMECHAT or organization has connected to Scryme, send real message
+        if (scrymeConfig?.isActive && scrymeConfig.workspaceSlug) {
+          try {
+            const channelId = targetNode.data?.channelId || 'general';
+            const scrymeMsg = content || `Workflow report alert: ${label} executed for customer ${customer.name}`;
+            await scrymeClient.sendMessage(scrymeConfig.workspaceSlug, channelId, {
+              content: scrymeMsg,
+            });
+            sentRealScrymeMessage = true;
+          } catch (err: any) {
+            console.error("Failed to send real ScrymeChat message in simulation:", err.message);
+          }
+        }
+
         if (subType === 'SCRYMECHAT') {
-          details = `Sending native ScrymeChat message to target channel "${targetNode.data?.channelId || 'general'}":\n"${content || '(Empty message)'}"`;
+          details = `Sending native ScrymeChat message to target channel "${targetNode.data?.channelId || 'general'}":\n"${content || '(Empty message)'}"${sentRealScrymeMessage ? ' [Dispatched to ScrymeChat]' : ''}`;
         } else if (subType === 'EMAIL') {
-          details = `Sending email to ${customer.email || 'N/A'}:\n"${content || '(Empty email)'}"`;
+          details = `Sending email to ${customer.email || 'N/A'}:\n"${content || '(Empty email)'}"${sentRealScrymeMessage ? ' [Report copy sent to ScrymeChat]' : ''}`;
         } else if (subType === 'SMS') {
-          details = `Sending SMS to ${customer.phone || 'N/A'}:\n"${content || '(Empty SMS)'}"`;
+          details = `Sending SMS to ${customer.phone || 'N/A'}:\n"${content || '(Empty SMS)'}"${sentRealScrymeMessage ? ' [Report copy sent to ScrymeChat]' : ''}`;
         } else if (subType === 'TASK') {
-          details = `Creating follow-up task: "${label}"`;
+          details = `Creating follow-up task: "${label}"${sentRealScrymeMessage ? ' [Report copy sent to ScrymeChat]' : ''}`;
         } else if (subType === 'TAG') {
-          details = `Adding tag "${targetNode.data?.tagName || 'auto-tagged'}" to customer record.`;
+          details = `Adding tag "${targetNode.data?.tagName || 'auto-tagged'}" to customer record.${sentRealScrymeMessage ? ' [Report copy sent to ScrymeChat]' : ''}`;
         } else {
-          details = `Action completed: ${label}`;
+          details = `Action completed: ${label}${sentRealScrymeMessage ? ' [Report copy sent to ScrymeChat]' : ''}`;
         }
       } else if (nodeType === 'delay') {
         details = `Delay sequence: Waiting for ${targetNode.data?.duration || '1 Day'} before proceeding.`;

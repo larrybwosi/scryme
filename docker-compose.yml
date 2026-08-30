@@ -11,8 +11,6 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-dbuser}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dbpassword}
       - POSTGRES_DB=${POSTGRES_DB:-app_db}
-    ports:
-      - "5438:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -53,8 +51,6 @@ services:
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-admin}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-adminpassword}
-    ports:
-      - "15672:15672" # Exposed for access to the Web Management Dashboard
     networks:
       - scryme-network
     healthcheck:
@@ -103,62 +99,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-
-  # --- PERMISSION FIXER FOR NON-ROOT CONTAINERS ---
-  vol-perms:
-    image: alpine
-    user: root
-    volumes:
-      - rustfs_data:/fix_rustfs
-      - loki_data:/fix_loki
-    command: sh -c "chown -R 10001:10001 /fix_rustfs /fix_loki && touch /tmp/done && sleep infinity"
-    healthcheck:
-      test: ["CMD", "test", "-f", "/tmp/done"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    networks:
-      - scryme-network
-
-  # --- LOGGING INFRASTRUCTURE ---
-  loki:
-    image: grafana/loki:latest
-    command: -config.file=/etc/loki/local-config.yaml
-    volumes:
-      - loki_data:/tmp/loki
-      - ./docker/loki/local-config.yaml:/etc/loki/local-config.yaml:ro
-    depends_on:
-      vol-perms:
-        condition: service_healthy
-    networks:
-      - scryme-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--timeout=3",
-          "--spider",
-          "http://localhost:3100/ready",
-        ]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 45s
-
-  promtail:
-    image: grafana/promtail:latest
-    volumes:
-      - /var/log:/var/log:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Mount the folder instead of the file to prevent the "not a directory" error
-      - ./docker/promtail:/mnt/config/:ro
-    command: -config.file=/mnt/config/config.yml
-    networks:
-      - scryme-network
 
   # --- APPLICATIONS ---
   api:

@@ -27,7 +27,7 @@ import {
   emitMemberCreated,
   emitMemberRoleChanged,
   emitEvent,
-} from "@repo/windmill/server";
+} from "@repo/shared/server";
 import { createMemberToken } from "@repo/shared/api/v2";
 
 @Injectable()

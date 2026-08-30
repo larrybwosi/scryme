@@ -1,5 +1,35 @@
 # api
 
+## 6.41.0-next.3
+
+### Minor Changes
+
+- 02bff17: Release
+
+## 6.41.0-next.2
+
+### Minor Changes
+
+- 5056a90: Update
+
+## 6.41.0-next.1
+
+### Minor Changes
+
+- 5cbf61c: Update
+
+## 6.41.0-next.0
+
+### Minor Changes
+
+- eac6c2d: Update
+
+## 6.40.0
+
+### Minor Changes
+
+- 7d149b1: Release
+
 ## 6.39.0
 
 ### Minor Changes

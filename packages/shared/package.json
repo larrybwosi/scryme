@@ -144,7 +144,6 @@
     "@repo/env": "workspace:*",
     "@repo/notifications": "workspace:*",
     "@repo/chat": "workspace:*",
-    "@repo/windmill": "workspace:*",
     "@sanity/client": "^7.22.1",
     "@tanstack/react-query": "^5.100.9",
     "@types/jsonwebtoken": "^9.0.10",

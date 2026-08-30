@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "@/components/page-header";
 import { ShoppingCart, ArrowLeft } from "lucide-react";
@@ -8,6 +9,12 @@ import {
   getStockLevels,
 } from "@/app/actions/stock-management";
 import { StockRequestForm } from "@/components/stocking/requests/stock-request-form";
+
+export const metadata: Metadata = {
+  title: "New Stock Request",
+  description: "Submit a request for inventory replenishment from central storage or vendor.",
+};
+
 
 export default async function NewStockRequestPage() {
   const [locations, stock] = await Promise.all([

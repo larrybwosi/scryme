@@ -60,6 +60,10 @@ export interface Product {
   stock: number;
   sellableUnits: SellableUnit[];
   variants?: Variant[];
+
+  // Service billing features
+  isService?: boolean;
+  durationMinutes?: number;
 }
 
 export interface Variant {
@@ -84,6 +88,12 @@ export interface OrderItem {
   requiresPrescription?: boolean;
   dosageInstructions?: string;
   pharmacistVerified?: boolean;
+
+  // Service billing specific
+  isService?: boolean;
+  serviceNotes?: string;
+  providerName?: string;
+  durationMinutes?: number;
 }
 
 export interface Order {
@@ -373,6 +383,20 @@ export interface CustomerDisplayConfig {
   showCompanyLogo: boolean;
 }
 
+export interface PharmacyConfig {
+  pharmacistName: string;
+  pharmacistLicense: string;
+  facilityRegistrationNo: string;
+  requirePharmacistVerification: boolean;
+  drugInteractionAlerts: boolean;
+  genericSubstitutionPolicy: 'always_ask' | 'auto_suggest' | 'disabled';
+  allowInsuranceClaims: boolean;
+  defaultInsuranceCopayPercent: number;
+  controlledSubstanceLedger: boolean;
+  dispensingLabelHeader: string;
+  warningDisclaimerText: string;
+}
+
 export interface ThemeConfig {
   mode: 'light' | 'dark' | 'system';
   primaryColor: string;
@@ -454,6 +478,8 @@ export interface BusinessSettings {
   heldOrderExpiryHours?: number;
   requireHoldReason: boolean;
   forcedImmediateSyncThreshold: number;
+
+  pharmacyConfig: PharmacyConfig;
 }
 
 export interface Customer {
@@ -650,6 +676,8 @@ interface PosStore {
 
   updateThemeConfig: (config: Partial<ThemeConfig>) => void;
 
+  updatePharmacyConfig: (config: Partial<PharmacyConfig>) => void;
+
   updateSecurityConfig: (config: Partial<SecurityConfig>) => void;
 
   updateAutoPrintConfig: (config: Partial<AutoPrintConfig>) => void;
@@ -834,6 +862,20 @@ export const getDefaultReceiptConfig = (): ReceiptConfig => ({
   // Signature
   showSignatureLine: false,
   signatureLineText: 'Customer Signature',
+});
+
+export const getDefaultPharmacyConfig = (): PharmacyConfig => ({
+  pharmacistName: 'Dr. Jane Doe, PharmD',
+  pharmacistLicense: 'PH-98765432',
+  facilityRegistrationNo: 'PHARM-2025-001',
+  requirePharmacistVerification: true,
+  drugInteractionAlerts: true,
+  genericSubstitutionPolicy: 'auto_suggest',
+  allowInsuranceClaims: true,
+  defaultInsuranceCopayPercent: 20,
+  controlledSubstanceLedger: true,
+  dispensingLabelHeader: 'OFFICIAL DISPENSING LABEL',
+  warningDisclaimerText: 'Take as directed by your physician. Keep out of reach of children.',
 });
 
 export const getDefaultKitchenTicketConfig = (): KitchenTicketConfig => ({
@@ -1029,6 +1071,7 @@ export const usePosStore = create<PosStore>()(
             },
           ],
         },
+        pharmacyConfig: getDefaultPharmacyConfig(),
         kitchenTicketConfig: getDefaultKitchenTicketConfig(),
         cashDrawerPort: '', // No port configured by default
         enableAutoStart: false,
@@ -1123,6 +1166,8 @@ export const usePosStore = create<PosStore>()(
             quantity,
             imageUrl: product.imageUrl,
             isWholesale: options?.isWholesale || false,
+            isService: product.isService || product.category?.toLowerCase() === 'services' || product.category?.toLowerCase() === 'service',
+            durationMinutes: product.durationMinutes,
             // Pharmacy Check: if category is "Prescription" or "Medicine"
             requiresPrescription: product.category.toLowerCase().includes('prescription') || product.category.toLowerCase().includes('medicine'),
           };
@@ -1316,6 +1361,7 @@ export const usePosStore = create<PosStore>()(
                 },
               ],
             },
+            pharmacyConfig: getDefaultPharmacyConfig(),
             kitchenTicketConfig: getDefaultKitchenTicketConfig(),
             cashDrawerPort: '',
             enableAutoStart: false,
@@ -1633,12 +1679,16 @@ export const usePosStore = create<PosStore>()(
           let updated = false;
 
           for (const item of items) {
+            if (item.isService) continue; // Skip stock deduction for services
+
             const productIndex = newProducts.findIndex(p => p.productId === item.productId);
             if (productIndex !== -1) {
+              const product = newProducts[productIndex];
+              if (product.isService) continue; // Skip if product itself is marked as service
+
               const conversion = item.selectedUnit?.conversion || 1;
               const deductedAmount = item.quantity * conversion;
 
-              const product = newProducts[productIndex];
               newProducts[productIndex] = {
                 ...product,
                 stock: Math.max(0, product.stock - deductedAmount),
@@ -1656,7 +1706,7 @@ export const usePosStore = create<PosStore>()(
       getLowStockProducts: () => {
         const state = get();
         return state.products
-          .filter(p => p.stock <= state.settings.lowStockThreshold)
+          .filter(p => !p.isService && p.stock <= state.settings.lowStockThreshold)
           .map(p => ({
             productId: p.productId,
             productName: p.productName,
@@ -1837,6 +1887,14 @@ export const usePosStore = create<PosStore>()(
           settings: {
             ...state.settings,
             themeConfig: { ...state.settings.themeConfig, ...config },
+          },
+        })),
+
+      updatePharmacyConfig: (config: Partial<PharmacyConfig>) =>
+        set(state => ({
+          settings: {
+            ...state.settings,
+            pharmacyConfig: { ...state.settings.pharmacyConfig, ...config },
           },
         })),
 

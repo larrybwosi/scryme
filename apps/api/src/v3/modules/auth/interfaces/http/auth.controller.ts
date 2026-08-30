@@ -17,14 +17,25 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { AllowPublic } from "@/common/decorators/auth.decorator";
 import { ExchangeTokenUseCase } from "../../application/use-cases/exchange-token.use-case";
+import { OAuthClientManagementUseCase } from "../../application/use-cases/oauth-client-management.use-case";
 import {
   TokenRequestDto,
   TokenResponseDto,
 } from "../../application/dto/token.dto";
+import {
+  CreateOAuthClientDto,
+  UpdateOAuthClientDto,
+  OAuthClientResponseDto,
+} from "../../application/dto/oauth-client.dto";
+import {
+  CreateOAuthClientSchema,
+  UpdateOAuthClientSchema,
+} from "../../application/dto/oauth-client.schema";
 import { V3ZodValidationPipe } from "../../../../common/pipes/v3-zod-validation.pipe";
 import { TokenRequestSchema } from "../../application/dto/token.schema";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { AuthService } from "@/auth/auth.service";
+import { CurrentUser } from "@/v3/common/decorators/current-user.decorator";
 import {
   ApiErrorResponseDto,
   ApiResponseDto,
@@ -37,6 +48,7 @@ import {
 export class AuthController {
   constructor(
     private readonly exchangeTokenUseCase: ExchangeTokenUseCase,
+    private readonly oauthClientManagementUseCase: OAuthClientManagementUseCase,
     private readonly authService: AuthService,
   ) {}
 
@@ -59,6 +71,71 @@ export class AuthController {
   })
   async exchangeToken(@Body() body: TokenRequestDto) {
     return this.exchangeTokenUseCase.execute(body.clientId, body.clientSecret);
+  }
+
+  @Post("oauth/clients")
+  @UsePipes(new V3ZodValidationPipe(CreateOAuthClientSchema))
+  @ApiOperation({
+    summary: "Register a new OAuth Application Client for Sign in with Scryme",
+    operationId: "Auth_CreateOAuthClient",
+  })
+  @ApiStandardResponse({
+    status: 201,
+    type: OAuthClientResponseDto,
+    description: "OAuth Client application registered successfully",
+  })
+  async createOAuthClient(
+    @CurrentUser() user: any,
+    @Body() body: CreateOAuthClientDto,
+  ) {
+    return this.oauthClientManagementUseCase.createClient(user?.userId || user?.id, body as any);
+  }
+
+  @Get("oauth/clients")
+  @ApiOperation({
+    summary: "List registered OAuth Application Clients",
+    operationId: "Auth_ListOAuthClients",
+  })
+  async listOAuthClients(@CurrentUser() user: any) {
+    return this.oauthClientManagementUseCase.listClients(user?.userId || user?.id);
+  }
+
+  @Get("oauth/clients/:id")
+  @ApiParam({ name: "id", type: "string" })
+  @ApiOperation({
+    summary: "Get OAuth Application Client details",
+    operationId: "Auth_GetOAuthClient",
+  })
+  async getOAuthClient(@CurrentUser() user: any, @Req() req: any) {
+    const id = req.params.id;
+    return this.oauthClientManagementUseCase.getClientById(id, user?.userId || user?.id);
+  }
+
+  @Put("oauth/clients/:id")
+  @ApiParam({ name: "id", type: "string" })
+  @UsePipes(new V3ZodValidationPipe(UpdateOAuthClientSchema))
+  @ApiOperation({
+    summary: "Update OAuth Application Client configuration",
+    operationId: "Auth_UpdateOAuthClient",
+  })
+  async updateOAuthClient(
+    @CurrentUser() user: any,
+    @Req() req: any,
+    @Body() body: UpdateOAuthClientDto,
+  ) {
+    const id = req.params.id;
+    return this.oauthClientManagementUseCase.updateClient(id, user?.userId || user?.id, body as any);
+  }
+
+  @Delete("oauth/clients/:id")
+  @ApiParam({ name: "id", type: "string" })
+  @ApiOperation({
+    summary: "Delete an OAuth Application Client",
+    operationId: "Auth_DeleteOAuthClient",
+  })
+  async deleteOAuthClient(@CurrentUser() user: any, @Req() req: any) {
+    const id = req.params.id;
+    return this.oauthClientManagementUseCase.deleteClient(id, user?.userId || user?.id);
   }
 
   @AllowPublic()

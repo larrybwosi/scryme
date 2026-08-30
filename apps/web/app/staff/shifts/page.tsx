@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { redirect } from "next/navigation";
 import { getServerAuth } from "@repo/auth/server";
@@ -8,6 +9,12 @@ import { getStaffMembers } from "../../actions/staff";
 import { Button } from "@repo/ui/components/ui/button";
 import { Calendar, ChevronLeft, Clock } from "lucide-react";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Shift Roster & Schedules",
+  description: "Schedule staff shifts, breaks, working hours, and view check-in activity.",
+};
+
 
 export default async function ShiftsPage() {
   const session = await getServerAuth();

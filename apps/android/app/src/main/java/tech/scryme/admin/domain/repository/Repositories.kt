@@ -66,6 +66,7 @@ interface ExpenseRepository {
 
 interface DeviceRepository {
     suspend fun provisionDevice(setupToken: String): Result<DeviceProvisionResponseDto>
+    suspend fun authorizePairingSession(sessionId: String): Result<DeviceProvisionResponseDto>
 }
 
 interface ShiftsRepository {

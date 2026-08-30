@@ -1,5 +1,12 @@
+import { Metadata } from "next";
 import { PageHeader } from "../../../../components/page-header";
 import { CalendarClock } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Recurring Transactions",
+  description: "Automate recurring billing, subscriptions, and scheduled journal entries.",
+};
+
 
 export default function RecurringBillsPage() {
   return (
