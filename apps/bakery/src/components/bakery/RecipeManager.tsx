@@ -213,7 +213,7 @@ export default function RecipeManager() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right pr-6">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -315,7 +315,7 @@ export default function RecipeManager() {
                       ))}
                     </div>
                   </CardContent>
-                  <CardFooter className="bg-muted/10 p-2 flex justify-end gap-1 border-t border-border/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <CardFooter className="bg-muted/10 p-2 flex justify-end gap-1 border-t border-border/30 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"

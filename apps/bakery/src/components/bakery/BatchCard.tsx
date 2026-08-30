@@ -93,7 +93,7 @@ export function BatchCard({
   return (
     <Card className="group relative overflow-hidden transition-all duration-500 hover:shadow-2xl border-border/40 hover:border-primary/30 bg-card/40 backdrop-blur-md flex flex-col h-full rounded-2xl">
       {/* Quick Actions Overlay */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+      <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 group-focus-within:translate-x-0 focus-within:translate-x-0">
         <Button
           variant="secondary"
           size="icon"
@@ -101,6 +101,7 @@ export function BatchCard({
           onClick={() => onDuplicate(batch.id)}
           disabled={isDuplicating}
           title="Duplicate Batch"
+          aria-label={`Duplicate batch ${batch.name}`}
         >
           <Copy className="h-4 w-4" />
         </Button>
@@ -110,6 +111,7 @@ export function BatchCard({
           className="h-9 w-9 bg-background/90 backdrop-blur-md border border-border/50 shadow-lg hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer rounded-xl"
           onClick={() => onSaveTemplate(batch)}
           title="Save as Template"
+          aria-label={`Save batch ${batch.name} as template`}
         >
           <ClipboardList className="h-4 w-4" />
         </Button>
@@ -119,6 +121,7 @@ export function BatchCard({
           className="h-9 w-9 bg-background/90 backdrop-blur-md border border-border/50 shadow-lg hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer rounded-xl"
           onClick={() => onPrint(batch)}
           title="Print Label"
+          aria-label={`Print label for batch ${batch.name}`}
         >
           <Printer className="h-4 w-4" />
         </Button>

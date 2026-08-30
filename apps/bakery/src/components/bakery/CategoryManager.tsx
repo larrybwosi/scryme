@@ -433,7 +433,7 @@ export default function CategoryManager() {
           const stats = getCategoryStats(category.id);
           return (
             <Card key={category.id} className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg border-border/60 hover:border-primary/20 bg-card/50 backdrop-blur-sm">
-               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
+               <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity z-10 flex gap-1">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
