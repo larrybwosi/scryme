@@ -43,6 +43,17 @@ export class PurchaseOrderUseCase {
     }
 
     return this.prisma.client.$transaction(async (tx) => {
+      const variantIds = Array.from(new Set(dto.items.map((i) => i.variantId)));
+      const validVariantsCount = await tx.productVariant.count({
+        where: {
+          id: { in: variantIds },
+          product: { organizationId },
+        },
+      });
+      if (validVariantsCount !== variantIds.length) {
+        throw new BadRequestException("One or more product variants were not found");
+      }
+
       let subTotal = 0;
       for (const item of dto.items) {
         subTotal += item.orderedQuantity * item.unitCost;

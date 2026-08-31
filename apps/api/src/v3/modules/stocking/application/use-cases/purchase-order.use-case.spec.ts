@@ -31,6 +31,9 @@ describe("PurchaseOrderUseCase", () => {
         $transaction: vi.fn((cb) => cb(prismaMock.tx)),
       },
       tx: {
+        productVariant: {
+          count: vi.fn(),
+        },
         purchase: {
           findFirst: vi.fn(),
           findUnique: vi.fn(),
@@ -74,6 +77,68 @@ describe("PurchaseOrderUseCase", () => {
       pricingManagementServiceMock as any,
       accountingServiceMock as any,
     );
+  });
+
+  describe("create", () => {
+    const createDto = {
+      supplierId: "sup-123",
+      items: [
+        {
+          variantId: "var-123",
+          orderedQuantity: 5,
+          unitCost: 10,
+        },
+      ],
+    };
+
+    it("should throw NotFoundException if supplier does not belong to organization", async () => {
+      prismaMock.client.supplier.findFirst.mockResolvedValue(null);
+
+      await expect(
+        useCase.create(mockOrgId, mockMemberId, createDto as any),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prismaMock.client.supplier.findFirst).toHaveBeenCalledWith({
+        where: { id: "sup-123", organizationId: mockOrgId },
+      });
+    });
+
+    it("should throw BadRequestException if any variant does not belong to organization", async () => {
+      prismaMock.client.supplier.findFirst.mockResolvedValue({ id: "sup-123" });
+      prismaMock.tx.productVariant.count.mockResolvedValue(0);
+
+      await expect(
+        useCase.create(mockOrgId, mockMemberId, createDto as any),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(prismaMock.tx.productVariant.count).toHaveBeenCalledWith({
+        where: {
+          id: { in: ["var-123"] },
+          product: { organizationId: mockOrgId },
+        },
+      });
+    });
+
+    it("should create purchase order successfully when supplier and variants belong to organization", async () => {
+      prismaMock.client.supplier.findFirst.mockResolvedValue({ id: "sup-123" });
+      prismaMock.tx.productVariant.count.mockResolvedValue(1);
+      prismaMock.tx.purchase.create.mockResolvedValue({
+        id: mockPurchaseId,
+        purchaseNumber: "PO-123",
+        totalAmount: 50,
+        currency: "KES",
+        member: { user: { name: "Test User" } },
+      });
+
+      const result = await useCase.create(
+        mockOrgId,
+        mockMemberId,
+        createDto as any,
+      );
+
+      expect(prismaMock.tx.purchase.create).toHaveBeenCalled();
+      expect(result.id).toBe(mockPurchaseId);
+    });
   });
 
   describe("receive", () => {
