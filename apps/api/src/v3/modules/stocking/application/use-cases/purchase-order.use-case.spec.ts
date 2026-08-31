@@ -150,10 +150,12 @@ describe("PurchaseOrderUseCase", () => {
       prismaMock.tx.stockBatch.create.mockResolvedValue({ id: "batch-1" });
       prismaMock.tx.productVariantStock.upsert.mockResolvedValue({});
       prismaMock.tx.purchaseItem.update.mockResolvedValue({});
-      prismaMock.tx.purchase.findUnique.mockResolvedValue({
-        ...mockPurchase,
-        items: [{ ...mockPurchase.items[0], receivedQuantity: 10 }],
-      });
+      prismaMock.tx.purchase.findFirst
+        .mockResolvedValueOnce(mockPurchase)
+        .mockResolvedValueOnce({
+          ...mockPurchase,
+          items: [{ ...mockPurchase.items[0], receivedQuantity: 10 }],
+        });
       prismaMock.tx.purchase.update.mockResolvedValue({});
 
       const result = await useCase.receive(
