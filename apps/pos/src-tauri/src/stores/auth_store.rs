@@ -814,6 +814,98 @@ pub async fn update_base_url(state: State<'_, AuthState>, base_url: String) -> R
 }
 
 #[tauri::command]
+pub async fn create_pairing_session_command(
+    state: State<'_, AuthState>,
+) -> Result<serde_json::Value, String> {
+    let request = state.build_request(
+        reqwest::Method::POST,
+        "api/v3/pos/pairing/session",
+    )?;
+
+    let res = request
+        .send()
+        .await
+        .map_err(|e| format!("Network error creating pairing session: {}", e))?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(format!("Failed to create pairing session: {} - {}", status, err_body));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| format!("Invalid JSON response: {}", e))?;
+
+    Ok(data)
+}
+
+#[tauri::command]
+pub async fn get_pairing_session_status_command(
+    state: State<'_, AuthState>,
+    session_id: String,
+) -> Result<serde_json::Value, String> {
+    let path = format!("api/v3/pos/pairing/session/{}/status", session_id);
+    let request = state.build_request(reqwest::Method::GET, &path)?;
+
+    let res = request
+        .send()
+        .await
+        .map_err(|e| format!("Network error checking session status: {}", e))?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(format!("Failed to check session status: {} - {}", status, err_body));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| format!("Invalid JSON response: {}", e))?;
+
+    Ok(data)
+}
+
+#[tauri::command]
+pub async fn authorize_pairing_session_command(
+    state: State<'_, AuthState>,
+    session_id: String,
+    location_id: Option<String>,
+    device_name: Option<String>,
+    device_type: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let path = format!("api/v3/pos/pairing/session/{}/authorize", session_id);
+    let mut request = state.build_request(reqwest::Method::POST, &path)?;
+
+    let body = serde_json::json!({
+        "locationId": location_id,
+        "deviceName": device_name,
+        "deviceType": device_type,
+    });
+    request = request.json(&body);
+
+    let res = request
+        .send()
+        .await
+        .map_err(|e| format!("Network error authorizing session: {}", e))?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(format!("Failed to authorize session: {} - {}", status, err_body));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| format!("Invalid JSON response: {}", e))?;
+
+    Ok(data)
+}
+
+#[tauri::command]
 pub async fn update_device_location(
     state: State<'_, AuthState>,
     location_id: String,
