@@ -100,6 +100,14 @@ describe("Stocking Flow Verification", () => {
 
     // Mock Prisma Client Transaction Object
     mockTx = {
+      productVariant: {
+        count: vi.fn().mockImplementation(({ where }: any) => {
+          if (where?.id?.in) {
+            return Promise.resolve(where.id.in.length);
+          }
+          return Promise.resolve(1);
+        }),
+      },
       purchase: {
         create: vi.fn(),
         findUnique: vi.fn(),
