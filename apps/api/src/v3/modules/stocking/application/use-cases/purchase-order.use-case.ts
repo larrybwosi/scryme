@@ -330,8 +330,10 @@ export class PurchaseOrderUseCase {
         });
       }
 
-      const updatedPurchase = await tx.purchase.findUnique({
-        where: { id: purchaseId },
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // Purchase lacks a composite unique index on [id, organizationId].
+      const updatedPurchase = await tx.purchase.findFirst({
+        where: { id: purchaseId, organizationId },
         include: { items: true },
       });
 
