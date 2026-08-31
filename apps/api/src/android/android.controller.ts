@@ -104,7 +104,14 @@ export class AndroidController {
     }
 
     res.status(200);
-    const orgId = json.user?.activeOrganizationId;
+    let orgId = json.user?.activeOrganizationId;
+    if (!orgId && json.user?.id) {
+      const firstMembership = await this.prisma.client.member.findFirst({
+        where: { userId: json.user.id, deletedAt: null },
+        select: { organizationId: true },
+      });
+      if (firstMembership) orgId = firstMembership.organizationId;
+    }
     const org = orgId
       ? await this.prisma.client.organization.findUnique({ where: { id: orgId } })
       : null;
@@ -113,6 +120,7 @@ export class AndroidController {
       token: token || null,
       user: {
         ...json.user,
+        activeOrganizationId: org?.id || json.user?.activeOrganizationId || null,
         activeOrganizationSlug: org?.slug || null,
         activeOrganizationName: org?.name || null,
       },
@@ -124,8 +132,16 @@ export class AndroidController {
     const user = await this.prisma.client.user.findUnique({
       where: { id: req.user.id },
     });
-    const org = user?.activeOrganizationId
-      ? await this.prisma.client.organization.findUnique({ where: { id: user.activeOrganizationId } })
+    let orgId = user?.activeOrganizationId || req.organization?.id;
+    if (!orgId && user?.id) {
+      const firstMembership = await this.prisma.client.member.findFirst({
+        where: { userId: user.id, deletedAt: null },
+        select: { organizationId: true },
+      });
+      if (firstMembership) orgId = firstMembership.organizationId;
+    }
+    const org = orgId
+      ? await this.prisma.client.organization.findUnique({ where: { id: orgId } })
       : req.organization;
     return {
       success: true,
@@ -134,7 +150,7 @@ export class AndroidController {
         id: user.id,
         email: user.email,
         name: user.name,
-        activeOrganizationId: user.activeOrganizationId,
+        activeOrganizationId: org?.id || user?.activeOrganizationId || null,
         activeOrganizationSlug: org?.slug || null,
         activeOrganizationName: org?.name || null,
       },
