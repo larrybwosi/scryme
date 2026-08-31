@@ -8,7 +8,6 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { type V2ApiContext } from "@repo/shared/api/v2";
-import { ably } from "@repo/shared/ably";
 import { createMemberToken } from "@repo/shared/api/v2";
 import { verifyQRToken, getDocumentUrl } from "@repo/shared/api/v2";
 import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v2";
@@ -99,8 +98,6 @@ export class PosService {
       },
     });
 
-    // SECURITY (Sentinel): Mitigate timing attacks and cardId/member enumeration side-channels by always
-    // performing a cryptographically heavy bcrypt.compare on a valid dummy PIN hash if member or pinHash is missing.
     const dummyPinHash = "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
     const pinHashToCompare = member?.pinHash || dummyPinHash;
     const isPinValid = await bcrypt.compare(pin, pinHashToCompare);
@@ -188,8 +185,6 @@ export class PosService {
         throw new BadRequestException("Member is not checked in.");
       }
 
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because AttendanceLog lacks
-      // a composite unique index on [id, organizationId]. Scoping by organizationId prevents IDOR.
       const attendanceLog = await tx.attendanceLog.findFirst({
         where: { id: member.currentAttendanceLogId, organizationId: ctx.organizationId },
       });
@@ -321,7 +316,6 @@ export class PosService {
           organizationId: ctx.organizationId,
           status: { in: ["ORDERED", "PARTIALLY_RECEIVED"] },
         },
-        // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
         select: {
           id: true,
           purchaseNumber: true,
@@ -357,7 +351,6 @@ export class PosService {
           toLocationId: locationId,
           status: { in: ["SHIPPED", "IN_TRANSIT"] as any },
         },
-        // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
         select: {
           id: true,
           transferNumber: true,
@@ -435,12 +428,6 @@ export class PosService {
 
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: payload.transactionId, organizationId: ctx.organizationId },
-      /**
-       * ⚡ Bolt: Performance Optimization
-       * Using targeted select instead of include to fetch only required fields.
-       * This removes the unused 'payments' join and reduces the database I/O
-       * and network payload for 'customer' and 'items'.
-       */
       select: {
         id: true,
         number: true,
@@ -488,46 +475,15 @@ export class PosService {
 
     const { organizationId, memberId } = ctx;
     const paymentChannel = `organization:${organizationId}:payments`;
-    const notificationChannel = `organization:${organizationId}:notifications`;
-    const organizationChannel = `organization:${organizationId}:*`;
 
-    const provider = process.env.REALTIME_PROVIDER || "ably";
-
-    let tokenRequest: any;
-
-    if (provider === "ably") {
-      tokenRequest = await ably.auth.requestToken({
-        clientId: memberId,
-        capability: JSON.stringify({
-          "order-*": ["subscribe", "publish"],
-          "cashier-notifications": ["subscribe"],
-          "channel:*": ["subscribe", "publish", "history"],
-          "session:*": ["subscribe", "publish", "history"],
-          "system:*": ["subscribe", "publish", "history"],
-          "presence:*": ["subscribe", "publish", "history", "presence"],
-          "store:*": ["subscribe", "publish", "history", "presence"],
-          [paymentChannel]: ["subscribe"],
-          [notificationChannel]: ["subscribe"],
-          [organizationChannel]: [
-            "subscribe",
-            "publish",
-            "history",
-            "presence",
-          ],
-        }),
-        ttl: 3600 * 1000,
-        timestamp: Date.now(),
-      });
-    } else {
-      tokenRequest = {
-        token: "socketio-placeholder-token",
-        clientId: memberId,
-      };
-    }
+    const tokenRequest = {
+      token: "socketio-placeholder-token",
+      clientId: memberId,
+    };
 
     return {
       tokenRequest,
-      provider,
+      provider: "socketio",
       metadata: { organizationId, paymentChannel },
     };
   }
@@ -569,9 +525,6 @@ export class PosService {
 
     if (!locationId) throw new BadRequestException("Location ID is required.");
 
-    // ⚡ Bolt Optimization: Conditionally filter the `category.findMany` query with `updatedAt: { gt: new Date(lastSync) }`
-    // when `lastSync` is provided in the query parameters. This converts category synchronization to a true delta/incremental sync,
-    // avoiding redundant database reads and bloated category payload transfers on every POS synchronization request.
     const [products, customers, categories] = await Promise.all([
       this.getProducts(ctx, { ...query, locationId }),
       this.getCustomersDelta(ctx, lastSync),
@@ -599,7 +552,6 @@ export class PosService {
 
     const where: any = { organizationId };
 
-    // Contextual filtering
     if (locationId) where.locationId = locationId;
     if (memberId && !ctx.permissions.includes("*")) {
       where.memberId = memberId;
@@ -626,8 +578,6 @@ export class PosService {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        // ⚡ Bolt: Use select instead of include to reduce payload size and speed up serialization.
-        // All fields required for the response shaping below are explicitly selected.
         select: {
           id: true,
           number: true,
@@ -781,7 +731,6 @@ export class PosService {
         organizationId: ctx.organizationId,
         OR: [{ fromLocationId: locationId }, { toLocationId: locationId }],
       },
-      // ⚡ Bolt: Use select instead of include to reduce database payload size and serialization overhead.
       select: {
         id: true,
         requestNumber: true,
@@ -839,11 +788,6 @@ export class PosService {
       },
     });
 
-    /**
-     * ⚡ Bolt Optimization: Index variants into a Map to avoid O(N*M) nested array searches.
-     * This reduces lookups to O(1) constant-time complexity, ensuring high performance
-     * for bulk stock request creation even with large numbers of items.
-     */
     const variantMap = new Map(variants.map(v => [v.id, v]));
 
     let totalEstimatedCost = new Decimal(0);
@@ -863,7 +807,6 @@ export class PosService {
       };
     });
 
-    // Concurrency-safe request number generation with retries
     let request: any;
     let attempts = 0;
     const maxAttempts = 5;
@@ -899,7 +842,7 @@ export class PosService {
             items: { create: itemsToCreate },
           },
         });
-        break; // Success
+        break;
       } catch (error) {
         if (
           error.code === "P2002" &&
@@ -911,7 +854,7 @@ export class PosService {
               "Failed to generate a unique stock request number after multiple attempts.",
             );
           }
-          continue; // Retry
+          continue;
         }
         throw error;
       }
@@ -946,7 +889,6 @@ export class PosService {
 
     if (!request) throw new NotFoundException("Stock request not found");
 
-    // Authorization check: Only the requesting location can cancel
     if (request.fromLocationId !== ctx.locationId && !isAdmin) {
       throw new UnauthorizedException(
         "You do not have permission to cancel this stock request",
@@ -1004,7 +946,6 @@ export class PosService {
       },
     });
 
-    // Update transaction payment status if necessary
     const allPayments = await this.prisma.client.payment.findMany({
       where: { transactionId },
     });
@@ -1043,8 +984,6 @@ export class PosService {
 
     const priceLists = await this.prisma.client.priceList.findMany({
       where,
-      // ⚡ Bolt: Use select instead of include to fetch only essential scalar fields and relations.
-      // This reduces database payload size and serialization overhead.
       select: {
         id: true,
         code: true,
@@ -1121,7 +1060,7 @@ export class PosService {
           lists,
           items,
           customerAllocations,
-          deletedItemIds: [], // Would need a soft-delete mechanism to track this properly
+          deletedItemIds: [],
         },
       },
     };
@@ -1130,8 +1069,6 @@ export class PosService {
   async syncShifts(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(ShiftSyncSchema, body);
 
-    // In a real implementation, you might want to save this to an Actual Shifts table
-    // For now, we'll just log it and audit it.
     this.logger.log(
       `Syncing shift ${validated.shift_id} for location ${validated.location_id}`,
     );
@@ -1176,7 +1113,6 @@ export class PosService {
   }
 
   async receivePurchase(ctx: V2ApiContext, id: string, body: any) {
-    // This would typically involve updating purchase order status and inventory
     this.logger.log(`Receiving purchase ${id} for location ${ctx.locationId}`);
     return { success: true };
   }
@@ -1196,7 +1132,6 @@ export class PosService {
     }
 
     await this.prisma.client.$transaction(async tx => {
-      // 1. Update transfer status to COMPLETED
       await tx.stockTransfer.update({
         where: { id },
         data: {
@@ -1234,7 +1169,6 @@ export class PosService {
         variants.map((v: any) => [v.id, v]),
       );
 
-      // 2. Adjust inventory for each item
       for (const item of transfer.items) {
         const receivedItem = receivedItemMap.get(item.variantId);
         const qtyToReceive = receivedItem
@@ -1273,7 +1207,6 @@ export class PosService {
           });
         }
 
-        // 3. Record stock movement
         await tx.stockMovement.create({
           data: {
             organizationId: ctx.organizationId,
@@ -1299,8 +1232,6 @@ export class PosService {
       where: {
         organizationId: ctx.organizationId,
         isActive: true,
-        // Assuming drivers have a specific role or tag, or just return all active members for now
-        // adjust based on actual schema if needed
       },
       select: {
         id: true,
@@ -1338,11 +1269,6 @@ export class PosService {
       },
     });
 
-    /**
-     * ⚡ Bolt Optimization: Index variants into a Map to avoid O(N*M) nested array searches.
-     * This reduces lookups to O(1) constant-time complexity, ensuring high performance
-     * for bulk stock transfer creation even with large numbers of items.
-     */
     const variantMap = new Map(variants.map(v => [v.id, v]));
 
     const itemsToCreate = validated.items.map((item: any) => {
@@ -1356,7 +1282,6 @@ export class PosService {
       };
     });
 
-    // Concurrency-safe transfer number generation
     let transfer: any;
     let attempts = 0;
     const maxAttempts = 5;
@@ -1431,7 +1356,6 @@ export class PosService {
 
     const validated = this.validate<any>(RegisterPettyCashSchema, body);
 
-    // 1. Ensure "Petty Cash" category exists
     let category = await this.prisma.client.expenseCategory.findFirst({
       where: {
         organizationId,
@@ -1449,7 +1373,6 @@ export class PosService {
       });
     }
 
-    // 2. Identify the petty cash fund
     let fundId = validated.pettyCashFundId;
     if (!fundId) {
       let fund = null;
@@ -1471,7 +1394,6 @@ export class PosService {
       throw new NotFoundException("No active petty cash fund found.");
     }
 
-    // 3. Determine status and create expense
     const org = await this.prisma.client.organization.findUnique({
       where: { id: organizationId },
       select: {
@@ -1619,7 +1541,6 @@ export class PosService {
     const validated = this.validate<any>(RegisterBarcodeSchema, body);
     const { variantId, barcode } = validated;
 
-    // Check if variant exists and belongs to the organization
     const variant = await this.prisma.client.productVariant.findFirst({
       where: {
         id: variantId,
@@ -1631,7 +1552,6 @@ export class PosService {
       throw new NotFoundException("Product variant not found");
     }
 
-    // Check if barcode is already used by another variant in the same organization
     const existing = await this.prisma.client.productVariant.findFirst({
       where: {
         barcode,

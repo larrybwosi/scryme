@@ -11,16 +11,6 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./ably": {
-      "types": "./src/ably/index.ts",
-      "import": "./dist/ably.js",
-      "require": "./dist/ably.cjs"
-    },
-    "./ably/client": {
-      "types": "./src/ably/client.ts",
-      "import": "./dist/ably/client.js",
-      "require": "./dist/ably/client.cjs"
-    },
     "./axios": {
       "types": "./src/axios/index.ts",
       "import": "./dist/axios.js",
