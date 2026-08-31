@@ -8,7 +8,6 @@ import { useQueryClient } from '@tanstack/react-query';
 
 export default function RealtimeInitializer() {
   const initialize = useRealtimeStore((state) => state.initialize);
-  const ablyClient = useRealtimeStore((state) => state.ablyClient);
   const socketClient = useRealtimeStore((state) => state.socketClient);
   const connectionState = useRealtimeStore((state) => state.connectionState);
   const subscribe = useRealtimeStore((state) => state.subscribe);
@@ -32,32 +31,18 @@ export default function RealtimeInitializer() {
   useEffect(() => {
     if (!currentLocation?.id || !currentMember) return;
 
-    if (ablyClient) {
-        const presenceChannel = ablyClient.channels.get(`presence:${currentLocation.id}`);
-        presenceChannel.presence
-          .enter({ id: currentMember.id, name: currentMember.name, updatedAt: new Date().toISOString() })
-          .catch(() => {});
-
-        return () => {
-          presenceChannel.presence.leave().catch(() => {});
-        };
-    } else if (socketClient && socketClient.connected) {
+    if (socketClient && socketClient.connected) {
         socketClient.emit('join', { channel: `presence:${currentLocation.id}` });
     }
 
-  }, [ablyClient, socketClient, currentLocation?.id, currentMember]);
+  }, [socketClient, currentLocation?.id, currentMember]);
 
   // ── Reconnect when page becomes visible after being backgrounded ───────────
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
       const current = useRealtimeStore.getState();
-      if (
-        current.ablyClient &&
-        ['disconnected', 'suspended', 'failed'].includes(current.connectionState)
-      ) {
-        current.ablyClient.connect();
-      } else if (current.socketClient && !current.socketClient.connected) {
+      if (current.socketClient && !current.socketClient.connected) {
         current.socketClient.connect();
       }
     };
@@ -150,7 +135,6 @@ export default function RealtimeInitializer() {
   useEffect(() => {
     return () => {
       const state = useRealtimeStore.getState();
-      state.ablyClient?.close();
       state.socketClient?.disconnect();
     };
   }, []);

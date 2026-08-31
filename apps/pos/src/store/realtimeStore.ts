@@ -1,7 +1,6 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
 import { z } from 'zod';
 import { invoke } from '@tauri-apps/api/core';
-import type { AuthOptions, Realtime } from 'ably';
 import type { Socket } from 'socket.io-client';
 import { useAuthStore } from './pos-auth-store';
 
@@ -19,24 +18,10 @@ const RealtimeConfigSchema = z.object({
   }),
 });
 
-const BACKOFF_BASE_MS = 1_000;
-const BACKOFF_MAX_MS = 30_000;
-const BACKOFF_MAX_RETRIES = 5;
-
-function jitteredBackoff(attempt: number): number {
-  const exp = Math.min(BACKOFF_BASE_MS * Math.pow(2, attempt), BACKOFF_MAX_MS);
-  return exp + Math.random() * 1_000;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 type RealtimeConnectionState = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'suspended' | 'failed' | 'closed';
 
 interface RealtimeState {
-  provider: 'ably' | 'socketio';
-  ablyClient: Realtime | null;
+  provider: 'socketio';
   socketClient: Socket | null;
   paymentChannel: string | null;
   status: 'idle' | 'loading' | 'success' | 'error';
@@ -49,8 +34,7 @@ interface RealtimeState {
 }
 
 export const useRealtimeStore = create<RealtimeState>((set, get) => ({
-  provider: (import.meta.env.VITE_REALTIME_PROVIDER as any) || (import.meta.env.NEXT_PUBLIC_REALTIME_PROVIDER as any) || 'ably',
-  ablyClient: null,
+  provider: 'socketio',
   socketClient: null,
   paymentChannel: null,
   status: 'idle',
@@ -59,157 +43,83 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
   error: null,
 
   initialize: () => {
-    const { ablyClient, socketClient, connectionState, provider } = get();
+    const { socketClient, connectionState } = get();
 
-    if ((ablyClient || socketClient) && !['closed', 'failed', 'idle'].includes(connectionState)) {
+    if (socketClient && !['closed', 'failed', 'idle'].includes(connectionState)) {
       return;
     }
 
-    if (ablyClient) ablyClient.close();
     if (socketClient) socketClient.disconnect();
 
-    set({ status: 'loading', error: null, ablyClient: null, socketClient: null, authRetryCount: 0 });
+    set({ status: 'loading', error: null, socketClient: null, authRetryCount: 0 });
 
-    if (provider === 'socketio') {
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3002';
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3002';
 
-      const initSocket = async () => {
-        const { io } = await import('socket.io-client');
-        const socket = io(socketUrl, {
-          transports: ['websocket'],
-          autoConnect: false,
-        });
+    const initSocket = async () => {
+      const { io } = await import('socket.io-client');
+      const socket = io(socketUrl, {
+        transports: ['websocket'],
+        autoConnect: false,
+      });
 
-        socket.on('connect', () => {
-          set({ connectionState: 'connected', status: 'success' });
-          invoke('update_network_status_command', { isOnline: true }).catch(console.error);
+      socket.on('connect', () => {
+        set({ connectionState: 'connected', status: 'success' });
+        invoke('update_network_status_command', { isOnline: true }).catch(console.error);
+        window.dispatchEvent(new CustomEvent('realtime-connection-change', { detail: { state: 'connected' } }));
 
-          const authStore = useAuthStore.getState();
-          const locationId = authStore.currentLocation?.id;
-          const member = authStore.currentMember;
-          if (locationId && member) {
-              socket.emit('presence:enter', {
-                  channel: `presence:${locationId}`,
-                  metadata: { id: member.id, name: member.name, lastSeen: new Date().toISOString() }
-              });
-          }
-        });
-
-        socket.on('disconnect', () => {
-          set({ connectionState: 'disconnected' });
-          invoke('update_network_status_command', { isOnline: false }).catch(console.error);
-        });
-
-        socket.on('connect_error', (error) => {
-          set({ connectionState: 'failed', status: 'error', error: error.message });
-        });
-
-        const fetchToken = async () => {
-            try {
-                const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
-                const parsed = RealtimeConfigSchema.parse(response);
-                set({ paymentChannel: parsed.data.metadata.paymentChannel });
-
-                socket.auth = { token: parsed.data.tokenRequest.token };
-                socket.connect();
-            } catch (error) {
-                set({ status: 'error', error: 'Failed to fetch auth token' });
-            }
-        };
-
-        fetchToken();
-        set({ socketClient: socket });
-      };
-
-      initSocket();
-
-    } else {
-      let authAttempt = 0;
-      const authCallback: AuthOptions['authCallback'] = async (tokenParams, callback) => {
-        while (authAttempt < BACKOFF_MAX_RETRIES) {
-          try {
-            const response = await invoke<unknown>('get_ably_auth_token_command', { params: tokenParams });
-            const parsed = RealtimeConfigSchema.parse(response);
-            const { data } = parsed;
-
-            authAttempt = 0;
-            set({
-              paymentChannel: data.metadata.paymentChannel,
-              status: 'success',
-              authRetryCount: 0,
-              error: null,
+        const authStore = useAuthStore.getState();
+        const locationId = authStore.currentLocation?.id;
+        const member = authStore.currentMember;
+        if (locationId && member) {
+            socket.emit('presence:enter', {
+                channel: `presence:${locationId}`,
+                metadata: { id: member.id, name: member.name, lastSeen: new Date().toISOString() }
             });
-
-            callback(null, data.tokenRequest.token);
-            return;
-          } catch (error) {
-            authAttempt += 1;
-            set({ authRetryCount: authAttempt });
-            const errorMessage = typeof error === 'string' ? error : error instanceof Error ? error.message : 'Failed to fetch Ably auth token';
-
-            if (authAttempt >= BACKOFF_MAX_RETRIES) {
-              set({ status: 'error', error: errorMessage });
-              // Create a compatible error object without importing ErrorInfo as a value
-              callback({ message: errorMessage, code: 40001, statusCode: 401 } as any, null);
-              return;
-            }
-            await sleep(jitteredBackoff(authAttempt));
-          }
         }
-      };
+      });
 
-      const initAbly = async () => {
-        const { Realtime } = await import('ably');
-        const client = new Realtime({
-          authCallback,
-          autoConnect: true,
-        });
+      socket.on('disconnect', (reason) => {
+        set({ connectionState: 'disconnected' });
+        invoke('update_network_status_command', { isOnline: false }).catch(console.error);
+        window.dispatchEvent(new CustomEvent('realtime-connection-change', { detail: { state: 'disconnected', reason } }));
+      });
 
-        client.connection.on(stateChange => {
-          const state = stateChange.current as RealtimeConnectionState;
-          set({ connectionState: state });
+      socket.on('connect_error', (error) => {
+        set({ connectionState: 'failed', status: 'error', error: error.message });
+        window.dispatchEvent(new CustomEvent('realtime-connection-change', { detail: { state: 'failed', reason: error } }));
+      });
 
-          if (state === 'connected') {
-            invoke('update_network_status_command', { isOnline: true }).catch(console.error);
-            const authStore = useAuthStore.getState();
-            const locationId = authStore.currentLocation?.id;
-            const member = authStore.currentMember;
+      const fetchToken = async () => {
+          try {
+              const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
+              const parsed = RealtimeConfigSchema.parse(response);
+              set({ paymentChannel: parsed.data.metadata.paymentChannel });
 
-            if (locationId && member) {
-              const presenceChannel = client.channels.get(`presence:${locationId}`);
-              presenceChannel.presence.enter({ id: member.id, name: member.name, lastSeen: new Date().toISOString() });
-            }
-          } else if (['disconnected', 'suspended', 'failed', 'closed'].includes(state)) {
-            invoke('update_network_status_command', { isOnline: false }).catch(console.error);
+              socket.auth = { token: parsed.data.tokenRequest.token };
+              socket.connect();
+          } catch (error) {
+              set({ status: 'error', error: 'Failed to fetch auth token' });
+              socket.connect();
           }
-          window.dispatchEvent(new CustomEvent('realtime-connection-change', { detail: { state, reason: stateChange.reason } }));
-        });
-
-        set({ ablyClient: client });
       };
 
-      initAbly();
-    }
+      fetchToken();
+      set({ socketClient: socket });
+    };
+
+    initSocket();
   },
 
   publish: async (channelName, event, data) => {
-    const { provider, ablyClient, socketClient } = get();
-    if (provider === 'ably' && ablyClient) {
-      await ablyClient.channels.get(channelName).publish(event, data);
-    } else if (provider === 'socketio' && socketClient) {
+    const { socketClient } = get();
+    if (socketClient) {
       socketClient.emit('publish', { channel: channelName, event, data });
     }
   },
 
   subscribe: (channelName, event, callback, options) => {
-    const { provider, ablyClient, socketClient } = get();
-    if (provider === 'ably' && ablyClient) {
-      const channelNameWithRewind = options?.rewind ? `[?rewind=${options.rewind}]${channelName}` : channelName;
-      const channel = ablyClient.channels.get(channelNameWithRewind);
-      const internalCallback = (message: any) => callback(message.data);
-      channel.subscribe(event, internalCallback);
-      return () => channel.unsubscribe(event, internalCallback);
-    } else if (provider === 'socketio' && socketClient) {
+    const { socketClient } = get();
+    if (socketClient) {
       socketClient.emit('join', { channel: channelName, options });
       const internalCallback = (data: any) => {
           callback(data);
