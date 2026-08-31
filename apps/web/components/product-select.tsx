@@ -43,7 +43,13 @@ export function ProductSelect({
 }: ProductSelectProps) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedProduct = products.find(p => p.id === value);
+  // ⚡ Bolt Optimization: Memoize selected product lookup to prevent repeated linear O(N)
+  // array .find() scans on component re-renders (e.g. search input changes or popover toggles)
+  // when value and products haven't changed, with zero map object allocation overhead.
+  const selectedProduct = React.useMemo(
+    () => (value ? products.find(p => p.id === value) : undefined),
+    [products, value],
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

@@ -47,7 +47,13 @@ export function ProductVariantSelect({
 }: ProductVariantSelectProps) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedVariant = variants.find(v => v.id === value);
+  // ⚡ Bolt Optimization: Memoize selected variant lookup to prevent repeated linear O(N)
+  // array .find() scans on component re-renders (e.g. search input changes or popover toggles)
+  // when value and variants haven't changed, with zero map object allocation overhead.
+  const selectedVariant = React.useMemo(
+    () => (value ? variants.find(v => v.id === value) : undefined),
+    [variants, value],
+  );
 
   const formatLabel = (variant: ProductVariant) => {
     if (variant.name === "Default" || variant.name === "" || !variant.name) {

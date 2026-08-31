@@ -1,3 +1,7 @@
+## 2026-09-01 - [Direct Lookup Memoization vs Map Allocation in Single-Item Components]
+**Learning:** Instantiating a `Map` structure inside `useMemo` for single-item lookups allocates memory and adds GC overhead every time the source array updates. Directly memoizing array searches using `React.useMemo(() => items.find(i => i.id === selectedId), [items, selectedId])` eliminates linear array scans on unrelated component re-renders (such as input typing or dropdown toggling) with zero auxiliary object allocation.
+**Action:** Prefer direct `useMemo` for single-item array lookups instead of constructing full `Map` instances unless multiple lookups are performed per render.
+
 ## 2026-08-21 - [Parallelizing Async Iterations in InvoiceAutomationService]
 **Learning:** Sequential `for...of` loops awaiting external network operations (like notifications or workflow triggers) or database queries per entity create an $O(N)$ blocking latency bottleneck. Mapping over collections and awaiting them with `Promise.all` collapses execution time to $O(1)$ concurrent roundtrips.
 **Action:** Replace sequential `for...of` async loops in batch services with `Promise.all(items.map(...))` to maximize concurrency while maintaining localized error handling.
