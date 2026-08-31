@@ -43,23 +43,24 @@ export class NotificationEngine {
 
     let { channels = ["WEBHOOK"] } = options;
 
-    // Enterprise: Standardize Scryme as primary channel if active
-    const scrymeConfig = await db.scrymeConfiguration.findUnique({
-      where: { organizationId },
-    });
+    // Performance optimization: Parallelize independent database queries for Scryme config and notification template
+    const [scrymeConfig, template] = await Promise.all([
+      db.scrymeConfiguration.findUnique({
+        where: { organizationId },
+      }),
+      db.notificationTemplate.findUnique({
+        where: {
+          organizationId_name: {
+            organizationId,
+            name: templateName,
+          },
+        },
+      }),
+    ]);
+
     if (scrymeConfig?.isActive && !channels.includes("SCRYME")) {
       channels = ["SCRYME", ...channels];
     }
-
-    // 1. Fetch template
-    const template = await db.notificationTemplate.findUnique({
-      where: {
-        organizationId_name: {
-          organizationId,
-          name: templateName,
-        },
-      },
-    });
 
     if (!template) {
       throw new Error(
@@ -108,32 +109,34 @@ export class NotificationEngine {
   ): Promise<string[]> {
     const userIds = new Set<string>(recipients?.userIds || []);
 
-    if (recipients?.memberIds?.length) {
-      const members = await db.member.findMany({
-        where: { id: { in: recipients.memberIds }, organizationId },
-        select: { userId: true },
-      });
-      members.forEach((m: any) => userIds.add(m.userId));
-    }
+    // Performance optimization: Execute independent member and department queries concurrently
+    const [membersById, membersByRole, deptMembers] = await Promise.all([
+      recipients?.memberIds?.length
+        ? db.member.findMany({
+            where: { id: { in: recipients.memberIds }, organizationId },
+            select: { userId: true },
+          })
+        : Promise.resolve([]),
+      recipients?.roles?.length
+        ? db.member.findMany({
+            where: {
+              organizationId,
+              role: { in: recipients.roles as any },
+            },
+            select: { userId: true },
+          })
+        : Promise.resolve([]),
+      recipients?.departmentIds?.length
+        ? db.departmentMember.findMany({
+            where: { departmentId: { in: recipients.departmentIds } },
+            include: { member: { select: { userId: true } } },
+          })
+        : Promise.resolve([]),
+    ]);
 
-    if (recipients?.roles?.length) {
-      const members = await db.member.findMany({
-        where: {
-          organizationId,
-          role: { in: recipients.roles as any },
-        },
-        select: { userId: true },
-      });
-      members.forEach((m: any) => userIds.add(m.userId));
-    }
-
-    if (recipients?.departmentIds?.length) {
-      const deptMembers = await db.departmentMember.findMany({
-        where: { departmentId: { in: recipients.departmentIds } },
-        include: { member: { select: { userId: true } } },
-      });
-      deptMembers.forEach((dm: any) => userIds.add(dm.member.userId));
-    }
+    membersById.forEach((m: any) => userIds.add(m.userId));
+    membersByRole.forEach((m: any) => userIds.add(m.userId));
+    deptMembers.forEach((dm: any) => userIds.add(dm.member.userId));
 
     return Array.from(userIds);
   }
@@ -152,24 +155,31 @@ export class NotificationEngine {
     });
 
     try {
-      for (const channel of dispatch.channels) {
-        if (channel === "WEBHOOK") {
-          await this.deliverWebhook(dispatch);
-        }
-        if (channel === "SCRYME") {
-          try {
+      // Performance optimization: Execute multi-channel notification deliveries concurrently
+      const channelPromises = dispatch.channels.map(async (channel: string) => {
+        try {
+          if (channel === "WEBHOOK") {
+            await this.deliverWebhook(dispatch);
+          } else if (channel === "SCRYME") {
             await this.deliverScryme(dispatch);
-          } catch (err: any) {
-             console.error(`Failed to deliver to Scryme: ${err.message}`);
-             // Don't fail the whole dispatch if one channel fails
+          } else if (channel === "DISCORD") {
+            await this.deliverDiscord(dispatch);
+          } else if (channel === "EMAIL") {
+            await this.deliverEmail(dispatch);
           }
+        } catch (err: any) {
+          console.error(`Failed to deliver to ${channel}: ${err.message}`);
+          throw err;
         }
-        if (channel === "DISCORD") {
-          await this.deliverDiscord(dispatch);
-        }
-        if (channel === "EMAIL") {
-          await this.deliverEmail(dispatch);
-        }
+      });
+
+      const results = await Promise.allSettled(channelPromises);
+      const failures = results.filter((r) => r.status === "rejected");
+
+      // If all channels failed, mark dispatch as FAILED
+      if (failures.length === dispatch.channels.length && dispatch.channels.length > 0) {
+        const firstError = (failures[0] as PromiseRejectedResult).reason;
+        throw new Error(firstError?.message || "All notification channels failed");
       }
 
       await db.notificationDispatch.update({
