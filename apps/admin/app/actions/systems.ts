@@ -44,7 +44,7 @@ export async function getWorkflowEngineMetrics() {
           select: { id: true, name: true, organization: { select: { name: true } } },
         },
         record: {
-          select: { id: true, name: true, email: true },
+          select: { id: true, data: true },
         },
       },
     }),
