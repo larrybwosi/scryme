@@ -215,10 +215,7 @@ function V3ClientSkeleton() {
 
 function AppsApiContent() {
   const searchParams = useSearchParams();
-  const initialTab =
-    searchParams.get("tab") === "v2"
-      ? "devices"
-      : searchParams.get("tab") || "v3";
+  const initialTab = searchParams.get("tab") || "v3";
   const [activeTab, setActiveTab] = useState(initialTab);
 
   // V3 Clients State
