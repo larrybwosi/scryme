@@ -1,6 +1,6 @@
 {
   "name": "@scryme/sdk",
-  "version": "9.72.1-next.3",
+  "version": "9.73.0-next.4",
   "publishConfig": {
     "access": "public"
   },

@@ -1,5 +1,11 @@
 # admin
 
+## 1.2.0-next.5
+
+### Minor Changes
+
+- b09edc1: Update
+
 ## 1.2.0-next.4
 
 ### Minor Changes

@@ -27,5 +27,7 @@
     "@repo/ui": "0.1.0",
     "@scryme/sdk": "9.70.0"
   },
-  "changesets": []
+  "changesets": [
+    "spicy-grapes-ring"
+  ]
 }
