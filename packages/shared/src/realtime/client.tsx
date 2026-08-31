@@ -8,17 +8,14 @@ import React, {
   useCallback,
 } from "react";
 import { io, Socket } from "socket.io-client";
-import axios from "axios";
 
 import { PresenceMember } from "./types";
 import { applyDelta } from "./delta";
-import { getAblyRealtime, Realtime } from "../ably/client";
 
 interface RealtimeContextType {
   socket: Socket | null;
-  ably: Realtime | null;
   isConnected: boolean;
-  provider: "ably" | "socketio";
+  provider: "socketio";
   subscribe: (
     channel: string,
     event: string,
@@ -35,9 +32,8 @@ interface RealtimeContextType {
 
 const RealtimeContext = createContext<RealtimeContextType>({
   socket: null,
-  ably: null,
   isConnected: false,
-  provider: "ably",
+  provider: "socketio",
   subscribe: () => () => {},
   publish: async () => {},
   presence: {
@@ -57,77 +53,44 @@ function getCookie(name: string): string | undefined {
 
 export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
-  const [ably, setAbly] = useState<Realtime | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [provider, setProvider] = useState<"ably" | "socketio">("ably");
+  const provider = "socketio" as const;
   const [presenceMembers, setPresenceMembers] = useState<
     Record<string, PresenceMember[]>
   >({});
 
   useEffect(() => {
-    const providerType =
-      (process.env.NEXT_PUBLIC_REALTIME_PROVIDER as any) || "ably";
-    setProvider(providerType);
+    // Default to same origin if no URL provided
+    const socketUrl =
+      process.env.NEXT_PUBLIC_SOCKET_URL ||
+      (typeof window !== "undefined"
+        ? window.location.origin
+        : "http://localhost:3001");
 
-    if (providerType === "socketio") {
-      // Default to same origin if no URL provided
-      const socketUrl =
-        process.env.NEXT_PUBLIC_SOCKET_URL ||
-        (typeof window !== "undefined"
-          ? window.location.origin
-          : "http://localhost:3001");
+    const sessionToken = getCookie("better-auth.session_token") || getCookie("dealio_member_token");
 
-      const sessionToken = getCookie("better-auth.session_token") || getCookie("dealio_member_token");
+    const socketInstance = io(socketUrl, {
+      transports: ["websocket"],
+      auth: {
+        token: sessionToken,
+      },
+    });
 
-      const socketInstance = io(socketUrl, {
-        transports: ["websocket"],
-        auth: {
-          token: sessionToken,
-        },
-      });
+    socketInstance.on("connect", () => {
+      setIsConnected(true);
+      console.log("Socket.io connected");
+    });
 
-      socketInstance.on("connect", () => {
-        setIsConnected(true);
-        console.log("Socket.io connected");
-      });
+    socketInstance.on("disconnect", () => {
+      setIsConnected(false);
+      console.log("Socket.io disconnected");
+    });
 
-      socketInstance.on("disconnect", () => {
-        setIsConnected(false);
-        console.log("Socket.io disconnected");
-      });
+    setSocket(socketInstance);
 
-      setSocket(socketInstance);
-
-      return () => {
-        socketInstance.disconnect();
-      };
-    } else {
-      // Use the imported Ably client
-      const ablyInstance = getAblyRealtime();
-
-      if (ablyInstance) {
-        // Set up connection event listeners
-        const handleConnect = () => {
-          setIsConnected(true);
-          console.log("Ably connected");
-        };
-
-        const handleDisconnect = () => {
-          setIsConnected(false);
-        };
-
-        ablyInstance.connection.on("connected", handleConnect);
-        ablyInstance.connection.on("disconnected", handleDisconnect);
-
-        setAbly(ablyInstance);
-
-        return () => {
-          ablyInstance.connection.off("connected", handleConnect);
-          ablyInstance.connection.off("disconnected", handleDisconnect);
-          // Don't close the instance here since it's a singleton
-        };
-      }
-    }
+    return () => {
+      socketInstance.disconnect();
+    };
   }, []);
 
   const subscribe = useCallback(
@@ -137,7 +100,7 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
       callback: (data: any) => void,
       options?: { rewind?: number },
     ) => {
-      if (provider === "socketio" && socket) {
+      if (socket) {
         socket.emit("join", { channel: channelName, options });
 
         const presenceHandler = (data: {
@@ -176,68 +139,43 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
           socket.off(deltaEvent, deltaHandler);
           socket.off("presence:update", presenceHandler);
         };
-      } else if (provider === "ably" && ably) {
-        const channel = ably.channels.get(channelName);
-        const ablyOptions: any = {};
-        if (options?.rewind) {
-          // Ably uses [?rewind=N]channelName syntax for rewind
-          const rewindChannel = ably.channels.get(
-            `[?rewind=${options.rewind}]${channelName}`,
-          );
-          rewindChannel.subscribe(event, (message) => callback(message.data));
-          return () => rewindChannel.unsubscribe(event);
-        }
-
-        channel.subscribe(event, (message) => callback(message.data));
-        return () => {
-          channel.unsubscribe(event);
-        };
       }
       return () => {};
     },
-    [provider, socket, ably],
+    [socket],
   );
 
   const publish = useCallback(
     async (channelName: string, event: string, data: any) => {
-      if (provider === "socketio" && socket) {
+      if (socket) {
         socket.emit("publish", { channel: channelName, event, data });
-      } else if (provider === "ably" && ably) {
-        await ably.channels.get(channelName).publish(event, data);
       }
     },
-    [provider, socket, ably],
+    [socket],
   );
 
   const enterPresence = useCallback(
     async (channelName: string, metadata?: any) => {
-      if (provider === "socketio" && socket) {
+      if (socket) {
         socket.emit("presence:enter", { channel: channelName, metadata });
-      } else if (provider === "ably" && ably) {
-        const channel = ably.channels.get(channelName);
-        await channel.presence.enter(metadata);
       }
     },
-    [provider, socket, ably],
+    [socket],
   );
 
   const leavePresence = useCallback(
     async (channelName: string) => {
-      if (provider === "socketio" && socket) {
+      if (socket) {
         socket.emit("presence:leave", { channel: channelName });
-      } else if (provider === "ably" && ably) {
-        const channel = ably.channels.get(channelName);
-        await channel.presence.leave();
       }
     },
-    [provider, socket, ably],
+    [socket],
   );
 
   return (
     <RealtimeContext.Provider
       value={{
         socket,
-        ably,
         isConnected,
         provider,
         subscribe,
