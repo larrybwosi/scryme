@@ -92,7 +92,7 @@ interface PosAuthActions {
 }
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
-const STORAGE_KEY = 'pos-auth-storage-v2';
+const STORAGE_KEY = 'pos-auth-storage-v3';
 
 const initialState: PosAuthState = {
   isConfigured: false,
