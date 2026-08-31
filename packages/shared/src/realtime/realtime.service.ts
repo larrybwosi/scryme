@@ -1,18 +1,11 @@
 import { RealtimeProvider, PresenceMember } from './types';
-import { AblyRealtimeProvider } from './ably.provider';
 import { SocketIORealtimeProvider } from './socketio.provider';
 
 export class RealtimeService implements RealtimeProvider {
   private provider: RealtimeProvider;
 
   constructor() {
-    const providerType = process.env.REALTIME_PROVIDER || 'ably';
-
-    if (providerType === 'socketio') {
-      this.provider = new SocketIORealtimeProvider();
-    } else {
-      this.provider = new AblyRealtimeProvider();
-    }
+    this.provider = new SocketIORealtimeProvider();
   }
 
   async publish(channel: string, event: string, data: any) {
