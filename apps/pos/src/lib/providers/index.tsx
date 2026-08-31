@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useEffect } from "react"
 import { usePosStore } from "@/store/store"
+import { useAuthStore } from "@/store/pos-auth-store"
 import { NotificationToast } from "@/components/notification-toast"
 import { ConnectionStatusBanner } from "@/components/connection-status-banner"
 import { Toaster } from "sonner"
@@ -15,6 +16,8 @@ import { TooltipProvider } from "@repo/ui/components/ui/tooltip"
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const themeConfig = usePosStore((state) => state.settings.themeConfig)
   const checkLowStockAlerts = usePosStore((state) => state.checkLowStockAlerts)
+  const isConfigured = useAuthStore((state) => state.isConfigured)
+  const currentMember = useAuthStore((state) => state.currentMember)
 
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
@@ -106,6 +109,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }, [themeConfig])
 
   useEffect(() => {
+    if (!isConfigured || !currentMember) return;
+
     // Initial check
     checkLowStockAlerts()
 
@@ -118,7 +123,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     )
 
     return () => clearInterval(interval)
-  }, [checkLowStockAlerts])
+  }, [checkLowStockAlerts, isConfigured, currentMember])
 
   return (
     <>
