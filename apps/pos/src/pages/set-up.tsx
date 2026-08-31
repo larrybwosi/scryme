@@ -111,6 +111,7 @@ const SetupTokenStep = ({
 
   // QR Pairing Session State
   const [pairingSessionId, setPairingSessionId] = useState<string | null>(null);
+  const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [pairingExpiresAt, setPairingExpiresAt] = useState<Date | null>(null);
   const [pairingStatus, setPairingStatus] = useState<'PENDING' | 'AUTHORIZED' | 'EXPIRED' | 'LOADING'>('PENDING');
   const [timeLeftSec, setTimeLeftSec] = useState<number>(300);
@@ -125,19 +126,26 @@ const SetupTokenStep = ({
       let resData: any = null;
       try {
         const { invoke } = await import('@tauri-apps/api/core');
-        const response = await invoke<any>('authenticated_api_request', {
-          method: 'POST',
-          path: 'api/v3/pos/pairing/session',
-        });
+        const response = await invoke<any>('create_pairing_session_command');
         resData = response?.success !== undefined ? response.data : response;
       } catch {
-        const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session`, { method: 'POST' });
-        const json = await fallback.json();
-        resData = json.data || json;
+        try {
+          const { invoke } = await import('@tauri-apps/api/core');
+          const response = await invoke<any>('authenticated_api_request', {
+            method: 'POST',
+            path: 'api/v3/pos/pairing/session',
+          });
+          resData = response?.success !== undefined ? response.data : response;
+        } catch {
+          const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session`, { method: 'POST' });
+          const json = await fallback.json();
+          resData = json.data || json;
+        }
       }
 
       if (resData?.sessionId) {
         setPairingSessionId(resData.sessionId);
+        setPairingCode(resData.pairingCode || null);
         setPairingExpiresAt(resData.expiresAt ? new Date(resData.expiresAt) : new Date(Date.now() + 300000));
         setPairingStatus('PENDING');
       } else {
@@ -157,7 +165,63 @@ const SetupTokenStep = ({
     }
   }, [authMode]);
 
-  // Poll pairing session status
+  // Realtime Socket.io listener for instant pairing authorization
+  useEffect(() => {
+    if (authMode !== 'qr' || !pairingSessionId || pairingStatus !== 'PENDING') return;
+
+    let socket: any = null;
+    let isMounted = true;
+
+    const setupSocket = async () => {
+      try {
+        const { io } = await import('socket.io-client');
+        socket = io(apiUrl, {
+          transports: ['websocket', 'polling'],
+          autoConnect: true,
+          reconnection: true,
+        });
+
+        const channelSession = `pos:pairing:${pairingSessionId}`;
+        const channelCode = pairingCode ? `pos:pairing:${pairingCode}` : null;
+
+        socket.on('connect', () => {
+          socket.emit('join', { channel: channelSession });
+          if (channelCode) {
+            socket.emit('join', { channel: channelCode });
+          }
+        });
+
+        const handleAuthorized = async (data: any) => {
+          if (!isMounted) return;
+          const payload = data?.payload || data;
+          if (payload) {
+            setPairingStatus('AUTHORIZED');
+            try {
+              await authorizeFromPairingPayload(payload);
+              onNext('pairing_authorized');
+            } catch (e: any) {
+              setError(e.message || 'Failed to apply authorized session credentials.');
+            }
+          }
+        };
+
+        socket.on('pairing:authorized', handleAuthorized);
+      } catch (err) {
+        console.error('Failed to setup socket.io client for pairing:', err);
+      }
+    };
+
+    setupSocket();
+
+    return () => {
+      isMounted = false;
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [authMode, pairingSessionId, pairingCode, pairingStatus, apiUrl, authorizeFromPairingPayload, onNext]);
+
+  // Poll pairing session status (as fallback alongside socket.io)
   useEffect(() => {
     if (authMode !== 'qr' || !pairingSessionId || pairingStatus !== 'PENDING') return;
 
@@ -167,15 +231,23 @@ const SetupTokenStep = ({
         let statusData: any = null;
         try {
           const { invoke } = await import('@tauri-apps/api/core');
-          const response = await invoke<any>('authenticated_api_request', {
-            method: 'GET',
-            path: `api/v3/pos/pairing/session/${pairingSessionId}/status`,
+          const response = await invoke<any>('get_pairing_session_status_command', {
+            sessionId: pairingSessionId,
           });
           statusData = response?.success !== undefined ? response.data : response;
         } catch {
-          const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session/${pairingSessionId}/status`);
-          const json = await fallback.json();
-          statusData = json.data || json;
+          try {
+            const { invoke } = await import('@tauri-apps/api/core');
+            const response = await invoke<any>('authenticated_api_request', {
+              method: 'GET',
+              path: `api/v3/pos/pairing/session/${pairingSessionId}/status`,
+            });
+            statusData = response?.success !== undefined ? response.data : response;
+          } catch {
+            const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session/${pairingSessionId}/status`);
+            const json = await fallback.json();
+            statusData = json.data || json;
+          }
         }
 
         if (!isMounted) return;
@@ -365,12 +437,27 @@ const SetupTokenStep = ({
             <>
               <div className="bg-white p-4 border border-zinc-200 shadow-md relative group">
                 <QRCodeSVG
-                  value={JSON.stringify({ type: 'POS_PAIRING', sessionId: pairingSessionId })}
+                  value={JSON.stringify({ type: 'POS_PAIRING', sessionId: pairingSessionId, pairingCode })}
                   size={180}
                   level="H"
                   includeMargin={false}
                 />
               </div>
+
+              {pairingCode && (
+                <div className="flex flex-col items-center justify-center space-y-1 my-2">
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                    Pairing Code
+                  </p>
+                  <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 px-4 py-2 font-mono text-2xl font-black tracking-widest text-zinc-900 dark:text-zinc-100">
+                    {pairingCode.split('').map((char, idx) => (
+                      <span key={idx} className="w-5 text-center">
+                        {char}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 text-xs font-mono font-bold text-zinc-600 dark:text-zinc-400">
                 <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />

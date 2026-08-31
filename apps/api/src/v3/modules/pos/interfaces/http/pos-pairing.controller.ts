@@ -18,6 +18,7 @@ import { type V3ApiContext } from "@repo/shared/api/v2";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { PosPairingService } from "../../application/services/pos-pairing.service";
 import { PrismaService } from "@/prisma/prisma.service";
+import { ApiRealtimeService } from "@/common/services/realtime.service";
 
 @ApiTags("V3 POS Pairing")
 @Controller("pos/pairing")
@@ -25,7 +26,8 @@ import { PrismaService } from "@/prisma/prisma.service";
 export class PosPairingController {
   constructor(
     private readonly pairingService: PosPairingService,
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
+    private readonly realtimeService: ApiRealtimeService
   ) {}
 
   @AllowPublic()
@@ -73,12 +75,33 @@ export class PosPairingController {
       throw new BadRequestException("Organization and member context required");
     }
 
-    return this.pairingService.authorizeSession(
+    const result = await this.pairingService.authorizeSession(
       sessionId,
       ctx.organizationId,
       ctx.memberId,
       this.prisma,
       body
     );
+
+    // Get updated session details to emit pairing authorized event over socket.io
+    try {
+      const session = this.pairingService.getSession(sessionId);
+      const payload = {
+        sessionId: session.sessionId,
+        pairingCode: session.pairingCode,
+        status: session.status,
+        payload: result,
+      };
+
+      // Broadcast event to both sessionId and pairingCode channels
+      await this.realtimeService.publish(`pos:pairing:${session.sessionId}`, "pairing:authorized", payload);
+      await this.realtimeService.publish(`pos:pairing:${session.pairingCode}`, "pairing:authorized", payload);
+      await this.realtimeService.publish(`v3:pos:pairing:${session.sessionId}`, "pairing:authorized", payload);
+      await this.realtimeService.publish(`v3:pos:pairing:${session.pairingCode}`, "pairing:authorized", payload);
+    } catch (e: any) {
+      console.error("Failed to publish socket event for pairing session authorization:", e?.message || e);
+    }
+
+    return result;
   }
 }

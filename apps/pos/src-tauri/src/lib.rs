@@ -452,6 +452,9 @@ pub fn run() {
             auth_store::restore_member_session,
             auth_store::reset_device_config,
             auth_store::authenticated_api_request,
+            auth_store::create_pairing_session_command,
+            auth_store::get_pairing_session_status_command,
+            auth_store::authorize_pairing_session_command,
             #[cfg(not(feature = "standalone"))]
             auth_store::update_device_location,
             notification_manager::send_native_notification,
