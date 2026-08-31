@@ -1,4 +1,4 @@
-# Scryme ERP Platform
+# Scryme
 
 Scryme is a professional, enterprise-grade Enterprise Resource Planning (ERP) platform tailored for retailers and wholesalers. It provides a unified ecosystem to manage inventory, sales, customers, and financial integrations through a modern, performant architecture.
 

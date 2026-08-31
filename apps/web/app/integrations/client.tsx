@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Boxes,
   Zap,
@@ -39,6 +39,16 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { Hash, Lock, Users, Plus, Trash2, Shield, UserPlus, RefreshCw, MessageSquare } from "lucide-react";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+
+// Create a client
+const queryClient = new QueryClient();
 
 const INTEGRATIONS = [
   {
@@ -78,16 +88,13 @@ const INTEGRATIONS = [
   },
 ];
 
-export default function IntegrationsPage() {
-  const [statuses, setStatuses] = useState<Record<string, any>>({});
+function IntegrationsPageContent() {
+  const queryClient = useQueryClient();
   const [selectedIntegration, setSelectedIntegration] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isScrymeProvisioning, setIsScrymeProvisioning] = useState(false);
 
   // Scryme Workspace Management Details
   const [scrymeTab, setScrymeTab] = useState<"overview" | "channels" | "members">("overview");
-  const [scrymeDetails, setScrymeDetails] = useState<any>(null);
-  const [isLoadingScrymeDetails, setIsLoadingScrymeDetails] = useState(false);
   const [newChannelName, setNewChannelName] = useState("");
   const [newChannelType, setNewChannelType] = useState<"public" | "private">("public");
   const [isCreatingChannel, setIsCreatingChannel] = useState(false);
@@ -95,39 +102,90 @@ export default function IntegrationsPage() {
   const [newMemberRole, setNewMemberRole] = useState<"admin" | "member">("member");
   const [isAddingMember, setIsAddingMember] = useState(false);
 
-  useEffect(() => {
-    loadStatuses();
-  }, []);
+  // Query for integration statuses
+  const {
+    data: statuses = {},
+    isLoading: isLoadingStatuses,
+    refetch: refetchStatuses,
+  } = useQuery({
+    queryKey: ["integrations", "statuses"],
+    queryFn: getIntegrationsStatus,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  const loadScrymeDetails = async () => {
-    setIsLoadingScrymeDetails(true);
-    try {
-      const data = await getScrymeWorkspaceDetails();
-      setScrymeDetails(data);
-    } catch {
-      toast.error("Failed to fetch Scryme Chat workspace details");
-    } finally {
-      setIsLoadingScrymeDetails(false);
-    }
-  };
+  // Query for Scryme workspace details (only when Scryme is connected)
+  const {
+    data: scrymeDetails,
+    isLoading: isLoadingScrymeDetails,
+    refetch: refetchScrymeDetails,
+  } = useQuery({
+    queryKey: ["scryme", "workspace", "details"],
+    queryFn: getScrymeWorkspaceDetails,
+    enabled: selectedIntegration?.id === "scryme" && statuses?.scryme?.connected,
+    staleTime: 30 * 1000, // 30 seconds
+  });
 
-  useEffect(() => {
-    if (selectedIntegration?.id === "scryme" && statuses.scryme?.connected) {
-      loadScrymeDetails();
-    }
-  }, [selectedIntegration, statuses.scryme?.connected]);
+  // Mutation for provisioning Scryme
+  const provisionMutation = useMutation({
+    mutationFn: provisionScryme,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(
+          "Scryme Chat workspace successfully provisioned and channels created!"
+        );
+        setSelectedIntegration(null);
+        queryClient.invalidateQueries({ queryKey: ["integrations", "statuses"] });
+        queryClient.invalidateQueries({ queryKey: ["scryme", "workspace", "details"] });
+      }
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.message ||
+          "Failed to provision Scryme Chat workspace automatically."
+      );
+    },
+  });
 
-  const loadStatuses = async () => {
-    setIsLoading(true);
-    try {
-      const data = await getIntegrationsStatus();
-      setStatuses(data);
-    } catch (error) {
-      toast.error("Failed to load integration statuses");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Mutation for creating a channel
+  const createChannelMutation = useMutation({
+    mutationFn: createScrymeWorkspaceChannel,
+    onSuccess: (res, variables) => {
+      if (res.message) toast.info(res.message);
+      else toast.success(`Channel #${variables.name} created!`);
+      setNewChannelName("");
+      queryClient.invalidateQueries({ queryKey: ["scryme", "workspace", "details"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create channel");
+    },
+  });
+
+  // Mutation for adding a member
+  const addMemberMutation = useMutation({
+    mutationFn: addScrymeWorkspaceMember,
+    onSuccess: (res, variables) => {
+      if (res.message) toast.info(res.message);
+      else toast.success(`Granted ${variables.email} access to workspace`);
+      setNewMemberEmail("");
+      queryClient.invalidateQueries({ queryKey: ["scryme", "workspace", "details"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to add member");
+    },
+  });
+
+  // Mutation for removing a member
+  const removeMemberMutation = useMutation({
+    mutationFn: removeScrymeWorkspaceMember,
+    onSuccess: (res) => {
+      if (res.message) toast.info(res.message);
+      else toast.success("Removed member access");
+      queryClient.invalidateQueries({ queryKey: ["scryme", "workspace", "details"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to remove member");
+    },
+  });
 
   const handleOpenConfig = (integration: any) => {
     if (!integration.isExternal) return;
@@ -136,23 +194,8 @@ export default function IntegrationsPage() {
 
   const handleScrymeProvision = async () => {
     setIsScrymeProvisioning(true);
-    try {
-      const result = await provisionScryme();
-      if (result.success) {
-        toast.success(
-          "Scryme Chat workspace successfully provisioned and channels created!",
-        );
-        setSelectedIntegration(null);
-        loadStatuses();
-      }
-    } catch (error: any) {
-      toast.error(
-        error.message ||
-          "Failed to provision Scryme Chat workspace automatically.",
-      );
-    } finally {
-      setIsScrymeProvisioning(false);
-    }
+    await provisionMutation.mutateAsync();
+    setIsScrymeProvisioning(false);
   };
 
   const renderDialogBody = () => {
@@ -190,7 +233,7 @@ export default function IntegrationsPage() {
           </div>
         );
       case "scryme":
-        const isProvisioned = statuses.scryme?.connected;
+        const isProvisioned = statuses?.scryme?.connected;
         if (!isProvisioned) {
           return (
             <div className="py-4">
@@ -206,9 +249,9 @@ export default function IntegrationsPage() {
                 <Button
                   type="button"
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white h-10 text-xs font-semibold"
-                  disabled={isScrymeProvisioning}
+                  disabled={isScrymeProvisioning || provisionMutation.isPending}
                   onClick={handleScrymeProvision}>
-                  {isScrymeProvisioning
+                  {isScrymeProvisioning || provisionMutation.isPending
                     ? "Provisioning..."
                     : "Provision Automatically"}
                 </Button>
@@ -263,7 +306,7 @@ export default function IntegrationsPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground font-medium">Workspace Slug:</span>
                     <Badge variant="outline" className="font-mono text-[11px]">
-                      {statuses.scryme?.config?.workspaceSlug || "org-workspace"}
+                      {statuses?.scryme?.config?.workspaceSlug || "org-workspace"}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
@@ -282,7 +325,7 @@ export default function IntegrationsPage() {
                     size="sm"
                     className="gap-1 text-xs"
                     disabled={isLoadingScrymeDetails}
-                    onClick={loadScrymeDetails}>
+                    onClick={() => refetchScrymeDetails()}>
                     <RefreshCw className={cn("w-3 h-3", isLoadingScrymeDetails && "animate-spin")} />
                     Sync
                   </Button>
@@ -298,20 +341,11 @@ export default function IntegrationsPage() {
                     e.preventDefault();
                     if (!newChannelName.trim()) return;
                     setIsCreatingChannel(true);
-                    try {
-                      const res = await createScrymeWorkspaceChannel({
-                        name: newChannelName.trim(),
-                        type: newChannelType,
-                      });
-                      if (res.message) toast.info(res.message);
-                      else toast.success(`Channel #${newChannelName} created!`);
-                      setNewChannelName("");
-                      loadScrymeDetails();
-                    } catch (err: any) {
-                      toast.error(err.message || "Failed to create channel");
-                    } finally {
-                      setIsCreatingChannel(false);
-                    }
+                    await createChannelMutation.mutateAsync({
+                      name: newChannelName.trim(),
+                      type: newChannelType,
+                    });
+                    setIsCreatingChannel(false);
                   }}
                   className="flex gap-2 items-end">
                   <div className="flex-1 flex flex-col gap-1">
@@ -333,7 +367,11 @@ export default function IntegrationsPage() {
                       <option value="private">Private</option>
                     </select>
                   </div>
-                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={isCreatingChannel}>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="h-8 gap-1 text-xs"
+                    disabled={isCreatingChannel || createChannelMutation.isPending}>
                     <Plus className="w-3 h-3" /> Add
                   </Button>
                 </form>
@@ -368,20 +406,11 @@ export default function IntegrationsPage() {
                     e.preventDefault();
                     if (!newMemberEmail.trim()) return;
                     setIsAddingMember(true);
-                    try {
-                      const res = await addScrymeWorkspaceMember({
-                        email: newMemberEmail.trim(),
-                        role: newMemberRole,
-                      });
-                      if (res.message) toast.info(res.message);
-                      else toast.success(`Granted ${newMemberEmail} access to workspace`);
-                      setNewMemberEmail("");
-                      loadScrymeDetails();
-                    } catch (err: any) {
-                      toast.error(err.message || "Failed to add member");
-                    } finally {
-                      setIsAddingMember(false);
-                    }
+                    await addMemberMutation.mutateAsync({
+                      email: newMemberEmail.trim(),
+                      role: newMemberRole,
+                    });
+                    setIsAddingMember(false);
                   }}
                   className="flex gap-2 items-end">
                   <div className="flex-1 flex flex-col gap-1">
@@ -403,7 +432,11 @@ export default function IntegrationsPage() {
                       <option value="admin">Admin</option>
                     </select>
                   </div>
-                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={isAddingMember}>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="h-8 gap-1 text-xs"
+                    disabled={isAddingMember || addMemberMutation.isPending}>
                     <UserPlus className="w-3 h-3" /> Add
                   </Button>
                 </form>
@@ -426,14 +459,7 @@ export default function IntegrationsPage() {
                             size="icon"
                             className="h-6 w-6 text-destructive hover:bg-destructive/10"
                             onClick={async () => {
-                              try {
-                                const res = await removeScrymeWorkspaceMember(m.id || m.email);
-                                if (res.message) toast.info(res.message);
-                                else toast.success("Removed member access");
-                                loadScrymeDetails();
-                              } catch (err: any) {
-                                toast.error(err.message || "Failed to remove member");
-                              }
+                              await removeMemberMutation.mutateAsync(m.id || m.email);
                             }}>
                             <Trash2 className="w-3 h-3" />
                           </Button>
@@ -487,7 +513,7 @@ export default function IntegrationsPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
         {INTEGRATIONS.map(integration => {
-          const isConnected = statuses[integration.id]?.connected;
+          const isConnected = statuses?.[integration.id]?.connected;
           const statusLabel = isConnected ? "Connected" : "Not Configured";
 
           const content = (
@@ -593,5 +619,13 @@ export default function IntegrationsPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function IntegrationsPage() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <IntegrationsPageContent />
+    </QueryClientProvider>
   );
 }
