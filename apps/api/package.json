@@ -84,7 +84,7 @@
   },
   "devDependencies": {
     "prisma": "7.9.1",
-    "@eslint/js": "^8.57.1",
+    "@eslint/js": "^10.0.1",
     "@nestjs/cli": "^11.0.23",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.1.27",

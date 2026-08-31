@@ -113,7 +113,7 @@ export class WebhookDispatcherService {
         },
       });
 
-      throw new Error(`Webhook dispatch failed: ${errorMessage}`);
+      throw new Error(`Webhook dispatch failed: ${errorMessage}`, { cause: error });
     }
   }
 
