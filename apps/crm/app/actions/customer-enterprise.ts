@@ -39,7 +39,7 @@ export async function calculateCustomerHealthScore(
       transactions: {
         select: {
           id: true,
-          grandTotal: true,
+          finalTotal: true,
           createdAt: true,
         },
         orderBy: { createdAt: "desc" },
@@ -60,9 +60,9 @@ export async function calculateCustomerHealthScore(
     throw new Error("Customer not found");
   }
 
-  const transactions = customer.transactions || [];
+  const transactions = (customer as any).transactions || [];
   const orderCount = transactions.length;
-  const totalSpent = transactions.reduce((acc, tx) => acc + (tx.grandTotal || 0), 0);
+  const totalSpent = transactions.reduce((acc: number, tx: any) => acc + (Number(tx.finalTotal) || 0), 0);
 
   const now = new Date();
   const lastOrderDate = transactions.length > 0 ? new Date(transactions[0].createdAt) : null;
@@ -103,7 +103,8 @@ export async function calculateCustomerHealthScore(
   else if (totalSpent > 0) monetaryScore = 5;
 
   // 4. Activity Score (0 - 10 points based on recent CRM activity)
-  const activities = customer.crmRecord?.activities || [];
+  const crmRecord = (customer as any).crmRecord;
+  const activities = crmRecord?.activities || [];
   let activityScore = 0;
   if (activities.length >= 5) activityScore = 10;
   else if (activities.length >= 2) activityScore = 6;
@@ -254,13 +255,14 @@ export async function updateCustomerCustomFields(
       include: { crmRecord: true },
     });
 
-    if (!customer || !customer.crmRecord) {
+    if (!customer || !(customer as any).crmRecord) {
       return { success: false, error: "Customer CRM record not found" };
     }
 
-    const currentData = (customer.crmRecord.data as Record<string, any>) || {};
+    const crmRecord = (customer as any).crmRecord;
+    const currentData = (crmRecord.data as Record<string, any>) || {};
     await db.crmRecord.update({
-      where: { id: customer.crmRecord.id },
+      where: { id: crmRecord.id },
       data: {
         data: {
           ...currentData,

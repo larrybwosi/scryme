@@ -41,7 +41,7 @@ export async function dispatchCustomerWorkflowTrigger(
 
       await chatClient.sendMessage(scrymeConfig.workspaceSlug, channel, {
         content: message,
-      }).catch((err) => {
+      }).catch((err: any) => {
         console.warn("Failed to dispatch Scryme Chat notification:", err.message);
       });
     }
@@ -50,7 +50,7 @@ export async function dispatchCustomerWorkflowTrigger(
     const activeWorkflows = await db.campaignWorkflow.findMany({
       where: {
         organizationId,
-        status: "PUBLISHED",
+        isActive: true,
       },
     });
 
