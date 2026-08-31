@@ -41,7 +41,7 @@ export function ServerNotificationProvider({ children }: { children: React.React
   // Realtime client + meta
   const connectionState = useRealtimeStore((state) => state.connectionState);
   const subscribe = useRealtimeStore((state) => state.subscribe);
-  const { currentLocation } = useAuthStore();
+  const { currentLocation, isConfigured, currentMember } = useAuthStore();
   const storeId = currentLocation?.id;
 
   // ── Deduplication: LRU-capped Set of seen IDs ───────────────────────────────
@@ -100,7 +100,7 @@ export function ServerNotificationProvider({ children }: { children: React.React
 
   // ── Realtime subscription ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!storeId) return;
+    if (!isConfigured || !currentMember || !storeId) return;
 
     const unsubStore = subscribe(`store:${storeId}`, 'message', handleIncomingMessage);
     const unsubSystem = subscribe(`system:global`, 'message', handleIncomingMessage);
@@ -109,16 +109,18 @@ export function ServerNotificationProvider({ children }: { children: React.React
       unsubStore();
       unsubSystem();
     };
-  }, [storeId, handleIncomingMessage, subscribe]);
+  }, [isConfigured, currentMember, storeId, handleIncomingMessage, subscribe]);
 
   // ── Pending count (refresh every 5 s) ────────────────────────────────────────
   const [pendingCount, setPendingCount] = useState(0);
   useEffect(() => {
+    if (!isConfigured || !currentMember) return;
+
     const id = setInterval(() => {
       setPendingCount(notificationService.pendingRetryCount);
     }, 5_000);
     return () => clearInterval(id);
-  }, []);
+  }, [isConfigured, currentMember]);
 
   return (
     <ServerNotificationContext.Provider

@@ -146,11 +146,12 @@ export const useSessionActivityListener = () => {
   const refreshSession = useAuthStore(state => state.refreshSession);
   const currentMember = useAuthStore(state => state.currentMember);
   const deviceConfig = useAuthStore(state => state.deviceConfig);
+  const isConfigured = useAuthStore(state => state.isConfigured);
   const clearMemberSession = useAuthStore(state => state.clearMemberSession);
 
   // Periodic session check (refresh mechanism)
   useEffect(() => {
-    if (!currentMember || !deviceConfig?.orgSlug) return;
+    if (!isConfigured || !currentMember || !deviceConfig?.orgSlug) return;
 
     const checkSession = async () => {
       try {
@@ -205,7 +206,7 @@ export const useSessionActivityListener = () => {
     const interval = setInterval(checkSession, 2 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [currentMember, deviceConfig, clearMemberSession, refreshSession]);
+  }, [isConfigured, currentMember, deviceConfig, clearMemberSession, refreshSession]);
 
   // Throttled function to prevent too many state updates.
   // It will only fire once every 5 seconds max, even if the user is typing furiously.

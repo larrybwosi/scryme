@@ -13,6 +13,7 @@ export default function RealtimeInitializer() {
   const subscribe = useRealtimeStore((state) => state.subscribe);
   const currentLocation = useAuthStore((state) => state.currentLocation);
   const currentMember = useAuthStore((state) => state.currentMember);
+  const isConfigured = useAuthStore((state) => state.isConfigured);
   const isAuthInitialized = useAuthStore((state) => state.isInitialized);
   const updateProductStock = usePosStore((state) => state.updateProductStock);
   const organizationId = useAuthStore((state) => state.deviceConfig?.orgSlug);
@@ -22,25 +23,32 @@ export default function RealtimeInitializer() {
   // ── Initialize Realtime once auth is ready ──────────────────────────────────
   useEffect(() => {
     const isDisabled = localStorage.getItem('realtime-disabled') === 'true';
-    if (isAuthInitialized && currentMember && !isDisabled) {
+    if (isAuthInitialized && isConfigured && currentMember && !isDisabled) {
       initialize();
+    } else if (!isConfigured || !currentMember) {
+      const state = useRealtimeStore.getState();
+      if (state.socketClient?.connected) {
+        state.socketClient.disconnect();
+      }
     }
-  }, [initialize, isAuthInitialized, currentMember]);
+  }, [initialize, isAuthInitialized, isConfigured, currentMember]);
 
   // ── Presence management ────────────────────────────────────────────────────
   useEffect(() => {
-    if (!currentLocation?.id || !currentMember) return;
+    if (!isConfigured || !currentLocation?.id || !currentMember) return;
 
     if (socketClient && socketClient.connected) {
         socketClient.emit('join', { channel: `presence:${currentLocation.id}` });
     }
 
-  }, [socketClient, currentLocation?.id, currentMember]);
+  }, [socketClient, currentLocation?.id, currentMember, isConfigured]);
 
   // ── Reconnect when page becomes visible after being backgrounded ───────────
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
+      const authState = useAuthStore.getState();
+      if (!authState.isConfigured || !authState.currentMember) return;
       const current = useRealtimeStore.getState();
       if (current.socketClient && !current.socketClient.connected) {
         current.socketClient.connect();
@@ -53,17 +61,17 @@ export default function RealtimeInitializer() {
 
   // ── Re-init when connection is definitively failed or closed ───────────────
   useEffect(() => {
-    if (connectionState === 'failed' && isAuthInitialized && currentMember) {
+    if (connectionState === 'failed' && isAuthInitialized && isConfigured && currentMember) {
       const timeoutId = setTimeout(() => {
         initialize();
       }, 5_000);
       return () => clearTimeout(timeoutId);
     }
-  }, [connectionState, initialize, isAuthInitialized, currentMember]);
+  }, [connectionState, initialize, isAuthInitialized, isConfigured, currentMember]);
 
   // ── Inventory sync ─────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!organizationId) return;
+    if (!isConfigured || !currentMember || !organizationId) return;
 
     const channel = `organization:${organizationId}:inventory`;
     const unsubStockUpdate = subscribe(channel, 'stock-update', (data: any) => {
@@ -96,7 +104,7 @@ export default function RealtimeInitializer() {
 
   // ── Customer & Pricing sync ─────────────────────────────────────────────────
   useEffect(() => {
-      if (!organizationId) return;
+      if (!isConfigured || !currentMember || !organizationId) return;
 
       const pricingChannel = `organization:${organizationId}:pricing`;
       const customersChannel = `organization:${organizationId}:customers`;
