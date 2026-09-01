@@ -53,8 +53,7 @@ describe("StrapiConnectionUseCase - Security Tests", () => {
       await expect(useCase.create(orgId, dto)).rejects.toThrow(
         NotFoundException,
       );
-      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith
-      ({
+      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
         where: { id: "invalid-loc", organizationId: orgId },
       });
     });
@@ -94,8 +93,7 @@ describe("StrapiConnectionUseCase - Security Tests", () => {
       const result = await useCase.create(orgId, dto);
 
       expect(result.id).toBe("conn-123");
-      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith
-      ({
+      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
         where: { id: "loc-123", organizationId: orgId },
       });
     });
@@ -117,8 +115,7 @@ describe("StrapiConnectionUseCase - Security Tests", () => {
         useCase.update(orgId, "conn-123", dto),
       ).rejects.toThrow(NotFoundException);
 
-      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith
-      ({
+      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
         where: { id: "invalid-loc", organizationId: orgId },
       });
     });
@@ -140,8 +137,7 @@ describe("StrapiConnectionUseCase - Security Tests", () => {
 
       await useCase.update(orgId, "conn-123", dto);
 
-      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith
-      ({
+      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
         where: { id: "loc-123", organizationId: orgId },
       });
       expect(mockPrisma.client.ecommerceConnection.update).toHaveBeenCalled();
