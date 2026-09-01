@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/sign-up",
   },
+  openGraph: {
+    title: "Create an Account | Scryme CRM",
+    description:
+      "Create an enterprise CRM account with Scryme to collaborate with vetted agencies and streamline your client pipeline.",
+    url: "https://crm.scryme.tech/sign-up",
+  },
 };
 
 type Params = Promise<{ slug: string }>;
