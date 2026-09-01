@@ -109,7 +109,13 @@ export default function RecipeManager() {
             />
           </div>
 
-          <Button variant="outline" size="icon" className="h-11 w-11 border-border/50 bg-background/50 rounded-lg">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 border-border/50 bg-background/50 rounded-lg"
+            aria-label="Filter formulas"
+            title="Filter formulas"
+          >
             <Filter className="h-4 w-4 text-muted-foreground/60" />
           </Button>
         </div>
@@ -213,13 +219,14 @@ export default function RecipeManager() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right pr-6">
-                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity">
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-muted-foreground hover:text-primary"
                             onClick={() => handleViewRecipe(recipe)}
                             aria-label={`View ${recipe.name}`}
+                            title={`View ${recipe.name}`}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -229,6 +236,7 @@ export default function RecipeManager() {
                             className="h-8 w-8 text-muted-foreground hover:text-primary"
                             onClick={() => handleEdit(recipe)}
                             aria-label={`Edit ${recipe.name}`}
+                            title={`Edit ${recipe.name}`}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -238,6 +246,7 @@ export default function RecipeManager() {
                             className="h-8 w-8 text-muted-foreground hover:text-destructive"
                             onClick={() => handleDelete(recipe)}
                             aria-label={`Delete ${recipe.name}`}
+                            title={`Delete ${recipe.name}`}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -315,13 +324,14 @@ export default function RecipeManager() {
                       ))}
                     </div>
                   </CardContent>
-                  <CardFooter className="bg-muted/10 p-2 flex justify-end gap-1 border-t border-border/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <CardFooter className="bg-muted/10 p-2 flex justify-end gap-1 border-t border-border/30 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
                       onClick={() => handleViewRecipe(recipe)}
                       aria-label={`View ${recipe.name}`}
+                      title={`View ${recipe.name}`}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -331,6 +341,7 @@ export default function RecipeManager() {
                       className="h-8 w-8"
                       onClick={() => handleEdit(recipe)}
                       aria-label={`Edit ${recipe.name}`}
+                      title={`Edit ${recipe.name}`}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -340,6 +351,7 @@ export default function RecipeManager() {
                       className="h-8 w-8 text-destructive"
                       onClick={() => handleDelete(recipe)}
                       aria-label={`Delete ${recipe.name}`}
+                      title={`Delete ${recipe.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
