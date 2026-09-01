@@ -46,6 +46,18 @@ export class StrapiConnectionUseCase {
       );
     }
 
+    // SECURITY (Sentinel): Verify defaultLocationId belongs to the caller's organizationId
+    if (dto.defaultLocationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: dto.defaultLocationId, organizationId },
+      });
+      if (!location) {
+        throw new NotFoundException(
+          `Location ${dto.defaultLocationId} not found in this organization`,
+        );
+      }
+    }
+
     // Guard: each org can have at most one connection per store URL
     const existing = await this.prisma.client.ecommerceConnection.findFirst({
       where: { organizationId, storeUrl: dto.strapiUrl },
@@ -115,6 +127,18 @@ export class StrapiConnectionUseCase {
     dto: UpdateStrapiConnectionDto,
   ): Promise<StrapiConnectionResponseDto> {
     await this.getConnectionOrThrow(organizationId, connectionId);
+
+    // SECURITY (Sentinel): Verify defaultLocationId belongs to the caller's organizationId
+    if (dto.defaultLocationId) {
+      const location = await this.prisma.client.inventoryLocation.findFirst({
+        where: { id: dto.defaultLocationId, organizationId },
+      });
+      if (!location) {
+        throw new NotFoundException(
+          `Location ${dto.defaultLocationId} not found in this organization`,
+        );
+      }
+    }
 
     // If credentials changed, re-verify
     if (dto.strapiUrl || dto.apiToken) {
