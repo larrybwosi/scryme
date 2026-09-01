@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/dashboard",
   },
+  openGraph: {
+    title: "Enterprise Dashboard | Scryme CRM",
+    description:
+      "Monitor sales performance, conversion metrics, campaign activity, and active pipelines in real-time.",
+    url: "https://crm.scryme.tech/dashboard",
+  },
 };
 
 export default async function DashboardPage() {

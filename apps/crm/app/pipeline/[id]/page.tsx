@@ -1,10 +1,39 @@
-import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
-import { db } from '@repo/db';
-import { DealDetailView } from './_components/deal-detail-view';
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { db } from "@repo/db";
+import { DealDetailView } from "./_components/deal-detail-view";
 
 interface DealPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: DealPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const deal = await db.crmRecord
+    .findUnique({
+      where: { id },
+      include: { objectDefinition: true },
+    })
+    .catch(() => null);
+
+  const data = (deal?.data as Record<string, any>) || {};
+  const title = data.name || data.title || "Deal Opportunity";
+
+  return {
+    title: `${title} | Deal Details`,
+    description: `Inspect deal stage, forecasted value, associated contacts, and pipeline progress for ${title}.`,
+    alternates: {
+      canonical: `/pipeline/${id}`,
+    },
+    openGraph: {
+      title: `${title} | Deal Details | Scryme CRM`,
+      description: `Inspect deal stage, forecasted value, associated contacts, and pipeline progress for ${title}.`,
+      url: `https://crm.scryme.tech/pipeline/${id}`,
+    },
+  };
 }
 
 export default async function DealPage({ params }: DealPageProps) {
@@ -32,14 +61,14 @@ export default async function DealPage({ params }: DealPageProps) {
             include: {
               customer: true,
               businessAccount: true,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     },
   });
 
-  if (!deal || deal.objectDefinition.name !== 'deal') notFound();
+  if (!deal || deal.objectDefinition.name !== "deal") notFound();
 
   return (
     <Suspense fallback={<div>Loading deal details...</div>}>
