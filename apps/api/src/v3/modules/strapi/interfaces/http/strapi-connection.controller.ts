@@ -145,35 +145,43 @@ export class StrapiConnectionController {
     const results: Record<string, unknown> = {};
     const orgId = req.organization.id;
     const dir = dto.direction ?? SyncDirection.BIDIRECTIONAL;
+    const triggeredBy = `manual:${req.user?.memberId ?? "unknown"}`;
+
+    // ⚡ Bolt Optimization: Collect independent sync tasks and execute concurrently with Promise.all,
+    // reducing total API latency from sum(task_latencies) to max(task_latencies).
+    const syncTasks: { key: string; fn: () => Promise<unknown> }[] = [];
 
     for (const syncType of dto.syncTypes) {
       if (syncType === "PRODUCTS") {
         if (dir === SyncDirection.OUTBOUND || dir === SyncDirection.BIDIRECTIONAL) {
-          results["products.outbound"] = await this.productSyncUseCase.syncOutbound(
-            orgId,
-            connectionId,
-            `manual:${req.user?.memberId ?? "unknown"}`,
-          );
+          syncTasks.push({
+            key: "products.outbound",
+            fn: () => this.productSyncUseCase.syncOutbound(orgId, connectionId, triggeredBy),
+          });
         }
         if (dir === SyncDirection.INBOUND || dir === SyncDirection.BIDIRECTIONAL) {
-          results["products.inbound"] = await this.productSyncUseCase.syncInbound(
-            orgId,
-            connectionId,
-            `manual:${req.user?.memberId ?? "unknown"}`,
-          );
+          syncTasks.push({
+            key: "products.inbound",
+            fn: () => this.productSyncUseCase.syncInbound(orgId, connectionId, triggeredBy),
+          });
         }
       }
 
       if (syncType === "CUSTOMERS") {
         if (dir === SyncDirection.OUTBOUND || dir === SyncDirection.BIDIRECTIONAL) {
-          results["customers.outbound"] = await this.customerSyncUseCase.bulkSyncOutbound(
-            orgId,
-            connectionId,
-            `manual:${req.user?.memberId ?? "unknown"}`,
-          );
+          syncTasks.push({
+            key: "customers.outbound",
+            fn: () => this.customerSyncUseCase.bulkSyncOutbound(orgId, connectionId, triggeredBy),
+          });
         }
       }
     }
+
+    await Promise.all(
+      syncTasks.map(async ({ key, fn }) => {
+        results[key] = await fn();
+      }),
+    );
 
     return results;
   }
@@ -190,16 +198,19 @@ export class StrapiConnectionController {
     @Param("connectionId") connectionId: string,
     @Body() dto: TriggerSyncDto,
   ) {
-    const jobs: string[] = [];
     const orgId = req.organization.id;
     const triggeredBy = `manual:${req.user?.memberId ?? "unknown"}`;
     const dir = dto.direction ?? SyncDirection.BIDIRECTIONAL;
 
+    // ⚡ Bolt Optimization: Collect independent job queueing promises and resolve concurrently with Promise.all,
+    // collapsing multiple sequential Redis/DB job enqueue operations into a single concurrent roundtrip.
+    const jobPromises: Promise<string>[] = [];
+
     for (const syncType of dto.syncTypes) {
       if (syncType === "PRODUCTS") {
         if (dir === SyncDirection.OUTBOUND || dir === SyncDirection.BIDIRECTIONAL) {
-          jobs.push(
-            await this.webhookService.enqueueSyncJob(
+          jobPromises.push(
+            this.webhookService.enqueueSyncJob(
               "strapi.product.sync.outbound",
               connectionId,
               orgId,
@@ -208,8 +219,8 @@ export class StrapiConnectionController {
           );
         }
         if (dir === SyncDirection.INBOUND || dir === SyncDirection.BIDIRECTIONAL) {
-          jobs.push(
-            await this.webhookService.enqueueSyncJob(
+          jobPromises.push(
+            this.webhookService.enqueueSyncJob(
               "strapi.product.sync.inbound",
               connectionId,
               orgId,
@@ -221,8 +232,8 @@ export class StrapiConnectionController {
 
       if (syncType === "CUSTOMERS") {
         if (dir === SyncDirection.OUTBOUND || dir === SyncDirection.BIDIRECTIONAL) {
-          jobs.push(
-            await this.webhookService.enqueueSyncJob(
+          jobPromises.push(
+            this.webhookService.enqueueSyncJob(
               "strapi.customer.sync.outbound",
               connectionId,
               orgId,
@@ -232,6 +243,8 @@ export class StrapiConnectionController {
         }
       }
     }
+
+    const jobs = await Promise.all(jobPromises);
 
     return { queued: true, jobIds: jobs };
   }
