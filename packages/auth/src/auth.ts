@@ -201,7 +201,7 @@ export const auth = betterAuth({
             return {
               user: {
                 ...user,
-                role: systemRole, // Maintain system role for admin plugin checks
+                role: parsedCache.orgRole,
                 systemRole,
                 orgRole: parsedCache.orgRole,
                 activeOrganizationId: parsedCache.activeOrganizationId ?? null,
