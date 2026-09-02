@@ -382,12 +382,12 @@ class DeviceRepositoryImpl(
     }
 
     override suspend fun authorizePairingSession(sessionId: String, locationId: String?): Result<DeviceProvisionResponseDto> {
-        val payload = mutableMapOf("sessionId" to sessionId)
+        val payload = mutableMapOf<String, String>()
         if (!locationId.isNullOrBlank()) {
             payload["locationId"] = locationId
         }
         return safeApiCallDirectOrEnvelope {
-            api.authorizePairingSession(payload)
+            api.authorizePairingSession(sessionId, payload)
         }
     }
 }

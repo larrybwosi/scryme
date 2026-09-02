@@ -274,8 +274,8 @@ pub async fn run_sync(
     let response = request.query(&query_params).send().await?;
     if !response.status().is_success() { return Err(anyhow::anyhow!("Server returned error: {}", response.status())); }
 
-    let v2_resp = response.json::<crate::models::V2Response<ProductsSyncResponse>>().await?;
-    let mut res_body = v2_resp.data;
+    let v3_resp = response.json::<crate::models::StandardResponse<ProductsSyncResponse>>().await?;
+    let mut res_body = v3_resp.data;
 
     // Parallelize image caching for better performance
     let mut image_tasks = Vec::new();
@@ -309,7 +309,7 @@ pub async fn run_sync(
     }
 
     let incoming_count = res_body.products.len();
-    let new_sync_time = v2_resp.meta.and_then(|m| m.get("syncTimestamp").and_then(|t| t.as_str().map(|s| s.to_string())))
+    let new_sync_time = v3_resp.meta.and_then(|m| m.get("syncTimestamp").and_then(|t| t.as_str().map(|s| s.to_string())))
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
     let mut tx = pool.begin().await?;

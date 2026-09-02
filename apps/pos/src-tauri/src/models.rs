@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-// --- V2 API Wrapper ---
+// --- Standard API Wrapper ---
 #[derive(Debug, Serialize, Deserialize)]
-pub struct V2Response<T> {
+pub struct StandardResponse<T> {
     pub success: bool,
     pub data: T,
     pub meta: Option<serde_json::Value>,

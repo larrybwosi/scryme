@@ -158,14 +158,15 @@ interface AnnouncementApiService {
 }
 
 interface DeviceApiService {
-    @POST("/api/v2/devices/provision")
+    @POST("/api/v3/global/pos/provision")
     suspend fun provisionDevice(
         @Body request: Map<String, String> // setupToken
     ): Response<ApiEnvelope<DeviceProvisionResponseDto>>
 
-    @POST("/api/v2/devices/pairing/authorize")
+    @POST("/api/v3/pos/pairing/session/{sessionId}/authorize")
     suspend fun authorizePairingSession(
-        @Body request: Map<String, String> // sessionId
+        @Path("sessionId") sessionId: String,
+        @Body request: Map<String, String> // locationId, etc.
     ): Response<ApiEnvelope<DeviceProvisionResponseDto>>
 }
 

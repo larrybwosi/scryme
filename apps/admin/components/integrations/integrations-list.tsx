@@ -20,7 +20,6 @@ import {
 import {
   deleteIntegrationDefinition,
   testScrymeChatConnection,
-  testWindmillConnection,
   testHermesConnection,
 } from "@/app/actions/integrations"
 import {
@@ -48,8 +47,6 @@ export function IntegrationsList({
       let res: { success: boolean; message: string }
       if (slug === "scryme-chat") {
         res = await testScrymeChatConnection()
-      } else if (slug === "windmill") {
-        res = await testWindmillConnection()
       } else if (slug === "hermes-agent") {
         res = await testHermesConnection()
       } else {

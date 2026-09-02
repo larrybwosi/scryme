@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiSecurity } from "@nestjs/swagger";
 import { DevicesService } from "./devices.service";
 import { PosPairingService } from "../../v3/modules/pos/application/services/pos-pairing.service";
 import { PrismaService } from "../../prisma/prisma.service";
+import { ApiRealtimeService } from "../../common/services/realtime.service";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
 import { type V2ApiContext } from "@repo/shared/api/v2";
@@ -14,6 +15,7 @@ export class DevicesController {
     private readonly devicesService: DevicesService,
     private readonly pairingService: PosPairingService,
     private readonly prisma: PrismaService,
+    private readonly realtimeService: ApiRealtimeService,
   ) {}
 
   @AllowPublic()
@@ -48,13 +50,32 @@ export class DevicesController {
       memberId = activeMember.id;
     }
 
-    return this.pairingService.authorizeSession(
+    const result = await this.pairingService.authorizeSession(
       sessionId,
       orgId,
       memberId,
       this.prisma,
       body
     );
+
+    try {
+      const session = this.pairingService.getSession(sessionId);
+      const payload = {
+        sessionId: session.sessionId,
+        pairingCode: session.pairingCode,
+        status: session.status,
+        payload: result,
+      };
+
+      await this.realtimeService.publish(`pos:pairing:${session.sessionId}`, "pairing:authorized", payload);
+      await this.realtimeService.publish(`pos:pairing:${session.pairingCode}`, "pairing:authorized", payload);
+      await this.realtimeService.publish(`v3:pos:pairing:${session.sessionId}`, "pairing:authorized", payload);
+      await this.realtimeService.publish(`v3:pos:pairing:${session.pairingCode}`, "pairing:authorized", payload);
+    } catch (e: any) {
+      console.error("Failed to publish socket event for v2 device pairing authorization:", e?.message || e);
+    }
+
+    return result;
   }
 
   @Get("me")

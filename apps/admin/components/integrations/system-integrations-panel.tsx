@@ -18,7 +18,6 @@ import {
   removeAdminChatWorkspaceMember,
   testHermesConnection,
   testScrymeChatConnection,
-  testWindmillConnection,
   type SystemIntegrationSettings,
 } from "@/app/actions/integrations"
 
@@ -32,17 +31,11 @@ export function SystemIntegrationsPanel({
   const [isProvisioning, setIsProvisioning] = useState(false)
   const [isTestingHermes, setIsTestingHermes] = useState(false)
   const [isTestingChat, setIsTestingChat] = useState(false)
-  const [isTestingWindmill, setIsTestingWindmill] = useState(false)
 
   // Scryme Chat Credentials
   const [scrymeChatClientId, setScrymeChatClientId] = useState(settings.scrymeChatClientId ?? "")
   const [scrymeChatClientSecret, setScrymeChatClientSecret] = useState(settings.scrymeChatClientSecret ?? "")
   const [scrymeChatBaseUrl, setScrymeChatBaseUrl] = useState(settings.scrymeChatBaseUrl ?? "https://api.chat.scryme.tech")
-
-  // Windmill Credentials
-  const [windmillBaseUrl, setWindmillBaseUrl] = useState(settings.windmillBaseUrl ?? "http://windmill:8000")
-  const [windmillAdminApiKey, setWindmillAdminApiKey] = useState(settings.windmillAdminApiKey ?? "")
-  const [windmillWebhookSecret, setWindmillWebhookSecret] = useState(settings.windmillWebhookSecret ?? "")
 
   // Hermes Agent Credentials & Configurations
   const [hermesApiKey, setHermesApiKey] = useState(settings.hermesApiKey ?? "")
@@ -94,9 +87,6 @@ export function SystemIntegrationsPanel({
         scrymeChatClientId,
         scrymeChatClientSecret,
         scrymeChatBaseUrl,
-        windmillBaseUrl,
-        windmillAdminApiKey,
-        windmillWebhookSecret,
         hermesApiKey,
         hermesBaseUrl,
         hermesModel,
@@ -129,22 +119,6 @@ export function SystemIntegrationsPanel({
       toast.error(error instanceof Error ? error.message : "Failed to test Scryme Chat connection")
     } finally {
       setIsTestingChat(false)
-    }
-  }
-
-  async function handleTestWindmill() {
-    setIsTestingWindmill(true)
-    try {
-      const res = await testWindmillConnection()
-      if (res.success) {
-        toast.success(res.message)
-      } else {
-        toast.error(res.message)
-      }
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to test Windmill connection")
-    } finally {
-      setIsTestingWindmill(false)
     }
   }
 
@@ -245,69 +219,6 @@ export function SystemIntegrationsPanel({
             >
               {isTestingChat ? <Loader2 className="size-4 animate-spin" /> : <MessageSquare className="size-4 text-blue-500" />}
               Test Connection & Channel Message
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Windmill Credentials Card */}
-      <Card className="border-border bg-card">
-        <CardHeader className="flex flex-row items-start justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600">
-              <Workflow className="size-5" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold text-foreground">Windmill Orchestration Credentials</CardTitle>
-              <CardDescription>
-                System-wide configuration for the Windmill automation engine and script deployment.
-              </CardDescription>
-            </div>
-          </div>
-          <Badge variant={windmillAdminApiKey ? "secondary" : "outline"} className={windmillAdminApiKey ? "bg-emerald-500/10 text-emerald-600" : ""}>
-            {windmillAdminApiKey ? "Configured" : "Missing API Key"}
-          </Badge>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="windmill-base-url">Windmill Base URL</Label>
-            <Input
-              id="windmill-base-url"
-              value={windmillBaseUrl}
-              onChange={(e) => setWindmillBaseUrl(e.target.value)}
-              placeholder="http://windmill:8000"
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="windmill-admin-api-key">Admin API Key</Label>
-            <Input
-              id="windmill-admin-api-key"
-              type="password"
-              value={windmillAdminApiKey}
-              onChange={(e) => setWindmillAdminApiKey(e.target.value)}
-              placeholder="••••••••••••••••"
-            />
-          </div>
-          <div className="flex flex-col gap-2 sm:col-span-2">
-            <Label htmlFor="windmill-webhook-secret">Webhook Verification Secret (Optional)</Label>
-            <Input
-              id="windmill-webhook-secret"
-              type="password"
-              value={windmillWebhookSecret}
-              onChange={(e) => setWindmillWebhookSecret(e.target.value)}
-              placeholder="••••••••••••••••"
-            />
-          </div>
-          <div className="flex justify-end pt-2 sm:col-span-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isTestingWindmill}
-              onClick={handleTestWindmill}
-              className="gap-2"
-            >
-              {isTestingWindmill ? <Loader2 className="size-4 animate-spin" /> : <Workflow className="size-4 text-purple-500" />}
-              Test Connection
             </Button>
           </div>
         </CardContent>

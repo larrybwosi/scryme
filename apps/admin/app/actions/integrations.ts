@@ -14,14 +14,6 @@ const DEFAULT_INTEGRATIONS = [
     isActive: true,
   },
   {
-    name: "Windmill",
-    slug: "windmill",
-    description: "Headless automation engine and workflow orchestrator for background scripts and triggers.",
-    category: IntegrationCategory.OTHER,
-    authType: AuthType.API_KEY,
-    isActive: true,
-  },
-  {
     name: "Hermes Agent",
     slug: "hermes-agent",
     description: "Autonomous AI agent for automated tasks, system monitoring, and operational workflows.",
@@ -168,10 +160,6 @@ export type SystemIntegrationSettings = {
   scrymeChatClientSecret?: string;
   scrymeChatBaseUrl?: string;
 
-  windmillBaseUrl?: string;
-  windmillAdminApiKey?: string;
-  windmillWebhookSecret?: string;
-
   hermesApiKey?: string;
   hermesBaseUrl?: string;
   hermesModel?: string;
@@ -193,9 +181,6 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
     "system:integration:scryme:clientId",
     "system:integration:scryme:clientSecret",
     "system:integration:scryme:baseUrl",
-    "system:integration:windmill:baseUrl",
-    "system:integration:windmill:adminApiKey",
-    "system:integration:windmill:webhookSecret",
     "system:integration:hermes:apiKey",
     "system:integration:hermes:baseUrl",
     "system:integration:hermes:model",
@@ -227,19 +212,6 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       settingsMap.get("system:integration:scryme:baseUrl") ||
       process.env.SCRYME_CHAT_BASE_URL ||
       "https://api.chat.scryme.tech",
-
-    windmillBaseUrl:
-      settingsMap.get("system:integration:windmill:baseUrl") ||
-      process.env.WINDMILL_BASE_URL ||
-      "http://windmill:8000",
-    windmillAdminApiKey:
-      settingsMap.get("system:integration:windmill:adminApiKey") ||
-      process.env.WINDMILL_ADMIN_API_KEY ||
-      "",
-    windmillWebhookSecret:
-      settingsMap.get("system:integration:windmill:webhookSecret") ||
-      process.env.WINDMILL_WEBHOOK_SECRET ||
-      "",
 
     hermesApiKey:
       settingsMap.get("system:integration:hermes:apiKey") ||
@@ -287,9 +259,6 @@ export async function updateSystemIntegrationSettings(
     ["system:integration:scryme:clientId", input.scrymeChatClientId],
     ["system:integration:scryme:clientSecret", input.scrymeChatClientSecret],
     ["system:integration:scryme:baseUrl", input.scrymeChatBaseUrl],
-    ["system:integration:windmill:baseUrl", input.windmillBaseUrl],
-    ["system:integration:windmill:adminApiKey", input.windmillAdminApiKey],
-    ["system:integration:windmill:webhookSecret", input.windmillWebhookSecret],
     ["system:integration:hermes:apiKey", input.hermesApiKey],
     ["system:integration:hermes:baseUrl", input.hermesBaseUrl],
     ["system:integration:hermes:model", input.hermesModel],
@@ -555,51 +524,6 @@ export async function testScrymeChatConnection() {
   }
 }
 
-export async function testWindmillConnection() {
-  await requireSuperAdmin();
-
-  const settings = await getSystemIntegrationSettings();
-  if (!settings.windmillBaseUrl) {
-    throw new Error("Windmill Base URL is not configured");
-  }
-
-  try {
-    const baseUrl = settings.windmillBaseUrl.replace(/\/$/, "");
-    const headers: Record<string, string> = {};
-    if (settings.windmillAdminApiKey) {
-      headers["Authorization"] = `Bearer ${settings.windmillAdminApiKey}`;
-    }
-
-    const response = await fetch(`${baseUrl}/api/version`, {
-      method: "GET",
-      headers,
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (!response.ok) {
-      const rootRes = await fetch(`${baseUrl}/`, {
-        method: "GET",
-        headers,
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (!rootRes.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-    }
-
-    return {
-      success: true,
-      message: "Successfully connected to Windmill Orchestration engine.",
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      message: `Failed to connect to Windmill: ${error.message || "Endpoint unreachable"}`,
-    };
-  }
-}
-
 export async function testOrganizationIntegrationConnection(id: string) {
   await requireSuperAdmin();
 
@@ -620,8 +544,6 @@ export async function testOrganizationIntegrationConnection(id: string) {
 
   if (slug === "scryme-chat") {
     testResult = await testScrymeChatConnection();
-  } else if (slug === "windmill") {
-    testResult = await testWindmillConnection();
   } else if (slug === "hermes-agent") {
     testResult = await testHermesConnection();
   } else {

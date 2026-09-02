@@ -104,10 +104,10 @@ function IntegrationsPageContent() {
 
   // Query for integration statuses
   const {
-    data: statuses = {},
+    data: statuses = {} as any,
     isLoading: isLoadingStatuses,
     refetch: refetchStatuses,
-  } = useQuery({
+  } = useQuery<any>({
     queryKey: ["integrations", "statuses"],
     queryFn: getIntegrationsStatus,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -118,10 +118,10 @@ function IntegrationsPageContent() {
     data: scrymeDetails,
     isLoading: isLoadingScrymeDetails,
     refetch: refetchScrymeDetails,
-  } = useQuery({
+  } = useQuery<any>({
     queryKey: ["scryme", "workspace", "details"],
     queryFn: getScrymeWorkspaceDetails,
-    enabled: selectedIntegration?.id === "scryme" && statuses?.scryme?.connected,
+    enabled: selectedIntegration?.id === "scryme" && Boolean((statuses as Record<string, any>)?.scryme?.connected),
     staleTime: 30 * 1000, // 30 seconds
   });
 
@@ -233,7 +233,7 @@ function IntegrationsPageContent() {
           </div>
         );
       case "scryme":
-        const isProvisioned = statuses?.scryme?.connected;
+        const isProvisioned = (statuses as Record<string, any>)?.scryme?.connected;
         if (!isProvisioned) {
           return (
             <div className="py-4">
@@ -306,7 +306,7 @@ function IntegrationsPageContent() {
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground font-medium">Workspace Slug:</span>
                     <Badge variant="outline" className="font-mono text-[11px]">
-                      {statuses?.scryme?.config?.workspaceSlug || "org-workspace"}
+                      {(statuses as Record<string, any>)?.scryme?.config?.workspaceSlug || "org-workspace"}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
@@ -513,7 +513,7 @@ function IntegrationsPageContent() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 lg:gap-8">
         {INTEGRATIONS.map(integration => {
-          const isConnected = statuses?.[integration.id]?.connected;
+          const isConnected = (statuses as Record<string, any>)?.[integration.id]?.connected;
           const statusLabel = isConnected ? "Connected" : "Not Configured";
 
           const content = (

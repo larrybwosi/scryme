@@ -213,7 +213,7 @@ test.describe('Order Creation and Invoice Download Flow', () => {
         version: 0
       };
 
-      localStorage.setItem('pos-auth-storage-v2', JSON.stringify(authState));
+      localStorage.setItem('pos-auth-storage-v3', JSON.stringify(authState));
       localStorage.setItem('DEVICE_ID', 'test-device');
       localStorage.setItem('DEVICE_ROLE', 'MAIN_HUB');
     }, { now: currentTimestamp, locId: MOCK_LOCATION_ID });
