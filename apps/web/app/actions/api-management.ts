@@ -22,7 +22,8 @@ import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
 
 async function ensureOrgContext() {
-  const context = await getServerAuth();
+    const context = await getServerAuth();
+    console.log(context);
   if (!context || !context.organizationId) {
     throw new Error("Unauthorized");
   }

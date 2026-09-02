@@ -34,6 +34,10 @@ describe("ScrymeService", () => {
         findFirst: vi.fn(),
         update: vi.fn(),
       },
+      member: {
+        findFirst: vi.fn(),
+        update: vi.fn(),
+      },
     },
   };
 
@@ -119,6 +123,124 @@ describe("ScrymeService", () => {
       await expect(
         service.handleWebhook("", decisionPayload),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it("should process approve_perm interactive action and grant member access (IDOR protected)", async () => {
+      const approvePayload = {
+        event: "message.action",
+        data: {
+          workspaceSlug: "org-test",
+          action: { id: "approve_perm:ADMIN:member-123", value: "ADMIN" },
+          message: { id: "msg-101", channelSlug: "admins", content: "Access Request" },
+          user: { id: "admin-1", name: "Org Owner", email: "owner@test.com" },
+        },
+      };
+
+      mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
+        organizationId: "org-1",
+        organization: {},
+      });
+
+      mockPrisma.client.member.findFirst.mockResolvedValue({
+        id: "member-123",
+        role: "EMPLOYEE",
+        organizationId: "org-1",
+      });
+
+      mockPrisma.client.member.update.mockResolvedValue({
+        id: "member-123",
+        role: "ADMIN",
+        membershipStatus: "ACTIVE",
+        isActive: true,
+      });
+
+      const updateMsgSpy = vi
+        .spyOn(service["scrymeClient"], "updateMessage")
+        .mockResolvedValue({} as any);
+
+      const result = await service.handleWebhook("", approvePayload);
+
+      expect(result.status).toBe("success");
+      expect(mockPrisma.client.member.findFirst).toHaveBeenCalledWith({
+        where: { id: "member-123", organizationId: "org-1" },
+      });
+      expect(mockPrisma.client.member.update).toHaveBeenCalledWith({
+        where: { id: "member-123" },
+        data: {
+          role: "ADMIN",
+          membershipStatus: "ACTIVE",
+          isActive: true,
+        },
+      });
+      expect(updateMsgSpy).toHaveBeenCalledWith(
+        "org-test",
+        "admins",
+        "msg-101",
+        expect.objectContaining({
+          actions: [],
+        }),
+      );
+    });
+
+    it("should process decline_perm interactive action", async () => {
+      const declinePayload = {
+        event: "message.action",
+        data: {
+          workspaceSlug: "org-test",
+          action: { id: "decline_perm:member-123" },
+          message: { id: "msg-102", channelSlug: "admins", content: "Access Request" },
+          user: { id: "admin-1", name: "Org Owner" },
+        },
+      };
+
+      mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
+        organizationId: "org-1",
+        organization: {},
+      });
+
+      mockPrisma.client.member.findFirst.mockResolvedValue({
+        id: "member-123",
+        organizationId: "org-1",
+      });
+
+      const updateMsgSpy = vi
+        .spyOn(service["scrymeClient"], "updateMessage")
+        .mockResolvedValue({} as any);
+
+      const result = await service.handleWebhook("", declinePayload);
+
+      expect(result.status).toBe("success");
+      expect(updateMsgSpy).toHaveBeenCalledWith(
+        "org-test",
+        "admins",
+        "msg-102",
+        expect.objectContaining({
+          actions: [],
+        }),
+      );
+    });
+
+    it("should throw BadRequestException for approve_perm when member does not belong to org (IDOR protection)", async () => {
+      const idorPayload = {
+        event: "message.action",
+        data: {
+          workspaceSlug: "org-test",
+          action: { id: "approve_perm:ADMIN:other-org-member" },
+          message: { id: "msg-103", channelSlug: "admins" },
+          user: { id: "admin-1" },
+        },
+      };
+
+      mockPrisma.client.scrymeConfiguration.findFirst.mockResolvedValue({
+        organizationId: "org-1",
+        organization: {},
+      });
+
+      mockPrisma.client.member.findFirst.mockResolvedValue(null);
+
+      await expect(service.handleWebhook("", idorPayload)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it("should prevent cross-tenant IDOR for Windmill execution resume actions", async () => {

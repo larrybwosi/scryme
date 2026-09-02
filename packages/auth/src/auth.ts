@@ -201,7 +201,7 @@ export const auth = betterAuth({
             return {
               user: {
                 ...user,
-                role: systemRole, // Maintain system role for admin plugin checks
+                role: systemRole,
                 systemRole,
                 orgRole: parsedCache.orgRole,
                 activeOrganizationId: parsedCache.activeOrganizationId ?? null,
@@ -238,6 +238,14 @@ export const auth = betterAuth({
 
           if (firstMembership) {
             activeOrganizationId = firstMembership.organizationId;
+          } else if (systemRole === "SUPER_ADMIN") {
+            const firstOrg = await db.organization.findFirst({
+              where: { isSuspended: false },
+              select: { id: true },
+            });
+            if (firstOrg) {
+              activeOrganizationId = firstOrg.id;
+            }
           }
         }
 
@@ -269,6 +277,8 @@ export const auth = betterAuth({
 
           if (member) {
             memberData = { memberId: member.id, role: member.role };
+          } else if (systemRole === "SUPER_ADMIN") {
+            memberData = { memberId: `superadmin-${user.id}`, role: MemberRole.OWNER };
           }
           isOrgSuspended = organization?.isSuspended ?? false;
         }

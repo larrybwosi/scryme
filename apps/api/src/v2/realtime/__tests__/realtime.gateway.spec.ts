@@ -34,7 +34,48 @@ describe('RealtimeGateway', () => {
     } as any;
   });
 
-  it('should handle join room', async () => {
+  it('should allow unauthenticated connections for public pairing without disconnect', async () => {
+    const client = {
+      id: 'client-unauth-1',
+      handshake: { auth: {}, headers: {} },
+      disconnect: vi.fn(),
+    } as any as Socket;
+
+    await gateway.handleConnection(client);
+
+    expect(client.disconnect).not.toHaveBeenCalled();
+    expect((client as any).v2Context).toBeNull();
+  });
+
+  it('should allow unauthenticated client to join pos:pairing channel', async () => {
+    const client = {
+      join: vi.fn(),
+      emit: vi.fn(),
+      id: 'client-unauth-1',
+      v2Context: null,
+    } as any as Socket;
+
+    const result = await gateway.handleJoinRoom(client, { channel: 'pos:pairing:session-123' });
+
+    expect(client.join).toHaveBeenCalledWith('pos:pairing:session-123');
+    expect(result).toEqual({ event: 'joined', data: 'pos:pairing:session-123' });
+  });
+
+  it('should reject unauthenticated client joining private organization channel', async () => {
+    const client = {
+      join: vi.fn(),
+      emit: vi.fn(),
+      id: 'client-unauth-1',
+      v2Context: null,
+    } as any as Socket;
+
+    const result = await gateway.handleJoinRoom(client, { channel: 'organization:org-1:events' });
+
+    expect(client.join).not.toHaveBeenCalled();
+    expect(result).toEqual({ event: 'error', message: 'Unauthorized' });
+  });
+
+  it('should handle join room for authenticated client', async () => {
     const client = {
       join: vi.fn(),
       emit: vi.fn(),

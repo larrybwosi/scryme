@@ -24,6 +24,7 @@
     "@repo/ui": "workspace:*",
     "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "@tanstack/react-query": "^5.90.20",
     "argon2": "^0.44.0",
     "better-auth": "^1.4.19",
     "clsx": "^2.1.1",

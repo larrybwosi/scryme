@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Plus, Pencil, Trash2, Plug, Loader2, Play } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
 import { Badge } from "@repo/ui/components/ui/badge"
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,18 +31,31 @@ import {
 } from "./integration-definition-dialog"
 import Image from "next/image"
 
-
 export function IntegrationsList({
   integrations,
+  isLoading,
 }: {
   integrations: IntegrationDefinitionRow[]
+  isLoading?: boolean
 }) {
-  const router = useRouter()
+  const queryClient = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<IntegrationDefinitionRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<IntegrationDefinitionRow | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
   const [testingSlug, setTestingSlug] = useState<string | null>(null)
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteIntegrationDefinition(id),
+    onSuccess: (_, id) => {
+      const name = deleteTarget?.name || "Integration"
+      toast.success(`${name} deleted`)
+      setDeleteTarget(null)
+      queryClient.invalidateQueries({ queryKey: ["integration-definitions"] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to delete integration")
+    },
+  })
 
   async function handleTestDefinition(slug: string, name: string) {
     setTestingSlug(slug)
@@ -65,21 +81,6 @@ export function IntegrationsList({
     }
   }
 
-  async function handleDelete() {
-    if (!deleteTarget) return
-    setIsDeleting(true)
-    try {
-      await deleteIntegrationDefinition(deleteTarget.id)
-      toast.success(`Integration ${deleteTarget.name} deleted`)
-      setDeleteTarget(null)
-      router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete integration")
-    } finally {
-      setIsDeleting(false)
-    }
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end">
@@ -89,7 +90,22 @@ export function IntegrationsList({
         </Button>
       </div>
 
-      {integrations.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse border-border bg-card p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="size-9 bg-muted rounded-md" />
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-4 bg-muted rounded w-1/2" />
+                  <div className="h-3 bg-muted rounded w-1/3" />
+                </div>
+              </div>
+              <div className="h-12 bg-muted rounded w-full" />
+            </Card>
+          ))}
+        </div>
+      ) : integrations.length === 0 ? (
         <Card className="border-border bg-card">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             No integration definitions created yet. Add one to allow organizations to connect external services.
@@ -174,12 +190,20 @@ export function IntegrationsList({
 
       <IntegrationDefinitionDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open)
+          if (!open) queryClient.invalidateQueries({ queryKey: ["integration-definitions"] })
+        }}
       />
       <IntegrationDefinitionDialog
         integration={editingItem}
         open={!!editingItem}
-        onOpenChange={(open) => !open && setEditingItem(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingItem(null)
+            queryClient.invalidateQueries({ queryKey: ["integration-definitions"] })
+          }
+        }}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -191,16 +215,16 @@ export function IntegrationsList({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
-                handleDelete()
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id)
               }}
-              disabled={isDeleting}
+              disabled={deleteMutation.isPending}
               className="gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+              {deleteMutation.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

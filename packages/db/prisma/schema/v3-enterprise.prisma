@@ -20,6 +20,7 @@ model V3ApiClient {
   updatedAt      DateTime     @updatedAt
 
   webhookSubscriptions WebhookSubscription[]
+  deviceRegistry       DeviceRegistry?
 
   @@index([organizationId])
   @@map("v3_api_client")
