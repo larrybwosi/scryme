@@ -395,6 +395,82 @@ export class ScrymeService {
         return { status: "ignored" };
       }
 
+      // Handle Permission Request interactive actions
+      if (
+        action.id.startsWith("approve_perm:") ||
+        action.id.startsWith("decline_perm:")
+      ) {
+        const parts = action.id.split(":");
+        const actionType = parts[0];
+
+        if (actionType === "approve_perm") {
+          // Format: approve_perm:ROLE:memberId
+          const roleToGrant = parts[1] as any;
+          const targetMemberId = parts[2];
+
+          // SECURITY (Sentinel): Use findFirst scoped to organizationId to prevent cross-tenant IDOR
+          const targetMember = await this.prisma.client.member.findFirst({
+            where: { id: targetMemberId, organizationId: config.organizationId },
+          });
+
+          if (!targetMember) {
+            this.logger.warn(
+              `Target member ${targetMemberId} not found or unauthorized for org ${config.organizationId}`,
+            );
+            throw new BadRequestException("Target member not found or unauthorized");
+          }
+
+          // Grant access: update member role and set membershipStatus to ACTIVE & isActive to true
+          await this.prisma.client.member.update({
+            where: { id: targetMember.id },
+            data: {
+              role: roleToGrant,
+              membershipStatus: "ACTIVE",
+              isActive: true,
+            },
+          });
+
+          // Update message in Scryme Chat to remove actions and display approval note
+          await this.scrymeClient.updateMessage(
+            workspaceSlug,
+            message.channelSlug || message.channelId,
+            message.id,
+            {
+              content: `${message.content}\n\n✅ *Permission request APPROVED by ${user.name || user.email} (Role upgraded to ${roleToGrant}). Access granted!*`,
+              actions: [],
+            },
+          );
+
+          return {
+            status: "success",
+            message: `Permission request approved. Member ${targetMember.id} role set to ${roleToGrant}`,
+          };
+        } else if (actionType === "decline_perm") {
+          const targetMemberId = parts[1];
+
+          // SECURITY (Sentinel): Verify member belongs to org
+          const targetMember = await this.prisma.client.member.findFirst({
+            where: { id: targetMemberId, organizationId: config.organizationId },
+          });
+
+          if (!targetMember) {
+            throw new BadRequestException("Target member not found or unauthorized");
+          }
+
+          await this.scrymeClient.updateMessage(
+            workspaceSlug,
+            message.channelSlug || message.channelId,
+            message.id,
+            {
+              content: `${message.content}\n\n❌ *Permission request DECLINED by ${user.name || user.email}*`,
+              actions: [],
+            },
+          );
+
+          return { status: "success", message: "Permission request declined" };
+        }
+      }
+
       if (
         action.id.startsWith("approve:") ||
         action.id.startsWith("decline:") ||
