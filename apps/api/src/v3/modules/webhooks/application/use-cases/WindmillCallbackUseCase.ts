@@ -154,13 +154,15 @@ export class WindmillCallbackUseCase {
       });
 
       // 2. Business Logic based on entity type
+      // SECURITY (Sentinel): Use updateMany with organizationId scoping because Purchase,
+      // Expense, and StockAdjustment models lack composite unique indices on [id, organizationId].
       if (payload.entityType === "PurchaseOrder") {
         const statusMap: Record<string, PurchaseStatus> = {
           APPROVED: PurchaseStatus.APPROVED,
           REJECTED: PurchaseStatus.REJECTED,
           PENDING_REVIEW: PurchaseStatus.ORDERED,
         };
-        await tx.purchase.update({
+        await tx.purchase.updateMany({
           where: {
             id: payload.entityId,
             organizationId: payload.organizationId,
@@ -175,7 +177,7 @@ export class WindmillCallbackUseCase {
           REJECTED: ExpenseStatus.REJECTED,
           PENDING_REVIEW: ExpenseStatus.PENDING_APPROVAL,
         };
-        await tx.expense.update({
+        await tx.expense.updateMany({
           where: {
             id: payload.entityId,
             organizationId: payload.organizationId,
@@ -191,7 +193,7 @@ export class WindmillCallbackUseCase {
           REJECTED: AdjustmentStatus.REJECTED,
           PENDING_REVIEW: AdjustmentStatus.PENDING,
         };
-        await tx.stockAdjustment.update({
+        await tx.stockAdjustment.updateMany({
           where: {
             id: payload.entityId,
             organizationId: payload.organizationId,
@@ -228,8 +230,9 @@ export class WindmillCallbackUseCase {
       });
 
       // 2. Business Logic
+      // SECURITY (Sentinel): Use updateMany with organizationId scoping because Batch lacks a composite unique index on [id, organizationId].
       if (payload.action === "DISPOSE") {
-        await tx.batch.update({
+        await tx.batch.updateMany({
           where: {
             id: payload.batchId,
             organizationId: payload.organizationId,
@@ -244,7 +247,7 @@ export class WindmillCallbackUseCase {
           },
         });
       } else if (payload.action === "REPURPOSE") {
-        await tx.batch.update({
+        await tx.batch.updateMany({
           where: {
             id: payload.batchId,
             organizationId: payload.organizationId,

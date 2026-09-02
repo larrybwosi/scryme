@@ -124,13 +124,16 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
           updateMany: vi.fn(),
         },
         purchase: {
-          update: vi.fn(),
+          updateMany: vi.fn(),
         },
         expense: {
-          update: vi.fn(),
+          updateMany: vi.fn(),
+        },
+        stockAdjustment: {
+          updateMany: vi.fn(),
         },
         batch: {
-          update: vi.fn(),
+          updateMany: vi.fn(),
         },
         $transaction: vi.fn((cb) => cb(mockPrisma.client)),
       },
@@ -176,7 +179,7 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
 
   it('should process handleApprovalCallback for PurchaseOrder', async () => {
     mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
-    mockPrisma.client.purchase.update.mockResolvedValue({});
+    mockPrisma.client.purchase.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await useCase.handleApprovalCallback({
       jobId: mockJobId,
@@ -189,7 +192,7 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
     } as any);
 
     expect(result).toEqual({ success: true });
-    expect(mockPrisma.client.purchase.update).toHaveBeenCalledWith({
+    expect(mockPrisma.client.purchase.updateMany).toHaveBeenCalledWith({
       where: { id: 'po_100', organizationId: mockOrgId },
       data: { status: 'APPROVED' },
     });
@@ -197,7 +200,7 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
 
   it('should process handleBakeryDisposalCallback for DISPOSE', async () => {
     mockPrisma.client.windmillExecution.updateMany.mockResolvedValue({ count: 1 });
-    mockPrisma.client.batch.update.mockResolvedValue({});
+    mockPrisma.client.batch.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await useCase.handleBakeryDisposalCallback({
       jobId: mockJobId,
@@ -210,7 +213,7 @@ describe('WindmillCallbackUseCase - Callbacks & Business Logic', () => {
     } as any);
 
     expect(result).toEqual({ success: true });
-    expect(mockPrisma.client.batch.update).toHaveBeenCalledWith({
+    expect(mockPrisma.client.batch.updateMany).toHaveBeenCalledWith({
       where: { id: 'batch_777', organizationId: mockOrgId },
       data: expect.objectContaining({
         expirationStatus: 'DISPOSED',
