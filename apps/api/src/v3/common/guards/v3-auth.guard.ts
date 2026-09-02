@@ -214,7 +214,12 @@ export class V3AuthGuard implements CanActivate {
         const client = await this.v3AuthService.validateClient(clientId, clientSecret);
         if (client) {
           const registry = await this.prisma.client.deviceRegistry.findFirst({
-            where: { apiKeyId: client.id },
+            where: {
+              OR: [
+                { v3ApiClientId: client.id },
+                { apiKeyId: client.id },
+              ],
+            },
           });
           payload = {
             type: "v3_client",

@@ -38,7 +38,7 @@ export async function provisionDeviceV3(prisma: any, token: string) {
   const device = await (prisma.client || prisma).deviceRegistry.create({
     data: {
       organizationId: setupToken.organizationId,
-      apiKeyId: client.id,
+      v3ApiClientId: client.id,
       deviceName: setupToken.deviceName,
       deviceType: setupToken.deviceType,
       locationId: setupToken.locationId,
