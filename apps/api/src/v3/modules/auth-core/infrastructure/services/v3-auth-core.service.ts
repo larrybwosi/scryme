@@ -98,7 +98,12 @@ export class V3AuthCoreService {
 
     payload.type = "v3_hybrid";
     const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: { apiKeyId: clientId },
+      where: {
+        OR: [
+          { v3ApiClientId: clientId },
+          { apiKeyId: clientId },
+        ],
+      },
     });
     if (registry) {
       payload.locationId = registry.locationId;
@@ -220,7 +225,12 @@ export class V3AuthCoreService {
 
   private async handleMemberCheckIn(client: any, member: any) {
     const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: { apiKeyId: client.id },
+      where: {
+        OR: [
+          { v3ApiClientId: client.id },
+          { apiKeyId: client.id },
+        ],
+      },
     });
     if (!registry) return;
 

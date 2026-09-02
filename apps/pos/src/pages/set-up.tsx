@@ -450,21 +450,6 @@ const SetupTokenStep = ({
               <Key className="absolute left-4 top-4.5 h-5 w-5 text-zinc-400 group-focus-within:text-blue-600 transition-colors" />
             </div>
 
-            {token.length >= 3 && (
-              <div className="flex flex-col items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 space-y-3 animate-in fade-in">
-                <div className="bg-white p-3 border border-zinc-200 shadow-sm">
-                  <QRCodeSVG
-                    value={JSON.stringify({ type: 'POS_PROVISION', token })}
-                    size={140}
-                    level="H"
-                    includeMargin={false}
-                  />
-                </div>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold text-center">
-                  Scan with Scryme Admin Mobile App to Authorize Device
-                </p>
-              </div>
-            )}
           </div>
 
           <div className="flex flex-col gap-4">
