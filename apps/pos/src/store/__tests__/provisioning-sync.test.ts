@@ -30,7 +30,7 @@ describe('POS Provisioning, Auth & Sync Engine Core Integration', () => {
 
   describe('Device Provisioning & Pairing Payload Authorization', () => {
     it('provisions a device via token successfully', async () => {
-      mockInvoke.mockImplementation(async (cmd, args: any) => {
+      mockInvoke.mockImplementation(async (cmd, _args: any) => {
         if (cmd === 'update_base_url') return;
         if (cmd === 'authenticated_api_request') {
           return {
