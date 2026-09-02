@@ -56,22 +56,23 @@ export async function getServerAuth(
     (session.session as any).activeOrganizationId || (user as any).activeOrganizationId;
 
   const memberId = (user as any).memberId;
+  const role = user.role;
+  const systemRole = (user as any).systemRole || user.role;
+  const isSuperAdmin = systemRole === "SUPER_ADMIN";
+  const orgRole = (user as any).orgRole || (isSuperAdmin ? "OWNER" : role);
+
   // Ensure organizationId is present before proceeding
-  if (!options.allowNoOrg && (!organizationId || !memberId)) {
+  if (!options.allowNoOrg && (!organizationId || (!memberId && !isSuperAdmin))) {
     redirect("/create-org");
   }
 
   // Block access for organizations suspended by a platform administrator
-  if (organizationId && (session.session as any).isOrgSuspended) {
+  if (organizationId && (session.session as any).isOrgSuspended && !isSuperAdmin) {
     redirect("/suspended");
   }
 
-  const role = user.role;
-  const systemRole = (user as any).systemRole || user.role;
-
   if (options.permission) {
-    const isSuperAdmin = systemRole === "SUPER_ADMIN";
-    if (!isSuperAdmin && (!role || !hasMemberPermission(role, options.permission))) {
+    if (!isSuperAdmin && (!orgRole || !hasMemberPermission(orgRole, options.permission))) {
       redirect("/unauthorized");
     }
   }
