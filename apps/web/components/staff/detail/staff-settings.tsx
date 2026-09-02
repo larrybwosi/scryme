@@ -142,22 +142,22 @@ export function StaffSettings({
   };
 
   return (
-    <div className="">
+    <div className="bg-background">
       <form onSubmit={handleUpdate} className="">
         {/* Sticky header with Save button */}
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 bg-[#F8F9FB]/95 backdrop-blur-sm border-b border-gray-100 px-1 py-3 mb-6">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 bg-background/95 backdrop-blur-sm border-b border-border px-1 py-3 mb-6">
           <div>
-            <h2 className="text-base font-bold text-gray-900">
+            <h2 className="text-base font-bold text-foreground">
               Staff Settings
             </h2>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               {form.name || member.user?.email || "Manage staff details"}
             </p>
           </div>
           <Button
             type="submit"
             disabled={loading}
-            className="gap-2 bg-[#1D1D1F]">
+            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
             {loading ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
@@ -176,19 +176,19 @@ export function StaffSettings({
         <div className="flex-1 min-h-0 overflow-y-auto pb-6">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             <div className="lg:col-span-2 space-y-6">
-              <Card className="border-none shadow-sm bg-white">
+              <Card className="border-border shadow-sm bg-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <User size={20} className="text-[#34A853]" />
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                    <User size={20} className="text-primary" />
                     Personal Information
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground">
                     Manage staff personal details and contact information.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Profile Image</Label>
+                    <Label className="text-foreground">Profile Image</Label>
                     <ImageUpload
                       value={form.image ? [form.image] : []}
                       onChange={urls =>
@@ -200,15 +200,15 @@ export function StaffSettings({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="name" className="text-foreground">Full Name</Label>
                       <div className="relative">
                         <User
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                           size={16}
                         />
                         <Input
                           id="name"
-                          className="pl-10"
+                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                           placeholder="e.g. John Doe"
                           value={form.name}
                           onChange={e =>
@@ -218,16 +218,16 @@ export function StaffSettings({
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email Address</Label>
+                      <Label htmlFor="email" className="text-foreground">Email Address</Label>
                       <div className="relative">
                         <Mail
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                           size={16}
                         />
                         <Input
                           id="email"
                           type="email"
-                          className="pl-10"
+                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                           placeholder="e.g. john@example.com"
                           value={form.email}
                           onChange={e =>
@@ -240,15 +240,15 @@ export function StaffSettings({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Phone Number</Label>
+                      <Label htmlFor="phone" className="text-foreground">Phone Number</Label>
                       <div className="relative">
                         <Phone
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                           size={16}
                         />
                         <Input
                           id="phone"
-                          className="pl-10"
+                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                           placeholder="+254..."
                           value={form.phone}
                           onChange={e =>
@@ -258,13 +258,13 @@ export function StaffSettings({
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="gender">Gender</Label>
+                      <Label htmlFor="gender" className="text-foreground">Gender</Label>
                       <Select
                         value={form.gender || undefined}
                         onValueChange={val =>
                           setForm({ ...form, gender: val })
                         }>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background border-border text-foreground">
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
                         <SelectContent>
@@ -280,15 +280,15 @@ export function StaffSettings({
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="age">Age / Date of Birth</Label>
+                      <Label htmlFor="age" className="text-foreground">Age / Date of Birth</Label>
                       <div className="relative">
                         <Hash
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                           size={16}
                         />
                         <Input
                           id="age"
-                          className="pl-10"
+                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                           placeholder="e.g. 25"
                           value={form.age}
                           onChange={e =>
@@ -298,15 +298,15 @@ export function StaffSettings({
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="tags">Tags (Comma separated)</Label>
+                      <Label htmlFor="tags" className="text-foreground">Tags (Comma separated)</Label>
                       <div className="relative">
                         <Tag
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                           size={16}
                         />
                         <Input
                           id="tags"
-                          className="pl-10"
+                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                           placeholder="Shift A, Morning, Delivery"
                           value={form.tags}
                           onChange={e =>
@@ -317,15 +317,15 @@ export function StaffSettings({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
+                    <Label htmlFor="address" className="text-foreground">Address</Label>
                     <div className="relative">
                       <Home
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                         size={16}
                       />
                       <Input
                         id="address"
-                        className="pl-10"
+                        className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                         placeholder="Full residential address"
                         value={form.address}
                         onChange={e =>
@@ -337,28 +337,28 @@ export function StaffSettings({
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-sm bg-white">
+              <Card className="border-border shadow-sm bg-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
                     <Briefcase size={20} className="text-blue-500" />
                     Employment Details
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground">
                     Corporate position and employment contract information.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="jobTitle">Job Title</Label>
+                      <Label htmlFor="jobTitle" className="text-foreground">Job Title</Label>
                       <div className="relative">
                         <Briefcase
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                           size={16}
                         />
                         <Input
                           id="jobTitle"
-                          className="pl-10"
+                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                           placeholder="e.g. Senior Accountant"
                           value={form.jobTitle}
                           onChange={e =>
@@ -368,13 +368,13 @@ export function StaffSettings({
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="employmentType">Employment Type</Label>
+                      <Label htmlFor="employmentType" className="text-foreground">Employment Type</Label>
                       <Select
                         value={form.employmentType || undefined}
                         onValueChange={val =>
                           setForm({ ...form, employmentType: val })
                         }>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background border-border text-foreground">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
@@ -390,16 +390,16 @@ export function StaffSettings({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="joiningDate">Joining Date</Label>
+                      <Label htmlFor="joiningDate" className="text-foreground">Joining Date</Label>
                       <div className="relative">
                         <Calendar
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                           size={16}
                         />
                         <Input
                           id="joiningDate"
                           type="date"
-                          className="pl-10"
+                          className="pl-10 bg-background border-border text-foreground"
                           value={form.joiningDate}
                           onChange={e =>
                             setForm({ ...form, joiningDate: e.target.value })
@@ -408,7 +408,7 @@ export function StaffSettings({
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="manager">Reporting Manager</Label>
+                      <Label htmlFor="manager" className="text-foreground">Reporting Manager</Label>
                       <Select
                         value={form.managerId || "none"}
                         onValueChange={val =>
@@ -417,7 +417,7 @@ export function StaffSettings({
                             managerId: val === "none" ? "" : val,
                           })
                         }>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background border-border text-foreground">
                           <SelectValue placeholder="Select manager" />
                         </SelectTrigger>
                         <SelectContent>
@@ -436,22 +436,23 @@ export function StaffSettings({
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-sm bg-white">
+              <Card className="border-border shadow-sm bg-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
                     <Heart size={20} className="text-rose-500" />
                     Emergency Contact
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground">
                     Primary contact in case of an emergency.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="emergencyName">Contact Name</Label>
+                      <Label htmlFor="emergencyName" className="text-foreground">Contact Name</Label>
                       <Input
                         id="emergencyName"
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                         placeholder="Full Name"
                         value={form.emergencyContactName}
                         onChange={e =>
@@ -463,9 +464,10 @@ export function StaffSettings({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="emergencyPhone">Contact Phone</Label>
+                      <Label htmlFor="emergencyPhone" className="text-foreground">Contact Phone</Label>
                       <Input
                         id="emergencyPhone"
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                         placeholder="+254..."
                         value={form.emergencyContactPhone}
                         onChange={e =>
@@ -478,9 +480,10 @@ export function StaffSettings({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="emergencyRelation">Relationship</Label>
+                    <Label htmlFor="emergencyRelation" className="text-foreground">Relationship</Label>
                     <Input
                       id="emergencyRelation"
+                      className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                       placeholder="e.g. Spouse, Parent, Sibling"
                       value={form.emergencyContactRelation}
                       onChange={e =>
@@ -494,23 +497,23 @@ export function StaffSettings({
                 </CardContent>
               </Card>
 
-              <Card className="border-none shadow-sm bg-white">
+              <Card className="border-border shadow-sm bg-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
-                    <Lock size={20} className="text-red-500" />
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+                    <Lock size={20} className="text-destructive" />
                     Security
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground">
                     Advanced account security settings.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-between p-4 rounded-xl border border-red-100 bg-red-50/30">
+                  <div className="flex items-center justify-between p-4 rounded-xl border border-destructive/20 bg-destructive/10">
                     <div className="space-y-1">
-                      <p className="font-semibold text-sm">
+                      <p className="font-semibold text-sm text-foreground">
                         Reset Account Password
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-muted-foreground">
                         This will generate a new random password for the user.
                       </p>
                     </div>
@@ -528,19 +531,21 @@ export function StaffSettings({
                     <AlertDialog
                       open={showResetConfirm}
                       onOpenChange={setShowResetConfirm}>
-                      <AlertDialogContent>
+                      <AlertDialogContent className="bg-card border-border">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>
+                          <AlertDialogTitle className="text-foreground">
                             Are you absolutely sure?
                           </AlertDialogTitle>
-                          <AlertDialogDescription>
+                          <AlertDialogDescription className="text-muted-foreground">
                             This will reset the member&apos;s password and
                             generate a new random one. The current password will
                             no longer work.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                          <AlertDialogCancel disabled={resettingPassword}>
+                          <AlertDialogCancel
+                            disabled={resettingPassword}
+                            className="bg-background border-border text-foreground hover:bg-accent hover:text-foreground">
                             Cancel
                           </AlertDialogCancel>
                           <AlertDialogAction
@@ -549,7 +554,7 @@ export function StaffSettings({
                               handleResetPassword();
                             }}
                             disabled={resettingPassword}
-                            className="bg-red-600 hover:bg-red-700">
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">
                             {resettingPassword ? (
                               <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -568,21 +573,22 @@ export function StaffSettings({
             </div>
 
             <div className="space-y-6 lg:sticky lg:top-[72px] self-start">
-              <Card className="border-none shadow-sm bg-white">
+              <Card className="border-border shadow-sm bg-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
                     <CreditCard size={20} className="text-orange-500" />
                     Identification
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground">
                     Configure POS and access credentials.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Card ID</Label>
+                    <Label className="text-foreground">Card ID</Label>
                     <div className="flex gap-2">
                       <Input
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                         placeholder="Scan or enter card ID"
                         value={form.cardId}
                         onChange={e =>
@@ -596,7 +602,8 @@ export function StaffSettings({
                             size="icon"
                             onClick={handleGenerateCard}
                             type="button"
-                            aria-label="Generate random Card ID">
+                            aria-label="Generate random Card ID"
+                            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent">
                             <RefreshCcw size={16} />
                           </Button>
                         </TooltipTrigger>
@@ -605,11 +612,12 @@ export function StaffSettings({
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>PIN Code (6 digits)</Label>
+                    <Label className="text-foreground">PIN Code (6 digits)</Label>
                     <div className="flex gap-2">
                       <Input
                         type="password"
                         maxLength={6}
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
                         placeholder="Set new PIN"
                         value={form.pin}
                         onChange={e =>
@@ -623,7 +631,8 @@ export function StaffSettings({
                             size="icon"
                             onClick={handleGeneratePin}
                             type="button"
-                            aria-label="Generate random 6-digit PIN">
+                            aria-label="Generate random 6-digit PIN"
+                            className="border-border text-muted-foreground hover:text-foreground hover:bg-accent">
                             <Key size={16} />
                           </Button>
                         </TooltipTrigger>
@@ -632,7 +641,7 @@ export function StaffSettings({
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[10px] text-muted-foreground">
                       Staff will use this PIN to log in to the POS and perform
                       sensitive actions.
                     </p>

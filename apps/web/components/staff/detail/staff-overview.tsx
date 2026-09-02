@@ -29,41 +29,41 @@ export function StaffOverview({ stats, currency = "USD" }: { stats: any; currenc
       value: formatCurrency(stats.totalSalesValue),
       subValue: `${stats.totalSalesCount} transactions`,
       icon: DollarSign,
-      color: "text-green-600",
-      bg: "bg-green-50",
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-500/10",
     },
     {
       title: "Monthly Sales",
       value: formatCurrency(stats.monthlySalesValue),
       subValue: `${stats.monthlySalesCount} this month`,
       icon: TrendingUp,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-500/10",
     },
     {
       title: "Avg. Transaction",
       value: formatCurrency(stats.avgTransactionValue),
       subValue: "Per successful sale",
       icon: ShoppingBag,
-      color: "text-purple-600",
-      bg: "bg-purple-50",
+      color: "text-purple-600 dark:text-purple-400",
+      bg: "bg-purple-500/10",
     },
     {
       title: "Attendance",
       value: stats.attendanceCount,
       subValue: "Total check-ins",
       icon: UserCheck,
-      color: "text-orange-600",
-      bg: "bg-orange-50",
+      color: "text-orange-600 dark:text-orange-400",
+      bg: "bg-orange-500/10",
     },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {statCards.map((stat, i) => (
-        <Card key={i} className="border-none shadow-sm bg-white">
+        <Card key={i} className="border-border shadow-sm bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               {stat.title}
             </CardTitle>
             <div className={`${stat.bg} ${stat.color} p-2 rounded-lg`}>
@@ -71,8 +71,8 @@ export function StaffOverview({ stats, currency = "USD" }: { stats: any; currenc
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
-            <p className="text-xs text-gray-500 mt-1">{stat.subValue}</p>
+            <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+            <p className="text-xs text-muted-foreground mt-1">{stat.subValue}</p>
           </CardContent>
         </Card>
       ))}

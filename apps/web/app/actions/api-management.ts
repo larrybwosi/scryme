@@ -1,7 +1,5 @@
 "use server";
 
-import { getOrganizationContext } from "./auth";
-import * as crypto from "crypto";
 import {
   createV3ApiClient,
   getV3ApiClients,
@@ -22,8 +20,7 @@ import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
 
 async function ensureOrgContext() {
-    const context = await getServerAuth();
-    console.log(context);
+  const context = await getServerAuth();
   if (!context || !context.organizationId) {
     throw new Error("Unauthorized");
   }

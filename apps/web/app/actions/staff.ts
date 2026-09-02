@@ -212,7 +212,7 @@ export async function getStaffMemberDetail(
 
   // Security check: Only admins/owners or the user themselves
   const isSelf = session.memberId === memberId;
-  const isAdmin = ["ADMIN", "OWNER"].includes(session.role as string);
+  const isAdmin = ["ADMIN", "OWNER", "SYSTEM_A"].includes(session.role as string);
 
   if (!isSelf && !isAdmin) {
     return { success: false, error: "Forbidden" };
