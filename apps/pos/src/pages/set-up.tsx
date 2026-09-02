@@ -221,61 +221,6 @@ const SetupTokenStep = ({
     };
   }, [authMode, pairingSessionId, pairingCode, pairingStatus, apiUrl, authorizeFromPairingPayload, onNext]);
 
-  // Poll pairing session status (as fallback alongside socket.io)
-  useEffect(() => {
-    if (authMode !== 'qr' || !pairingSessionId || pairingStatus !== 'PENDING') return;
-
-    let isMounted = true;
-    const interval = setInterval(async () => {
-      try {
-        let statusData: any = null;
-        try {
-          const { invoke } = await import('@tauri-apps/api/core');
-          const response = await invoke<any>('get_pairing_session_status_command', {
-            sessionId: pairingSessionId,
-          });
-          statusData = response?.success !== undefined ? response.data : response;
-        } catch {
-          try {
-            const { invoke } = await import('@tauri-apps/api/core');
-            const response = await invoke<any>('authenticated_api_request', {
-              method: 'GET',
-              path: `api/v3/pos/pairing/session/${pairingSessionId}/status`,
-            });
-            statusData = response?.success !== undefined ? response.data : response;
-          } catch {
-            const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session/${pairingSessionId}/status`);
-            const json = await fallback.json();
-            statusData = json.data || json;
-          }
-        }
-
-        if (!isMounted) return;
-
-        if (statusData?.status === 'AUTHORIZED' && statusData?.payload) {
-          setPairingStatus('AUTHORIZED');
-          clearInterval(interval);
-          try {
-            await authorizeFromPairingPayload(statusData.payload);
-            onNext('pairing_authorized');
-          } catch (e: any) {
-            setError(e.message || 'Failed to apply authorized session credentials.');
-          }
-        } else if (statusData?.status === 'EXPIRED') {
-          setPairingStatus('EXPIRED');
-          clearInterval(interval);
-        }
-      } catch (err) {
-        // Continue polling silently on transient network errors
-      }
-    }, 2000);
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, [authMode, pairingSessionId, pairingStatus, apiUrl, authorizeFromPairingPayload, onNext]);
-
   // Countdown timer effect
   useEffect(() => {
     if (!pairingExpiresAt || pairingStatus !== 'PENDING') return;
