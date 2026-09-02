@@ -41,6 +41,7 @@ describe("V3AuthCoreService", () => {
               member: {
                 findMany: vi.fn(),
                 findUnique: vi.fn(),
+                findFirst: vi.fn(),
               },
               v3ApiClient: {
                 findUnique: vi.fn(),

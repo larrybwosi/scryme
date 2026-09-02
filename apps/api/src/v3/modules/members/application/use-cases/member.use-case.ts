@@ -607,17 +607,10 @@ export class MemberUseCase {
       if (hash.startsWith("$argon2")) {
         return await argon2.verify(hash, secret);
       }
-      if (
-        hash.startsWith("$2a$") ||
-        hash.startsWith("$2b$") ||
-        hash.startsWith("$2y$")
-      ) {
-        return await bcrypt.compare(secret, hash);
-      }
+      return await bcrypt.compare(secret, hash);
     } catch {
       return false;
     }
-    return false;
   }
 
   async login(
@@ -700,11 +693,12 @@ export class MemberUseCase {
     if (!member || !isPinValid) {
       // Track failed attempts
       const newCount = await this.redis.incr(rateLimitKey);
-      if (newCount === 1) {
+      const validCount = typeof newCount === "number" && !isNaN(newCount) ? newCount : 1;
+      if (validCount === 1) {
         await this.redis.expire(rateLimitKey, LOCKOUT_DURATION_SECONDS);
       }
       throw new UnauthorizedException(
-        `Invalid credentials. ${MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
+        `Invalid credentials. ${Math.max(0, MAX_PIN_ATTEMPTS - validCount)} attempts remaining.`,
       );
     }
 

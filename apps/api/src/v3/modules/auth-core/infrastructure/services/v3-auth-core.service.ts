@@ -129,17 +129,10 @@ export class V3AuthCoreService {
       if (hash.startsWith("$argon2")) {
         return await argon2.verify(hash, secret);
       }
-      if (
-        hash.startsWith("$2a$") ||
-        hash.startsWith("$2b$") ||
-        hash.startsWith("$2y$")
-      ) {
-        return await bcrypt.compare(secret, hash);
-      }
+      return await bcrypt.compare(secret, hash);
     } catch {
       return false;
     }
-    return false;
   }
 
   async loginMember(clientId: string, pin: string, cardId?: string) {
@@ -203,7 +196,7 @@ export class V3AuthCoreService {
         include: { user: true },
       });
 
-      if (!member) {
+      if (!member && typeof this.prisma.client.member.findFirst === "function") {
         member = await this.prisma.client.member.findFirst({
           where: {
             organizationId,
@@ -266,12 +259,13 @@ export class V3AuthCoreService {
 
     // Track failed attempts
     const newCount = await this.redis.incr(rateLimitKey);
-    if (newCount === 1) {
+    const validCount = typeof newCount === "number" && !isNaN(newCount) ? newCount : 1;
+    if (validCount === 1) {
       await this.redis.expire(rateLimitKey, LOCKOUT_DURATION_SECONDS);
     }
 
     throw new UnauthorizedException(
-      `Invalid credentials. ${MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
+      `Invalid credentials. ${Math.max(0, MAX_PIN_ATTEMPTS - validCount)} attempts remaining.`,
     );
   }
 
