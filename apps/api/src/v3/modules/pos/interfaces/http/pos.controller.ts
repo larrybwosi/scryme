@@ -91,8 +91,8 @@ export class PosController {
       const apiKeyStr = Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
       clientId = apiKeyStr.includes(".") ? apiKeyStr.split(".")[0] : apiKeyStr;
     }
-    if (!clientId && (body as any).deviceKey) {
-      const devKey = (body as any).deviceKey;
+    if (!clientId && body.deviceKey) {
+      const devKey = body.deviceKey;
       clientId = devKey.includes(".") ? devKey.split(".")[0] : devKey;
     }
     if (!clientId) {
@@ -101,7 +101,7 @@ export class PosController {
 
     const accessToken = await this.authCore.loginMember(
       clientId,
-      body.pin,
+      body.pin || "",
       body.cardId,
     );
     return { accessToken };

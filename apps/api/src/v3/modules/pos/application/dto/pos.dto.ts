@@ -20,10 +20,26 @@ export class PosLoginDto {
   @IsOptional()
   clientId?: string;
 
-  @ApiProperty({ example: "1234", description: "The staff PIN" })
+  @ApiPropertyOptional({
+    example: "device_key_123",
+    description: "The device key of the provisioned device (alias for clientId)",
+  })
   @IsString()
-  @IsNotEmpty()
-  pin: string;
+  @IsOptional()
+  deviceKey?: string;
+
+  @ApiPropertyOptional({
+    example: "loc_123",
+    description: "Optional location ID context",
+  })
+  @IsString()
+  @IsOptional()
+  locationId?: string;
+
+  @ApiPropertyOptional({ example: "1234", description: "The staff PIN" })
+  @IsString()
+  @IsOptional()
+  pin?: string;
 
   @ApiPropertyOptional({
     example: "CARD-123",
