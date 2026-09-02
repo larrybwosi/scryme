@@ -167,13 +167,6 @@ pub struct PricingRule {
 
 // --- CUSTOMERS ---
 
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CustomersSyncResponse {
-    pub data: Vec<PosCustomer>,
-    pub next_sync_token: String,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct PosCustomer {

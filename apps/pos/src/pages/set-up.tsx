@@ -368,7 +368,7 @@ const SetupTokenStep = ({
                   value={JSON.stringify({ type: 'POS_PAIRING', sessionId: pairingSessionId })}
                   size={180}
                   level="H"
-                  includeMargin={false}
+                  marginSize={0}
                 />
               </div>
 
@@ -419,7 +419,7 @@ const SetupTokenStep = ({
                     value={JSON.stringify({ type: 'POS_PROVISION', token })}
                     size={140}
                     level="H"
-                    includeMargin={false}
+                    marginSize={0}
                   />
                 </div>
                 <p className="text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold text-center">
