@@ -2,7 +2,7 @@
 
 import { db, MemberRole } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
-import { ScrymeChatApiClient } from "@repo/chat";
+import { ScrymeChatApiClient, ScrymeChatAction } from "@repo/chat";
 import { revalidatePath } from "next/cache";
 
 export async function getCurrentUserContext() {
@@ -93,7 +93,7 @@ export async function requestPermissionsAction(data: {
         // Ignore conflicts if channel already exists
       }
 
-      const actions = [
+      const actions: ScrymeChatAction[] = [
         {
           id: `approve_perm:ADMIN:${auth.memberId}`,
           label: "Approve (Grant Admin)",
