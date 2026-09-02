@@ -411,7 +411,25 @@ pub async fn login_member(
         .map_err(|e| format!("Failed to read response body: {}", e))?;
 
     if !status.is_success() {
-        let error_msg = format!("Login failed: {} - {}", status, text);
+        let error_msg = if let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) {
+            if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
+                msg.to_string()
+            } else if let Some(msg) = json.get("error").and_then(|e| {
+                if e.is_string() {
+                    e.as_str()
+                } else {
+                    e.get("message").and_then(|m| m.as_str())
+                }
+            }) {
+                msg.to_string()
+            } else if let Some(msg) = json.get("data").and_then(|d| d.get("message")).and_then(|m| m.as_str()) {
+                msg.to_string()
+            } else {
+                format!("Login failed: {} - {}", status, text)
+            }
+        } else {
+            format!("Login failed: {} - {}", status, text)
+        };
         error!("[AUTH] {}", error_msg);
 
         // Audit failed login attempt
