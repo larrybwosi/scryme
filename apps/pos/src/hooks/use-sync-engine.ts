@@ -9,6 +9,8 @@ export function useSyncEngine() {
   const setIsOnline = useSyncEngineStore((state) => state.setIsOnline);
   const syncAll = useSyncEngineStore((state) => state.syncAll);
   const isConfigured = useAuthStore((state) => state.isConfigured);
+  const currentMember = useAuthStore((state) => state.currentMember);
+  const isAuthenticated = !!currentMember;
   const isAuthInitialized = useAuthStore((state) => state.isInitialized);
 
   const initialSyncDone = useRef(false);
@@ -17,7 +19,7 @@ export function useSyncEngine() {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
-      if (isConfigured) {
+      if (isConfigured && isAuthenticated) {
         syncAll();
       }
     };
@@ -41,7 +43,7 @@ export function useSyncEngine() {
       const detail = (e as CustomEvent).detail;
       if (detail?.state === 'connected') {
         setIsOnline(true);
-        if (isConfigured) {
+        if (isConfigured && isAuthenticated) {
           syncAll();
         }
       } else if (['disconnected', 'suspended', 'failed', 'closed'].includes(detail?.state)) {
@@ -54,26 +56,26 @@ export function useSyncEngine() {
     return () => {
       window.removeEventListener('realtime-connection-change', handleRealtimeConnectionChange);
     };
-  }, [setIsOnline, syncAll, isConfigured]);
+  }, [setIsOnline, syncAll, isConfigured, isAuthenticated]);
 
   // ── Initial Boot Sync ──────────────────────────────────────────────────
   useEffect(() => {
-    if (isAuthInitialized && isConfigured && isOnline && !initialSyncDone.current) {
+    if (isAuthInitialized && isConfigured && isAuthenticated && isOnline && !initialSyncDone.current) {
       initialSyncDone.current = true;
       syncAll();
     }
-  }, [isAuthInitialized, isConfigured, isOnline, syncAll]);
+  }, [isAuthInitialized, isConfigured, isAuthenticated, isOnline, syncAll]);
 
   // ── Periodic Background Sync ───────────────────────────────────────────
   useEffect(() => {
-    if (!isConfigured || !isOnline) return;
+    if (!isConfigured || !isAuthenticated || !isOnline) return;
 
     const interval = setInterval(() => {
       syncAll();
     }, AUTO_SYNC_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, [isConfigured, isOnline, syncAll]);
+  }, [isConfigured, isAuthenticated, isOnline, syncAll]);
 
   return {
     isOnline,

@@ -52,14 +52,14 @@ export const useSyncEngineStore = create<SyncEngineState>((set, get) => ({
 
     try {
       const result = await invoke<string>('sync_products_command', { forceFullSync });
-      set((state) => ({
+      set({
         products: {
           status: 'success',
           lastSyncedAt: new Date().toISOString(),
           error: null,
           message: result,
         },
-      }));
+      });
       return true;
     } catch (err: any) {
       const errorMsg = typeof err === 'string' ? err : err?.message || 'Failed to sync products';
@@ -91,14 +91,14 @@ export const useSyncEngineStore = create<SyncEngineState>((set, get) => ({
 
     try {
       const result = await invoke<string>('sync_customers_command');
-      set((state) => ({
+      set({
         customers: {
           status: 'success',
           lastSyncedAt: new Date().toISOString(),
           error: null,
           message: result,
         },
-      }));
+      });
       return true;
     } catch (err: any) {
       const errorMsg = typeof err === 'string' ? err : err?.message || 'Failed to sync customers';
@@ -130,14 +130,14 @@ export const useSyncEngineStore = create<SyncEngineState>((set, get) => ({
 
     try {
       const result = await invoke<string>('sync_pricing_command');
-      set((state) => ({
+      set({
         pricing: {
           status: 'success',
           lastSyncedAt: new Date().toISOString(),
           error: null,
           message: result,
         },
-      }));
+      });
       return true;
     } catch (err: any) {
       const errorMsg = typeof err === 'string' ? err : err?.message || 'Failed to sync pricing';

@@ -394,7 +394,7 @@ export function ThermalReceiptPreview({
               </div>
             )}
 
-            <p className="text-[9px] opacity-40 mt-4">NeoReceipts v2.1 - {format(new Date(), 'yyyy')}</p>
+            <p className="text-[9px] opacity-40 mt-4">NeoReceipts v3.0 - {format(new Date(), 'yyyy')}</p>
           </div>
         );
 
