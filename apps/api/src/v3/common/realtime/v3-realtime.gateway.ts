@@ -9,7 +9,6 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { V3AuthService } from "../../modules/auth/infrastructure/services/v3-auth.service";
-import { UseGuards } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RealtimeRedisService } from "../../../v2/realtime/realtime-redis.service";
 import { auth } from "@repo/auth/nest";
@@ -35,10 +34,11 @@ export class V3RealtimeGateway
   async handleConnection(client: Socket) {
     try {
       const token =
-        client.handshake.auth.token ||
-        client.handshake.headers.authorization?.split(" ")[1];
+        client.handshake.auth?.token ||
+        client.handshake.headers?.authorization?.split(" ")[1];
       if (!token) {
-        client.disconnect();
+        (client as any).v3Context = null;
+        console.log(`V3 Client connected (unauthenticated): ${client.id}`);
         return;
       }
 
@@ -73,6 +73,7 @@ export class V3RealtimeGateway
       }
 
       if (!payload) {
+        console.warn(`V3 WS connection rejected: Invalid token for client ${client.id}`);
         client.disconnect();
         return;
       }
@@ -95,12 +96,6 @@ export class V3RealtimeGateway
     const presenceChannels = (client as any).presenceChannels as Set<string>;
 
     if (presenceChannels) {
-      /**
-       * OPTIMIZATION (Bolt ⚡): Replaced sequential for...of loop with Promise.all.
-       * Parallelizing presence cleanup across multiple channels converts O(N) sequential Redis
-       * network roundtrips into a flat O(1) concurrent profile, significantly reducing socket
-       * disconnect latency under high concurrency or multi-channel subscriptions.
-       */
       await Promise.all(
         Array.from(presenceChannels).map(async (channel) => {
           await this.redis.leavePresence(channel, clientId);
@@ -116,13 +111,20 @@ export class V3RealtimeGateway
     context: any,
     channel: string,
   ): Promise<boolean> {
+    // Public and pairing channels do not require an authenticated member context
+    if (
+      channel.startsWith("pos:pairing:") ||
+      channel.startsWith("v3:pos:pairing:") ||
+      channel.startsWith("public:")
+    ) {
+      return true;
+    }
+
     if (!context) return false;
 
     // Basic ownership check for common V3 patterns
     if (channel.startsWith("order:")) {
       const orderId = channel.split(":")[1];
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
-      // Transaction lacks a composite unique index on [id, organizationId].
       const order = await this.prisma.client.transaction.findFirst({
         where: { id: orderId, organizationId: context.organizationId },
         select: { id: true },
@@ -173,7 +175,7 @@ export class V3RealtimeGateway
       return { event: "error", message: "Unauthorized" };
     }
 
-    const clientId = context.memberId || client.id;
+    const clientId = context?.memberId || client.id;
     await this.redis.enterPresence(data.channel, clientId, data.metadata);
 
     // Track presence channel on client for cleanup on disconnect
@@ -250,9 +252,6 @@ export class V3RealtimeGateway
       return { event: "error", message: "Unauthorized" };
     }
 
-    // Verify ownership
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
-    // Transaction lacks a composite unique index on [id, organizationId].
     const order = await this.prisma.client.transaction.findFirst({
       where: { id: data.orderId, organizationId: context.organizationId },
       select: { id: true },
