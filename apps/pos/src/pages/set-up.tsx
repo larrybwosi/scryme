@@ -183,11 +183,17 @@ const SetupTokenStep = ({
 
         const channelSession = `pos:pairing:${pairingSessionId}`;
         const channelCode = pairingCode ? `pos:pairing:${pairingCode}` : null;
+        const v3ChannelSession = `v3:pos:pairing:${pairingSessionId}`;
+        const v3ChannelCode = pairingCode ? `v3:pos:pairing:${pairingCode}` : null;
 
         socket.on('connect', () => {
           socket.emit('join', { channel: channelSession });
+          socket.emit('join', { channel: v3ChannelSession });
           if (channelCode) {
             socket.emit('join', { channel: channelCode });
+          }
+          if (v3ChannelCode) {
+            socket.emit('join', { channel: v3ChannelCode });
           }
         });
 

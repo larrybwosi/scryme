@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Key,
@@ -13,17 +13,24 @@ import {
   Globe,
   Lock,
   MoreVertical,
-  Check,
   Terminal,
   Code2,
   Cpu,
   History,
   Settings2,
+  Loader2,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Breadcrumbs } from "../../../components/breadcrumbs";
 import { PageHeader } from "../../../components/page-header";
 import { cn } from "@repo/ui/lib/utils";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import {
   getDeviceRegistryAction,
   getDeviceSetupTokensAction,
@@ -76,6 +83,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+
+const queryClient = new QueryClient();
 
 const SCOPE_CATEGORIES = [
   {
@@ -214,12 +223,43 @@ function V3ClientSkeleton() {
 }
 
 function AppsApiContent() {
+  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "v3";
   const [activeTab, setActiveTab] = useState(initialTab);
 
-  // V3 Clients State
-  const [v3Clients, setV3Clients] = useState<any[]>([]);
+  // Queries with TanStack Query
+  const { data: v3Clients = [], isLoading: isLoadingV3Clients } = useQuery<any[]>({
+    queryKey: ["v3-clients"],
+    queryFn: getV3ApiClientsAction,
+    staleTime: 60 * 1000,
+  });
+
+  const { data: webhooks = [], isLoading: isLoadingWebhooks } = useQuery<any[]>({
+    queryKey: ["webhooks"],
+    queryFn: getWebhookSubscriptionsAction,
+    staleTime: 60 * 1000,
+  });
+
+  const { data: deviceTokens = [], isLoading: isLoadingDeviceTokens } = useQuery<any[]>({
+    queryKey: ["device-tokens"],
+    queryFn: getDeviceSetupTokensAction,
+    staleTime: 60 * 1000,
+  });
+
+  const { data: registries = [], isLoading: isLoadingRegistries } = useQuery<any[]>({
+    queryKey: ["registries"],
+    queryFn: getDeviceRegistryAction,
+    staleTime: 60 * 1000,
+  });
+
+  const { data: locations = [], isLoading: isLoadingLocations } = useQuery<any[]>({
+    queryKey: ["locations"],
+    queryFn: getLocations,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Local Form States
   const [newClientName, setNewClientName] = useState("");
   const [newClientScopes, setNewClientScopes] = useState<string[]>(["read", "write"]);
   const [newClientCors, setNewClientCors] = useState("");
@@ -227,8 +267,6 @@ function AppsApiContent() {
   const [v3Result, setV3Result] = useState<any>(null);
   const [editingV3Client, setEditingV3Client] = useState<any>(null);
 
-  // Webhooks State
-  const [webhooks, setWebhooks] = useState<any[]>([]);
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
   const [newWebhook, setNewWebhook] = useState({
     name: "",
@@ -236,9 +274,6 @@ function AppsApiContent() {
     events: [] as string[],
   });
 
-  // Device Tokens State
-  const [deviceTokens, setDeviceTokens] = useState<any[]>([]);
-  const [registries, setRegistries] = useState<any[]>([]);
   const [showDeviceDialog, setShowDeviceDialog] = useState(false);
   const [newDevice, setNewDevice] = useState({
     deviceName: "",
@@ -248,100 +283,76 @@ function AppsApiContent() {
     environment: "LIVE" as "LIVE" | "TEST",
   });
   const [deviceTokenResult, setDeviceTokenResult] = useState<any>(null);
-  const [locations, setLocations] = useState<any[]>([]);
-
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [v3, wh, tokens, regs, locs] = await Promise.all([
-        getV3ApiClientsAction(),
-        getWebhookSubscriptionsAction(),
-        getDeviceSetupTokensAction(),
-        getDeviceRegistryAction(),
-        getLocations(),
-      ]);
-      setV3Clients(v3);
-      setWebhooks(wh);
-      setDeviceTokens(tokens);
-      setRegistries(regs);
-      setLocations(locs);
-      setNewDevice(prev => {
-        if (locs.length > 0 && prev.locationId === "default") {
-          return { ...prev, locationId: locs[0].id };
-        }
-        return prev;
-      });
-    } catch (error) {
-      console.error("Failed to load data", error);
-      toast.error("Failed to load integration data");
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    loadData();
-  }, [activeTab, loadData]);
+    if (locations.length > 0 && newDevice.locationId === "default") {
+      setNewDevice(prev => ({ ...prev, locationId: locations[0].id }));
+    }
+  }, [locations]);
 
-  const handleCreateV3 = async () => {
-    try {
-      const res = await createV3ApiClientAction({
-        name: newClientName,
-        scopes: newClientScopes,
-        corsOrigins: newClientCors ? newClientCors.split(",").map(s => s.trim()).filter(Boolean) : [],
-      });
+  // Mutations
+  const createV3Mutation = useMutation({
+    mutationFn: createV3ApiClientAction,
+    onSuccess: (res) => {
       setV3Result(res);
       setNewClientName("");
       setNewClientScopes(["read", "write"]);
       setNewClientCors("");
-      loadData();
+      queryClient.invalidateQueries({ queryKey: ["v3-clients"] });
       toast.success("V3 client created");
-    } catch (error) {
-      toast.error("Failed to create V3 client");
-    }
-  };
+    },
+    onError: () => toast.error("Failed to create V3 client"),
+  });
 
-  const handleUpdateV3 = async () => {
-    if (!editingV3Client) return;
-    try {
-      await updateV3ApiClientAction(editingV3Client.id, {
-        name: editingV3Client.name,
-        scopes: editingV3Client.scopes,
-        corsOrigins: editingV3Client.corsOrigins,
-        isActive: editingV3Client.isActive,
-      });
+  const updateV3Mutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: any }) => updateV3ApiClientAction(id, payload),
+    onSuccess: () => {
       setEditingV3Client(null);
-      loadData();
+      queryClient.invalidateQueries({ queryKey: ["v3-clients"] });
       toast.success("Client settings updated");
-    } catch (error) {
-      toast.error("Failed to update client settings");
-    }
-  };
+    },
+    onError: () => toast.error("Failed to update client settings"),
+  });
 
-  const handleCreateWebhook = async () => {
-    try {
-      await createWebhookSubscriptionAction(newWebhook);
+  const deleteV3Mutation = useMutation({
+    mutationFn: deleteV3ApiClientAction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["v3-clients"] });
+      toast.success("Client deleted");
+    },
+    onError: () => toast.error("Failed to delete client"),
+  });
+
+  const createWebhookMutation = useMutation({
+    mutationFn: createWebhookSubscriptionAction,
+    onSuccess: () => {
       setShowWebhookDialog(false);
       setNewWebhook({ name: "", url: "", events: [] });
-      loadData();
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
       toast.success("Webhook subscription added");
-    } catch (error) {
-      toast.error("Failed to add webhook subscription");
-    }
-  };
+    },
+    onError: () => toast.error("Failed to add webhook subscription"),
+  });
 
-  const handleProvisionDevice = async () => {
-    try {
-      const res = await createDeviceSetupTokenAction(newDevice);
+  const deleteWebhookMutation = useMutation({
+    mutationFn: deleteWebhookSubscriptionAction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      toast.success("Webhook subscription deleted");
+    },
+    onError: () => toast.error("Failed to delete webhook subscription"),
+  });
+
+  const provisionDeviceMutation = useMutation({
+    mutationFn: createDeviceSetupTokenAction,
+    onSuccess: (res) => {
       setDeviceTokenResult(res);
-      loadData();
+      queryClient.invalidateQueries({ queryKey: ["device-tokens"] });
+      queryClient.invalidateQueries({ queryKey: ["registries"] });
       toast.success("Device provisioned");
-    } catch (error) {
-      toast.error("Failed to provision device");
-    }
-  };
+    },
+    onError: () => toast.error("Failed to provision device"),
+  });
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -563,9 +574,14 @@ function AppsApiContent() {
                 <DialogFooter className="gap-2 sm:gap-0">
                   {!v3Result ? (
                     <Button
-                      onClick={handleCreateV3}
-                      disabled={!newClientName}
-                      className="text-xs rounded-lg">
+                      onClick={() => createV3Mutation.mutate({
+                        name: newClientName,
+                        scopes: newClientScopes,
+                        corsOrigins: newClientCors ? newClientCors.split(",").map(s => s.trim()).filter(Boolean) : [],
+                      })}
+                      disabled={!newClientName || createV3Mutation.isPending}
+                      className="text-xs rounded-lg gap-1.5">
+                      {createV3Mutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                       Create client
                     </Button>
                   ) : (
@@ -584,7 +600,7 @@ function AppsApiContent() {
           </div>
 
           <div className="grid gap-4">
-            {isLoading ? (
+            {isLoadingV3Clients ? (
               <>
                 <V3ClientSkeleton />
                 <V3ClientSkeleton />
@@ -642,9 +658,10 @@ function AppsApiContent() {
                                 : "bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900/30 dark:text-red-400",
                             )}
                             onClick={() =>
-                              updateV3ApiClientAction(client.id, {
-                                isActive: !client.isActive,
-                              }).then(loadData)
+                              updateV3Mutation.mutate({
+                                id: client.id,
+                                payload: { isActive: !client.isActive },
+                              })
                             }>
                             {client.isActive ? "Active" : "Inactive"}
                           </Badge>
@@ -688,9 +705,7 @@ function AppsApiContent() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive py-1.5 text-xs rounded-md"
-                            onClick={() =>
-                              deleteV3ApiClientAction(client.id).then(loadData)
-                            }>
+                            onClick={() => deleteV3Mutation.mutate(client.id)}>
                             <Trash2 size={12} className="mr-2" />
                             Delete client
                           </DropdownMenuItem>
@@ -1009,9 +1024,10 @@ function AppsApiContent() {
                 <DialogFooter>
                   {!deviceTokenResult ? (
                     <Button
-                      onClick={handleProvisionDevice}
-                      disabled={!newDevice.deviceName}
-                      className="w-full text-xs rounded-lg">
+                      onClick={() => provisionDeviceMutation.mutate(newDevice)}
+                      disabled={!newDevice.deviceName || provisionDeviceMutation.isPending}
+                      className="w-full text-xs rounded-lg gap-1.5">
+                      {provisionDeviceMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                       Generate token
                     </Button>
                   ) : (
@@ -1030,9 +1046,13 @@ function AppsApiContent() {
           </div>
 
           <div className="space-y-4">
-            {registries.length === 0 &&
-              deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length ===
-                0 && (
+            {(isLoadingDeviceTokens || isLoadingRegistries) ? (
+              <div className="space-y-3">
+                <V3ClientSkeleton />
+                <V3ClientSkeleton />
+              </div>
+            ) : registries.length === 0 &&
+              deviceTokens.filter(t => !t.usedAt && !t.revokedAt).length === 0 ? (
                 <div className="bg-card h-50 rounded-xl border border-dashed border-border flex flex-col items-center justify-center text-center p-6">
                   <div className="p-3 bg-muted rounded-lg mb-2 border border-border">
                     <Cpu className="w-7 h-7 text-muted-foreground" />
@@ -1041,7 +1061,7 @@ function AppsApiContent() {
                     No hardware devices connected to this organization yet.
                   </p>
                 </div>
-              )}
+              ) : null}
 
             {deviceTokens
               .filter(t => !t.usedAt && !t.revokedAt)
@@ -1221,9 +1241,10 @@ function AppsApiContent() {
                     Cancel
                   </Button>
                   <Button
-                    onClick={handleCreateWebhook}
-                    disabled={!newWebhook.url || newWebhook.events.length === 0}
-                    className="h-9 text-xs rounded-lg">
+                    onClick={() => createWebhookMutation.mutate(newWebhook)}
+                    disabled={!newWebhook.url || newWebhook.events.length === 0 || createWebhookMutation.isPending}
+                    className="h-9 text-xs rounded-lg gap-1.5">
+                    {createWebhookMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                     Create subscription
                   </Button>
                 </DialogFooter>
@@ -1231,7 +1252,12 @@ function AppsApiContent() {
             </Dialog>
           </div>
 
-          {webhooks.length === 0 ? (
+          {isLoadingWebhooks ? (
+            <div className="space-y-3">
+              <V3ClientSkeleton />
+              <V3ClientSkeleton />
+            </div>
+          ) : webhooks.length === 0 ? (
             <div className="bg-card p-14 rounded-xl border border-dashed border-border flex flex-col items-center text-center">
               <div className="p-3 bg-muted rounded-lg mb-3 border border-border">
                 <Webhook className="w-7 h-7 text-muted-foreground" />
@@ -1277,9 +1303,7 @@ function AppsApiContent() {
                     variant="ghost"
                     size="icon"
                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-destructive/60 focus-visible:ring-offset-1 transition-opacity h-8 w-8 rounded-lg"
-                    onClick={() =>
-                      deleteWebhookSubscriptionAction(wh.id).then(loadData)
-                    }
+                    onClick={() => deleteWebhookMutation.mutate(wh.id)}
                     aria-label="Delete webhook"
                     title="Delete webhook">
                     <Trash2 size={16} />
@@ -1621,8 +1645,18 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
               Cancel
             </Button>
             <Button
-              className="flex-1 h-10 text-xs rounded-lg"
-              onClick={handleUpdateV3}>
+              className="flex-1 h-10 text-xs rounded-lg gap-1.5"
+              disabled={updateV3Mutation.isPending}
+              onClick={() => updateV3Mutation.mutate({
+                id: editingV3Client.id,
+                payload: {
+                  name: editingV3Client.name,
+                  scopes: editingV3Client.scopes,
+                  corsOrigins: editingV3Client.corsOrigins,
+                  isActive: editingV3Client.isActive,
+                },
+              })}>
+              {updateV3Mutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Save changes
             </Button>
           </SheetFooter>
@@ -1634,15 +1668,17 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
 
 export default function AppsApiPage() {
   return (
-    <div className="p-6 max-w-350 mx-auto min-h-screen bg-background">
-      <Suspense
-        fallback={
-          <div className="flex items-center justify-center h-[50vh]">
-            <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        }>
-        <AppsApiContent />
-      </Suspense>
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <div className="p-6 max-w-350 mx-auto min-h-screen bg-background">
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-[50vh]">
+              <RefreshCw className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          }>
+          <AppsApiContent />
+        </Suspense>
+      </div>
+    </QueryClientProvider>
   );
 }

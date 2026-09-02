@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2, MessageSquare, Workflow, ShieldAlert, CheckCircle2, Save, Sparkles, Bot, Hash, Lock, Users, Plus, Trash2, UserPlus, RefreshCw } from "lucide-react"
+import { Loader2, MessageSquare, ShieldAlert, Save, Sparkles, Bot, Hash, Lock, Users, Plus, Trash2, UserPlus, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
 import { Label } from "@repo/ui/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
 import { Badge } from "@repo/ui/components/ui/badge"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   updateSystemIntegrationSettings,
   provisionAdminChatWorkspace,
@@ -23,12 +23,12 @@ import {
 
 export function SystemIntegrationsPanel({
   settings,
+  isLoading,
 }: {
   settings: SystemIntegrationSettings
+  isLoading?: boolean
 }) {
-  const router = useRouter()
-  const [isSaving, setIsSaving] = useState(false)
-  const [isProvisioning, setIsProvisioning] = useState(false)
+  const queryClient = useQueryClient()
   const [isTestingHermes, setIsTestingHermes] = useState(false)
   const [isTestingChat, setIsTestingChat] = useState(false)
 
@@ -58,10 +58,24 @@ export function SystemIntegrationsPanel({
   const [isLoadingDetails, setIsLoadingDetails] = useState(false)
   const [newChannelName, setNewChannelName] = useState("")
   const [newChannelType, setNewChannelType] = useState<"public" | "private">("public")
-  const [isCreatingChannel, setIsCreatingChannel] = useState(false)
   const [newMemberEmail, setNewMemberEmail] = useState("")
   const [newMemberRole, setNewMemberRole] = useState<"admin" | "member">("admin")
-  const [isAddingMember, setIsAddingMember] = useState(false)
+
+  useEffect(() => {
+    setScrymeChatClientId(settings.scrymeChatClientId ?? "")
+    setScrymeChatClientSecret(settings.scrymeChatClientSecret ?? "")
+    setScrymeChatBaseUrl(settings.scrymeChatBaseUrl ?? "https://api.chat.scryme.tech")
+    setHermesApiKey(settings.hermesApiKey ?? "")
+    setHermesBaseUrl(settings.hermesBaseUrl ?? "http://hermes:8080")
+    setHermesModel(settings.hermesModel ?? "hermes-3-llama-3.1-8b")
+    setHermesEnabled(settings.hermesEnabled ?? false)
+    setAdminWorkspaceName(settings.adminWorkspaceName ?? "System Admin Workspace")
+    setAdminWorkspaceSlug(settings.adminWorkspaceSlug ?? "system-admins")
+    setAdminChannelSlug(settings.adminChannelSlug ?? "system-alerts")
+    setAdminWorkspaceStatus(settings.adminWorkspaceStatus ?? "Not Configured")
+    setErrorAlertsEnabled(settings.errorAlertsEnabled ?? true)
+    setErrorAlertsMinStatus(settings.errorAlertsMinStatus ?? 500)
+  }, [settings])
 
   const loadAdminWorkspaceDetails = async () => {
     setIsLoadingDetails(true)
@@ -79,31 +93,88 @@ export function SystemIntegrationsPanel({
     loadAdminWorkspaceDetails()
   }, [])
 
+  const saveSettingsMutation = useMutation({
+    mutationFn: updateSystemIntegrationSettings,
+    onSuccess: () => {
+      toast.success("System integration credentials saved successfully")
+      queryClient.invalidateQueries({ queryKey: ["system-integration-settings"] })
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to save settings")
+    },
+  })
+
+  const provisionWorkspaceMutation = useMutation({
+    mutationFn: provisionAdminChatWorkspace,
+    onSuccess: (res) => {
+      if (res.message) {
+        toast.info(res.message)
+      } else {
+        toast.success(`Admin Chat Workspace "${adminWorkspaceName}" provisioned`)
+      }
+      setAdminWorkspaceStatus("PROVISIONED")
+      queryClient.invalidateQueries({ queryKey: ["system-integration-settings"] })
+      loadAdminWorkspaceDetails()
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to provision workspace")
+    },
+  })
+
+  const createChannelMutation = useMutation({
+    mutationFn: createAdminChatChannel,
+    onSuccess: (res) => {
+      if (res.message) toast.info(res.message)
+      else toast.success(`Channel #${newChannelName} created`)
+      setNewChannelName("")
+      loadAdminWorkspaceDetails()
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to create channel")
+    },
+  })
+
+  const addMemberMutation = useMutation({
+    mutationFn: addAdminChatWorkspaceMember,
+    onSuccess: (res) => {
+      if (res.message) toast.info(res.message)
+      else toast.success(`Granted ${newMemberEmail} admin chat access`)
+      setNewMemberEmail("")
+      loadAdminWorkspaceDetails()
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to add member")
+    },
+  })
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (emailOrId: string) => removeAdminChatWorkspaceMember(emailOrId),
+    onSuccess: (res) => {
+      if (res.message) toast.info(res.message)
+      else toast.success("Access revoked")
+      loadAdminWorkspaceDetails()
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to remove member")
+    },
+  })
+
   async function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault()
-    setIsSaving(true)
-    try {
-      await updateSystemIntegrationSettings({
-        scrymeChatClientId,
-        scrymeChatClientSecret,
-        scrymeChatBaseUrl,
-        hermesApiKey,
-        hermesBaseUrl,
-        hermesModel,
-        hermesEnabled,
-        adminWorkspaceName,
-        adminWorkspaceSlug,
-        adminChannelSlug,
-        errorAlertsEnabled,
-        errorAlertsMinStatus,
-      })
-      toast.success("System integration credentials saved successfully")
-      router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save settings")
-    } finally {
-      setIsSaving(false)
-    }
+    saveSettingsMutation.mutate({
+      scrymeChatClientId,
+      scrymeChatClientSecret,
+      scrymeChatBaseUrl,
+      hermesApiKey,
+      hermesBaseUrl,
+      hermesModel,
+      hermesEnabled,
+      adminWorkspaceName,
+      adminWorkspaceSlug,
+      adminChannelSlug,
+      errorAlertsEnabled,
+      errorAlertsMinStatus,
+    })
   }
 
   async function handleTestChat() {
@@ -138,26 +209,13 @@ export function SystemIntegrationsPanel({
     }
   }
 
-  async function handleProvisionWorkspace() {
-    setIsProvisioning(true)
-    try {
-      const res = await provisionAdminChatWorkspace({
-        workspaceSlug: adminWorkspaceSlug,
-        workspaceName: adminWorkspaceName,
-        channelSlug: adminChannelSlug,
-      })
-      if (res.message) {
-        toast.info(res.message)
-      } else {
-        toast.success(`Admin Chat Workspace "${adminWorkspaceName}" provisioned`)
-      }
-      setAdminWorkspaceStatus("PROVISIONED")
-      router.refresh()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to provision workspace")
-    } finally {
-      setIsProvisioning(false)
-    }
+  if (isLoading) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-48 bg-card border border-border rounded-xl p-6" />
+        <div className="h-48 bg-card border border-border rounded-xl p-6" />
+      </div>
+    )
   }
 
   return (
@@ -357,11 +415,15 @@ export function SystemIntegrationsPanel({
             <Button
               type="button"
               variant="outline"
-              disabled={isProvisioning}
-              onClick={handleProvisionWorkspace}
+              disabled={provisionWorkspaceMutation.isPending}
+              onClick={() => provisionWorkspaceMutation.mutate({
+                workspaceSlug: adminWorkspaceSlug,
+                workspaceName: adminWorkspaceName,
+                channelSlug: adminChannelSlug,
+              })}
               className="gap-2"
             >
-              {isProvisioning ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-emerald-500" />}
+              {provisionWorkspaceMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-emerald-500" />}
               Provision Admin Chat Workspace
             </Button>
           </div>
@@ -396,24 +458,13 @@ export function SystemIntegrationsPanel({
                 </div>
 
                 <form
-                  onSubmit={async (e) => {
+                  onSubmit={(e) => {
                     e.preventDefault()
                     if (!newChannelName.trim()) return
-                    setIsCreatingChannel(true)
-                    try {
-                      const res = await createAdminChatChannel({
-                        name: newChannelName.trim(),
-                        type: newChannelType,
-                      })
-                      if (res.message) toast.info(res.message)
-                      else toast.success(`Channel #${newChannelName} created`)
-                      setNewChannelName("")
-                      loadAdminWorkspaceDetails()
-                    } catch (err: any) {
-                      toast.error(err.message || "Failed to create channel")
-                    } finally {
-                      setIsCreatingChannel(false)
-                    }
+                    createChannelMutation.mutate({
+                      name: newChannelName.trim(),
+                      type: newChannelType,
+                    })
                   }}
                   className="flex gap-2 items-end"
                 >
@@ -437,8 +488,8 @@ export function SystemIntegrationsPanel({
                       <option value="private">Private</option>
                     </select>
                   </div>
-                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={isCreatingChannel}>
-                    <Plus className="size-3" /> Add
+                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={createChannelMutation.isPending}>
+                    {createChannelMutation.isPending ? <Loader2 className="size-3 animate-spin" /> : <Plus className="size-3" />} Add
                   </Button>
                 </form>
 
@@ -470,24 +521,13 @@ export function SystemIntegrationsPanel({
                 </div>
 
                 <form
-                  onSubmit={async (e) => {
+                  onSubmit={(e) => {
                     e.preventDefault()
                     if (!newMemberEmail.trim()) return
-                    setIsAddingMember(true)
-                    try {
-                      const res = await addAdminChatWorkspaceMember({
-                        email: newMemberEmail.trim(),
-                        role: newMemberRole,
-                      })
-                      if (res.message) toast.info(res.message)
-                      else toast.success(`Granted ${newMemberEmail} admin chat access`)
-                      setNewMemberEmail("")
-                      loadAdminWorkspaceDetails()
-                    } catch (err: any) {
-                      toast.error(err.message || "Failed to add member")
-                    } finally {
-                      setIsAddingMember(false)
-                    }
+                    addMemberMutation.mutate({
+                      email: newMemberEmail.trim(),
+                      role: newMemberRole,
+                    })
                   }}
                   className="flex gap-2 items-end"
                 >
@@ -511,8 +551,8 @@ export function SystemIntegrationsPanel({
                       <option value="member">Member</option>
                     </select>
                   </div>
-                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={isAddingMember}>
-                    <UserPlus className="size-3" /> Add
+                  <Button type="submit" size="sm" className="h-8 gap-1 text-xs" disabled={addMemberMutation.isPending}>
+                    {addMemberMutation.isPending ? <Loader2 className="size-3 animate-spin" /> : <UserPlus className="size-3" />} Add
                   </Button>
                 </form>
 
@@ -533,16 +573,7 @@ export function SystemIntegrationsPanel({
                             variant="ghost"
                             size="icon"
                             className="size-6 text-destructive hover:bg-destructive/10"
-                            onClick={async () => {
-                              try {
-                                const res = await removeAdminChatWorkspaceMember(m.id || m.email)
-                                if (res.message) toast.info(res.message)
-                                else toast.success("Access revoked")
-                                loadAdminWorkspaceDetails()
-                              } catch (err: any) {
-                                toast.error(err.message || "Failed to remove member")
-                              }
-                            }}
+                            onClick={() => removeMemberMutation.mutate(m.id || m.email)}
                           >
                             <Trash2 className="size-3" />
                           </Button>
@@ -595,8 +626,8 @@ export function SystemIntegrationsPanel({
 
       {/* Save Button Bar */}
       <div className="flex justify-end pt-2">
-        <Button type="submit" disabled={isSaving} size="lg" className="gap-2">
-          {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+        <Button type="submit" disabled={saveSettingsMutation.isPending} size="lg" className="gap-2">
+          {saveSettingsMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
           Save System Settings
         </Button>
       </div>

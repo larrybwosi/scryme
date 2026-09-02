@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Loader2, Play } from "lucide-react"
 import { toast } from "sonner"
 import { Badge } from "@repo/ui/components/ui/badge"
@@ -15,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table"
+import { useQueryClient } from "@tanstack/react-query"
 import { testOrganizationIntegrationConnection } from "@/app/actions/integrations"
 
 export interface ActiveOrgIntegrationRow {
@@ -39,10 +39,12 @@ export interface ActiveOrgIntegrationRow {
 
 export function OrganizationIntegrationsTable({
   activeIntegrations,
+  isLoading,
 }: {
   activeIntegrations: ActiveOrgIntegrationRow[]
+  isLoading?: boolean
 }) {
-  const router = useRouter()
+  const queryClient = useQueryClient()
   const [testingId, setTestingId] = useState<string | null>(null)
 
   async function handleTestConnection(id: string) {
@@ -54,7 +56,7 @@ export function OrganizationIntegrationsTable({
       } else {
         toast.error(res.message)
       }
-      router.refresh()
+      queryClient.invalidateQueries({ queryKey: ["active-organization-integrations"] })
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to test connection")
     } finally {
@@ -76,7 +78,14 @@ export function OrganizationIntegrationsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {activeIntegrations.length === 0 ? (
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                <Loader2 className="size-5 animate-spin mx-auto text-muted-foreground mb-2" />
+                Loading active integration connections...
+              </TableCell>
+            </TableRow>
+          ) : activeIntegrations.length === 0 ? (
             <TableRow>
               <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
                 No active organization integration connections currently found.

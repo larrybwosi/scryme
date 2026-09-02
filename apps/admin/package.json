@@ -17,6 +17,7 @@
     "@repo/db": "workspace:^",
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.3.3",
+    "@tanstack/react-query": "^5.90.20",
     "better-auth": "^1.4.19",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
