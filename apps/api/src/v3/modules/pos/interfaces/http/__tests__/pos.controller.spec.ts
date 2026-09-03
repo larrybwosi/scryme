@@ -13,10 +13,14 @@ import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { BadRequestException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { PosService } from "@/v2/pos/pos.service";
+import { PosSaleService } from "@/v2/pos/pos-sale.service";
 
 describe("PosController (V3)", () => {
   let controller: PosController;
   let authCoreService: V3AuthCoreService;
+  let posService: PosService;
+  let posSaleService: PosSaleService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -66,11 +70,50 @@ describe("PosController (V3)", () => {
           provide: RegisterPettyCashUseCase,
           useValue: { execute: vi.fn(), getFunds: vi.fn(), getRecentTransactions: vi.fn() },
         },
+        {
+          provide: PosService,
+          useValue: {
+            checkOut: vi.fn(),
+            getAttendanceStatus: vi.fn(),
+            listLocations: vi.fn(),
+            getProducts: vi.fn(),
+            recordPayment: vi.fn(),
+            getIncoming: vi.fn(),
+            scanTransaction: vi.fn(),
+            ablyAuth: vi.fn(),
+            getInventory: vi.fn(),
+            adjustStock: vi.fn(),
+            getCustomersDelta: vi.fn(),
+            createCustomer: vi.fn(),
+            dispatchDelivery: vi.fn(),
+            reconcileDelivery: vi.fn(),
+            listStockRequests: vi.fn(),
+            createStockRequest: vi.fn(),
+            cancelStockRequest: vi.fn(),
+            getPricing: vi.fn(),
+            syncShifts: vi.fn(),
+            getWaybill: vi.fn(),
+            getPackingList: vi.fn(),
+            receivePurchase: vi.fn(),
+            receiveTransfer: vi.fn(),
+            getDrivers: vi.fn(),
+            createStockTransfer: vi.fn(),
+            registerBarcode: vi.fn(),
+          },
+        },
+        {
+          provide: PosSaleService,
+          useValue: {
+            handleOrder: vi.fn(),
+          },
+        },
       ],
     }).compile();
 
     controller = module.get<PosController>(PosController);
     authCoreService = module.get<V3AuthCoreService>(V3AuthCoreService);
+    posService = module.get<PosService>(PosService);
+    posSaleService = module.get<PosSaleService>(PosSaleService);
   });
 
   it("should be defined", () => {
@@ -202,6 +245,66 @@ describe("PosController (V3)", () => {
         ...mockCtx,
         isCheckedIn: false,
       });
+    });
+  });
+
+  describe("checkOut & attendance", () => {
+    it("should call posService.checkOut", async () => {
+      const mockCtx = { organizationId: "org_1", memberId: "m1" } as any;
+      vi.mocked(posService.checkOut).mockResolvedValue({ message: "Check-out successful." } as any);
+
+      const res = await controller.checkOut(mockCtx, { locationId: "loc_1" });
+      expect(res).toEqual({ message: "Check-out successful." });
+      expect(posService.checkOut).toHaveBeenCalledWith(mockCtx, { locationId: "loc_1" });
+    });
+
+    it("should call posService.getAttendanceStatus", async () => {
+      const mockCtx = { organizationId: "org_1", memberId: "m1" } as any;
+      vi.mocked(posService.getAttendanceStatus).mockResolvedValue({ isCheckedIn: true } as any);
+
+      const res = await controller.getAttendanceStatus(mockCtx);
+      expect(res).toEqual({ isCheckedIn: true });
+      expect(posService.getAttendanceStatus).toHaveBeenCalledWith(mockCtx);
+    });
+  });
+
+  describe("locations & products & pricing", () => {
+    it("should call posService.listLocations", async () => {
+      const mockCtx = { organizationId: "org_1" } as any;
+      vi.mocked(posService.listLocations).mockResolvedValue({ locations: [] } as any);
+
+      const res = await controller.listLocations(mockCtx);
+      expect(res).toEqual({ locations: [] });
+    });
+
+    it("should call posService.getProducts", async () => {
+      const mockCtx = { organizationId: "org_1" } as any;
+      vi.mocked(posService.getProducts).mockResolvedValue({ success: true, data: { products: [] } } as any);
+
+      const res = await controller.getProducts(mockCtx, { page: "1" });
+      expect(res).toEqual({ success: true, data: { products: [] } });
+      expect(posService.getProducts).toHaveBeenCalledWith(mockCtx, { page: "1" });
+    });
+
+    it("should call posService.getPricing", async () => {
+      const mockCtx = { organizationId: "org_1" } as any;
+      vi.mocked(posService.getPricing).mockResolvedValue({ success: true, data: {} } as any);
+
+      const res = await controller.getPricing(mockCtx);
+      expect(res).toEqual({ success: true, data: {} });
+      expect(posService.getPricing).toHaveBeenCalledWith(mockCtx);
+    });
+  });
+
+  describe("barcode registration", () => {
+    it("should call posService.registerBarcode", async () => {
+      const mockCtx = { organizationId: "org_1", memberId: "m1" } as any;
+      const body = { variantId: "v1", barcode: "123456789" };
+      vi.mocked(posService.registerBarcode).mockResolvedValue({ id: "v1", barcode: "123456789" } as any);
+
+      const res = await controller.registerBarcode(mockCtx, body);
+      expect(res).toEqual({ id: "v1", barcode: "123456789" });
+      expect(posService.registerBarcode).toHaveBeenCalledWith(mockCtx, body);
     });
   });
 });
