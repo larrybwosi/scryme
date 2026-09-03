@@ -38,6 +38,7 @@ export class UpdateInvoiceDto extends CreateInvoiceDto {
 
 export class InvoiceConfigDto {
   @IsString() @IsOptional() defaultTemplate?: string;
+  @IsBoolean() @IsOptional() autoGenerateInvoice?: boolean;
   @IsString() @IsOptional() primaryColor?: string;
   @IsString() @IsOptional() logoUrl?: string;
   @IsString() @IsOptional() companyName?: string;
