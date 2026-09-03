@@ -54,7 +54,7 @@ export class ProcessSaleUseCase {
         // 1. Process Product Items if present
         if (hasProducts) {
           const variants = await this.getV(tx, productItems, orgId);
-          items = this.prepI(productItems, variants, orgId);
+          items = this.prepI(productItems, variants);
           sub += items.reduce((s: number, i: any) => s + i.lineTotal, 0);
         }
 
@@ -125,7 +125,6 @@ export class ProcessSaleUseCase {
                     status: "COMPLETED",
                     amount: p.amount,
                     referenceNumber: p.reference,
-                    organizationId: orgId,
                   })),
                 }
               : undefined,
@@ -195,7 +194,7 @@ export class ProcessSaleUseCase {
     return v;
   }
 
-  private prepI(items: any[], variants: any[], organizationId: string) {
+  private prepI(items: any[], variants: any[]) {
     // ⚡ Bolt Optimization: Use a Map for O(1) constant-time variant lookups.
     // This reduces lookup complexity from O(N*M) nested search to O(N+M) mapping.
     const variantMap = new Map(variants.map((v) => [v.id, v]));
@@ -215,7 +214,6 @@ export class ProcessSaleUseCase {
         unitCost: Number(v.buyingPrice || 0),
         subtotal: p * i.quantity,
         lineTotal: p * i.quantity,
-        organizationId,
       };
     });
   }

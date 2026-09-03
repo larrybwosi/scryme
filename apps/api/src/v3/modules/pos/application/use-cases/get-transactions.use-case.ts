@@ -40,10 +40,6 @@ export class GetTransactionsUseCase {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        // ⚡ Bolt Optimization: Use targeted select for relations to prevent over-fetching
-        // of large JSON/Blob fields (like metadata, gatewayResponse, customFields) in lists.
-        // Keeping top-level include for Transaction to ensure all scalar fields are present.
-        // Impact: Reduces DB payload size by ~30-50% for transactions with many items or M-Pesa payments.
         include: {
           customer: { select: { id: true, name: true } },
           items: {
