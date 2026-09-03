@@ -268,12 +268,23 @@ pub async fn run_sync(
     }
 
     let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
-    let customers_array = if raw_val.is_array() {
-        &raw_val
-    } else if let Some(data) = raw_val.get("data") {
-        if data.is_array() { data } else { &raw_val }
+
+    // StandardResponseInterceptor wraps response in { success: true, data: ..., timestamp: ... }
+    // getCustomersDelta returns { data: [...], nextSyncToken: ... } inside that envelope.
+    let unwrapped_data = if let Some(d) = raw_val.get("data") {
+        d
     } else {
         &raw_val
+    };
+
+    let (customers_array, sync_token_from_resp) = if unwrapped_data.is_array() {
+        (unwrapped_data, None)
+    } else if let Some(arr) = unwrapped_data.get("data").and_then(|v| if v.is_array() { Some(v) } else { None }) {
+        (arr, unwrapped_data.get("nextSyncToken").and_then(|t| t.as_str()))
+    } else if let Some(arr) = raw_val.get("customers").and_then(|v| if v.is_array() { Some(v) } else { None }) {
+        (arr, None)
+    } else {
+        (unwrapped_data, None)
     };
 
     let customers_list: Vec<PosCustomer> = serde_json::from_value(customers_array.clone())
@@ -313,7 +324,10 @@ pub async fn run_sync(
             .await.map_err(|e| anyhow::anyhow!(e))?;
     }
 
-    let new_sync_time = chrono::Utc::now().to_rfc3339();
+    let new_sync_time = sync_token_from_resp
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+
     sqlx::query("INSERT OR REPLACE INTO customer_sync_meta (id, last_sync) VALUES (1, ?1)")
         .bind(&new_sync_time)
         .execute(&mut *tx)
@@ -420,11 +434,20 @@ pub async fn create_customer_cloud(
     }
 
     let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
-    let new_customer: PosCustomer = if raw_val.get("data").is_some() {
-        serde_json::from_value(raw_val["data"].clone()).map_err(|e| anyhow::anyhow!(e))?
+    let target = if let Some(data) = raw_val.get("data") {
+        if let Some(c) = data.get("customer") {
+            c
+        } else {
+            data
+        }
+    } else if let Some(c) = raw_val.get("customer") {
+        c
     } else {
-        serde_json::from_value(raw_val).map_err(|e| anyhow::anyhow!(e))?
+        &raw_val
     };
+
+    let new_customer: PosCustomer = serde_json::from_value(target.clone())
+        .map_err(|e| anyhow::anyhow!("Failed to parse created customer: {} | Raw: {}", e, raw_val))?;
 
     // Save to DB
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
@@ -496,11 +519,20 @@ pub async fn update_customer_cloud(
     }
 
     let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
-    let new_customer: PosCustomer = if raw_val.get("data").is_some() {
-        serde_json::from_value(raw_val["data"].clone()).map_err(|e| anyhow::anyhow!(e))?
+    let target = if let Some(data) = raw_val.get("data") {
+        if let Some(c) = data.get("customer") {
+            c
+        } else {
+            data
+        }
+    } else if let Some(c) = raw_val.get("customer") {
+        c
     } else {
-        serde_json::from_value(raw_val).map_err(|e| anyhow::anyhow!(e))?
+        &raw_val
     };
+
+    let new_customer: PosCustomer = serde_json::from_value(target.clone())
+        .map_err(|e| anyhow::anyhow!("Failed to parse updated customer: {} | Raw: {}", e, raw_val))?;
 
     // Save to DB
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;

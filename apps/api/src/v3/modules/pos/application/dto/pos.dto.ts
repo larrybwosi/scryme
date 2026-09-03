@@ -138,6 +138,61 @@ export class PosCreateCustomerDto {
   @IsString()
   @IsOptional()
   email?: string;
+
+  @ApiPropertyOptional({ example: "Acme Corp" })
+  @IsString()
+  @IsOptional()
+  company?: string;
+
+  @ApiPropertyOptional({ example: "B2B" })
+  @IsString()
+  @IsOptional()
+  customerType?: string;
+
+  @ApiPropertyOptional({ example: "male" })
+  @IsString()
+  @IsOptional()
+  gender?: string;
+
+  @ApiPropertyOptional({ example: "1990-01-01" })
+  @IsString()
+  @IsOptional()
+  dateOfBirth?: string;
+
+  @ApiPropertyOptional({ example: "VIP customer" })
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
+  @ApiPropertyOptional({ example: "No penicillin" })
+  @IsString()
+  @IsOptional()
+  medicalHistory?: string;
+
+  @ApiPropertyOptional({ example: "Peanuts" })
+  @IsString()
+  @IsOptional()
+  allergies?: string;
+
+  @ApiPropertyOptional({ example: "Hypertension" })
+  @IsString()
+  @IsOptional()
+  chronicConditions?: string;
+
+  @ApiPropertyOptional({ example: "Aetna" })
+  @IsString()
+  @IsOptional()
+  insuranceProvider?: string;
+
+  @ApiPropertyOptional({ example: "POL12345" })
+  @IsString()
+  @IsOptional()
+  policyNumber?: string;
+
+  @ApiPropertyOptional({ example: "Deliver to back door" })
+  @IsString()
+  @IsOptional()
+  deliveryNotes?: string;
 }
 
 export class PosDispatchDeliveryDto {
