@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray, ValidateNested, IsEnum } from "class-validator";
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsArray, ValidateNested, IsEnum, IsBoolean } from "class-validator";
 import { Type } from "class-transformer";
 
 export class ProvisionDeviceDto {
@@ -193,6 +193,58 @@ export class PosCreateCustomerDto {
   @IsString()
   @IsOptional()
   deliveryNotes?: string;
+
+  @ApiPropertyOptional({ example: "mem_123" })
+  @IsString()
+  @IsOptional()
+  memberId?: string;
+
+  @ApiPropertyOptional({ example: false })
+  @IsBoolean()
+  @IsOptional()
+  isBusiness?: boolean;
+
+  @ApiPropertyOptional({ example: "TAX123" })
+  @IsString()
+  @IsOptional()
+  taxId?: string;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsNumber()
+  @IsOptional()
+  loyaltyPoints?: number;
+
+  @ApiPropertyOptional({ example: true })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ example: "tier_123" })
+  @IsString()
+  @IsOptional()
+  loyaltyTierId?: string;
+
+  @ApiPropertyOptional({ example: "https://example.com/avatar.jpg" })
+  @IsString()
+  @IsOptional()
+  avatar?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  addresses?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  address?: any;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  pinnedLocation?: any;
+
+  @ApiPropertyOptional({ example: ["vip", "retail"] })
+  @IsArray()
+  @IsOptional()
+  tags?: string[];
 }
 
 export class PosDispatchDeliveryDto {

@@ -38,6 +38,7 @@ export const CreateCustomerSchema = z.object({
   email: z.string().email().optional().nullable().or(z.literal("")),
   phone: z.string().optional().nullable(),
   address: z.any().optional().nullable(),
+  addresses: z.any().optional().nullable(),
   notes: z.string().optional().nullable(),
   company: z.string().optional().nullable(),
   avatar: z.string().optional().nullable(),
@@ -57,6 +58,7 @@ export const CreateCustomerSchema = z.object({
   chronicConditions: z.string().optional().nullable(),
   insuranceProvider: z.string().optional().nullable(),
   policyNumber: z.string().optional().nullable(),
+  memberId: z.string().optional().nullable(),
 });
 
 export const DispatchDeliverySchema = z.object({
