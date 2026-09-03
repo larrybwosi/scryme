@@ -99,12 +99,11 @@ export class PosController {
       throw new BadRequestException("clientId or X-API-KEY header is required");
     }
 
-    const accessToken = await this.authCore.loginMember(
+    return this.authCore.loginMember(
       clientId,
       body.pin || "",
       body.cardId,
     );
-    return { accessToken };
   }
 
   @Get("me")
