@@ -8,9 +8,9 @@ export enum TransactionStatus {
 
 export const OrderItemSchema = z.object({
   variantId: z.string(),
-  sellingUnitId: z.string().optional(),
+  sellingUnitId: z.string().optional().nullable(),
   quantity: z.number().int().positive('Quantity must be a positive integer'),
-  unitPrice: z.number().nonnegative('Price cannot be negative').optional(),
+  unitPrice: z.number().nonnegative('Price cannot be negative').optional().nullable(),
   _maxStock: z.number().optional(),
   _availableUnits: z.array(z.any()).optional(),
 }).refine((data) => {
@@ -46,13 +46,13 @@ export const CreateOrderSchema = z.object({
   }),
   items: z.array(OrderItemSchema).min(1, 'Order must contain at least one item'),
   payments: z.array(OrderPaymentSchema).default([]),
-  fulfillment: OrderFulfillmentSchema.optional(),
+  fulfillment: OrderFulfillmentSchema.optional().nullable(),
   status: z.nativeEnum(TransactionStatus).default(TransactionStatus.PENDING_CONFIRMATION),
   notes: z.string().optional().nullable(),
   shippingFee: z.number().nonnegative().default(0),
   discountAmount: z.number().nonnegative().default(0),
-  taxIds: z.array(z.string()).optional(),
-}).refine(data => data.customerId || data.businessAccountId, {
+  taxIds: z.array(z.string()).optional().nullable(),
+}).refine(data => (data.customerId && data.customerId.trim().length > 0) || (data.businessAccountId && data.businessAccountId.trim().length > 0), {
   message: "Either Customer or Business Account must be provided",
   path: ["customerId"],
 });
