@@ -89,6 +89,13 @@ export class ProcessSaleDto {
   @Type(() => SaleItemDto)
   items?: SaleItemDto[];
 
+  @ApiPropertyOptional({ type: [SaleItemDto], description: "Alias for items" })
+  @IsArray()
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => SaleItemDto)
+  cartItems?: SaleItemDto[];
+
   @ApiPropertyOptional({ type: [SaleServiceItemDto], description: "List of services purchased (Option A with bookingId or Option C without)" })
   @IsArray()
   @IsOptional()
@@ -96,11 +103,17 @@ export class ProcessSaleDto {
   @Type(() => SaleServiceItemDto)
   serviceItems?: SaleServiceItemDto[];
 
-  @ApiProperty({ type: [SalePaymentDto], description: "List of payments applied to this transaction" })
+  @ApiPropertyOptional({ type: [SalePaymentDto], description: "List of payments applied to this transaction" })
   @IsArray()
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => SalePaymentDto)
-  payments: SalePaymentDto[];
+  payments?: SalePaymentDto[];
+
+  @ApiPropertyOptional({ example: "CASH", description: "Optional payment method if single payment method provided" })
+  @IsString()
+  @IsOptional()
+  paymentMethod?: string;
 
   @ApiPropertyOptional({ example: 0, description: "Generic discount amount applied to the overall transaction" })
   @IsNumber()
@@ -121,4 +134,9 @@ export class ProcessSaleDto {
   @IsString()
   @IsOptional()
   loyaltyVoucherCode?: string;
+
+  @ApiPropertyOptional({ example: "loc_123", description: "Optional location ID override" })
+  @IsString()
+  @IsOptional()
+  locationId?: string;
 }

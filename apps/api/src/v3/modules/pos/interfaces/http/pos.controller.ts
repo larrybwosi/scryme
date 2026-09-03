@@ -6,8 +6,10 @@ import {
   UseGuards,
   UseInterceptors,
   Query,
+  Param,
   Req,
   BadRequestException,
+  NotFoundException,
 } from "@nestjs/common";
 import {
   ApiTags,
@@ -241,6 +243,45 @@ export class PosController {
     return { token: "socket-io-realtime" };
   }
 
+  @Get("sale")
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "List POS sales / transactions",
+    operationId: "POS_GetSales",
+  })
+  @ApiResponse({ status: 200, description: "Sales transactions list" })
+  async getSales(@v3Context() ctx: V3ApiContext, @Query() query: any) {
+    return this.getTransactionsUseCase.execute(ctx, query);
+  }
+
+  @Get("sale/:id")
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Get POS sale by ID",
+    operationId: "POS_GetSaleById",
+  })
+  @ApiResponse({ status: 200, description: "Sale transaction details" })
+  async getSaleById(@v3Context() ctx: V3ApiContext, @Param("id") id: string) {
+    const sale = await this.prisma.client.transaction.findFirst({
+      where: {
+        id,
+        organizationId: ctx.organizationId,
+      },
+      include: {
+        customer: { select: { id: true, name: true, phone: true } },
+        items: true,
+        payments: true,
+        serviceItems: true,
+      },
+    });
+    if (!sale) {
+      throw new NotFoundException(`Sale with ID ${id} not found`);
+    }
+    return sale;
+  }
+
   @Post("sale")
   @RequireMember()
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
@@ -258,8 +299,53 @@ export class PosController {
   async processSale(
     @v3Context() ctx: V3ApiContext,
     @Body() body: ProcessSaleDto,
+    @Query("locationId") queryLocationId?: string,
   ) {
-    return this.processSaleUseCase.execute(ctx, body);
+    const saleCtx = {
+      ...ctx,
+      locationId: ctx.locationId || queryLocationId || body?.locationId,
+    };
+    return this.processSaleUseCase.execute(saleCtx, body);
+  }
+
+  @Post("sale/payments")
+  @RequireMember()
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Record payment for a sale",
+    operationId: "POS_RecordPayment",
+  })
+  @ApiResponse({ status: 201, description: "Payment recorded" })
+  async recordPayment(
+    @v3Context() ctx: V3ApiContext,
+    @Body() body: any,
+  ) {
+    const { transactionId, amount, method, reference, notes } = body;
+    if (!transactionId || !amount || !method) {
+      throw new BadRequestException("transactionId, amount, and method are required");
+    }
+
+    const transaction = await this.prisma.client.transaction.findFirst({
+      where: { id: transactionId, organizationId: ctx.organizationId },
+    });
+    if (!transaction) {
+      throw new NotFoundException(`Transaction with ID ${transactionId} not found`);
+    }
+
+    const payment = await this.prisma.client.transactionPayment.create({
+      data: {
+        transactionId,
+        organizationId: ctx.organizationId,
+        amount: Number(amount),
+        method,
+        referenceNumber: reference,
+        notes,
+        status: "COMPLETED",
+      },
+    });
+
+    return payment;
   }
 
   @Get("sync")

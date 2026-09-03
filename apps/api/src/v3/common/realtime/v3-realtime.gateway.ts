@@ -122,6 +122,20 @@ export class V3RealtimeGateway
 
     if (!context) return false;
 
+    // Presence channel check (e.g., presence:locationId)
+    if (channel.startsWith("presence:")) {
+      return true;
+    }
+
+    // Organization specific channels check (e.g., organization:orgId:inventory, organization:orgId:pricing, organization:orgId:customers)
+    if (channel.startsWith("organization:")) {
+      const parts = channel.split(":");
+      const targetOrg = parts[1];
+      if (targetOrg && (targetOrg === context.organizationId || targetOrg === context.orgSlug)) {
+        return true;
+      }
+    }
+
     // Basic ownership check for common V3 patterns
     if (channel.startsWith("order:")) {
       const orderId = channel.split(":")[1];

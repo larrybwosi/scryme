@@ -57,7 +57,8 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
 
     const initSocket = async () => {
       const { io } = await import('socket.io-client');
-      const socket = io(socketUrl, {
+      const cleanUrl = socketUrl.replace(/\/+$/, '');
+      const socket = io(`${cleanUrl}/v3`, {
         transports: ['websocket'],
         autoConnect: false,
       });
@@ -93,12 +94,14 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
           try {
               const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
               const parsed = RealtimeConfigSchema.parse(response);
-              set({ paymentChannel: parsed.data.metadata.paymentChannel });
-
-              socket.auth = { token: parsed.data.tokenRequest.token };
+              if (parsed.data?.metadata?.paymentChannel) {
+                set({ paymentChannel: parsed.data.metadata.paymentChannel });
+              }
+              if (parsed.data?.tokenRequest?.token) {
+                socket.auth = { token: parsed.data.tokenRequest.token };
+              }
               socket.connect();
           } catch (error) {
-              set({ status: 'error', error: 'Failed to fetch auth token' });
               socket.connect();
           }
       };
