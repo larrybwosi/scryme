@@ -836,6 +836,7 @@ export async function createOrderAction(data: {
 
   const result = await createOrder(auth.organizationId, auth.memberId, {
     ...data,
+    customerId: data.customerId,
     businessAccountId: data.businessAccountId,
     type: data.type === "QUOTE" ? "QUOTE" : "SALES_ORDER",
     status:
@@ -846,11 +847,18 @@ export async function createOrderAction(data: {
     shippingFee: data.shippingFee || 0,
     discountAmount: data.discountAmount || 0,
     deliveryPartnerId: data.deliveryPartnerId,
+    notes: data.notes,
+    termsAndConditions: data.termsAndConditions,
     fulfillment: {
       type: "DELIVERY", // Default
       pickupLocationId: data.locationId,
       shippingAddressId: data.shippingAddressId,
+      tableNumber: undefined,
     },
+    attachments: undefined,
+    taxIds: undefined,
+    enableStockTracking: undefined,
+    isWholesale: undefined,
   });
 
   if (result.success) {
