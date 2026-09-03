@@ -19,7 +19,7 @@ import {
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
-import { type V3ApiContext, getPosProducts, getPosProductsDelta } from "@repo/shared/api/v2";
+import { type V3ApiContext, getPosProducts, getPosProductsDelta, type V2ApiContext } from "@repo/shared/api/v2";
 import { ProcessSaleDto } from "../../application/dto/sale.dto";
 import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";
@@ -147,7 +147,7 @@ export class PosController {
         name: true,
         code: true,
         address: true,
-        type: true,
+        locationType: true,
         isDefault: true,
       },
       orderBy: { name: "asc" },
@@ -203,7 +203,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Pricing data" })
   async getPricing(@v3Context() ctx: V3ApiContext, @Query("lastSync") lastSync?: string) {
-    return this.posService.getPricing(ctx, lastSync);
+    return this.posService.getPricing(ctx as unknown as V2ApiContext, lastSync);
   }
 
   @Get("pricing/sync")
@@ -215,7 +215,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Pricing sync data" })
   async syncPricing(@v3Context() ctx: V3ApiContext, @Query("lastSync") lastSync?: string) {
-    return this.posService.getPricing(ctx, lastSync);
+    return this.posService.getPricing(ctx as unknown as V2ApiContext, lastSync);
   }
 
   @Get("customers")
