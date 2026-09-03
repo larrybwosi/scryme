@@ -28,7 +28,8 @@ export class ProcessSaleUseCase {
     }
 
     // Validation: At least one product item or service item must be present
-    const hasProducts = dto.items && dto.items.length > 0;
+    const productItems = dto.items || dto.cartItems || [];
+    const hasProducts = productItems.length > 0;
     const hasServices = dto.serviceItems && dto.serviceItems.length > 0;
 
     if (!hasProducts && !hasServices) {
@@ -36,6 +37,12 @@ export class ProcessSaleUseCase {
         "At least one product item or service item is required to process a sale"
       );
     }
+
+    const paymentsList = dto.payments && dto.payments.length > 0
+      ? dto.payments
+      : dto.paymentMethod
+      ? [{ method: dto.paymentMethod, amount: dto.total || dto.amountReceived || 0 }]
+      : [];
 
     const { transaction, total } = await this.prisma.client.$transaction(
       async (tx: any) => {
@@ -46,8 +53,8 @@ export class ProcessSaleUseCase {
 
         // 1. Process Product Items if present
         if (hasProducts) {
-          const variants = await this.getV(tx, dto.items, orgId);
-          items = this.prepI(dto.items, variants, orgId);
+          const variants = await this.getV(tx, productItems, orgId);
+          items = this.prepI(productItems, variants, orgId);
           sub += items.reduce((s: number, i: any) => s + i.lineTotal, 0);
         }
 
@@ -111,9 +118,9 @@ export class ProcessSaleUseCase {
             notes: dto.notes,
             items: hasProducts ? { create: items } : undefined,
             serviceItems: hasServices ? { create: serviceItemsToCreate } : undefined,
-            payments: dto.payments && dto.payments.length > 0
+            payments: paymentsList.length > 0
               ? {
-                  create: dto.payments.map((p: any) => ({
+                  create: paymentsList.map((p: any) => ({
                     method: p.method,
                     status: "COMPLETED",
                     amount: p.amount,
@@ -131,7 +138,7 @@ export class ProcessSaleUseCase {
 
         // 3. Update stock levels for physical items
         if (hasProducts) {
-          await this.stock(tx, orgId, locId, mId, dto.items, t.id, t.number);
+          await this.stock(tx, orgId, locId, mId, productItems, t.id, t.number);
         }
 
         // 4. Update booking statuses and consume service materials

@@ -9,12 +9,11 @@ import { PosLoginDto } from "../../../application/dto/pos.dto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { PosService } from "@/v2/pos/pos.service";
 import { PosCustomerService } from "@/v2/pos/pos-customer.service";
+import { PosSaleService } from "@/v2/pos/pos-sale.service";
 import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { BadRequestException } from "@nestjs/common";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { PosService } from "@/v2/pos/pos.service";
-import { PosSaleService } from "@/v2/pos/pos-sale.service";
 
 describe("PosController (V3)", () => {
   let controller: PosController;
@@ -33,12 +32,6 @@ describe("PosController (V3)", () => {
               v3ApiClient: { findUnique: vi.fn() },
               inventoryLocation: { findMany: vi.fn() },
             },
-          },
-        },
-        {
-          provide: PosService,
-          useValue: {
-            getPricing: vi.fn(),
           },
         },
         {
@@ -245,6 +238,35 @@ describe("PosController (V3)", () => {
         ...mockCtx,
         isCheckedIn: false,
       });
+    });
+  });
+
+  describe("getSales endpoint", () => {
+    it("should delegate to getTransactionsUseCase", async () => {
+      const mockCtx = { organizationId: "org_1" } as any;
+      const getTransactionsUseCase = (controller as any).getTransactionsUseCase;
+      vi.mocked(getTransactionsUseCase.execute).mockResolvedValue({ data: [] } as any);
+
+      const result = await controller.getSales(mockCtx, { locationId: "loc_1" });
+      expect(getTransactionsUseCase.execute).toHaveBeenCalledWith(mockCtx, { locationId: "loc_1" });
+      expect(result).toEqual({ data: [] });
+    });
+  });
+
+  describe("processSale endpoint", () => {
+    it("should delegate to processSaleUseCase with locationId query param fallback", async () => {
+      const mockCtx = { organizationId: "org_1", memberId: "m_1" } as any;
+      const processSaleUseCase = (controller as any).processSaleUseCase;
+      vi.mocked(processSaleUseCase.execute).mockResolvedValue({ id: "sale_123" } as any);
+
+      const body = { items: [{ variantId: "v_1", quantity: 1, unitPrice: 10 }], payments: [{ method: "CASH", amount: 10 }] };
+      const result = await controller.processSale(mockCtx, body as any, "loc_query_1");
+
+      expect(processSaleUseCase.execute).toHaveBeenCalledWith(
+        expect.objectContaining({ organizationId: "org_1", locationId: "loc_query_1" }),
+        body
+      );
+      expect(result).toEqual({ id: "sale_123" });
     });
   });
 
