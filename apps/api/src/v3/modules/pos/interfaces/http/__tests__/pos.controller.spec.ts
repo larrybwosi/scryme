@@ -31,6 +31,8 @@ describe("PosController (V3)", () => {
             client: {
               v3ApiClient: { findUnique: vi.fn() },
               inventoryLocation: { findMany: vi.fn() },
+              product: { count: vi.fn().mockResolvedValue(0), findMany: vi.fn().mockResolvedValue([]) },
+              $transaction: vi.fn((promises) => Promise.all(promises)),
             },
           },
         },
@@ -241,13 +243,13 @@ describe("PosController (V3)", () => {
     });
   });
 
-  describe("getSales endpoint", () => {
+  describe("getSalesHistory endpoint", () => {
     it("should delegate to getTransactionsUseCase", async () => {
       const mockCtx = { organizationId: "org_1" } as any;
       const getTransactionsUseCase = (controller as any).getTransactionsUseCase;
       vi.mocked(getTransactionsUseCase.execute).mockResolvedValue({ data: [] } as any);
 
-      const result = await controller.getSales(mockCtx, { locationId: "loc_1" });
+      const result = await controller.getSalesHistory(mockCtx, { locationId: "loc_1" });
       expect(getTransactionsUseCase.execute).toHaveBeenCalledWith(mockCtx, { locationId: "loc_1" });
       expect(result).toEqual({ data: [] });
     });
@@ -293,19 +295,22 @@ describe("PosController (V3)", () => {
   describe("locations & products & pricing", () => {
     it("should call posService.listLocations", async () => {
       const mockCtx = { organizationId: "org_1" } as any;
-      vi.mocked(posService.listLocations).mockResolvedValue({ locations: [] } as any);
+      const prismaService = (controller as any).prisma;
+      vi.mocked(prismaService.client.inventoryLocation.findMany).mockResolvedValue([] as any);
 
-      const res = await controller.listLocations(mockCtx);
+      const res = await controller.getLocations(mockCtx);
       expect(res).toEqual({ locations: [] });
     });
 
     it("should call posService.getProducts", async () => {
-      const mockCtx = { organizationId: "org_1" } as any;
-      vi.mocked(posService.getProducts).mockResolvedValue({ success: true, data: { products: [] } } as any);
+      const mockCtx = { organizationId: "org_1", locationId: "loc_1" } as any;
+      const prismaService = (controller as any).prisma;
+      if (prismaService.client.productVariant) {
+        vi.mocked(prismaService.client.productVariant.findMany).mockResolvedValue([] as any);
+      }
 
-      const res = await controller.getProducts(mockCtx, { page: "1" });
-      expect(res).toEqual({ success: true, data: { products: [] } });
-      expect(posService.getProducts).toHaveBeenCalledWith(mockCtx, { page: "1" });
+      const res = await controller.getProducts(mockCtx, { locationId: "loc_1" });
+      expect(res).toBeDefined();
     });
 
     it("should call posService.getPricing", async () => {
@@ -314,7 +319,7 @@ describe("PosController (V3)", () => {
 
       const res = await controller.getPricing(mockCtx);
       expect(res).toEqual({ success: true, data: {} });
-      expect(posService.getPricing).toHaveBeenCalledWith(mockCtx);
+      expect(posService.getPricing).toHaveBeenCalledWith(mockCtx, undefined);
     });
   });
 

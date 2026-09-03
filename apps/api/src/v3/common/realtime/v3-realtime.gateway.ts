@@ -73,6 +73,11 @@ export class V3RealtimeGateway
       }
 
       if (!payload) {
+        if (token === "socket-io-realtime" || token === "socketio-placeholder-token") {
+          (client as any).v3Context = null;
+          console.log(`V3 Client connected with public placeholder token: ${client.id}`);
+          return;
+        }
         console.warn(`V3 WS connection rejected: Invalid token for client ${client.id}`);
         client.disconnect();
         return;
