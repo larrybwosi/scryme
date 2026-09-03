@@ -2,6 +2,8 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { usePosStore } from '@/store/store';
+import { useAuthStore } from '@/store/pos-auth-store';
+import { usePrinter } from '@/hooks/use-printer';
 import {
   FileText,
   Search,
@@ -49,7 +51,9 @@ export interface PrescriptionRecord {
 const STORAGE_KEY = 'scryme_prescriptions';
 
 export function PrescriptionsPage() {
-  const pharmacyConfig = usePosStore(state => state.settings.pharmacyConfig);
+  const settings = usePosStore(state => state.settings);
+  const pharmacyConfig = settings.pharmacyConfig;
+  const { printDocument } = usePrinter();
 
   // Load initial prescription data from localStorage (or empty array)
   const [prescriptions, setPrescriptions] = useState<PrescriptionRecord[]>(() => {
@@ -468,9 +472,38 @@ export function PrescriptionsPage() {
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelectedRxForPrint(null)}>Close</Button>
               <Button
-                onClick={() => {
-                  toast.success(`Sent dispensing label for ${selectedRxForPrint.rxNumber} to printer!`);
-                  setSelectedRxForPrint(null);
+                onClick={async () => {
+                  try {
+                    const branchName = useAuthStore.getState().currentLocation?.name;
+                    const orderPayload = {
+                      rxNumber: selectedRxForPrint.rxNumber,
+                      patientName: selectedRxForPrint.patientName,
+                      doctorName: selectedRxForPrint.doctorName,
+                      doctorLicense: selectedRxForPrint.doctorLicense,
+                      dateWritten: selectedRxForPrint.dateWritten,
+                      pharmacistName: pharmacyConfig?.pharmacistName || 'Staff Pharmacist',
+                      pharmacistLicense: pharmacyConfig?.pharmacistLicense || '',
+                      headerText: pharmacyConfig?.dispensingLabelHeader || 'OFFICIAL DISPENSING LABEL',
+                      disclaimer: pharmacyConfig?.warningDisclaimerText || 'Keep out of reach of children. Take strictly as directed.',
+                      items: [
+                        {
+                          name: selectedRxForPrint.medicationName,
+                          quantity: selectedRxForPrint.quantity,
+                          dosageInstructions: selectedRxForPrint.sig,
+                          rxNumber: selectedRxForPrint.rxNumber,
+                          patientName: selectedRxForPrint.patientName,
+                          doctorName: selectedRxForPrint.doctorName,
+                        },
+                      ],
+                    };
+                    await printDocument('label', orderPayload, settings, branchName);
+                    toast.success(`Sent dispensing label for ${selectedRxForPrint.rxNumber} to printer!`);
+                  } catch (err: any) {
+                    console.error('Prescription label print failed:', err);
+                    toast.error('Print failed', { description: err?.message || 'Check printer settings' });
+                  } finally {
+                    setSelectedRxForPrint(null);
+                  }
                 }}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
               >

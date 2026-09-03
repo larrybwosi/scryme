@@ -20,7 +20,12 @@ import {
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
-import { type V3ApiContext } from "@repo/shared/api/v2";
+import {
+  type V3ApiContext,
+  getPosProducts,
+  getPosProductsDelta,
+  type V2ApiContext,
+} from "@repo/shared/api/v2";
 import { ProcessSaleDto } from "../../application/dto/sale.dto";
 import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";
@@ -47,8 +52,11 @@ import {
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { RequireMember } from "@/v3/common/decorators/require-member.decorator";
+import { PrismaService } from "@/prisma/prisma.service";
 import { PosService } from "@/v2/pos/pos.service";
 import { PosSaleService } from "@/v2/pos/pos-sale.service";
+import { PosCustomerService } from "@/v2/pos/pos-customer.service";
+import { AllowPublic } from "@/common/decorators/auth.decorator";
 
 @ApiTags("V3 POS")
 @Controller(":orgSlug/pos")
@@ -61,8 +69,10 @@ export class PosController {
     private readonly syncUseCase: SyncUseCase,
     private readonly getTransactionsUseCase: GetTransactionsUseCase,
     private readonly registerPettyCashUseCase: RegisterPettyCashUseCase,
+    private readonly prisma: PrismaService,
     private readonly posService: PosService,
     private readonly posSaleService: PosSaleService,
+    private readonly posCustomerService: PosCustomerService,
   ) {}
 
   @Post("provision")
@@ -166,24 +176,66 @@ export class PosController {
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "List active POS locations",
-    operationId: "POS_ListLocations",
+    summary: "Get POS active inventory locations",
+    operationId: "POS_GetLocations",
   })
   @ApiResponse({ status: 200, description: "Active locations" })
-  async listLocations(@v3Context() ctx: V3ApiContext) {
-    return this.posService.listLocations(ctx);
+  async getLocations(@v3Context() ctx: V3ApiContext) {
+    const locations = await this.prisma.client.inventoryLocation.findMany({
+      where: {
+        organizationId: ctx.organizationId,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        address: true,
+        locationType: true,
+        isDefault: true,
+      },
+      orderBy: { name: "asc" },
+    });
+    return { locations };
   }
 
   @Get("products")
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get POS catalog products",
+    summary: "Get POS products for full or delta sync",
     operationId: "POS_GetProducts",
   })
-  @ApiResponse({ status: 200, description: "POS products" })
+  @ApiResponse({ status: 200, description: "POS products list" })
   async getProducts(@v3Context() ctx: V3ApiContext, @Query() query: any) {
-    return this.posService.getProducts(ctx, query);
+    const { lastSync, locationId: queryLocationId, page, limit, search, categoryId } = query;
+    const locationId = ctx.locationId || queryLocationId;
+
+    if (!locationId) {
+      throw new BadRequestException("Location ID is required.");
+    }
+
+    const pageNum = page ? parseInt(page, 10) : 1;
+    const limitNum = limit ? parseInt(limit, 10) : 2000;
+
+    return lastSync
+      ? getPosProductsDelta({
+          prisma: this.prisma.client,
+          organizationId: ctx.organizationId,
+          locationId,
+          lastSync,
+          page: pageNum,
+          limit: limitNum,
+        })
+      : getPosProducts({
+          prisma: this.prisma.client,
+          organizationId: ctx.organizationId,
+          locationId,
+          page: pageNum,
+          limit: limitNum,
+          search,
+          categoryId,
+        });
   }
 
   @Get("sale")
@@ -196,6 +248,17 @@ export class PosController {
   @ApiResponse({ status: 200, description: "Sales history" })
   async getSalesHistory(@v3Context() ctx: V3ApiContext, @Query() query: any) {
     return this.getTransactionsUseCase.execute(ctx, query);
+  }
+
+  @AllowPublic()
+  @Post("ably-auth")
+  @ApiOperation({
+    summary: "Get token for realtime communication",
+    operationId: "POS_AblyAuth",
+  })
+  @ApiResponse({ status: 200, description: "Realtime Auth token" })
+  async ablyAuthPublic() {
+    return { token: "socket-io-realtime" };
   }
 
   @Post("sale")
@@ -277,15 +340,15 @@ export class PosController {
     return this.posService.scanTransaction(ctx, code);
   }
 
-  @Post("ably-auth")
+  @Post("ably-auth/context")
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Realtime messaging token/auth for POS websocket channel",
-    operationId: "POS_AblyAuth",
+    operationId: "POS_AblyAuthContext",
   })
   @ApiResponse({ status: 200, description: "Realtime token details" })
-  async ablyAuth(@v3Context() ctx: V3ApiContext) {
+  async ablyAuthContext(@v3Context() ctx: V3ApiContext) {
     return this.posService.ablyAuth(ctx);
   }
 
@@ -353,7 +416,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Query("lastSync") lastSync?: string,
   ) {
-    return this.posService.getCustomersDelta(ctx, lastSync);
+    return this.posCustomerService.getCustomersDelta(ctx.organizationId, lastSync);
   }
 
   @Post("customers")
@@ -457,8 +520,11 @@ export class PosController {
     operationId: "POS_GetPricing",
   })
   @ApiResponse({ status: 200, description: "Pricing data" })
-  async getPricing(@v3Context() ctx: V3ApiContext) {
-    return this.posService.getPricing(ctx);
+  async getPricing(
+    @v3Context() ctx: V3ApiContext,
+    @Query("lastSync") lastSync?: string,
+  ) {
+    return this.posService.getPricing(ctx as unknown as V2ApiContext, lastSync);
   }
 
   @Get("pricing/sync")
@@ -473,7 +539,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Query("lastSync") lastSync?: string,
   ) {
-    return this.posService.getPricing(ctx, lastSync);
+    return this.posService.getPricing(ctx as unknown as V2ApiContext, lastSync);
   }
 
   @Post("shifts/sync")
