@@ -7,6 +7,7 @@ import {
   ValidateNested,
   IsOptional,
   Min,
+  IsBoolean,
 } from "class-validator";
 import { Type } from "class-transformer";
 
@@ -139,4 +140,100 @@ export class ProcessSaleDto {
   @IsString()
   @IsOptional()
   locationId?: string;
+
+  @ApiPropertyOptional({ example: "mem_123", description: "Optional member ID override" })
+  @IsString()
+  @IsOptional()
+  memberId?: string;
+
+  @ApiPropertyOptional({ example: "SALE-123456", description: "Optional sale number" })
+  @IsString()
+  @IsOptional()
+  saleNumber?: string;
+
+  @ApiPropertyOptional({ example: false, description: "Whether this is a wholesale sale" })
+  @IsBoolean()
+  @IsOptional()
+  isWholesale?: boolean;
+
+  @ApiPropertyOptional({ example: "cust_123", description: "Optional customer ID" })
+  @IsString()
+  @IsOptional()
+  customerId?: string;
+
+  @ApiPropertyOptional({ example: "biz_123", description: "Optional business account ID" })
+  @IsString()
+  @IsOptional()
+  businessAccountId?: string;
+
+  @ApiPropertyOptional({ example: "COMPLETED", description: "Optional payment status" })
+  @IsString()
+  @IsOptional()
+  paymentStatus?: string;
+
+  @ApiPropertyOptional({ example: "STK_PUSH", description: "Optional M-Pesa transaction flow type" })
+  @IsString()
+  @IsOptional()
+  mpesaType?: string;
+
+  @ApiPropertyOptional({ example: "254712345678", description: "Optional M-Pesa phone number" })
+  @IsString()
+  @IsOptional()
+  mpesaPhoneNumber?: string;
+
+  @ApiPropertyOptional({ example: 1000, description: "Optional forced immediate sync threshold" })
+  @IsNumber()
+  @IsOptional()
+  forcedImmediateSyncThreshold?: number;
+
+  @ApiPropertyOptional({ example: 100, description: "Optional total transaction amount" })
+  @IsNumber()
+  @IsOptional()
+  total?: number;
+
+  @ApiPropertyOptional({ example: 100, description: "Optional amount received from customer" })
+  @IsNumber()
+  @IsOptional()
+  amountReceived?: number;
+
+  @ApiPropertyOptional({ example: 0, description: "Optional change amount returned to customer" })
+  @IsNumber()
+  @IsOptional()
+  change?: number;
+
+  @ApiPropertyOptional({ example: "drawer_123", description: "Optional cash drawer ID" })
+  @IsString()
+  @IsOptional()
+  cashDrawerId?: string;
+
+  @ApiPropertyOptional({ example: true, description: "Whether stock tracking is enabled" })
+  @IsBoolean()
+  @IsOptional()
+  enableStockTracking?: boolean;
+
+  @ApiPropertyOptional({ example: ["tax_123"], description: "Optional tax IDs applied" })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  taxIds?: string[];
+
+  @ApiPropertyOptional({ example: "John Doe", description: "Optional cashier name" })
+  @IsString()
+  @IsOptional()
+  cashierName?: string;
+
+  @ApiPropertyOptional({ example: "123456", description: "Optional account reference number" })
+  @IsString()
+  @IsOptional()
+  accountRef?: string;
+
+  @ApiPropertyOptional({ example: "rx_123", description: "Optional prescription ID for pharmacy POS" })
+  @IsString()
+  @IsOptional()
+  prescriptionId?: string;
+
+  @ApiPropertyOptional({ example: "Dr. Smith", description: "Optional doctor name for pharmacy POS" })
+  @IsString()
+  @IsOptional()
+  doctorName?: string;
 }
