@@ -30,7 +30,10 @@ export class OpenPanelService implements OnModuleInit {
   async track(payload: { profileId?: string; event: string; properties?: Record<string, unknown> }) {
     if (!this.client) return;
     try {
-      await this.client.track(payload);
+      await this.client.track(payload.event, {
+        profileId: payload.profileId,
+        ...payload.properties,
+      });
     } catch (error) {
       this.logger.error(`Failed to track event: ${payload.event}`, error);
     }
