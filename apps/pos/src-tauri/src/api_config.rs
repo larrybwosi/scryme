@@ -30,12 +30,12 @@ pub mod routes {
     pub const ORDERS: &str = "api/v3/:orgSlug/orders";
 
     // --- Products & Pricing ---
-    pub const PRODUCTS: &str = "api/v3/:orgSlug/catalog/products";
-    pub const PRICING: &str = "api/v3/:orgSlug/catalog/pricing";
-    pub const PRICING_SYNC: &str = "api/v3/:orgSlug/catalog/pricing/sync";
+    pub const PRODUCTS: &str = "api/v3/:orgSlug/pos/products";
+    pub const PRICING: &str = "api/v3/:orgSlug/pos/pricing";
+    pub const PRICING_SYNC: &str = "api/v3/:orgSlug/pos/pricing/sync";
 
     // --- Customers ---
-    pub const CUSTOMERS: &str = "api/v3/:orgSlug/customers";
+    pub const CUSTOMERS: &str = "api/v3/:orgSlug/pos/customers";
 
     // --- Shifts ---
     pub const SHIFT_SYNC: &str = "api/v3/:orgSlug/pos/shifts/sync";

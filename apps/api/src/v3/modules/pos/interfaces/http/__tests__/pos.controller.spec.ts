@@ -7,6 +7,8 @@ import { GetTransactionsUseCase } from "../../../application/use-cases/get-trans
 import { RegisterPettyCashUseCase } from "../../../application/use-cases/register-petty-cash.use-case";
 import { PosLoginDto } from "../../../application/dto/pos.dto";
 import { PrismaService } from "@/prisma/prisma.service";
+import { PosService } from "@/v2/pos/pos.service";
+import { PosCustomerService } from "@/v2/pos/pos-customer.service";
 import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { BadRequestException } from "@nestjs/common";
@@ -25,7 +27,20 @@ describe("PosController (V3)", () => {
           useValue: {
             client: {
               v3ApiClient: { findUnique: vi.fn() },
+              inventoryLocation: { findMany: vi.fn() },
             },
+          },
+        },
+        {
+          provide: PosService,
+          useValue: {
+            getPricing: vi.fn(),
+          },
+        },
+        {
+          provide: PosCustomerService,
+          useValue: {
+            getCustomersDelta: vi.fn(),
           },
         },
         {
