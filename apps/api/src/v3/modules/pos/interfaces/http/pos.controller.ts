@@ -244,7 +244,7 @@ export class PosController {
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "List sales history (alias for transactions)",
+    summary: "List sales history / transactions",
     operationId: "POS_GetSalesHistory",
   })
   @ApiResponse({ status: 200, description: "Sales history" })
@@ -259,20 +259,37 @@ export class PosController {
     operationId: "POS_AblyAuth",
   })
   @ApiResponse({ status: 200, description: "Realtime Auth token" })
-  async ablyAuthPublic() {
-    return { token: "socket-io-realtime" };
-  }
+  async ablyAuthPublic(@Req() req: any) {
+    const authHeader = req.headers["x-member-token"] || req.headers["authorization"] || req.headers["x-api-key"];
+    if (authHeader) {
+      const rawToken = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+      const cleanToken = rawToken.startsWith("Bearer ") ? rawToken.split(" ")[1] : rawToken;
+      if (cleanToken) {
+        try {
+          const verified = await this.authCore.verifyToken(cleanToken);
+          if (verified) {
+            return {
+              data: {
+                tokenRequest: { token: cleanToken },
+                metadata: {
+                  paymentChannel: `organization:${verified.organizationId}:payments`,
+                  organizationId: verified.organizationId,
+                },
+              },
+            };
+          }
+        } catch {
+          // Token verification failed, fallback to default
+        }
+      }
+    }
 
-  @Get("sale")
-  @UseGuards(V3AuthGuard, MultiTenancyGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: "List POS sales / transactions",
-    operationId: "POS_GetSales",
-  })
-  @ApiResponse({ status: 200, description: "Sales transactions list" })
-  async getSales(@v3Context() ctx: V3ApiContext, @Query() query: any) {
-    return this.getTransactionsUseCase.execute(ctx, query);
+    return {
+      data: {
+        tokenRequest: { token: "socket-io-realtime" },
+        metadata: { paymentChannel: "public" },
+      },
+    };
   }
 
   @Get("sale/:id")
@@ -336,51 +353,14 @@ export class PosController {
     summary: "Record payment for a sale",
     operationId: "POS_RecordPayment",
   })
-  @ApiResponse({ status: 201, description: "Payment recorded" })
-  async recordPayment(
-    @v3Context() ctx: V3ApiContext,
-    @Body() body: any,
-  ) {
-    const { transactionId, amount, method, reference, notes } = body;
-    if (!transactionId || !amount || !method) {
-      throw new BadRequestException("transactionId, amount, and method are required");
-    }
-
-    const transaction = await this.prisma.client.transaction.findFirst({
-      where: { id: transactionId, organizationId: ctx.organizationId },
-    });
-    if (!transaction) {
-      throw new NotFoundException(`Transaction with ID ${transactionId} not found`);
-    }
-
-    const payment = await this.prisma.client.transactionPayment.create({
-      data: {
-        transactionId,
-        organizationId: ctx.organizationId,
-        amount: Number(amount),
-        method,
-        referenceNumber: reference,
-        notes,
-        status: "COMPLETED",
-      },
-    });
-
-    return payment;
-  }
-
-  @Post("sale/payments")
-  @RequireMember()
-  @UseGuards(V3AuthGuard, MultiTenancyGuard)
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: "Record payment for a sale",
-    operationId: "POS_RecordPayment",
-  })
   @ApiResponse({ status: 200, description: "Payment recorded" })
   async recordPayment(
     @v3Context() ctx: V3ApiContext,
-    @Body() body: PosRecordPaymentDto,
+    @Body() body: PosRecordPaymentDto | any,
   ) {
+    if (body.transactionId && body.amount && body.method && !body.saleId) {
+      body.saleId = body.transactionId;
+    }
     return this.posService.recordPayment(ctx, body);
   }
 
