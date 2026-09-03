@@ -17,17 +17,43 @@ export class SaleItemDto {
   @IsNotEmpty()
   variantId: string;
 
+  @ApiPropertyOptional({ example: "prod_123", description: "Optional product ID" })
+  @IsString()
+  @IsOptional()
+  productId?: string;
+
+  @ApiPropertyOptional({ example: "Whole Milk 1L", description: "Optional product name" })
+  @IsString()
+  @IsOptional()
+  productName?: string;
+
+  @ApiPropertyOptional({ example: "1L Bottle", description: "Optional variant name" })
+  @IsString()
+  @IsOptional()
+  variantName?: string;
+
+  @ApiPropertyOptional({ example: "unit_123", description: "Optional selling unit ID" })
+  @IsString()
+  @IsOptional()
+  sellingUnitId?: string;
+
+  @ApiPropertyOptional({ example: "Bottle", description: "Optional selling unit name" })
+  @IsString()
+  @IsOptional()
+  sellingUnitName?: string;
+
   @ApiProperty({ example: 2, description: "Quantity of the variant purchased" })
   @IsNumber()
   @Min(1)
   quantity: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 15.99,
-    description: "Client provided price (validated against DB)",
+    description: "Client provided price (validated against DB or defaults to variant retail price)",
   })
   @IsNumber()
-  unitPrice: number;
+  @IsOptional()
+  unitPrice?: number;
 }
 
 export class SaleServiceItemDto {
@@ -80,6 +106,10 @@ export class SalePaymentDto {
   @IsString()
   @IsOptional()
   reference?: string;
+
+  @ApiPropertyOptional({ description: "Optional payment metadata" })
+  @IsOptional()
+  meta?: any;
 }
 
 export class ProcessSaleDto {
