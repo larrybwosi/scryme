@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { OpenPanel } from "@openpanel/sdk";
+import { env } from "@repo/env";
 
 @Injectable()
 export class OpenPanelService implements OnModuleInit {
@@ -7,9 +8,9 @@ export class OpenPanelService implements OnModuleInit {
   private client: OpenPanel | null = null;
 
   onModuleInit() {
-    const clientId = process.env.OPENPANEL_CLIENT_ID;
-    const clientSecret = process.env.OPENPANEL_CLIENT_SECRET;
-    const host = process.env.OPENPANEL_HOST;
+    const clientId = env.OPENPANEL_CLIENT_ID;
+    const clientSecret = env.OPENPANEL_CLIENT_SECRET;
+    const host = env.OPENPANEL_HOST;
 
     if (clientId && clientSecret) {
       try {

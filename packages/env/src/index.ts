@@ -117,6 +117,10 @@ const serverSchema = z.object({
   SCRYME_SYSTEM_WORKSPACE_SLUG: z.string().optional(),
   SCRYME_SYSTEM_CHANNEL_SLUG: z.string().optional(),
 
+  // OpenPanel Configuration
+  OPENPANEL_CLIENT_ID: z.string().optional(),
+  OPENPANEL_CLIENT_SECRET: z.string().optional(),
+  OPENPANEL_HOST: z.string().optional(),
 });
 
 const clientSchema = z.object({
@@ -159,6 +163,12 @@ const clientSchema = z.object({
   // Sanity Public Configuration
   NEXT_PUBLIC_SITE_SANITY_DATASET: z.string().optional().default("production"),
   NEXT_PUBLIC_SITE_SANITY_PROJECT_ID: z.string().optional().default("ce88cj7n"),
+
+  // OpenPanel Public Configuration
+  NEXT_PUBLIC_OPENPANEL_CLIENT_ID: z.string().optional(),
+  NEXT_PUBLIC_OPENPANEL_HOST: z.string().optional(),
+  VITE_OPENPANEL_CLIENT_ID: z.string().optional(),
+  VITE_OPENPANEL_HOST: z.string().optional(),
 });
 
 // ─────────────────────────────────────────────
@@ -304,6 +314,14 @@ function getRawEnv() {
     SCRYME_SYSTEM_WORKSPACE_SLUG: process.env.SCRYME_SYSTEM_WORKSPACE_SLUG,
     SCRYME_SYSTEM_CHANNEL_SLUG: process.env.SCRYME_SYSTEM_CHANNEL_SLUG,
     CUSTOMER_AUTH_STRATEGY: process.env.CUSTOMER_AUTH_STRATEGY,
+    // OpenPanel
+    OPENPANEL_CLIENT_ID: process.env.OPENPANEL_CLIENT_ID,
+    OPENPANEL_CLIENT_SECRET: process.env.OPENPANEL_CLIENT_SECRET,
+    OPENPANEL_HOST: process.env.OPENPANEL_HOST,
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID: process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
+    NEXT_PUBLIC_OPENPANEL_HOST: process.env.NEXT_PUBLIC_OPENPANEL_HOST,
+    VITE_OPENPANEL_CLIENT_ID: process.env.VITE_OPENPANEL_CLIENT_ID,
+    VITE_OPENPANEL_HOST: process.env.VITE_OPENPANEL_HOST,
     // Client
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
