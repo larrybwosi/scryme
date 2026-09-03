@@ -98,7 +98,12 @@ describe("PosController (V3)", () => {
 
   describe("login endpoint", () => {
     it("should login using deviceKey fallback from request body", async () => {
-      vi.mocked(authCoreService.loginMember).mockResolvedValue("mock_access_token" as any);
+      const mockResult = {
+        token: "mock_access_token",
+        accessToken: "mock_access_token",
+        member: { id: "m1", name: "Staff Member", role: "OWNER", cardId: "1234" },
+      };
+      vi.mocked(authCoreService.loginMember).mockResolvedValue(mockResult as any);
 
       const mockReq = { headers: {} };
       const body: PosLoginDto = {
@@ -110,7 +115,7 @@ describe("PosController (V3)", () => {
 
       const response = await controller.login(body, mockReq);
 
-      expect(response).toEqual({ accessToken: "mock_access_token" });
+      expect(response).toEqual(mockResult);
       expect(authCoreService.loginMember).toHaveBeenCalledWith(
         "dev_key_123",
         "1111",
@@ -119,7 +124,12 @@ describe("PosController (V3)", () => {
     });
 
     it("should login using X-API-KEY header when clientId and deviceKey are missing in body", async () => {
-      vi.mocked(authCoreService.loginMember).mockResolvedValue("mock_access_token" as any);
+      const mockResult = {
+        token: "mock_access_token",
+        accessToken: "mock_access_token",
+        member: { id: "m2", name: "Staff Member", role: "STAFF", cardId: "9999" },
+      };
+      vi.mocked(authCoreService.loginMember).mockResolvedValue(mockResult as any);
 
       const mockReq = { headers: { "x-api-key": "header_key_456.secret" } };
       const body: PosLoginDto = {
@@ -128,7 +138,7 @@ describe("PosController (V3)", () => {
 
       const response = await controller.login(body, mockReq);
 
-      expect(response).toEqual({ accessToken: "mock_access_token" });
+      expect(response).toEqual(mockResult);
       expect(authCoreService.loginMember).toHaveBeenCalledWith(
         "header_key_456",
         "",
