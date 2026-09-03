@@ -28,7 +28,19 @@ pub async fn get_drivers_command(auth_state: State<'_, AuthState>) -> Result<Vec
         return Err(format!("Failed to fetch drivers: {}", res.status()));
     }
 
-    let drivers: Vec<Driver> = res.json().await.map_err(|e| e.to_string())?;
+    let raw_val: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    let target = if let Some(data) = raw_val.get("data") {
+        if data.is_array() {
+            data
+        } else {
+            &raw_val
+        }
+    } else {
+        &raw_val
+    };
+
+    let drivers: Vec<Driver> = serde_json::from_value(target.clone())
+        .map_err(|e| format!("Failed to parse drivers: {} | Raw: {}", e, raw_val))?;
     Ok(drivers)
 }
 
@@ -58,7 +70,12 @@ pub async fn dispatch_order_command(
         return Err(format!("Dispatch failed: {} - {}", status, err_text));
     }
 
-    let data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    let raw_val: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    let data = if let Some(d) = raw_val.get("data") {
+        if !d.is_null() { d.clone() } else { raw_val }
+    } else {
+        raw_val
+    };
     Ok(data)
 }
 

@@ -96,8 +96,31 @@ async fn handle_response<T: for<'de> Deserialize<'de>>(
     let status = response.status();
 
     if status.is_success() {
-        return response.json::<T>().await.map_err(|e| {
-            error!("[{}] JSON Parse Error: {}", context, e);
+        let raw_val: serde_json::Value = response.json().await.map_err(|e| {
+            error!("[{}] JSON Read Error: {}", context, e);
+            CommandError::new(
+                ErrorKind::Serialization,
+                "Failed to process server response",
+            )
+            .with_details(e.to_string())
+        })?;
+
+        let target = if let Some(d) = raw_val.get("data") {
+            if !d.is_null() {
+                d
+            } else {
+                &raw_val
+            }
+        } else {
+            &raw_val
+        };
+
+        if let Ok(result) = serde_json::from_value::<T>(target.clone()) {
+            return Ok(result);
+        }
+
+        return serde_json::from_value::<T>(raw_val.clone()).map_err(|e| {
+            error!("[{}] JSON Parse Error: {} | Raw: {}", context, e, raw_val);
             CommandError::new(
                 ErrorKind::Serialization,
                 "Failed to process server response",
