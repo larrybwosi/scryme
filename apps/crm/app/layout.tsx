@@ -2,6 +2,7 @@ import { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SidebarWrapper } from "../components/sidebar-wrapper";
 import { Providers } from "@/lib/providers";
+import { OpenPanelProvider } from "../components/openpanel-provider";
 import { Roboto } from "next/font/google";
 
 const roboto = Roboto({
@@ -130,6 +131,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#f8f9fa] font-sans antialiased">
+        <OpenPanelProvider />
         <Providers>
           <div className="flex h-screen overflow-hidden">
             <SidebarWrapper />

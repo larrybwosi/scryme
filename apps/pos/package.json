@@ -39,6 +39,7 @@
   "dependencies": {
     "@bwip-js/browser": "^4.8.0",
     "@hookform/resolvers": "^5.2.2",
+    "@openpanel/web": "^1.4.1",
     "@posthog/react": "^1.8.2",
     "@react-pdf/renderer": "latest",
     "@redfernelec/tauri-plugin-hid-api": "^0.2.3",

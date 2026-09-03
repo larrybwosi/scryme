@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SidebarWrapper } from "../components/sidebar-wrapper";
 import { Providers } from "@/lib/providers";
+import { OpenPanelProvider } from "../components/openpanel-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"),
@@ -72,6 +73,7 @@ export default function RootLayout({
         ` }} />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">
+        <OpenPanelProvider />
         <Providers>
           <div className="flex h-screen overflow-hidden">
             <SidebarWrapper />
