@@ -115,7 +115,10 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Current context" })
   async getMe(@v3Context() ctx: V3ApiContext) {
-    return ctx;
+    return {
+      ...ctx,
+      isCheckedIn: !!ctx.memberId,
+    };
   }
 
   @Post("sale")

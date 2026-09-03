@@ -166,7 +166,7 @@ export const useSessionActivityListener = () => {
         const isCheckedIn =
           typeof statusData?.isCheckedIn === 'boolean'
             ? statusData.isCheckedIn
-            : Boolean(response?.success && response?.data?.isCheckedIn);
+            : Boolean(statusData?.memberId || (response?.success && statusData));
 
         if (isCheckedIn) {
           // Session is valid, update the local activity timer

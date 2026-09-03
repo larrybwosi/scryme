@@ -153,4 +153,40 @@ describe("PosController (V3)", () => {
       await expect(controller.login(body, mockReq)).rejects.toThrow(BadRequestException);
     });
   });
+
+  describe("getMe endpoint", () => {
+    it("should return context with isCheckedIn: true when memberId is present", async () => {
+      const mockCtx = {
+        clientId: "client_1",
+        organizationId: "org_1",
+        orgSlug: "slug-1",
+        memberId: "m1",
+        locationId: "loc_1",
+        authType: "v3_hybrid",
+      } as any;
+
+      const result = await controller.getMe(mockCtx);
+      expect(result).toEqual({
+        ...mockCtx,
+        isCheckedIn: true,
+      });
+    });
+
+    it("should return context with isCheckedIn: false when memberId is null", async () => {
+      const mockCtx = {
+        clientId: "client_1",
+        organizationId: "org_1",
+        orgSlug: "slug-1",
+        memberId: null,
+        locationId: "loc_1",
+        authType: "v3_client",
+      } as any;
+
+      const result = await controller.getMe(mockCtx);
+      expect(result).toEqual({
+        ...mockCtx,
+        isCheckedIn: false,
+      });
+    });
+  });
 });
