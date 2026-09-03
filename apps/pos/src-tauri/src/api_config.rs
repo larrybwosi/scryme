@@ -27,7 +27,7 @@ pub mod routes {
     pub const SALE_BASE: &str = "api/v3/:orgSlug/pos/sale";
     pub const SALE_PAYMENTS: &str = "api/v3/:orgSlug/pos/sale/payments";
     pub const TRANSACTION_SCAN: &str = "api/v3/:orgSlug/pos/transactions";
-    pub const ORDERS: &str = "api/v3/:orgSlug/orders";
+    pub const ORDERS: &str = "api/v3/:orgSlug/pos/orders";
 
     // --- Products & Pricing ---
     pub const PRODUCTS: &str = "api/v3/:orgSlug/pos/products";

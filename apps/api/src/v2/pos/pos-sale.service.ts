@@ -119,11 +119,36 @@ export class PosSaleService {
       });
     }
 
+    const sanitizedData = {
+      ...preCheck.data,
+      customerId: preCheck.data.customerId ? preCheck.data.customerId.trim() : undefined,
+      businessAccountId: preCheck.data.businessAccountId ? preCheck.data.businessAccountId.trim() : undefined,
+      notes: preCheck.data.notes || undefined,
+      termsAndConditions: preCheck.data.termsAndConditions || undefined,
+      deliveryPartnerId: preCheck.data.deliveryPartnerId || undefined,
+      fulfillment: preCheck.data.fulfillment
+        ? {
+            ...preCheck.data.fulfillment,
+            shippingAddressId: preCheck.data.fulfillment.shippingAddressId || undefined,
+            pickupLocationId: preCheck.data.fulfillment.pickupLocationId || undefined,
+            tableNumber: preCheck.data.fulfillment.tableNumber || undefined,
+          }
+        : undefined,
+      items: preCheck.data.items.map((item) => ({
+        ...item,
+        sellingUnitId: item.sellingUnitId || undefined,
+        unitPrice: item.unitPrice ?? undefined,
+      })),
+      taxIds: preCheck.data.taxIds || undefined,
+      enableStockTracking: preCheck.data.enableStockTracking ?? undefined,
+      isWholesale: preCheck.data.isWholesale ?? undefined,
+    };
+
     // 2. Process Order via Shared Action
     const result = await createOrder(
       organizationId,
       memberId ?? "api",
-      preCheck.data,
+      sanitizedData as any,
     );
 
     if (!result.success) {
