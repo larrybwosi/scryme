@@ -142,6 +142,11 @@ export class StrapiConnectionController {
     @Param("connectionId") connectionId: string,
     @Body() dto: TriggerSyncDto,
   ) {
+    // SECURITY (Sentinel): Verify connection exists and belongs to calling organization
+    await this.connectionUseCase.getConnectionOrThrow(
+      req.organization.id,
+      connectionId,
+    );
     const results: Record<string, unknown> = {};
     const orgId = req.organization.id;
     const dir = dto.direction ?? SyncDirection.BIDIRECTIONAL;
@@ -190,6 +195,11 @@ export class StrapiConnectionController {
     @Param("connectionId") connectionId: string,
     @Body() dto: TriggerSyncDto,
   ) {
+    // SECURITY (Sentinel): Verify connection exists and belongs to calling organization
+    await this.connectionUseCase.getConnectionOrThrow(
+      req.organization.id,
+      connectionId,
+    );
     const jobs: string[] = [];
     const orgId = req.organization.id;
     const triggeredBy = `manual:${req.user?.memberId ?? "unknown"}`;

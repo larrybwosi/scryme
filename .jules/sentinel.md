@@ -259,3 +259,8 @@
 **Vulnerability:** In `LoyaltyService.redeemPointsForVoucher`, customer points were checked before entering the write transaction block. Concurrent requests allowed point balances to drop below 0 (negative balance double-spending). In addition, `validateVoucher` evaluated `voucher.expiresAt < new Date()`, which evaluated to `true` when `expiresAt` was `null`, falsely invalidating non-expiring vouchers.
 **Learning:** Atomic database updates (`decrement`) inside transactions must be accompanied by immediate post-decrement balance checks to catch race conditions and abort double-spend transactions. Furthermore, relational comparisons against `Date()` in JS evaluate `null < Date()` to `true` because `null` coerces to 0.
 **Prevention:** Always validate post-decrement balances (`balance < 0`) within transaction blocks and throw to trigger rollback. Always check `voucher.expiresAt && voucher.expiresAt < new Date()` when validating optional expiration dates.
+
+## 2026-09-03 - IDOR / BOLA Prevention in Background Sync Enqueueing
+**Vulnerability:** `StrapiConnectionController.enqueueSync` allowed users to enqueue background sync tasks for any `connectionId` without verifying that the connection belonged to the calling `organizationId`.
+**Learning:** Endpoints that enqueue asynchronous background tasks (such as BullMQ jobs) must perform tenant isolation checks up front. Delaying validation to background workers allows unauthorized queue pollution and potential cross-tenant resource processing.
+**Prevention:** Always call `getConnectionOrThrow` (or an equivalent tenant-scoping verification helper) at the API controller layer before enqueueing background sync jobs.
