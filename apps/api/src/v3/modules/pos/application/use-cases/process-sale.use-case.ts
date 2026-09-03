@@ -202,7 +202,8 @@ export class ProcessSaleUseCase {
 
     return items.map((i) => {
       const v = variantMap.get(i.variantId)!;
-      const p = Number(v.retailPrice || 0);
+      const defaultPrice = Number(v.retailPrice || 0);
+      const p = i.unitPrice !== undefined && i.unitPrice !== null ? Number(i.unitPrice) : defaultPrice;
       return {
         variantId: v.id,
         productName: v.product.name,
@@ -210,7 +211,7 @@ export class ProcessSaleUseCase {
         sku: v.sku || "N/A",
         quantity: i.quantity,
         unitPrice: p,
-        listPrice: p,
+        listPrice: defaultPrice,
         unitCost: Number(v.buyingPrice || 0),
         subtotal: p * i.quantity,
         lineTotal: p * i.quantity,

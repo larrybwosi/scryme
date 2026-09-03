@@ -120,7 +120,11 @@ export class V3RealtimeGateway
     if (
       channel.startsWith("pos:pairing:") ||
       channel.startsWith("v3:pos:pairing:") ||
-      channel.startsWith("public:")
+      channel.startsWith("public:") ||
+      channel === "public" ||
+      channel === "mpesa-payments" ||
+      channel.startsWith("store:") ||
+      channel.startsWith("system:")
     ) {
       return true;
     }
@@ -132,7 +136,7 @@ export class V3RealtimeGateway
       return true;
     }
 
-    // Organization specific channels check (e.g., organization:orgId:inventory, organization:orgId:pricing, organization:orgId:customers)
+    // Organization specific channels check (e.g., organization:orgId:inventory, organization:orgId:pricing, organization:orgId:customers, organization:orgId:payments)
     if (channel.startsWith("organization:")) {
       const parts = channel.split(":");
       const targetOrg = parts[1];
