@@ -8,7 +8,7 @@ export enum TransactionStatus {
 
 export const OrderItemSchema = z.object({
   variantId: z.string(),
-  sellingUnitId: z.string().optional().nullable(),
+  sellingUnitId: z.string().optional(),
   quantity: z.number().int().positive('Quantity must be a positive integer'),
   unitPrice: z.number().nonnegative('Price cannot be negative').optional(),
   _maxStock: z.number().optional(),

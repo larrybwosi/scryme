@@ -370,8 +370,8 @@ export function TransactionsPage() {
     }
 
     return transactions.filter(t => {
-      if (startDate && t.createdAt) {
-        const txDate = new Date(t.createdAt);
+      if (startDate && t.date) {
+        const txDate = new Date(t.date);
         if (!isNaN(txDate.getTime()) && txDate < startDate) {
           return false;
         }

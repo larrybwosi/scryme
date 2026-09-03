@@ -749,7 +749,20 @@ pub async fn get_sales_history_command(
         return Err(format!("Failed to fetch sales history: {}", res.status()));
     }
 
-    res.json().await.map_err(|e| e.to_string())
+    let raw_val: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    let target = if let Some(data) = raw_val.get("data") {
+        data
+    } else {
+        &raw_val
+    };
+
+    if let Some(arr) = target.as_array() {
+        Ok(arr.clone())
+    } else if let Some(arr) = raw_val.as_array() {
+        Ok(arr.clone())
+    } else {
+        Ok(vec![target.clone()])
+    }
 }
 
 #[tauri::command]
@@ -805,7 +818,13 @@ pub async fn record_payment_command(
         return Err(format!("Payment recording failed: {} - {}", status, err_text));
     }
 
-    res.json().await.map_err(|e| e.to_string())
+    let raw_val: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    let data = if let Some(d) = raw_val.get("data") {
+        if !d.is_null() { d.clone() } else { raw_val }
+    } else {
+        raw_val
+    };
+    Ok(data)
 }
 
 #[tauri::command]
@@ -824,7 +843,13 @@ pub async fn initiate_mpesa_payment_command(
         return Err(format!("M-Pesa initiation failed: {} - {}", res.status(), res.text().await.unwrap_or_default()));
     }
 
-    res.json().await.map_err(|e| e.to_string())
+    let raw_val: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    let data = if let Some(d) = raw_val.get("data") {
+        if !d.is_null() { d.clone() } else { raw_val }
+    } else {
+        raw_val
+    };
+    Ok(data)
 }
 
 pub async fn scan_transaction_qr(auth_state: &AuthState, qr_code: String) -> Result<serde_json::Value> {

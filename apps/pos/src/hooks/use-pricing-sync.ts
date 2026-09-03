@@ -68,7 +68,7 @@ function useStableItems(items: PricingItem[]): [PricingItem[], string] {
 
 // ---------------------------------------------------------------------------
 
-export const useBatchPricing = (items: PricingItem[], customerId?: string) => {
+export const useBatchPricing = (items: PricingItem[], customerId?: string | null) => {
   const [stableItems, requestKey] = useStableItems(items);
 
   const { data, isLoading, isFetching } = useQuery({
