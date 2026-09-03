@@ -23,6 +23,7 @@ import { UploadModule } from "./common/upload/upload.module";
 import { ImageModule } from "./common/images/image.module";
 import { MpesaModule } from "./common/mpesa.module";
 import { CommonModule } from "./common/common.module";
+import { OpenPanelModule } from "./common/openpanel/openpanel.module";
 import { V2AuthGuard } from "./auth/v2-auth.guard";
 import { AuthorizationGuard } from "./common/guards/authorization.guard";
 import { CorrelationIdMiddleware } from "./common/middleware/correlation-id.middleware";
@@ -75,6 +76,7 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
     ImageModule,
     MpesaModule,
     CommonModule,
+    OpenPanelModule,
     RouterModule.register([
       {
         path: "v2",
