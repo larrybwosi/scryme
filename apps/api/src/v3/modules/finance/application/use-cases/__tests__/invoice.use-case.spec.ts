@@ -19,6 +19,7 @@ describe("InvoiceUseCase", () => {
         update: vi.fn(),
         delete: vi.fn(),
       },
+      invoiceConfig: { findUnique: vi.fn() },
       invoiceTemplate: { findMany: vi.fn(), create: vi.fn() },
       organization: { findUnique: vi.fn() },
       transaction: { findFirst: vi.fn() },
@@ -70,9 +71,25 @@ describe("InvoiceUseCase", () => {
   });
 
   describe("Partially Paid Invoices", () => {
+    it("should return null if autoGenerateInvoice is false when creating invoice from order", async () => {
+      const orgId = "org-1";
+      const orderId = "order-1";
+      mockPrisma.client.invoiceConfig.findUnique.mockResolvedValue({
+        autoGenerateInvoice: false,
+      });
+
+      const result = await useCase.createInvoiceFromOrder(orgId, orderId);
+
+      expect(result).toBeNull();
+      expect(mockPrisma.client.transaction.findFirst).not.toHaveBeenCalled();
+    });
+
     it("should create a partially paid invoice from a transaction", async () => {
       const orgId = "org-1";
       const orderId = "order-1";
+      mockPrisma.client.invoiceConfig.findUnique.mockResolvedValue({
+        autoGenerateInvoice: true,
+      });
       const mockOrder = {
         id: orderId,
         organizationId: orgId,

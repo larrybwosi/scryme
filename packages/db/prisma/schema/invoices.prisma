@@ -177,6 +177,7 @@ model InvoiceConfig {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   defaultTemplate String @default("default")
+  autoGenerateInvoice Boolean @default(true)
 
   // Branding Overrides
   primaryColor   String?

@@ -476,6 +476,10 @@ export class ProcessSaleUseCase {
       tId,
     );
 
+    if (!invoice) {
+      return null;
+    }
+
     const result = await this.invoiceUseCase.finalizeInvoice(orgId, invoice.id);
 
     return result.complianceData || null;
