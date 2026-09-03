@@ -251,49 +251,55 @@ pub async fn run_sync(
 ) -> Result<usize> {
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
 
-    let sdk_client = auth_state.build_sdk_client().map_err(|e| anyhow::anyhow!(e))?;
-    let customers_list = scryme_sdk::apis::v3_customers_api::customers_get_customers(
-        &sdk_client.config,
-        &sdk_client.org_slug,
-        None,
-        Some(2000.0),
-        None,
-    ).await.map_err(|e| anyhow::anyhow!("SDK get_customers failed: {}", e))?;
+    let last_sync: Option<String> = sqlx::query("SELECT last_sync FROM customer_sync_meta WHERE id = 1")
+        .fetch_optional(&pool).await.map_err(|e| anyhow::anyhow!(e))?.map(|r| r.get("last_sync"));
+
+    let request = auth_state.build_request(reqwest::Method::GET, crate::api_config::routes::CUSTOMERS)
+        .map_err(|e| anyhow::anyhow!(e))?;
+
+    let mut query_params = vec![];
+    if let Some(ts) = &last_sync {
+        query_params.push(("lastSync", ts.clone()));
+    }
+
+    let response = request.query(&query_params).send().await.map_err(|e| anyhow::anyhow!(e))?;
+    if !response.status().is_success() {
+        return Err(anyhow::anyhow!("Server returned error: {}", response.status()));
+    }
+
+    let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
+    let customers_array = if raw_val.is_array() {
+        &raw_val
+    } else if let Some(data) = raw_val.get("data") {
+        if data.is_array() { data } else { &raw_val }
+    } else {
+        &raw_val
+    };
+
+    let customers_list: Vec<PosCustomer> = serde_json::from_value(customers_array.clone())
+        .unwrap_or_default();
 
     let incoming_count = customers_list.len();
     let mut tx = pool.begin().await.map_err(|e| anyhow::anyhow!(e))?;
 
-    // Clear local customers before full sync
-    sqlx::query("DELETE FROM customers").execute(&mut *tx).await.map_err(|e| anyhow::anyhow!(e))?;
+    if last_sync.is_none() {
+        // Clear local customers before full sync
+        sqlx::query("DELETE FROM customers").execute(&mut *tx).await.map_err(|e| anyhow::anyhow!(e))?;
+    }
 
-    for cust_dto in customers_list {
-        let customer = PosCustomer {
-            id: cust_dto.id,
-            name: cust_dto.name,
-            phone: Some(cust_dto.phone),
-            email: Some(cust_dto.email),
-            company: cust_dto.company,
-            customer_type: cust_dto.customer_type,
-            business_account_id: None,
-            loyalty_points: None,
-            city: None,
-            primary_address: None,
-            updated_at: None,
-            gender: None,
-            date_of_birth: cust_dto.date_of_birth,
-            medical_history: None,
-            allergies: None,
-            chronic_conditions: None,
-            insurance_provider: None,
-            policy_number: None,
-        };
-
+    for customer in customers_list {
         let search_text = build_search_text(&customer);
         let encrypted_payload = encrypt_payload(&customer).await?;
 
         let query = r#"
             INSERT INTO customers (id, name, phone, email, search_text, payload)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+            ON CONFLICT(id) DO UPDATE SET
+                name = excluded.name,
+                phone = excluded.phone,
+                email = excluded.email,
+                search_text = excluded.search_text,
+                payload = excluded.payload
         "#;
 
         sqlx::query(query)
@@ -306,6 +312,12 @@ pub async fn run_sync(
             .execute(&mut *tx)
             .await.map_err(|e| anyhow::anyhow!(e))?;
     }
+
+    let new_sync_time = chrono::Utc::now().to_rfc3339();
+    sqlx::query("INSERT OR REPLACE INTO customer_sync_meta (id, last_sync) VALUES (1, ?1)")
+        .bind(&new_sync_time)
+        .execute(&mut *tx)
+        .await.map_err(|e| anyhow::anyhow!(e))?;
 
     tx.commit().await.map_err(|e| anyhow::anyhow!(e))?;
 
