@@ -9,6 +9,6 @@ import { PosCustomerService } from "./pos-customer.service";
   imports: [InventoryModule],
   controllers: [PosController],
   providers: [PosService, PosSaleService, PosCustomerService],
-  exports: [PosCustomerService, PosService],
+  exports: [PosCustomerService, PosService, PosSaleService],
 })
 export class PosModule {}
