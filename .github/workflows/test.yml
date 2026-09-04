@@ -412,6 +412,13 @@ jobs:
             pnpm turbo build --filter=pos...
             pnpm --filter pos test:frontend
           fi
+        env:
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY || secrets.POSTHOG_API_KEY }}
+          VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST }}
+          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_CLIENT_ID: ${{ secrets.VITE_OPENPANEL_CLIENT_ID || secrets.OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_HOST: ${{ secrets.VITE_OPENPANEL_HOST }}
 
   e2e-tests:
     needs: [filter]
