@@ -1,5 +1,11 @@
 # crm
 
+## 8.0.0-next.4
+
+### Major Changes
+
+- 6a42a37: Version 10
+
 ## 7.41.0-next.3
 
 ### Minor Changes

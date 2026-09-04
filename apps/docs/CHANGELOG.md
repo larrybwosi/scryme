@@ -1,5 +1,11 @@
 # docs
 
+## 2.0.0-next.5
+
+### Major Changes
+
+- 6a42a37: Version 10
+
 ## 1.8.0-next.4
 
 ### Minor Changes

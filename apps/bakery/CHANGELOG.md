@@ -1,5 +1,11 @@
 # bakery
 
+## 10.0.0-next.5
+
+### Major Changes
+
+- 6a42a37: Version 10
+
 ## 9.73.0-next.4
 
 ### Minor Changes
