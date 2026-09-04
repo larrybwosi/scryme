@@ -1,5 +1,11 @@
 # api
 
+## 7.0.0-next.5
+
+### Major Changes
+
+- 6a42a37: Version 10
+
 ## 6.41.0-next.4
 
 ### Minor Changes
