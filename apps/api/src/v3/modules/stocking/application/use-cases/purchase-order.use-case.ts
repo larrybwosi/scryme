@@ -312,8 +312,11 @@ export class PurchaseOrderUseCase {
         });
       }
 
-      const updatedPurchase = await tx.purchase.findUnique({
-        where: { id: purchaseId },
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // Purchase lacks a composite unique index on [id, organizationId],
+      // ensuring queries are strictly scoped by tenant to prevent cross-tenant IDOR vulnerabilities.
+      const updatedPurchase = await tx.purchase.findFirst({
+        where: { id: purchaseId, organizationId },
         include: { items: true },
       });
 
