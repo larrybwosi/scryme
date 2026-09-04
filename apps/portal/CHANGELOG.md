@@ -1,5 +1,16 @@
 # portal
 
+## 2.0.0
+
+### Major Changes
+
+- 6a42a37: Version 10
+- 3a5b05f: Major bump
+
+### Patch Changes
+
+- @repo/sdk@9.73.9
+
 ## 2.0.0-next.1
 
 ### Major Changes
