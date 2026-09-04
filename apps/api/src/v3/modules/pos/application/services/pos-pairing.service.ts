@@ -51,11 +51,28 @@ export class PosPairingService {
   }
 
   /**
-   * Retrieves the current status of a pairing session.
+   * Finds a session by either sessionId or 6-digit pairingCode.
    */
-  getSession(sessionId: string): PosPairingSession {
+  findSession(identifier: string): PosPairingSession | undefined {
     this.cleanupExpired();
-    const session = this.sessions.get(sessionId);
+    // Direct lookup by sessionId
+    let session = this.sessions.get(identifier);
+    if (session) return session;
+
+    // Search by pairingCode
+    for (const s of this.sessions.values()) {
+      if (s.pairingCode === identifier) {
+        return s;
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Retrieves the current status of a pairing session by sessionId or pairingCode.
+   */
+  getSession(identifier: string): PosPairingSession {
+    const session = this.findSession(identifier);
     if (!session) {
       throw new NotFoundException("Pairing session not found");
     }
@@ -69,9 +86,10 @@ export class PosPairingService {
 
   /**
    * Authorizes a pending pairing session from the Android app or Admin user.
+   * Can accept either sessionId or pairingCode.
    */
   async authorizeSession(
-    sessionId: string,
+    identifier: string,
     organizationId: string,
     memberId: string,
     prisma: any,
@@ -81,7 +99,7 @@ export class PosPairingService {
       deviceType?: any;
     }
   ) {
-    const session = this.getSession(sessionId);
+    const session = this.getSession(identifier);
 
     if (session.status === "EXPIRED" || new Date() > session.expiresAt) {
       session.status = "EXPIRED";

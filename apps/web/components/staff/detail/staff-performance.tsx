@@ -60,47 +60,47 @@ export function StaffPerformance({
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-white border-none shadow-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Sales Velocity
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.monthlySalesCount}</div>
-            <div className="flex items-center text-xs text-green-600 mt-1">
+            <div className="text-2xl font-bold text-foreground">{stats.monthlySalesCount}</div>
+            <div className="flex items-center text-xs text-emerald-600 dark:text-emerald-400 mt-1">
               <ArrowUpRight size={12} className="mr-1" />
               <span>Transactions this month</span>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-white border-none shadow-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Revenue Contribution
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(stats.monthlySalesValue)}
             </div>
-            <div className="flex items-center text-xs text-blue-600 mt-1">
+            <div className="flex items-center text-xs text-blue-600 dark:text-blue-400 mt-1">
               <Target size={12} className="mr-1" />
               <span>Monthly revenue target: 85%</span>
             </div>
           </CardContent>
         </Card>
-        <Card className="bg-white border-none shadow-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
               Average Ticket
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-foreground">
               {formatCurrency(stats.avgTransactionValue)}
             </div>
-            <div className="flex items-center text-xs text-purple-600 mt-1">
+            <div className="flex items-center text-xs text-purple-600 dark:text-purple-400 mt-1">
               <ShoppingBag size={12} className="mr-1" />
               <span>Per customer interaction</span>
             </div>
@@ -109,12 +109,12 @@ export function StaffPerformance({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-white border-none shadow-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-bold">
+            <CardTitle className="text-lg font-bold text-foreground">
               Recent Sales Trend
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               Daily revenue from last 7 transactions
             </CardDescription>
           </CardHeader>
@@ -125,31 +125,35 @@ export function StaffPerformance({
                   <CartesianGrid
                     strokeDasharray="3 3"
                     vertical={false}
-                    stroke="#f0f0f0"
+                    stroke="hsl(var(--border))"
                   />
                   <XAxis
                     dataKey="name"
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
                   />
                   <YAxis
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
+                    tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
                     tickFormatter={val => `${symbol}${val}`}
                   />
                   <Tooltip
-                    cursor={{ fill: "#f9fafb" }}
+                    cursor={{ fill: "hsl(var(--muted) / 0.5)" }}
                     contentStyle={{
                       borderRadius: "8px",
-                      border: "none",
+                      border: "1px solid hsl(var(--border))",
+                      backgroundColor: "hsl(var(--card))",
+                      color: "hsl(var(--foreground))",
                       boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                     }}
+                    labelStyle={{ color: "hsl(var(--foreground))" }}
+                    itemStyle={{ color: "hsl(var(--foreground))" }}
                   />
                   <Bar
                     dataKey="amount"
-                    fill="#3b82f6"
+                    fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
                     barSize={40}
                   />
@@ -159,51 +163,51 @@ export function StaffPerformance({
           </CardContent>
         </Card>
 
-        <Card className="bg-white border-none shadow-sm">
+        <Card className="bg-card border-border shadow-sm">
           <CardHeader>
-            <CardTitle className="text-lg font-bold">
+            <CardTitle className="text-lg font-bold text-foreground">
               Performance Breakdown
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-muted-foreground">
               Detailed metrics across different categories
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Attendance Reliability</span>
-                <span className="font-semibold">98%</span>
+                <span className="text-muted-foreground">Attendance Reliability</span>
+                <span className="font-semibold text-foreground">98%</span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 w-[98%]" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Transaction Accuracy</span>
-                <span className="font-semibold">99.5%</span>
-              </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 w-[99.5%]" />
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500 w-[98%]" />
               </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Upselling Performance</span>
-                <span className="font-semibold">65%</span>
+                <span className="text-muted-foreground">Transaction Accuracy</span>
+                <span className="font-semibold text-foreground">99.5%</span>
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-primary w-[99.5%]" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Upselling Performance</span>
+                <span className="font-semibold text-foreground">65%</span>
+              </div>
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div className="h-full bg-purple-500 w-[65%]" />
               </div>
             </div>
-            <div className="pt-4 border-t">
-              <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="pt-4 border-t border-border">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-green-500 rounded-full" />
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full" />
                   Excellent
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                  <div className="w-3 h-3 bg-primary rounded-full" />
                   Stable
                 </div>
                 <div className="flex items-center gap-1">

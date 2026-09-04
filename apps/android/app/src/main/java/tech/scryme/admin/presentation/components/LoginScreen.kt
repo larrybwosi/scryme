@@ -45,6 +45,7 @@ private val AccentBlue = Color(0xFF3B82F6)
 private val AccentBlueDim = Color(0xFF2563EB)
 private val CardSurface = Color(0xFF171C24)
 private val CardBorder = Color(0xFF2A313D)
+private val CardHighlight = Color(0xFF3A4250)
 private val TextPrimary = Color(0xFFF3F5F7)
 private val TextSecondary = Color(0xFF8B95A5)
 private val ErrorRed = Color(0xFFEF4444)
@@ -81,11 +82,11 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 .padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Brand mark
+            // Brand mark — squircle instead of full circle, tighter and more "app icon" like
             Box(
                 modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(16.dp))
                     .background(
                         Brush.linearGradient(listOf(AccentBlueDim, AccentBlue))
                     ),
@@ -95,7 +96,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
                     imageVector = Icons.Default.Shield,
                     contentDescription = null,
                     tint = Color.White,
-                    modifier = Modifier.size(30.dp)
+                    modifier = Modifier.size(28.dp)
                 )
             }
 
@@ -117,24 +118,32 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Card container — the "glass panel" holding the form
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(14.dp),
                 color = CardSurface,
                 border = BorderStroke(1.dp, CardBorder),
                 shadowElevation = 24.dp,
                 tonalElevation = 0.dp
             ) {
                 Column(
-                    modifier = Modifier.padding(28.dp),
+                    modifier = Modifier
+                        // subtle top-edge highlight — reads as a light catching a bevel
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(CardHighlight.copy(alpha = 0.35f), Color.Transparent),
+                                endY = 60f
+                            )
+                        )
+                        .padding(28.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
                     Text(
                         text = "EMAIL ADDRESS",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
                         color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -147,16 +156,16 @@ fun LoginScreen(viewModel: AuthViewModel) {
                         },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         colors = scrymeFieldColors(),
                         modifier = Modifier.fillMaxWidth()
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(18.dp))
 
                     Text(
                         text = "PASSWORD",
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.2.sp),
                         color = TextSecondary
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -178,7 +187,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         colors = scrymeFieldColors(),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -189,7 +198,7 @@ fun LoginScreen(viewModel: AuthViewModel) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
+                                    .clip(RoundedCornerShape(6.dp))
                                     .background(ErrorRed.copy(alpha = 0.12f))
                                     .padding(horizontal = 12.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically
@@ -210,19 +219,19 @@ fun LoginScreen(viewModel: AuthViewModel) {
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(26.dp))
 
                     Button(
                         onClick = { viewModel.login(email, password) },
                         enabled = !isLoading && email.isNotBlank() && password.isNotBlank(),
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = AccentBlue,
                             disabledContainerColor = AccentBlue.copy(alpha = 0.35f)
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(52.dp)
+                            .height(50.dp)
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
@@ -233,7 +242,10 @@ fun LoginScreen(viewModel: AuthViewModel) {
                         } else {
                             Text(
                                 text = "Sign In",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.SemiBold,
+                                    letterSpacing = 0.2.sp
+                                ),
                                 color = Color.White
                             )
                         }
@@ -241,12 +253,12 @@ fun LoginScreen(viewModel: AuthViewModel) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "Protected by Scryme • Enterprise Access Only",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary.copy(alpha = 0.7f),
+                text = "PROTECTED BY SCRYME · ENTERPRISE ACCESS ONLY",
+                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.8.sp),
+                color = TextSecondary.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
             )
         }

@@ -289,11 +289,84 @@ class AnnouncementRepositoryImpl(
         title: String,
         message: String,
         targetBranchId: String?,
+        targetMemberId: String?,
+        channelSlug: String?,
         severity: String
     ): Result<Unit> {
         val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
         return safeApiCallEnvelope {
-            api.broadcastAnnouncement(slug, AnnouncementDto(title, message, targetBranchId, severity))
+            api.broadcastAnnouncement(
+                slug,
+                AnnouncementDto(
+                    title = title,
+                    message = message,
+                    targetBranchId = targetBranchId,
+                    targetMemberId = targetMemberId,
+                    channelSlug = channelSlug,
+                    severity = severity
+                )
+            )
+        }
+    }
+
+    override suspend fun sendMessageToMember(
+        memberId: String,
+        title: String,
+        message: String,
+        type: String
+    ): Result<Unit> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.sendMessageToMember(
+                slug,
+                DirectMessageDto(
+                    memberId = memberId,
+                    title = title,
+                    message = message,
+                    type = type
+                )
+            )
+        }
+    }
+}
+
+class ShiftsRepositoryImpl(
+    private val api: ShiftsApiService,
+    private val sessionManager: SessionManager
+) : ShiftsRepository {
+
+    override suspend fun getShifts(
+        memberId: String?,
+        dayOfWeek: Int?,
+        isActive: Boolean?
+    ): Result<List<StaffShiftDto>> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getShifts(slug, memberId, dayOfWeek, isActive)
+        }
+    }
+
+    override suspend fun createShift(
+        memberId: String,
+        dayOfWeek: Int,
+        startTime: String,
+        endTime: String
+    ): Result<StaffShiftDto> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.createShift(slug, memberId, CreateShiftRequestDto(dayOfWeek, startTime, endTime))
+        }
+    }
+
+    override suspend fun addBreak(
+        shiftId: String,
+        startTime: String,
+        endTime: String,
+        description: String?
+    ): Result<StaffBreakDto> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.addBreak(slug, shiftId, CreateBreakRequestDto(startTime, endTime, description))
         }
     }
 }
@@ -308,9 +381,13 @@ class DeviceRepositoryImpl(
         }
     }
 
-    override suspend fun authorizePairingSession(sessionId: String): Result<DeviceProvisionResponseDto> {
+    override suspend fun authorizePairingSession(sessionId: String, locationId: String?): Result<DeviceProvisionResponseDto> {
+        val payload = mutableMapOf<String, String>()
+        if (!locationId.isNullOrBlank()) {
+            payload["locationId"] = locationId
+        }
         return safeApiCallDirectOrEnvelope {
-            api.authorizePairingSession(mapOf("sessionId" to sessionId))
+            api.authorizePairingSession(sessionId, payload)
         }
     }
 }

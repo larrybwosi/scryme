@@ -8,7 +8,8 @@
     ".": {
       "types": "./src/client.ts",
       "import": "./dist/client.mjs",
-      "require": "./dist/client.js"
+      "require": "./dist/client.js",
+      "default": "./dist/client.js"
     },
     "./client": {
       "types": "./src/browser.ts",
@@ -37,7 +38,7 @@
     "pg": "^8.21.0"
   },
   "devDependencies": {
-    "@eslint/js": "^8.57.0",
+    "@eslint/js": "^10.0.1",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/pg": "^8.20.0",

@@ -64,12 +64,12 @@ class DeviceAuthViewModelTest {
             )
         )
 
-        coEvery { repository.authorizePairingSession("pair_session_123") } coAnswers {
+        coEvery { repository.authorizePairingSession("pair_session_123", "loc_branch_1") } coAnswers {
             delay(100)
             Result.success(mockResponse)
         }
 
-        viewModel.onQrCodeScanned(qrContent)
+        viewModel.onQrCodeScanned(qrContent, "loc_branch_1")
 
         runCurrent()
         assertEquals(UiState.Loading, viewModel.uiState.value)

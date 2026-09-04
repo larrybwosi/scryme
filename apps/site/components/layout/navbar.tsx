@@ -21,6 +21,7 @@ import {
   BarChart3,
   Globe2,
   Cpu,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { captureCtaClicked } from "@/lib/posthog-tracking";
@@ -70,6 +71,12 @@ const solutionLinks = [
 ];
 
 const resourceLinks = [
+  {
+    name: "Developer Portal & Auth",
+    description: "Manage V3 API keys, 'Sign in with Scryme' OAuth credentials, and webhooks.",
+    href: "/developer",
+    icon: Lock,
+  },
   {
     name: "Documentation",
     description: "Guides and architecture specs for deploying Scryme.",

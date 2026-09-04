@@ -422,6 +422,7 @@ async function main() {
       } catch (innerErr: any) {
         throw new Error(
           `Failed to import Prisma client from both relative paths. Inner error: ${innerErr.message}`,
+          { cause: innerErr },
         );
       }
     } else {

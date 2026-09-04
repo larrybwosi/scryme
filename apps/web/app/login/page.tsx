@@ -1,6 +1,12 @@
 import React from "react";
+import { Metadata } from "next";
 import { Newsreader, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { LoginPageClient } from "./login-client";
+
+export const metadata: Metadata = {
+  title: "Sign In",
+  description: "Sign in to your Scryme account to access your organization's dashboard, POS, inventory, and management tools.",
+};
 
 // Define the fonts inside the Server Component (safer for Turbopack and SSR compilation)
 const display = Newsreader({

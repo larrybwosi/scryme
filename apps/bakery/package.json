@@ -1,11 +1,10 @@
 {
   "name": "bakery",
   "private": true,
-  "version": "9.71.2-next.0",
+  "version": "9.73.9-next.4",
   "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {
-    "prebuild": "pnpm --filter @scryme/sdk generate:rust",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
@@ -14,7 +13,8 @@
     "tauri": "tauri",
     "preview": "vite preview",
     "test:frontend": "vitest run",
-    "type-check": "pnpm exec tsc --noEmit"
+    "type-check": "pnpm exec tsc --noEmit",
+    "prebuild": "pnpm --filter @scryme/sdk generate:rust"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -55,7 +55,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
-    "@eslint/js": "8.57.0",
+    "@eslint/js": "10.0.1",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.3.0",

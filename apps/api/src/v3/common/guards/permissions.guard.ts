@@ -39,6 +39,11 @@ export class PermissionsGuard implements CanActivate {
     const user = request.user;
     const organization = request.organization || v3Context?.organization;
 
+    const isSuperAdmin = user?.role === "SUPER_ADMIN" || user?.systemRole === "SUPER_ADMIN";
+    if (isSuperAdmin) {
+      return true;
+    }
+
     const isClientCredentials = v3Context?.authType === "v3_client";
     const isCustomer = v3Context?.authType === "v3_customer";
 

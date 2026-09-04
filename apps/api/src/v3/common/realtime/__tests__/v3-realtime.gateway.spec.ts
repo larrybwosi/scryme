@@ -72,6 +72,19 @@ describe('V3RealtimeGateway', () => {
     expect(result).toEqual({ event: 'joined', data: 'inventory:org-1' });
   });
 
+  it('should allow joining presence and organization channels', async () => {
+    const client = {
+      join: vi.fn(),
+      v3Context: mockContext,
+    } as any as Socket;
+
+    const res1 = await gateway.handleJoinRoom(client, { channel: 'presence:loc-1' });
+    expect(res1).toEqual({ event: 'joined', data: 'presence:loc-1' });
+
+    const res2 = await gateway.handleJoinRoom(client, { channel: 'organization:org-1:inventory' });
+    expect(res2).toEqual({ event: 'joined', data: 'organization:org-1:inventory' });
+  });
+
   it('should block joining an unauthorized inventory channel', async () => {
     const client = {
       join: vi.fn(),

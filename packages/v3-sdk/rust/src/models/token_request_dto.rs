@@ -16,16 +16,16 @@ pub struct TokenRequestDto {
     /// The Client ID provided during provisioning or registration
     #[serde(rename = "clientId")]
     pub client_id: String,
-    /// The Client Secret
-    #[serde(rename = "clientSecret")]
-    pub client_secret: String,
+    /// The Client Secret (optional for client devices like POS/Bakery)
+    #[serde(rename = "clientSecret", skip_serializing_if = "Option::is_none")]
+    pub client_secret: Option<String>,
 }
 
 impl TokenRequestDto {
-    pub fn new(client_id: String, client_secret: String) -> TokenRequestDto {
+    pub fn new(client_id: String) -> TokenRequestDto {
         TokenRequestDto {
             client_id,
-            client_secret,
+            client_secret: None,
         }
     }
 }

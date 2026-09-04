@@ -43,6 +43,7 @@ import { uploadFileAction } from "../../actions/sales";
 import Image from "next/image";
 
 const formSchema = z.object({
+  autoGenerateInvoice: z.boolean(),
   companyName: z.string().optional(),
   companyAddress: z.string().optional(),
   companyEmail: z.string().optional(),
@@ -92,6 +93,7 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      autoGenerateInvoice: initialConfig?.autoGenerateInvoice ?? true,
       companyName: initialConfig?.companyName || "",
       companyAddress: initialConfig?.companyAddress || "",
       companyEmail: initialConfig?.companyEmail || "",
@@ -563,6 +565,40 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
               className="mt-2">
               <Plus className="w-4 h-4 mr-2" /> Add Custom Field
             </Button>
+          </CardContent>
+        </Card>
+
+        {/* Enterprise Features */}
+        <Card className="shadow-sm border border-muted/60">
+          <CardHeader className="bg-muted/10">
+            <div className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-emerald-600" />
+              <CardTitle>Invoice Automation</CardTitle>
+            </div>
+            <CardDescription>
+              Control automatic document generation settings.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <FormField
+              name="autoGenerateInvoice"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4 shadow-sm">
+                  <div className="space-y-0.5">
+                    <FormLabel>Automatic Invoice Generation</FormLabel>
+                    <FormDescription>
+                      Automatically create invoices when orders are placed or confirmed (e.g. from the POS app).
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 

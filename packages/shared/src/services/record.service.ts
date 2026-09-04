@@ -96,12 +96,6 @@ export class RecordService {
     return record;
   }
 
-  /**
-   * Optimized: Fetch records with optional pagination.
-   * PERFORMANCE: Removed redundant objectDefinition include. The client already
-   * possesses the schema for the current object view, and sending it for
-   * every record in a large list is O(N) overhead.
-   */
   async getRecords(
     objectId: string,
     organizationId: string,

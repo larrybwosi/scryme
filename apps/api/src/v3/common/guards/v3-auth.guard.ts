@@ -35,15 +35,23 @@ export class V3AuthGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+    const authHeader =
+      request.headers.authorization ||
+      request.headers["x-member-token"] ||
+      request.headers["X-MEMBER-TOKEN"];
+    const apiKeyHeader = request.headers["x-api-key"] || request.headers["X-API-KEY"];
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedException(
-        "Missing or invalid authorization header",
-      );
+    let token: string | null = null;
+    if (authHeader) {
+      const authStr = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+      token = authStr.startsWith("Bearer ") ? authStr.substring(7).trim() : authStr.trim();
     }
 
-    const token = authHeader.split(" ")[1];
+    if (!token && !apiKeyHeader) {
+      throw new UnauthorizedException(
+        "Missing or invalid authorization header / API key",
+      );
+    }
 
     if (!this.v3AuthService) {
       this.v3AuthService = this.moduleRef.get(V3AuthCoreService, {
@@ -67,25 +75,27 @@ export class V3AuthGuard implements CanActivate {
     let payload: any = null;
     const authStrategy = process.env.CUSTOMER_AUTH_STRATEGY || env.CUSTOMER_AUTH_STRATEGY || "HYBRID";
 
-    // 1. Try HS256 V3 client/hybrid JWT first
-    try {
-      payload = await this.v3AuthService.verifyToken(token);
+    if (token) {
+      // 1. Try HS256 V3 client/hybrid JWT first
+      try {
+        payload = await this.v3AuthService.verifyToken(token);
 
-      // If it is a v3_customer type token, check Redis to ensure session is active
-      if (payload && payload.type === "v3_customer" && payload.sessionId) {
-          const redisService = this.moduleRef.get(RedisService, { strict: false });
-          if (redisService) {
-            const sessionActive = await redisService.get(`customer_session:${payload.sub}:${payload.sessionId}`);
-            if (!sessionActive) {
-              payload = null; // Session revoked
-            } else {
-              // Adapt fields to match what guard expects
-              payload.customerId = payload.sub;
+        // If it is a v3_customer type token, check Redis to ensure session is active
+        if (payload && payload.type === "v3_customer" && payload.sessionId) {
+            const redisService = this.moduleRef.get(RedisService, { strict: false });
+            if (redisService) {
+              const sessionActive = await redisService.get(`customer_session:${payload.sub}:${payload.sessionId}`);
+              if (!sessionActive) {
+                payload = null; // Session revoked
+              } else {
+                // Adapt fields to match what guard expects
+                payload.customerId = payload.sub;
+              }
             }
-          }
+        }
+      } catch (error) {
+        // Not a valid HS256 V3 JWT, proceed to other checks
       }
-    } catch (error) {
-      // Not a valid HS256 V3 JWT, proceed to other checks
     }
 
     // 2. Try better-auth session token
@@ -189,6 +199,38 @@ export class V3AuthGuard implements CanActivate {
               }
             }
           }
+        }
+      } catch (err) {
+        // Ignored
+      }
+    }
+
+    // 4. Try POS Device X-API-KEY / Client ID lookup
+    if (!payload && apiKeyHeader) {
+      const apiKeyStr = Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
+      const clientId = apiKeyStr.includes(".") ? apiKeyStr.split(".")[0] : apiKeyStr;
+      const clientSecret = apiKeyStr.includes(".") ? apiKeyStr.split(".").slice(1).join(".") : undefined;
+      try {
+        const client = await this.v3AuthService.validateClient(clientId, clientSecret);
+        if (client) {
+          const registry = await this.prisma.client.deviceRegistry.findFirst({
+            where: {
+              OR: [
+                { v3ApiClientId: client.id },
+                { apiKeyId: client.id },
+              ],
+            },
+          });
+          payload = {
+            type: "v3_client",
+            clientId: client.clientId,
+            organizationId: client.organizationId,
+            orgSlug: client.organization.slug,
+            businessAccountId: client.businessAccountId || null,
+            scopes: client.scopes || [],
+            locationId: registry?.locationId || null,
+            deviceId: registry?.id || null,
+          };
         }
       } catch (err) {
         // Ignored

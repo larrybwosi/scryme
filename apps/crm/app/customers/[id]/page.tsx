@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { getCustomer } from "../../actions/customers";
@@ -7,6 +8,36 @@ import { getOrganizationContext } from "../../actions/auth";
 
 interface CustomerPageProps {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({
+  params,
+}: CustomerPageProps): Promise<Metadata> {
+  const { id } = await params;
+  const customer = await getCustomer(id);
+  if (!customer) {
+    return {
+      title: "Customer Not Found",
+    };
+  }
+
+  const name =
+    `${customer.firstName || ""} ${customer.lastName || ""}`.trim() ||
+    customer.email ||
+    "Customer Details";
+
+  return {
+    title: `${name} | Customer Profile`,
+    description: `Customer relationship record and account details for ${name} on Scryme CRM.`,
+    alternates: {
+      canonical: `/customers/${id}`,
+    },
+    openGraph: {
+      title: `${name} | Customer Profile | Scryme CRM`,
+      description: `Customer relationship record and account details for ${name} on Scryme CRM.`,
+      url: `https://crm.scryme.tech/customers/${id}`,
+    },
+  };
 }
 
 export default async function CustomerPage({ params }: CustomerPageProps) {

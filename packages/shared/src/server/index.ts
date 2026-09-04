@@ -1,4 +1,3 @@
-export * from "../ably";
 export * from "../storage";
 export * from "../realtime";
 export * from "../api/v2";
@@ -7,3 +6,4 @@ export * from "../redis";
 export * from "../actions";
 export * from "../lib/images";
 export * from "../node-utils";
+export * from "../services/automation";

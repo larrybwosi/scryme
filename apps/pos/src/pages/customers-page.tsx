@@ -185,15 +185,22 @@ export default function CustomersPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-within:opacity-100 transition-opacity">
                   {!(customer.businessAccountId || customer.customerType?.toLowerCase() === 'business' || customer.customerType === 'B2B') && (
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditCustomer(customer)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
+                      onClick={() => handleEditCustomer(customer)}
+                      aria-label={`Edit ${customer.name}`}
+                      title={`Edit ${customer.name}`}
+                    >
                       <Edit className="w-3.5 h-3.5" />
                     </Button>
                   )}
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <div className="h-8 w-8 flex items-center justify-center text-muted-foreground" aria-hidden="true">
                     <ChevronRight className="w-3.5 h-3.5" />
-                  </Button>
+                  </div>
                 </div>
               </li>
             ))}

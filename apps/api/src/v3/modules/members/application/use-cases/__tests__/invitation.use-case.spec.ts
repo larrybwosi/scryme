@@ -6,7 +6,7 @@ import { InvitationStatus, MemberRole } from "@repo/db";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("@repo/windmill/server", () => ({
+vi.mock("@repo/shared/server", () => ({
   emitEvent: vi.fn().mockResolvedValue(undefined),
 }));
 

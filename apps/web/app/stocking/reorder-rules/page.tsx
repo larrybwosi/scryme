@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "../../../components/page-header";
 import {
@@ -26,6 +27,12 @@ import {
 import { Bell, Settings, Plus, Save, AlertCircle } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { ReorderRuleForm } from "../../../components/stocking/reorder-rule-form";
+
+export const metadata: Metadata = {
+  title: "Reorder Rules",
+  description: "Configure automated minimum stock thresholds and auto-purchase order generation rules.",
+};
+
 
 export default async function ReorderRulesPage() {
   const [rules, locations, products] = await Promise.all([

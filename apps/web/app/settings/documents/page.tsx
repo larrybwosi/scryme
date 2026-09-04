@@ -1,9 +1,16 @@
+import { Metadata } from "next";
 import React, { Suspense } from "react";
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { redirect } from "next/navigation";
 import { EnhancedDocumentSettings } from "./enhanced-settings";
 import { Separator } from "@repo/ui/components/ui/separator";
+
+export const metadata: Metadata = {
+  title: "Document Configuration",
+  description: "Customize invoice headers, thermal receipt layouts, and export templates.",
+};
+
 
 // Helper function to convert Decimal to number
 const convertDecimalsToNumbers = (obj: any): any => {

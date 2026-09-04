@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { Suspense } from "react";
 import { getSuppliers } from "../../actions/supplier";
 import { SupplierCard } from "@/components/supplier/SupplierCard";
@@ -14,6 +15,12 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Search, Filter, Truck, LayoutGrid, List } from "lucide-react";
 import { RegisterSupplierModal } from "@/components/supplier/register-supplier-modal";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Suppliers",
+  description: "Manage supplier relations, contact information, purchase orders, and lead times.",
+};
+
 
 interface SupplierPageProps {
   searchParams: Promise<{

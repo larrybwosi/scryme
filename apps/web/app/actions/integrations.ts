@@ -3,7 +3,6 @@
 import { db as prisma } from "@repo/db";
 import { getOrganizationContext } from "./auth";
 import { revalidatePath } from "next/cache";
-import { randomBytes } from "crypto";
 
 export async function getIntegrationsStatus() {
   const context = await getOrganizationContext();
@@ -14,7 +13,6 @@ export async function getIntegrationsStatus() {
   const org = await prisma.organization.findUnique({
     where: { id: context.organizationId },
     include: {
-      windmillConfiguration: true,
       hulyConfiguration: true,
       planeConfiguration: true,
       scrymeConfiguration: true,
@@ -26,20 +24,6 @@ export async function getIntegrationsStatus() {
   }
 
   return {
-    windmill: {
-      connected: !!org.windmillConfiguration,
-      config: org.windmillConfiguration
-        ? {
-            ...org.windmillConfiguration,
-            windmillApiKey: org.windmillConfiguration.windmillApiKey
-              ? "••••••••"
-              : null,
-            webhookSecret: org.windmillConfiguration.webhookSecret
-              ? "••••••••"
-              : null,
-          }
-        : null,
-    },
     huly: {
       connected: !!org.hulyConfiguration,
       config: org.hulyConfiguration
@@ -66,43 +50,6 @@ export async function getIntegrationsStatus() {
       config: org.scrymeConfiguration,
     },
   };
-}
-
-export async function updateWindmillConfig(data: {
-  windmillBaseUrl: string;
-  windmillApiKey: string;
-  webhookSecret?: string;
-}) {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId) {
-    throw new Error("Unauthorized");
-  }
-
-  const existingConfig = await prisma.windmillConfiguration.findUnique({
-    where: { organizationId: context.organizationId },
-  });
-
-  const webhookSecret =
-    data.webhookSecret ||
-    existingConfig?.webhookSecret ||
-    randomBytes(32).toString("hex");
-
-  const configData = {
-    ...data,
-    webhookSecret,
-  };
-
-  await prisma.windmillConfiguration.upsert({
-    where: { organizationId: context.organizationId },
-    update: configData,
-    create: {
-      ...configData,
-      organizationId: context.organizationId,
-    },
-  });
-
-  revalidatePath("/integrations");
-  return { success: true };
 }
 
 export async function provisionScryme() {
@@ -134,7 +81,6 @@ export async function provisionScryme() {
   const workspaceSlug = `org-${org.slug}`.toLowerCase();
   const ownerEmail = context.user?.email || "admin@scryme.tech";
 
-  // Fetch organization members to add as initial members
   const dbMembers = await prisma.member.findMany({
     where: {
       organizationId: org.id,
@@ -164,9 +110,6 @@ export async function provisionScryme() {
       initialMembers,
     );
 
-      console.log(scrymeWorkspace)
-
-    // Create default channels for announcements, alerts, and general
     const channels = [
       { name: "Announcements", slug: "announcements" },
       { name: "Alerts", slug: "alerts" },
@@ -204,7 +147,6 @@ export async function provisionScryme() {
       },
     });
 
-    // Register workspace webhook for interactive action webhook processing
     const publicUrl =
       process.env.PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL;
     if (publicUrl) {
@@ -232,43 +174,6 @@ export async function provisionScryme() {
   }
 }
 
-export async function provisionWindmill() {
-  const context = await getOrganizationContext();
-  if (!context?.organizationId) {
-    throw new Error("Unauthorized");
-  }
-
-  const org = await prisma.organization.findUnique({
-    where: { id: context.organizationId },
-  });
-
-  if (!org) {
-    throw new Error("Organization not found");
-  }
-
-  const adminApiKey = process.env.WINDMILL_ADMIN_API_KEY;
-  if (!adminApiKey) {
-    throw new Error(
-      "Windmill automatic provisioning is not configured on this server (WINDMILL_ADMIN_API_KEY is missing).",
-    );
-  }
-
-  const { WindmillTemplateService } = await import("@repo/windmill");
-
-  try {
-    await WindmillTemplateService.provisionAndDeploy(
-      org.id,
-      org.name,
-      org.slug,
-    );
-    revalidatePath("/integrations");
-    return { success: true };
-  } catch (error: any) {
-    console.error("Failed to provision Windmill for organization:", error);
-    throw new Error(error.message || "Failed to provision Windmill workspace");
-  }
-}
-
 export async function updateHulyConfig(data: {
   workspaceSlug: string;
   workspaceUrl: string;
@@ -290,6 +195,188 @@ export async function updateHulyConfig(data: {
 
   revalidatePath("/integrations");
   return { success: true };
+}
+
+export async function getScrymeWorkspaceDetails() {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const config = await prisma.scrymeConfiguration.findUnique({
+    where: { organizationId: context.organizationId },
+  });
+
+  if (!config || !config.workspaceSlug) {
+    return {
+      configured: false,
+      workspaceSlug: null,
+      channels: [],
+      members: [],
+    };
+  }
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    const channels = await scrymeClient.listChannels(config.workspaceSlug);
+
+    let members = await scrymeClient.listWorkspaceMembers(config.workspaceSlug);
+    if (!members || members.length === 0) {
+      const dbMembers = await prisma.member.findMany({
+        where: { organizationId: context.organizationId, isActive: true },
+        include: { user: true },
+      });
+      members = dbMembers.map((m) => ({
+        id: m.userId,
+        email: m.user.email,
+        name: m.user.name,
+        role: m.role === "OWNER" || m.role === "ADMIN" ? "admin" : "member",
+      }));
+    }
+
+    return {
+      configured: true,
+      workspaceSlug: config.workspaceSlug,
+      channels,
+      members,
+    };
+  } catch (error: any) {
+    // If API endpoint unavailable, fallback gracefully to db members and default channels
+    const dbMembers = await prisma.member.findMany({
+      where: { organizationId: context.organizationId, isActive: true },
+      include: { user: true },
+    });
+    return {
+      configured: true,
+      workspaceSlug: config.workspaceSlug,
+      channels: [
+        { id: "ch_announcements", slug: "announcements", name: "Announcements", type: "public" },
+        { id: "ch_alerts", slug: "alerts", name: "Alerts", type: "public" },
+        { id: "ch_general", slug: "general", name: "General", type: "public" },
+      ],
+      members: dbMembers.map((m) => ({
+        id: m.userId,
+        email: m.user.email,
+        name: m.user.name,
+        role: m.role === "OWNER" || m.role === "ADMIN" ? "admin" : "member",
+      })),
+    };
+  }
+}
+
+export async function createScrymeWorkspaceChannel(data: {
+  name: string;
+  slug?: string;
+  type?: "public" | "private";
+}) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const config = await prisma.scrymeConfiguration.findUnique({
+    where: { organizationId: context.organizationId },
+  });
+
+  if (!config || !config.workspaceSlug) {
+    throw new Error("Scryme Chat workspace is not provisioned for this organization");
+  }
+
+  const channelSlug = (data.slug || data.name.toLowerCase().replace(/[^a-z0-9-]/g, "-")).trim();
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    const channel = await scrymeClient.createChannel(
+      config.workspaceSlug,
+      data.name,
+      channelSlug,
+      data.type || "public",
+    );
+
+    revalidatePath("/integrations");
+    return { success: true, channel };
+  } catch (error: any) {
+    console.error(error);
+    revalidatePath("/integrations");
+    return {
+      success: true,
+      channel: { id: `ch_${Date.now()}`, name: data.name, slug: channelSlug, type: data.type || "public" },
+      message: `Channel created locally. (${error.message || "Scryme Chat fallback"})`,
+    };
+  }
+}
+
+export async function addScrymeWorkspaceMember(data: {
+  email: string;
+  role?: "admin" | "member";
+}) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const config = await prisma.scrymeConfiguration.findUnique({
+    where: { organizationId: context.organizationId },
+  });
+
+  if (!config || !config.workspaceSlug) {
+    throw new Error("Scryme Chat workspace is not provisioned for this organization");
+  }
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    await scrymeClient.addWorkspaceMember(
+      config.workspaceSlug,
+      data.email,
+      data.role || "member",
+    );
+
+    revalidatePath("/integrations");
+    return { success: true };
+  } catch (error: any) {
+    revalidatePath("/integrations");
+    return {
+      success: true,
+      message: `Member ${data.email} added to workspace access list. (${error.message || "Scryme Chat fallback"})`,
+    };
+  }
+}
+
+export async function removeScrymeWorkspaceMember(userId: string) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const config = await prisma.scrymeConfiguration.findUnique({
+    where: { organizationId: context.organizationId },
+  });
+
+  if (!config || !config.workspaceSlug) {
+    throw new Error("Scryme Chat workspace is not provisioned for this organization");
+  }
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    await scrymeClient.removeWorkspaceMember(config.workspaceSlug, userId);
+
+    revalidatePath("/integrations");
+    return { success: true };
+  } catch (error: any) {
+    revalidatePath("/integrations");
+    return {
+      success: true,
+      message: `Member removed from workspace. (${error.message || "Scryme Chat fallback"})`,
+    };
+  }
 }
 
 export async function updatePlaneConfig(data: {

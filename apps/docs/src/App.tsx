@@ -31,6 +31,8 @@ import CmsCustomizationGuide, {
 import GlobalResponseGuide from "./components/GlobalResponseGuide";
 import InstallationSetupGuide from "./components/InstallationSetupGuide";
 import CustomerAuthGuide from "./components/CustomerAuthGuide";
+import SignInWithScrymeGuide from "./components/SignInWithScrymeGuide";
+import WorkflowAutomationGuide from "./components/WorkflowAutomationGuide";
 import UserGuides from "./components/UserGuides";
 
 // --- Type Definitions for parsed schema ---
@@ -1406,7 +1408,11 @@ export default function App() {
       "v3 global".includes(query) ||
       "customer registration".includes(query) ||
       "session management".includes(query) ||
-      "customer auth".includes(query)
+      "customer auth".includes(query) ||
+      "sign in with scryme".includes(query) ||
+      "oauth2".includes(query) ||
+      "workflow automation".includes(query) ||
+      "automation engine".includes(query)
     );
   }, [searchQuery]);
 
@@ -1663,6 +1669,16 @@ export default function App() {
       ? rawApiUrl.slice(0, -1)
       : rawApiUrl;
 
+    if (activeEndpointId === "workflow-automation-guide") {
+      let curl = `curl -X POST "https://api.scryme.tech/v3/automation/trigger" \\\n  -H "Authorization: Bearer <YOUR_ACCESS_TOKEN>" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "key": "lowstock_alert",\n    "payload": {\n      "productId": "prod_123",\n      "currentStock": 3\n    }\n  }'`;
+
+      let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "https://api.scryme.tech",\n  orgSlug: "bakery-co",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});\n\n// Provision organization workflow definitions with custom threshold config\nconst provisioned = await fetch("https://api.scryme.tech/v3/automation/definitions/provision", {\n  method: "POST",\n  headers: { "Authorization": "Bearer <ACCESS_TOKEN>", "Content-Type": "application/json" },\n  body: JSON.stringify({ customConfigs: { lowstock_alert: { threshold: 15 } } })\n});`;
+
+      let python = `import requests\n\nurl = "https://api.scryme.tech/v3/automation/trigger"\nheaders = {\n    "Authorization": "Bearer <YOUR_ACCESS_TOKEN>",\n    "Content-Type": "application/json"\n}\npayload = {\n    "key": "lowstock_alert",\n    "payload": {"productId": "prod_123", "currentStock": 3}\n}\nresponse = requests.post(url, json=payload, headers=headers)\nprint(response.json())`;
+
+      return { curl, node, python };
+    }
+
     if (activeEndpointId === "installation-setup-guide") {
       let curl = `pnpm add @scryme/sdk`;
       let node = `// Node.js SDK Code\nimport { ScrymeServerSDK } from '@scryme/sdk/server';\n\nconst scrymeServer = new ScrymeServerSDK({\n  baseURL: "https://api.scryme.tech",\n  orgSlug: "your-org-slug",\n  clientId: "your_client_id_123",\n  clientSecret: "your_client_secret_456",\n});`;
@@ -1873,6 +1889,16 @@ export default function App() {
         id: "customer-registration-guide",
         type: "guide",
         name: "Customer Auth & Sessions",
+      },
+      {
+        id: "signin-scryme-guide",
+        type: "guide",
+        name: "Sign in with Scryme",
+      },
+      {
+        id: "workflow-automation-guide",
+        type: "guide",
+        name: "Workflow & Automation",
       },
     ];
     endpoints.forEach((ep) => {
@@ -2258,6 +2284,34 @@ export default function App() {
                   <Lock size={14} className="text-brass shrink-0" />
                   <span className="truncate">Customer Auth & Sessions</span>
                 </button>
+                <button
+                  onClick={() => {
+                    setActiveEndpointId("signin-scryme-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left text-[13px] transition-all duration-150 cursor-pointer ${
+                    activeEndpointId === "signin-scryme-guide"
+                      ? "bg-brass/[0.14] text-paper font-semibold"
+                      : "text-light-text hover:text-paper hover:bg-ink-card/70"
+                  }`}
+                >
+                  <Fingerprint size={14} className="text-brass shrink-0" />
+                  <span className="truncate">Sign in with Scryme</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveEndpointId("workflow-automation-guide");
+                    setSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-2.5 py-2 px-2.5 rounded-md text-left text-[13px] transition-all duration-150 cursor-pointer ${
+                    activeEndpointId === "workflow-automation-guide"
+                      ? "bg-brass/[0.14] text-paper font-semibold"
+                      : "text-light-text hover:text-paper hover:bg-ink-card/70"
+                  }`}
+                >
+                  <Workflow size={14} className="text-brass shrink-0" />
+                  <span className="truncate">Workflow & Automation</span>
+                </button>
               </div>
             )}
 
@@ -2357,6 +2411,14 @@ export default function App() {
                 />
               ) : activeEndpointId === "customer-registration-guide" ? (
                 <CustomerAuthGuide
+                  renderHighlightedCode={renderHighlightedCode}
+                />
+              ) : activeEndpointId === "signin-scryme-guide" ? (
+                <SignInWithScrymeGuide
+                  renderHighlightedCode={renderHighlightedCode}
+                />
+              ) : activeEndpointId === "workflow-automation-guide" ? (
+                <WorkflowAutomationGuide
                   renderHighlightedCode={renderHighlightedCode}
                 />
               ) : activeEndpointId === "cms-customization-guide" ? (
@@ -2867,6 +2929,7 @@ export default function App() {
               {activeEndpointId !== "installation-setup-guide" &&
                 activeEndpointId !== "cms-customization-guide" &&
                 activeEndpointId !== "v3-global-response-guide" &&
+                activeEndpointId !== "workflow-automation-guide" &&
                 activeDocTab === "reference" && (
                   <div className="space-y-0 rounded-xl overflow-hidden border border-ink-border shadow-lg shadow-black/20 animate-fade-in">
                     <div className="flex items-center justify-between px-3.5 py-2.5 bg-ink-card border-b border-ink-border">

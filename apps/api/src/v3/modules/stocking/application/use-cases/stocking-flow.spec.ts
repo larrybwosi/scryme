@@ -1,6 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("@repo/windmill/server", () => ({
+vi.mock("@repo/shared/server", () => ({
   emitPurchaseApprovalRequested: vi.fn().mockResolvedValue({}),
   emitStockTransferCreated: vi.fn().mockResolvedValue({}),
   emitStockTransferShipped: vi.fn().mockResolvedValue({}),

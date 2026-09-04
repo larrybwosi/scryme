@@ -25,10 +25,9 @@
     "@repo/sdk": "9.70.0",
     "@repo/shared": "0.1.0",
     "@repo/ui": "0.1.0",
-    "@scryme/sdk": "9.70.0",
-    "@repo/windmill": "0.1.0"
+    "@scryme/sdk": "9.70.0"
   },
   "changesets": [
-    "proud-eels-pick"
+    "spicy-grapes-ring"
   ]
 }

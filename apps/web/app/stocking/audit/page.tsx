@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "../../../components/page-header";
 import { getStockMovementHistory } from "../../actions/stock-management";
@@ -20,6 +21,12 @@ import {
 } from "@repo/ui/components/ui/card";
 import { ShieldCheck, History, ArrowRight, User, MapPin } from "lucide-react";
 import { AuditProductFilter } from "../../../components/stocking/audit-product-filter";
+
+export const metadata: Metadata = {
+  title: "Stock Audit & Physical Count",
+  description: "Conduct inventory stocktakes, record variances, and post stock adjustments.",
+};
+
 
 export default async function AuditTrailPage({
   searchParams,

@@ -267,4 +267,17 @@
   .scrollbar-none::-webkit-scrollbar {
     display: none;
   }
+  .enterprise-grid {
+    background-image:
+      linear-gradient(to right, var(--ink-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--ink-line) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(to bottom, black, transparent 92%);
+    opacity: 0.42;
+  }
+  .premium-frame {
+    box-shadow:
+      0 40px 100px rgb(0 0 0 / 0.42),
+      inset 0 1px 0 rgb(241 233 216 / 0.06);
+  }
 }

@@ -6,8 +6,9 @@ export class ExchangeTokenUseCase {
   constructor(private readonly v3AuthService: V3AuthService) {}
 
   async execute(clientId: string, clientSecret?: string) {
+    const parsedClientId = clientId.includes(".") ? clientId.split(".")[0] : clientId;
     const client = await this.v3AuthService.validateClient(
-      clientId,
+      parsedClientId,
       clientSecret,
     );
     const accessToken = await this.v3AuthService.generateToken(client);

@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@repo/db";
 import { NotificationEngine } from "@repo/notifications";
-import { runAutomation } from "@repo/windmill";
+import { runAutomation } from "../automation";
 
 const notificationEngine = new NotificationEngine();
 
@@ -21,10 +21,6 @@ export const InvoiceAutomationService = {
       where: { deletedAt: null },
       select: { id: true, name: true },
     });
-
-    // Performance Optimization: Process organization invoice reminders concurrently
-    // using Promise.all instead of sequential blocking for-of loops.
-    // Reduces latency from O(N) sequential org processing down to O(1) concurrent roundtrips.
     await Promise.all(
       organizations.map((org) => this.processOrgInvoiceReminders(org.id, org.name)),
     );

@@ -17,18 +17,19 @@ describe("WorkflowsService", () => {
   beforeEach(() => {
     mockPrisma = {
       client: {
-        windmillWorkflow: {
+        workflowEngineDefinition: {
           findMany: vi.fn(),
           upsert: vi.fn(),
-        },
-        windmillConfiguration: {
-          findUnique: vi.fn(),
           create: vi.fn(),
+          findUnique: vi.fn(),
         },
-        windmillExecution: {
+        workflowEngineExecution: {
           create: vi.fn(),
           update: vi.fn(),
           findMany: vi.fn(),
+        },
+        workflowEngineJob: {
+          create: vi.fn(),
         },
       },
     };
@@ -41,24 +42,19 @@ describe("WorkflowsService", () => {
   });
 
   describe("getAvailableWorkflows", () => {
-    it("should fetch provisioned workflows and config concurrently and map them with O(1) Map lookups", async () => {
+    it("should fetch provisioned workflows and map them with O(1) Map lookups", async () => {
       const mockProvisioned = [
         {
-          path: "f/dealio/customer_onboarding",
-          settings: { sendWelcomeEmail: false },
+          key: "f/dealio/customer_onboarding",
+          config: { sendWelcomeEmail: false },
         },
       ];
-      const mockConfig = { id: "cfg_1", organizationId: "org_123" };
 
-      mockPrisma.client.windmillWorkflow.findMany.mockResolvedValue(mockProvisioned);
-      mockPrisma.client.windmillConfiguration.findUnique.mockResolvedValue(mockConfig);
+      mockPrisma.client.workflowEngineDefinition.findMany.mockResolvedValue(mockProvisioned);
 
       const result = await service.getAvailableWorkflows(mockCtx);
 
-      expect(mockPrisma.client.windmillWorkflow.findMany).toHaveBeenCalledWith({
-        where: { organizationId: "org_123" },
-      });
-      expect(mockPrisma.client.windmillConfiguration.findUnique).toHaveBeenCalledWith({
+      expect(mockPrisma.client.workflowEngineDefinition.findMany).toHaveBeenCalledWith({
         where: { organizationId: "org_123" },
       });
 

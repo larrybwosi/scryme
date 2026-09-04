@@ -87,12 +87,7 @@ update_env_var "REDIS_HOST" "redis" "false"
 update_env_var "REDIS_PORT" "6379" "false"
 update_env_var "REDIS_URL" "redis://redis:6379" "false"
 
-# 8. Generate Windmill database credentials if missing
-update_env_var "WINDMILL_DB_USER" "windmill" "false"
-update_env_var "WINDMILL_DB_PASSWORD" "$(generate_secret)" "false"
-update_env_var "WINDMILL_DB_NAME" "windmill" "false"
-
-# 9. Generate RabbitMQ credentials and construct URL if missing
+# 8. Generate RabbitMQ credentials and construct URL if missing
 update_env_var "RABBITMQ_USER" "scryme" "false"
 update_env_var "RABBITMQ_PASS" "$(generate_secret)" "false"
 

@@ -7,7 +7,7 @@ vi.mock("@repo/shared/mpesa/server", () => ({
 import { CheckoutUseCase } from "../checkout.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 
-vi.mock("@repo/windmill/server", () => ({
+vi.mock("@repo/shared/server", () => ({
   emitOrderPlaced: vi.fn().mockResolvedValue({}),
 }));
 

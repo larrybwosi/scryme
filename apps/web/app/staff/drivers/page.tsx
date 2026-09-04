@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { getDrivers } from "../../actions/drivers";
 import { DriverTable } from "../../../components/drivers/driver-table";
@@ -6,6 +7,12 @@ import { Plus, Truck, Search, Filter, Download } from "lucide-react";
 import { AddDriverSheet } from "../../../components/drivers/add-driver-sheet";
 import { Input } from "@repo/ui/components/ui/input";
 import { Badge } from "@repo/ui/components/ui/badge";
+
+export const metadata: Metadata = {
+  title: "Delivery Drivers",
+  description: "Manage fleet logistics personnel, driver schedules, and active dispatches.",
+};
+
 
 export default async function DriversPage() {
   const result = await getDrivers();

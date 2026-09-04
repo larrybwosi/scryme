@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { getStaffMembers } from "../actions/staff";
 import { getOrgInvitations } from "../actions/invitations";
@@ -26,6 +27,12 @@ import {
 } from "@repo/ui/components/ui/tabs";
 import { RolesManager } from "../../components/staff/roles-manager";
 import { Shield } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Staff Management",
+  description: "Manage employee profiles, role permissions, access tokens, and attendance.",
+};
+
 
 export default async function StaffPage() {
   const [membersResult, invitationsResult] = await Promise.all([

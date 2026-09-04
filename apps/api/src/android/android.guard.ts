@@ -67,7 +67,8 @@ export class AndroidAuthGuard implements CanActivate {
         organizationId: payload.organizationId,
         orgSlug: payload.orgSlug,
         businessAccountId: payload.businessAccountId,
-        scopes: payload.scopes,
+        scopes: payload.scopes || [],
+        permissions: payload.permissions || payload.scopes || ["*"],
         organization,
         memberId: payload.memberId,
         deviceId: payload.deviceId,
@@ -91,13 +92,39 @@ export class AndroidAuthGuard implements CanActivate {
       }
 
       const user = session.user as any;
-      const orgId = user.activeOrganizationId || (session.session as any).activeOrganizationId;
+      let orgId = user.activeOrganizationId || (session.session as any).activeOrganizationId;
+
+      const orgSlugFromUrl = request.params.orgSlug;
+
+      if (!orgId && orgSlugFromUrl) {
+        const targetOrg = await this.prisma.client.organization.findUnique({
+          where: { slug: orgSlugFromUrl },
+        });
+        if (targetOrg) {
+          const isMember = await this.prisma.client.member.findFirst({
+            where: { userId: user.id, organizationId: targetOrg.id, deletedAt: null },
+          });
+          if (isMember) {
+            orgId = targetOrg.id;
+          }
+        }
+      }
+
+      if (!orgId) {
+        const firstMembership = await this.prisma.client.member.findFirst({
+          where: { userId: user.id, deletedAt: null },
+          select: { organizationId: true },
+        });
+        if (firstMembership) {
+          orgId = firstMembership.organizationId;
+        }
+      }
 
       if (!orgId) {
         throw new UnauthorizedException("No active organization selected for user");
       }
 
-      const organization = await this.prisma.client.organization.findUnique({
+      let organization = await this.prisma.client.organization.findUnique({
         where: { id: orgId },
       });
 
@@ -105,9 +132,23 @@ export class AndroidAuthGuard implements CanActivate {
         throw new UnauthorizedException("Organization not found");
       }
 
-      const orgSlugFromUrl = request.params.orgSlug;
       if (orgSlugFromUrl && orgSlugFromUrl !== organization.slug) {
-        throw new UnauthorizedException("Organization slug mismatch");
+        const targetOrg = await this.prisma.client.organization.findUnique({
+          where: { slug: orgSlugFromUrl },
+        });
+        if (targetOrg) {
+          const targetMember = await this.prisma.client.member.findFirst({
+            where: { userId: user.id, organizationId: targetOrg.id, deletedAt: null },
+          });
+          if (targetMember) {
+            organization = targetOrg;
+            orgId = targetOrg.id;
+          } else {
+            throw new UnauthorizedException("Organization slug mismatch or unauthorized access to organization");
+          }
+        } else {
+          throw new UnauthorizedException("Organization slug mismatch");
+        }
       }
 
       // Look up member details in this organization
@@ -121,6 +162,7 @@ export class AndroidAuthGuard implements CanActivate {
         orgSlug: organization.slug,
         businessAccountId: null,
         scopes: [],
+        permissions: ["*"],
         organization,
         memberId: member?.id || null,
         deviceId: null,

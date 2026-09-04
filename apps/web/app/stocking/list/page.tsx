@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "@/components/page-header";
 import { getStockLevels } from "../../actions/stock-management";
@@ -9,6 +10,12 @@ import {
 import { TrendingUp } from "lucide-react";
 import { StockingListTable } from "@/components/stocking/list/stocking-list-table";
 import { StockingListFilters } from "@/components/stocking/list/stocking-list-filters";
+
+export const metadata: Metadata = {
+  title: "Stock Management",
+  description: "Monitor real-time stock levels, warehouse allocations, and batch expirations.",
+};
+
 
 export default async function StockingListPage({
   searchParams,

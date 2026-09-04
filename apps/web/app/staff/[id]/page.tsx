@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React, { Suspense } from "react";
 import { getStaffMemberDetail, getStaffMembers } from "../../actions/staff";
 import { getMemberDepartments } from "../../actions/department";
@@ -175,3 +176,8 @@ export default async function StaffMemberPage({
     </Suspense>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Staff Profile",
+  description: "Employee profile details, active roles, shift assignments, and activity history.",
+};

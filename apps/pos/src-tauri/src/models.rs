@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-// --- V2 API Wrapper ---
+// --- Standard API Wrapper ---
 #[derive(Debug, Serialize, Deserialize)]
-pub struct V2Response<T> {
+pub struct StandardResponse<T> {
     pub success: bool,
     pub data: T,
     pub meta: Option<serde_json::Value>,
@@ -166,13 +166,6 @@ pub struct PricingRule {
 }
 
 // --- CUSTOMERS ---
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CustomersSyncResponse {
-    pub data: Vec<PosCustomer>,
-    pub next_sync_token: String,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

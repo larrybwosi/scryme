@@ -13,26 +13,26 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct CheckoutResponseDto {
-    #[serde(rename = "orderId", skip_serializing_if = "Option::is_none")]
-    pub order_id: Option<String>,
-    #[serde(rename = "paymentId", skip_serializing_if = "Option::is_none")]
-    pub payment_id: Option<String>,
-    #[serde(rename = "status", skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-    #[serde(rename = "merchantRequestID", skip_serializing_if = "Option::is_none")]
-    pub merchant_request_id: Option<String>,
-    #[serde(rename = "checkoutRequestID", skip_serializing_if = "Option::is_none")]
-    pub checkout_request_id: Option<String>,
+    #[serde(rename = "orderId")]
+    pub order_id: String,
+    #[serde(rename = "paymentId")]
+    pub payment_id: String,
+    #[serde(rename = "status")]
+    pub status: String,
+    #[serde(rename = "merchantRequestID")]
+    pub merchant_request_id: String,
+    #[serde(rename = "checkoutRequestID")]
+    pub checkout_request_id: String,
 }
 
 impl CheckoutResponseDto {
-    pub fn new() -> CheckoutResponseDto {
+    pub fn new(order_id: String, payment_id: String, status: String, merchant_request_id: String, checkout_request_id: String) -> CheckoutResponseDto {
         CheckoutResponseDto {
-            order_id: None,
-            payment_id: None,
-            status: None,
-            merchant_request_id: None,
-            checkout_request_id: None,
+            order_id,
+            payment_id,
+            status,
+            merchant_request_id,
+            checkout_request_id,
         }
     }
 }

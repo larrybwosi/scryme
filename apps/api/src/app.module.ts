@@ -12,6 +12,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { AuthModule } from "./auth/auth.module";
 import { CustomerAuthModule } from "./customer-auth/customer-auth.module";
+import { AutomationModule } from "./automation/automation.module";
 import { PrismaModule } from "./prisma/prisma.module";
 import { RedisModule } from "./redis/redis.module";
 import { V2Module, V2_SUB_MODULES } from "./v2/v2.module";
@@ -20,9 +21,9 @@ import { AndroidModule } from "./android/android.module";
 
 import { UploadModule } from "./common/upload/upload.module";
 import { ImageModule } from "./common/images/image.module";
-import { WindmillModule } from "./common/Windmill/WindmillModule";
 import { MpesaModule } from "./common/mpesa.module";
 import { CommonModule } from "./common/common.module";
+import { OpenPanelModule } from "./common/openpanel/openpanel.module";
 import { V2AuthGuard } from "./auth/v2-auth.guard";
 import { AuthorizationGuard } from "./common/guards/authorization.guard";
 import { CorrelationIdMiddleware } from "./common/middleware/correlation-id.middleware";
@@ -67,14 +68,15 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
     RedisModule,
     AuthModule,
     CustomerAuthModule,
+    AutomationModule,
     V2Module,
     V3Module,
     AndroidModule,
     UploadModule,
     ImageModule,
-    WindmillModule,
     MpesaModule,
     CommonModule,
+    OpenPanelModule,
     RouterModule.register([
       {
         path: "v2",

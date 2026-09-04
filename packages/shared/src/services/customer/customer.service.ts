@@ -1,6 +1,6 @@
 import "server-only";
 import { PrismaClient } from "@repo/db";
-import { runAutomation } from "@repo/windmill";
+import { runAutomation } from "../automation";
 import { ActionResponse } from "../../types/action-response";
 import { RecordService } from "../record.service";
 import { SchemaService } from "../schema.service";

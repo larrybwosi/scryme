@@ -28,12 +28,12 @@ export class RealtimeGateway
   async handleConnection(client: Socket) {
     try {
       const token =
-        client.handshake.auth.token ||
-        client.handshake.headers.authorization?.split(" ")[1];
+        client.handshake.auth?.token ||
+        client.handshake.headers?.authorization?.split(" ")[1];
 
       if (!token) {
-        console.warn(`V2 WS connection rejected: Missing token for client ${client.id}`);
-        client.disconnect();
+        (client as any).v2Context = null;
+        console.log(`V2 WS Client connected (unauthenticated): ${client.id}`);
         return;
       }
 
@@ -91,6 +91,16 @@ export class RealtimeGateway
 
   private validateChannelAccess(client: Socket, channel: string): boolean {
     const context = (client as any).v2Context;
+
+    // Public and pairing channels do not require an authenticated member context
+    if (
+      channel.startsWith("pos:pairing:") ||
+      channel.startsWith("v3:pos:pairing:") ||
+      channel.startsWith("public:")
+    ) {
+      return true;
+    }
+
     if (!context) return false;
 
     // organization:[id]:[type] or org:[id]:[type]

@@ -22,11 +22,46 @@ pub enum AuthControllerHandleOAuth2Error {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`auth_create_o_auth_client`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AuthCreateOAuthClientError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`auth_delete_o_auth_client`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AuthDeleteOAuthClientError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`auth_exchange_token`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum AuthExchangeTokenError {
     Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`auth_get_o_auth_client`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AuthGetOAuthClientError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`auth_list_o_auth_clients`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AuthListOAuthClientsError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`auth_update_o_auth_client`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AuthUpdateOAuthClientError {
     UnknownValue(serde_json::Value),
 }
 
@@ -53,6 +88,68 @@ pub async fn auth_controller_handle_o_auth2(configuration: &configuration::Confi
     } else {
         let content = resp.text().await?;
         let entity: Option<AuthControllerHandleOAuth2Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn auth_create_o_auth_client(configuration: &configuration::Configuration, create_o_auth_client_dto: models::CreateOAuthClientDto) -> Result<models::AuthCreateOAuthClient201Response, Error<AuthCreateOAuthClientError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_create_o_auth_client_dto = create_o_auth_client_dto;
+
+    let uri_str = format!("{}/v3/auth/oauth/clients", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_create_o_auth_client_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AuthCreateOAuthClient201Response`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AuthCreateOAuthClient201Response`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AuthCreateOAuthClientError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn auth_delete_o_auth_client(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthDeleteOAuthClientError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+
+    let uri_str = format!("{}/v3/auth/oauth/clients/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AuthDeleteOAuthClientError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -90,6 +187,81 @@ pub async fn auth_exchange_token(configuration: &configuration::Configuration, t
     } else {
         let content = resp.text().await?;
         let entity: Option<AuthExchangeTokenError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn auth_get_o_auth_client(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthGetOAuthClientError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+
+    let uri_str = format!("{}/v3/auth/oauth/clients/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AuthGetOAuthClientError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn auth_list_o_auth_clients(configuration: &configuration::Configuration, ) -> Result<(), Error<AuthListOAuthClientsError>> {
+
+    let uri_str = format!("{}/v3/auth/oauth/clients", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AuthListOAuthClientsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn auth_update_o_auth_client(configuration: &configuration::Configuration, id: &str, update_o_auth_client_dto: models::UpdateOAuthClientDto) -> Result<(), Error<AuthUpdateOAuthClientError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_body_update_o_auth_client_dto = update_o_auth_client_dto;
+
+    let uri_str = format!("{}/v3/auth/oauth/clients/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_update_o_auth_client_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<AuthUpdateOAuthClientError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

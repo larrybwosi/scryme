@@ -10,7 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@scryme/chat": "^2.91.3",
+    "@scryme/chat": "^2.91.26",
     "axios": "latest"
   },
   "devDependencies": {

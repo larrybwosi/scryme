@@ -6,7 +6,7 @@ const defaultAppUrl = isDev
   ? "http://localhost:3001"
   : "https://crm.scryme.tech";
 
-export const authClient = createAuthClient({
+export const authClient: any = createAuthClient({
   baseURL:
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_CRM_URL ||

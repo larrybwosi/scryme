@@ -13,7 +13,7 @@ import {
 } from "@repo/db";
 import { PaginationQueryDto, paginate } from "@/v3/common/utils/pagination";
 import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
-import { emitPurchaseApprovalRequested } from "@repo/windmill/server";
+import { emitPurchaseApprovalRequested } from "@repo/shared/server";
 import { PricingManagementService } from "../../../catalog/application/services/pricing-management.service";
 import { AccountingService } from "../../../finance/application/services/accounting.service";
 
@@ -312,8 +312,11 @@ export class PurchaseOrderUseCase {
         });
       }
 
-      const updatedPurchase = await tx.purchase.findUnique({
-        where: { id: purchaseId },
+      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // Purchase lacks a composite unique index on [id, organizationId],
+      // ensuring queries are strictly scoped by tenant to prevent cross-tenant IDOR vulnerabilities.
+      const updatedPurchase = await tx.purchase.findFirst({
+        where: { id: purchaseId, organizationId },
         include: { items: true },
       });
 

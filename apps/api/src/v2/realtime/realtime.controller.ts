@@ -7,14 +7,13 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { v2Context } from "../../common/decorators/v2-context.decorator";
-import { ably } from "@repo/shared/ably";
 import { type V2ApiContext } from "@repo/shared/api/v2";
 
 @ApiTags("Realtime")
 @Controller("realtime")
 export class RealtimeController {
   @Post("auth")
-  @ApiOperation({ summary: "Ably token authentication for v2 API" })
+  @ApiOperation({ summary: "Socket.IO token authentication for v2 API" })
   async auth(
     @v2Context() ctx: V2ApiContext,
     @Headers("authorization") authHeader: string = "",
@@ -34,48 +33,19 @@ export class RealtimeController {
       // Use either the memberId or the deviceId as the clientId
       const clientId = memberId || ctxDeviceId || "anonymous";
 
-      const provider = process.env.REALTIME_PROVIDER || "ably";
-
       const paymentChannel = `organization:${organizationId}:payments`;
       const notificationChannel = `organization:${organizationId}:notifications`;
       const inventoryChannel = `organization:${organizationId}:inventory`;
       const ordersChannel = `organization:${organizationId}:orders`;
 
-      const capability: any = {
-        [paymentChannel]: ["subscribe", "publish", "history"],
-        [notificationChannel]: ["subscribe", "publish", "history"],
-        [inventoryChannel]: ["subscribe", "publish", "history"],
-        [ordersChannel]: ["subscribe", "publish", "history"],
+      const tokenRequest = {
+        token: "socketio-placeholder-token",
+        clientId,
       };
-
-      // Add POS specific channel if we have a location
-      if (ctx.locationId) {
-        capability[`pos:${ctx.locationId}:sales`] = [
-          "subscribe",
-          "publish",
-          "history",
-        ];
-      }
-
-      let tokenRequest: any = null;
-      if (provider === "ably") {
-        tokenRequest = await ably.auth.requestToken({
-          clientId,
-          capability: JSON.stringify(capability),
-          ttl: 3600 * 1000,
-          timestamp: Date.now(),
-        });
-      } else {
-        // Socket.io simplified auth for now
-        tokenRequest = {
-          token: "socketio-placeholder-token",
-          clientId,
-        };
-      }
 
       return {
         tokenRequest,
-        provider,
+        provider: "socketio",
         channels: {
           payments: paymentChannel,
           notifications: notificationChannel,

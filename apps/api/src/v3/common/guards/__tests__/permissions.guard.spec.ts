@@ -66,6 +66,17 @@ describe("PermissionsGuard", () => {
     expect(result).toBe(true);
   });
 
+  it("should return true immediately if user has SUPER_ADMIN role or systemRole", async () => {
+    const context = createMockHttpContext({
+      requiredPermissions: ["super:secret:permission"],
+      user: { id: "admin1", role: "SUPER_ADMIN" },
+      organization: { id: "org1" },
+    });
+
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
+
   it("should throw ForbiddenException if user or organization not identified", async () => {
     const context = createMockHttpContext({
       requiredPermissions: ["test:permission"],

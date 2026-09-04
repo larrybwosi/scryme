@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "@/components/page-header";
 import {
@@ -405,3 +406,8 @@ export default async function TransferDetailsPage({
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Stock Transfer Details",
+  description: "Review inter-branch inventory movement details and dispatch status.",
+};

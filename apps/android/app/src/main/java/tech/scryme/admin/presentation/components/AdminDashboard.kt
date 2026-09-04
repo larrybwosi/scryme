@@ -26,6 +26,7 @@ fun AdminDashboard(
     analyticsViewModel: AnalyticsViewModel,
     announcementViewModel: AnnouncementViewModel,
     expenseViewModel: ExpenseViewModel,
+    shiftsViewModel: ShiftsViewModel? = null,
     deviceAuthViewModel: DeviceAuthViewModel? = null,
     sessionManager: SessionManagerImpl,
     onSignOut: () -> Unit
@@ -94,6 +95,7 @@ fun AdminDashboard(
                                     4 -> "Expenses Management"
                                     5 -> "Broadcast Announcements"
                                     6 -> "Settings & Preferences"
+                                    7 -> "Shifts & Staff Roster"
                                     else -> "Dashboard"
                                 },
                                 style = MaterialTheme.typography.titleLarge,
@@ -176,10 +178,13 @@ fun AdminDashboard(
                         label = { Text("Presence") }
                     )
                     NavigationBarItem(
-                        selected = selectedTab == 6,
-                        onClick = { selectedTab = 6 },
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                        label = { Text("Settings") }
+                        selected = selectedTab == 7,
+                        onClick = {
+                            selectedTab = 7
+                            shiftsViewModel?.loadShifts()
+                        },
+                        icon = { Icon(Icons.Default.Schedule, contentDescription = "Shifts") },
+                        label = { Text("Shifts") }
                     )
                 }
             }
@@ -246,6 +251,18 @@ fun AdminDashboard(
                         sessionManager = sessionManager,
                         onSignOut = onSignOut
                     )
+                    7 -> {
+                        if (shiftsViewModel != null) {
+                            ShiftsView(
+                                shiftsViewModel = shiftsViewModel,
+                                presenceViewModel = presenceViewModel
+                            )
+                        } else {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("Shifts module unavailable")
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -260,7 +277,7 @@ fun AdminDashboard(
             onDismissRequest = { showQrScanner = false },
             onQrCodeScanned = { qr ->
                 showQrScanner = false
-                deviceAuthViewModel.onQrCodeScanned(qr)
+                deviceAuthViewModel.onQrCodeScanned(qr, selectedBranchId)
             }
         )
     }

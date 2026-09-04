@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { getPriceList, getProductsForPricing, getUniqueCustomerTags } from "../../../actions/pricing";
 import { getCategories } from "../../../actions/inventory";
@@ -155,3 +156,8 @@ export default async function PriceListDetailPage({
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Price List Details",
+  description: "Manage price rules, markup percentages, and promotional pricing.",
+};

@@ -4,7 +4,7 @@ import { CreateCrmRecordDto, UpdateCrmRecordDto } from "../dto/crm.dto";
 import {
   emitCrmRecordCreated,
   emitCrmRecordUpdated,
-} from "@repo/windmill/server";
+} from "@repo/shared/server";
 
 @Injectable()
 export class CrmRecordService {

@@ -529,38 +529,6 @@ const PaymentModal = ({
   };
 
 
-  const handleMpesaStkTrigger = async () => {
-    const amount = parseFloat(amountInput);
-    if (!amount || amount <= 0) return;
-    const payload: ProcessSaleInput = {
-      cartItems: [],
-      ...getCommonPayloadFields(),
-      paymentMethod: PaymentMethod.MPESA,
-      paymentStatus: PaymentStatus.PENDING,
-      amountReceived: amount,
-      change: 0,
-      mpesaType: MpesaFlowType.STK_PUSH,
-      mpesaPhoneNumber: normalizePhoneNumber(mpesaPhone, PHONE_CONFIG),
-      payments: [
-        {
-          method: PaymentMethod.MPESA,
-          amount: amount,
-          meta: {
-            mpesaType: MpesaFlowType.STK_PUSH,
-            mpesaPhoneNumber: normalizePhoneNumber(mpesaPhone, PHONE_CONFIG),
-          },
-        },
-      ],
-    };
-    try {
-      await createSale(payload);
-      setMpesaStatus('WAITING');
-      setMpesaWaiting(true);
-    } catch (err: any) {
-      setValidationErrors([err?.message || 'Failed to trigger STK Push. Please retry.']);
-    }
-  };
-
   const getCommonPayloadFields = (): any => {
     let finalNotes = notes;
     const { metadata } = usePosStore.getState().currentOrder;
@@ -615,23 +583,64 @@ const PaymentModal = ({
     };
   };
 
+  const handleMpesaStkTrigger = async () => {
+    const amount = parseFloat(amountInput);
+    if (!amount || amount <= 0) return;
+    const payload: ProcessSaleInput = {
+      ...getCommonPayloadFields(),
+      paymentMethod: PaymentMethod.MPESA,
+      paymentStatus: PaymentStatus.PENDING,
+      amountReceived: amount,
+      change: 0,
+      mpesaType: MpesaFlowType.STK_PUSH,
+      mpesaPhoneNumber: normalizePhoneNumber(mpesaPhone, PHONE_CONFIG),
+      payments: [
+        {
+          method: PaymentMethod.MPESA,
+          amount: amount,
+          meta: {
+            mpesaType: MpesaFlowType.STK_PUSH,
+            mpesaPhoneNumber: normalizePhoneNumber(mpesaPhone, PHONE_CONFIG),
+          },
+        },
+      ],
+    };
+    try {
+      await createSale(payload);
+      setMpesaStatus('WAITING');
+      setMpesaWaiting(true);
+    } catch (err: any) {
+      setValidationErrors([err?.message || 'Failed to trigger STK Push. Please retry.']);
+    }
+  };
+
   const handleCompleteSale = async () => {
     let primaryMethod = PaymentMethod.SPLIT;
     if (currentPayments.length === 1) primaryMethod = currentPayments[0].method;
     else if (currentPayments.length === 0 && totalPayable === 0) primaryMethod = PaymentMethod.CASH;
+    else if (currentPayments.length === 0) primaryMethod = PaymentMethod.CASH;
+
+    const paymentsToSubmit = currentPayments.length > 0
+      ? currentPayments.map(p => ({
+          method: p.method,
+          amount: p.amount,
+          reference: p.reference,
+          meta: p.meta,
+        }))
+      : [
+          {
+            method: primaryMethod,
+            amount: totalPayable,
+          },
+        ];
 
     const payload: any = {
       ...getCommonPayloadFields(),
       paymentMethod: primaryMethod,
       paymentStatus: PaymentStatus.COMPLETED,
-      amountReceived: totalPaid,
+      amountReceived: totalPaid > 0 ? totalPaid : totalPayable,
       change: changeDue,
-      payments: currentPayments.map(p => ({
-        method: p.method,
-        amount: p.amount,
-        reference: p.reference,
-        meta: p.meta,
-      })),
+      payments: paymentsToSubmit,
     };
 
     const result = ProcessSaleInputSchema.safeParse(payload);
@@ -658,7 +667,7 @@ const PaymentModal = ({
         status: 'completed',
         paymentMethod: primaryMethod,
         saleNumber: fullSaleNumber,
-        amountPaid: totalPaid,
+        amountPaid: totalPaid > 0 ? totalPaid : totalPayable,
         change: changeDue,
       };
       if (currentPayments.some(p => p.method === PaymentMethod.CASH) && autoPrintConfig.openCashDrawer) {

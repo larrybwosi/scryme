@@ -13,9 +13,9 @@ export enum OrderTransactionStatus {
 
 export const OrderItemInputSchema = z.object({
   variantId: z.string(),
-  sellingUnitId: z.string().optional(),
+  sellingUnitId: z.string().nullish().transform(val => val ?? undefined),
   quantity: z.number().int().positive("Quantity must be a positive integer"),
-  unitPrice: z.number().nonnegative("Price cannot be negative").optional(),
+  unitPrice: z.number().nonnegative("Price cannot be negative").nullish().transform(val => val ?? undefined),
 });
 
 export const OrderPaymentInputSchema = z.object({
@@ -25,14 +25,14 @@ export const OrderPaymentInputSchema = z.object({
 
 export const OrderFulfillmentInputSchema = z.object({
   type: z.enum(FulfillmentType).or(z.any()), // Fallback for errorMap issue
-  shippingAddressId: z.string().optional(),
-  pickupLocationId: z.string().optional(),
-  tableNumber: z.string().optional(),
+  shippingAddressId: z.string().nullish().transform(val => val ?? undefined),
+  pickupLocationId: z.string().nullish().transform(val => val ?? undefined),
+  tableNumber: z.string().nullish().transform(val => val ?? undefined),
 });
 
 export const CreateOrderInputSchema = z.object({
-  customerId: z.string().optional(),
-  businessAccountId: z.string().optional(),
+  customerId: z.string().nullish().transform(val => val ?? undefined),
+  businessAccountId: z.string().nullish().transform(val => val ?? undefined),
   locationId: z.string(),
   type: z
     .enum(TransactionType)
@@ -43,29 +43,29 @@ export const CreateOrderInputSchema = z.object({
     .array(OrderItemInputSchema)
     .min(1, "Order must contain at least one item"),
   payments: z.array(OrderPaymentInputSchema).default([]),
-  fulfillment: OrderFulfillmentInputSchema.optional(),
+  fulfillment: OrderFulfillmentInputSchema.nullish().transform(val => val ?? undefined),
   status: z
     .enum(OrderTransactionStatus)
     .default(OrderTransactionStatus.PENDING_CONFIRMATION),
-  notes: z.string().optional(),
-  termsAndConditions: z.string().optional(),
+  notes: z.string().nullish().transform(val => val ?? undefined),
+  termsAndConditions: z.string().nullish().transform(val => val ?? undefined),
   shippingFee: z.number().nonnegative().default(0),
   discountAmount: z.number().nonnegative().default(0),
-  deliveryPartnerId: z.string().optional(),
+  deliveryPartnerId: z.string().nullish().transform(val => val ?? undefined),
   attachments: z
     .array(
       z.object({
         fileName: z.string(),
         fileUrl: z.string(),
         mimeType: z.string(),
-        sizeBytes: z.number().optional(),
+        sizeBytes: z.number().nullish().transform(val => val ?? undefined),
       }),
     )
-    .optional(),
-  taxIds: z.array(z.string()).optional(),
-  enableStockTracking: z.boolean().optional(),
-  isWholesale: z.boolean().optional(),
-}).refine(data => data.customerId || data.businessAccountId, {
+    .nullish().transform(val => val ?? undefined),
+  taxIds: z.array(z.string()).nullish().transform(val => val ?? undefined),
+  enableStockTracking: z.boolean().nullish().transform(val => val ?? undefined),
+  isWholesale: z.boolean().nullish().transform(val => val ?? undefined),
+}).refine(data => (data.customerId && data.customerId.trim().length > 0) || (data.businessAccountId && data.businessAccountId.trim().length > 0), {
   message: "Either Customer or Business Account must be provided",
   path: ["customerId"],
 });

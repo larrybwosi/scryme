@@ -38,6 +38,33 @@ export const homePageType = defineType({
       ],
     }),
     defineField({
+      name: 'heroVideo',
+      title: 'Hero Video (Optional)',
+      description: 'Optional premium product overview. When empty, the hero image or product interface fallback is shown.',
+      type: 'object',
+      fields: [
+        defineField({
+          name: 'file',
+          title: 'Video File',
+          type: 'file',
+          options: { accept: 'video/mp4,video/webm' },
+        }),
+        defineField({
+          name: 'poster',
+          title: 'Poster Image',
+          type: 'image',
+          options: { hotspot: true },
+          fields: [defineField({ name: 'alt', type: 'string', title: 'Alternative text' })],
+        }),
+        defineField({
+          name: 'ariaLabel',
+          title: 'Accessible Label',
+          type: 'string',
+          initialValue: 'Scryme platform overview',
+        }),
+      ],
+    }),
+    defineField({
       name: 'reconciledToday',
       title: 'Reconciled Today Target Value',
       type: 'number',

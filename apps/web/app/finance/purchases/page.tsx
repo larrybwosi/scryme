@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { ShoppingBag, Plus } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { FilterBar } from "@/components/filter-bar";
@@ -7,6 +8,12 @@ import { getSuppliers, getInventoryProducts } from "@/app/actions/inventory";
 import { PurchaseDialog } from "@/components/finance/purchase-dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import { Suspense } from "react";
+
+export const metadata: Metadata = {
+  title: "Purchase Orders",
+  description: "Issue purchase orders, track vendor deliveries, and log accounts payable.",
+};
+
 
 export default async function PurchasesPage(props: {
   searchParams: Promise<{ q?: string; status?: string }>;

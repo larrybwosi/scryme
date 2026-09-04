@@ -5,6 +5,7 @@ import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { UpdateDialog } from '@/components/update.dialog';
 import { usePosStore } from '@/store/store';
+import { useAuthStore } from '@/store/pos-auth-store';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -227,7 +228,8 @@ export const UpdaterProvider = ({
   // ── Core check ─────────────────────────────────────────────────────────────
 
   const checkForUpdates = useCallback(async () => {
-    if (import.meta.env.MODE === 'standalone') {
+    const isConfigured = useAuthStore.getState().isConfigured;
+    if (import.meta.env.MODE === 'standalone' || !isConfigured) {
       setStatus('IDLE');
       return;
     }
@@ -306,12 +308,15 @@ export const UpdaterProvider = ({
 
   // ── Polling ────────────────────────────────────────────────────────────────
 
+  const isConfigured = useAuthStore(state => state.isConfigured);
+
   useEffect(() => {
+    if (!isConfigured) return;
     checkForUpdates();
     if (checkInterval <= 0) return;
     const id = setInterval(checkForUpdates, checkInterval);
     return () => clearInterval(id);
-  }, [checkForUpdates, checkInterval]);
+  }, [checkForUpdates, checkInterval, isConfigured]);
 
   // ── Context value ──────────────────────────────────────────────────────────
 

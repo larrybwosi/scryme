@@ -16,42 +16,46 @@ export function StaffDetailHeader({ member }: { member: any }) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild className="-ml-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="-ml-2 text-muted-foreground hover:text-foreground hover:bg-accent">
           <Link href="/staff">
             <ArrowLeft size={20} />
           </Link>
         </Button>
-        <h1 className="text-2xl font-bold text-[#1D1D1F]">
+        <h1 className="text-2xl font-bold text-foreground">
           Staff Member Profile
         </h1>
       </div>
 
-      <div className="bg-white p-6 rounded-2xl border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-6">
-          <Avatar className="h-24 w-24 border-4 border-white shadow-md">
+          <Avatar className="h-24 w-24 border-4 border-background shadow-md">
             <AvatarImage src={member.user.image || ""} />
-            <AvatarFallback className="bg-gray-100 text-gray-400 text-2xl font-bold">
+            <AvatarFallback className="bg-muted text-muted-foreground text-2xl font-bold">
               {member.user.name?.charAt(0) ||
                 member.user.email.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold text-[#1D1D1F]">
+              <h2 className="text-2xl font-bold text-foreground">
                 {member.user.name || "Unnamed User"}
               </h2>
               <Badge
                 className={
                   member.membershipStatus === "ACTIVE"
-                    ? "bg-green-100 text-green-700 hover:bg-green-100"
+                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20"
                     : member.membershipStatus === "SUSPENDED"
-                      ? "bg-red-100 text-red-700 hover:bg-red-100"
-                      : "bg-yellow-100 text-yellow-700 hover:bg-yellow-100"
+                      ? "bg-destructive/10 text-destructive hover:bg-destructive/10 border-destructive/20"
+                      : "bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 border-amber-500/20"
                 }>
                 {member.membershipStatus}
               </Badge>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Mail size={14} />
                 {member.user.email}
@@ -76,7 +80,7 @@ export function StaffDetailHeader({ member }: { member: any }) {
                 <Badge
                   key={role.id}
                   variant="secondary"
-                  className="bg-blue-50 text-blue-700 border-blue-100">
+                  className="bg-primary/10 text-primary border-primary/20 hover:bg-primary/10">
                   {role.name}
                 </Badge>
               ))}

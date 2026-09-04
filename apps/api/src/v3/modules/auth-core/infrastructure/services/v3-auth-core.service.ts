@@ -2,9 +2,8 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { env } from "@repo/env";
 import * as bcrypt from "bcryptjs";
+import * as argon2 from "argon2";
 import * as jwt from "jsonwebtoken";
-import { decrypt } from "@repo/shared/api/v2";
-import { timingSafeMatch } from "@repo/shared/api/v2";
 import { provisionDeviceV3 } from "@repo/shared/lib";
 import { RedisService } from "@/redis/redis.service";
 import { validateV3ApiSecret } from "@repo/shared/actions";
@@ -98,7 +97,12 @@ export class V3AuthCoreService {
 
     payload.type = "v3_hybrid";
     const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: { apiKeyId: clientId },
+      where: {
+        OR: [
+          { v3ApiClientId: clientId },
+          { apiKeyId: clientId },
+        ],
+      },
     });
     if (registry) {
       payload.locationId = registry.locationId;
@@ -116,6 +120,21 @@ export class V3AuthCoreService {
     }
   }
 
+  private async verifyHash(
+    hash: string | null | undefined,
+    secret: string,
+  ): Promise<boolean> {
+    if (!hash || !secret) return false;
+    try {
+      if (hash.startsWith("$argon2")) {
+        return await argon2.verify(hash, secret);
+      }
+      return await bcrypt.compare(secret, hash);
+    } catch {
+      return false;
+    }
+  }
+
   async loginMember(clientId: string, pin: string, cardId?: string) {
     const client = await this.validateLoginClient(clientId);
     const member = await this.validateLoginMember(
@@ -125,12 +144,24 @@ export class V3AuthCoreService {
       client.clientId,
     );
     await this.handleMemberCheckIn(client, member);
-    return this.generateToken(client, member);
+    const accessToken = await this.generateToken(client, member);
+    const memberUser = (member as any).user;
+    return {
+      token: accessToken,
+      accessToken,
+      member: {
+        id: member.id,
+        name: memberUser?.name || (member as any).name || "Staff Member",
+        role: member.role,
+        cardId: member.cardId,
+      },
+    };
   }
 
   private async validateLoginClient(clientId: string) {
+    const parsedClientId = clientId.includes(".") ? clientId.split(".")[0] : clientId;
     const client = await this.prisma.client.v3ApiClient.findUnique({
-      where: { clientId },
+      where: { clientId: parsedClientId },
       include: { organization: true },
     });
     if (!client || !client.isActive) throw new UnauthorizedException("Invalid client credentials");
@@ -157,22 +188,36 @@ export class V3AuthCoreService {
       );
     }
 
-    // Optimization: If cardId is provided, use O(1) lookup
+    // Optimization: If cardId is provided, use lookup
     if (cardId) {
-      const member = await this.prisma.client.member.findUnique({
-        where: { organizationId_cardId: { organizationId, cardId } },
+      const cleanCardId = cardId.trim();
+      let member = await this.prisma.client.member.findUnique({
+        where: { organizationId_cardId: { organizationId, cardId: cleanCardId } },
+        include: { user: true },
       });
 
+      if (!member && typeof this.prisma.client.member.findFirst === "function") {
+        member = await this.prisma.client.member.findFirst({
+          where: {
+            organizationId,
+            cardId: { equals: cleanCardId, mode: "insensitive" },
+          },
+          include: { user: true },
+        });
+      }
+
       // SECURITY (Sentinel): Mitigate timing attacks and cardId/member enumeration side-channels by always
-      // performing a cryptographically heavy bcrypt.compare on a valid dummy PIN hash if member or pinHash is missing.
+      // performing a cryptographically heavy check on a valid dummy PIN hash if member or pinHash is missing.
       const dummyPinHash = "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
       const pinHashToCompare = member?.pinHash || dummyPinHash;
-      const isPinValid = await bcrypt.compare(pin, pinHashToCompare);
+      let isPinValid = await this.verifyHash(pinHashToCompare, pin);
+      if (!isPinValid && member?.user?.password) {
+        isPinValid = await this.verifyHash(member.user.password, pin);
+      }
 
       if (
         member &&
         member.isActive &&
-        member.pinHash &&
         isPinValid
       ) {
         await this.redis.del(rateLimitKey);
@@ -187,18 +232,24 @@ export class V3AuthCoreService {
         where: {
           organizationId,
           isActive: true,
-          pinHash: { not: null },
+          deletedAt: null,
         },
+        include: { user: true },
         take: MAX_MEMBERS_TO_CHECK + 1,
       });
 
+      if (members.length > MAX_MEMBERS_TO_CHECK) {
+        throw new UnauthorizedException("Invalid credentials");
+      }
+
       let checkedCount = 0;
       for (const member of members) {
-        if (checkedCount >= MAX_MEMBERS_TO_CHECK) {
-          throw new UnauthorizedException("Invalid credentials");
+        let isPinValid = await this.verifyHash(member.pinHash, pin);
+        if (!isPinValid && member.user?.password) {
+          isPinValid = await this.verifyHash(member.user.password, pin);
         }
 
-        if (member.pinHash && (await bcrypt.compare(pin, member.pinHash))) {
+        if (isPinValid) {
           await this.redis.del(rateLimitKey);
           return member;
         }
@@ -208,18 +259,24 @@ export class V3AuthCoreService {
 
     // Track failed attempts
     const newCount = await this.redis.incr(rateLimitKey);
-    if (newCount === 1) {
+    const validCount = typeof newCount === "number" && !isNaN(newCount) ? newCount : 1;
+    if (validCount === 1) {
       await this.redis.expire(rateLimitKey, LOCKOUT_DURATION_SECONDS);
     }
 
     throw new UnauthorizedException(
-      `Invalid credentials. ${MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
+      `Invalid credentials. ${Math.max(0, MAX_PIN_ATTEMPTS - validCount)} attempts remaining.`,
     );
   }
 
   private async handleMemberCheckIn(client: any, member: any) {
     const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: { apiKeyId: client.id },
+      where: {
+        OR: [
+          { v3ApiClientId: client.id },
+          { apiKeyId: client.id },
+        ],
+      },
     });
     if (!registry) return;
 

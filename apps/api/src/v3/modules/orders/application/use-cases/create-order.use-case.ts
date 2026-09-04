@@ -8,7 +8,7 @@ import {
 import * as crypto from "crypto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApiRealtimeService } from "@/common/services/realtime.service";
-import { emitOrderPlaced } from "@repo/windmill/server";
+import { emitOrderPlaced } from "@repo/shared/server";
 import { createOrder } from "@repo/shared/actions";
 import { CreateOrderInput, OrderTransactionStatus } from "@repo/shared/lib";
 import { WebhookService } from "@/v3/modules/webhooks/infrastructure/services/webhook.service";
