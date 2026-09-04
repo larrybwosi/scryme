@@ -1,6 +1,6 @@
 {
   "name": "@repo/sdk",
-  "version": "9.73.9-next.4",
+  "version": "9.73.9",
   "private": true,
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

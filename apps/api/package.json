@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "version": "7.0.0-next.5",
+  "version": "7.0.0",
   "private": true,
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -1,5 +1,12 @@
 # api
 
+## 7.0.0
+
+### Major Changes
+
+- 6a42a37: Version 10
+- 3a5b05f: Major bump
+
 ## 7.0.0-next.5
 
 ### Major Changes
