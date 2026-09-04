@@ -6,6 +6,80 @@ set -e
 echo "Starting container in directory: $(pwd)"
 
 # ---------------------------------------------------------
+# 0. Dynamic NEXT_PUBLIC_ and VITE_ Environment Variable Injection
+# ---------------------------------------------------------
+inject_env_placeholders() {
+  echo "Injecting runtime NEXT_PUBLIC_ and VITE_ environment variables..."
+
+  # Fallback defaults for core endpoints if unset
+  : "${NEXT_PUBLIC_API_URL:=https://api.scryme.tech}"
+  : "${NEXT_PUBLIC_ADMIN_URL:=https://admin.scryme.tech}"
+  : "${NEXT_PUBLIC_WEB_URL:=https://app.scryme.tech}"
+  : "${NEXT_PUBLIC_APP_URL:=https://app.scryme.tech}"
+  : "${NEXT_PUBLIC_CRM_URL:=https://crm.scryme.tech}"
+  : "${NEXT_PUBLIC_SOCKET_URL:=https://api.scryme.tech}"
+  : "${VITE_API_URL:=https://api.scryme.tech}"
+
+  # Get list of all environment variables starting with NEXT_PUBLIC_ or VITE_
+  DYNAMIC_VARS=$(env | grep -E '^(NEXT_PUBLIC_|VITE_)' | cut -d= -f1 || true)
+
+  KNOWN_VARS="
+    NEXT_PUBLIC_API_URL
+    NEXT_PUBLIC_APP_URL
+    NEXT_PUBLIC_WEB_URL
+    NEXT_PUBLIC_CRM_URL
+    NEXT_PUBLIC_ADMIN_URL
+    NEXT_PUBLIC_SOCKET_URL
+    NEXT_PUBLIC_COOKIE_DOMAIN
+    NEXT_PUBLIC_REALTIME_PROVIDER
+    NEXT_PUBLIC_POSTHOG_KEY
+    NEXT_PUBLIC_POSTHOG_HOST
+    NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN
+    NEXT_PUBLIC_SENTRY_DSN
+    NEXT_PUBLIC_SITE_SANITY_DATASET
+    NEXT_PUBLIC_SITE_SANITY_PROJECT_ID
+    NEXT_PUBLIC_SANITY_PROJECT_ID
+    NEXT_PUBLIC_SANITY_DATASET
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID
+    NEXT_PUBLIC_OPENPANEL_HOST
+    NEXT_PUBLIC_SITE_URL
+    NEXT_PUBLIC_SCRYME_ORG_SLUG
+    NEXT_PUBLIC_SCRYME_API_URL
+    VITE_API_URL
+    VITE_SOCKET_URL
+    VITE_OPENPANEL_CLIENT_ID
+    VITE_OPENPANEL_HOST
+    VITE_PUBLIC_POSTHOG_KEY
+    VITE_PUBLIC_POSTHOG_HOST
+    VITE_PUBLIC_SENTRY_DSN
+    VITE_BUSINESS_MODE
+  "
+
+  ALL_VARS=$(printf "%s\n%s\n" "$DYNAMIC_VARS" "$KNOWN_VARS" | grep -v '^$' | sort -u)
+
+  TARGET_DIR="."
+  if [ -d "/usr/share/nginx/html" ]; then
+    TARGET_DIR="/usr/share/nginx/html"
+  elif [ -d "/app/dist" ]; then
+    TARGET_DIR="/app/dist"
+  fi
+
+  for var in $ALL_VARS; do
+    val=$(eval echo \$$var)
+    if [ -n "$val" ]; then
+      escaped_val=$(echo "$val" | sed 's/[/&\]/\\&/g')
+      for placeholder in "APP_${var}_PLACEHOLDER" "${var}_PLACEHOLDER" "NEXT_PUBLIC_${var}_PLACEHOLDER"; do
+        if [ "$val" != "$placeholder" ]; then
+          find "$TARGET_DIR" -type f \( -name "*.js" -o -name "*.html" -o -name "*.json" -o -name "*.mjs" \) -exec sed -i "s/$placeholder/$escaped_val/g" {} + 2>/dev/null || true
+        fi
+      done
+    fi
+  done
+}
+
+inject_env_placeholders
+
+# ---------------------------------------------------------
 # 1. Static Site Environment (e.g., Bakery, Docs)
 # ---------------------------------------------------------
 # Static sites have their HTML/JS files in /usr/share/nginx/html, /app/dist, or ./dist
@@ -20,18 +94,6 @@ fi
 
 if [ -n "$STATIC_DIR" ]; then
   echo "Detected static site environment in $STATIC_DIR..."
-
-  # Replace VITE_ placeholders in JavaScript files
-  echo "Replacing VITE_ placeholders in JavaScript files..."
-  VARS="VITE_API_URL"
-  for var in $VARS; do
-    val=$(eval echo \$$var)
-    if [ -n "$val" ]; then
-      echo "Injecting $var=$val"
-      escaped_val=$(echo "$val" | sed 's/[/&\]/\\&/g')
-      find "$STATIC_DIR" -type f -name "*.js" -exec sed -i "s/APP_${var}_PLACEHOLDER/$escaped_val/g" {} +
-    fi
-  done
 
   # Replace LISTEN_PORT in nginx config if present
   if [ -f "/etc/nginx/conf.d/default.conf" ]; then
@@ -104,22 +166,10 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
 fi
 
 # ---------------------------------------------------------
-# 3. Site App (Next.js) Sanity Environment Variable Injection & Seeding
+# 3. Site App (Next.js) Sanity Seeding
 # ---------------------------------------------------------
 if [ -f "apps/site/server.js" ]; then
   echo "Detected Site App (Next.js) environment..."
-
-  if [ -n "$NEXT_PUBLIC_SANITY_PROJECT_ID" ] && [ "$NEXT_PUBLIC_SANITY_PROJECT_ID" != "NEXT_PUBLIC_SANITY_PROJECT_ID_PLACEHOLDER" ]; then
-    echo "Injecting runtime NEXT_PUBLIC_SANITY_PROJECT_ID..."
-    escaped_val=$(echo "$NEXT_PUBLIC_SANITY_PROJECT_ID" | sed 's/[/&\]/\\&/g')
-    find . -type f \( -name "*.js" -o -name "*.html" -o -name "*.json" -o -name "*.mjs" \) -exec sed -i "s/NEXT_PUBLIC_SANITY_PROJECT_ID_PLACEHOLDER/$escaped_val/g" {} +
-  fi
-
-  if [ -n "$NEXT_PUBLIC_SANITY_DATASET" ] && [ "$NEXT_PUBLIC_SANITY_DATASET" != "NEXT_PUBLIC_SANITY_DATASET_PLACEHOLDER" ]; then
-    echo "Injecting runtime NEXT_PUBLIC_SANITY_DATASET..."
-    escaped_val=$(echo "$NEXT_PUBLIC_SANITY_DATASET" | sed 's/[/&\]/\\&/g')
-    find . -type f \( -name "*.js" -o -name "*.html" -o -name "*.json" -o -name "*.mjs" \) -exec sed -i "s/NEXT_PUBLIC_SANITY_DATASET_PLACEHOLDER/$escaped_val/g" {} +
-  fi
 
   if [ -n "$SANITY_API_TOKEN" ]; then
     echo "Running Sanity seeding..."

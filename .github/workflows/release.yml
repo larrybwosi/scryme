@@ -192,10 +192,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || secrets.NEXT_PUBLIC_API_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
           VITE_BUSINESS_MODE: ${{ matrix.variant }}
           SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+          VITE_PUBLIC_SENTRY_DSN: ${{ secrets.VITE_PUBLIC_SENTRY_DSN || secrets.SENTRY_DSN || secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || secrets.NEXT_PUBLIC_POSTHOG_KEY || secrets.VITE_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY || secrets.POSTHOG_API_KEY || secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || secrets.NEXT_PUBLIC_POSTHOG_HOST }}
+          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_CLIENT_ID: ${{ secrets.VITE_OPENPANEL_CLIENT_ID || secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_HOST: ${{ secrets.VITE_OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.OPENPANEL_HOST }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
