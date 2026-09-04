@@ -11,7 +11,7 @@ variable "VERSION" {
 }
 
 variable "NEXT_PUBLIC_API_URL" {
-  default = ""
+  default = "APP_NEXT_PUBLIC_API_URL_PLACEHOLDER"
 }
 
 variable "BETTER_AUTH_SECRET" {
