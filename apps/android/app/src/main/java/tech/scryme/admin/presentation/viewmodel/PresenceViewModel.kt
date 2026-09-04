@@ -43,9 +43,7 @@ class PresenceViewModel(
     init {
         viewModelScope.launch {
             repository.monitorActivePresence().collect { activeMembers ->
-                if (_presenceState.value is UiState.Idle) {
-                    _presenceState.value = UiState.Success(activeMembers)
-                }
+                _presenceState.value = UiState.Success(activeMembers)
             }
         }
     }
@@ -89,7 +87,7 @@ class PresenceViewModel(
         val newBranch = LocationDto(
             id = "loc_${_branches.value.size + 1}",
             name = name,
-            organizationId = "org_1",
+            organizationId = (_organizationDetails.value as? UiState.Success)?.data?.id ?: "org_1",
             isActive = true
         )
         _branches.value = _branches.value + newBranch

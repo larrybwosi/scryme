@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { getTransactionById } from "../../../actions/sales";
 import { getOrganizationSettings } from "../../../actions/organization";
 import { db } from "@repo/db";
@@ -39,3 +40,8 @@ export default async function TransactionDetailPage({
     />
   );
 }
+
+export const metadata: Metadata = {
+  title: "Transaction Details",
+  description: "View sales transaction details, payment logs, tax invoices, and fulfillment status.",
+};

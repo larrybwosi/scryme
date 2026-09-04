@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { getPriceLists, getUniqueCustomerTags } from "../../actions/pricing";
 import { PriceListTable } from "../../../components/inventory/pricelist-table";
@@ -14,6 +15,12 @@ import {
   BreadcrumbSeparator,
 } from "@repo/ui/components/ui/breadcrumb";
 import { PriceListListClient } from "../../../components/inventory/pricelist-list-client";
+
+export const metadata: Metadata = {
+  title: "Price Lists",
+  description: "Manage custom pricing rules, tier discounts, and promotional price lists across channels.",
+};
+
 
 export default async function PriceListsPage() {
   const [priceLists, tags] = await Promise.all([

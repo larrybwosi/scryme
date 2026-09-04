@@ -1,5 +1,11 @@
+import { Metadata } from "next";
 import { getServerAuth } from "@repo/auth/server";
 import { redirect } from "next/navigation";
+
+export const metadata: Metadata = {
+  title: "Welcome to Scryme — Enterprise Management",
+  description: "All-in-one cloud platform for multi-branch inventory, supplier management, POS operations, and enterprise resource planning.",
+};
 
 export default async function LandingPage() {
   const auth = await getServerAuth();

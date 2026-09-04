@@ -168,6 +168,18 @@ export class ScrymeChatApiClient {
   /**
    * Add a member to a workspace using V3 API.
    */
+  /**
+   * List members in a workspace using V3 API.
+   */
+  async listWorkspaceMembers(workspaceSlug: string): Promise<any[]> {
+    try {
+      const res: any = await chat.workspace.members.list(workspaceSlug);
+      return res?.data?.members || res?.members || [];
+    } catch {
+      return [];
+    }
+  }
+
   async addWorkspaceMember(
     workspaceSlug: string,
     email: string,

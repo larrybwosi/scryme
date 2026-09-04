@@ -210,13 +210,22 @@ data class DashboardAnalyticsDto(
     @SerializedName("branchStats") val branchStats: List<BranchStatsDto>
 )
 
-// --- Broadcast Announcements ---
+// --- Broadcast Announcements & Messaging ---
 
 data class AnnouncementDto(
     @SerializedName("title") val title: String,
     @SerializedName("message") val message: String,
     @SerializedName("targetBranchId") val targetBranchId: String? = null, // null for all
+    @SerializedName("targetMemberId") val targetMemberId: String? = null, // target member if direct
+    @SerializedName("channelSlug") val channelSlug: String? = null, // e.g. "announcements", "shifts"
     @SerializedName("severity") val severity: String = "INFO" // INFO, WARNING, URGENT
+)
+
+data class DirectMessageDto(
+    @SerializedName("memberId") val memberId: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("message") val message: String,
+    @SerializedName("type") val type: String = "DIRECT_MESSAGE" // DIRECT_MESSAGE, SHIFT_NOTIFICATION, ALERT
 )
 
 // --- Generic API Response Envelope ---
@@ -262,6 +271,54 @@ data class StockAdjustmentProductDto(
 data class StockAdjustmentLocationDto(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String
+)
+
+// --- Staff Shift & Roster Models ---
+
+data class StaffBreakDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("shiftId") val shiftId: String,
+    @SerializedName("startTime") val startTime: String, // "HH:mm"
+    @SerializedName("endTime") val endTime: String,     // "HH:mm"
+    @SerializedName("description") val description: String? = null
+)
+
+data class ShiftUserDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("email") val email: String? = null
+)
+
+data class ShiftMemberDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("role") val role: String? = null,
+    @SerializedName("user") val user: ShiftUserDto? = null
+)
+
+data class StaffShiftDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("memberId") val memberId: String,
+    @SerializedName("organizationId") val organizationId: String,
+    @SerializedName("dayOfWeek") val dayOfWeek: Int, // 0 (Sunday) to 6 (Saturday)
+    @SerializedName("startTime") val startTime: String, // "HH:mm"
+    @SerializedName("endTime") val endTime: String,     // "HH:mm"
+    @SerializedName("isActive") val isActive: Boolean = true,
+    @SerializedName("breaks") val breaks: List<StaffBreakDto> = emptyList(),
+    @SerializedName("member") val member: ShiftMemberDto? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("updatedAt") val updatedAt: String? = null
+)
+
+data class CreateShiftRequestDto(
+    @SerializedName("dayOfWeek") val dayOfWeek: Int,
+    @SerializedName("startTime") val startTime: String,
+    @SerializedName("endTime") val endTime: String
+)
+
+data class CreateBreakRequestDto(
+    @SerializedName("startTime") val startTime: String,
+    @SerializedName("endTime") val endTime: String,
+    @SerializedName("description") val description: String? = null
 )
 
 // --- Device Authorization & Provisioning Models ---

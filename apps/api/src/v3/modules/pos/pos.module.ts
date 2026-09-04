@@ -1,6 +1,7 @@
 import { Module, Global, forwardRef } from "@nestjs/common";
 import { PrismaModule } from "../../../prisma/prisma.module";
 import { PosController } from "./interfaces/http/pos.controller";
+import { GlobalPosController } from "./interfaces/http/global-pos.controller";
 import { PosPairingController } from "./interfaces/http/pos-pairing.controller";
 import { PosPairingService } from "./application/services/pos-pairing.service";
 import { ProcessSaleUseCase } from "./application/use-cases/process-sale.use-case";
@@ -23,7 +24,7 @@ import { FinanceModule } from "../finance/finance.module";
     V2PosModule,
     FinanceModule,
   ],
-  controllers: [PosController, PosPairingController],
+  controllers: [PosController, GlobalPosController, PosPairingController],
   providers: [
     PosPairingService,
     ProcessSaleUseCase,

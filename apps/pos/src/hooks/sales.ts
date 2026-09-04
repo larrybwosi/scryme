@@ -168,6 +168,10 @@ export const useProcessSale = () => {
 };
 
 export const usePendingSales = () => {
+  const isConfigured = useAuthStore(state => state.isConfigured);
+  const currentMember = useAuthStore(state => state.currentMember);
+  const isReady = isConfigured && !!currentMember;
+
   const {
     data: pendingSales = [],
     isLoading,
@@ -178,7 +182,8 @@ export const usePendingSales = () => {
       const sales = await invoke<RustQueuedSale[]>('get_pending_sales_command');
       return sales;
     },
-    refetchInterval: 5000, // Poll every 5s to see if queue clears
+    enabled: isReady,
+    refetchInterval: isReady ? 5000 : false, // Poll every 5s to see if queue clears when ready
   });
 
   const queryClient = useQueryClient();

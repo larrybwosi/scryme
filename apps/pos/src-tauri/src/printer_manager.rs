@@ -1627,13 +1627,57 @@ pub async fn print_generic_labels(
                 }
             }
 
+            // Prescription specific details for dispensing labels
+            let rx_num = item.get("rxNumber").or(order.get("rxNumber")).and_then(|v| v.as_str());
+            let patient_name = item.get("patientName").or(order.get("patientName")).and_then(|v| v.as_str());
+            let doctor_name = item.get("doctorName").or(order.get("doctorName")).and_then(|v| v.as_str());
+            let date_written = item.get("dateWritten").or(order.get("dateWritten")).and_then(|v| v.as_str());
+            let pharmacist_name = order.get("pharmacistName").and_then(|v| v.as_str());
+            let header_text = order.get("headerText").and_then(|v| v.as_str());
+
+            if let Some(header) = header_text {
+                if !header.is_empty() {
+                    esc.bold(true);
+                    esc.text_line(header);
+                    esc.bold(false);
+                }
+            }
+
+            if rx_num.is_some() || patient_name.is_some() || doctor_name.is_some() {
+                esc.align(0);
+                if let Some(rx) = rx_num {
+                    esc.text_line(&format!("Rx #: {}", rx));
+                }
+                if let Some(pt) = patient_name {
+                    esc.text_line(&format!("PATIENT: {}", pt));
+                }
+                if let Some(doc) = doctor_name {
+                    esc.text_line(&format!("PRESCRIBER: {}", doc));
+                }
+                if let Some(dt) = date_written {
+                    esc.text_line(&format!("DATE: {}", dt));
+                }
+                if let Some(pharm) = pharmacist_name {
+                    esc.text_line(&format!("PHARMACIST: {}", pharm));
+                }
+                esc.align(1);
+            }
+
             // Dosage instructions for pharmacy labels
             if let Some(dosage) = item.get("dosageInstructions").and_then(|v| v.as_str()) {
                 esc.feed(1);
                 esc.align(0);
-                esc.text_line("DIRECTIONS:");
+                esc.bold(true);
+                esc.text_line("DIRECTIONS (SIG):");
+                esc.bold(false);
                 esc.text_line(dosage);
                 esc.align(1);
+            }
+
+            if let Some(disclaimer) = order.get("disclaimer").and_then(|v| v.as_str()) {
+                esc.feed(1);
+                esc.align(1);
+                esc.text_line(disclaimer);
             }
 
             esc.feed(1);

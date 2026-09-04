@@ -64,13 +64,6 @@ export class FollowUpReminderService {
         location: true,
       },
     });
-
-    // ⚡ Bolt Optimization (Parallelized Notifications and Database Writes):
-    // Sequential loops with awaited async calls create a critical performance bottleneck.
-    // By grouping and running notifications and database updates concurrently using Promise.all,
-    // we eliminate blocking sequential roundtrips. This reduces execution complexity
-    // from O(N) sequential HTTP and DB calls to a flat O(1) concurrent roundtrip block,
-    // maximizing throughput and ensuring follow-ups are processed extremely fast without timeouts.
     const reminderPromises = followUpsToNotify.map(async (followUp) => {
       try {
         await this.sendNotification(followUp);

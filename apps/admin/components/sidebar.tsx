@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
+  Cpu,
 } from "lucide-react"
 import { cn } from "@repo/ui/lib/utils"
 import { Button } from "@repo/ui/components/ui/button"
@@ -19,6 +20,7 @@ import { authClient } from "@/lib/auth-client"
 
 const NAV_ITEMS = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/systems", label: "Platform Systems", icon: Cpu },
   { href: "/reports", label: "Reports & Analytics", icon: BarChart3 },
   { href: "/organizations", label: "Organizations", icon: Building2 },
   { href: "/billing", label: "Billing", icon: CreditCard },

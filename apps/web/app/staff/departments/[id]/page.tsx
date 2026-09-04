@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { getDepartmentDetail } from "../../../actions/department";
 import { notFound } from "next/navigation";
@@ -227,3 +228,8 @@ export default async function DepartmentDetailPage({ params }: Props) {
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Department Details",
+  description: "Manage departmental members, roles, permissions, and organogram.",
+};

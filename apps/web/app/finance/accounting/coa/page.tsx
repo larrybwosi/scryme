@@ -1,6 +1,13 @@
+import { Metadata } from "next";
 import { PageHeader } from "../../../../components/page-header";
 import { BookOpen } from "lucide-react";
 import { COAClient } from "./coa-client";
+
+export const metadata: Metadata = {
+  title: "Chart of Accounts",
+  description: "Manage general ledger accounts, asset/liability classifications, and account codes.",
+};
+
 
 export default function COAPage() {
   return (

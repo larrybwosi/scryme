@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "crm",
-  "version": "7.41.0-next.0",
+  "version": "7.41.0-next.3",
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build",
@@ -15,12 +15,12 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@hookform/resolvers": "3.9.0",
+    "@openpanel/nextjs": "^1.5.1",
     "@repo/auth": "workspace:*",
-    "@repo/db": "workspace:^",
     "@repo/chat": "workspace:*",
+    "@repo/db": "workspace:^",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@repo/windmill": "workspace:*",
     "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/pg": "^8.20.0",
@@ -46,7 +46,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@eslint/js": "8.57.0",
+    "@eslint/js": "10.0.1",
     "@next/eslint-plugin-next": "16.2.6",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",

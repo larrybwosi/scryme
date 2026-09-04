@@ -1,9 +1,16 @@
+import { Metadata } from "next";
 import React, { Suspense } from "react";
 import { getCategoriesFull } from "../../actions/inventory";
 import { CategoryTable } from "../../../components/inventory/category-table";
 import { Button } from "@repo/ui/components/ui/button";
 import { Plus } from "lucide-react";
 import { CategoryDialog } from "../../../components/inventory/category-dialog";
+
+export const metadata: Metadata = {
+  title: "Product Categories",
+  description: "Organize products and services into structured categories and taxonomies.",
+};
+
 
 export default async function CategoriesPage() {
   const categories = await getCategoriesFull();

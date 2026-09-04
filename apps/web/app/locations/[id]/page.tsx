@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import {
   getLocation,
@@ -547,3 +548,8 @@ function EmptyState({
     </div>
   );
 }
+
+export const metadata: Metadata = {
+  title: "Location Details",
+  description: "Manage branch settings, terminal devices, and localized stock inventories.",
+};

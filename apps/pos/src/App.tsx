@@ -10,6 +10,8 @@ import posthog from 'posthog-js';
 import AppLayout from '@/components/app.layout';
 import { AutoShiftModal } from './components/shift/auto-shift-modal';
 import { IdleTimer } from './components/auth/idle-timer';
+import { useSyncEngine } from '@/hooks/use-sync-engine';
+import { OpenPanelProvider, trackPosEvent } from '@/lib/openpanel';
 
 // Lazy load pages to reduce initial bundle size and allow variant-based code splitting
 const TransactionsPage = lazy(() => import('@/pages/transactions-page').then(m => ({ default: m.TransactionsPage })));
@@ -185,6 +187,7 @@ const AppRoutes = () => {
 
 const DynamicRenderer = () => {
   useSessionActivityListener();
+  useSyncEngine();
 
   const fetchTables = usePosStore(state => state.fetchTables);
   const swapUserCart = usePosStore(state => state.swapUserCart);
@@ -212,6 +215,7 @@ const DynamicRenderer = () => {
       fetchTables();
     }
     posthog.capture('app_started');
+    trackPosEvent('app_started');
     // Hide and remove the splashscreen from index.html
     const splash = document.getElementById('splash-root');
     if (splash) {
@@ -225,9 +229,11 @@ const DynamicRenderer = () => {
   }, [fetchTables]);
 
   return (
-    <Router>
-      <AppRoutes />
-    </Router>
+    <OpenPanelProvider>
+      <Router>
+        <AppRoutes />
+      </Router>
+    </OpenPanelProvider>
   );
 };
 

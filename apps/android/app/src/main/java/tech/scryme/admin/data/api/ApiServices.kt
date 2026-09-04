@@ -149,17 +149,24 @@ interface AnnouncementApiService {
         @Path("orgSlug") orgSlug: String,
         @Body dto: AnnouncementDto
     ): Response<ApiEnvelope<Unit>>
+
+    @POST("/api/android/{orgSlug}/members/messages")
+    suspend fun sendMessageToMember(
+        @Path("orgSlug") orgSlug: String,
+        @Body dto: DirectMessageDto
+    ): Response<ApiEnvelope<Unit>>
 }
 
 interface DeviceApiService {
-    @POST("/api/v2/devices/provision")
+    @POST("/api/v3/global/pos/provision")
     suspend fun provisionDevice(
         @Body request: Map<String, String> // setupToken
     ): Response<ApiEnvelope<DeviceProvisionResponseDto>>
 
-    @POST("/api/v2/devices/pairing/authorize")
+    @POST("/api/v3/pos/pairing/session/{sessionId}/authorize")
     suspend fun authorizePairingSession(
-        @Body request: Map<String, String> // sessionId
+        @Path("sessionId") sessionId: String,
+        @Body request: Map<String, String> // locationId, etc.
     ): Response<ApiEnvelope<DeviceProvisionResponseDto>>
 }
 
@@ -182,4 +189,28 @@ interface ExpenseApiService {
     suspend fun approveExpense(
         @Path("id") id: String
     ): Response<ApiEnvelope<Unit>>
+}
+
+interface ShiftsApiService {
+    @GET("/api/android/{orgSlug}/shifts")
+    suspend fun getShifts(
+        @Path("orgSlug") orgSlug: String,
+        @Query("memberId") memberId: String? = null,
+        @Query("dayOfWeek") dayOfWeek: Int? = null,
+        @Query("isActive") isActive: Boolean? = null
+    ): Response<ApiEnvelope<List<StaffShiftDto>>>
+
+    @POST("/api/android/{orgSlug}/staff/{memberId}/shifts")
+    suspend fun createShift(
+        @Path("orgSlug") orgSlug: String,
+        @Path("memberId") memberId: String,
+        @Body dto: CreateShiftRequestDto
+    ): Response<ApiEnvelope<StaffShiftDto>>
+
+    @POST("/api/android/{orgSlug}/shifts/{shiftId}/breaks")
+    suspend fun addBreak(
+        @Path("orgSlug") orgSlug: String,
+        @Path("shiftId") shiftId: String,
+        @Body dto: CreateBreakRequestDto
+    ): Response<ApiEnvelope<StaffBreakDto>>
 }

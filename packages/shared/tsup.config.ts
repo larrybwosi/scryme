@@ -15,7 +15,6 @@ const commonOptions: Options = {
     "@repo/db",
     "@repo/env",
     "@prisma/client",
-    "ably",
     "axios",
     "ioredis",
     "lucide-react",
@@ -24,7 +23,6 @@ const commonOptions: Options = {
     "@nestjs/common",
     "@repo/documents",
     "@repo/notifications",
-    "@repo/windmill",
     "@repo/chat",
     "@sanity/client",
     "@tanstack/react-query",
@@ -53,7 +51,6 @@ export default defineConfig([
     clean: true, // Only first entry cleans
     entry: {
       index: "src/index.ts",
-      ably: "src/ably/index.ts",
       axios: "src/axios/index.ts",
       constants: "src/constants/index.ts",
       integrations: "src/integrations/index.ts",
@@ -79,13 +76,12 @@ export default defineConfig([
   {
     ...commonOptions,
     entry: {
-      "ably/client": "src/ably/client.ts",
       "realtime/client": "src/realtime/client.tsx",
     },
     onSuccess: async () => {
       const fs = await import("node:fs/promises");
       const path = await import("node:path");
-      const files = ["dist/ably/client.js", "dist/realtime/client.js"];
+      const files = ["dist/realtime/client.js"];
       for (const file of files) {
         const filePath = path.join(process.cwd(), file);
         try {

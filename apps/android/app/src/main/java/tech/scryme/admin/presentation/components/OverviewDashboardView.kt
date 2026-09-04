@@ -1,5 +1,6 @@
 package tech.scryme.admin.presentation.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -7,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.admin.data.model.LocationDto
@@ -35,6 +38,11 @@ data class TaskAlertItem(
     val due: String
 )
 
+// Consistent accent set for statuses across the dashboard
+private val StatusBlue = Color(0xFF3B82F6)
+private val StatusAmber = Color(0xFFF59E0B)
+private val StatusGreen = Color(0xFF10B981)
+
 @Composable
 fun OverviewDashboardView(
     branches: List<LocationDto>,
@@ -47,13 +55,11 @@ fun OverviewDashboardView(
     onSelectBranch: (String) -> Unit,
     onOpenQrScanner: () -> Unit
 ) {
-    // 1. Calculate Real Revenue
     val currencyCode = if (orgDetailsState is UiState.Success) orgDetailsState.data.currencyCode else "USD"
     val totalRevenue = if (transactionsState is UiState.Success) {
         transactionsState.data.sumOf { it.effectiveAmount() }
     } else 0.0
 
-    // 2. Calculate Real Pending Approvals
     val pendingPriceCount = if (priceChangeRequestsState is UiState.Success) {
         priceChangeRequestsState.data.count { it.status.equals("PENDING", ignoreCase = true) }
     } else 0
@@ -64,7 +70,6 @@ fun OverviewDashboardView(
 
     val totalPendingApprovals = pendingPriceCount + pendingStockCount
 
-    // 3. Calculate Real Active Staff / Members
     val checkedInStaffCount = if (presenceState is UiState.Success) {
         presenceState.data.count { it.isCheckedIn == true }
     } else 0
@@ -75,7 +80,6 @@ fun OverviewDashboardView(
         presenceState.data.size
     } else 0
 
-    // 4. Generate Dynamic Real Priority Tasks
     val taskAlerts = remember(pendingPriceCount, pendingStockCount, checkedInStaffCount, branches.size) {
         val list = mutableListOf<TaskAlertItem>()
         if (pendingPriceCount > 0) {
@@ -98,70 +102,31 @@ fun OverviewDashboardView(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ElevatedCard(
+                MetricCard(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Organization Revenue",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            formatCurrency(totalRevenue, currencyCode),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "Live Transactions Sum",
-                            fontSize = 11.sp,
-                            color = Color(0xFF10B981),
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                ElevatedCard(
+                    icon = Icons.AutoMirrored.Filled.TrendingUp,
+                    iconTint = StatusGreen,
+                    label = "ORGANIZATION REVENUE",
+                    value = formatCurrency(totalRevenue, currencyCode),
+                    footnote = "Live transaction sum",
+                    footnoteColor = StatusGreen
+                )
+                MetricCard(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Active Locations",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "${branches.size}",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            if (branches.isNotEmpty()) branches.first().name else "No active locations",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
-                    }
-                }
+                    icon = Icons.Default.Storefront,
+                    iconTint = StatusBlue,
+                    label = "ACTIVE LOCATIONS",
+                    value = "${branches.size}",
+                    footnote = if (branches.isNotEmpty()) branches.first().name else "No active locations",
+                    footnoteColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
@@ -170,175 +135,130 @@ fun OverviewDashboardView(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                ElevatedCard(
+                MetricCard(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Pending Approvals",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "$totalPendingApprovals",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "Price: $pendingPriceCount • Stock: $pendingStockCount",
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                ElevatedCard(
+                    icon = Icons.Default.PendingActions,
+                    iconTint = StatusAmber,
+                    label = "PENDING APPROVALS",
+                    value = "$totalPendingApprovals",
+                    footnote = "Price $pendingPriceCount  ·  Stock $pendingStockCount",
+                    footnoteColor = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                MetricCard(
                     modifier = Modifier.weight(1f),
-                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    shape = RoundedCornerShape(16.dp),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            "Active Members",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "$totalMembersCount",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            "$checkedInStaffCount Staff Checked-In Now",
-                            fontSize = 11.sp,
-                            color = Color(0xFF10B981),
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
+                    icon = Icons.Default.Groups,
+                    iconTint = StatusGreen,
+                    label = "ACTIVE MEMBERS",
+                    value = "$totalMembersCount",
+                    footnote = "$checkedInStaffCount checked in now",
+                    footnoteColor = StatusGreen
+                )
             }
         }
 
         item {
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+            EnterpriseSurface {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    SectionHeader(
+                        title = "To-Do & Priority Tasks",
+                        subtitle = "${taskAlerts.size} item(s) requiring attention"
                     ) {
-                        Text(
-                            "To-Do & Priority Tasks",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        TextButton(onClick = {}) {
+                        TextButton(onClick = {}, contentPadding = PaddingValues(horizontal = 8.dp)) {
                             Text("View All", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            Spacer(modifier = Modifier.width(2.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(14.dp))
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
                     ) {
-                        Text("Type", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.2f))
-                        Text("Title", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1.5f))
-                        Text("Status", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                        Text("Due", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.8f))
-                    }
-
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
-                    taskAlerts.forEach { task ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(vertical = 10.dp),
+                                .padding(horizontal = 12.dp, vertical = 8.dp)
+                        ) {
+                            TableHeaderCell("TYPE", 1.2f)
+                            TableHeaderCell("TITLE", 1.6f)
+                            TableHeaderCell("STATUS", 1f)
+                            TableHeaderCell("DUE", 0.8f, alignEnd = true)
+                        }
+                    }
+
+                    taskAlerts.forEachIndexed { index, task ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(modifier = Modifier.weight(1.2f), verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(8.dp)
+                                        .size(6.dp)
                                         .clip(CircleShape)
-                                        .background(MaterialTheme.colorScheme.primary)
+                                        .background(statusColorFor(task.status))
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(task.type, fontSize = 11.sp, maxLines = 1, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Medium)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    task.type,
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Medium
+                                )
                             }
 
-                            Text(task.title, fontSize = 11.sp, modifier = Modifier.weight(1.5f), maxLines = 1, color = MaterialTheme.colorScheme.onSurface)
+                            Text(
+                                task.title,
+                                fontSize = 12.sp,
+                                modifier = Modifier.weight(1.6f),
+                                maxLines = 1,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
 
                             Box(modifier = Modifier.weight(1f)) {
-                                val statusColor = when (task.status) {
-                                    "Awaiting" -> Color(0xFF3B82F6)
-                                    "Pending" -> Color(0xFFF59E0B)
-                                    "Active" -> Color(0xFF10B981)
-                                    "Completed" -> Color(0xFF10B981)
-                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
-                                }
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = statusColor.copy(alpha = 0.15f)
-                                ) {
-                                    Text(
-                                        text = task.status,
-                                        fontSize = 10.sp,
-                                        color = statusColor,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
+                                StatusBadge(task.status)
                             }
 
-                            Text(task.due, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(0.8f))
+                            Text(
+                                task.due,
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(0.8f),
+                                textAlign = TextAlign.End
+                            )
                         }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        if (index < taskAlerts.lastIndex) {
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                        }
                     }
                 }
             }
         }
 
         item {
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        "Organization Locations (${branches.size})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
+            EnterpriseSurface {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    SectionHeader(
+                        title = "Organization Locations",
+                        subtitle = "${branches.size} location(s) under management"
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = onOpenQrScanner,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp)
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.QrCodeScanner,
@@ -346,51 +266,225 @@ fun OverviewDashboardView(
                             modifier = Modifier.size(18.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Authorize POS Terminal (Scan QR)", fontWeight = FontWeight.Bold)
+                        Text(
+                            "Authorize POS Terminal",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp
+                        )
                     }
 
                     if (branches.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        branches.forEach { branch ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        branches.forEachIndexed { index, branch ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { onSelectBranch(branch.id) }
-                                    .padding(vertical = 10.dp),
+                                    .padding(vertical = 12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Column {
-                                    Text(
-                                        branch.name,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    Text(
-                                        if (branch.isActive) "Active Location" else "Inactive",
-                                        fontSize = 11.sp,
-                                        color = if (branch.isActive) Color(0xFF10B981) else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(
+                                                if (branch.isActive) StatusGreen.copy(alpha = 0.12f)
+                                                else MaterialTheme.colorScheme.surfaceVariant
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Storefront,
+                                            contentDescription = null,
+                                            tint = if (branch.isActive) StatusGreen else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Column {
+                                        Text(
+                                            branch.name,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.sp,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Text(
+                                            if (branch.isActive) "Active Location" else "Inactive",
+                                            fontSize = 11.sp,
+                                            color = if (branch.isActive) StatusGreen else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
                                 }
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
-                                    color = if (branch.id == selectedBranchId) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                                    color = if (branch.id == selectedBranchId)
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    else Color.Transparent,
+                                    border = if (branch.id == selectedBranchId) null
+                                    else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
                                 ) {
                                     Text(
                                         if (branch.id == selectedBranchId) "Selected" else "Select",
-                                        color = if (branch.id == selectedBranchId) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        color = if (branch.id == selectedBranchId)
+                                            MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        fontWeight = FontWeight.SemiBold,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                                     )
                                 }
                             }
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            if (index < branches.lastIndex) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                            }
                         }
                     }
                 }
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Shared building blocks
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun EnterpriseSurface(content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun MetricCard(
+    modifier: Modifier = Modifier,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    iconTint: Color,
+    label: String,
+    value: String,
+    footnote: String,
+    footnoteColor: Color
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(28.dp)
+                        .clip(RoundedCornerShape(7.dp))
+                        .background(iconTint.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(icon, contentDescription = null, tint = iconTint, modifier = Modifier.size(15.dp))
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.6.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                footnote,
+                fontSize = 11.sp,
+                color = footnoteColor,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+private fun SectionHeader(
+    title: String,
+    subtitle: String,
+    trailing: @Composable (() -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                subtitle,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        trailing?.invoke()
+    }
+}
+
+@Composable
+private fun RowScope.TableHeaderCell(text: String, weight: Float, alignEnd: Boolean = false) {
+    Text(
+        text,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 0.6.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.weight(weight),
+        textAlign = if (alignEnd) TextAlign.End else TextAlign.Start
+    )
+}
+
+@Composable
+private fun StatusBadge(status: String) {
+    val color = statusColorFor(status)
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = color.copy(alpha = 0.12f),
+        border = BorderStroke(1.dp, color.copy(alpha = 0.25f))
+    ) {
+        Text(
+            text = status,
+            fontSize = 10.sp,
+            color = color,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+        )
+    }
+}
+
+private fun statusColorFor(status: String): Color = when (status) {
+    "Awaiting" -> StatusBlue
+    "Pending" -> StatusAmber
+    "Active" -> StatusGreen
+    "Completed" -> StatusGreen
+    else -> Color(0xFF8B95A5)
 }

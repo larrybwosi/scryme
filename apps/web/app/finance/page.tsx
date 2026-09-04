@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import {
   BookOpen,
   FileText,
@@ -22,6 +23,12 @@ import { getFinanceOverview } from "../actions/finance";
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { PageHeader } from "../../components/page-header";
+
+export const metadata: Metadata = {
+  title: "Finance Overview",
+  description: "Central financial dashboard, cash flow metrics, budget tracking, and account balances.",
+};
+
 
 export default async function FinanceDashboard() {
   const auth = await getServerAuth();

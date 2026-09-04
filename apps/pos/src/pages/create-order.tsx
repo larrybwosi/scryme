@@ -89,7 +89,7 @@ const blockInvalidChar = (e: React.KeyboardEvent<HTMLInputElement>) => {
  */
 function resolvePrice(
   variantId: string | undefined,
-  sellingUnitId: string | undefined,
+  sellingUnitId: string | null | undefined,
   availableUnits: SellableUnit[],
   priceMap: Record<string, number>,
 ): number {
@@ -761,7 +761,7 @@ export default function CreateOrderPage() {
                     render={({ field }) => (
                       <CustomerSelect
                         onValueChange={field.onChange}
-                        value={field.value}
+                        value={field.value ?? undefined}
                         onSelect={(customer: any) => {
                           const addrs = customer.addresses || [];
                           setCustomerAddresses(addrs);
@@ -884,7 +884,7 @@ export default function CreateOrderPage() {
                       setValue={setValue}
                       errors={errors}
                       formatCurrency={formatCurrency}
-                      customerId={customerId}
+                      customerId={customerId ?? undefined}
                       priceMap={priceMap}
                       isFetching={isPriceMapFetching}
                     />

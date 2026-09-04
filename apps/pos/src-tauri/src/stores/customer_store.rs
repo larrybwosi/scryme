@@ -251,49 +251,66 @@ pub async fn run_sync(
 ) -> Result<usize> {
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
 
-    let sdk_client = auth_state.build_sdk_client().map_err(|e| anyhow::anyhow!(e))?;
-    let customers_list = scryme_sdk::apis::v3_customers_api::customers_get_customers(
-        &sdk_client.config,
-        &sdk_client.org_slug,
-        None,
-        Some(2000.0),
-        None,
-    ).await.map_err(|e| anyhow::anyhow!("SDK get_customers failed: {}", e))?;
+    let last_sync: Option<String> = sqlx::query("SELECT last_sync FROM customer_sync_meta WHERE id = 1")
+        .fetch_optional(&pool).await.map_err(|e| anyhow::anyhow!(e))?.map(|r| r.get("last_sync"));
+
+    let request = auth_state.build_request(reqwest::Method::GET, crate::api_config::routes::CUSTOMERS)
+        .map_err(|e| anyhow::anyhow!(e))?;
+
+    let mut query_params = vec![];
+    if let Some(ts) = &last_sync {
+        query_params.push(("lastSync", ts.clone()));
+    }
+
+    let response = request.query(&query_params).send().await.map_err(|e| anyhow::anyhow!(e))?;
+    if !response.status().is_success() {
+        return Err(anyhow::anyhow!("Server returned error: {}", response.status()));
+    }
+
+    let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
+
+    // StandardResponseInterceptor wraps response in { success: true, data: ..., timestamp: ... }
+    // getCustomersDelta returns { data: [...], nextSyncToken: ... } inside that envelope.
+    let unwrapped_data = if let Some(d) = raw_val.get("data") {
+        d
+    } else {
+        &raw_val
+    };
+
+    let (customers_array, sync_token_from_resp) = if unwrapped_data.is_array() {
+        (unwrapped_data, None)
+    } else if let Some(arr) = unwrapped_data.get("data").and_then(|v| if v.is_array() { Some(v) } else { None }) {
+        (arr, unwrapped_data.get("nextSyncToken").and_then(|t| t.as_str()))
+    } else if let Some(arr) = raw_val.get("customers").and_then(|v| if v.is_array() { Some(v) } else { None }) {
+        (arr, None)
+    } else {
+        (unwrapped_data, None)
+    };
+
+    let customers_list: Vec<PosCustomer> = serde_json::from_value(customers_array.clone())
+        .unwrap_or_default();
 
     let incoming_count = customers_list.len();
     let mut tx = pool.begin().await.map_err(|e| anyhow::anyhow!(e))?;
 
-    // Clear local customers before full sync
-    sqlx::query("DELETE FROM customers").execute(&mut *tx).await.map_err(|e| anyhow::anyhow!(e))?;
+    if last_sync.is_none() {
+        // Clear local customers before full sync
+        sqlx::query("DELETE FROM customers").execute(&mut *tx).await.map_err(|e| anyhow::anyhow!(e))?;
+    }
 
-    for cust_dto in customers_list {
-        let customer = PosCustomer {
-            id: cust_dto.id,
-            name: cust_dto.name,
-            phone: Some(cust_dto.phone),
-            email: Some(cust_dto.email),
-            company: cust_dto.company,
-            customer_type: cust_dto.customer_type,
-            business_account_id: None,
-            loyalty_points: None,
-            city: None,
-            primary_address: None,
-            updated_at: None,
-            gender: None,
-            date_of_birth: cust_dto.date_of_birth,
-            medical_history: None,
-            allergies: None,
-            chronic_conditions: None,
-            insurance_provider: None,
-            policy_number: None,
-        };
-
+    for customer in customers_list {
         let search_text = build_search_text(&customer);
         let encrypted_payload = encrypt_payload(&customer).await?;
 
         let query = r#"
             INSERT INTO customers (id, name, phone, email, search_text, payload)
             VALUES (?1, ?2, ?3, ?4, ?5, ?6)
+            ON CONFLICT(id) DO UPDATE SET
+                name = excluded.name,
+                phone = excluded.phone,
+                email = excluded.email,
+                search_text = excluded.search_text,
+                payload = excluded.payload
         "#;
 
         sqlx::query(query)
@@ -306,6 +323,15 @@ pub async fn run_sync(
             .execute(&mut *tx)
             .await.map_err(|e| anyhow::anyhow!(e))?;
     }
+
+    let new_sync_time = sync_token_from_resp
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+
+    sqlx::query("INSERT OR REPLACE INTO customer_sync_meta (id, last_sync) VALUES (1, ?1)")
+        .bind(&new_sync_time)
+        .execute(&mut *tx)
+        .await.map_err(|e| anyhow::anyhow!(e))?;
 
     tx.commit().await.map_err(|e| anyhow::anyhow!(e))?;
 
@@ -408,11 +434,20 @@ pub async fn create_customer_cloud(
     }
 
     let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
-    let new_customer: PosCustomer = if raw_val.get("data").is_some() {
-        serde_json::from_value(raw_val["data"].clone()).map_err(|e| anyhow::anyhow!(e))?
+    let target = if let Some(data) = raw_val.get("data") {
+        if let Some(c) = data.get("customer") {
+            c
+        } else {
+            data
+        }
+    } else if let Some(c) = raw_val.get("customer") {
+        c
     } else {
-        serde_json::from_value(raw_val).map_err(|e| anyhow::anyhow!(e))?
+        &raw_val
     };
+
+    let new_customer: PosCustomer = serde_json::from_value(target.clone())
+        .map_err(|e| anyhow::anyhow!("Failed to parse created customer: {} | Raw: {}", e, raw_val))?;
 
     // Save to DB
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
@@ -484,11 +519,20 @@ pub async fn update_customer_cloud(
     }
 
     let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
-    let new_customer: PosCustomer = if raw_val.get("data").is_some() {
-        serde_json::from_value(raw_val["data"].clone()).map_err(|e| anyhow::anyhow!(e))?
+    let target = if let Some(data) = raw_val.get("data") {
+        if let Some(c) = data.get("customer") {
+            c
+        } else {
+            data
+        }
+    } else if let Some(c) = raw_val.get("customer") {
+        c
     } else {
-        serde_json::from_value(raw_val).map_err(|e| anyhow::anyhow!(e))?
+        &raw_val
     };
+
+    let new_customer: PosCustomer = serde_json::from_value(target.clone())
+        .map_err(|e| anyhow::anyhow!("Failed to parse updated customer: {} | Raw: {}", e, raw_val))?;
 
     // Save to DB
     let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;

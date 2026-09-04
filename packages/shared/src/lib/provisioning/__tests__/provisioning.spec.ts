@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createDeviceSetupTokenCore, getDeviceSetupTokensCore } from '../common';
 import { provisionDeviceV2 } from '../v2';
+import { provisionDeviceV3 } from '../v3';
 import * as crypto from 'crypto';
 
 // Mock the dependencies
@@ -15,6 +16,9 @@ const mockPrisma = {
     updateMany: vi.fn(),
   },
   apiKey: {
+    create: vi.fn(),
+  },
+  v3ApiClient: {
     create: vi.fn(),
   },
   deviceRegistry: {
@@ -89,6 +93,46 @@ describe('Provisioning Logic', () => {
         where: { id: 'token-1' },
         data: expect.objectContaining({ usedAt: expect.any(Date) })
       }));
+    });
+  });
+
+  describe('provisionDeviceV3', () => {
+    it('should successfully provision a V3 device and link v3ApiClientId', async () => {
+      const mockToken = 'v3-setup-token';
+      const mockSetupToken = {
+        id: 'token-v3-1',
+        organizationId: 'org-1',
+        deviceName: 'V3 Terminal',
+        deviceType: 'POS_TERMINAL',
+        locationId: 'loc-1',
+        organization: { id: 'org-1', slug: 'demo' },
+        location: { id: 'loc-1', name: 'Main Store' },
+        permissions: ['pos:read', 'pos:write'],
+        environment: 'LIVE',
+        expiresAt: new Date(Date.now() + 10000),
+        usedAt: null,
+        revokedAt: null,
+        createdById: 'user-1',
+      };
+
+      (mockPrisma.deviceSetupToken.findFirst as any).mockResolvedValue(mockSetupToken);
+      (mockPrisma.v3ApiClient.create as any).mockResolvedValue({ id: 'v3-client-123', clientId: 'pos_abc' });
+      (mockPrisma.deviceRegistry.create as any).mockResolvedValue({ id: 'reg-v3-1' });
+      (mockPrisma.deviceSetupToken.update as any).mockResolvedValue({});
+
+      const result = await provisionDeviceV3(mockPrisma as any, mockToken);
+
+      expect(result).toHaveProperty('clientId');
+      expect(result).toHaveProperty('clientSecret');
+      expect(result.deviceRegistryId).toBe('reg-v3-1');
+      expect(mockPrisma.deviceRegistry.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          organizationId: 'org-1',
+          v3ApiClientId: 'v3-client-123',
+          deviceName: 'V3 Terminal',
+          status: 'ACTIVE',
+        }),
+      });
     });
   });
 });

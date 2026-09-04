@@ -8,6 +8,12 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/leads",
   },
+  openGraph: {
+    title: "Leads Management | Scryme CRM",
+    description:
+      "Track incoming prospects, manage statuses, qualify opportunities, and monitor pipeline health.",
+    url: "https://crm.scryme.tech/leads",
+  },
 };
 
 export default async function LeadsPage() {

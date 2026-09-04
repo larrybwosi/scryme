@@ -1,5 +1,11 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
+import { Loader2, Play } from "lucide-react"
+import { toast } from "sonner"
 import { Badge } from "@repo/ui/components/ui/badge"
+import { Button } from "@repo/ui/components/ui/button"
 import {
   Table,
   TableBody,
@@ -8,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table"
+import { useQueryClient } from "@tanstack/react-query"
+import { testOrganizationIntegrationConnection } from "@/app/actions/integrations"
 
 export interface ActiveOrgIntegrationRow {
   id: string
@@ -31,9 +39,31 @@ export interface ActiveOrgIntegrationRow {
 
 export function OrganizationIntegrationsTable({
   activeIntegrations,
+  isLoading,
 }: {
   activeIntegrations: ActiveOrgIntegrationRow[]
+  isLoading?: boolean
 }) {
+  const queryClient = useQueryClient()
+  const [testingId, setTestingId] = useState<string | null>(null)
+
+  async function handleTestConnection(id: string) {
+    setTestingId(id)
+    try {
+      const res = await testOrganizationIntegrationConnection(id)
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+      queryClient.invalidateQueries({ queryKey: ["active-organization-integrations"] })
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test connection")
+    } finally {
+      setTestingId(null)
+    }
+  }
+
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <Table>
@@ -44,12 +74,20 @@ export function OrganizationIntegrationsTable({
             <TableHead>Category</TableHead>
             <TableHead>Sync Status</TableHead>
             <TableHead>Last Sync</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {activeIntegrations.length === 0 ? (
+          {isLoading ? (
             <TableRow>
-              <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+              <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                <Loader2 className="size-5 animate-spin mx-auto text-muted-foreground mb-2" />
+                Loading active integration connections...
+              </TableCell>
+            </TableRow>
+          ) : activeIntegrations.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
                 No active organization integration connections currently found.
               </TableCell>
             </TableRow>
@@ -84,6 +122,22 @@ export function OrganizationIntegrationsTable({
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {item.lastSyncAt ? new Date(item.lastSyncAt).toLocaleString() : "Never"}
+                </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs"
+                    disabled={testingId === item.id}
+                    onClick={() => handleTestConnection(item.id)}
+                  >
+                    {testingId === item.id ? (
+                      <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Play className="size-3.5 text-emerald-500" aria-hidden="true" />
+                    )}
+                    Test Connection
+                  </Button>
                 </TableCell>
               </TableRow>
             ))

@@ -1,5 +1,5 @@
-import { Message, Realtime } from 'ably';
 import { invoke } from '@tauri-apps/api/core';
+import { useRealtimeStore } from '@/store/realtimeStore';
 
 interface InitiateMpesaPaymentParams {
   phoneNumber: string;
@@ -16,50 +16,35 @@ interface MpesaResponse {
 }
 
 /**
- * Subscribes to an Ably channel to listen for M-Pesa payment status updates.
+ * Subscribes to realtime channel to listen for M-Pesa payment status updates.
  * @param checkoutRequestId The unique ID for the checkout request to listen for.
- * @param ably The Ably client instance from the store.
  * @param callbacks Object with onSuccess and onFailed callback functions.
  * @returns A function to unsubscribe and clean up the listener.
  */
-export function subscribeToAbly(
+export function subscribeToMpesaPayment(
   checkoutRequestId: string,
-  ably: Realtime | null,
   callbacks: {
     onSuccess?: () => void;
     onFailed?: (message: string) => void;
   }
 ) {
-  // Get the Ably channel for M-Pesa payments
-  const channel = ably?.channels.get('mpesa-payments');
+  const subscribe = useRealtimeStore.getState().subscribe;
 
-  // Define the subscription callback
-  const subscriptionCallback = (message: Message) => {
-    const data = message.data; // The data payload from the server
-
-    // Check if the message is for the current transaction
-    if (data.checkoutRequestId === checkoutRequestId) {
+  const unsubscribe = subscribe('mpesa-payments', 'payment-status', (data: any) => {
+    if (data?.checkoutRequestId === checkoutRequestId) {
       if (data.status === 'SUCCESS' && callbacks.onSuccess) {
         callbacks.onSuccess();
       } else if (data.status === 'FAILED' && callbacks.onFailed) {
-        // Use the customer message or the more technical response description as a fallback
         callbacks.onFailed(data.customerMessage || data.responseDescription);
       }
     }
-  };
+  });
 
-  // Subscribe to the 'payment-status' event
-  channel?.subscribe('payment-status', subscriptionCallback);
-
-  // Return a cleanup function to be called when the component unmounts
-  return () => {
-    channel?.unsubscribe('payment-status', subscriptionCallback);
-  };
+  return unsubscribe;
 }
 
 /**
  * Initiates an M-Pesa STK push payment request to your backend.
- * This function does not change as it only communicates with your API.
  */
 export async function initiateMpesaPayment({
   phoneNumber,

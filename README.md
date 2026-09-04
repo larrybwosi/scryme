@@ -1,4 +1,4 @@
-# Scryme ERP Platform
+# Scryme
 
 Scryme is a professional, enterprise-grade Enterprise Resource Planning (ERP) platform tailored for retailers and wholesalers. It provides a unified ecosystem to manage inventory, sales, customers, and financial integrations through a modern, performant architecture.
 
@@ -45,7 +45,6 @@ Our core logic, database client, configurations, and utilities are modularized i
 - **[`@repo/chat`](./packages/scryme)**: Developer-centric API client mapping token exchange and message publishing against the Scryme Chat API.
 - **[`@repo/sdk`](./packages/sdk)**: Central client SDK containing shared HTTP wrappers and pre-configured request interceptors.
 - **[`@scryme/sdk`](./packages/v3-sdk)**: Rigorous TypeScript API client compiler generated directly from our core OpenAPI 3.0 specification.
-- **[`@repo/windmill`](./packages/windmill)**: Secondary Handlebars compiler and Nodemailer client helper designed for background mail queues.
 - **[`@repo/env`](./packages/env)**: Type-safe runtime environment schema validation powered by Zod.
 - **[`@repo/eslint-config`](./packages/config-eslint)**: Common ESLint linting configurations.
 - **[`@repo/typescript-config`](./packages/config-typescript)**: Base strict TS configuration files for Next.js, Node services, and React libraries.

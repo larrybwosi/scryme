@@ -23,11 +23,12 @@ import {
   Status,
 } from "@repo/db";
 import * as bcrypt from "bcryptjs";
+import * as argon2 from "argon2";
 import {
   emitMemberCreated,
   emitMemberRoleChanged,
   emitEvent,
-} from "@repo/windmill/server";
+} from "@repo/shared/server";
 import { createMemberToken } from "@repo/shared/api/v2";
 
 @Injectable()
@@ -597,6 +598,21 @@ export class MemberUseCase {
     return member;
   }
 
+  private async verifyHash(
+    hash: string | null | undefined,
+    secret: string,
+  ): Promise<boolean> {
+    if (!hash || !secret) return false;
+    try {
+      if (hash.startsWith("$argon2")) {
+        return await argon2.verify(hash, secret);
+      }
+      return await bcrypt.compare(secret, hash);
+    } catch {
+      return false;
+    }
+  }
+
   async login(
     organizationId: string,
     locationId: string,
@@ -621,10 +637,11 @@ export class MemberUseCase {
       );
     }
 
-    const member = await this.prisma.client.member.findFirst({
+    const cleanCardId = cardId?.trim() || "";
+    let member = await this.prisma.client.member.findFirst({
       where: {
         organizationId,
-        cardId,
+        cardId: cleanCardId,
         isActive: true,
         deletedAt: null,
       },
@@ -635,26 +652,53 @@ export class MemberUseCase {
             name: true,
             email: true,
             image: true,
+            password: true,
           },
         },
       },
     });
 
+    if (!member && cleanCardId) {
+      member = await this.prisma.client.member.findFirst({
+        where: {
+          organizationId,
+          cardId: { equals: cleanCardId, mode: "insensitive" },
+          isActive: true,
+          deletedAt: null,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+              password: true,
+            },
+          },
+        },
+      });
+    }
+
     // SECURITY (Sentinel): Mitigate timing attacks and cardId/member enumeration side-channels by always
-    // performing a cryptographically heavy bcrypt.compare on a valid dummy PIN hash if member or pinHash is missing.
+    // performing a cryptographically heavy check on a valid dummy PIN hash if member or pinHash is missing.
     const dummyPinHash =
       "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
     const pinHashToCompare = member?.pinHash || dummyPinHash;
-    const isPinValid = await bcrypt.compare(pin, pinHashToCompare);
+    let isPinValid = await this.verifyHash(pinHashToCompare, pin);
+    if (!isPinValid && member?.user?.password) {
+      isPinValid = await this.verifyHash(member.user.password, pin);
+    }
 
-    if (!member || !member.pinHash || !isPinValid) {
+    if (!member || !isPinValid) {
       // Track failed attempts
       const newCount = await this.redis.incr(rateLimitKey);
-      if (newCount === 1) {
+      const validCount = typeof newCount === "number" && !isNaN(newCount) ? newCount : 1;
+      if (validCount === 1) {
         await this.redis.expire(rateLimitKey, LOCKOUT_DURATION_SECONDS);
       }
       throw new UnauthorizedException(
-        `Invalid credentials. ${MAX_PIN_ATTEMPTS - newCount} attempts remaining.`,
+        `Invalid credentials. ${Math.max(0, MAX_PIN_ATTEMPTS - validCount)} attempts remaining.`,
       );
     }
 

@@ -1,7 +1,7 @@
 {
   "name": "docs",
   "private": true,
-  "version": "1.8.0-next.0",
+  "version": "1.8.0-next.4",
   "type": "module",
   "scripts": {
     "predev": "cp ../../packages/v3-sdk/openapi.json src/openapi.json",

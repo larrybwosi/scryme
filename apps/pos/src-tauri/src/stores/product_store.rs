@@ -274,8 +274,20 @@ pub async fn run_sync(
     let response = request.query(&query_params).send().await?;
     if !response.status().is_success() { return Err(anyhow::anyhow!("Server returned error: {}", response.status())); }
 
-    let v2_resp = response.json::<crate::models::V2Response<ProductsSyncResponse>>().await?;
-    let mut res_body = v2_resp.data;
+    let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
+    let (mut res_body, sync_timestamp_opt) = if let Ok(v3_resp) = serde_json::from_value::<crate::models::StandardResponse<ProductsSyncResponse>>(raw_val.clone()) {
+        let ts = v3_resp.meta.and_then(|m| m.get("syncTimestamp").and_then(|t| t.as_str().map(|s| s.to_string())));
+        (v3_resp.data, ts)
+    } else if let Some(d) = raw_val.get("data") {
+        let ts = raw_val.get("meta").and_then(|m| m.get("syncTimestamp").and_then(|t| t.as_str().map(|s| s.to_string())));
+        let parsed: ProductsSyncResponse = serde_json::from_value(d.clone())
+            .map_err(|e| anyhow::anyhow!("Failed to parse product sync response: {} | Raw: {}", e, raw_val))?;
+        (parsed, ts)
+    } else {
+        let parsed: ProductsSyncResponse = serde_json::from_value(raw_val.clone())
+            .map_err(|e| anyhow::anyhow!("Failed to parse product sync response: {} | Raw: {}", e, raw_val))?;
+        (parsed, None)
+    };
 
     // Parallelize image caching for better performance
     let mut image_tasks = Vec::new();
@@ -309,7 +321,7 @@ pub async fn run_sync(
     }
 
     let incoming_count = res_body.products.len();
-    let new_sync_time = v2_resp.meta.and_then(|m| m.get("syncTimestamp").and_then(|t| t.as_str().map(|s| s.to_string())))
+    let new_sync_time = sync_timestamp_opt
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
     let mut tx = pool.begin().await?;

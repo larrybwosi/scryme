@@ -4,9 +4,7 @@ import { db, DeviceRegistry, ApiKey, InventoryLocation } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
 
-export async function getDevices(): Promise<
-  (DeviceRegistry & { location: InventoryLocation; apiKey: ApiKey })[]
-> {
+export async function getDevices(): Promise<any[]> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
@@ -15,6 +13,7 @@ export async function getDevices(): Promise<
     include: {
       location: true,
       apiKey: true,
+      v3ApiClient: true,
     },
     orderBy: { createdAt: "desc" },
   });
@@ -56,21 +55,37 @@ export async function revokeDevice(deviceId: string) {
       id: deviceId,
       organizationId: auth.organizationId,
     },
-    include: { apiKey: true },
+    include: { apiKey: true, v3ApiClient: true },
   });
 
   if (!device) throw new Error("Device not found");
 
-  await db.$transaction([
-    db.apiKey.update({
-      where: { id: device.apiKeyId },
-      data: { isActive: false, revokedAt: new Date() },
-    }),
+  const actions: any[] = [
     db.deviceRegistry.update({
       where: { id: deviceId },
       data: { status: "INACTIVE" },
     }),
-  ]);
+  ];
+
+  if (device.apiKeyId) {
+    actions.push(
+      db.apiKey.update({
+        where: { id: device.apiKeyId },
+        data: { isActive: false, revokedAt: new Date() },
+      })
+    );
+  }
+
+  if (device.v3ApiClientId) {
+    actions.push(
+      db.v3ApiClient.update({
+        where: { id: device.v3ApiClientId },
+        data: { isActive: false },
+      })
+    );
+  }
+
+  await db.$transaction(actions);
 
   revalidatePath("/settings/devices");
 }

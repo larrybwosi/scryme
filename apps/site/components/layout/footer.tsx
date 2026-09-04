@@ -1,189 +1,37 @@
-"use client";
-
 import Link from "next/link";
-import { BookText, ArrowRight } from "lucide-react";
-import { colors, fonts, modules } from "@/lib/scryme-tokens";
+import { ArrowUpRight, BookOpen, ShieldCheck } from "lucide-react";
+import { modules } from "@/lib/scryme-tokens";
 
-const otherLinks = {
-  company: {
-    title: "Company",
-    links: [
-      { name: "About", href: "/about" },
-      { name: "Careers", href: "/careers" },
-      { name: "Blog", href: "/blog" },
-      { name: "Press", href: "/press" },
-      { name: "Contact", href: "/contact" },
-    ],
-  },
-  resources: {
-    title: "Resources",
-    links: [
-      { name: "Documentation", href: "/docs" },
-      { name: "API Reference", href: "/api" },
-      { name: "Integrations", href: "/integrations" },
-      { name: "Status", href: "/status" },
-      { name: "Changelog", href: "/changelog" },
-    ],
-  },
-  legal: {
-    title: "Legal",
-    links: [
-      { name: "Privacy Policy", href: "/privacy" },
-      { name: "Terms of Service", href: "/terms" },
-      { name: "Cookie Policy", href: "/cookies" },
-      { name: "Security", href: "/security" },
-    ],
-  },
-};
+const company = [{ name: "About", href: "/about" }, { name: "Careers", href: "/careers" }, { name: "Journal", href: "/blog" }, { name: "Contact", href: "/contact" }];
+const resources = [
+  { name: "Developer Portal", href: "/developer" },
+  { name: "Documentation", href: "/docs" },
+  { name: "API reference", href: "/api" },
+  { name: "Integrations", href: "/integrations" },
+  { name: "Platform status", href: "/status" },
+];
 
 export function Footer() {
   return (
-    <footer
-      style={{ background: colors.inkBg, color: colors.textPrimary }}
-      aria-label="Site footer"
-    >
-      <div className="container mx-auto py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-8">
-          {/* Brand column */}
-          <div className="lg:col-span-2 flex flex-col items-center md:items-start text-center md:text-left">
-            <Link href="/" className="flex items-center gap-2.5 mb-4">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ background: colors.brass }}
-              >
-                <BookText size={16} style={{ color: colors.inkBg }} />
-              </div>
-              <span
-                className="text-xl font-medium tracking-tight"
-                style={{ color: colors.textPrimary, fontFamily: fonts.display }}
-              >
-                Scryme
-              </span>
-            </Link>
-            <p
-              className="text-sm leading-relaxed mb-6"
-              style={{ color: colors.textMuted, fontFamily: fonts.body }}
-            >
-              One ledger for CRM, Point of Sale, Inventory, and Finance — every
-              entry reconciled the moment it&apos;s made, so every team reads from
-              the same record.
-            </p>
-
-            <div className="w-full max-w-sm">
-              <p
-                className="text-xs font-semibold uppercase tracking-widest mb-3"
-                style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-              >
-                Product updates
-              </p>
-              <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 min-w-0 px-3 py-2 rounded-md text-sm outline-none"
-                  style={{
-                    background: colors.inkPanel,
-                    border: `1px solid ${colors.inkLine}`,
-                    color: colors.textPrimary,
-                    fontFamily: fonts.body,
-                  }}
-                  aria-label="Email for product updates"
-                />
-                <button
-                  type="submit"
-                  className="px-3 py-2 rounded-md transition-opacity hover:opacity-90 shrink-0"
-                  style={{ background: colors.brass, color: colors.inkBg }}
-                  aria-label="Subscribe"
-                >
-                  <ArrowRight size={15} />
-                </button>
-              </form>
-            </div>
+    <footer className="border-t border-inkLine bg-inkBg text-textPrimary" aria-label="Site footer">
+      <div className="container mx-auto py-16 sm:py-20">
+        <div className="grid gap-12 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
+          <div className="flex max-w-md flex-col items-start gap-5">
+            <Link href="/" className="flex items-center gap-3 font-sans text-xl font-semibold tracking-tight"><span className="flex size-9 items-center justify-center rounded-md border border-brassLine bg-brassDim text-brass"><BookOpen aria-hidden="true" /></span>Scryme</Link>
+            <p className="text-pretty font-sans text-base leading-relaxed text-textMuted">The commerce operating system for ambitious companies — connecting every location, channel, transaction, and team to one trusted record.</p>
+            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.16em] text-ledgerGreen"><ShieldCheck aria-hidden="true" /> Enterprise security and 99.9% uptime SLA</div>
+            <Link href="/contact" className="mt-2 inline-flex items-center gap-2 border-b border-brassLine pb-1 font-sans text-sm font-semibold text-brass">Speak with an enterprise specialist <ArrowUpRight data-icon="inline-end" aria-hidden="true" /></Link>
           </div>
-
-          {/* Products column — reuses the manifest's ticker codes */}
-          <div className="text-center md:text-left">
-            <h3
-              className="text-xs font-semibold uppercase tracking-widest mb-4"
-              style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-            >
-              Products
-            </h3>
-            <ul className="space-y-2.5">
-              {modules.map((m) => (
-                <li key={m.code}>
-                  <Link
-                    href={m.href}
-                    className="text-sm transition-colors inline-flex items-center gap-2 justify-center md:justify-start hover:opacity-100"
-                    style={{ color: colors.textMuted, fontFamily: fonts.body }}
-                  >
-                    <span
-                      className="text-[10px] font-semibold"
-                      style={{ color: m.accent, fontFamily: fonts.mono }}
-                    >
-                      {m.code}
-                    </span>
-                    {m.name.split(" ").slice(0, 2).join(" ")}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Other link columns */}
-          {Object.values(otherLinks).map((section) => (
-            <div key={section.title} className="text-center md:text-left">
-              <h3
-                className="text-xs font-semibold uppercase tracking-widest mb-4"
-                style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-              >
-                {section.title}
-              </h3>
-              <ul className="space-y-2.5">
-                {section.links.map((link) => (
-                  <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className="text-sm transition-colors"
-                      style={{
-                        color: colors.textMuted,
-                        fontFamily: fonts.body,
-                      }}
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          <FooterColumn title="Platform" links={modules.map((item) => ({ name: item.name, href: item.href }))} />
+          <FooterColumn title="Company" links={company} />
+          <FooterColumn title="Resources" links={resources} />
         </div>
       </div>
-
-      {/* Bottom bar */}
-      <div style={{ borderTop: `1px solid ${colors.inkLine}` }}>
-        <div className="container mx-auto py-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p
-            className="text-xs"
-            style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-          >
-            &copy; {new Date().getFullYear()} Scryme Technologies Ltd. All
-            rights reserved.
-          </p>
-          <div className="flex items-center gap-5">
-            {["Privacy", "Terms", "Security"].map((item) => (
-              <Link
-                key={item}
-                href={`/${item.toLowerCase()}`}
-                className="text-xs transition-colors"
-                style={{ color: colors.textFaint, fontFamily: fonts.body }}
-              >
-                {item}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
+      <div className="border-t border-inkLine"><div className="container mx-auto flex flex-col gap-4 py-6 font-mono text-[10px] uppercase tracking-wider text-textFaint sm:flex-row sm:items-center sm:justify-between"><p>&copy; {new Date().getFullYear()} Scryme Technologies. All rights reserved.</p><div className="flex gap-5"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/security">Security</Link></div></div></div>
     </footer>
   );
+}
+
+function FooterColumn({ title, links }: { title: string; links: Array<{ name: string; href: string }> }) {
+  return <div><h2 className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-textFaint">{title}</h2><ul className="mt-5 flex flex-col gap-3">{links.map((link) => <li key={link.name}><Link href={link.href} className="font-sans text-sm text-textMuted transition-colors hover:text-textPrimary">{link.name}</Link></li>)}</ul></div>;
 }

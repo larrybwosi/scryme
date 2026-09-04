@@ -17,12 +17,12 @@ class DeviceAuthViewModel(
     private val _uiState = MutableStateFlow<UiState<DeviceProvisionResponseDto>>(UiState.Idle)
     val uiState: StateFlow<UiState<DeviceProvisionResponseDto>> = _uiState.asStateFlow()
 
-    fun onQrCodeScanned(qrContent: String) {
+    fun onQrCodeScanned(qrContent: String, locationId: String? = null) {
         if (_uiState.value is UiState.Loading) return
 
         val sessionId = parsePairingSessionId(qrContent)
         if (!sessionId.isNullOrBlank()) {
-            authorizePairingSession(sessionId)
+            authorizePairingSession(sessionId, locationId)
             return
         }
 
@@ -35,7 +35,7 @@ class DeviceAuthViewModel(
         authorizeDevice(extractedToken)
     }
 
-    fun authorizePairingSession(sessionId: String) {
+    fun authorizePairingSession(sessionId: String, locationId: String? = null) {
         val trimmedId = sessionId.trim()
         if (trimmedId.isBlank()) {
             _uiState.value = UiState.Error("Pairing session ID cannot be empty.")
@@ -44,7 +44,7 @@ class DeviceAuthViewModel(
 
         viewModelScope.launch {
             _uiState.value = UiState.Loading
-            deviceRepository.authorizePairingSession(trimmedId)
+            deviceRepository.authorizePairingSession(trimmedId, locationId)
                 .onSuccess { response ->
                     _uiState.value = UiState.Success(response)
                 }

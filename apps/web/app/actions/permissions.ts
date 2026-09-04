@@ -1,8 +1,9 @@
 "use server";
 
-import { db } from "@repo/db";
+import { db, MemberRole } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
-import { ScrymeChatApiClient } from "@repo/chat";
+import { ScrymeChatApiClient, ScrymeChatAction } from "@repo/chat";
+import { revalidatePath } from "next/cache";
 
 export async function getCurrentUserContext() {
   const auth = await getServerAuth();
@@ -92,20 +93,43 @@ export async function requestPermissionsAction(data: {
         // Ignore conflicts if channel already exists
       }
 
+      const actions: ScrymeChatAction[] = [
+        {
+          id: `approve_perm:ADMIN:${auth.memberId}`,
+          label: "Approve (Grant Admin)",
+          type: "button",
+          style: "primary",
+          value: "ADMIN",
+        },
+        {
+          id: `approve_perm:MANAGER:${auth.memberId}`,
+          label: "Approve (Grant Manager)",
+          type: "button",
+          style: "secondary",
+          value: "MANAGER",
+        },
+        {
+          id: `decline_perm:${auth.memberId}`,
+          label: "Decline",
+          type: "button",
+          style: "danger",
+          value: "DECLINED",
+        },
+        {
+          id: `grant_${auth.memberId}`,
+          label: "Review Member Settings",
+          type: "button",
+          style: "primary",
+          value: `/staff/${auth.memberId}`,
+        },
+      ];
+
       const response = await scrymeClient.sendMessage(
         config.workspaceSlug,
         "admins",
         {
           content,
-          actions: [
-            {
-              id: `grant_${auth.memberId}`,
-              label: "Review Member Settings",
-              type: "button",
-              style: "primary",
-              value: `/staff/${auth.memberId}`,
-            }
-          ]
+          actions,
         }
       ).catch(async (err) => {
         // Fallback to sending to 'alerts' if 'admins' fails
@@ -115,15 +139,7 @@ export async function requestPermissionsAction(data: {
           "alerts",
           {
             content,
-            actions: [
-              {
-                id: `grant_${auth.memberId}`,
-                label: "Review Member Settings",
-                type: "button",
-                style: "primary",
-                value: `/staff/${auth.memberId}`,
-              }
-            ]
+            actions,
           }
         );
       });
@@ -156,4 +172,48 @@ export async function requestPermissionsAction(data: {
       message: "Scryme Chat integration not set up for this organization. Request was logged locally.",
     };
   }
+}
+
+export async function approvePermissionRequestAction(data: {
+  memberId: string;
+  roleToGrant: MemberRole;
+}) {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId || !auth.memberId) {
+    return { success: false, error: "Unauthorized: Please log in again." };
+  }
+
+  const currentMember = await db.member.findUnique({
+    where: { id: auth.memberId },
+  });
+
+  if (!currentMember || !["OWNER", "ADMIN"].includes(currentMember.role)) {
+    return {
+      success: false,
+      error: "Forbidden: Only admins can approve permission requests.",
+    };
+  }
+
+  const memberToUpdate = await db.member.findFirst({
+    where: { id: data.memberId, organizationId: auth.organizationId },
+  });
+
+  if (!memberToUpdate) {
+    return { success: false, error: "Target member not found." };
+  }
+
+  const updatedMember = await db.member.update({
+    where: { id: memberToUpdate.id },
+    data: {
+      role: data.roleToGrant,
+      membershipStatus: "ACTIVE",
+      isActive: true,
+    },
+  });
+
+  revalidatePath("/staff");
+  revalidatePath(`/staff/${data.memberId}`);
+  revalidatePath("/unauthorized");
+
+  return { success: true, member: updatedMember };
 }

@@ -205,9 +205,12 @@ model Organization {
   cycleCountConfigs  CycleCountConfig[]
   serialNumbers      SerialNumber[]
 
-  // Windmill Integration
-  windmillConfiguration WindmillConfiguration?
-  windmillExecutions    WindmillExecution[]
+  // Custom Workflows Automation Engine
+  workflowEngineDefinitions WorkflowEngineDefinition[]
+  workflowEngineExecutions  WorkflowEngineExecution[]
+  workflowEngineJobs        WorkflowEngineJob[]
+  workflowEngineAuditLogs   WorkflowEngineAuditLog[]
+  workflowEngineWebhooks    WorkflowEngineWebhook[]
 
   // Scryme Integration
   scrymeConfiguration ScrymeConfiguration?
@@ -789,8 +792,10 @@ model DeviceRegistry {
   id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  apiKeyId       String       @unique // One-to-one with the ApiKey it authenticates with
-  apiKey         ApiKey       @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  apiKeyId       String?      @unique // One-to-one with the ApiKey it authenticates with
+  apiKey         ApiKey?      @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  v3ApiClientId  String?      @unique
+  v3ApiClient    V3ApiClient? @relation(fields: [v3ApiClientId], references: [id], onDelete: Cascade)
 
   deviceName String
   deviceType DeviceType

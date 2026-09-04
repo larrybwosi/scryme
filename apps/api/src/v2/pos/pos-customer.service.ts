@@ -12,9 +12,6 @@ export class PosCustomerService {
   }
 
   async getCustomer(ctx: V2ApiContext, id: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
-    // Customer lacks a composite unique index on [id, organizationId].
-    // Using findUnique with non-unique filters risks ignoring the filter or IDOR.
     return this.prisma.client.customer.findFirst({
       where: { id, organizationId: ctx.organizationId },
     });

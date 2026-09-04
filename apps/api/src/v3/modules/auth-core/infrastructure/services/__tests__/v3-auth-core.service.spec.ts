@@ -41,6 +41,7 @@ describe("V3AuthCoreService", () => {
               member: {
                 findMany: vi.fn(),
                 findUnique: vi.fn(),
+                findFirst: vi.fn(),
               },
               v3ApiClient: {
                 findUnique: vi.fn(),
@@ -108,6 +109,7 @@ describe("V3AuthCoreService", () => {
       expect(result.id).toBe("member-1");
       expect(prisma.client.member.findUnique).toHaveBeenCalledWith({
         where: { organizationId_cardId: { organizationId: "org-1", cardId: "card-123" } },
+        include: { user: true },
       });
       expect(bcrypt.compare).toHaveBeenCalledWith("1234", "hash-1");
     });

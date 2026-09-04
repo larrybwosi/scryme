@@ -8,9 +8,9 @@ export enum TransactionStatus {
 
 export const OrderItemSchema = z.object({
   variantId: z.string(),
-  sellingUnitId: z.string().optional(),
+  sellingUnitId: z.string().optional().nullable(),
   quantity: z.number().int().positive('Quantity must be a positive integer'),
-  unitPrice: z.number().nonnegative('Price cannot be negative').optional(),
+  unitPrice: z.number().nonnegative('Price cannot be negative').optional().nullable(),
   _maxStock: z.number().optional(),
   _availableUnits: z.array(z.any()).optional(),
 }).refine((data) => {
@@ -31,26 +31,30 @@ export const OrderPaymentSchema = z.object({
 
 export const OrderFulfillmentSchema = z.object({
   type: z.nativeEnum(FulfillmentType),
-  shippingAddressId: z.string().optional(),
-  pickupLocationId: z.string().optional(),
-  tableNumber: z.string().optional(),
+  shippingAddressId: z.string().optional().nullable(),
+  pickupLocationId: z.string().optional().nullable(),
+  tableNumber: z.string().optional().nullable(),
 });
 
 export const CreateOrderSchema = z.object({
-  customerId: z.string(),
-  memberId: z.string().optional(),
+  customerId: z.string().optional().nullable(),
+  businessAccountId: z.string().optional().nullable(),
+  memberId: z.string().optional().nullable(),
   locationId: z.string(),
   type: z.nativeEnum(TransactionType).refine(type => type !== TransactionType.POS_SALE, {
     message: 'Use the POS sale endpoint for POS transactions',
   }),
   items: z.array(OrderItemSchema).min(1, 'Order must contain at least one item'),
   payments: z.array(OrderPaymentSchema).default([]),
-  fulfillment: OrderFulfillmentSchema,
+  fulfillment: OrderFulfillmentSchema.optional().nullable(),
   status: z.nativeEnum(TransactionStatus).default(TransactionStatus.PENDING_CONFIRMATION),
-  notes: z.string().optional(),
+  notes: z.string().optional().nullable(),
   shippingFee: z.number().nonnegative().default(0),
   discountAmount: z.number().nonnegative().default(0),
-  taxIds: z.array(z.string()).optional(),
+  taxIds: z.array(z.string()).optional().nullable(),
+}).refine(data => (data.customerId && data.customerId.trim().length > 0) || (data.businessAccountId && data.businessAccountId.trim().length > 0), {
+  message: "Either Customer or Business Account must be provided",
+  path: ["customerId"],
 });
 
 export type OrderFormValues = z.infer<typeof CreateOrderSchema>;
@@ -68,25 +72,23 @@ export const ProcessSaleInputSchema = z
     cartItems: z
       .array(
         z.object({
-          productId: z.string().min(1, 'Product ID cannot be empty'),
-          productName: z.string().optional(),
+          productId: z.string().optional().nullable(),
+          productName: z.string().optional().nullable(),
           variantId: z.string().min(1, 'Variant ID cannot be empty'),
-          variantName: z.string().optional(),
+          variantName: z.string().optional().nullable(),
           quantity: z
             .number()
             .int('Quantity must be a whole number')
             .positive('Quantity must be greater than zero'),
-          sellingUnitId: z
-            .string()
-            .min(1, 'Selling unit ID cannot be empty'),
-          sellingUnitName: z.string().optional(),
-          unitPrice: z.number().optional(),
+          sellingUnitId: z.string().optional().nullable(),
+          sellingUnitName: z.string().optional().nullable(),
+          unitPrice: z.number().optional().nullable(),
         })
       )
       .min(1, 'At least one cart item is required'),
 
     locationId: z.string().min(1, 'Location ID cannot be empty'),
-    memberId: z.string().optional(),
+    memberId: z.string().optional().nullable(),
     saleNumber: z.string().optional().nullable(),
     isWholesale: z.boolean().optional().default(false),
 
@@ -113,8 +115,8 @@ export const ProcessSaleInputSchema = z
     payments: z.array(z.object({
       method: z.nativeEnum(PaymentMethod),
       amount: z.number().nonnegative(),
-      reference: z.string().optional(), // e.g. M-Pesa Code, Gift Card Code
-      meta: z.record(z.string(), z.any()).optional()
+      reference: z.string().optional().nullable(), // e.g. M-Pesa Code, Gift Card Code
+      meta: z.record(z.string(), z.any()).optional().nullable()
     })).optional(),
 
     paymentStatus: z.nativeEnum(PaymentStatus),
@@ -129,18 +131,20 @@ export const ProcessSaleInputSchema = z
       .optional()
       .nullable(),
 
-    forcedImmediateSyncThreshold: z.number().optional(),
-    total: z.number().optional(),
+    forcedImmediateSyncThreshold: z.number().optional().nullable(),
+    total: z.number().optional().nullable(),
 
     amountReceived: z
       .number()
       .nonnegative('Amount received cannot be negative')
-      .optional(),
+      .optional()
+      .nullable(),
 
     change: z
       .number()
       .nonnegative('Change amount cannot be negative')
-      .optional(),
+      .optional()
+      .nullable(),
 
     discountAmount: z
       .number()
@@ -159,6 +163,11 @@ export const ProcessSaleInputSchema = z
     notes: z.string().max(500, 'Notes cannot exceed 500 characters').optional().nullable(),
 
     enableStockTracking: z.boolean(),
+
+    cashierName: z.string().optional().nullable(),
+    accountRef: z.string().optional().nullable(),
+    prescriptionId: z.string().optional().nullable(),
+    doctorName: z.string().optional().nullable(),
 
     taxIds: z
       .array(z.string().min(1, 'Tax ID cannot be empty'))

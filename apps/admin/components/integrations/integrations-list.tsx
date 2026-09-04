@@ -1,12 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Plus, Pencil, Trash2, Plug, Loader2 } from "lucide-react"
+import { Plus, Pencil, Trash2, Plug, Loader2, Play } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
 import { Badge } from "@repo/ui/components/ui/badge"
+import {
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +22,8 @@ import {
 } from "@repo/ui/components/ui/alert-dialog"
 import {
   deleteIntegrationDefinition,
+  testScrymeChatConnection,
+  testHermesConnection,
 } from "@/app/actions/integrations"
 import {
   IntegrationDefinitionDialog,
@@ -26,30 +31,53 @@ import {
 } from "./integration-definition-dialog"
 import Image from "next/image"
 
-
 export function IntegrationsList({
   integrations,
+  isLoading,
 }: {
   integrations: IntegrationDefinitionRow[]
+  isLoading?: boolean
 }) {
-  const router = useRouter()
+  const queryClient = useQueryClient()
   const [createOpen, setCreateOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<IntegrationDefinitionRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<IntegrationDefinitionRow | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const [testingSlug, setTestingSlug] = useState<string | null>(null)
 
-  async function handleDelete() {
-    if (!deleteTarget) return
-    setIsDeleting(true)
-    try {
-      await deleteIntegrationDefinition(deleteTarget.id)
-      toast.success(`Integration ${deleteTarget.name} deleted`)
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteIntegrationDefinition(id),
+    onSuccess: (_, id) => {
+      const name = deleteTarget?.name || "Integration"
+      toast.success(`${name} deleted`)
       setDeleteTarget(null)
-      router.refresh()
-    } catch (error) {
+      queryClient.invalidateQueries({ queryKey: ["integration-definitions"] })
+    },
+    onError: (error) => {
       toast.error(error instanceof Error ? error.message : "Failed to delete integration")
+    },
+  })
+
+  async function handleTestDefinition(slug: string, name: string) {
+    setTestingSlug(slug)
+    try {
+      let res: { success: boolean; message: string }
+      if (slug === "scryme-chat") {
+        res = await testScrymeChatConnection()
+      } else if (slug === "hermes-agent") {
+        res = await testHermesConnection()
+      } else {
+        res = { success: true, message: `Tested connection definition for ${name}.` }
+      }
+
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test integration definition")
     } finally {
-      setIsDeleting(false)
+      setTestingSlug(null)
     }
   }
 
@@ -62,7 +90,22 @@ export function IntegrationsList({
         </Button>
       </div>
 
-      {integrations.length === 0 ? (
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse border-border bg-card p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="size-9 bg-muted rounded-md" />
+                <div className="space-y-1.5 flex-1">
+                  <div className="h-4 bg-muted rounded w-1/2" />
+                  <div className="h-3 bg-muted rounded w-1/3" />
+                </div>
+              </div>
+              <div className="h-12 bg-muted rounded w-full" />
+            </Card>
+          ))}
+        </div>
+      ) : integrations.length === 0 ? (
         <Card className="border-border bg-card">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             No integration definitions created yet. Add one to allow organizations to connect external services.
@@ -108,20 +151,36 @@ export function IntegrationsList({
                 {item.description ? (
                   <p className="text-sm text-muted-foreground">{item.description}</p>
                 ) : null}
-                <div className="mt-auto flex justify-end gap-2 pt-2">
-                  <Button variant="ghost" size="sm" className="gap-2" onClick={() => setEditingItem(item)}>
-                    <Pencil className="size-3.5" aria-hidden="true" />
-                    Edit
-                  </Button>
+                <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="gap-2 text-destructive hover:text-destructive"
-                    onClick={() => setDeleteTarget(item)}
+                    className="gap-1.5 text-xs"
+                    disabled={testingSlug === item.slug}
+                    onClick={() => handleTestDefinition(item.slug, item.name)}
                   >
-                    <Trash2 className="size-3.5" aria-hidden="true" />
-                    Delete
+                    {testingSlug === item.slug ? (
+                      <Loader2 className="size-3 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Play className="size-3 text-emerald-500" aria-hidden="true" />
+                    )}
+                    Test
                   </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => setEditingItem(item)}>
+                      <Pencil className="size-3.5" aria-hidden="true" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                      onClick={() => setDeleteTarget(item)}
+                    >
+                      <Trash2 className="size-3.5" aria-hidden="true" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -131,12 +190,20 @@ export function IntegrationsList({
 
       <IntegrationDefinitionDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open)
+          if (!open) queryClient.invalidateQueries({ queryKey: ["integration-definitions"] })
+        }}
       />
       <IntegrationDefinitionDialog
         integration={editingItem}
         open={!!editingItem}
-        onOpenChange={(open) => !open && setEditingItem(null)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingItem(null)
+            queryClient.invalidateQueries({ queryKey: ["integration-definitions"] })
+          }
+        }}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
@@ -148,16 +215,16 @@ export function IntegrationsList({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
                 e.preventDefault()
-                handleDelete()
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id)
               }}
-              disabled={isDeleting}
+              disabled={deleteMutation.isPending}
               className="gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+              {deleteMutation.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

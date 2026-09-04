@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import React from "react";
 import { getProduct, getCategories } from "../../../actions/inventory";
 import { getService, getServiceCategories } from "../../../actions/services";
@@ -53,3 +54,8 @@ export default async function HybridCmsPage({
     />
   );
 }
+
+export const metadata: Metadata = {
+  title: "CMS Content Details",
+  description: "Edit CMS content, promotional text, and media entries.",
+};

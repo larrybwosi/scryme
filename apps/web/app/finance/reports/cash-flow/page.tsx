@@ -1,5 +1,12 @@
+import { Metadata } from "next";
 import { PageHeader } from "../../../../components/page-header";
 import { ArrowRightLeft } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Cash Flow Statement",
+  description: "Analyze operating, investing, and financing cash flows across custom date ranges.",
+};
+
 
 export default function CashFlowPage() {
   return (

@@ -1,85 +1,58 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RealtimeService } from '../realtime.service';
-import { AblyRealtimeProvider } from '../ably.provider';
 import { SocketIORealtimeProvider } from '../socketio.provider';
-
-vi.mock('../ably.provider', () => {
-  return {
-    AblyRealtimeProvider: vi.fn().mockImplementation(() => ({
-      publish: vi.fn(),
-      getPresence: vi.fn(),
-      enterPresence: vi.fn(),
-      leavePresence: vi.fn(),
-      getHistory: vi.fn(),
-    })),
-  };
-});
 
 vi.mock('../socketio.provider', () => {
   return {
     SocketIORealtimeProvider: vi.fn().mockImplementation(() => ({
-      publish: vi.fn(),
-      getPresence: vi.fn(),
-      enterPresence: vi.fn(),
-      leavePresence: vi.fn(),
-      getHistory: vi.fn(),
+      publish: vi.fn().mockResolvedValue(undefined),
+      getPresence: vi.fn().mockResolvedValue([]),
+      enterPresence: vi.fn().mockResolvedValue(undefined),
+      leavePresence: vi.fn().mockResolvedValue(undefined),
+      getHistory: vi.fn().mockResolvedValue([]),
     })),
   };
 });
 
 describe('RealtimeService', () => {
-  const originalEnv = process.env;
+  let service: RealtimeService;
 
   beforeEach(() => {
-    vi.resetModules();
-    process.env = { ...originalEnv };
+    vi.clearAllMocks();
+    service = new RealtimeService();
   });
 
-  afterEach(() => {
-    process.env = originalEnv;
-  });
-
-  it('should initialize with AblyRealtimeProvider by default', () => {
-    delete process.env.REALTIME_PROVIDER;
-    const service = new RealtimeService();
-    expect(AblyRealtimeProvider).toHaveBeenCalled();
-  });
-
-  it('should initialize with SocketIORealtimeProvider when REALTIME_PROVIDER is socketio', () => {
-    process.env.REALTIME_PROVIDER = 'socketio';
-    const service = new RealtimeService();
+  it('should initialize with SocketIORealtimeProvider', () => {
     expect(SocketIORealtimeProvider).toHaveBeenCalled();
   });
 
-  it('should delegate publish to the provider', async () => {
-    process.env.REALTIME_PROVIDER = 'socketio';
-    const service = new RealtimeService();
-    const provider = (service as any).provider;
-
-    await service.publish('test-channel', 'test-event', { foo: 'bar' });
-    expect(provider.publish).toHaveBeenCalledWith('test-channel', 'test-event', { foo: 'bar' });
+  it('should delegate publish to provider', async () => {
+    await service.publish('test-channel', 'test-event', { data: 'test' });
+    const providerInstance = (service as any).provider;
+    expect(providerInstance.publish).toHaveBeenCalledWith('test-channel', 'test-event', { data: 'test' });
   });
 
-  it('should delegate presence methods to the provider', async () => {
-    process.env.REALTIME_PROVIDER = 'ably';
-    const service = new RealtimeService();
-    const provider = (service as any).provider;
-
-    await service.enterPresence('chan', 'client1', { name: 'Jules' });
-    expect(provider.enterPresence).toHaveBeenCalledWith('chan', 'client1', { name: 'Jules' });
-
-    await service.getPresence('chan');
-    expect(provider.getPresence).toHaveBeenCalledWith('chan');
-
-    await service.leavePresence('chan', 'client1');
-    expect(provider.leavePresence).toHaveBeenCalledWith('chan', 'client1');
+  it('should delegate getPresence to provider', async () => {
+    await service.getPresence('test-channel');
+    const providerInstance = (service as any).provider;
+    expect(providerInstance.getPresence).toHaveBeenCalledWith('test-channel');
   });
 
-  it('should delegate getHistory to the provider', async () => {
-    const service = new RealtimeService();
-    const provider = (service as any).provider;
+  it('should delegate enterPresence to provider', async () => {
+    await service.enterPresence('test-channel', 'client-1', { name: 'User 1' });
+    const providerInstance = (service as any).provider;
+    expect(providerInstance.enterPresence).toHaveBeenCalledWith('test-channel', 'client-1', { name: 'User 1' });
+  });
 
-    await service.getHistory('chan', 50);
-    expect(provider.getHistory).toHaveBeenCalledWith('chan', 50);
+  it('should delegate leavePresence to provider', async () => {
+    await service.leavePresence('test-channel', 'client-1');
+    const providerInstance = (service as any).provider;
+    expect(providerInstance.leavePresence).toHaveBeenCalledWith('test-channel', 'client-1');
+  });
+
+  it('should delegate getHistory to provider', async () => {
+    await service.getHistory('test-channel', 10);
+    const providerInstance = (service as any).provider;
+    expect(providerInstance.getHistory).toHaveBeenCalledWith('test-channel', 10);
   });
 });

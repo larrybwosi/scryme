@@ -5,12 +5,6 @@ export class InsightService {
   constructor(private prisma: PrismaClient) {}
 
   async getCustomerInsights(organizationId: string, customerId: string) {
-    /**
-     * ⚡ Bolt Performance Optimization:
-     * 1. Executing independent transaction and crmRecord database queries concurrently using Promise.all
-     *    reduces database latency from 2 serial network roundtrips down to 1 concurrent roundtrip (~50% latency reduction).
-     * 2. Compute lastPurchase once when transactions exist, avoiding redundant array iterations and mapping calls.
-     */
     const [transactions, crmRecord] = await Promise.all([
       // 1. Get Transaction Data
       this.prisma.transaction.findMany({

@@ -317,19 +317,64 @@ impl AuthState {
 
 // --- API Response Models ---
 
-// The nested login data containing the actual payload
-#[derive(Deserialize)]
-struct ServerLoginResponse {
-    token: String,
-    member: MemberProfile,
-    #[serde(rename = "restoredSession")]
-    restored_session: Option<bool>,
+#[derive(Clone, Debug)]
+pub struct ServerLoginResponsePayload {
+    pub token: String,
+    pub member: MemberProfile,
+    pub restored_session: bool,
 }
 
-// The V2 API wrapper for login
-#[derive(Deserialize)]
-struct LoginApiWrapper {
-    data: ServerLoginResponse,
+pub fn parse_login_response(text: &str) -> Result<ServerLoginResponsePayload, String> {
+    let json: serde_json::Value = serde_json::from_str(text)
+        .map_err(|e| format!("JSON parse error: {} | Raw: {}", e, text))?;
+
+    // Determine target object (either json.data or json itself)
+    let target = if json.get("data").is_some() && !json["data"].is_null() {
+        &json["data"]
+    } else {
+        &json
+    };
+
+    // Check if accessToken is a nested payload object
+    let (token_val, member_val, restored_val) = if let Some(access_token_obj) = target.get("accessToken").and_then(|v| v.as_object()) {
+        let nested_token = access_token_obj.get("token")
+            .or_else(|| access_token_obj.get("accessToken"));
+        let nested_member = access_token_obj.get("member")
+            .or_else(|| target.get("member"));
+        let nested_restored = access_token_obj.get("restoredSession")
+            .or_else(|| access_token_obj.get("restored_session"))
+            .or_else(|| target.get("restoredSession"))
+            .or_else(|| target.get("restored_session"));
+        (nested_token, nested_member, nested_restored)
+    } else {
+        let direct_token = target.get("token")
+            .or_else(|| target.get("accessToken"));
+        let direct_member = target.get("member");
+        let direct_restored = target.get("restoredSession")
+            .or_else(|| target.get("restored_session"));
+        (direct_token, direct_member, direct_restored)
+    };
+
+    let token = token_val
+        .and_then(|t| t.as_str())
+        .ok_or_else(|| format!("Missing field `token` | Raw: {}", text))?
+        .to_string();
+
+    let member_json = member_val
+        .ok_or_else(|| format!("Missing field `member` | Raw: {}", text))?;
+
+    let member: MemberProfile = serde_json::from_value(member_json.clone())
+        .map_err(|e| format!("Failed to parse `member`: {} | Raw: {}", e, text))?;
+
+    let restored_session = restored_val
+        .and_then(|r| r.as_bool())
+        .unwrap_or(false);
+
+    Ok(ServerLoginResponsePayload {
+        token,
+        member,
+        restored_session,
+    })
 }
 
 #[derive(Serialize)]
@@ -373,6 +418,79 @@ pub async fn set_device_config(
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_login_response_v3_direct() {
+        let raw = r#"{
+            "success": true,
+            "data": {
+                "token": "token_123",
+                "accessToken": "token_123",
+                "member": {
+                    "id": "mem_1",
+                    "name": "Jane Doe",
+                    "role": "OWNER",
+                    "cardId": "1234"
+                },
+                "restoredSession": false
+            },
+            "timestamp": "2026-09-03T05:58:17.487Z"
+        }"#;
+
+        let parsed = parse_login_response(raw).unwrap();
+        assert_eq!(parsed.token, "token_123");
+        assert_eq!(parsed.member.id, "mem_1");
+        assert_eq!(parsed.member.name, "Jane Doe");
+        assert_eq!(parsed.restored_session, false);
+    }
+
+    #[test]
+    fn test_parse_login_response_v3_nested_access_token() {
+        let raw = r#"{
+            "success": true,
+            "data": {
+                "accessToken": {
+                    "token": "token_abc",
+                    "accessToken": "token_abc",
+                    "member": {
+                        "id": "mem_2",
+                        "name": "Dean James",
+                        "role": "OWNER",
+                        "cardId": "1234"
+                    }
+                }
+            },
+            "timestamp": "2026-09-03T05:58:17.487Z"
+        }"#;
+
+        let parsed = parse_login_response(raw).unwrap();
+        assert_eq!(parsed.token, "token_abc");
+        assert_eq!(parsed.member.id, "mem_2");
+        assert_eq!(parsed.member.name, "Dean James");
+    }
+
+    #[test]
+    fn test_parse_login_response_flat() {
+        let raw = r#"{
+            "token": "token_xyz",
+            "member": {
+                "id": "mem_3",
+                "name": "Bob Smith"
+            },
+            "restoredSession": true
+        }"#;
+
+        let parsed = parse_login_response(raw).unwrap();
+        assert_eq!(parsed.token, "token_xyz");
+        assert_eq!(parsed.member.id, "mem_3");
+        assert_eq!(parsed.member.name, "Bob Smith");
+        assert_eq!(parsed.restored_session, true);
+    }
+}
+
 #[tauri::command]
 pub async fn login_member(
     app: AppHandle,
@@ -411,7 +529,25 @@ pub async fn login_member(
         .map_err(|e| format!("Failed to read response body: {}", e))?;
 
     if !status.is_success() {
-        let error_msg = format!("Login failed: {} - {}", status, text);
+        let error_msg = if let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) {
+            if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
+                msg.to_string()
+            } else if let Some(msg) = json.get("error").and_then(|e| {
+                if e.is_string() {
+                    e.as_str()
+                } else {
+                    e.get("message").and_then(|m| m.as_str())
+                }
+            }) {
+                msg.to_string()
+            } else if let Some(msg) = json.get("data").and_then(|d| d.get("message")).and_then(|m| m.as_str()) {
+                msg.to_string()
+            } else {
+                format!("Login failed: {} - {}", status, text)
+            }
+        } else {
+            format!("Login failed: {} - {}", status, text)
+        };
         error!("[AUTH] {}", error_msg);
 
         // Audit failed login attempt
@@ -428,22 +564,19 @@ pub async fn login_member(
         return Err(error_msg);
     }
 
-    // 3. Parse and Store Token Internally utilizing the new wrapper
-    let wrapper: LoginApiWrapper = serde_json::from_str(&text)
-        .map_err(|e| format!("JSON parse error: {} | Raw: {}", e, text))?;
-
-    let data = wrapper.data;
+    // 3. Parse and Store Token Internally utilizing robust parsing logic
+    let payload = parse_login_response(&text)?;
 
     // CRITICAL: Token stays here, never returned to UI
     {
         let mut sessions = state.sessions.lock().map_err(|_| "Lock error")?;
-        sessions.insert(data.member.id.clone(), Session {
-            token: data.token.clone(),
-            user: data.member.clone(),
+        sessions.insert(payload.member.id.clone(), Session {
+            token: payload.token.clone(),
+            user: payload.member.clone(),
         });
 
         let mut active_id = state.active_member_id.lock().map_err(|_| "Lock error")?;
-        *active_id = Some(data.member.id.clone());
+        *active_id = Some(payload.member.id.clone());
     }
 
     // Audit successful login
@@ -452,15 +585,15 @@ pub async fn login_member(
         crate::audit_store::AuditLevel::Info,
         "LOGIN",
         None,
-        Some(data.member.name.clone()),
+        Some(payload.member.name.clone()),
         location_id,
         None,
-        serde_json::json!({ "card_id": card_id, "role": data.member.role }),
+        serde_json::json!({ "card_id": card_id, "role": payload.member.role }),
     );
 
     Ok(CheckInResult {
-        member: data.member,
-        restored_session: data.restored_session.unwrap_or(false),
+        member: payload.member,
+        restored_session: payload.restored_session,
     })
 }
 
@@ -811,6 +944,98 @@ pub async fn update_base_url(state: State<'_, AuthState>, base_url: String) -> R
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn create_pairing_session_command(
+    state: State<'_, AuthState>,
+) -> Result<serde_json::Value, String> {
+    let request = state.build_request(
+        reqwest::Method::POST,
+        "api/v3/pos/pairing/session",
+    )?;
+
+    let res = request
+        .send()
+        .await
+        .map_err(|e| format!("Network error creating pairing session: {}", e))?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(format!("Failed to create pairing session: {} - {}", status, err_body));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| format!("Invalid JSON response: {}", e))?;
+
+    Ok(data)
+}
+
+#[tauri::command]
+pub async fn get_pairing_session_status_command(
+    state: State<'_, AuthState>,
+    session_id: String,
+) -> Result<serde_json::Value, String> {
+    let path = format!("api/v3/pos/pairing/session/{}/status", session_id);
+    let request = state.build_request(reqwest::Method::GET, &path)?;
+
+    let res = request
+        .send()
+        .await
+        .map_err(|e| format!("Network error checking session status: {}", e))?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(format!("Failed to check session status: {} - {}", status, err_body));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| format!("Invalid JSON response: {}", e))?;
+
+    Ok(data)
+}
+
+#[tauri::command]
+pub async fn authorize_pairing_session_command(
+    state: State<'_, AuthState>,
+    session_id: String,
+    location_id: Option<String>,
+    device_name: Option<String>,
+    device_type: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let path = format!("api/v3/pos/pairing/session/{}/authorize", session_id);
+    let mut request = state.build_request(reqwest::Method::POST, &path)?;
+
+    let body = serde_json::json!({
+        "locationId": location_id,
+        "deviceName": device_name,
+        "deviceType": device_type,
+    });
+    request = request.json(&body);
+
+    let res = request
+        .send()
+        .await
+        .map_err(|e| format!("Network error authorizing session: {}", e))?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(format!("Failed to authorize session: {} - {}", status, err_body));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(|e| format!("Invalid JSON response: {}", e))?;
+
+    Ok(data)
 }
 
 #[tauri::command]

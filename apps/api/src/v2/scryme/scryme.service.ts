@@ -385,7 +385,7 @@ export class ScrymeService {
         this.prisma.client as any
       ).scrymeConfiguration.findFirst({
         where: { workspaceSlug },
-        include: { organization: { include: { windmillConfiguration: true } } },
+        include: { organization: true },
       });
 
       if (!config) {
@@ -393,6 +393,82 @@ export class ScrymeService {
           `No organization found for Scryme workspace: ${workspaceSlug}`,
         );
         return { status: "ignored" };
+      }
+
+      // Handle Permission Request interactive actions
+      if (
+        action.id.startsWith("approve_perm:") ||
+        action.id.startsWith("decline_perm:")
+      ) {
+        const parts = action.id.split(":");
+        const actionType = parts[0];
+
+        if (actionType === "approve_perm") {
+          // Format: approve_perm:ROLE:memberId
+          const roleToGrant = parts[1] as any;
+          const targetMemberId = parts[2];
+
+          // SECURITY (Sentinel): Use findFirst scoped to organizationId to prevent cross-tenant IDOR
+          const targetMember = await this.prisma.client.member.findFirst({
+            where: { id: targetMemberId, organizationId: config.organizationId },
+          });
+
+          if (!targetMember) {
+            this.logger.warn(
+              `Target member ${targetMemberId} not found or unauthorized for org ${config.organizationId}`,
+            );
+            throw new BadRequestException("Target member not found or unauthorized");
+          }
+
+          // Grant access: update member role and set membershipStatus to ACTIVE & isActive to true
+          await this.prisma.client.member.update({
+            where: { id: targetMember.id },
+            data: {
+              role: roleToGrant,
+              membershipStatus: "ACTIVE",
+              isActive: true,
+            },
+          });
+
+          // Update message in Scryme Chat to remove actions and display approval note
+          await this.scrymeClient.updateMessage(
+            workspaceSlug,
+            message.channelSlug || message.channelId,
+            message.id,
+            {
+              content: `${message.content}\n\n✅ *Permission request APPROVED by ${user.name || user.email} (Role upgraded to ${roleToGrant}). Access granted!*`,
+              actions: [],
+            },
+          );
+
+          return {
+            status: "success",
+            message: `Permission request approved. Member ${targetMember.id} role set to ${roleToGrant}`,
+          };
+        } else if (actionType === "decline_perm") {
+          const targetMemberId = parts[1];
+
+          // SECURITY (Sentinel): Verify member belongs to org
+          const targetMember = await this.prisma.client.member.findFirst({
+            where: { id: targetMemberId, organizationId: config.organizationId },
+          });
+
+          if (!targetMember) {
+            throw new BadRequestException("Target member not found or unauthorized");
+          }
+
+          await this.scrymeClient.updateMessage(
+            workspaceSlug,
+            message.channelSlug || message.channelId,
+            message.id,
+            {
+              content: `${message.content}\n\n❌ *Permission request DECLINED by ${user.name || user.email}*`,
+              actions: [],
+            },
+          );
+
+          return { status: "success", message: "Permission request declined" };
+        }
       }
 
       if (
@@ -486,30 +562,19 @@ export class ScrymeService {
         }
       }
 
-      if (!config.organization.windmillConfiguration) {
-        this.logger.warn(
-          `No Windmill config found for Scryme workspace: ${workspaceSlug}`,
-        );
-        return { status: "ignored" };
-      }
-
       // Enterprise: Handle generic HITL (Human-in-the-loop) actions
       if (action.id.startsWith("wm_resume:")) {
         const resumeToken = action.value;
         const [_, jobId] = action.id.split(":");
 
-        this.logger.log(`Resuming Windmill job ${jobId} via Scryme action`);
+        this.logger.log(`Resuming automation execution ${jobId} via Scryme action`);
 
-        // In a real scenario, this would call Windmill's resume endpoint
-        // For now, we update the execution record if it exists
-        // SECURITY (Sentinel): Using findFirst instead of findUnique because we must scope the lookup
-        // to the authorized tenant (config.organizationId) to prevent IDOR / cross-tenant resume actions.
-        const execution = await this.prisma.client.windmillExecution.findFirst({
-          where: { jobId, organizationId: config.organizationId },
+        const execution = await (this.prisma.client as any).workflowEngineExecution.findFirst({
+          where: { id: jobId, organizationId: config.organizationId },
         });
 
         if (execution) {
-          await this.prisma.client.windmillExecution.update({
+          await (this.prisma.client as any).workflowEngineExecution.update({
             where: { id: execution.id },
             data: {
               status: "RUNNING",
@@ -534,22 +599,20 @@ export class ScrymeService {
           },
         );
 
-        return { status: "success", message: "Windmill job resumed" };
+        return { status: "success", message: "Automation job resumed" };
       }
 
-      // Trigger Windmill workflow for unknown actions
+      // Trigger workflow execution for unknown actions
       const scriptPath =
         process.env.SCRYME_ACTION_WORKFLOW_PATH ||
         "f/dealio/scryme_action_handler";
 
       const secureRandomSuffix = crypto.randomBytes(4).toString("hex");
-      await (this.prisma.client as any).windmillExecution.create({
+      await (this.prisma.client as any).workflowEngineExecution.create({
         data: {
           organizationId: config.organizationId,
-          configId: config.organization.windmillConfiguration.id,
-          jobId: `scryme_${Date.now()}_${secureRandomSuffix}`,
-          scriptPath,
-          dealioEventType: "SCRYME_ACTION",
+          definitionId: scriptPath,
+          triggerEvent: "SCRYME_ACTION",
           correlationId: message.id,
           status: "PENDING",
           result: {
@@ -562,7 +625,7 @@ export class ScrymeService {
       });
 
       this.logger.log(
-        `Queued Windmill execution for Scryme action: ${action.id} in workspace ${workspaceSlug}`,
+        `Queued execution for Scryme action: ${action.id} in workspace ${workspaceSlug}`,
       );
       return { status: "success" };
     }

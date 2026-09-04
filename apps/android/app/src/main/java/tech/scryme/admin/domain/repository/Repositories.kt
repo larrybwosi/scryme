@@ -40,7 +40,21 @@ interface AnalyticsRepository {
 }
 
 interface AnnouncementRepository {
-    suspend fun broadcastAnnouncement(title: String, message: String, targetBranchId: String? = null, severity: String = "INFO"): Result<Unit>
+    suspend fun broadcastAnnouncement(
+        title: String,
+        message: String,
+        targetBranchId: String? = null,
+        targetMemberId: String? = null,
+        channelSlug: String? = null,
+        severity: String = "INFO"
+    ): Result<Unit>
+
+    suspend fun sendMessageToMember(
+        memberId: String,
+        title: String,
+        message: String,
+        type: String = "DIRECT_MESSAGE"
+    ): Result<Unit>
 }
 
 interface ExpenseRepository {
@@ -52,5 +66,11 @@ interface ExpenseRepository {
 
 interface DeviceRepository {
     suspend fun provisionDevice(setupToken: String): Result<DeviceProvisionResponseDto>
-    suspend fun authorizePairingSession(sessionId: String): Result<DeviceProvisionResponseDto>
+    suspend fun authorizePairingSession(sessionId: String, locationId: String? = null): Result<DeviceProvisionResponseDto>
+}
+
+interface ShiftsRepository {
+    suspend fun getShifts(memberId: String? = null, dayOfWeek: Int? = null, isActive: Boolean? = null): Result<List<StaffShiftDto>>
+    suspend fun createShift(memberId: String, dayOfWeek: Int, startTime: String, endTime: String): Result<StaffShiftDto>
+    suspend fun addBreak(shiftId: String, startTime: String, endTime: String, description: String? = null): Result<StaffBreakDto>
 }

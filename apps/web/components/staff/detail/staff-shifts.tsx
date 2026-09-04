@@ -278,33 +278,33 @@ export function StaffMemberShiftsTab({
 
   return (
     <div className="space-y-6">
-      <Card className="border-none shadow-sm bg-white">
+      <Card className="border-border shadow-sm bg-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-lg font-bold">Weekly Shifts Schedule</CardTitle>
-            <CardDescription className="text-xs text-zinc-500">
+            <CardTitle className="text-lg font-bold text-foreground">Weekly Shifts Schedule</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">
               Manage weekly recurring shifts and break allocations for {member.user.name || "this member"}.
             </CardDescription>
           </div>
           {canManage && (
             <Button
               onClick={handleOpenAddShift}
-              className="gap-2 bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white text-xs h-9"
+              className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs h-9"
             >
               <Plus size={14} />
               <span>Add Shift</span>
             </Button>
           )}
         </CardHeader>
-        <CardContent className="p-0 border-t border-zinc-100">
+        <CardContent className="p-0 border-t border-border">
           <Table>
-            <TableHeader className="bg-gray-50/50">
+            <TableHeader className="bg-muted/30">
               <TableRow>
-                <TableHead>Day of Week</TableHead>
-                <TableHead>Shift Hours</TableHead>
-                <TableHead>Breaks</TableHead>
-                <TableHead>Status</TableHead>
-                {canManage && <TableHead className="text-right w-[150px]">Actions</TableHead>}
+                <TableHead className="text-muted-foreground">Day of Week</TableHead>
+                <TableHead className="text-muted-foreground">Shift Hours</TableHead>
+                <TableHead className="text-muted-foreground">Breaks</TableHead>
+                <TableHead className="text-muted-foreground">Status</TableHead>
+                {canManage && <TableHead className="text-right w-[150px] text-muted-foreground">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -312,22 +312,22 @@ export function StaffMemberShiftsTab({
                 <TableRow>
                   <TableCell
                     colSpan={canManage ? 5 : 4}
-                    className="text-center py-10 text-gray-500 text-sm"
+                    className="text-center py-10 text-muted-foreground text-sm"
                   >
                     No shifts assigned to this staff member yet.
                   </TableCell>
                 </TableRow>
               ) : (
                 sortedShifts.map((shift) => (
-                  <TableRow key={shift.id} className="group hover:bg-gray-50/50">
+                  <TableRow key={shift.id} className="group hover:bg-muted/30">
                     <TableCell>
-                      <Badge variant="secondary" className="font-semibold bg-zinc-100">
+                      <Badge variant="secondary" className="font-semibold bg-muted text-foreground">
                         {DAYS_OF_WEEK.find((d) => d.value === shift.dayOfWeek)?.label}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-800">
-                        <Clock className="h-3.5 w-3.5 text-zinc-400" />
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                        <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                         <span>
                           {shift.startTime} – {shift.endTime}
                         </span>
@@ -339,7 +339,7 @@ export function StaffMemberShiftsTab({
                           <Badge
                             key={b.id}
                             variant="outline"
-                            className="bg-orange-50/50 text-orange-700 border-orange-200/60 text-[10px] py-0 px-2 flex items-center gap-1"
+                            className="bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-500/20 text-[10px] py-0 px-2 flex items-center gap-1"
                           >
                             <Coffee className="h-2.5 w-2.5" />
                             <span>
@@ -352,7 +352,7 @@ export function StaffMemberShiftsTab({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenBreaks(shift)}
-                            className="h-6 px-1.5 text-[10px] text-zinc-500 hover:text-orange-600 gap-0.5 hover:bg-orange-50"
+                            className="h-6 px-1.5 text-[10px] text-muted-foreground hover:text-orange-600 dark:hover:text-orange-400 gap-0.5 hover:bg-orange-500/10"
                           >
                             <Plus className="h-3 w-3" />
                             <span>Manage</span>
@@ -364,8 +364,8 @@ export function StaffMemberShiftsTab({
                       <Badge
                         className={
                           shift.isActive
-                            ? "bg-green-100 text-green-700 hover:bg-green-100"
-                            : "bg-gray-100 text-gray-500 hover:bg-gray-100"
+                            ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20"
+                            : "bg-muted text-muted-foreground hover:bg-muted"
                         }
                       >
                         {shift.isActive ? "Active" : "Inactive"}
@@ -378,15 +378,15 @@ export function StaffMemberShiftsTab({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleOpenEditShift(shift)}
-                            className="h-8 w-8 p-0 hover:bg-zinc-100"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                           >
-                            <Edit className="h-4 w-4 text-zinc-600" />
+                            <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteShift(shift.id)}
-                            className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
+                            className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -403,19 +403,19 @@ export function StaffMemberShiftsTab({
 
       {/* ADD/EDIT SHIFT DIALOG */}
       <Dialog open={isShiftModalOpen} onOpenChange={setIsShiftModalOpen}>
-        <DialogContent className="max-w-md bg-white">
+        <DialogContent className="max-w-md bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold">
+            <DialogTitle className="text-lg font-bold text-foreground">
               {editingShift ? "Edit Staff Shift" : "Add New Staff Shift"}
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500">
+            <DialogDescription className="text-xs text-muted-foreground">
               Set up recurring weekly shifts. Times must not overlap.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSaveShift} className="space-y-4 pt-2">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-xs rounded-lg flex items-center gap-2">
+              <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-lg flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -423,12 +423,12 @@ export function StaffMemberShiftsTab({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-700">Day of Week</label>
+                <label className="text-xs font-semibold text-foreground">Day of Week</label>
                 <Select
                   value={shiftFormData.dayOfWeek}
                   onValueChange={(val) => setShiftFormData((prev) => ({ ...prev, dayOfWeek: val }))}
                 >
-                  <SelectTrigger className="border-zinc-200">
+                  <SelectTrigger className="border-border bg-background text-foreground">
                     <SelectValue placeholder="Day" />
                   </SelectTrigger>
                   <SelectContent>
@@ -442,51 +442,52 @@ export function StaffMemberShiftsTab({
               </div>
 
               <div className="flex items-center justify-between pt-6 px-1">
-                <span className="text-xs font-semibold text-zinc-700">Active Status</span>
+                <span className="text-xs font-semibold text-foreground">Active Status</span>
                 <Switch
                   checked={shiftFormData.isActive}
                   onCheckedChange={(val) => setShiftFormData((prev) => ({ ...prev, isActive: val }))}
+                  className="data-[state=checked]:bg-primary"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-700">Start Time</label>
+                <label className="text-xs font-semibold text-foreground">Start Time</label>
                 <Input
                   type="time"
                   value={shiftFormData.startTime}
                   onChange={(e) => setShiftFormData((prev) => ({ ...prev, startTime: e.target.value }))}
-                  className="border-zinc-200"
+                  className="border-border bg-background text-foreground"
                   required
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-zinc-700">End Time</label>
+                <label className="text-xs font-semibold text-foreground">End Time</label>
                 <Input
                   type="time"
                   value={shiftFormData.endTime}
                   onChange={(e) => setShiftFormData((prev) => ({ ...prev, endTime: e.target.value }))}
-                  className="border-zinc-200"
+                  className="border-border bg-background text-foreground"
                   required
                 />
               </div>
             </div>
 
-            <DialogFooter className="pt-4 border-t border-zinc-100">
+            <DialogFooter className="pt-4 border-t border-border">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setIsShiftModalOpen(false)}
-                className="border-zinc-200"
+                className="border-border text-muted-foreground hover:text-foreground hover:bg-accent"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isPending}
-                className="bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {isPending ? "Saving..." : "Save Shift"}
               </Button>
@@ -497,13 +498,13 @@ export function StaffMemberShiftsTab({
 
       {/* MANAGE BREAKS DIALOG */}
       <Dialog open={isBreaksModalOpen} onOpenChange={setIsBreaksModalOpen}>
-        <DialogContent className="max-w-md bg-white">
+        <DialogContent className="max-w-md bg-card border-border">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2">
-              <Coffee className="h-5 w-5 text-orange-600" />
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+              <Coffee className="h-5 w-5 text-orange-500" />
               <span>Manage Shift Breaks</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-zinc-500">
+            <DialogDescription className="text-xs text-muted-foreground">
               Configure scheduled break slots within this shift (
               {activeShiftForBreaks?.startTime} – {activeShiftForBreaks?.endTime}).
             </DialogDescription>
@@ -511,7 +512,7 @@ export function StaffMemberShiftsTab({
 
           <div className="space-y-4 pt-2">
             {error && (
-              <div className="p-3 bg-red-50 border border-red-100 text-red-700 text-xs rounded-lg flex items-center gap-2">
+              <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-lg flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -519,9 +520,9 @@ export function StaffMemberShiftsTab({
 
             {/* List */}
             <div className="space-y-2">
-              <span className="text-xs font-bold text-zinc-700">Current Breaks</span>
+              <span className="text-xs font-bold text-foreground">Current Breaks</span>
               {activeShiftForBreaks?.breaks.length === 0 ? (
-                <div className="text-center py-6 text-xs text-gray-400 bg-zinc-50 rounded-lg border border-dashed">
+                <div className="text-center py-6 text-xs text-muted-foreground bg-muted/30 rounded-lg border border-dashed border-border">
                   No breaks scheduled
                 </div>
               ) : (
@@ -529,21 +530,21 @@ export function StaffMemberShiftsTab({
                   {activeShiftForBreaks?.breaks.map((b) => (
                     <div
                       key={b.id}
-                      className="flex items-center justify-between p-2.5 rounded-lg border border-zinc-100 bg-zinc-50/50 hover:bg-zinc-50"
+                      className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-muted/30 hover:bg-muted/50"
                     >
                       <div className="flex flex-col">
-                        <span className="text-xs font-semibold text-zinc-800">
+                        <span className="text-xs font-semibold text-foreground">
                           {b.startTime} – {b.endTime}
                         </span>
                         {b.description && (
-                          <span className="text-[10px] text-zinc-500">{b.description}</span>
+                          <span className="text-[10px] text-muted-foreground">{b.description}</span>
                         )}
                       </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteBreak(b.id)}
-                        className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 rounded-full"
+                        className="h-7 w-7 p-0 text-destructive hover:bg-destructive/10 rounded-full"
                         disabled={isPending}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -555,47 +556,47 @@ export function StaffMemberShiftsTab({
             </div>
 
             {/* Add Break */}
-            <form onSubmit={handleAddBreak} className="border-t border-zinc-100 pt-4 space-y-3">
-              <span className="text-xs font-bold text-zinc-700">Add New Break</span>
+            <form onSubmit={handleAddBreak} className="border-t border-border pt-4 space-y-3">
+              <span className="text-xs font-bold text-foreground">Add New Break</span>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-zinc-600">Start Time</label>
+                  <label className="text-[10px] font-semibold text-muted-foreground">Start Time</label>
                   <Input
                     type="time"
                     value={breakFormData.startTime}
                     onChange={(e) => setBreakFormData((prev) => ({ ...prev, startTime: e.target.value }))}
-                    className="border-zinc-200 h-9 text-xs"
+                    className="border-border bg-background text-foreground h-9 text-xs"
                     required
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-semibold text-zinc-600">End Time</label>
+                  <label className="text-[10px] font-semibold text-muted-foreground">End Time</label>
                   <Input
                     type="time"
                     value={breakFormData.endTime}
                     onChange={(e) => setBreakFormData((prev) => ({ ...prev, endTime: e.target.value }))}
-                    className="border-zinc-200 h-9 text-xs"
+                    className="border-border bg-background text-foreground h-9 text-xs"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-zinc-600">Description</label>
+                <label className="text-[10px] font-semibold text-muted-foreground">Description</label>
                 <Input
                   placeholder="e.g. Lunch break, coffee time"
                   value={breakFormData.description}
                   onChange={(e) => setBreakFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  className="border-zinc-200 h-9 text-xs"
+                  className="border-border bg-background text-foreground h-9 text-xs placeholder:text-muted-foreground/60"
                 />
               </div>
 
               <Button
                 type="submit"
                 disabled={isPending}
-                className="w-full bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white h-9 text-xs mt-1"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-9 text-xs mt-1"
               >
                 {isPending ? "Adding..." : "Add Break"}
               </Button>

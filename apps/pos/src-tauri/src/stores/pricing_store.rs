@@ -227,7 +227,19 @@ pub async fn run_sync(
         return Err(anyhow::anyhow!("Server returned error: {}", response.status()));
     }
 
-    let res_body = response.json::<crate::models::ServerPricingResponse>().await.map_err(|e| anyhow::anyhow!(e))?;
+    let raw_val: serde_json::Value = response.json().await.map_err(|e| anyhow::anyhow!(e))?;
+    let target = if let Some(data) = raw_val.get("data") {
+        if data.get("metadata").is_some() || data.get("data").is_some() {
+            data
+        } else {
+            &raw_val
+        }
+    } else {
+        &raw_val
+    };
+
+    let res_body: crate::models::ServerPricingResponse = serde_json::from_value(target.clone())
+        .map_err(|e| anyhow::anyhow!("Failed to parse pricing response: {} | Raw: {}", e, raw_val))?;
     let metadata = res_body.metadata;
     let server_data = res_body.data;
 

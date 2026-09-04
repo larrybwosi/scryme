@@ -8,6 +8,7 @@ import { FinanceModule } from "../v3/modules/finance/finance.module";
 import { CatalogModule } from "../v3/modules/catalog/catalog.module";
 import { InventoryModule } from "../v3/modules/inventory/inventory.module";
 import { PosModule } from "../v3/modules/pos/pos.module";
+import { ServicesModule } from "../v3/modules/services/services.module";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PosModule } from "../v3/modules/pos/pos.module";
     CatalogModule,
     InventoryModule,
     PosModule,
+    ServicesModule,
   ],
   controllers: [AndroidController],
   providers: [AndroidAuthGuard],

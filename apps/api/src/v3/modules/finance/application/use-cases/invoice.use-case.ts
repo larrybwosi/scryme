@@ -73,6 +73,15 @@ export class InvoiceUseCase {
   }
 
   async createInvoiceFromOrder(organizationId: string, orderId: string) {
+    const config = await this.prisma.client.invoiceConfig.findUnique({
+      where: { organizationId },
+      select: { autoGenerateInvoice: true },
+    });
+
+    if (config && config.autoGenerateInvoice === false) {
+      return null;
+    }
+
     const order = await this.prisma.client.transaction.findFirst({
       where: { id: orderId, organizationId },
       // ⚡ Bolt Optimization: Use targeted select for order data and items

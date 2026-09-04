@@ -92,7 +92,7 @@ interface PosAuthActions {
 }
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
-const STORAGE_KEY = 'pos-auth-storage-v2';
+const STORAGE_KEY = 'pos-auth-storage-v3';
 
 const initialState: PosAuthState = {
   isConfigured: false,
@@ -298,8 +298,9 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
       authorizeFromPairingPayload: async (payload: any) => {
         const { apiUrl } = get();
-        const { apiKey, device, organization } = payload || {};
-        if (!apiKey || !device || !organization) {
+        const { apiKey, clientId, device, organization } = payload || {};
+        const deviceKey = apiKey || clientId;
+        if (!deviceKey || !device || !organization) {
           throw new Error('Invalid pairing payload structure');
         }
 
@@ -310,12 +311,16 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
           throw new Error('Required configuration parameters missing in pairing response');
         }
 
-        await invoke('set_device_config', {
-          baseUrl: apiUrl,
-          locationId,
-          deviceKey: apiKey,
-          orgSlug,
-        });
+        try {
+          await invoke('set_device_config', {
+            baseUrl: apiUrl,
+            locationId,
+            deviceKey,
+            orgSlug,
+          });
+        } catch (e) {
+          // Web / browser mode fallback
+        }
 
         const location = device.location;
 
@@ -339,52 +344,73 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
           console.error('Failed to update base URL in backend during provision:', err);
         }
 
-        const response = await invoke<any>('authenticated_api_request', {
-          method: 'POST',
-          path: 'api/v3/:orgSlug/pos/provision',
-          body: { setupToken, token: setupToken },
-        });
+        let responseData: any = null;
+        try {
+          const response = await invoke<any>('authenticated_api_request', {
+            method: 'POST',
+            path: 'api/v3/global/pos/provision',
+            body: { setupToken, token: setupToken },
+          });
 
-        const isWrapped = response && response.success !== undefined;
-        const responseData = isWrapped ? response.data : response;
-
-        if (!isWrapped || response.success) {
-          const { apiKey, device, organization } = responseData || {};
-          if (!apiKey || !device || !organization) {
-            throw new Error('Invalid provisioning response structure');
+          const isWrapped = response && response.success !== undefined;
+          responseData = isWrapped ? response.data : response;
+          if (isWrapped && !response.success) {
+            throw new Error(response.error?.message || 'Provisioning failed');
           }
-
-          const locationId = device.locationId || device.location_id;
-          const orgSlug = organization.slug || organization.orgSlug || organization.org_slug;
-
-          if (!locationId || !orgSlug) {
-            throw new Error('Required configuration parameters missing in API response');
+        } catch (invokeErr: any) {
+          // Web / Non-Tauri fallback
+          try {
+            const res = await fetch(`${apiUrl}/api/v3/global/pos/provision`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ setupToken, token: setupToken }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.message || json.error?.message || 'Provisioning failed');
+            responseData = json.data || json;
+          } catch (fetchErr: any) {
+            throw new Error(invokeErr?.message || fetchErr?.message || 'Provisioning failed');
           }
+        }
 
+        const { apiKey, clientId, device, organization } = responseData || {};
+        const deviceKey = apiKey || clientId;
+        if (!deviceKey || !device || !organization) {
+          throw new Error('Invalid provisioning response structure');
+        }
+
+        const locationId = device.locationId || device.location_id;
+        const orgSlug = organization.slug || organization.orgSlug || organization.org_slug;
+
+        if (!locationId || !orgSlug) {
+          throw new Error('Required configuration parameters missing in API response');
+        }
+
+        try {
           await invoke('set_device_config', {
             baseUrl: apiUrl,
             locationId,
-            deviceKey: apiKey,
+            deviceKey,
             orgSlug,
           });
-
-          // Location details are already returned in the provisioned response
-          const location = device.location;
-
-          set({
-            // Do not set isConfigured here so that the Success UI can play out.
-            // completeSetup() will be called after the animation.
-            currentLocation:
-              location ||
-              ({
-                ...device,
-                id: locationId,
-                name: device.name || device.deviceName || 'Terminal',
-              } as any),
-          });
-        } else {
-          throw new Error(response.error?.message || 'Provisioning failed');
+        } catch (e) {
+          // Web / browser mode fallback
         }
+
+        // Location details are already returned in the provisioned response
+        const location = device.location;
+
+        set({
+          // Do not set isConfigured here so that the Success UI can play out.
+          // completeSetup() will be called after the animation.
+          currentLocation:
+            location ||
+            ({
+              ...device,
+              id: locationId,
+              name: device.name || device.deviceName || 'Terminal',
+            } as any),
+        });
       },
 
       registerDevice: async (apiKey: string, location: InventoryLocation, orgSlug: string) => {

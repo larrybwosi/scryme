@@ -255,15 +255,20 @@ export default function CheckinPage() {
       return;
     }
 
-    await checkIn({ cardId, password });
-    
-    // Clear sensitive data on success/fail cycle
-    setCardId('');
-    scannerBuffer.current = '';
-    setPassword('');
-    setShowPassword(false);
-    cardInputRef.current?.focus();
-    navigate('/');
+    try {
+      await checkIn({ cardId, password });
+
+      // Clear sensitive data on success
+      setCardId('');
+      scannerBuffer.current = '';
+      setPassword('');
+      setShowPassword(false);
+      cardInputRef.current?.focus();
+      navigate('/');
+    } catch (err: any) {
+      const msg = err?.message || err?.toString() || 'Failed to check in';
+      setError(msg);
+    }
   };
 
   const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>): void => {

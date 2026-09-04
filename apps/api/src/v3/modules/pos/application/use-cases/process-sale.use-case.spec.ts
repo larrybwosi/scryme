@@ -7,7 +7,7 @@ import { InventoryMovementService } from "../../../inventory/application/service
 import { BadRequestException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
-vi.mock("@repo/windmill/server", () => ({
+vi.mock("@repo/shared/server", () => ({
   emitLoyaltyPointsAwarded: vi.fn().mockResolvedValue({}),
   emitLoyaltyVoucherCreated: vi.fn().mockResolvedValue({}),
   emitPaymentCompleted: vi.fn().mockResolvedValue({}),
@@ -17,6 +17,7 @@ describe("ProcessSaleUseCase", () => {
   let useCase: ProcessSaleUseCase;
   let prisma: any;
   let inventoryMovementService: any;
+  let invoiceUseCase: any;
 
   beforeEach(async () => {
     prisma = {
@@ -53,7 +54,7 @@ describe("ProcessSaleUseCase", () => {
         {
           provide: InvoiceUseCase,
           useValue: {
-            createInvoiceFromOrder: vi.fn().mockResolvedValue({ id: "inv1" }),
+            createInvoiceFromOrder: vi.fn(),
             getInvoiceById: vi.fn().mockResolvedValue({ id: "inv1" }),
             handleKRACompliance: vi.fn().mockResolvedValue({}),
             finalizeInvoice: vi.fn().mockResolvedValue({ complianceData: {} }),
@@ -63,9 +64,52 @@ describe("ProcessSaleUseCase", () => {
     }).compile();
 
     useCase = module.get<ProcessSaleUseCase>(ProcessSaleUseCase);
+    invoiceUseCase = module.get<InvoiceUseCase>(InvoiceUseCase);
+  });
+
+  it("should handle null invoice gracefully when auto generate invoice is disabled", async () => {
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 10 }],
+      payments: [{ method: "CASH", amount: 10 }],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 10,
+        buyingPrice: 5,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.transaction.create.mockResolvedValue({
+      id: "t1",
+      number: "T1",
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(result.id).toBe("t1");
+    expect(result.complianceData).toBeNull();
+    expect(invoiceUseCase.finalizeInvoice).not.toHaveBeenCalled();
   });
 
   it("should process a sale and update stock in parallel", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue({ id: "inv1" });
     const ctx = {
       organizationId: "org_1",
       memberId: "mem_1",
@@ -165,6 +209,7 @@ describe("ProcessSaleUseCase", () => {
   });
 
   it("should support Option C - direct service sale without booking, and consume its materials", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue({ id: "inv1" });
     const ctx = {
       organizationId: "org_1",
       memberId: "mem_1",
@@ -225,6 +270,7 @@ describe("ProcessSaleUseCase", () => {
   });
 
   it("should support Option A - complete existing booking, consume booking materials, and update booking details", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue({ id: "inv1" });
     const ctx = {
       organizationId: "org_1",
       memberId: "mem_1",

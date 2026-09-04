@@ -1,6 +1,13 @@
+import { Metadata } from "next";
 import { PageHeader } from "../../../../components/page-header";
 import { BarChart3 } from "lucide-react";
 import { PLClient } from "./pl-client";
+
+export const metadata: Metadata = {
+  title: "Profit & Loss Statement",
+  description: "Generate comprehensive income statements, gross profit metrics, and net margins.",
+};
+
 
 export default function PLPage() {
   return (

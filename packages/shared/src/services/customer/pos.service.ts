@@ -18,11 +18,6 @@ export class PosCustomerService {
         organizationId,
         ...(lastSync ? { updatedAt: { gt: new Date(lastSync) } } : {}),
       },
-      /**
-       * ⚡ Bolt: Performance Optimization
-       * Use targeted select to fetch only essential fields for POS sync.
-       * Reduces database I/O and payload size by avoiding heavy JSON/metadata fields.
-       */
       select: {
         id: true,
         name: true,
@@ -71,11 +66,6 @@ export class PosCustomerService {
         ],
       },
       take: 20,
-      /**
-       * ⚡ Bolt: Performance Optimization
-       * Use targeted select to fetch only essential fields for POS search results.
-       * Reduces database I/O and payload size by avoiding heavy JSON/metadata fields.
-       */
       select: {
         id: true,
         name: true,

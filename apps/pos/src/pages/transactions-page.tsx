@@ -55,10 +55,33 @@ import { DispatchDialog } from '@/components/pending-page/dispatch-dialog';
 import { TransactionRow } from '@/components/pending-page/transaction-row';
 import { ReceiptDialog } from '@/components/receipt-dialog';
 
-// --- Fetch Functions ---
-const fetchTransactions = async (locationId?: string) => {
-  const data = await invoke<Transaction[]>('get_sales_history_command', { locationId });
-  return data;
+const TRANSACTIONS_CACHE_KEY_PREFIX = 'scryme_cached_transactions_';
+
+// --- Fetch Functions with Local Storage Fallback & Persistence ---
+const fetchTransactions = async (locationId?: string): Promise<Transaction[]> => {
+  const cacheKey = `${TRANSACTIONS_CACHE_KEY_PREFIX}${locationId || 'default'}`;
+  try {
+    const data = await invoke<Transaction[]>('get_sales_history_command', { locationId });
+    if (Array.isArray(data) && data.length > 0) {
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+      } catch (e) {
+        console.warn('Failed to cache transactions to localStorage:', e);
+      }
+    }
+    return data;
+  } catch (err) {
+    console.warn('Failed to fetch sales history from backend, falling back to local cache:', err);
+    try {
+      const stored = localStorage.getItem(cacheKey);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {
+      console.error('Failed to parse cached transactions:', e);
+    }
+    throw err;
+  }
 };
 
 const fetchDrivers = async (): Promise<DriverOption[]> => {
@@ -112,18 +135,36 @@ export function TransactionsPage() {
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [dateFilter, setDateFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('week');
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // --- Query: Get Outstanding / Dispatched Transactions ---
+  // Load initial cached transactions if available
+  const [cachedTransactions, setCachedTransactions] = useState<Transaction[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const cacheKey = `${TRANSACTIONS_CACHE_KEY_PREFIX}${locationId || 'default'}`;
+      const stored = localStorage.getItem(cacheKey);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // --- Query: Get Outstanding / Dispatched Transactions with Stale-While-Revalidate Background Sync ---
   const {
-    data: transactions = [],
+    data: transactions = cachedTransactions,
     isLoading: isTxLoading,
     isRefetching: isTxRefetching,
     refetch: refetchTx,
   } = useQuery({
     queryKey: ['transactions', locationId],
-    queryFn: () => fetchTransactions(locationId),
+    queryFn: async () => {
+      const data = await fetchTransactions(locationId);
+      setCachedTransactions(data);
+      return data;
+    },
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    gcTime: 1000 * 60 * 60 * 24, // Keep in cache for 24 hours
   });
 
   // --- Query: Get Drivers ---
@@ -307,13 +348,40 @@ export function TransactionsPage() {
 
   // Helper Calculations for Pending Transactions
   const outstandingTx = useMemo(() => {
+    const now = new Date();
+    let startDate: Date | null = null;
+
+    switch (dateFilter) {
+      case 'today':
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        break;
+      case 'week':
+        startDate = new Date();
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'month':
+        startDate = new Date();
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      default:
+        startDate = null;
+        break;
+    }
+
     return transactions.filter(t => {
+      if (startDate && t.date) {
+        const txDate = new Date(t.date);
+        if (!isNaN(txDate.getTime()) && txDate < startDate) {
+          return false;
+        }
+      }
       const isDispatched = t.status === 'dispatched';
       const isUnpaid = t.status === 'pending' || t.status === 'partially_paid';
       const hasBalance = t.paidAmount < t.totalAmount;
       return isDispatched || isUnpaid || hasBalance;
     });
-  }, [transactions]);
+  }, [transactions, dateFilter]);
 
   const totalOutstanding = useMemo(
     () => outstandingTx.reduce((acc, curr) => acc + (curr.totalAmount - curr.paidAmount), 0),
@@ -516,6 +584,18 @@ export function TransactionsPage() {
                   onChange={e => setSearchQuery(e.target.value)}
                 />
               </div>
+
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Filter date" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                  <SelectItem value="all">All Time</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

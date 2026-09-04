@@ -11,16 +11,6 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./ably": {
-      "types": "./src/ably/index.ts",
-      "import": "./dist/ably.js",
-      "require": "./dist/ably.cjs"
-    },
-    "./ably/client": {
-      "types": "./src/ably/client.ts",
-      "import": "./dist/ably/client.js",
-      "require": "./dist/ably/client.cjs"
-    },
     "./axios": {
       "types": "./src/axios/index.ts",
       "import": "./dist/axios.js",
@@ -139,23 +129,21 @@
     "@aws-sdk/s3-request-presigner": "^3.1067.0",
     "@nestjs/common": "^11.0.1",
     "@prisma/client": "^7.8.0",
+    "@repo/chat": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/notifications": "workspace:*",
-    "@repo/chat": "workspace:*",
-    "@repo/windmill": "workspace:*",
     "@sanity/client": "^7.22.1",
     "@tanstack/react-query": "^5.100.9",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/qrcode": "^1.5.6",
     "@upstash/redis": "^1.37.0",
-    "ably": "^2.18.0",
     "argon2": "^0.44.0",
-    "date-fns": "^4.1.0",
     "axios": "latest",
     "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "decimal.js": "^10.6.0",
     "ioredis": "^5.11.0",
     "jose": "^6.2.3",

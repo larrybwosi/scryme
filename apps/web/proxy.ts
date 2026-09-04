@@ -71,7 +71,8 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
   // Check for organization (except on /create-org and error pages)
   const organizationId =
     (session.session as any).activeOrganizationId ||
-    (session.user as any).activeOrganizationId;
+      (session.user as any).activeOrganizationId;
+
 
   const isExcludedFromOrgCheck = [
     "/create-org",

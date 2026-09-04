@@ -5,6 +5,7 @@ import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath } from "next/cache";
 
 export async function updateInvoiceConfig(data: {
+  autoGenerateInvoice?: boolean;
   primaryColor?: string;
   secondaryColor?: string;
   logoUrl?: string;

@@ -111,6 +111,7 @@ const SetupTokenStep = ({
 
   // QR Pairing Session State
   const [pairingSessionId, setPairingSessionId] = useState<string | null>(null);
+  const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [pairingExpiresAt, setPairingExpiresAt] = useState<Date | null>(null);
   const [pairingStatus, setPairingStatus] = useState<'PENDING' | 'AUTHORIZED' | 'EXPIRED' | 'LOADING'>('PENDING');
   const [timeLeftSec, setTimeLeftSec] = useState<number>(300);
@@ -125,19 +126,26 @@ const SetupTokenStep = ({
       let resData: any = null;
       try {
         const { invoke } = await import('@tauri-apps/api/core');
-        const response = await invoke<any>('authenticated_api_request', {
-          method: 'POST',
-          path: 'api/v3/pos/pairing/session',
-        });
+        const response = await invoke<any>('create_pairing_session_command');
         resData = response?.success !== undefined ? response.data : response;
       } catch {
-        const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session`, { method: 'POST' });
-        const json = await fallback.json();
-        resData = json.data || json;
+        try {
+          const { invoke } = await import('@tauri-apps/api/core');
+          const response = await invoke<any>('authenticated_api_request', {
+            method: 'POST',
+            path: 'api/v3/pos/pairing/session',
+          });
+          resData = response?.success !== undefined ? response.data : response;
+        } catch {
+          const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session`, { method: 'POST' });
+          const json = await fallback.json();
+          resData = json.data || json;
+        }
       }
 
       if (resData?.sessionId) {
         setPairingSessionId(resData.sessionId);
+        setPairingCode(resData.pairingCode || null);
         setPairingExpiresAt(resData.expiresAt ? new Date(resData.expiresAt) : new Date(Date.now() + 300000));
         setPairingStatus('PENDING');
       } else {
@@ -157,52 +165,67 @@ const SetupTokenStep = ({
     }
   }, [authMode]);
 
-  // Poll pairing session status
+  // Realtime Socket.io listener for instant pairing authorization
   useEffect(() => {
     if (authMode !== 'qr' || !pairingSessionId || pairingStatus !== 'PENDING') return;
 
+    let socket: any = null;
     let isMounted = true;
-    const interval = setInterval(async () => {
+
+    const setupSocket = async () => {
       try {
-        let statusData: any = null;
-        try {
-          const { invoke } = await import('@tauri-apps/api/core');
-          const response = await invoke<any>('authenticated_api_request', {
-            method: 'GET',
-            path: `api/v3/pos/pairing/session/${pairingSessionId}/status`,
-          });
-          statusData = response?.success !== undefined ? response.data : response;
-        } catch {
-          const fallback = await fetch(`${apiUrl}/api/v3/pos/pairing/session/${pairingSessionId}/status`);
-          const json = await fallback.json();
-          statusData = json.data || json;
-        }
+        const { io } = await import('socket.io-client');
+        socket = io(apiUrl, {
+          transports: ['websocket', 'polling'],
+          autoConnect: true,
+          reconnection: true,
+        });
 
-        if (!isMounted) return;
+        const channelSession = `pos:pairing:${pairingSessionId}`;
+        const channelCode = pairingCode ? `pos:pairing:${pairingCode}` : null;
+        const v3ChannelSession = `v3:pos:pairing:${pairingSessionId}`;
+        const v3ChannelCode = pairingCode ? `v3:pos:pairing:${pairingCode}` : null;
 
-        if (statusData?.status === 'AUTHORIZED' && statusData?.payload) {
-          setPairingStatus('AUTHORIZED');
-          clearInterval(interval);
-          try {
-            await authorizeFromPairingPayload(statusData.payload);
-            onNext('pairing_authorized');
-          } catch (e: any) {
-            setError(e.message || 'Failed to apply authorized session credentials.');
+        socket.on('connect', () => {
+          socket.emit('join', { channel: channelSession });
+          socket.emit('join', { channel: v3ChannelSession });
+          if (channelCode) {
+            socket.emit('join', { channel: channelCode });
           }
-        } else if (statusData?.status === 'EXPIRED') {
-          setPairingStatus('EXPIRED');
-          clearInterval(interval);
-        }
+          if (v3ChannelCode) {
+            socket.emit('join', { channel: v3ChannelCode });
+          }
+        });
+
+        const handleAuthorized = async (data: any) => {
+          if (!isMounted) return;
+          const payload = data?.payload || data;
+          if (payload) {
+            setPairingStatus('AUTHORIZED');
+            try {
+              await authorizeFromPairingPayload(payload);
+              onNext('pairing_authorized');
+            } catch (e: any) {
+              setError(e.message || 'Failed to apply authorized session credentials.');
+            }
+          }
+        };
+
+        socket.on('pairing:authorized', handleAuthorized);
       } catch (err) {
-        // Continue polling silently on transient network errors
+        console.error('Failed to setup socket.io client for pairing:', err);
       }
-    }, 2000);
+    };
+
+    setupSocket();
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      if (socket) {
+        socket.disconnect();
+      }
     };
-  }, [authMode, pairingSessionId, pairingStatus, apiUrl, authorizeFromPairingPayload, onNext]);
+  }, [authMode, pairingSessionId, pairingCode, pairingStatus, apiUrl, authorizeFromPairingPayload, onNext]);
 
   // Countdown timer effect
   useEffect(() => {
@@ -365,12 +388,27 @@ const SetupTokenStep = ({
             <>
               <div className="bg-white p-4 border border-zinc-200 shadow-md relative group">
                 <QRCodeSVG
-                  value={JSON.stringify({ type: 'POS_PAIRING', sessionId: pairingSessionId })}
+                  value={JSON.stringify({ type: 'POS_PAIRING', sessionId: pairingSessionId, pairingCode })}
                   size={180}
                   level="H"
-                  includeMargin={false}
+                  marginSize={0}
                 />
               </div>
+
+              {pairingCode && (
+                <div className="flex flex-col items-center justify-center space-y-1 my-2">
+                  <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                    Pairing Code
+                  </p>
+                  <div className="flex items-center gap-1.5 bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 px-4 py-2 font-mono text-2xl font-black tracking-widest text-zinc-900 dark:text-zinc-100">
+                    {pairingCode.split('').map((char, idx) => (
+                      <span key={idx} className="w-5 text-center">
+                        {char}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-center gap-2 text-xs font-mono font-bold text-zinc-600 dark:text-zinc-400">
                 <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
@@ -412,21 +450,6 @@ const SetupTokenStep = ({
               <Key className="absolute left-4 top-4.5 h-5 w-5 text-zinc-400 group-focus-within:text-blue-600 transition-colors" />
             </div>
 
-            {token.length >= 3 && (
-              <div className="flex flex-col items-center justify-center p-4 bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 space-y-3 animate-in fade-in">
-                <div className="bg-white p-3 border border-zinc-200 shadow-sm">
-                  <QRCodeSVG
-                    value={JSON.stringify({ type: 'POS_PROVISION', token })}
-                    size={140}
-                    level="H"
-                    includeMargin={false}
-                  />
-                </div>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 uppercase tracking-wider font-semibold text-center">
-                  Scan with Scryme Admin Mobile App to Authorize Device
-                </p>
-              </div>
-            )}
           </div>
 
           <div className="flex flex-col gap-4">

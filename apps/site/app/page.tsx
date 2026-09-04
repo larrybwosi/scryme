@@ -37,10 +37,13 @@ export default async function HomePage() {
         data={{
           heroTitle: content.heroTitle,
           heroSubtitle: content.heroSubtitle,
+          heroImage: content.heroImage,
+          heroVideo: content.heroVideo,
           reconciledToday: content.reconciledToday,
         }}
       />
       <TrustBar brands={content.brands} />
+      <PlatformShowcase />
       <FeaturesGrid modules={content.modules} />
       <StatsStrip stats={content.stats} />
       <SolutionsSpotlight

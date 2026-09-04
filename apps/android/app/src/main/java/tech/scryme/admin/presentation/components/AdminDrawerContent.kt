@@ -32,6 +32,7 @@ val defaultDrawerItems = listOf(
     DrawerMenuItem("Transactions", Icons.Default.ShoppingBag, targetTab = 1),
     DrawerMenuItem("Approvals", Icons.Default.Event, targetTab = 2),
     DrawerMenuItem("Staff & Presence", Icons.Default.PeopleOutline, targetTab = 3),
+    DrawerMenuItem("Shifts & Roster", Icons.Default.Schedule, targetTab = 7),
     DrawerMenuItem("Expenses", Icons.AutoMirrored.Filled.ReceiptLong, targetTab = 4),
     DrawerMenuItem("Announcements", Icons.Default.Campaign, targetTab = 5),
     DrawerMenuItem("Settings", Icons.Default.Settings, targetTab = 6)

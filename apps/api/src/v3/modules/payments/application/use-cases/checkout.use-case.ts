@@ -6,7 +6,7 @@ import {
 import { PrismaService } from "@/prisma/prisma.service";
 import { CheckoutDto, CheckoutResponseDto } from "../dto/checkout.dto";
 import { MpesaService } from "@repo/shared/mpesa/server";
-import { emitOrderPlaced } from "@repo/windmill/server";
+import { emitOrderPlaced } from "@repo/shared/server";
 import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
 import { Decimal } from "decimal.js";
 

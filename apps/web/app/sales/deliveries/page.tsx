@@ -1,9 +1,16 @@
+import { Metadata } from "next";
 import { Truck } from "lucide-react";
 import { PageHeader } from "../../../components/page-header";
 import { FilterBar } from "../../../components/filter-bar";
 import { getFulfillments } from "../../actions/sales";
 import { DeliveryTable } from "../../../components/sales/delivery-table";
 import { FulfillmentStatus } from "@repo/db/client";
+
+export const metadata: Metadata = {
+  title: "Dispatch & Deliveries",
+  description: "Track fulfillment status, delivery dispatches, and driver assignments.",
+};
+
 
 export default async function DeliveriesPage(props: {
   searchParams: Promise<{
