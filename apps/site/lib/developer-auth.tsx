@@ -49,9 +49,10 @@ interface DeveloperAuthContextType {
   apiKeys: ApiKeyItem[];
   oauthClients: OAuthClientItem[];
   fetchOAuthClients: () => Promise<void>;
+  fetchApiKeys: () => Promise<void>;
   createApiKey: (name: string, environment: "LIVE" | "TEST") => Promise<ApiKeyItem>;
-  toggleApiKey: (id: string) => void;
-  deleteApiKey: (id: string) => void;
+  toggleApiKey: (id: string) => Promise<void>;
+  deleteApiKey: (id: string) => Promise<void>;
   createOAuthClient: (data: { name: string; redirectUris: string[]; scopes?: string[]; corsOrigins?: string[]; uri?: string; tos?: string; policy?: string; public?: boolean }) => Promise<OAuthClientItem>;
   rotateOAuthSecret: (id: string) => Promise<string>;
   toggleOAuthClient: (id: string) => Promise<void>;
@@ -101,6 +102,19 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     };
   };
 
+  const mapRawApiKey = (k: any): ApiKeyItem => {
+    return {
+      id: k.id,
+      name: k.name || "API Key",
+      keyPrefix: k.keyPrefix || k.prefix || "sk_",
+      fullKey: k.fullKey,
+      environment: k.environment || "LIVE",
+      isActive: k.isActive !== undefined ? k.isActive : (k.enabled ?? true),
+      createdAt: k.createdAt ? new Date(k.createdAt).toISOString() : new Date().toISOString(),
+      lastUsedAt: k.lastUsedAt || (k.lastRequest ? new Date(k.lastRequest).toISOString() : undefined),
+    };
+  };
+
   const fetchOAuthClients = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients`, {
@@ -125,15 +139,41 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
+  const fetchApiKeys = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/v3/auth/api-keys`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const body = await res.json();
+        const data = body.data || body;
+        if (Array.isArray(data)) {
+          setApiKeys(data.map(mapRawApiKey));
+        }
+      } else {
+        console.warn("Failed to fetch API keys from API:", res.status);
+      }
+    } catch (err) {
+      console.error("Failed fetching API keys:", err);
+    }
+  }, []);
+
   const userId = user?.id;
 
   useEffect(() => {
     if (userId) {
       fetchOAuthClients();
+      fetchApiKeys();
     } else {
       setOauthClients([]);
+      setApiKeys([]);
     }
-  }, [userId, fetchOAuthClients]);
+  }, [userId, fetchOAuthClients, fetchApiKeys]);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -179,32 +219,72 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
   };
 
   const createApiKey = async (name: string, environment: "LIVE" | "TEST"): Promise<ApiKeyItem> => {
-    const randomHex = Math.random().toString(36).substring(2, 10);
-    const secretHex = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const prefix = `sk_${environment.toLowerCase()}_${randomHex}_`;
-    const fullKey = `${prefix}${secretHex}`;
+    const res = await fetch(`${API_BASE_URL}/v3/auth/api-keys`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ name, environment }),
+    });
 
-    const newKey: ApiKeyItem = {
-      id: `key_${Date.now()}`,
-      name,
-      keyPrefix: prefix,
-      fullKey,
-      environment,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      lastUsedAt: "Just now",
-    };
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.message || errJson.error || `Failed to create API key (${res.status})`);
+    }
 
-    setApiKeys((prev) => [newKey, ...prev]);
-    return newKey;
+    const resBody = await res.json();
+    const createdRaw = resBody.data || resBody;
+    const mapped = mapRawApiKey(createdRaw);
+
+    setApiKeys((prev) => [mapped, ...prev]);
+    return mapped;
   };
 
-  const toggleApiKey = (id: string) => {
-    setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: !k.isActive } : k)));
+  const toggleApiKey = async (id: string) => {
+    const existing = apiKeys.find((k) => k.id === id);
+    if (!existing) return;
+
+    const newActiveState = !existing.isActive;
+    setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: newActiveState } : k)));
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/v3/auth/api-keys/${id}/toggle`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: !newActiveState } : k)));
+      }
+    } catch (err) {
+      setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: !newActiveState } : k)));
+      console.error("Error toggling API key status:", err);
+    }
   };
 
-  const deleteApiKey = (id: string) => {
+  const deleteApiKey = async (id: string) => {
     setApiKeys((prev) => prev.filter((k) => k.id !== id));
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/v3/auth/api-keys/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        fetchApiKeys();
+      }
+    } catch (err) {
+      console.error("Error deleting API key:", err);
+      fetchApiKeys();
+    }
   };
 
   const createOAuthClient = async (data: {
@@ -220,6 +300,8 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     const payload = {
       name: data.name,
       redirectUris: data.redirectUris,
+      ...(data.scopes ? { scopes: data.scopes } : {}),
+      ...(data.corsOrigins ? { corsOrigins: data.corsOrigins } : {}),
       ...(data.uri ? { uri: data.uri } : {}),
       ...(data.tos ? { tos: data.tos } : {}),
       ...(data.policy ? { policy: data.policy } : {}),
@@ -358,6 +440,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
         apiKeys,
         oauthClients,
         fetchOAuthClients,
+        fetchApiKeys,
         createApiKey,
         toggleApiKey,
         deleteApiKey,
