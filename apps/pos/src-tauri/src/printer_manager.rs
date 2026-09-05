@@ -64,13 +64,26 @@ async fn print_raw_to_printer(
     data: Vec<u8>,
 ) -> Result<String, String> {
     if let Some(printer) = config {
-        // We exclusively use the native path for print_job,
-        // even if the config says "network", we treat the target as a system printer name
-        // if the user has it installed.
-        // NOTE: The requirement was to use the native printer functions.
-        print_system_raw_bytes(printer.target, data)
-            .await
-            .map_err(|e| format!("Native print failed: {:?}", e))
+        if printer.method == "network" || printer.target.contains('.') || printer.target.contains(':') {
+            let port = printer.port;
+            let mut retries = 3;
+            let mut last_err = String::new();
+            while retries > 0 {
+                match print_network_raw_bytes(printer.target.clone(), port, data.clone()).await {
+                    Ok(msg) => return Ok(msg),
+                    Err(e) => {
+                        last_err = format!("{:?}", e);
+                        retries -= 1;
+                        tokio::time::sleep(tokio::time::Duration::from_millis(250)).await;
+                    }
+                }
+            }
+            Err(format!("Network print failed after retries: {}", last_err))
+        } else {
+            print_system_raw_bytes(printer.target, data)
+                .await
+                .map_err(|e| format!("Native print failed: {:?}", e))
+        }
     } else {
         Err("Printer not configured".into())
     }

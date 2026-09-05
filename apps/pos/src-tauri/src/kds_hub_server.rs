@@ -323,7 +323,13 @@ async fn handle_socket(socket: WebSocket, state: AppState, addr: SocketAddr) {
                         warn!("Received SyncOrders from client, which is unexpected.");
                     },
                     WsMessage::Ping => {
-                        // Keep-alive from the tablet, no action needed
+                        // Keep-alive from tablet, update last_seen timestamp
+                        let mut devices = registry.devices.lock().unwrap();
+                        for device in devices.values_mut() {
+                            if device.ip == client_ip {
+                                device.last_seen = chrono::Utc::now().timestamp_millis();
+                            }
+                        }
                     }
                 }
             }
@@ -345,35 +351,6 @@ fn decrement_connections(registry: &Arc<DeviceRegistry>) {
         *count -= 1;
     }
     info!("KDS Client disconnected. Total active: {}", *count);
-
-    if *count == 0 {
-        let registry_clone = registry.clone();
-        let current_session = *registry.session_id.lock().unwrap();
-
-        tauri::async_runtime::spawn(async move {
-            info!("No active connections. Starting 5-minute auto-shutdown timer for session {}...", current_session);
-            sleep(Duration::from_secs(300)).await;
-
-            // Check if we are still in the same session and count is still zero
-            let count = registry_clone.active_connections.lock().unwrap();
-            let session = registry_clone.session_id.lock().unwrap();
-
-            if *count == 0 && *session == current_session {
-                let is_running = registry_clone.is_running.lock().unwrap();
-                if *is_running {
-                    info!("Auto-shutting down KDS Hub (session {}) due to inactivity.", current_session);
-                    let mut tx_guard = registry_clone.shutdown_tx.lock().unwrap();
-                    if let Some(tx) = tx_guard.take() {
-                        let _ = tx.send(());
-                    }
-                }
-            } else if *session != current_session {
-                info!("Auto-shutdown timer for session {} discarded (new session {} active).", current_session, *session);
-            } else {
-                info!("Auto-shutdown for session {} cancelled, new client connected.", current_session);
-            }
-        });
-    }
 }
 
 #[tauri::command]

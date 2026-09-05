@@ -85,10 +85,10 @@ let reconnectTimeout: any = null;
 let reconnectAttempts = 0;
 let heartbeatInterval: any = null;
 
-const MAX_RECONNECT_ATTEMPTS = 50;
-const BASE_RECONNECT_DELAY = 1000; // 1s
-const MAX_RECONNECT_DELAY = 30000; // 30s
-const HEARTBEAT_INTERVAL = 10000; // 10s
+const MAX_RECONNECT_ATTEMPTS = 100;
+const BASE_RECONNECT_DELAY = 500; // 500ms
+const MAX_RECONNECT_DELAY = 5000; // 5s max delay in high demand
+const HEARTBEAT_INTERVAL = 5000; // 5s heartbeat
 
 function getOfflineQueue(): string[] {
   const stored = localStorage.getItem('KDS_OFFLINE_QUEUE');
@@ -122,8 +122,16 @@ function clearOfflineQueue() {
 function startHeartbeat() {
   stopHeartbeat();
   heartbeatInterval = setInterval(() => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'Ping' }));
+    if (socket) {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'Ping' }));
+      } else if (socket.readyState === WebSocket.CLOSED || socket.readyState === WebSocket.CLOSING) {
+        console.warn("Heartbeat detected closed socket, attempting reconnect...");
+        stopHeartbeat();
+        const hubIp = localStorage.getItem('HUB_IP_ADDRESS');
+        const hubWsUrl = localStorage.getItem('HUB_WS_URL') || (hubIp ? `ws://${hubIp}:8080/kds-ws` : null);
+        if (hubWsUrl) connectToHub(hubWsUrl);
+      }
     }
   }, HEARTBEAT_INTERVAL);
 }

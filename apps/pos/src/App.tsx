@@ -93,6 +93,19 @@ const AppRoutes = () => {
     return <SetupPage />;
   }
 
+  // If KDS device, boot directly to KDS page without requiring staff checkin
+  if (deviceType === 'KDS') {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          <Route index path="/" element={<KDSPage />} />
+          <Route path="/setup" element={<SetupPage />} />
+          <Route path="*" element={<KDSPage />} />
+        </Routes>
+      </Suspense>
+    );
+  }
+
   if (!isAuthenticated) {
     return <CheckinPage />;
   }
@@ -107,19 +120,6 @@ const AppRoutes = () => {
         <Routes>
           <Route index path="/" element={<SupermarketPOS />} />
           <Route path="*" element={<SupermarketPOS />} />
-        </Routes>
-      </Suspense>
-    );
-  }
-
-  // If KDS device, boot directly to KDS page
-  if (deviceType === 'KDS') {
-    return (
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          <Route index path="/" element={<KDSPage />} />
-          <Route path="/setup" element={<SetupPage />} />
-          <Route path="*" element={<KDSPage />} />
         </Routes>
       </Suspense>
     );
@@ -208,12 +208,16 @@ const DynamicRenderer = () => {
   const storeBusinessType = usePosStore(state => state.settings.businessType);
   const businessMode = import.meta.env.VITE_BUSINESS_MODE || storeBusinessType || 'retail';
   const isRestaurant = businessMode === 'restaurant';
+  const deviceType = useAuthStore(state => state.deviceType);
 
   useEffect(() => {
-    if (isRestaurant) {
+    if (isRestaurant || deviceType === 'KDS') {
       initializeNetworkRole();
       fetchTables();
     }
+  }, [fetchTables, isRestaurant, deviceType]);
+
+  useEffect(() => {
     posthog.capture('app_started');
     trackPosEvent('app_started');
     // Hide and remove the splashscreen from index.html

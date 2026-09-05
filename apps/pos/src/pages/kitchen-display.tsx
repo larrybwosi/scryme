@@ -76,6 +76,25 @@ import { useKdsStore, KdsOrder as Order, OrderStatus, OrderType, ItemStatus, Sta
 import { usePosStore } from '@/store/store';
 import { updateOrderStatusInKitchen, sendOrderEtaResponse } from '@/lib/kds';
 
+function playOrderChime() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } catch (e) {
+    console.warn("Audio chime error:", e);
+  }
+}
+
 type SortKey = "time_asc" | "time_desc" | "priority" | "table";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -352,6 +371,34 @@ function OrderCard({
           </TooltipProvider>
         )}
 
+        {/* Course Fire Indicator button */}
+        {!isDoneOrVoided && (
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    useKdsStore.getState().toggleCourseFire(order.id);
+                  }}
+                  className={cn(
+                    "text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border flex items-center gap-1 transition-all",
+                    order.isFired
+                      ? "bg-[#ff6b35]/25 text-[#ff6b35] border-[#ff6b35]/50 animate-pulse"
+                      : "bg-[#1a1d24] text-[#8b919e] border-[#353a44] hover:text-[#f0f2f5]"
+                  )}
+                >
+                  <Flame className="w-2.5 h-2.5" />
+                  {order.isFired ? "FIRED" : "FIRE"}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
+                Toggle course fire pacing
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
         <div className="ml-auto flex items-center gap-2">
           <span className="text-[11px] text-[#555b68] font-mono hidden sm:inline">
             {order.table}
@@ -398,8 +445,13 @@ function OrderCard({
               ×{item.quantity}
             </span>
             <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-semibold text-[#f0f2f5] truncate leading-tight">
+              <div className="text-[13px] font-semibold text-[#f0f2f5] truncate leading-tight flex items-center gap-1.5">
                 {item.name}
+                {item.course && (
+                  <span className="text-[9px] font-mono px-1 rounded bg-[#1a1d24] border border-[#353a44] text-[#e8a020]">
+                    {item.course}
+                  </span>
+                )}
               </div>
               {item.modifiers && (
                 <div
@@ -561,6 +613,72 @@ function OrderCard({
         <div className="absolute inset-x-0 bottom-0 h-0.5 bg-[#3b9eff] rounded-b-xl" />
       )}
     </div>
+  );
+}
+
+// ─── Prep Summary Sheet (Aggregated Item View) ────────────────────────────────
+
+function PrepSummarySheet({
+  open,
+  station,
+  onClose,
+}: {
+  open: boolean;
+  station: Station;
+  onClose: () => void;
+}) {
+  const getAggregatedPrepItems = useKdsStore((state) => state.getAggregatedPrepItems);
+  const items = getAggregatedPrepItems(station);
+
+  return (
+    <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
+      <SheetContent
+        side="right"
+        className="w-[340px] bg-[#111318] border-l border-[#252830] text-[#f0f2f5] p-0 flex flex-col"
+      >
+        <SheetHeader className="px-4 py-3 border-b border-[#252830]">
+          <SheetTitle className="text-[12px] font-bold uppercase tracking-widest text-[#e8a020] flex items-center gap-2">
+            <ChefHat className="w-3.5 h-3.5" />
+            Kitchen Prep View — Item Totals
+          </SheetTitle>
+          <p className="text-[11px] text-[#555b68]">
+            Aggregated pending & cooking quantities for fast prep during rushes.
+          </p>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+          {items.length === 0 ? (
+            <div className="text-center py-12 text-[#555b68]">
+              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-20" />
+              <p className="text-xs">No active items to prepare</p>
+            </div>
+          ) : (
+            items.map((item) => (
+              <div
+                key={item.name}
+                className="flex items-center justify-between p-3 rounded-lg border border-[#252830] bg-[#0d0f12]"
+              >
+                <div className="flex-1 min-w-0 pr-2">
+                  <div className="font-semibold text-sm text-[#f0f2f5] truncate">
+                    {item.name}
+                  </div>
+                  <div className="text-[10px] text-[#555b68] flex gap-2 mt-0.5">
+                    {item.cookingCount > 0 && (
+                      <span className="text-[#e8a020] font-mono">{item.cookingCount} cooking</span>
+                    )}
+                    {item.pendingCount > 0 && (
+                      <span className="text-[#8b919e] font-mono">{item.pendingCount} pending</span>
+                    )}
+                  </div>
+                </div>
+                <div className="font-mono font-bold text-lg text-[#e8a020] bg-[#e8a020]/10 border border-[#e8a020]/30 rounded-md px-2.5 py-0.5">
+                  ×{item.totalQuantity}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -762,19 +880,41 @@ export default function KDSPage() {
   }, [orders]);
 
   const autoPrintKds = usePosStore(state => state.settings.kitchenTicketConfig.autoPrintKds);
+  const assignedStation = useKdsStore(state => state.assignedStation);
+  const setAssignedStation = useKdsStore(state => state.setAssignedStation);
+
   const [bumped, setBumped] = useState<Order[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [station, setStation] = useState<Station>("all");
+  const [station, setStationState] = useState<Station>(assignedStation);
   const [filter, setFilter] = useState<OrderStatus | "all">("all");
   const [sort, setSort] = useState<SortKey>("time_asc");
   const [cols, setCols] = useState(3);
   const [search, setSearch] = useState("");
   const [now, setNow] = useState(Date.now());
   const [recallOpen, setRecallOpen] = useState(false);
+  const [prepSummaryOpen, setPrepSummaryOpen] = useState(false);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [voidTarget, setVoidTarget] = useState<Order | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(true);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  const prevOrderCount = useRef(orders.length);
+
+  const setStation = useCallback((s: Station) => {
+    setStationState(s);
+    setAssignedStation(s);
+  }, [setAssignedStation]);
+
+  // Play sound on new incoming order
+  useEffect(() => {
+    if (orders.length > prevOrderCount.current) {
+      if (soundEnabled) {
+        playOrderChime();
+      }
+    }
+    prevOrderCount.current = orders.length;
+  }, [orders.length, soundEnabled]);
 
   // Clock tick
   useEffect(() => {
@@ -1135,6 +1275,48 @@ export default function KDSPage() {
           <Separator orientation="vertical" className="h-6 bg-[#252830] mx-1" />
 
           <div className="flex items-center gap-1">
+            {/* Sound Chime Toggle */}
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setSoundEnabled((prev) => !prev)}
+                    className={cn(
+                      "w-8 h-8 border border-transparent hover:border-[#353a44]",
+                      soundEnabled ? "text-[#e8a020]" : "text-[#555b68]"
+                    )}
+                  >
+                    {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
+                  Toggle order chime sound
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Prep View Summary Toggle */}
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setPrepSummaryOpen((v) => !v)}
+                    className="h-8 px-2 text-[10px] font-bold uppercase tracking-wide gap-1.5 text-[#e8a020] bg-[#e8a020]/10 border border-[#e8a020]/30 hover:bg-[#e8a020]/20"
+                  >
+                    <ChefHat className="w-3.5 h-3.5" />
+                    <span className="hidden lg:inline">Prep View</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
+                  View aggregated item totals across active orders
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+
             {/* Auto-Print Settings Toggle */}
             <TooltipProvider delayDuration={200}>
               <Tooltip>
@@ -1485,6 +1667,13 @@ export default function KDSPage() {
           </div>
         </div>
       </div>
+
+      {/* ── PREP SUMMARY SHEET ── */}
+      <PrepSummarySheet
+        open={prepSummaryOpen}
+        station={station}
+        onClose={() => setPrepSummaryOpen(false)}
+      />
 
       {/* ── RECALL SHEET ── */}
       <RecallSheet
