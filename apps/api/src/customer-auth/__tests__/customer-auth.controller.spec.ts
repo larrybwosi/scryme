@@ -103,7 +103,7 @@ describe("CustomerAuthController", () => {
         hostname: "localhost",
         raw: { url: "/api/customer-auth/sign-in/email" },
         headers: { "content-type": "application/json" },
-        body: { email: "customer@example.com", password: "password123" },
+        body: { email: "customer@example.com", password: "test-password-value" },
       };
 
       const resHeader = vi.fn();
