@@ -76,6 +76,7 @@ describe("PublicServicesController & getServiceAvailability Algorithm", () => {
           provide: StaffSchedulingService,
           useValue: {
             isStaffAvailable: vi.fn().mockResolvedValue(true),
+            checkStaffAvailability: vi.fn().mockResolvedValue({ available: true, reasons: [] }),
           },
         },
         {
@@ -168,6 +169,7 @@ describe("PublicServicesController & getServiceAvailability Algorithm", () => {
         bufferTimeBefore: 0,
         bufferTimeAfter: 0,
         requiresDeposit: false,
+        staff: [{ memberId: "staff-1" }],
       };
 
       const mockCustomer = {
