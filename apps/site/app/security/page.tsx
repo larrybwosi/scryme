@@ -1,17 +1,32 @@
 import type { Metadata } from "next";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Platform Security — Scryme Enterprise",
-  description:
-    "Learn how Scryme Technologies protects B2B transactions, OIDC sessions, and offline-first terminal databases.",
-  alternates: {
-    canonical: "/security",
-  },
-};
+export const revalidate = 60;
 
-export default function SecurityPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getCmsPage("security");
+  return getPageMetadata({
+    pageSeo: page?.seo,
+    fallbackTitle: "Platform Security — Scryme Enterprise",
+    fallbackDescription:
+      "Learn how Scryme Technologies protects B2B transactions, OIDC sessions, and offline-first terminal databases.",
+    canonicalPath: "/security",
+  });
+}
+
+export default async function SecurityPage() {
+  const cmsPage = await getCmsPage("security");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   return (
     <main
       style={{ background: colors.inkBg }}

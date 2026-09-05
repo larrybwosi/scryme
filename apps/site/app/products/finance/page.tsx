@@ -20,9 +20,21 @@ import { FinancePlMock } from "@/components/products/finance/finance-pl-mock";
 import { FinanceInvoicesMock } from "@/components/products/finance/finance-invoices-mock";
 import { FinanceExpenseMock } from "@/components/products/finance/finance-expense-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
+
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
+  const cmsPage = await getCmsPage("products/finance");
+  if (cmsPage?.seo) {
+    return getPageMetadata({
+      pageSeo: cmsPage.seo,
+      fallbackTitle: "Automated Finance & Accounting for Businesses",
+      fallbackDescription: "Scryme Finance automates bookkeeping, invoicing, and financial reporting for retail and wholesale businesses — no accountant required for day-to-day operations.",
+      canonicalPath: "/products/finance",
+    });
+  }
   const content = await getHomePageContent();
   const moduleData = content.modules?.find((m) => m.code === "FIN" || m.href?.endsWith("/finance"));
   return getPageMetadata({
@@ -77,7 +89,16 @@ const includedCards = [
   },
 ];
 
-export default function FinancePage() {
+export default async function FinancePage() {
+  const cmsPage = await getCmsPage("products/finance");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",

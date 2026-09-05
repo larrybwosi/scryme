@@ -3,6 +3,7 @@ import { Inter, Geist_Mono } from "next/font/google";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LayoutContent } from "@/components/layout/layout-content";
+import { SanityLive } from "@/sanity/lib/live";
 import { OpenPanelProvider } from "@/components/openpanel-provider";
 import "./globals.css";
 import { env } from "@repo/env";
@@ -175,6 +176,7 @@ export default function RootLayout({
           <StructuredData data={websiteData} />
           <StructuredData data={softwareData} />
           <LayoutContent>{children}</LayoutContent>
+          <SanityLive />
         </ThemeProvider>
       </body>
     </html>
