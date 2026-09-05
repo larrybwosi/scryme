@@ -7,9 +7,15 @@ export class UtilityAccountUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async createAccount(organizationId: string, dto: CreateUtilityAccountDto) {
+    // 🛡️ Sentinel: Mass Assignment & IDOR Protection - Explicitly whitelist allowed fields
+    // and bind organizationId from request context to prevent property injection.
     return await this.prisma.client.utilityAccount.create({
       data: {
-        ...dto,
+        name: dto.name,
+        provider: dto.provider,
+        accountNumber: dto.accountNumber,
+        meterNumber: dto.meterNumber,
+        type: dto.type,
         organizationId,
       },
     });
