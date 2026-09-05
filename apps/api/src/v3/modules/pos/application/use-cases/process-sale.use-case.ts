@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   Inject,
   forwardRef,
+  Optional,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
@@ -20,7 +21,7 @@ export class ProcessSaleUseCase {
     @Inject(forwardRef(() => InvoiceUseCase))
     private readonly invoiceUseCase: InvoiceUseCase,
     private readonly inventoryMovementService: InventoryMovementService,
-    private readonly openPanelService: OpenPanelService,
+    @Optional() private readonly openPanelService?: OpenPanelService,
   ) {}
 
   async execute(ctx: any, dto: any) {
@@ -160,7 +161,7 @@ export class ProcessSaleUseCase {
       },
     );
 
-    this.openPanelService.trackEvent("pos.sale.completed", mId, {
+    this.openPanelService?.trackEvent("pos.sale.completed", mId, {
       organizationId: orgId,
       locationId: locId,
       total,

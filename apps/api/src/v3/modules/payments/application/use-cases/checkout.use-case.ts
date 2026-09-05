@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Optional,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CheckoutDto, CheckoutResponseDto } from "../dto/checkout.dto";
@@ -17,7 +18,7 @@ export class CheckoutUseCase {
     private readonly prisma: PrismaService,
     private readonly mpesaService: MpesaService,
     private readonly webhookService: WebhookService,
-    private readonly openPanelService: OpenPanelService,
+    @Optional() private readonly openPanelService?: OpenPanelService,
   ) {}
 
   async execute(
@@ -176,7 +177,7 @@ export class CheckoutUseCase {
       paymentStatus: payment.status,
     });
 
-    this.openPanelService.trackEvent("checkout.completed", cart.customerId || undefined, {
+    this.openPanelService?.trackEvent("checkout.completed", cart.customerId || undefined, {
       organizationId,
       orderId: transaction.id,
       orderNumber: transaction.number,
