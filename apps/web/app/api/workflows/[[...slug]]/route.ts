@@ -212,13 +212,16 @@ async function getAvailableWorkflows(
     where: { organizationId },
   });
 
-  return builtInWorkflowTemplates.map((template) => {
+  const builtinPaths = new Set(builtInWorkflowTemplates.map((t) => t.path));
+
+  const builtinItems = builtInWorkflowTemplates.map((template) => {
     const provisioned = definitions.find(
       (d) => d.key === template.path || d.key === template.path.replace("f/dealio/", ""),
     );
 
     return {
       path: template.path,
+      key: template.path.replace("f/dealio/", ""),
       name: template.name,
       description: template.description,
       isProvisioned: !!provisioned,
@@ -226,6 +229,99 @@ async function getAvailableWorkflows(
       schema: template.schema,
     };
   });
+
+  const customItems = definitions
+    .filter((d) => !builtinPaths.has(d.key) && !builtInWorkflowTemplates.some((t) => t.path.replace("f/dealio/", "") === d.key))
+    .map((d) => ({
+      path: d.key,
+      key: d.key,
+      name: d.name,
+      description: d.description || "Custom enterprise workflow automation.",
+      isProvisioned: true,
+      settings: (d.config as any) || {},
+      schema: {
+        type: "object",
+        properties: {
+          enabled: { type: "boolean", title: "Enabled", default: d.isActive },
+        },
+      },
+    }));
+
+  return [...builtinItems, ...customItems];
+}
+
+async function getWorkflowDefinitions(
+  organizationId: string,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
+) {
+  if (orgSlug) {
+    const v3Res = await fetchFromV3Api(orgSlug, "definitions", {}, authHeader, cookieHeader);
+    if (v3Res?.data) {
+      return v3Res.data;
+    }
+  }
+
+  return db.workflowEngineDefinition.findMany({
+    where: { organizationId },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+async function createWorkflowDefinition(
+  organizationId: string,
+  key: string,
+  name: string,
+  description?: string,
+  triggerType?: string,
+  config?: any,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
+) {
+  if (orgSlug) {
+    const v3Res = await fetchFromV3Api(
+      orgSlug,
+      "definitions",
+      {
+        method: "POST",
+        body: JSON.stringify({ key, name, description, triggerType, config }),
+      },
+      authHeader,
+      cookieHeader,
+    );
+    if (v3Res?.data || v3Res?.success) {
+      return v3Res;
+    }
+  }
+
+  const definition = await db.workflowEngineDefinition.upsert({
+    where: {
+      organizationId_key: {
+        organizationId,
+        key,
+      },
+    },
+    create: {
+      organizationId,
+      key,
+      name,
+      description: description || "Custom enterprise workflow automation",
+      triggerType: (triggerType as any) || "EVENT",
+      config: config || {},
+      isActive: true,
+    },
+    update: {
+      name,
+      description: description || "Custom enterprise workflow automation",
+      triggerType: (triggerType as any) || "EVENT",
+      config: config || {},
+      isActive: true,
+    },
+  });
+
+  return { success: true, data: definition };
 }
 
 async function provisionWorkflow(
@@ -507,6 +603,16 @@ export async function GET(
       return NextResponse.json({ success: true, data: workflows });
     }
 
+    if (action === "definitions") {
+      const definitions = await getWorkflowDefinitions(
+        auth.organizationId,
+        orgSlug,
+        authHeader,
+        cookieHeader,
+      );
+      return NextResponse.json({ success: true, data: definitions });
+    }
+
     if (action === "history") {
       const scriptPath = req.nextUrl.searchParams.get("path") || undefined;
       const history = await getExecutionHistory(
@@ -578,6 +684,21 @@ export async function POST(
     const orgSlug = (auth as any).organizationSlug || auth.organizationId;
     const authHeader = req.headers.get("authorization");
     const cookieHeader = req.headers.get("cookie");
+
+    if (action === "definitions") {
+      const result = await createWorkflowDefinition(
+        auth.organizationId,
+        body.key || body.path,
+        body.name,
+        body.description,
+        body.triggerType,
+        body.config,
+        orgSlug,
+        authHeader,
+        cookieHeader,
+      );
+      return NextResponse.json(result);
+    }
 
     if (action === "provision") {
       const result = await provisionWorkflow(

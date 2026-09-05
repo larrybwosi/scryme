@@ -43,6 +43,8 @@ import {
   Mail,
   MessageSquare,
   MoreHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
   Play,
   Plus,
   RefreshCw,
@@ -366,10 +368,18 @@ export default function WorkflowsPage() {
   const [search, setSearch] = useState("");
   const [paletteSearch, setPaletteSearch] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isProvisioning, setIsProvisioning] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("action");
   const [testMode, setTestMode] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
+  // New Enterprise Workflow Dialog state
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false);
+  const [newWorkflowName, setNewWorkflowName] = useState("");
+  const [newWorkflowDescription, setNewWorkflowDescription] = useState("");
+  const [newWorkflowTriggerType, setNewWorkflowTriggerType] = useState("EVENT");
+  const [newWorkflowKey, setNewWorkflowKey] = useState("");
 
   // Customization state for Workflow Schema Provisioning
   const [workflowSettings, setWorkflowSettings] = useState<Record<string, any>>({});
@@ -471,6 +481,45 @@ export default function WorkflowsPage() {
     }
   };
 
+  const handleCreateWorkflow = async () => {
+    if (!newWorkflowName.trim()) {
+      toast.error("Please provide a workflow name");
+      return;
+    }
+    const resolvedKey = (newWorkflowKey.trim() || newWorkflowName.toLowerCase().replace(/[^a-z0-9_]/g, "_")).replace(/^f\/dealio\//, "");
+
+    setIsCreatingWorkflow(true);
+    try {
+      const response = await fetch("/api/workflows/definitions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: resolvedKey,
+          name: newWorkflowName.trim(),
+          description: newWorkflowDescription.trim(),
+          triggerType: newWorkflowTriggerType,
+          config: { studio: { nodes: [], edges: [] } },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create workflow");
+
+      toast.success(`Workflow '${newWorkflowName}' created successfully!`);
+      setIsCreateDialogOpen(false);
+      setNewWorkflowName("");
+      setNewWorkflowDescription("");
+      setNewWorkflowKey("");
+      setNewWorkflowTriggerType("EVENT");
+
+      await mutate();
+      setSelectedPath(resolvedKey);
+    } catch {
+      toast.error("Unable to create new workflow definition");
+    } finally {
+      setIsCreatingWorkflow(false);
+    }
+  };
+
   const runWorkflow = async () => {
     if (!selectedWorkflow) return;
     try {
@@ -565,7 +614,17 @@ export default function WorkflowsPage() {
       <main className="workflow-studio flex h-[calc(100vh-4rem)] min-h-[680px] flex-col overflow-hidden bg-background text-foreground">
         {/* Top Navigation Bar */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/80 px-5 backdrop-blur z-10">
-          <div className="flex min-w-0 items-center gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            </Button>
+            <Separator orientation="vertical" className="h-4" />
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Zap className="text-primary fill-primary/20" size={18} />
               <span className="font-semibold text-foreground">Automations</span>
@@ -598,6 +657,77 @@ export default function WorkflowsPage() {
               </div>
             </div>
 
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs font-medium">
+                  <Plus size={14} /> New Workflow
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-base">
+                    <Sparkles className="text-primary" size={18} /> Create Enterprise Workflow
+                  </DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Design custom event-driven or scheduled automations for your workspace.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Workflow Name</Label>
+                    <Input
+                      value={newWorkflowName}
+                      onChange={(e) => setNewWorkflowName(e.target.value)}
+                      placeholder="e.g. High Value Order Approval"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Description</Label>
+                    <Textarea
+                      value={newWorkflowDescription}
+                      onChange={(e) => setNewWorkflowDescription(e.target.value)}
+                      placeholder="Describe the trigger and actions of this automation..."
+                      className="min-h-16 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Trigger Mode</Label>
+                      <Select value={newWorkflowTriggerType} onValueChange={setNewWorkflowTriggerType}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="EVENT" className="text-xs">System Event</SelectItem>
+                          <SelectItem value="SCHEDULED" className="text-xs">Scheduled Cron</SelectItem>
+                          <SelectItem value="WEBHOOK" className="text-xs">Incoming Webhook</SelectItem>
+                          <SelectItem value="MANUAL" className="text-xs">Manual Execution</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Workflow Identifier Key</Label>
+                      <Input
+                        value={newWorkflowKey}
+                        onChange={(e) => setNewWorkflowKey(e.target.value)}
+                        placeholder="e.g. order_approval"
+                        className="h-8 text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" size="sm" onClick={() => setIsCreateDialogOpen(false)} className="text-xs">
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleCreateWorkflow} disabled={isCreatingWorkflow} className="text-xs font-semibold">
+                    {isCreatingWorkflow ? "Creating..." : "Create Workflow"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <Button variant="ghost" size="sm" onClick={() => setActiveTab("history")} className="gap-1.5 text-xs">
               <History size={14} /> Execution History
             </Button>
@@ -613,106 +743,162 @@ export default function WorkflowsPage() {
         {/* Studio Body */}
         <div className="flex min-h-0 flex-1">
           {/* Left Sidebar: Workflow Selector & Palette */}
-          <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-card/60 backdrop-blur-sm">
-            <div className="border-b p-3.5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Workflows</p>
-                  <p className="text-xs text-muted-foreground">{workflows.length} available automations</p>
-                </div>
+          <aside
+            className={cn(
+              "flex shrink-0 flex-col border-r border-border bg-card/60 backdrop-blur-sm transition-all duration-300",
+              isSidebarCollapsed ? "w-16" : "w-80"
+            )}
+          >
+            {isSidebarCollapsed ? (
+              /* Collapsed Compact View */
+              <div className="flex h-full flex-col items-center py-3 gap-4">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  onClick={() => {
-                    setInspectorTab("provisioning");
-                    toast.info("Select a workflow or customize provisioning options in the inspector");
-                  }}
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 rounded-lg hover:bg-accent"
+                  onClick={() => setIsSidebarCollapsed(false)}
+                  title="Expand Sidebar"
                 >
-                  <SlidersHorizontal size={12} /> Provision
+                  <PanelLeftOpen size={18} />
                 </Button>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={13} />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search workflows..."
-                  className="h-8 pl-8 text-xs"
-                />
-              </div>
-            </div>
-
-            {/* Workflow List */}
-            <div className="max-h-48 overflow-y-auto border-b p-2">
-              {isLoading ? (
-                <div className="p-4 text-center text-xs text-muted-foreground">Loading workflows...</div>
-              ) : (
-                filteredWorkflows.map((workflow) => {
-                  const isSelected = workflow.path === selectedWorkflow?.path;
-                  return (
+                <Separator className="w-8" />
+                <div className="flex flex-col items-center gap-2 overflow-y-auto w-full px-2">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground rotate-90 my-2">Workflows</p>
+                  {workflows.slice(0, 5).map((w) => (
                     <button
-                      key={workflow.path}
-                      onClick={() => selectWorkflow(workflow.path)}
+                      key={w.path}
+                      onClick={() => selectWorkflow(w.path)}
+                      title={w.name}
                       className={cn(
-                        "mb-1 flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all",
-                        isSelected ? "bg-primary/10 text-primary font-medium ring-1 ring-primary/30" : "hover:bg-accent text-foreground"
+                        "flex size-9 items-center justify-center rounded-lg transition-all",
+                        w.path === selectedWorkflow?.path
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
                       )}
                     >
-                      <span className={cn("mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md", isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
-                        <Zap size={14} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1.5">
-                          <span className="truncate text-xs font-semibold">{workflow.name}</span>
-                          {workflow.isProvisioned && <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />}
-                        </span>
-                        <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">{workflow.description}</span>
-                      </span>
+                      <Zap size={16} />
                     </button>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Component Palette Header */}
-            <div className="border-b px-3.5 py-2.5 bg-muted/20">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Add Steps & Palette</p>
-                <Badge variant="secondary" className="text-[10px]">{palette.length} elements</Badge>
+                  ))}
+                </div>
+                <Separator className="w-8 mt-auto" />
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground rotate-90 my-2">Palette</p>
+                <div className="flex flex-col items-center gap-2 pb-3">
+                  {palette.slice(0, 6).map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => addNode(item)}
+                      title={`Add ${item.label}`}
+                      className="flex size-9 items-center justify-center rounded-lg border border-border/60 bg-card text-foreground hover:border-primary hover:bg-accent shadow-xs"
+                    >
+                      <Icon name={item.icon} />
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="relative mt-2">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={13} />
-                <Input
-                  value={paletteSearch}
-                  onChange={(e) => setPaletteSearch(e.target.value)}
-                  placeholder="Filter palette..."
-                  className="h-7 pl-8 text-xs bg-background"
-                />
-              </div>
-            </div>
-
-            {/* Palette Grid */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-              {filteredPalette.map((item) => (
-                <div
-                  key={item.label}
-                  onClick={() => addNode(item)}
-                  className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-card p-2.5 text-left transition-all hover:border-primary/50 hover:bg-accent/80 hover:shadow-sm"
-                >
-                  <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg text-foreground border border-border/40 shadow-xs", `node-accent-${item.color}`)}>
-                    <Icon name={item.icon} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary">{item.label}</p>
-                      <Plus size={12} className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+            ) : (
+              /* Expanded Full Sidebar */
+              <>
+                <div className="border-b p-3.5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Workflows</p>
+                      <p className="text-xs text-muted-foreground">{workflows.length} available automations</p>
                     </div>
-                    <p className="truncate text-[10px] text-muted-foreground">{item.description}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => {
+                        setInspectorTab("provisioning");
+                        toast.info("Select a workflow or customize provisioning options in the inspector");
+                      }}
+                    >
+                      <SlidersHorizontal size={12} /> Provision
+                    </Button>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={13} />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search workflows..."
+                      className="h-8 pl-8 text-xs"
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Workflow List */}
+                <div className="max-h-48 overflow-y-auto border-b p-2">
+                  {isLoading ? (
+                    <div className="p-4 text-center text-xs text-muted-foreground">Loading workflows...</div>
+                  ) : (
+                    filteredWorkflows.map((workflow) => {
+                      const isSelected = workflow.path === selectedWorkflow?.path;
+                      return (
+                        <button
+                          key={workflow.path}
+                          onClick={() => selectWorkflow(workflow.path)}
+                          className={cn(
+                            "mb-1 flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all",
+                            isSelected ? "bg-primary/10 text-primary font-medium ring-1 ring-primary/30" : "hover:bg-accent text-foreground"
+                          )}
+                        >
+                          <span className={cn("mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md", isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                            <Zap size={14} />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-1.5">
+                              <span className="truncate text-xs font-semibold">{workflow.name}</span>
+                              {workflow.isProvisioned && <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />}
+                            </span>
+                            <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">{workflow.description}</span>
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Component Palette Header */}
+                <div className="border-b px-3.5 py-2.5 bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Add Steps & Palette</p>
+                    <Badge variant="secondary" className="text-[10px]">{palette.length} elements</Badge>
+                  </div>
+                  <div className="relative mt-2">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={13} />
+                    <Input
+                      value={paletteSearch}
+                      onChange={(e) => setPaletteSearch(e.target.value)}
+                      placeholder="Filter palette..."
+                      className="h-7 pl-8 text-xs bg-background"
+                    />
+                  </div>
+                </div>
+
+                {/* Palette Grid */}
+                <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                  {filteredPalette.map((item) => (
+                    <div
+                      key={item.label}
+                      onClick={() => addNode(item)}
+                      className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-card p-2.5 text-left transition-all hover:border-primary/50 hover:bg-accent/80 hover:shadow-sm"
+                    >
+                      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg text-foreground border border-border/40 shadow-xs", `node-accent-${item.color}`)}>
+                        <Icon name={item.icon} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary">{item.label}</p>
+                          <Plus size={12} className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                        </div>
+                        <p className="truncate text-[10px] text-muted-foreground">{item.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </aside>
 
           {/* Main Canvas / Visualizer Panel */}
