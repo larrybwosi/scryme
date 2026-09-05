@@ -210,7 +210,7 @@ jobs:
           tagName: v${{ needs.set-version.outputs.version }}
           releaseName: "v${{ needs.set-version.outputs.version }}"
           releaseBody: "Release v${{ needs.set-version.outputs.version }}"
-          releaseDraft: false
+          releaseDraft: true
           prerelease: ${{ needs.release-management.outputs.isPrerelease }}
           args: ${{ steps.target.outputs.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.variant }}
 
@@ -290,3 +290,43 @@ jobs:
           VERSION: ${{ needs.set-version.outputs.version }}
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+
+  create-tag:
+    name: Create Tag and Publish Release
+    runs-on: ubuntu-latest
+    needs: [release-management, set-version, publish-pos, publish-crates, publish-docker]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Create Git Tag and Publish Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: v${{ needs.set-version.outputs.version }}
+          IS_PRERELEASE: ${{ needs.release-management.outputs.isPrerelease }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Checking if git tag $TAG_NAME exists locally/remotely..."
+          if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            git tag "$TAG_NAME"
+          fi
+
+          git push origin "$TAG_NAME" || true
+
+          echo "Publishing release $TAG_NAME..."
+          if gh release edit "$TAG_NAME" --draft=false; then
+            echo "Draft release $TAG_NAME successfully published."
+          else
+            echo "Draft release $TAG_NAME not found or couldn't be undrafted, creating new release..."
+            PRERELEASE_FLAG=""
+            if [ "$IS_PRERELEASE" = "true" ]; then
+              PRERELEASE_FLAG="--prerelease"
+            fi
+            gh release create "$TAG_NAME" --title "$TAG_NAME" --notes "Release $TAG_NAME" $PRERELEASE_FLAG || true
+          fi
