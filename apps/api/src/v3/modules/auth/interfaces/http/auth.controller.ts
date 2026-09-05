@@ -18,6 +18,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
 import { AllowPublic } from "@/common/decorators/auth.decorator";
 import { ExchangeTokenUseCase } from "../../application/use-cases/exchange-token.use-case";
 import { OAuthClientManagementUseCase } from "../../application/use-cases/oauth-client-management.use-case";
+import { ApiKeyManagementUseCase } from "../../application/use-cases/api-key-management.use-case";
 import {
   TokenRequestDto,
   TokenResponseDto,
@@ -49,6 +50,7 @@ export class AuthController {
   constructor(
     private readonly exchangeTokenUseCase: ExchangeTokenUseCase,
     private readonly oauthClientManagementUseCase: OAuthClientManagementUseCase,
+    private readonly apiKeyManagementUseCase: ApiKeyManagementUseCase,
     private readonly authService: AuthService,
   ) {}
 
@@ -72,6 +74,53 @@ export class AuthController {
   async exchangeToken(@Body() body: TokenRequestDto) {
     return this.exchangeTokenUseCase.execute(body.clientId, body.clientSecret);
   }
+
+  // --- API KEY MANAGEMENT ENDPOINTS ---
+
+  @Post("api-keys")
+  @ApiOperation({
+    summary: "Create a new V3 API Secret Key for developer account",
+    operationId: "Auth_CreateApiKey",
+  })
+  async createApiKey(
+    @CurrentUser() user: any,
+    @Body() body: { name: string; environment?: "LIVE" | "TEST" },
+  ) {
+    return this.apiKeyManagementUseCase.createApiKey(user?.userId || user?.id, body);
+  }
+
+  @Get("api-keys")
+  @ApiOperation({
+    summary: "List V3 API Secret Keys owned by developer",
+    operationId: "Auth_ListApiKeys",
+  })
+  async listApiKeys(@CurrentUser() user: any) {
+    return this.apiKeyManagementUseCase.listApiKeys(user?.userId || user?.id);
+  }
+
+  @Put("api-keys/:id/toggle")
+  @ApiParam({ name: "id", type: "string" })
+  @ApiOperation({
+    summary: "Toggle enabled status of a V3 API Secret Key",
+    operationId: "Auth_ToggleApiKey",
+  })
+  async toggleApiKey(@CurrentUser() user: any, @Req() req: any) {
+    const id = req.params.id;
+    return this.apiKeyManagementUseCase.toggleApiKey(id, user?.userId || user?.id);
+  }
+
+  @Delete("api-keys/:id")
+  @ApiParam({ name: "id", type: "string" })
+  @ApiOperation({
+    summary: "Revoke and delete a V3 API Secret Key",
+    operationId: "Auth_DeleteApiKey",
+  })
+  async deleteApiKey(@CurrentUser() user: any, @Req() req: any) {
+    const id = req.params.id;
+    return this.apiKeyManagementUseCase.deleteApiKey(id, user?.userId || user?.id);
+  }
+
+  // --- OAUTH CLIENT MANAGEMENT ENDPOINTS ---
 
   @Post("oauth/clients")
   @UsePipes(new V3ZodValidationPipe(CreateOAuthClientSchema))
