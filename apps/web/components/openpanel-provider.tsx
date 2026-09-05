@@ -5,10 +5,20 @@ import { OpenPanelComponent } from "@openpanel/nextjs";
 
 export function OpenPanelProvider() {
   const clientId = process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID;
+  const host = process.env.NEXT_PUBLIC_OPENPANEL_HOST;
 
-  if (!clientId) {
+  if (
+    !clientId ||
+    clientId.includes("PLACEHOLDER") ||
+    clientId === "your-openpanel-client-id"
+  ) {
     return null;
   }
+
+  const apiUrl =
+    host && !host.includes("PLACEHOLDER")
+      ? host
+      : undefined;
 
   return (
     <OpenPanelComponent
@@ -16,7 +26,7 @@ export function OpenPanelProvider() {
       trackScreenViews={true}
       trackAttributes={true}
       trackOutgoingLinks={true}
-      apiUrl={process.env.NEXT_PUBLIC_OPENPANEL_HOST}
+      apiUrl={apiUrl}
     />
   );
 }
