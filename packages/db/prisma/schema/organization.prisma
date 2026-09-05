@@ -22,6 +22,12 @@ model Organization {
   suspensionReason String?
   quotaOverrides   Json? // per-org override merged over the org's tier limits
 
+  // Platform admin controls
+  isSuspended      Boolean   @default(false)
+  suspendedAt      DateTime?
+  suspensionReason String?
+  quotaOverrides   Json? // per-org override merged over the org's tier limits
+
   defaultLocationId  String?
   defaultWarehouseId String?
 
