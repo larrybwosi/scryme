@@ -3,6 +3,7 @@ import { Inter, Geist_Mono } from "next/font/google";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LayoutContent } from "@/components/layout/layout-content";
+import { OpenPanelProvider } from "@/components/openpanel-provider";
 import "./globals.css";
 import { env } from "@repo/env";
 
@@ -167,6 +168,7 @@ export default function RootLayout({
         />
       </head>
       <body className="font-sans antialiased text-foreground">
+        <OpenPanelProvider />
         <a href="#main-content" className="sr-only fixed left-4 top-4 rounded-md bg-background px-4 py-3 text-foreground shadow-lg focus:not-sr-only">Skip to main content</a>
         <ThemeProvider>
           <StructuredData data={organizationData} />
