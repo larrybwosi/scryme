@@ -23,6 +23,29 @@ services:
       retries: 3
       start_period: 30s
 
+  customer-db:
+    image: postgres:17-alpine
+    restart: always
+    env_file:
+      - .env.example
+      - path: .env
+        required: false
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-dbuser}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-dbpassword}
+      - POSTGRES_DB=${CUSTOMER_DB_NAME:-customer_db}
+    volumes:
+      - customer_postgres_data:/var/lib/postgresql/data
+    networks:
+      - scryme-network
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${CUSTOMER_DB_NAME:-customer_db} -q"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
   # --- CACHE ---
   redis:
     image: redis:alpine
@@ -114,6 +137,7 @@ services:
         required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
+      - CUSTOMER_DB=${CUSTOMER_DB:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@customer-db:5432/${CUSTOMER_DB_NAME:-customer_db}?schema=public}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
@@ -130,6 +154,8 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-encryptionkey1234567890key12345}
     depends_on:
       db:
+        condition: service_healthy
+      customer-db:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -242,6 +268,7 @@ services:
 
 volumes:
   postgres_data:
+  customer_postgres_data:
   rustfs_data:
   loki_data:
 
