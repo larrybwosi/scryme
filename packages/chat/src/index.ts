@@ -221,12 +221,13 @@ export class ScrymeChatApiClient {
       workspaceSlug,
       channelSlugOrId,
     );
-    return chat.channel.message.create(channelId, {
+    const payload: any = {
       content: message.content,
       attachments: message.attachments,
-      // actions: message.actions,
+      actions: message.actions,
       threadId: message.threadId,
-    });
+    };
+    return chat.channel.message.create(channelId, payload);
   }
 
   /**
@@ -242,11 +243,12 @@ export class ScrymeChatApiClient {
       workspaceSlug,
       channelSlugOrId,
     );
-    return chat.message.update(channelId, messageId, {
+    const payload: any = {
       content: message.content,
-      // actions: message.actions,
-      // attachments: message.attachments,
-    });
+      actions: message.actions,
+      attachments: message.attachments,
+    };
+    return chat.message.update(channelId, messageId, payload);
   }
 
   /**

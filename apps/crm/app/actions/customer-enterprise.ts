@@ -361,58 +361,43 @@ export async function importCustomersCSV(csvContent: string): Promise<{
 
   const dataLines = lines.slice(1);
 
-  // Performance Optimization: Parallelized CSV row processing in controlled chunks of 10 using Promise.all.
-  // Chunking prevents database connection pool exhaustion while reducing total latency from O(N) sequential roundtrips to O(N/10) concurrent batch roundtrips.
-  const CHUNK_SIZE = 10;
-  for (let i = 0; i < dataLines.length; i += CHUNK_SIZE) {
-    const chunk = dataLines.slice(i, i + CHUNK_SIZE);
-    const results = await Promise.all(
-      chunk.map(async (line, chunkIdx) => {
-        const index = i + chunkIdx;
-        const cols = line.split(",").map((col) => col.trim().replace(/^"|"$/g, ""));
-        const name = cols[0] || cols[2];
-        const email = cols[1] || cols[3] || null;
-        const phone = cols[2] || cols[4] || null;
-        const company = cols[5] || null;
+  for (let i = 0; i < dataLines.length; i++) {
+    const line = dataLines[i];
+    const cols = line.split(",").map((col) => col.trim().replace(/^"|"$/g, ""));
+    const name = cols[0] || cols[2];
+    const email = cols[1] || cols[3] || null;
+    const phone = cols[2] || cols[4] || null;
+    const company = cols[5] || null;
 
-        if (!name || name.trim() === "") {
-          return { success: false, error: `Row ${index + 2}: Missing customer name` };
-        }
+    if (!name || name.trim() === "") {
+      errors.push(`Row ${i + 2}: Missing customer name`);
+      continue;
+    }
 
-        try {
-          const created = await db.customer.create({
-            data: {
-              name,
-              email: email === "" ? null : email,
-              phone: phone === "" ? null : phone,
-              company: company === "" ? null : company,
-              organizationId,
-              tags: ["IMPORTED"],
-              creationType: "IMPORTED",
-            },
-          });
+    try {
+      const created = await db.customer.create({
+        data: {
+          name,
+          email: email === "" ? null : email,
+          phone: phone === "" ? null : phone,
+          company: company === "" ? null : company,
+          organizationId,
+          tags: ["IMPORTED"],
+          creationType: "IMPORTED",
+        },
+      });
 
-          await dispatchCustomerWorkflowTrigger(organizationId, "CUSTOMER_CREATED", {
-            customerId: created.id,
-            customerName: created.name,
-            customerEmail: created.email,
-            customerPhone: created.phone,
-            details: "Customer registered via bulk CSV import.",
-          });
+      await dispatchCustomerWorkflowTrigger(organizationId, "CUSTOMER_CREATED", {
+        customerId: created.id,
+        customerName: created.name,
+        customerEmail: created.email,
+        customerPhone: created.phone,
+        details: "Customer registered via bulk CSV import.",
+      });
 
-          return { success: true };
-        } catch (err: any) {
-          return { success: false, error: `Row ${index + 2}: ${err.message}` };
-        }
-      })
-    );
-
-    for (const res of results) {
-      if (res.success) {
-        importedCount++;
-      } else if (res.error) {
-        errors.push(res.error);
-      }
+      importedCount++;
+    } catch (err: any) {
+      errors.push(`Row ${i + 2}: ${err.message}`);
     }
   }
 

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
 import { ShiftsManager } from "../../../components/staff/shifts-manager";
-import { getStaffShifts } from "../../actions/shifts";
+import { getSchedulingWorkspace, getStaffShifts } from "../../actions/shifts";
 import { getStaffMembers } from "../../actions/staff";
 import { Button } from "@repo/ui/components/ui/button";
 import { Calendar, ChevronLeft, Clock } from "lucide-react";
@@ -35,17 +35,25 @@ export default async function ShiftsPage() {
     role === "ADMIN" ||
     (role === "MANAGER" && !!settings?.managersCanManageShifts);
 
-  // Fetch shifts and members
-  const [shiftsResult, membersResult] = await Promise.all([
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setUTCDate(now.getUTCDate() - now.getUTCDay());
+  weekStart.setUTCHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setUTCDate(weekEnd.getUTCDate() + 7);
+
+  const [shiftsResult, membersResult, workspaceResult] = await Promise.all([
     getStaffShifts(),
     getStaffMembers(),
+    getSchedulingWorkspace(weekStart.toISOString(), weekEnd.toISOString()),
   ]);
 
   const shifts = (shiftsResult.success ? shiftsResult.data : []) || [];
   const members = (membersResult.success ? membersResult.data : []) || [];
+  const workspace = workspaceResult.success ? workspaceResult.data : undefined;
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
+    <main className="flex min-h-screen flex-col gap-6 bg-background p-4 md:p-8">
       {/* Header */}
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-2">
@@ -64,11 +72,11 @@ export default async function ShiftsPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                Shifts & Scheduling
+                Scheduling Command Center
               </h1>
               <p className="text-sm text-muted-foreground font-normal">
-                Define and schedule weekly recurring shifts and break times for
-                your team.
+                Coordinate bookings, coverage, availability, and staff rosters
+                from one operational workspace.
               </p>
             </div>
           </div>
@@ -80,7 +88,9 @@ export default async function ShiftsPage() {
         initialShifts={shifts as any}
         allMembers={members as any}
         canManage={canManage}
+        initialWorkspace={workspace as any}
+        initialWeekStart={weekStart.toISOString()}
       />
-    </div>
+    </main>
   );
 }
