@@ -163,6 +163,20 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
   else
     echo "⚠️ DATABASE_URL not set, skipping migrations."
   fi
+
+  if [ -n "$CUSTOMER_DB" ]; then
+    echo "Deploying customer database schema..."
+    PRISMA_BIN="./node_modules/.bin/prisma"
+    if [ ! -f "$PRISMA_BIN" ]; then
+      PRISMA_BIN="prisma"
+    fi
+
+    if [ -f "./src/customer-auth/prisma/schema.prisma" ]; then
+      $PRISMA_BIN db push --schema=./src/customer-auth/prisma/schema.prisma --accept-data-loss || echo "⚠️ Customer DB push failed, continuing anyway."
+    fi
+  else
+    echo "ℹ️ CUSTOMER_DB not set, skipping customer DB push."
+  fi
 fi
 
 # ---------------------------------------------------------
