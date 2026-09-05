@@ -9,6 +9,7 @@ import { MpesaService } from "@repo/shared/mpesa/server";
 import { emitOrderPlaced } from "@repo/shared/server";
 import { WebhookService } from "../../../webhooks/infrastructure/services/webhook.service";
 import { Decimal } from "decimal.js";
+import { OpenPanelService } from "@/common/openpanel/openpanel.service";
 
 @Injectable()
 export class CheckoutUseCase {
@@ -16,6 +17,7 @@ export class CheckoutUseCase {
     private readonly prisma: PrismaService,
     private readonly mpesaService: MpesaService,
     private readonly webhookService: WebhookService,
+    private readonly openPanelService: OpenPanelService,
   ) {}
 
   async execute(
@@ -172,6 +174,14 @@ export class CheckoutUseCase {
       customerId: cart.customerId,
       paymentId: payment.id,
       paymentStatus: payment.status,
+    });
+
+    this.openPanelService.trackEvent("checkout.completed", cart.customerId || undefined, {
+      organizationId,
+      orderId: transaction.id,
+      orderNumber: transaction.number,
+      totalAmount: Number(transaction.finalTotal),
+      itemCount: cart.items.length,
     });
 
     return {
