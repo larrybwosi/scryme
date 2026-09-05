@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table";
 import {
   createScheduleOverride,
+  createScheduledBooking,
   createStaffShift,
   deleteStaffShift,
   getSchedulingWorkspace,
@@ -134,9 +135,21 @@ export function ShiftsManager({
   const [pendingTransition, setPendingTransition] = useState<"CANCELLED" | "NOSHOW" | null>(null);
   const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+  const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [shiftForm, setShiftForm] = useState({ memberId: allMembers[0]?.id || "", dayOfWeek: "1", startTime: "09:00", endTime: "17:00" });
   const [leaveForm, setLeaveForm] = useState({ memberId: allMembers[0]?.id || "", type: "LEAVE", startTime: "", endTime: "", reason: "" });
+  const [bookingForm, setBookingForm] = useState({
+    memberId: allMembers[0]?.id || "",
+    serviceId: workspace.services[0]?.id || "",
+    scheduledStartTime: "",
+    scheduledEndTime: "",
+    locationId: "none",
+    customerName: "",
+    customerEmail: "",
+    customerPhone: "",
+    notes: "",
+  });
 
   const weekDays = useMemo(() => Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
@@ -256,6 +269,33 @@ export function ShiftsManager({
     });
   };
 
+  const submitBooking = (event: React.FormEvent) => {
+    event.preventDefault();
+    startTransition(async () => {
+      const result: any = await createScheduledBooking({
+        memberId: bookingForm.memberId,
+        serviceId: bookingForm.serviceId,
+        scheduledStartTime: new Date(bookingForm.scheduledStartTime).toISOString(),
+        scheduledEndTime: bookingForm.scheduledEndTime ? new Date(bookingForm.scheduledEndTime).toISOString() : undefined,
+        locationId: bookingForm.locationId !== "none" ? bookingForm.locationId : undefined,
+        customerName: bookingForm.customerName || undefined,
+        customerEmail: bookingForm.customerEmail || undefined,
+        customerPhone: bookingForm.customerPhone || undefined,
+        notes: bookingForm.notes || undefined,
+      });
+      if (!result.success || !result.data) {
+        toast.error(result.error || "Could not schedule appointment");
+        return;
+      }
+      setWorkspace(current => ({
+        ...current,
+        bookings: [result.data as Booking, ...current.bookings],
+      }));
+      setBookingDialogOpen(false);
+      toast.success("Schedule created successfully");
+    });
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <section aria-label="Scheduling summary" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -304,7 +344,21 @@ export function ShiftsManager({
               <Button variant="outline" size="icon" onClick={() => moveWeek(1)} disabled={isPending} aria-label="Next week"><ChevronRight /></Button>
               <span className="min-w-48 text-center text-sm font-medium">{format(weekDays[0], "MMM d")} – {format(weekDays[6], "MMM d, yyyy")}</span>
               <Badge variant="outline">{workspace.timezone}</Badge>
-              {canManage && <Button onClick={() => setLeaveDialogOpen(true)} variant="outline"><Plus data-icon="inline-start" />Override</Button>}
+              {canManage && (
+                <>
+                  <Button onClick={() => {
+                    setBookingForm(current => ({
+                      ...current,
+                      memberId: current.memberId || allMembers[0]?.id || "",
+                      serviceId: current.serviceId || workspace.services[0]?.id || "",
+                    }));
+                    setBookingDialogOpen(true);
+                  }}>
+                    <Plus data-icon="inline-start" />Add Schedule
+                  </Button>
+                  <Button onClick={() => setLeaveDialogOpen(true)} variant="outline"><Plus data-icon="inline-start" />Override</Button>
+                </>
+              )}
             </div>
           </div>
 
@@ -411,6 +465,8 @@ export function ShiftsManager({
       <Dialog open={shiftDialogOpen} onOpenChange={setShiftDialogOpen}><DialogContent><form onSubmit={submitShift}><DialogHeader><DialogTitle>Add recurring shift</DialogTitle><DialogDescription>Set regular working hours in the organization timezone.</DialogDescription></DialogHeader><FieldGroup className="py-5"><Field><FieldLabel>Staff member</FieldLabel><Select value={shiftForm.memberId} onValueChange={memberId => setShiftForm(current => ({ ...current, memberId }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{allMembers.map(member => <SelectItem key={member.id} value={member.id}>{member.user.name || member.user.email}</SelectItem>)}</SelectGroup></SelectContent></Select></Field><Field><FieldLabel>Day</FieldLabel><Select value={shiftForm.dayOfWeek} onValueChange={dayOfWeek => setShiftForm(current => ({ ...current, dayOfWeek }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{DAYS.map((day, index) => <SelectItem key={day} value={String(index)}>{day}</SelectItem>)}</SelectGroup></SelectContent></Select></Field><div className="grid grid-cols-2 gap-3"><Field><FieldLabel htmlFor="shift-start">Starts</FieldLabel><Input id="shift-start" type="time" value={shiftForm.startTime} onChange={event => setShiftForm(current => ({ ...current, startTime: event.target.value }))} required /></Field><Field><FieldLabel htmlFor="shift-end">Ends</FieldLabel><Input id="shift-end" type="time" value={shiftForm.endTime} onChange={event => setShiftForm(current => ({ ...current, endTime: event.target.value }))} required /></Field></div></FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={() => setShiftDialogOpen(false)}>Cancel</Button><Button type="submit" disabled={isPending}>Save shift</Button></DialogFooter></form></DialogContent></Dialog>
 
       <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}><DialogContent><form onSubmit={submitLeave}><DialogHeader><DialogTitle>Create schedule override</DialogTitle><DialogDescription>Block leave and unavailable time, or add a one-off working window.</DialogDescription></DialogHeader><FieldGroup className="py-5"><Field><FieldLabel>Staff member</FieldLabel><Select value={leaveForm.memberId} onValueChange={memberId => setLeaveForm(current => ({ ...current, memberId }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{allMembers.map(member => <SelectItem key={member.id} value={member.id}>{member.user.name || member.user.email}</SelectItem>)}</SelectGroup></SelectContent></Select></Field><Field><FieldLabel>Override type</FieldLabel><Select value={leaveForm.type} onValueChange={type => setLeaveForm(current => ({ ...current, type }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectGroup><SelectItem value="LEAVE">Leave</SelectItem><SelectItem value="UNAVAILABLE">Unavailable</SelectItem><SelectItem value="BLACKOUT">Blackout</SelectItem><SelectItem value="WORKING">One-off working time</SelectItem></SelectGroup></SelectContent></Select></Field><div className="grid grid-cols-2 gap-3"><Field><FieldLabel htmlFor="leave-start">Starts</FieldLabel><Input id="leave-start" type="datetime-local" value={leaveForm.startTime} onChange={event => setLeaveForm(current => ({ ...current, startTime: event.target.value }))} required /></Field><Field><FieldLabel htmlFor="leave-end">Ends</FieldLabel><Input id="leave-end" type="datetime-local" value={leaveForm.endTime} onChange={event => setLeaveForm(current => ({ ...current, endTime: event.target.value }))} required /></Field></div><Field><FieldLabel htmlFor="leave-reason">Reason</FieldLabel><Input id="leave-reason" value={leaveForm.reason} onChange={event => setLeaveForm(current => ({ ...current, reason: event.target.value }))} placeholder="Optional operational note" /></Field></FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={() => setLeaveDialogOpen(false)}>Cancel</Button><Button type="submit" disabled={isPending}>Create override</Button></DialogFooter></form></DialogContent></Dialog>
+
+      <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}><DialogContent className="max-w-lg"><form onSubmit={submitBooking}><DialogHeader><DialogTitle>Add member schedule</DialogTitle><DialogDescription>Schedule a service booking appointment for a staff member.</DialogDescription></DialogHeader><FieldGroup className="py-5"><Field><FieldLabel>Staff member</FieldLabel><Select value={bookingForm.memberId} onValueChange={memberId => setBookingForm(current => ({ ...current, memberId }))}><SelectTrigger><SelectValue placeholder="Select staff member" /></SelectTrigger><SelectContent><SelectGroup>{allMembers.map(member => <SelectItem key={member.id} value={member.id}>{member.user.name || member.user.email}</SelectItem>)}</SelectGroup></SelectContent></Select></Field><Field><FieldLabel>Service</FieldLabel><Select value={bookingForm.serviceId} onValueChange={serviceId => setBookingForm(current => ({ ...current, serviceId }))}><SelectTrigger><SelectValue placeholder="Select service" /></SelectTrigger><SelectContent><SelectGroup>{workspace.services.map(service => <SelectItem key={service.id} value={service.id}>{service.name} ({service.estimatedDuration ? `${service.estimatedDuration} mins` : "Fixed"})</SelectItem>)}</SelectGroup></SelectContent></Select></Field><div className="grid grid-cols-2 gap-3"><Field><FieldLabel htmlFor="booking-start">Scheduled Start</FieldLabel><Input id="booking-start" type="datetime-local" value={bookingForm.scheduledStartTime} onChange={event => setBookingForm(current => ({ ...current, scheduledStartTime: event.target.value }))} required /></Field><Field><FieldLabel htmlFor="booking-end">Scheduled End (Optional)</FieldLabel><Input id="booking-end" type="datetime-local" value={bookingForm.scheduledEndTime} onChange={event => setBookingForm(current => ({ ...current, scheduledEndTime: event.target.value }))} placeholder="Auto-calculated if blank" /></Field></div><Field><FieldLabel>Location (Optional)</FieldLabel><Select value={bookingForm.locationId} onValueChange={locationId => setBookingForm(current => ({ ...current, locationId }))}><SelectTrigger><SelectValue placeholder="All locations / Default" /></SelectTrigger><SelectContent><SelectGroup><SelectItem value="none">No location / Default</SelectItem>{workspace.locations.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}</SelectGroup></SelectContent></Select></Field><div className="grid grid-cols-3 gap-3"><Field><FieldLabel htmlFor="customer-name">Customer Name</FieldLabel><Input id="customer-name" value={bookingForm.customerName} onChange={event => setBookingForm(current => ({ ...current, customerName: event.target.value }))} placeholder="Walk-in Customer" /></Field><Field><FieldLabel htmlFor="customer-email">Email</FieldLabel><Input id="customer-email" type="email" value={bookingForm.customerEmail} onChange={event => setBookingForm(current => ({ ...current, customerEmail: event.target.value }))} placeholder="optional@email.com" /></Field><Field><FieldLabel htmlFor="customer-phone">Phone</FieldLabel><Input id="customer-phone" value={bookingForm.customerPhone} onChange={event => setBookingForm(current => ({ ...current, customerPhone: event.target.value }))} placeholder="+123..." /></Field></div><Field><FieldLabel htmlFor="booking-notes">Notes</FieldLabel><Input id="booking-notes" value={bookingForm.notes} onChange={event => setBookingForm(current => ({ ...current, notes: event.target.value }))} placeholder="Optional appointment instructions or details" /></Field></FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={() => setBookingDialogOpen(false)}>Cancel</Button><Button type="submit" disabled={isPending || !bookingForm.serviceId || !bookingForm.memberId}>Save Schedule</Button></DialogFooter></form></DialogContent></Dialog>
     </div>
   );
 }

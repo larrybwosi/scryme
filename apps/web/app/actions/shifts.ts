@@ -485,6 +485,131 @@ export async function transitionScheduledBooking(
   return { success: true };
 }
 
+export async function createScheduledBooking(data: {
+  memberId: string;
+  serviceId: string;
+  scheduledStartTime: string;
+  scheduledEndTime?: string;
+  locationId?: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  notes?: string;
+}) {
+  const session = await getServerAuth();
+  const permission = await checkShiftManagementPermission(session);
+  if (!permission.success) return permission;
+
+  try {
+    const startTime = new Date(data.scheduledStartTime);
+    if (!Number.isFinite(startTime.getTime())) {
+      return { success: false, error: "Invalid scheduled start time" };
+    }
+
+    const member = await db.member.findFirst({
+      where: { id: data.memberId, organizationId: session!.organizationId },
+      select: { id: true },
+    });
+    if (!member) return { success: false, error: "Staff member not found" };
+
+    const service = await db.service.findFirst({
+      where: { id: data.serviceId, organizationId: session!.organizationId },
+    });
+    if (!service) return { success: false, error: "Service not found" };
+
+    let endTime: Date;
+    if (data.scheduledEndTime) {
+      endTime = new Date(data.scheduledEndTime);
+      if (!Number.isFinite(endTime.getTime()) || endTime <= startTime) {
+        return { success: false, error: "End time must be after start time" };
+      }
+    } else {
+      const durationMinutes = service.estimatedDuration || 60;
+      endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
+    }
+
+    let customerId: string | undefined = undefined;
+    if (data.customerEmail || data.customerPhone || data.customerName) {
+      let existingCustomer = null;
+      if (data.customerEmail || data.customerPhone) {
+        existingCustomer = await db.customer.findFirst({
+          where: {
+            organizationId: session!.organizationId,
+            OR: [
+              ...(data.customerEmail ? [{ email: data.customerEmail }] : []),
+              ...(data.customerPhone ? [{ phone: data.customerPhone }] : []),
+            ],
+          },
+        });
+      }
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else if (data.customerName || data.customerEmail) {
+        const createdCustomer = await db.customer.create({
+          data: {
+            organizationId: session!.organizationId,
+            name: data.customerName || "Walk-in Customer",
+            email: data.customerEmail || null,
+            phone: data.customerPhone || null,
+          },
+        });
+        customerId = createdCustomer.id;
+      }
+    }
+
+    const booking = await db.serviceBooking.create({
+      data: {
+        organizationId: session!.organizationId,
+        serviceId: service.id,
+        serviceName: service.name,
+        price: service.price,
+        pricingModel: service.pricingModel,
+        scheduledStartTime: startTime,
+        scheduledEndTime: endTime,
+        locationId: data.locationId || null,
+        notes: data.notes || null,
+        customerId: customerId || null,
+        status: "SCHEDULED",
+        staff: {
+          create: {
+            memberId: data.memberId,
+            status: "ACCEPTED",
+          },
+        },
+      },
+      include: {
+        customer: { select: { id: true, name: true, email: true, phone: true } },
+        staff: { include: { member: { select: { id: true, user: { select: { name: true, email: true, image: true } } } } } },
+        resources: { include: { resource: { select: { id: true, name: true, type: true } } } },
+      },
+    });
+
+    await db.bookingEvent.create({
+      data: {
+        organizationId: session!.organizationId,
+        bookingId: booking.id,
+        source: "ADMIN",
+        type: "CREATED",
+        toStatus: "SCHEDULED",
+        actorMemberId: session!.memberId || null,
+      },
+    });
+
+    revalidatePath("/staff/shifts");
+    return {
+      success: true,
+      data: {
+        ...booking,
+        price: booking.price.toString(),
+      },
+    };
+  } catch (error: any) {
+    console.error("Error creating scheduled booking:", error);
+    return { success: false, error: error.message || "Failed to create schedule" };
+  }
+}
+
 export async function createScheduleOverride(data: {
   memberId: string;
   type: "WORKING" | "UNAVAILABLE" | "LEAVE" | "BLACKOUT";
