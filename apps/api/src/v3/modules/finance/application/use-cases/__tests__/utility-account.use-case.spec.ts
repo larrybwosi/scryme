@@ -59,7 +59,44 @@ describe("UtilityAccountUseCase", () => {
       expect(result).toEqual(mockResponse);
       expect(mockPrismaClient.utilityAccount.create).toHaveBeenCalledWith({
         data: {
-          ...dto,
+          name: dto.name,
+          provider: dto.provider,
+          accountNumber: dto.accountNumber,
+          meterNumber: dto.meterNumber,
+          type: dto.type,
+          organizationId: orgId,
+        },
+      });
+    });
+
+    it("should prevent mass assignment by ignoring unexpected extra fields and overriding organizationId", async () => {
+      const orgId = "org-1";
+      const maliciousDto = {
+        name: "Water Account",
+        provider: "Nairobi Water",
+        accountNumber: "87654321",
+        meterNumber: "W999",
+        type: UtilityType.WATER,
+        organizationId: "malicious-org-id",
+        id: "malicious-id",
+        extraField: "should-be-ignored",
+      } as any;
+
+      mockPrismaClient.utilityAccount.create.mockResolvedValue({
+        id: "acc-2",
+        name: "Water Account",
+        organizationId: orgId,
+      });
+
+      await useCase.createAccount(orgId, maliciousDto);
+
+      expect(mockPrismaClient.utilityAccount.create).toHaveBeenCalledWith({
+        data: {
+          name: "Water Account",
+          provider: "Nairobi Water",
+          accountNumber: "87654321",
+          meterNumber: "W999",
+          type: UtilityType.WATER,
           organizationId: orgId,
         },
       });
