@@ -2,15 +2,21 @@ import type { Metadata } from "next";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Careers — Join Scryme Technologies",
-  description:
-    "Join Scryme Technologies and help us shape the next generation of offline-first POS systems and integrated enterprise B2B software.",
-  alternates: {
-    canonical: "/careers",
-  },
-};
+export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getCmsPage("careers");
+  return getPageMetadata({
+    pageSeo: page?.seo,
+    fallbackTitle: "Careers — Join Scryme Technologies",
+    fallbackDescription:
+      "Join Scryme Technologies and help us shape the next generation of offline-first POS systems and integrated enterprise B2B software.",
+    canonicalPath: "/careers",
+  });
+}
 
 const openRoles = [
   {
@@ -33,7 +39,16 @@ const openRoles = [
   },
 ];
 
-export default function CareersPage() {
+export default async function CareersPage() {
+  const cmsPage = await getCmsPage("careers");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   return (
     <main
       style={{ background: colors.inkBg }}

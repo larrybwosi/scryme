@@ -19,9 +19,21 @@ import { InventoryStockStub } from "@/components/products/inventory/inventory-st
 import { InventoryStockMock } from "@/components/products/inventory/inventory-stock-mock";
 import { InventoryForecastMock } from "@/components/products/inventory/inventory-forecast-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
+
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
+  const cmsPage = await getCmsPage("products/inventory");
+  if (cmsPage?.seo) {
+    return getPageMetadata({
+      pageSeo: cmsPage.seo,
+      fallbackTitle: "Multi-Location Inventory Management Software",
+      fallbackDescription: "Scryme Inventory gives multi-location businesses real-time stock visibility, automated reorder triggers, and intelligent demand forecasting.",
+      canonicalPath: "/products/inventory",
+    });
+  }
   const content = await getHomePageContent();
   const moduleData = content.modules?.find((m) => m.code === "INV" || m.href?.endsWith("/inventory"));
   return getPageMetadata({
@@ -76,7 +88,16 @@ const includedCards = [
   },
 ];
 
-export default function InventoryPage() {
+export default async function InventoryPage() {
+  const cmsPage = await getCmsPage("products/inventory");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",
