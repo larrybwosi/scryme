@@ -19,3 +19,26 @@
     background: #d1d5db;
   }
 }
+
+.workflow-studio .react-flow__controls button {
+  background: var(--card);
+  color: var(--muted-foreground);
+  border-color: var(--border);
+}
+
+.workflow-studio .react-flow__minimap {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.workflow-studio .react-flow__node {
+  font-family: var(--font-sans);
+}
+
+.workflow-studio .node-accent-cyan { border-top: 2px solid oklch(0.78 0.15 190); }
+.workflow-studio .node-accent-violet { border-top: 2px solid oklch(0.72 0.18 300); }
+.workflow-studio .node-accent-amber { border-top: 2px solid oklch(0.8 0.16 80); }
+.workflow-studio .node-accent-emerald { border-top: 2px solid oklch(0.75 0.16 160); }
+.workflow-studio .node-accent-blue { border-top: 2px solid oklch(0.72 0.16 240); }
+.workflow-studio .node-accent-pink { border-top: 2px solid oklch(0.75 0.17 350); }
