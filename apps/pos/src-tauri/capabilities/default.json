@@ -93,13 +93,7 @@
       "allow": [
         { "name": "lp", "cmd": "lp", "args": true },
         { "name": "print", "cmd": "print", "args": true },
-        { "name": "powershell", "cmd": "powershell", "args": true },
-        { "name": "sumatrapdf", "cmd": "sumatrapdf", "args": true },
-        {
-          "name": "binaries/sumatrapdf",
-          "cmd": "binaries/sumatrapdf",
-          "args": true
-        }
+        { "name": "powershell", "cmd": "powershell", "args": true }
       ]
     }
   ]

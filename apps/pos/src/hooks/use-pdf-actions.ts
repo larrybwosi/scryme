@@ -25,48 +25,22 @@ export function usePdfActions() {
     const toastId = toast.loading('Preparing print job...');
 
     try {
-      // Use native thermal printing if on Tauri
+      // Use native printing if on Tauri
       if (isTauri()) {
         const settings = usePosStore.getState().settings;
         const branchName = useAuthStore.getState().currentLocation?.name;
-        const paperSize =
-          jobType === 'kitchen'
-            ? settings.kitchenTicketConfig?.paperSize
-            : settings.receiptConfig?.paperSize;
 
-        const isThermal = paperSize === '58mm' || paperSize === '80mm';
-
-        // Path A: Native ESC/POS (Optimized for thermal printers)
-        if (isThermal && orderData) {
+        if (orderData) {
           const result = await printNative(jobType, orderData, settings, branchName);
 
           if (result.success) {
             toast.success('Sent to printer!', { id: toastId });
-            setIsPrinting(false);
-            return;
+          } else {
+            throw new Error(result.error || 'Native print failed');
           }
-          console.warn('Native ESC/POS print failed, trying silent PDF fallback');
+          return;
         }
-
-        // Path B: Silent PDF Printing (Backend-driven)
-        const { pdf } = await import('@react-pdf/renderer');
-        const blob = await pdf(docInstance).toBlob();
-        const arrayBuffer = await blob.arrayBuffer();
-        const pdfBytes = Array.from(new Uint8Array(arrayBuffer));
-
-        const orderWithPdf = {
-          ...orderData,
-          pdfBytes,
-        };
-
-        const result = await printNative(jobType, orderWithPdf, settings, branchName);
-
-        if (result.success) {
-          toast.success('Sent to printer!', { id: toastId });
-        } else {
-          throw new Error(result.error || 'Native silent print failed');
-        }
-        return;
+        throw new Error('No order data provided for printing');
       }
 
       // Web Fallback: Use a hidden iframe to print without popups
