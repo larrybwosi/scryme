@@ -144,6 +144,6 @@ export class PublicServicesController {
       scheduledStartTime: dto.scheduledStartTime,
       customerContact: contact,
       notes: dto.notes,
-    });
+    }, true);
   }
 }

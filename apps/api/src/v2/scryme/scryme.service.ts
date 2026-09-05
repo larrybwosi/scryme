@@ -4,6 +4,8 @@ import { ScrymeChatApiClient } from "@repo/chat";
 import * as crypto from "crypto";
 import { makeApprovalDecisionCore } from "@repo/shared/actions";
 import { ScrymeApprovalService } from "./scryme-approval.service";
+import { BookingAssignmentStatus, BookingEventSource, BookingStatus } from "@repo/db";
+import { BookingService } from "@/v3/modules/services/application/services/booking.service";
 
 @Injectable()
 export class ScrymeService {
@@ -13,6 +15,7 @@ export class ScrymeService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly scrymeApprovalService: ScrymeApprovalService,
+    private readonly bookingService: BookingService,
   ) {}
 
   async getConfiguration(organizationId: string) {
@@ -393,6 +396,76 @@ export class ScrymeService {
           `No organization found for Scryme workspace: ${workspaceSlug}`,
         );
         return { status: "ignored" };
+      }
+
+      if (action.id.startsWith("booking_")) {
+        const [actionType, bookingId, revisionValue] = action.id.split(":");
+        const revision = Number(revisionValue);
+        if (!bookingId || !Number.isInteger(revision)) {
+          throw new BadRequestException("Invalid booking action payload");
+        }
+        const actor = await this.prisma.client.member.findFirst({
+          where: {
+            organizationId: config.organizationId,
+            isActive: true,
+            user: { email: user.email },
+          },
+          select: { id: true },
+        });
+        if (!actor) throw new BadRequestException("Scryme user is not an active organization member");
+
+        let result: any;
+        if (actionType === "booking_accept" || actionType === "booking_decline") {
+          result = await this.bookingService.respondToAssignment(
+            config.organizationId,
+            bookingId,
+            actor.id,
+            actionType === "booking_accept"
+              ? BookingAssignmentStatus.ACCEPTED
+              : BookingAssignmentStatus.DECLINED,
+            revision,
+            "Response submitted via Scryme Chat",
+            BookingEventSource.SCRYME,
+          );
+        } else if (actionType === "booking_start") {
+          result = await this.bookingService.updateBookingStatus(
+            config.organizationId,
+            bookingId,
+            BookingStatus.IN_PROGRESS,
+            revision,
+            actor.id,
+            BookingEventSource.SCRYME,
+          );
+        } else if (actionType === "booking_complete") {
+          const booking = await this.prisma.client.serviceBooking.findFirst({
+            where: { id: bookingId, organizationId: config.organizationId, revision },
+          });
+          if (!booking) throw new BadRequestException("Booking action is stale or invalid");
+          result = await this.bookingService.completeBooking(
+            config.organizationId,
+            bookingId,
+            actor.id,
+            {},
+          );
+        } else if (actionType === "booking_view") {
+          return {
+            status: "success",
+            url: `${process.env.NEXT_PUBLIC_CRM_URL || "http://localhost:3001"}/staff/shifts?booking=${bookingId}`,
+          };
+        } else {
+          throw new BadRequestException("Unsupported booking action");
+        }
+
+        await this.scrymeClient.updateMessage(
+          workspaceSlug,
+          message.channelSlug || message.channelId,
+          message.id,
+          {
+            content: `${message.content}\n\n*Updated by ${user.name || user.email}*`,
+            actions: [],
+          },
+        );
+        return { status: "success", bookingId: result.id };
       }
 
       // Handle Permission Request interactive actions
