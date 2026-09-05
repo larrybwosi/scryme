@@ -137,7 +137,7 @@ services:
         required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - CUSTOMER_DB=${CUSTOMER_DB:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@customer-db:5432/${CUSTOMER_DB_NAME:-customer_db}?schema=public}
+      - CUSTOMER_DB=${CUSTOMER_DB}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
