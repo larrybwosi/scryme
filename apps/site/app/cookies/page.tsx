@@ -1,17 +1,32 @@
 import type { Metadata } from "next";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Cookie Policy — Scryme Enterprise",
-  description:
-    "Learn how Scryme Technologies uses cookies and browser storage to maintain secure B2B authentication sessions.",
-  alternates: {
-    canonical: "/cookies",
-  },
-};
+export const revalidate = 60;
 
-export default function CookiesPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getCmsPage("cookies");
+  return getPageMetadata({
+    pageSeo: page?.seo,
+    fallbackTitle: "Cookie Policy — Scryme Enterprise",
+    fallbackDescription:
+      "Learn how Scryme Technologies uses cookies and browser storage to maintain secure B2B authentication sessions.",
+    canonicalPath: "/cookies",
+  });
+}
+
+export default async function CookiesPage() {
+  const cmsPage = await getCmsPage("cookies");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   return (
     <main
       style={{ background: colors.inkBg }}

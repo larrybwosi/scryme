@@ -2,15 +2,21 @@ import type { Metadata } from "next";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Product Changelog — Scryme Updates",
-  description:
-    "Review recent changes, performance improvements, and security updates published to Scryme's core modules.",
-  alternates: {
-    canonical: "/changelog",
-  },
-};
+export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getCmsPage("changelog");
+  return getPageMetadata({
+    pageSeo: page?.seo,
+    fallbackTitle: "Product Changelog — Scryme Updates",
+    fallbackDescription:
+      "Review recent changes, performance improvements, and security updates published to Scryme's core modules.",
+    canonicalPath: "/changelog",
+  });
+}
 
 const logs = [
   {
@@ -25,7 +31,16 @@ const logs = [
   },
 ];
 
-export default function ChangelogPage() {
+export default async function ChangelogPage() {
+  const cmsPage = await getCmsPage("changelog");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   return (
     <main
       style={{ background: colors.inkBg }}
