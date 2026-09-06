@@ -73,7 +73,7 @@ describe("ScrymeChatApiClient - Custom Messages", () => {
   it("should include customMessage in metadata when sending a message", async () => {
     const mockChannelId = "channel_123";
     vi.mocked(chat.workspace.channels.list).mockResolvedValue([
-      { id: mockChannelId, slug: "general", type: "public", workspaceId: "ws_1", isPrivate: false, createdAt: "", updatedAt: "" },
+      { id: mockChannelId, name: "General", slug: "general", type: "public", workspaceId: "ws_1", isPrivate: false, createdAt: "", updatedAt: "" },
     ]);
     vi.mocked(chat.channel.message.create).mockResolvedValue({ id: "msg_123" } as any);
 
@@ -102,7 +102,7 @@ describe("ScrymeChatApiClient - Custom Messages", () => {
   it("should merge existing metadata with customMessage when sending a message", async () => {
     const mockChannelId = "channel_123";
     vi.mocked(chat.workspace.channels.list).mockResolvedValue([
-      { id: mockChannelId, slug: "general", type: "public", workspaceId: "ws_1", isPrivate: false, createdAt: "", updatedAt: "" },
+      { id: mockChannelId, name: "General", slug: "general", type: "public", workspaceId: "ws_1", isPrivate: false, createdAt: "", updatedAt: "" },
     ]);
     vi.mocked(chat.channel.message.create).mockResolvedValue({ id: "msg_123" } as any);
 
@@ -133,7 +133,7 @@ describe("ScrymeChatApiClient - Custom Messages", () => {
   it("should include customMessage in metadata when updating a message", async () => {
     const mockChannelId = "channel_123";
     vi.mocked(chat.workspace.channels.list).mockResolvedValue([
-      { id: mockChannelId, slug: "general", type: "public", workspaceId: "ws_1", isPrivate: false, createdAt: "", updatedAt: "" },
+      { id: mockChannelId, name: "General", slug: "general", type: "public", workspaceId: "ws_1", isPrivate: false, createdAt: "", updatedAt: "" },
     ]);
     vi.mocked(chat.message.update).mockResolvedValue({ id: "msg_123" } as any);
 
