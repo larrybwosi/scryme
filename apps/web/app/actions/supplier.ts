@@ -16,15 +16,9 @@ export async function getSuppliers(options?: {
   }
 
   const orgId = auth.organizationId;
+  const memberId = auth.memberId;
 
-  // Find the member record for this user and organization
-  const member = await db.member.findUnique({
-    where: {
-      id: auth.memberId,
-    },
-  });
-
-  if (!member) {
+  if (!memberId) {
     throw new Error("Member not found");
   }
 
@@ -45,12 +39,18 @@ export async function getSuppliers(options?: {
     ];
   }
 
+  /**
+   * ⚡ Bolt Performance Optimization:
+   * auth.memberId is already validated and extracted from session context by getServerAuth().
+   * Using memberId directly in relation queries eliminates a redundant, sequential db.member.findUnique
+   * query before fetching suppliers, cutting down server latency by 1 database roundtrip.
+   */
   const suppliers = await db.supplier.findMany({
     where,
     include: {
       favorites: {
         where: {
-          memberId: member.id,
+          memberId,
         },
       },
       reviews: {
@@ -288,17 +288,17 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
   }
 
   const orgId = auth.organizationId;
+  const memberId = auth.memberId;
 
-  const member = await db.member.findUnique({
-    where: {
-      id: auth.memberId,
-    },
-  });
-
-  if (!member) {
+  if (!memberId) {
     throw new Error("Member not found");
   }
 
+  /**
+   * ⚡ Bolt Performance Optimization:
+   * auth.memberId is already validated and extracted from session context by getServerAuth().
+   * Using memberId directly in favorites lookup eliminates a redundant sequential db.member.findUnique call.
+   */
   const supplier = await db.supplier.findFirst({
     where: {
       id,
@@ -307,7 +307,7 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
     include: {
       favorites: {
         where: {
-          memberId: member.id,
+          memberId,
         },
       },
       products: {
@@ -378,21 +378,20 @@ export async function toggleFavoriteSupplier(supplierId: string): Promise<any> {
   }
 
   const orgId = auth.organizationId;
+  const memberId = auth.memberId;
 
-  const member = await db.member.findUnique({
-    where: {
-      id: auth.memberId,
-    },
-  });
-
-  if (!member) {
+  if (!memberId) {
     throw new Error("Member not found");
   }
 
+  /**
+   * ⚡ Bolt Performance Optimization:
+   * Using memberId directly from auth context eliminates a redundant db.member.findUnique database call.
+   */
   const existing = await db.favoriteSupplier.findUnique({
     where: {
       memberId_supplierId: {
-        memberId: member.id,
+        memberId,
         supplierId,
       },
     },
@@ -408,7 +407,7 @@ export async function toggleFavoriteSupplier(supplierId: string): Promise<any> {
     await db.favoriteSupplier.create({
       data: {
         organizationId: orgId,
-        memberId: member.id,
+        memberId,
         supplierId,
       },
     });
@@ -429,21 +428,20 @@ export async function addSupplierReview(
   }
 
   const orgId = auth.organizationId;
+  const memberId = auth.memberId;
 
-  const member = await db.member.findUnique({
-    where: {
-      id: auth.memberId,
-    },
-  });
-
-  if (!member) {
+  if (!memberId) {
     throw new Error("Member not found");
   }
 
+  /**
+   * ⚡ Bolt Performance Optimization:
+   * Using memberId directly from auth context eliminates a redundant db.member.findUnique database call.
+   */
   await db.supplierReview.create({
     data: {
       organizationId: orgId,
-      memberId: member.id,
+      memberId,
       supplierId,
       rating,
       comment,

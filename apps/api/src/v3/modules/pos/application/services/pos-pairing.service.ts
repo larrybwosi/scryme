@@ -56,7 +56,7 @@ export class PosPairingService {
   findSession(identifier: string): PosPairingSession | undefined {
     this.cleanupExpired();
     // Direct lookup by sessionId
-    let session = this.sessions.get(identifier);
+    const session = this.sessions.get(identifier);
     if (session) return session;
 
     // Search by pairingCode
