@@ -131,7 +131,7 @@ export class CommunicationIntegrationService {
     body: any,
   ) {
     const provider = this.getProvider(providerSlug);
-    const messages = await provider.parseWebhookEvent(headers, body);
+    const messages = (await provider.parseWebhookEvent(body)) || [];
 
     const integrationCache = new Map<string, any>();
     const personDefCache = new Map<string, any>();
