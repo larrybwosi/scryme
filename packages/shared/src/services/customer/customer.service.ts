@@ -18,9 +18,9 @@ export class CustomerService {
   private splitName(name: string): { firstName: string; lastName: string } {
     const parts = name.trim().split(/\s+/);
     if (parts.length <= 1) {
-      return { firstName: name, lastName: "" };
+      return { firstName: name, lastName: "-" };
     }
-    const lastName = parts.pop() || "";
+    const lastName = parts.pop() || "-";
     const firstName = parts.join(" ");
     return { firstName, lastName };
   }
@@ -264,7 +264,7 @@ export class CustomerService {
       // 2. Prepare CRM record data
       const crmRecordData = {
         firstName,
-        lastName,
+        lastName: lastName || "-",
         email,
         phone,
         company,
