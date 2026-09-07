@@ -12,6 +12,10 @@ export class CommunicationIntegrationService {
   ) {
   }
 
+  registerProvider(provider: CommunicationProvider) {
+    this.providers.set(provider.slug, provider);
+  }
+
   getProvider(slug: string): CommunicationProvider {
     const provider = this.providers.get(slug);
     if (!provider) throw new NotFoundException(`Provider ${slug} not found`);
@@ -119,5 +123,88 @@ export class CommunicationIntegrationService {
         },
       },
     });
+  }
+
+  async handleWebhook(
+    providerSlug: string,
+    headers: any,
+    body: any,
+  ) {
+    const provider = this.getProvider(providerSlug);
+    const messages = (await provider.parseWebhookEvent(body)) || [];
+
+    const integrationCache = new Map<string, any>();
+    const personDefCache = new Map<string, any>();
+
+    for (const msg of messages) {
+      if (!msg.metadata?.team) continue;
+
+      let integration = integrationCache.get(msg.metadata.team);
+      if (!integration) {
+        integration = await this.prisma.client.organizationIntegration.findFirst({
+          where: {
+            integrationDefinition: { slug: providerSlug },
+            credentials: { path: ["teamId"], equals: msg.metadata.team },
+          },
+          include: { organization: true },
+        });
+        if (integration) {
+          integrationCache.set(msg.metadata.team, integration);
+        }
+      }
+
+      if (!integration) continue;
+
+      let record = await this.prisma.client.crmRecord.findFirst({
+        where: {
+          organizationId: integration.organizationId,
+          data: { path: ["email"], equals: msg.senderEmail },
+        },
+      });
+
+      if (!record) {
+        let personDef = personDefCache.get(integration.organizationId);
+        if (!personDef) {
+          personDef = await this.prisma.client.crmObjectDefinition.findFirst({
+            where: {
+              organizationId: integration.organizationId,
+              name: "person",
+            },
+          });
+          if (personDef) {
+            personDefCache.set(integration.organizationId, personDef);
+          }
+        }
+
+        if (personDef) {
+          record = await this.prisma.client.crmRecord.create({
+            data: {
+              organizationId: integration.organizationId,
+              objectId: personDef.id,
+              data: {
+                email: msg.senderEmail,
+                name: msg.senderEmail.split("@")[0],
+              },
+            },
+          });
+        }
+      }
+
+      await this.prisma.client.crmActivity.create({
+        data: {
+          organizationId: integration.organizationId,
+          recordId: record?.id,
+          type: "COMMUNICATION",
+          description: msg.text,
+          metadata: {
+            provider: providerSlug,
+            externalId: msg.externalId,
+            ...msg.metadata,
+          },
+        },
+      });
+    }
+
+    return { ok: true };
   }
 }
