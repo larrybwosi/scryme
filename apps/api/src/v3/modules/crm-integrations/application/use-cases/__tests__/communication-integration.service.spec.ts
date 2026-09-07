@@ -1,8 +1,9 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { Test, TestingModule } from "@nestjs/testing";
 import { CommunicationIntegrationService } from "../communication-integration.service";
-import { SlackProvider } from "../../../infrastructure/providers/slack.provider";
 import { PrismaService } from "@/prisma/prisma.service";
+
+class SlackProvider {}
 import { NotFoundException } from "@nestjs/common";
 
 describe("CommunicationIntegrationService - Security Tests", () => {
@@ -53,6 +54,7 @@ describe("CommunicationIntegrationService - Security Tests", () => {
     service = module.get<CommunicationIntegrationService>(
       CommunicationIntegrationService,
     );
+    service.registerProvider(mockSlackProvider as any);
     vi.clearAllMocks();
   });
 
