@@ -58,24 +58,6 @@ export class CommunicationController {
     );
   }
 
-  @Post(":provider/webhook")
-  @ApiOperation({
-    summary: "Generic webhook receiver for providers",
-    operationId: "CrmIntegrations_HandleWebhook",
-  })
-  async handleWebhook(
-    @Param("provider") provider: string,
-    @Body() payload: any,
-    @Query() query: any,
-  ) {
-    // Special handling for Slack challenge
-    if (payload.type === "url_verification") {
-      return { challenge: payload.challenge };
-    }
-
-    return this.service.handleWebhook(provider, payload, query);
-  }
-
   @Post("activities/:id/reply")
   @ApiOperation({
     summary: "Reply to a communication activity",

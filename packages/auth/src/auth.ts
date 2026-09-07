@@ -111,7 +111,7 @@ export const auth = betterAuth({
     "http://localhost:3007",
   ],
   rateLimit: {
-    enabled: false,
+    enabled: true,
     window: 60, // 60 seconds
     max: 1000, // Relaxed default max requests per window
     storage: "secondary-storage", // Store in Redis secondary-storage
