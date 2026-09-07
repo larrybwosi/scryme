@@ -11,9 +11,11 @@ import {
   Clock3,
   Coffee,
   List,
+  Pencil,
   Plus,
   Search,
   ShieldAlert,
+  Trash2,
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,15 +31,19 @@ import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@repo/ui/components/ui/sheet";
+import { Switch } from "@repo/ui/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table";
 import {
+  addStaffBreak,
   createScheduleOverride,
   createScheduledBooking,
   createStaffShift,
+  deleteStaffBreak,
   deleteStaffShift,
   getSchedulingWorkspace,
   transitionScheduledBooking,
+  updateStaffShift,
 } from "../../app/actions/shifts";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -134,10 +140,14 @@ export function ShiftsManager({
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [pendingTransition, setPendingTransition] = useState<"CANCELLED" | "NOSHOW" | null>(null);
   const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
+  const [editingShift, setEditingShift] = useState<Shift | null>(null);
+  const [breaksDialogOpen, setBreaksDialogOpen] = useState(false);
+  const [activeShiftForBreaks, setActiveShiftForBreaks] = useState<Shift | null>(null);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [shiftForm, setShiftForm] = useState({ memberId: allMembers[0]?.id || "", dayOfWeek: "1", startTime: "09:00", endTime: "17:00" });
+  const [shiftForm, setShiftForm] = useState({ memberId: allMembers[0]?.id || "", dayOfWeek: "1", startTime: "09:00", endTime: "17:00", isActive: true });
+  const [breakForm, setBreakForm] = useState({ startTime: "12:00", endTime: "13:00", description: "Break" });
   const [leaveForm, setLeaveForm] = useState({ memberId: allMembers[0]?.id || "", type: "LEAVE", startTime: "", endTime: "", reason: "" });
   const [bookingForm, setBookingForm] = useState({
     memberId: allMembers[0]?.id || "",
@@ -216,23 +226,79 @@ export function ShiftsManager({
     });
   };
 
+  const openNewShiftModal = (memberId?: string, dayOfWeek?: number) => {
+    setEditingShift(null);
+    setShiftForm({
+      memberId: memberId || allMembers[0]?.id || "",
+      dayOfWeek: dayOfWeek !== undefined ? String(dayOfWeek) : "1",
+      startTime: "09:00",
+      endTime: "17:00",
+      isActive: true,
+    });
+    setShiftDialogOpen(true);
+  };
+
+  const openEditShiftModal = (shift: Shift) => {
+    setEditingShift(shift);
+    setShiftForm({
+      memberId: shift.memberId,
+      dayOfWeek: String(shift.dayOfWeek),
+      startTime: shift.startTime,
+      endTime: shift.endTime,
+      isActive: shift.isActive,
+    });
+    setShiftDialogOpen(true);
+  };
+
   const submitShift = (event: React.FormEvent) => {
     event.preventDefault();
     startTransition(async () => {
-      const result: any = await createStaffShift({
-        memberId: shiftForm.memberId,
-        dayOfWeek: Number(shiftForm.dayOfWeek),
-        startTime: shiftForm.startTime,
-        endTime: shiftForm.endTime,
-      });
+      let result: any;
+      if (editingShift) {
+        result = await updateStaffShift(editingShift.id, {
+          dayOfWeek: Number(shiftForm.dayOfWeek),
+          startTime: shiftForm.startTime,
+          endTime: shiftForm.endTime,
+          isActive: shiftForm.isActive,
+        });
+      } else {
+        result = await createStaffShift({
+          memberId: shiftForm.memberId,
+          dayOfWeek: Number(shiftForm.dayOfWeek),
+          startTime: shiftForm.startTime,
+          endTime: shiftForm.endTime,
+          isActive: shiftForm.isActive,
+        });
+      }
+
       if (!result.success || !result.data) {
-        toast.error(result.error || "Could not create shift");
+        toast.error(result.error || "Could not save shift");
         return;
       }
-      const member = allMembers.find(item => item.id === shiftForm.memberId);
-      if (member) setShifts(current => [...current, { ...(result.data as any), breaks: [], member }]);
+
+      if (editingShift) {
+        const updated = result.data as any;
+        setShifts(current => current.map(s => s.id === editingShift.id ? { ...s, ...updated } : s));
+        toast.success("Shift updated");
+      } else {
+        const member = allMembers.find(item => item.id === shiftForm.memberId);
+        if (member) setShifts(current => [...current, { ...(result.data as any), breaks: [], member }]);
+        toast.success("Recurring shift added");
+      }
       setShiftDialogOpen(false);
-      toast.success("Recurring shift added");
+    });
+  };
+
+  const toggleShiftActive = (shift: Shift) => {
+    startTransition(async () => {
+      const nextActive = !shift.isActive;
+      const result = await updateStaffShift(shift.id, { isActive: nextActive });
+      if (!result.success) {
+        toast.error(result.error || "Could not update shift status");
+        return;
+      }
+      setShifts(current => current.map(s => s.id === shift.id ? { ...s, isActive: nextActive } : s));
+      toast.success(nextActive ? "Shift activated" : "Shift deactivated");
     });
   };
 
@@ -245,6 +311,46 @@ export function ShiftsManager({
       }
       setShifts(current => current.filter(item => item.id !== shiftId));
       toast.success("Shift removed");
+    });
+  };
+
+  const openBreaksModal = (shift: Shift) => {
+    setActiveShiftForBreaks(shift);
+    setBreakForm({ startTime: "12:00", endTime: "13:00", description: "Lunch Break" });
+    setBreaksDialogOpen(true);
+  };
+
+  const submitBreak = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!activeShiftForBreaks) return;
+    startTransition(async () => {
+      const result: any = await addStaffBreak(activeShiftForBreaks.id, {
+        startTime: breakForm.startTime,
+        endTime: breakForm.endTime,
+        description: breakForm.description || undefined,
+      });
+      if (!result.success || !result.data) {
+        toast.error(result.error || "Could not add break");
+        return;
+      }
+      const newBreak = result.data;
+      setShifts(current => current.map(s => s.id === activeShiftForBreaks.id ? { ...s, breaks: [...s.breaks, newBreak] } : s));
+      setActiveShiftForBreaks(current => current ? { ...current, breaks: [...current.breaks, newBreak] } : null);
+      toast.success("Break added");
+    });
+  };
+
+  const removeBreak = (breakId: string) => {
+    if (!activeShiftForBreaks) return;
+    startTransition(async () => {
+      const result = await deleteStaffBreak(breakId);
+      if (!result.success) {
+        toast.error(result.error || "Could not remove break");
+        return;
+      }
+      setShifts(current => current.map(s => s.id === activeShiftForBreaks.id ? { ...s, breaks: s.breaks.filter(b => b.id !== breakId) } : s));
+      setActiveShiftForBreaks(current => current ? { ...current, breaks: current.breaks.filter(b => b.id !== breakId) } : null);
+      toast.success("Break removed");
     });
   };
 
@@ -435,11 +541,113 @@ export function ShiftsManager({
 
         <TabsContent value="roster">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-4"><div><CardTitle>Recurring roster</CardTitle><CardDescription>Weekly working hours are interpreted in {workspace.timezone}.</CardDescription></div>{canManage && <Button onClick={() => setShiftDialogOpen(true)}><Plus data-icon="inline-start" />Add shift</Button>}</CardHeader>
-            <CardContent><Table><TableHeader><TableRow><TableHead>Staff member</TableHead><TableHead>Day</TableHead><TableHead>Hours</TableHead><TableHead>Breaks</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Action</TableHead></TableRow></TableHeader><TableBody>
-              {shifts.map(shift => <TableRow key={shift.id}><TableCell><div className="flex items-center gap-2"><Avatar className="size-8"><AvatarImage src={shift.member.user.image || undefined} alt="" /><AvatarFallback>{initials(shift.member.user.name, shift.member.user.email)}</AvatarFallback></Avatar><span className="font-medium">{shift.member.user.name || shift.member.user.email}</span></div></TableCell><TableCell>{DAYS[shift.dayOfWeek]}</TableCell><TableCell className="font-mono text-xs">{shift.startTime}–{shift.endTime}</TableCell><TableCell>{shift.breaks.length ? <span className="flex items-center gap-1 text-sm"><Coffee aria-hidden="true" />{shift.breaks.length}</span> : "—"}</TableCell><TableCell><Badge variant={shift.isActive ? "default" : "secondary"}>{shift.isActive ? "Active" : "Inactive"}</Badge></TableCell><TableCell className="text-right">{canManage && <Button variant="ghost" size="sm" onClick={() => removeShift(shift.id)}>Remove</Button>}</TableCell></TableRow>)}
-              {!shifts.length && <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">No recurring shifts configured.</TableCell></TableRow>}
-            </TableBody></Table></CardContent>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div>
+                <CardTitle>Recurring roster</CardTitle>
+                <CardDescription>Weekly working hours are interpreted in {workspace.timezone}.</CardDescription>
+              </div>
+              {canManage && (
+                <Button onClick={() => openNewShiftModal()}>
+                  <Plus data-icon="inline-start" />Add shift
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Staff member</TableHead>
+                    <TableHead>Day</TableHead>
+                    <TableHead>Hours</TableHead>
+                    <TableHead>Breaks</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {shifts.map(shift => (
+                    <TableRow key={shift.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="size-8">
+                            <AvatarImage src={shift.member.user.image || undefined} alt="" />
+                            <AvatarFallback>{initials(shift.member.user.name, shift.member.user.email)}</AvatarFallback>
+                          </Avatar>
+                          <span className="font-medium">{shift.member.user.name || shift.member.user.email}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{DAYS[shift.dayOfWeek]}</TableCell>
+                      <TableCell className="font-mono text-xs">{shift.startTime}–{shift.endTime}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          {shift.breaks.length > 0 ? (
+                            <span className="flex items-center gap-1 text-xs font-mono">
+                              <Coffee className="size-3.5 text-muted-foreground" aria-hidden="true" />
+                              {shift.breaks.length} break{shift.breaks.length > 1 ? "s" : ""}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                          {canManage && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-1.5 text-[10px]"
+                              onClick={() => openBreaksModal(shift)}
+                            >
+                              Manage
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {canManage && (
+                            <Switch
+                              checked={shift.isActive}
+                              onCheckedChange={() => toggleShiftActive(shift)}
+                              disabled={isPending}
+                            />
+                          )}
+                          <Badge variant={shift.isActive ? "default" : "secondary"}>
+                            {shift.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {canManage && (
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8"
+                              onClick={() => openEditShiftModal(shift)}
+                            >
+                              <Pencil className="size-3.5 text-muted-foreground" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-8 hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => removeShift(shift.id)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!shifts.length && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                        No recurring shifts configured.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
@@ -462,7 +670,164 @@ export function ShiftsManager({
 
       <Dialog open={Boolean(pendingTransition)} onOpenChange={open => !open && setPendingTransition(null)}><DialogContent><DialogHeader><DialogTitle>{pendingTransition === "CANCELLED" ? "Cancel this booking?" : "Mark as no-show?"}</DialogTitle><DialogDescription>This change is recorded in the booking audit history and immediately invalidates stale notification actions.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" onClick={() => setPendingTransition(null)}>Keep booking</Button><Button variant="destructive" onClick={() => pendingTransition && runBookingTransition(pendingTransition)} disabled={isPending}>Confirm</Button></DialogFooter></DialogContent></Dialog>
 
-      <Dialog open={shiftDialogOpen} onOpenChange={setShiftDialogOpen}><DialogContent><form onSubmit={submitShift}><DialogHeader><DialogTitle>Add recurring shift</DialogTitle><DialogDescription>Set regular working hours in the organization timezone.</DialogDescription></DialogHeader><FieldGroup className="py-5"><Field><FieldLabel>Staff member</FieldLabel><Select value={shiftForm.memberId} onValueChange={memberId => setShiftForm(current => ({ ...current, memberId }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{allMembers.map(member => <SelectItem key={member.id} value={member.id}>{member.user.name || member.user.email}</SelectItem>)}</SelectGroup></SelectContent></Select></Field><Field><FieldLabel>Day</FieldLabel><Select value={shiftForm.dayOfWeek} onValueChange={dayOfWeek => setShiftForm(current => ({ ...current, dayOfWeek }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{DAYS.map((day, index) => <SelectItem key={day} value={String(index)}>{day}</SelectItem>)}</SelectGroup></SelectContent></Select></Field><div className="grid grid-cols-2 gap-3"><Field><FieldLabel htmlFor="shift-start">Starts</FieldLabel><Input id="shift-start" type="time" value={shiftForm.startTime} onChange={event => setShiftForm(current => ({ ...current, startTime: event.target.value }))} required /></Field><Field><FieldLabel htmlFor="shift-end">Ends</FieldLabel><Input id="shift-end" type="time" value={shiftForm.endTime} onChange={event => setShiftForm(current => ({ ...current, endTime: event.target.value }))} required /></Field></div></FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={() => setShiftDialogOpen(false)}>Cancel</Button><Button type="submit" disabled={isPending}>Save shift</Button></DialogFooter></form></DialogContent></Dialog>
+      <Dialog open={shiftDialogOpen} onOpenChange={setShiftDialogOpen}>
+        <DialogContent>
+          <form onSubmit={submitShift}>
+            <DialogHeader>
+              <DialogTitle>{editingShift ? "Edit recurring shift" : "Add recurring shift"}</DialogTitle>
+              <DialogDescription>Set regular working hours in the organization timezone.</DialogDescription>
+            </DialogHeader>
+            <FieldGroup className="py-5">
+              <Field>
+                <FieldLabel>Staff member</FieldLabel>
+                <Select
+                  value={shiftForm.memberId}
+                  onValueChange={memberId => setShiftForm(current => ({ ...current, memberId }))}
+                  disabled={Boolean(editingShift)}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {allMembers.map(member => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.user.name || member.user.email}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel>Day</FieldLabel>
+                <Select
+                  value={shiftForm.dayOfWeek}
+                  onValueChange={dayOfWeek => setShiftForm(current => ({ ...current, dayOfWeek }))}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {DAYS.map((day, index) => (
+                        <SelectItem key={day} value={String(index)}>{day}</SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field>
+                  <FieldLabel htmlFor="shift-start">Starts</FieldLabel>
+                  <Input
+                    id="shift-start"
+                    type="time"
+                    value={shiftForm.startTime}
+                    onChange={event => setShiftForm(current => ({ ...current, startTime: event.target.value }))}
+                    required
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="shift-end">Ends</FieldLabel>
+                  <Input
+                    id="shift-end"
+                    type="time"
+                    value={shiftForm.endTime}
+                    onChange={event => setShiftForm(current => ({ ...current, endTime: event.target.value }))}
+                    required
+                  />
+                </Field>
+              </div>
+              <div className="flex items-center justify-between pt-2">
+                <FieldLabel htmlFor="shift-active">Active Shift</FieldLabel>
+                <Switch
+                  id="shift-active"
+                  checked={shiftForm.isActive}
+                  onCheckedChange={isActive => setShiftForm(current => ({ ...current, isActive }))}
+                />
+              </div>
+            </FieldGroup>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShiftDialogOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={isPending}>Save shift</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={breaksDialogOpen} onOpenChange={setBreaksDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Coffee className="size-5 text-orange-500" />
+              <span>Manage Shift Breaks</span>
+            </DialogTitle>
+            <DialogDescription>
+              Configure breaks for {activeShiftForBreaks?.member.user.name || activeShiftForBreaks?.member.user.email} ({activeShiftForBreaks?.startTime} – {activeShiftForBreaks?.endTime}).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <span className="text-xs font-semibold uppercase text-muted-foreground">Scheduled Breaks</span>
+              {!activeShiftForBreaks?.breaks.length ? (
+                <p className="text-xs text-muted-foreground italic py-2">No breaks configured for this shift.</p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {activeShiftForBreaks.breaks.map(b => (
+                    <div key={b.id} className="flex items-center justify-between rounded-lg border p-2 text-xs">
+                      <div>
+                        <span className="font-semibold font-mono">{b.startTime} – {b.endTime}</span>
+                        {b.description && <span className="ml-2 text-muted-foreground">({b.description})</span>}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-destructive hover:bg-destructive/10"
+                        onClick={() => removeBreak(b.id)}
+                        disabled={isPending}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <form onSubmit={submitBreak} className="border-t pt-4 space-y-3">
+              <span className="text-xs font-semibold uppercase text-muted-foreground">Add New Break</span>
+              <div className="grid grid-cols-2 gap-3">
+                <Field>
+                  <FieldLabel htmlFor="break-start">Start Time</FieldLabel>
+                  <Input
+                    id="break-start"
+                    type="time"
+                    value={breakForm.startTime}
+                    onChange={e => setBreakForm(prev => ({ ...prev, startTime: e.target.value }))}
+                    required
+                  />
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="break-end">End Time</FieldLabel>
+                  <Input
+                    id="break-end"
+                    type="time"
+                    value={breakForm.endTime}
+                    onChange={e => setBreakForm(prev => ({ ...prev, endTime: e.target.value }))}
+                    required
+                  />
+                </Field>
+              </div>
+              <Field>
+                <FieldLabel htmlFor="break-desc">Description</FieldLabel>
+                <Input
+                  id="break-desc"
+                  value={breakForm.description}
+                  onChange={e => setBreakForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="e.g. Lunch break"
+                />
+              </Field>
+              <Button type="submit" disabled={isPending} className="w-full">Add Break</Button>
+            </form>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}><DialogContent><form onSubmit={submitLeave}><DialogHeader><DialogTitle>Create schedule override</DialogTitle><DialogDescription>Block leave and unavailable time, or add a one-off working window.</DialogDescription></DialogHeader><FieldGroup className="py-5"><Field><FieldLabel>Staff member</FieldLabel><Select value={leaveForm.memberId} onValueChange={memberId => setLeaveForm(current => ({ ...current, memberId }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectGroup>{allMembers.map(member => <SelectItem key={member.id} value={member.id}>{member.user.name || member.user.email}</SelectItem>)}</SelectGroup></SelectContent></Select></Field><Field><FieldLabel>Override type</FieldLabel><Select value={leaveForm.type} onValueChange={type => setLeaveForm(current => ({ ...current, type }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectGroup><SelectItem value="LEAVE">Leave</SelectItem><SelectItem value="UNAVAILABLE">Unavailable</SelectItem><SelectItem value="BLACKOUT">Blackout</SelectItem><SelectItem value="WORKING">One-off working time</SelectItem></SelectGroup></SelectContent></Select></Field><div className="grid grid-cols-2 gap-3"><Field><FieldLabel htmlFor="leave-start">Starts</FieldLabel><Input id="leave-start" type="datetime-local" value={leaveForm.startTime} onChange={event => setLeaveForm(current => ({ ...current, startTime: event.target.value }))} required /></Field><Field><FieldLabel htmlFor="leave-end">Ends</FieldLabel><Input id="leave-end" type="datetime-local" value={leaveForm.endTime} onChange={event => setLeaveForm(current => ({ ...current, endTime: event.target.value }))} required /></Field></div><Field><FieldLabel htmlFor="leave-reason">Reason</FieldLabel><Input id="leave-reason" value={leaveForm.reason} onChange={event => setLeaveForm(current => ({ ...current, reason: event.target.value }))} placeholder="Optional operational note" /></Field></FieldGroup><DialogFooter><Button type="button" variant="outline" onClick={() => setLeaveDialogOpen(false)}>Cancel</Button><Button type="submit" disabled={isPending}>Create override</Button></DialogFooter></form></DialogContent></Dialog>
 
