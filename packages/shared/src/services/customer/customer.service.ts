@@ -336,7 +336,6 @@ export class CustomerService {
           include: { crmRecord: true },
         });
 
-        // Trigger Loyalty processing and Windmill notification for new customer
         try {
           // Initialize loyalty account if needed (External)
           await LoyaltyService.adjustPointsExternal(
@@ -406,9 +405,6 @@ export class CustomerService {
     customerId: string,
   ): Promise<ActionResponse<{ id: string }>> {
     try {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
-      // Customer lacks a composite unique index on [id, organizationId].
-      // Using findUnique with non-unique filters risks ignoring the filter or IDOR.
       const customer = await this.prisma.customer.findFirst({
         where: { id: customerId, organizationId },
       });

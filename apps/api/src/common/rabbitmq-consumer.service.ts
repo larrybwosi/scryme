@@ -24,8 +24,15 @@ export class RabbitMQConsumerService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async initRabbitMQ() {
+    const rabbitUrl = process.env.RABBITMQ_URL;
+
+    // Skip initialization immediately if no connection string/credentials are provided
+    if (!rabbitUrl) {
+      this.logger.warn("RABBITMQ_URL environment variable is missing. Skipping RabbitMQ initialization.");
+      return;
+    }
+
     try {
-      const rabbitUrl = process.env.RABBITMQ_URL || "amqp://localhost:5672";
       this.connection = await amqp.connect(rabbitUrl);
       this.channel = await this.connection.createChannel();
 
