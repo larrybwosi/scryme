@@ -276,22 +276,20 @@ export function DocumentsTab({
                                   <ExternalLink className="w-3.5 h-3.5" />
                                 </a>
                               </Button>
-                              {!isPublicLink && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground border border-transparent hover:border-border rounded-none"
-                                  asChild
-                                  aria-label="Download document file"
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground border border-transparent hover:border-border rounded-none"
+                                asChild
+                                aria-label="Download document file"
+                              >
+                                <a
+                                  href={getCleanUrl(att.shortUrl || att.fileUrl!)}
+                                  download={att.fileName || "document"}
                                 >
-                                  <a
-                                    href={getCleanUrl(att.shortUrl || att.fileUrl!)}
-                                    download={att.fileName!}
-                                  >
-                                    <Download className="w-3.5 h-3.5" />
-                                  </a>
-                                </Button>
-                              )}
+                                  <Download className="w-3.5 h-3.5" />
+                                </a>
+                              </Button>
                             </div>
                           </div>
                         );
