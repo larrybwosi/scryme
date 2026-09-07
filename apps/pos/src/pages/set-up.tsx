@@ -47,7 +47,7 @@ interface SetupData {
 
 // --- Sub-Components ---
 
-const SetupTokenInstructions = ({ onBack, apiUrl }: { onBack: () => void, apiUrl: string }) => {
+const SetupTokenInstructions = ({ onBack }: { onBack: () => void}) => {
   return (
     <div className="space-y-6 w-full max-w-md mx-auto">
       <div className="space-y-2">
@@ -88,7 +88,7 @@ const SetupTokenInstructions = ({ onBack, apiUrl }: { onBack: () => void, apiUrl
       </div>
 
       <Button variant="outline" className="w-full h-11 rounded-none border-zinc-300 dark:border-zinc-700" asChild>
-        <a href={`${apiUrl}/integrations/apps-api?tab=devices`} target="_blank" rel="noreferrer">
+        <a href={`https://app.scryme.tech/integrations/apps-api?tab=devices`} target="_blank" rel="noreferrer">
           Open Dashboard <ExternalLink className="w-4 h-4 ml-2" />
         </a>
       </Button>
@@ -333,7 +333,7 @@ const SetupTokenStep = ({
               value={rawApiUrl}
               onChange={e => setApiUrl(e.target.value)}
               className="h-10 text-xs font-mono rounded-none border-zinc-200"
-              placeholder="https://api.example.com"
+              placeholder="https://api.scryme.tech"
             />
             <Button
               type="button"
@@ -728,7 +728,7 @@ export default function SetupPage() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <SetupTokenInstructions onBack={() => setViewMode('form')} apiUrl={useAuthStore.getState().apiUrl} />
+                <SetupTokenInstructions onBack={() => setViewMode('form')} />
               </motion.div>
             ) : (
               <motion.div

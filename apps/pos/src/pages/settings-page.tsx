@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { usePosStore } from '@/store/store';
 import { businessConfigs, getDefaultSidebarItems, type BusinessType } from '@/lib/business-configs';
@@ -31,9 +29,7 @@ import {
   Check,
   LayoutGrid,
   Save,
-  Bell,
   HardDrive,
-  FileText,
   CloudUpload,
 } from 'lucide-react';
 import {
@@ -53,7 +49,6 @@ import PrinterSettings from '@/components/printer.config';
 import { toast } from 'sonner';
 import posthog from 'posthog-js';
 import GeneralSettings from '@/components/settings/general-tab';
-import LogsTab from '@/components/settings/logs-tab';
 import PharmacyTab from '@/components/settings/pharmacy-tab';
 import { Stethoscope } from 'lucide-react';
 import { Badge } from '@repo/ui/components/ui/badge';
@@ -71,7 +66,6 @@ export default function SettingsPage() {
   const changeBusinessType = usePosStore(state => state.changeBusinessType);
   const getBusinessConfig = usePosStore(state => state.getBusinessConfig);
   const updateThemeConfig = usePosStore(state => state.updateThemeConfig);
-  const updateNotificationSettings = usePosStore(state => state.updateNotificationSettings);
   const updateCustomerDisplayConfig = usePosStore(state => state.updateCustomerDisplayConfig);
   const dangerouslyResetEverything = usePosStore(state => state.dangerouslyResetEverything);
 
@@ -331,12 +325,6 @@ export default function SettingsPage() {
                 <Palette className="h-4 w-4 mr-2" /> Theme
               </TabsTrigger>
               <TabsTrigger
-                value="notifications"
-                className="flex-1 min-w-[100px] h-10 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
-              >
-                <Bell className="h-4 w-4 mr-2" /> Alerts
-              </TabsTrigger>
-              <TabsTrigger
                 value="hardware"
                 className="flex-1 min-w-[100px] h-10 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
               >
@@ -353,12 +341,6 @@ export default function SettingsPage() {
                 className="flex-1 min-w-[100px] h-10 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
               >
                 <Monitor className="h-4 w-4 mr-2" /> Display
-              </TabsTrigger>
-              <TabsTrigger
-                value="logs"
-                className="flex-1 min-w-[100px] h-10 data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none transition-all"
-              >
-                <FileText className="h-4 w-4 mr-2" /> Logs
               </TabsTrigger>
               <TabsTrigger
                 value="danger"
@@ -419,8 +401,6 @@ export default function SettingsPage() {
               </Card>
             )}
           </TabsContent>
-
-          <LogsTab />
 
           {(businessType === 'pharmacy' || currentConfig.features.prescriptionManagement) && (
             <TabsContent value="pharmacy">
@@ -645,153 +625,6 @@ export default function SettingsPage() {
               </Card>
             </div>
           </TabsContent>
-
-          <TabsContent value="notifications" className="space-y-6">
-            <Card className="p-6 rounded-lg">
-              <h2 className="text-xl font-semibold mb-4">Notification Preferences</h2>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex-1">
-                    <div className="font-medium">Enable Notifications</div>
-                    <p className="text-sm text-muted-foreground">
-                      Show system notifications for orders, alerts, and updates
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.notificationSettings?.enabled ?? true}
-                    onCheckedChange={value => updateNotificationSettings({ enabled: value })}
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex-1">
-                    <div className="font-medium">Enable Sound</div>
-                    <p className="text-sm text-muted-foreground">Play sound when notifications appear</p>
-                  </div>
-                  <Switch
-                    checked={settings.notificationSettings?.soundEnabled ?? true}
-                    onCheckedChange={value => updateNotificationSettings({ soundEnabled: value })}
-                    disabled={!settings.notificationSettings?.enabled}
-                  />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 rounded-lg">
-              <h2 className="text-xl font-semibold mb-4">Notification Types</h2>
-              <p className="text-sm text-muted-foreground mb-4">Choose which types of notifications to receive</p>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex-1">
-                    <div className="font-medium">Online Orders</div>
-                    <p className="text-sm text-muted-foreground">Get notified when new online orders are placed</p>
-                  </div>
-                  <Switch
-                    checked={settings.notificationSettings?.showOnlineOrders ?? true}
-                    onCheckedChange={value => updateNotificationSettings({ showOnlineOrders: value })}
-                    disabled={!settings.notificationSettings?.enabled}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex-1">
-                    <div className="font-medium">Low Stock Alerts</div>
-                    <p className="text-sm text-muted-foreground">
-                      Get notified when products are running low or out of stock
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.notificationSettings?.showLowStock ?? true}
-                    onCheckedChange={value => updateNotificationSettings({ showLowStock: value })}
-                    disabled={!settings.notificationSettings?.enabled}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex-1">
-                    <div className="font-medium">System Alerts</div>
-                    <p className="text-sm text-muted-foreground">
-                      Get notified about system updates, warnings, and errors
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.notificationSettings?.showSystemAlerts ?? true}
-                    onCheckedChange={value => updateNotificationSettings({ showSystemAlerts: value })}
-                    disabled={!settings.notificationSettings?.enabled}
-                  />
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 rounded-lg">
-              <h2 className="text-xl font-semibold mb-4">Display Settings</h2>
-              <div className="space-y-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="notificationPosition">Notification Position</Label>
-                  <Select
-                    value={settings.notificationSettings?.position || 'top-right'}
-                    onValueChange={(value: any) => updateNotificationSettings({ position: value })}
-                    disabled={!settings.notificationSettings?.enabled}
-                  >
-                    <SelectTrigger id="notificationPosition">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="top-right">Top Right</SelectItem>
-                      <SelectItem value="top-left">Top Left</SelectItem>
-                      <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                      <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="autoCloseDelay">Auto Close Delay (milliseconds)</Label>
-                  <Input
-                    id="autoCloseDelay"
-                    type="number"
-                    min="1000"
-                    step="1000"
-                    value={settings.notificationSettings?.autoCloseDelay || 5000}
-                    onChange={e => updateNotificationSettings({ autoCloseDelay: Number.parseInt(e.target.value) })}
-                    disabled={!settings.notificationSettings?.enabled}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Time before notifications automatically disappear (min: 1000ms)
-                  </p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 rounded-lg">
-              <h2 className="text-xl font-semibold mb-4">API Integration</h2>
-              <p className="text-sm text-muted-foreground mb-4">
-                Configure your API endpoint to receive real-time notifications for online orders, inventory updates, and
-                system events.
-              </p>
-              <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm font-medium mb-2">Webhook Endpoint:</p>
-                <code className="text-xs bg-background px-2 py-1 rounded">POST /api/notifications</code>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Your API can send notifications with the following structure:
-                </p>
-                <pre className="text-xs bg-background p-2 rounded mt-2 overflow-auto">
-                  {`{
-                    "type": "order" | "stock" | "system",
-                    "priority": "low" | "medium" | "high",
-                    "title": "Notification Title",
-                    "message": "Notification message",
-                    "soundEnabled": true,
-                    "autoClose": true,
-                    "metadata": { /* custom data */ }
-                  }`}
-                </pre>
-              </div>
-            </Card>
-          </TabsContent>
-
           <TabsContent
             value="hardware"
             className="space-y-6 focus-visible:outline-none data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:zoom-in-95"
