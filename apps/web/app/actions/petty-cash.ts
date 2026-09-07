@@ -129,8 +129,10 @@ export async function topUpPettyCashFund(
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   return await db.$transaction(async tx => {
-    const fund = await tx.pettyCashFund.findUnique({
-      where: { id: fundId },
+    // 🛡️ Sentinel: IDOR/BOLA Prevention - Use findFirst with organizationId filter
+    // because PettyCashFund lacks a composite unique constraint on [id, organizationId].
+    const fund = await tx.pettyCashFund.findFirst({
+      where: { id: fundId, organizationId: auth.organizationId },
     });
 
     if (!fund) throw new Error("Fund not found");
@@ -164,6 +166,13 @@ export async function getPettyCashTransactions(fundId: string) {
     "MANAGER",
     "REPORTER",
   ], true);
+
+  // 🛡️ Sentinel: BOLA/IDOR Prevention - Verify fund belongs to organization before querying transactions
+  const fund = await db.pettyCashFund.findFirst({
+    where: { id: fundId, organizationId: auth.organizationId },
+  });
+
+  if (!fund) throw new Error("Fund not found");
 
   return await db.pettyCashTransaction.findMany({
     where: { fundId },
