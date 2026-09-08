@@ -31,6 +31,15 @@ export interface OAuthClientItem {
   public?: boolean;
 }
 
+export interface WebhookItem {
+  id: string;
+  url: string;
+  events: string[];
+  isActive: boolean;
+  secret?: string;
+  createdAt: string;
+}
+
 export interface DeveloperUser {
   id: string;
   name: string;
@@ -48,8 +57,10 @@ interface DeveloperAuthContextType {
   logout: () => Promise<void>;
   apiKeys: ApiKeyItem[];
   oauthClients: OAuthClientItem[];
+  webhooks: WebhookItem[];
   fetchOAuthClients: () => Promise<void>;
   fetchApiKeys: () => Promise<void>;
+  fetchWebhooks: () => Promise<void>;
   createApiKey: (name: string, environment: "LIVE" | "TEST") => Promise<ApiKeyItem>;
   toggleApiKey: (id: string) => Promise<void>;
   deleteApiKey: (id: string) => Promise<void>;
@@ -57,16 +68,25 @@ interface DeveloperAuthContextType {
   rotateOAuthSecret: (id: string) => Promise<string>;
   toggleOAuthClient: (id: string) => Promise<void>;
   deleteOAuthClient: (id: string) => Promise<void>;
+  createWebhook: (url: string, events: string[]) => Promise<WebhookItem>;
+  deleteWebhook: (id: string) => Promise<void>;
 }
 
 const DeveloperAuthContext = createContext<DeveloperAuthContextType | undefined>(undefined);
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
+const getNormalizedApiUrl = (path: string): string => {
+  const base = (process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech").replace(/\/$/, "");
+  const hasApiPrefix = base.endsWith("/api");
+  const normalizedBase = hasApiPrefix ? base : `${base}/api`;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizedBase}${normalizedPath}`;
+};
 
 export function DeveloperAuthProvider({ children }: { children: React.ReactNode }) {
   const session = authClient.useSession();
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
   const [oauthClients, setOauthClients] = useState<OAuthClientItem[]>([]);
+  const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
 
   const sessionUser = session?.data?.user;
 
@@ -117,7 +137,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
 
   const fetchOAuthClients = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients`, {
+      const res = await fetch(getNormalizedApiUrl("/v3/auth/oauth/clients"), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +161,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
 
   const fetchApiKeys = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/api-keys`, {
+      const res = await fetch(getNormalizedApiUrl("/v3/auth/api-keys"), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -163,17 +183,50 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
+  const fetchWebhooks = useCallback(async () => {
+    try {
+      const res = await fetch(getNormalizedApiUrl("/v3/developer/webhooks"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const body = await res.json();
+        const data = body.data || body;
+        if (Array.isArray(data)) {
+          setWebhooks(
+            data.map((w: any) => ({
+              id: w.id,
+              url: w.url,
+              events: w.events || [],
+              isActive: w.isActive ?? true,
+              secret: w.secret,
+              createdAt: w.createdAt ? new Date(w.createdAt).toISOString() : new Date().toISOString(),
+            }))
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Failed fetching webhooks:", err);
+    }
+  }, []);
+
   const userId = user?.id;
 
   useEffect(() => {
     if (userId) {
       fetchOAuthClients();
       fetchApiKeys();
+      fetchWebhooks();
     } else {
       setOauthClients([]);
       setApiKeys([]);
+      setWebhooks([]);
     }
-  }, [userId, fetchOAuthClients, fetchApiKeys]);
+  }, [userId, fetchOAuthClients, fetchApiKeys, fetchWebhooks]);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -219,7 +272,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
   };
 
   const createApiKey = async (name: string, environment: "LIVE" | "TEST"): Promise<ApiKeyItem> => {
-    const res = await fetch(`${API_BASE_URL}/v3/auth/api-keys`, {
+    const res = await fetch(getNormalizedApiUrl("/v3/auth/api-keys"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -249,7 +302,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: newActiveState } : k)));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/api-keys/${id}/toggle`, {
+      const res = await fetch(getNormalizedApiUrl(`/v3/auth/api-keys/${id}/toggle`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -270,7 +323,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     setApiKeys((prev) => prev.filter((k) => k.id !== id));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/api-keys/${id}`, {
+      const res = await fetch(getNormalizedApiUrl(`/v3/auth/api-keys/${id}`), {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -308,7 +361,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
       ...(data.public !== undefined ? { public: data.public } : {}),
     };
 
-    const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients`, {
+    const res = await fetch(getNormalizedApiUrl("/v3/auth/oauth/clients"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -343,21 +396,17 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
       throw new Error("OAuth client not found");
     }
 
-    const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients/${id}`, {
-      method: "PUT",
+    const res = await fetch(getNormalizedApiUrl(`/v3/auth/oauth/clients/${id}/rotate-secret`), {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({
-        name: existing.name,
-        redirectUris: existing.redirectUris,
-      }),
     });
 
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.message || errJson.error || "Failed to update OAuth client");
+      throw new Error(errJson.message || errJson.error || "Failed to rotate OAuth client secret");
     }
 
     const resBody = await res.json();
@@ -382,7 +431,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     );
 
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients/${id}`, {
+      const res = await fetch(getNormalizedApiUrl(`/v3/auth/oauth/clients/${id}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -411,7 +460,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     setOauthClients((prev) => prev.filter((c) => c.id !== id));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients/${id}`, {
+      const res = await fetch(getNormalizedApiUrl(`/v3/auth/oauth/clients/${id}`), {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -428,6 +477,57 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     }
   };
 
+  const createWebhook = async (url: string, events: string[]): Promise<WebhookItem> => {
+    const res = await fetch(getNormalizedApiUrl("/v3/developer/webhooks"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ url, events }),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.message || errJson.error || "Failed to register webhook");
+    }
+
+    const resBody = await res.json();
+    const created = resBody.data || resBody;
+    const item: WebhookItem = {
+      id: created.id || `wh_${Date.now()}`,
+      url: created.url || url,
+      events: created.events || events,
+      isActive: created.isActive ?? true,
+      secret: created.secret || `whsec_${Math.random().toString(36).substring(2, 15)}`,
+      createdAt: created.createdAt ? new Date(created.createdAt).toISOString() : new Date().toISOString(),
+    };
+
+    setWebhooks((prev) => [item, ...prev]);
+    return item;
+  };
+
+  const deleteWebhook = async (id: string) => {
+    setWebhooks((prev) => prev.filter((w) => w.id !== id));
+
+    try {
+      const res = await fetch(getNormalizedApiUrl(`/v3/developer/webhooks/${id}`), {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        fetchWebhooks();
+      }
+    } catch (err) {
+      console.error("Error deleting webhook:", err);
+      fetchWebhooks();
+    }
+  };
+
   return (
     <DeveloperAuthContext.Provider
       value={{
@@ -439,8 +539,10 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
         logout,
         apiKeys,
         oauthClients,
+        webhooks,
         fetchOAuthClients,
         fetchApiKeys,
+        fetchWebhooks,
         createApiKey,
         toggleApiKey,
         deleteApiKey,
@@ -448,6 +550,8 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
         rotateOAuthSecret,
         toggleOAuthClient,
         deleteOAuthClient,
+        createWebhook,
+        deleteWebhook,
       }}
     >
       {children}

@@ -122,4 +122,26 @@ export class OAuthClientManagementUseCase {
 
     return { success: true, message: "OAuth client deleted successfully" };
   }
+
+  async rotateSecret(id: string, userId?: string) {
+    const existing = await this.getClientById(id, userId);
+
+    const newSecret = `sec_${randomBytes(32).toString("hex")}`;
+
+    const updated = await db.oAuthClient.update({
+      where: { id: existing.id },
+      data: {
+        clientSecret: newSecret,
+      },
+    });
+
+    const meta = (updated.metadata as any) || {};
+
+    return {
+      ...updated,
+      clientSecret: newSecret,
+      scopes: meta.scopes || ["user.profile", "user.email"],
+      corsOrigins: meta.corsOrigins || [],
+    };
+  }
 }

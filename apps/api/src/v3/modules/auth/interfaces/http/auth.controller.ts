@@ -122,7 +122,7 @@ export class AuthController {
 
   // --- OAUTH CLIENT MANAGEMENT ENDPOINTS ---
 
-  @Post("oauth/clients")
+  @Post(["oauth/clients", "oauth/provision", "oauth/clients/provision"])
   @UsePipes(new V3ZodValidationPipe(CreateOAuthClientSchema))
   @ApiOperation({
     summary: "Register a new OAuth Application Client for Sign in with Scryme",
@@ -140,7 +140,7 @@ export class AuthController {
     return this.oauthClientManagementUseCase.createClient(user?.userId || user?.id, body as any);
   }
 
-  @Get("oauth/clients")
+  @Get(["oauth/clients", "oauth/provision", "oauth/clients/provision"])
   @ApiOperation({
     summary: "List registered OAuth Application Clients",
     operationId: "Auth_ListOAuthClients",
@@ -149,7 +149,7 @@ export class AuthController {
     return this.oauthClientManagementUseCase.listClients(user?.userId || user?.id);
   }
 
-  @Get("oauth/clients/:id")
+  @Get(["oauth/clients/:id", "oauth/provision/:id"])
   @ApiParam({ name: "id", type: "string" })
   @ApiOperation({
     summary: "Get OAuth Application Client details",
@@ -160,7 +160,7 @@ export class AuthController {
     return this.oauthClientManagementUseCase.getClientById(id, user?.userId || user?.id);
   }
 
-  @Put("oauth/clients/:id")
+  @Put(["oauth/clients/:id", "oauth/provision/:id"])
   @ApiParam({ name: "id", type: "string" })
   @UsePipes(new V3ZodValidationPipe(UpdateOAuthClientSchema))
   @ApiOperation({
@@ -176,7 +176,18 @@ export class AuthController {
     return this.oauthClientManagementUseCase.updateClient(id, user?.userId || user?.id, body as any);
   }
 
-  @Delete("oauth/clients/:id")
+  @Post(["oauth/clients/:id/rotate-secret", "oauth/clients/:id/rotate", "oauth/provision/:id/rotate-secret"])
+  @ApiParam({ name: "id", type: "string" })
+  @ApiOperation({
+    summary: "Rotate OAuth Application Client secret key",
+    operationId: "Auth_RotateOAuthClientSecret",
+  })
+  async rotateOAuthClientSecret(@CurrentUser() user: any, @Req() req: any) {
+    const id = req.params.id;
+    return this.oauthClientManagementUseCase.rotateSecret(id, user?.userId || user?.id);
+  }
+
+  @Delete(["oauth/clients/:id", "oauth/provision/:id"])
   @ApiParam({ name: "id", type: "string" })
   @ApiOperation({
     summary: "Delete an OAuth Application Client",
