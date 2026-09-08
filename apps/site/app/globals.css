@@ -36,7 +36,7 @@
 
   :focus-visible {
     outline: 2px solid var(--ring);
-    outline-offset: 3px;
+    outline-offset: 2px;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -101,26 +101,26 @@
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --radius: 0.5rem;
+  /* Refined, sharper border radii scale (Base radius 4px) */
+  --radius: 0.25rem;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg:
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl:
-    0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-primary: 0 8px 32px -4px oklch(0.55 0.18 265 / 0.35);
+  /* Premium Ambient Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-primary: 0 8px 24px -4px oklch(0.55 0.18 265 / 0.25);
 
   /* Scryme ledger variables — Light mode default values */
   --ink-bg: #fbf9f4;
   --ink-panel: #f4efe2;
   --ink-panel-alt: #ece4d2;
-  --ink-line: rgba(11, 18, 32, 0.1);
+  --ink-line: rgba(11, 18, 32, 0.08);
   --paper: #111827;
   --brass: #9e742a;
-  --brass-dim: rgba(158, 116, 42, 0.1);
-  --brass-line: rgba(158, 116, 42, 0.25);
+  --brass-dim: rgba(158, 116, 42, 0.08);
+  --brass-line: rgba(158, 116, 42, 0.2);
   --ledger-green: #2f6a4f;
   --ledger-rust: #933d25;
   --text-primary: #111827;
@@ -130,10 +130,10 @@
   /* Theme-adaptive helper variables — Light mode values */
   --hover-bg: rgba(11, 18, 32, 0.04);
   --hover-bg-intense: rgba(11, 18, 32, 0.08);
-  --navbar-bg-scrolled: rgba(251, 249, 244, 0.92);
-  --mobile-menu-bg: rgba(251, 249, 244, 0.97);
+  --navbar-bg-scrolled: rgba(251, 249, 244, 0.85);
+  --mobile-menu-bg: rgba(251, 249, 244, 0.95);
 
-  /* Pricing CTA adaptive variables (inverted from primary theme layout) */
+  /* Pricing CTA adaptive variables */
   --pricing-cta-text-muted: rgba(241, 233, 216, 0.68);
   --pricing-cta-text-body: rgba(241, 233, 216, 0.8);
   --pricing-cta-border-dim: rgba(241, 233, 216, 0.3);
@@ -154,29 +154,36 @@
   --card-foreground: #f1e9d8;
   --popover: #121b2e;
   --popover-foreground: #f1e9d8;
-  --border: rgba(241, 233, 216, 0.09);
+  --border: rgba(241, 233, 216, 0.08);
 
   --ink-bg: #0b1220;
   --ink-panel: #121b2e;
   --ink-panel-alt: #0e1626;
-  --ink-line: rgba(241, 233, 216, 0.09);
+  --ink-line: rgba(241, 233, 216, 0.07);
   --paper: #f1e9d8;
   --brass: #c89a4b;
-  --brass-dim: rgba(200, 154, 75, 0.16);
-  --brass-line: rgba(200, 154, 75, 0.35);
+  --brass-dim: rgba(200, 154, 75, 0.12);
+  --brass-line: rgba(200, 154, 75, 0.3);
   --ledger-green: #4b9073;
   --ledger-rust: #b4553a;
   --text-primary: #f1e9d8;
   --text-muted: rgba(241, 233, 216, 0.56);
   --text-faint: rgba(241, 233, 216, 0.32);
 
+  /* Adjusted Dark Mode Shadows for Depth */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(241, 233, 216, 0.08);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(241, 233, 216, 0.1);
+  --shadow-xl: 0 24px 48px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(241, 233, 216, 0.12);
+
   /* Theme-adaptive helper variables — Dark mode values */
   --hover-bg: rgba(241, 233, 216, 0.04);
   --hover-bg-intense: rgba(241, 233, 216, 0.08);
-  --navbar-bg-scrolled: rgba(11, 18, 32, 0.92);
-  --mobile-menu-bg: rgba(11, 18, 32, 0.97);
+  --navbar-bg-scrolled: rgba(11, 18, 32, 0.85);
+  --mobile-menu-bg: rgba(11, 18, 32, 0.95);
 
-  /* Pricing CTA adaptive variables (inverted from primary theme layout) */
+  /* Pricing CTA adaptive variables */
   --pricing-cta-text-muted: rgba(11, 18, 32, 0.68);
   --pricing-cta-text-body: rgba(11, 18, 32, 0.8);
   --pricing-cta-border-dim: rgba(11, 18, 32, 0.3);
@@ -230,18 +237,19 @@
   --color-textMuted: var(--text-muted);
   --color-textFaint: var(--text-faint);
 
-  /* Convenience surface aliases — noticeably different from background */
   --color-surface-1: oklch(0.96 0.008 265);
   --color-surface-2: oklch(0.925 0.012 265);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  /* Scaled down border radii definitions:
+     sm: 2px | md: 3px | lg: 4px | xl: 6px | 2xl: 8px */
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 1px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 4px);
 
   --shadow-sm: var(--shadow-sm);
   --shadow: var(--shadow);
@@ -277,7 +285,15 @@
   }
   .premium-frame {
     box-shadow:
-      0 40px 100px rgb(0 0 0 / 0.42),
-      inset 0 1px 0 rgb(241 233 216 / 0.06);
+      0 30px 80px -20px rgb(0 0 0 / 0.5),
+      inset 0 1px 0 rgba(241, 233, 216, 0.12);
+  }
+  .glass-panel {
+    background: var(--navbar-bg-scrolled);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .glow-subtle {
+    box-shadow: 0 0 32px -8px var(--brass-dim);
   }
 }

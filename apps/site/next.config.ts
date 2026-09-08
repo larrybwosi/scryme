@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+const isDev = process.env.NODE_ENV === "development";
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 const isEuPostHog = posthogHost?.includes("eu.i.posthog.com");
 const posthogAssetsHost = isEuPostHog
@@ -8,6 +9,10 @@ const posthogAssetsHost = isEuPostHog
   : "https://us-assets.i.posthog.com";
 const posthogIngestHost = posthogHost || "https://us.i.posthog.com";
 
+const defaultApiUrl = isDev
+  ? "http://localhost:3002"
+  : "https://api.scryme.tech";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 const nextConfig: NextConfig = {
   output: "standalone",
   skipTrailingSlashRedirect: true,
@@ -36,6 +41,10 @@ const nextConfig: NextConfig = {
       {
         source: "/ingest/:path*",
         destination: `${posthogIngestHost}/:path*`,
+      },
+      {
+        source: "/.well-known/:path*",
+        destination: `${apiUrl}/.well-known/:path*`,
       },
     ];
   },
