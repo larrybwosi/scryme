@@ -353,16 +353,28 @@ async function provisionWorkflow(
   const template = builtInWorkflowTemplates.find((t) => t.path === path || t.path.replace("f/dealio/", "") === path);
   const name = template?.name || path;
 
+  const existing = await db.workflowEngineDefinition.findFirst({
+    where: {
+      organizationId,
+      OR: [
+        { key: path },
+        { key: path.replace(/^f\/dealio\//, "") },
+      ],
+    },
+  });
+
+  const targetKey = existing?.key || path;
+
   const definition = await db.workflowEngineDefinition.upsert({
     where: {
       organizationId_key: {
         organizationId,
-        key: path,
+        key: targetKey,
       },
     },
     create: {
       organizationId,
-      key: path,
+      key: targetKey,
       name,
       triggerType: "EVENT",
       config: settings || {},
@@ -407,12 +419,13 @@ async function triggerWorkflow(
     }
   }
 
-  let definition = await db.workflowEngineDefinition.findUnique({
+  let definition = await db.workflowEngineDefinition.findFirst({
     where: {
-      organizationId_key: {
-        organizationId,
-        key: path,
-      },
+      organizationId,
+      OR: [
+        { key: path },
+        { key: path.replace(/^f\/dealio\//, "") },
+      ],
     },
   });
 

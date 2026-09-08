@@ -6,7 +6,9 @@ import {
   addEdge,
   Background,
   Controls,
+  Handle,
   MiniMap,
+  Position,
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
@@ -256,14 +258,26 @@ function Icon({ name }: { name: string }) {
 function WorkflowNode({ data, selected }: NodeProps<StudioNode>) {
   const conditionCount = data.conditions?.rules?.length || 0;
   const hasConfig = data.config && Object.keys(data.config).length > 0;
+  const isLogic = data.kind === "logic";
+  const isTrigger = data.kind === "trigger";
 
   return (
     <div
       className={cn(
-        "w-64 rounded-xl border bg-card/95 shadow-xl transition-all backdrop-blur",
+        "relative w-64 rounded-xl border bg-card/95 shadow-xl transition-all backdrop-blur",
         selected ? "border-primary ring-2 ring-primary/30" : "border-border/80 hover:border-border"
       )}
     >
+      {/* Target Input Handle (Left) */}
+      {!isTrigger && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="input"
+          className="!size-3.5 !border-2 !border-background !bg-primary transition-all hover:!scale-125 hover:!bg-primary/80"
+        />
+      )}
+
       <div className={cn("flex items-center gap-3 border-b px-3.5 py-3 rounded-t-xl", `node-accent-${data.color}`)}>
         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background/90 text-foreground shadow-sm">
           <Icon name={data.icon} />
@@ -281,7 +295,7 @@ function WorkflowNode({ data, selected }: NodeProps<StudioNode>) {
         {data.description || "Step configured in studio."}
       </div>
 
-      {data.kind === "logic" && conditionCount > 0 && (
+      {isLogic && conditionCount > 0 && (
         <div className="mx-3 mb-2 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
           <div className="flex items-center gap-1.5 font-medium">
             <GitBranch size={12} />
@@ -295,7 +309,7 @@ function WorkflowNode({ data, selected }: NodeProps<StudioNode>) {
         </div>
       )}
 
-      {data.config && Object.keys(data.config).length > 0 && data.kind !== "logic" && (
+      {data.config && Object.keys(data.config).length > 0 && !isLogic && (
         <div className="mx-3 mb-2 space-y-1 rounded-md border border-muted bg-muted/30 px-2.5 py-1.5 text-[10px]">
           {Object.entries(data.config).slice(0, 2).map(([key, val]) => (
             <div key={key} className="flex justify-between gap-2 truncate">
@@ -317,6 +331,39 @@ function WorkflowNode({ data, selected }: NodeProps<StudioNode>) {
           <span className="size-1.5 rounded-full bg-emerald-500" />
         )}
       </div>
+
+      {/* Output Handles (Right) */}
+      {isLogic ? (
+        <>
+          <div className="absolute -right-3 top-1/3 flex items-center gap-1">
+            <span className="text-[9px] font-bold text-emerald-500 pointer-events-none select-none pr-1">TRUE</span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id="true"
+              style={{ top: "35%" }}
+              className="!size-3.5 !border-2 !border-background !bg-emerald-500 transition-all hover:!scale-125"
+            />
+          </div>
+          <div className="absolute -right-3 top-2/3 flex items-center gap-1">
+            <span className="text-[9px] font-bold text-rose-500 pointer-events-none select-none pr-1">FALSE</span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id="false"
+              style={{ top: "65%" }}
+              className="!size-3.5 !border-2 !border-background !bg-rose-500 transition-all hover:!scale-125"
+            />
+          </div>
+        </>
+      ) : (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="output"
+          className="!size-3.5 !border-2 !border-background !bg-primary transition-all hover:!scale-125 hover:!bg-primary/80"
+        />
+      )}
     </div>
   );
 }
@@ -423,7 +470,18 @@ export default function WorkflowsPage() {
     setSelectedPath(path);
   };
 
-  const onConnect = (connection: Connection) => setEdges((items) => addEdge({ ...connection, animated: true }, items));
+  const onConnect = (connection: Connection) =>
+    setEdges((items) =>
+      addEdge(
+        {
+          ...connection,
+          type: "smoothstep",
+          animated: true,
+          style: { strokeWidth: 2, stroke: "#6366f1" },
+        },
+        items
+      )
+    );
 
   const addNode = (item: (typeof palette)[number]) => {
     const id = `${item.kind}-${Date.now()}`;
@@ -1260,21 +1318,323 @@ export default function WorkflowsPage() {
                       </div>
                     )}
 
-                    {/* Step Config Parameters */}
-                    {activeNode.data.config && Object.keys(activeNode.data.config).length > 0 && (
+                    {/* Specialized Step Config Parameters based on kind & icon */}
+                    {activeNode.data.kind === "trigger" && (
                       <div className="space-y-3">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Step Parameters</Label>
-                        <div className="space-y-2">
-                          {Object.entries(activeNode.data.config).map(([key, val]) => (
-                            <div key={key}>
-                              <Label className="text-[11px] text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1")}</Label>
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Trigger Configuration</Label>
+                        {activeNode.data.icon === "clock" ? (
+                          <>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Schedule Preset</Label>
+                              <Select
+                                value={activeNode.data.config?.preset || "custom"}
+                                onValueChange={(val) => {
+                                  let cronVal = activeNode.data.config?.cron || "0 9 * * 1";
+                                  if (val === "hourly") cronVal = "0 * * * *";
+                                  if (val === "daily_9am") cronVal = "0 9 * * *";
+                                  if (val === "weekly_mon") cronVal = "0 9 * * 1";
+                                  if (val === "monthly_1st") cronVal = "0 9 1 * *";
+                                  updateConfigValue("preset", val);
+                                  updateConfigValue("cron", cronVal);
+                                }}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="hourly" className="text-xs">Every Hour (0 * * * *)</SelectItem>
+                                  <SelectItem value="daily_9am" className="text-xs">Daily at 9:00 AM (0 9 * * *)</SelectItem>
+                                  <SelectItem value="weekly_mon" className="text-xs">Weekly on Mon 9 AM (0 9 * * 1)</SelectItem>
+                                  <SelectItem value="monthly_1st" className="text-xs">1st of Month 9 AM (0 9 1 * *)</SelectItem>
+                                  <SelectItem value="custom" className="text-xs">Custom Cron Expression</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Cron Expression</Label>
                               <Input
-                                value={String(val)}
-                                onChange={(e) => updateConfigValue(key, e.target.value)}
+                                value={activeNode.data.config?.cron || "0 9 * * 1"}
+                                onChange={(e) => updateConfigValue("cron", e.target.value)}
+                                placeholder="0 9 * * 1"
                                 className="mt-0.5 h-8 text-xs font-mono"
                               />
                             </div>
-                          ))}
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Timezone</Label>
+                              <Select
+                                value={activeNode.data.config?.timezone || "UTC"}
+                                onValueChange={(val) => updateConfigValue("timezone", val)}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="UTC" className="text-xs">UTC (Universal Time)</SelectItem>
+                                  <SelectItem value="America/New_York" className="text-xs">America/New_York (EST)</SelectItem>
+                                  <SelectItem value="Europe/London" className="text-xs">Europe/London (GMT)</SelectItem>
+                                  <SelectItem value="Africa/Nairobi" className="text-xs">Africa/Nairobi (EAT)</SelectItem>
+                                  <SelectItem value="Asia/Tokyo" className="text-xs">Asia/Tokyo (JST)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">System Event Type</Label>
+                              <Select
+                                value={activeNode.data.config?.eventType || "customer.created"}
+                                onValueChange={(val) => updateConfigValue("eventType", val)}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="customer.created" className="text-xs">Customer Created (customer.created)</SelectItem>
+                                  <SelectItem value="order.completed" className="text-xs">Order Completed (order.completed)</SelectItem>
+                                  <SelectItem value="inventory.low_stock" className="text-xs">Low Stock Alert (inventory.low_stock)</SelectItem>
+                                  <SelectItem value="payment.received" className="text-xs">Payment Received (payment.received)</SelectItem>
+                                  <SelectItem value="shift.started" className="text-xs">Staff Shift Started (shift.started)</SelectItem>
+                                  <SelectItem value="custom" className="text-xs">Custom Event Identifier</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Event Source Filter</Label>
+                              <Input
+                                value={activeNode.data.config?.source || "system"}
+                                onChange={(e) => updateConfigValue("source", e.target.value)}
+                                placeholder="system, crm, pos..."
+                                className="mt-0.5 h-8 text-xs font-mono"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {activeNode.data.kind === "action" && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Action Parameters</Label>
+                        {activeNode.data.icon === "mail" ? (
+                          <>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Recipient Email / Handle</Label>
+                              <Input
+                                value={activeNode.data.config?.recipient || "{{customer.email}}"}
+                                onChange={(e) => updateConfigValue("recipient", e.target.value)}
+                                placeholder="{{customer.email}}"
+                                className="mt-0.5 h-8 text-xs font-mono"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Subject Line</Label>
+                              <Input
+                                value={activeNode.data.config?.subject || "Welcome to Scryme"}
+                                onChange={(e) => updateConfigValue("subject", e.target.value)}
+                                className="mt-0.5 h-8 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Email Template</Label>
+                              <Select
+                                value={activeNode.data.config?.template || "welcome_v1"}
+                                onValueChange={(val) => updateConfigValue("template", val)}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="welcome_v1" className="text-xs">Welcome Customer (welcome_v1)</SelectItem>
+                                  <SelectItem value="order_receipt" className="text-xs">Order Receipt (order_receipt)</SelectItem>
+                                  <SelectItem value="stock_digest" className="text-xs">Stock Alert Digest (stock_digest)</SelectItem>
+                                  <SelectItem value="custom" className="text-xs">Custom Raw Template</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        ) : activeNode.data.icon === "message" ? (
+                          <>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Scryme Chat Channel</Label>
+                              <Select
+                                value={activeNode.data.config?.channel || "general"}
+                                onValueChange={(val) => updateConfigValue("channel", val)}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="general" className="text-xs">#general</SelectItem>
+                                  <SelectItem value="sales-alerts" className="text-xs">#sales-alerts</SelectItem>
+                                  <SelectItem value="inventory-warnings" className="text-xs">#inventory-warnings</SelectItem>
+                                  <SelectItem value="management" className="text-xs">#management</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Message Template</Label>
+                              <Textarea
+                                value={activeNode.data.config?.message || ""}
+                                onChange={(e) => updateConfigValue("message", e.target.value)}
+                                placeholder="Automated alert message..."
+                                className="mt-0.5 min-h-16 text-xs"
+                              />
+                            </div>
+                          </>
+                        ) : activeNode.data.icon === "code" ? (
+                          <>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="col-span-1">
+                                <Label className="text-[11px] text-muted-foreground">Method</Label>
+                                <Select
+                                  value={activeNode.data.config?.method || "POST"}
+                                  onValueChange={(val) => updateConfigValue("method", val)}
+                                >
+                                  <SelectTrigger className="mt-0.5 h-8 text-xs font-mono">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="GET" className="text-xs font-mono">GET</SelectItem>
+                                    <SelectItem value="POST" className="text-xs font-mono">POST</SelectItem>
+                                    <SelectItem value="PUT" className="text-xs font-mono">PUT</SelectItem>
+                                    <SelectItem value="DELETE" className="text-xs font-mono">DELETE</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="col-span-2">
+                                <Label className="text-[11px] text-muted-foreground">Endpoint URL</Label>
+                                <Input
+                                  value={activeNode.data.config?.url || ""}
+                                  onChange={(e) => updateConfigValue("url", e.target.value)}
+                                  placeholder="https://api.example.com/webhook"
+                                  className="mt-0.5 h-8 text-xs font-mono"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">HTTP Headers</Label>
+                              <Input
+                                value={activeNode.data.config?.headers || "Content-Type: application/json"}
+                                onChange={(e) => updateConfigValue("headers", e.target.value)}
+                                placeholder="Header: Value"
+                                className="mt-0.5 h-8 text-xs font-mono"
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <div className="space-y-2">
+                            {Object.entries(activeNode.data.config || {}).map(([key, val]) => (
+                              <div key={key}>
+                                <Label className="text-[11px] text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1")}</Label>
+                                <Input
+                                  value={String(val)}
+                                  onChange={(e) => updateConfigValue(key, e.target.value)}
+                                  className="mt-0.5 h-8 text-xs font-mono"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeNode.data.kind === "delay" && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Timing & Pause</Label>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Duration String</Label>
+                          <Input
+                            value={activeNode.data.config?.duration || "15m"}
+                            onChange={(e) => updateConfigValue("duration", e.target.value)}
+                            placeholder="e.g. 15m, 2h, 1d"
+                            className="mt-0.5 h-8 text-xs font-mono"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Pause Behavior</Label>
+                          <Select
+                            value={activeNode.data.config?.pauseType || "duration"}
+                            onValueChange={(val) => updateConfigValue("pauseType", val)}
+                          >
+                            <SelectTrigger className="mt-0.5 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="duration" className="text-xs">Wait Fixed Duration</SelectItem>
+                              <SelectItem value="until_time" className="text-xs">Wait Until Timestamp</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeNode.data.kind === "data" && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Data Record Settings</Label>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Entity Type</Label>
+                          <Select
+                            value={activeNode.data.config?.entity || "Customer"}
+                            onValueChange={(val) => updateConfigValue("entity", val)}
+                          >
+                            <SelectTrigger className="mt-0.5 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Customer" className="text-xs">CRM Customer</SelectItem>
+                              <SelectItem value="InventoryBatch" className="text-xs">Inventory Batch</SelectItem>
+                              <SelectItem value="SalesTransaction" className="text-xs">Sales Transaction</SelectItem>
+                              <SelectItem value="PurchaseOrder" className="text-xs">Purchase Order</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Action</Label>
+                          <Select
+                            value={activeNode.data.config?.action || "update"}
+                            onValueChange={(val) => updateConfigValue("action", val)}
+                          >
+                            <SelectTrigger className="mt-0.5 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="create" className="text-xs">Create New Record</SelectItem>
+                              <SelectItem value="update" className="text-xs">Update Existing Record</SelectItem>
+                              <SelectItem value="upsert" className="text-xs">Upsert (Create or Update)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Target Record ID Expression</Label>
+                          <Input
+                            value={activeNode.data.config?.targetId || "{{payload.customerId}}"}
+                            onChange={(e) => updateConfigValue("targetId", e.target.value)}
+                            placeholder="{{payload.id}}"
+                            className="mt-0.5 h-8 text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeNode.data.kind === "webhook" && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Outgoing Webhook Settings</Label>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Event Name</Label>
+                          <Input
+                            value={activeNode.data.config?.eventName || "workflow.completed"}
+                            onChange={(e) => updateConfigValue("eventName", e.target.value)}
+                            placeholder="workflow.completed"
+                            className="mt-0.5 h-8 text-xs font-mono"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between rounded-md border p-2 bg-muted/20">
+                          <Label className="text-xs font-medium">Retry On Failure</Label>
+                          <Switch
+                            checked={activeNode.data.config?.retryOnFailure !== false}
+                            onCheckedChange={(checked) => updateConfigValue("retryOnFailure", checked)}
+                          />
                         </div>
                       </div>
                     )}
