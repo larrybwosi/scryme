@@ -36,6 +36,7 @@ export default function DeveloperDashboardPage() {
     logout,
     apiKeys,
     oauthClients,
+    webhooks,
     createApiKey,
     toggleApiKey,
     deleteApiKey,
@@ -43,6 +44,8 @@ export default function DeveloperDashboardPage() {
     rotateOAuthSecret,
     toggleOAuthClient,
     deleteOAuthClient,
+    createWebhook,
+    deleteWebhook,
   } = useDeveloperAuth();
 
   const [activeTab, setActiveTab] = useState<"overview" | "apikeys" | "oauth" | "webhooks" | "quickstart">("overview");
@@ -62,6 +65,16 @@ export default function DeveloperDashboardPage() {
   const [isSubmittingOAuth, setIsSubmittingOAuth] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [generatedOAuth, setGeneratedOAuth] = useState<OAuthClientItem | null>(null);
+
+  // Webhook creation modal state
+  const [showWebhookModal, setShowWebhookModal] = useState(false);
+  const [newWebhookUrl, setNewWebhookUrl] = useState("");
+  const [selectedWebhookEvents, setSelectedWebhookEvents] = useState<string[]>([
+    "user.authenticated",
+    "order.created",
+  ]);
+  const [isSubmittingWebhook, setIsSubmittingWebhook] = useState(false);
+  const [webhookError, setWebhookError] = useState<string | null>(null);
 
   // Copy helper state
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -606,27 +619,70 @@ export default function DeveloperDashboardPage() {
         {/* WEBHOOKS TAB */}
         {activeTab === "webhooks" && (
           <div className="p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] space-y-6">
-            <div>
-              <h2 className="text-lg font-bold mb-1" style={{ fontFamily: fonts.display }}>
-                Webhook Endpoint Subscriptions
-              </h2>
-              <p className="text-xs text-[rgba(241,233,216,0.65)]">
-                Receive HTTP POST callbacks whenever authentication or retail events occur in your organization.
-              </p>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-bold mb-1" style={{ fontFamily: fonts.display }}>
+                  Webhook Endpoint Subscriptions
+                </h2>
+                <p className="text-xs text-[rgba(241,233,216,0.65)]">
+                  Receive HTTP POST callbacks whenever authentication or retail events occur in your organization.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setWebhookError(null);
+                  setShowWebhookModal(true);
+                }}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-all"
+              >
+                <Plus size={15} />
+                <span>Register Webhook Endpoint</span>
+              </button>
             </div>
 
-            <div className="p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)] flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Webhook size={18} className="text-[#C89A4B]" />
-                <div>
-                  <div className="text-xs font-bold text-[#F1E9D8]">https://yourapp.com/api/webhooks/scryme</div>
-                  <div className="text-[11px] text-[rgba(241,233,216,0.5)]">Events: user.authenticated, order.created</div>
-                </div>
+            {webhooks.length === 0 ? (
+              <div className="p-8 text-center text-xs text-[rgba(241,233,216,0.5)] bg-[#0B1220] rounded-md border border-[rgba(241,233,216,0.08)]">
+                No webhooks registered yet. Click &quot;Register Webhook Endpoint&quot; above.
               </div>
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                ACTIVE
-              </span>
-            </div>
+            ) : (
+              <div className="space-y-3">
+                {webhooks.map((wh) => (
+                  <div
+                    key={wh.id}
+                    className="p-4 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)] flex items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Webhook size={18} className="text-[#C89A4B] shrink-0" />
+                      <div>
+                        <div className="text-xs font-bold text-[#F1E9D8] font-mono">{wh.url}</div>
+                        <div className="text-[11px] text-[rgba(241,233,216,0.5)] mt-0.5">
+                          Events: {wh.events.join(", ") || "all"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-semibold border ${
+                        wh.isActive
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : "bg-rose-500/10 text-rose-400 border-rose-500/20"
+                      }`}>
+                        {wh.isActive ? "ACTIVE" : "INACTIVE"}
+                      </span>
+
+                      <button
+                        onClick={() => deleteWebhook(wh.id)}
+                        className="p-1.5 rounded text-[rgba(241,233,216,0.4)] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                        title="Delete Webhook"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -770,6 +826,105 @@ code=AUTH_CODE_RECEIVED`}
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* REGISTER WEBHOOK MODAL */}
+      {showWebhookModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-lg p-6 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.15)] shadow-xl">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[rgba(241,233,216,0.1)]">
+              <h3 className="text-sm font-bold text-[#F1E9D8]">Register Webhook Endpoint</h3>
+              <button onClick={() => setShowWebhookModal(false)} className="text-[rgba(241,233,216,0.5)] hover:text-[#F1E9D8]">
+                ✕
+              </button>
+            </div>
+
+            {webhookError && (
+              <div className="mb-4 p-3 rounded-md bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                {webhookError}
+              </div>
+            )}
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!newWebhookUrl.trim()) return;
+                setWebhookError(null);
+                setIsSubmittingWebhook(true);
+                try {
+                  await createWebhook(newWebhookUrl.trim(), selectedWebhookEvents);
+                  setShowWebhookModal(false);
+                  setNewWebhookUrl("");
+                } catch (err: any) {
+                  setWebhookError(err?.message || "Failed to register webhook");
+                } finally {
+                  setIsSubmittingWebhook(false);
+                }
+              }}
+              className="space-y-4 text-xs"
+            >
+              <div>
+                <label className="block font-medium text-[rgba(241,233,216,0.8)] mb-1">Webhook Endpoint URL *</label>
+                <input
+                  type="url"
+                  value={newWebhookUrl}
+                  onChange={(e) => setNewWebhookUrl(e.target.value)}
+                  placeholder="https://yourapp.com/api/webhooks/scryme"
+                  required
+                  className="w-full px-3 py-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.15)] text-[#F1E9D8] font-mono text-xs focus:outline-none focus:border-[#C89A4B]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-medium text-[rgba(241,233,216,0.8)] mb-2">Subscribe to Events</label>
+                <div className="space-y-2">
+                  {[
+                    { id: "user.authenticated", label: "User Authenticated", desc: "Triggered on successful OAuth or SSO login" },
+                    { id: "order.created", label: "Order Created", desc: "Triggered when a new order is placed" },
+                    { id: "inventory.updated", label: "Inventory Updated", desc: "Triggered when stock levels change" },
+                    { id: "customer.registered", label: "Customer Registered", desc: "Triggered when a new customer profile is created" },
+                  ].map((evt) => {
+                    const isChecked = selectedWebhookEvents.includes(evt.id);
+                    return (
+                      <label
+                        key={evt.id}
+                        className="flex items-start gap-2.5 p-2 rounded-md bg-[#0B1220] border border-[rgba(241,233,216,0.08)] cursor-pointer hover:border-[rgba(200,154,75,0.3)] transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedWebhookEvents([...selectedWebhookEvents, evt.id]);
+                            } else {
+                              setSelectedWebhookEvents(selectedWebhookEvents.filter((id) => id !== evt.id));
+                            }
+                          }}
+                          className="mt-0.5 accent-[#C89A4B]"
+                        />
+                        <div>
+                          <div className="font-semibold text-[#F1E9D8] flex items-center gap-2">
+                            <span>{evt.label}</span>
+                            <code className="text-[10px] text-[#C89A4B] font-mono">{evt.id}</code>
+                          </div>
+                          <div className="text-[11px] text-[rgba(241,233,216,0.5)]">{evt.desc}</div>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingWebhook}
+                className="w-full py-2.5 rounded-md font-semibold bg-[#C89A4B] text-[#0B1220] hover:bg-[#d4a859] transition-colors disabled:opacity-50"
+              >
+                {isSubmittingWebhook ? "Registering..." : "Register Webhook"}
+              </button>
+            </form>
           </div>
         </div>
       )}
