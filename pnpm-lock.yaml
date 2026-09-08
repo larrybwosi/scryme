@@ -1188,11 +1188,20 @@ importers:
         specifier: ^6.2.0
         version: 6.2.0(react@19.2.6)
       '@repo/auth':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/auth
+      '@repo/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@repo/env':
         specifier: workspace:*
         version: link:../../packages/env
+      '@repo/notifications':
+        specifier: workspace:*
+        version: link:../../packages/notifications
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@sanity/icons':
         specifier: ^5.1.0
         version: 5.2.1(react@19.2.6)
