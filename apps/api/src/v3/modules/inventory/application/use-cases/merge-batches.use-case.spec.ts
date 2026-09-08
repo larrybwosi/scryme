@@ -17,6 +17,9 @@ describe("MergeBatchesUseCase", () => {
     prisma = {
       client: {
         $transaction: vi.fn((cb) => cb(prisma.client)),
+        inventoryLocation: {
+          findFirst: vi.fn().mockResolvedValue({ id: "loc-target", organizationId: "org-1" }),
+        },
         stockBatch: {
           create: vi.fn().mockResolvedValue({ id: "merged-1" }),
           updateMany: vi.fn().mockResolvedValue({ count: 3 }),
@@ -53,8 +56,33 @@ describe("MergeBatchesUseCase", () => {
     expect(repository.findByIds).toHaveBeenCalledTimes(1);
     expect(repository.findByIds).toHaveBeenCalledWith(batchIds);
 
+    // Verify location check
+    expect(prisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
+      where: { id: "loc-target", organizationId: orgId },
+    });
+
     // Verify optimized writes
     expect(prisma.client.stockBatch.updateMany).toHaveBeenCalledTimes(1);
     expect(prisma.client.stockMovement.createMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("should throw NotFoundException if target location does not belong to organization", async () => {
+    const orgId = "org-1";
+    const batchIds = ["b1", "b2"];
+
+    repository.findByIds.mockResolvedValue(batchIds.map(id => new StockBatchEntity(
+        id, "v1", "BN-"+id, null, "loc-1", 10, 10, 5, null, new Date(), orgId, null, null, null, false, false, new Date(), new Date(), [], undefined, undefined, []
+    )));
+
+    // Location not found / cross-tenant IDOR attempt
+    prisma.client.inventoryLocation.findFirst.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute(orgId, "m1", batchIds, "foreign-loc")
+    ).rejects.toThrow("Target location not found");
+
+    expect(prisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
+      where: { id: "foreign-loc", organizationId: orgId },
+    });
   });
 });

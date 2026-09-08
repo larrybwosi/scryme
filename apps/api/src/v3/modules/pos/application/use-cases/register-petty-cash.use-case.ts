@@ -66,7 +66,7 @@ export class RegisterPettyCashUseCase {
     }
 
     if (!fundId) {
-      let defaultFund = await this.ensureDefaultFund(organizationId, memberId, locationId);
+      const defaultFund = await this.ensureDefaultFund(organizationId, memberId, locationId);
       fundId = defaultFund?.id;
     }
 
