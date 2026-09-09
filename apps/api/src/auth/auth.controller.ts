@@ -1,9 +1,11 @@
 import { Controller, All, Req, Res } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import { FastifyRequest, FastifyReply } from "fastify";
 import { AuthService } from "./auth.service";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 import { db } from "@repo/db";
 
+@SkipThrottle()
 @AllowPublic()
 @Controller("auth")
 export class AuthController {

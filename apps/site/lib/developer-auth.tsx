@@ -236,12 +236,32 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
       });
 
       if (result.error) {
-        return { success: false, error: result.error.message || "Invalid credentials." };
+        const isRateLimit =
+          result.error.status === 429 ||
+          result.error.message?.includes("TOO_MANY_REQUESTS") ||
+          result.error.message?.includes("429") ||
+          result.error.message?.includes("Too many requests");
+        return {
+          success: false,
+          error: isRateLimit
+            ? "Too many login attempts. Please wait a moment and try again."
+            : result.error.message || "Invalid credentials.",
+        };
       }
 
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err?.message || "An authentication error occurred." };
+      const isRateLimit =
+        err?.status === 429 ||
+        err?.message?.includes("TOO_MANY_REQUESTS") ||
+        err?.message?.includes("429") ||
+        err?.message?.includes("Too many requests");
+      return {
+        success: false,
+        error: isRateLimit
+          ? "Too many login attempts. Please wait a moment and try again."
+          : err?.message || "An authentication error occurred.",
+      };
     }
   };
 
