@@ -7,16 +7,7 @@ import {
 } from "better-auth/client/plugins";
 import { ac, ADMIN, CASHIER, DEVELOPER } from "./permissions";
 
-export const {
-  signIn,
-  useSession,
-  signOut,
-  admin,
-  changePassword,
-  organization,
-  requestPasswordReset,
-  resetPassword,
-} = createAuthClient({
+export const authClient: any = createAuthClient({
   baseURL: process.env.BETTER_AUTH_URL,
   plugins: [
     customSessionClient(),
@@ -32,3 +23,16 @@ export const {
     organizationClient(),
   ],
 });
+
+export const {
+  signIn,
+  useSession,
+  signOut,
+  admin,
+  changePassword,
+  organization,
+  resetPassword,
+} = authClient;
+
+export const forgetPassword: any = authClient.forgetPassword;
+export const requestPasswordReset = forgetPassword;
