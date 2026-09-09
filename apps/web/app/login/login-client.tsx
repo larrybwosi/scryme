@@ -224,14 +224,21 @@ function LoginPageContent({
   const handleForgotPassword = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     try {
-      await requestPasswordReset({
+      const { data: result, error } = await authClient.forgetPassword({
         email: data.email,
         redirectTo: "/reset-password",
       });
-      setLoginStatus("reset-email-sent");
-      toast.success("Reset email sent!");
-    } catch (error) {
-      toast.error("Failed to send reset email. Please contact support.");
+
+      if (error) {
+        toast.error(error.message || "Failed to send reset email.");
+      } else {
+        setLoginStatus("reset-email-sent");
+        toast.success("Reset email sent! Check your inbox.");
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.message || "Failed to send reset email. Please contact support.",
+      );
     } finally {
       setIsLoading(false);
     }

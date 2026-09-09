@@ -12,6 +12,11 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
+  // Skip proxy processing for reset password
+  if (pathname === "/reset-password") {
+    return NextResponse.next();
+  }
+
   const session = await auth.api.getSession({
     headers: request.headers,
   });
