@@ -8,7 +8,13 @@ import {
   regenerateV3ClientSecret,
   createWebhookSubscription,
   getWebhookSubscriptions,
+  updateWebhookSubscription,
   deleteWebhookSubscription,
+  getWebhookLogs,
+  createIncomingWebhookEndpoint,
+  getIncomingWebhookEndpoints,
+  deleteIncomingWebhookEndpoint,
+  getIncomingWebhookAuditLogs,
   createV2ApiKey,
   getV2ApiKeys,
   deleteV2ApiKey,
@@ -92,12 +98,66 @@ export async function getWebhookSubscriptionsAction(): Promise<any> {
   return getWebhookSubscriptions(context.organizationId);
 }
 
+export async function updateWebhookSubscriptionAction(
+  id: string,
+  data: Partial<{
+    name: string;
+    url: string;
+    events: string[];
+    isActive: boolean;
+  }>,
+): Promise<any> {
+  const context = await ensureOrgContext();
+  await updateWebhookSubscription(id, context.organizationId, data);
+  revalidatePath("/integrations/apps-api");
+}
+
 export async function deleteWebhookSubscriptionAction(
   id: string,
 ): Promise<any> {
   const context = await ensureOrgContext();
   await deleteWebhookSubscription(id, context.organizationId);
   revalidatePath("/integrations/apps-api");
+}
+
+export async function getWebhookLogsAction(
+  subscriptionId?: string,
+): Promise<any> {
+  const context = await ensureOrgContext();
+  return getWebhookLogs(context.organizationId, subscriptionId);
+}
+
+export async function createIncomingWebhookEndpointAction(data: {
+  name: string;
+  secret?: string;
+  headers?: Record<string, any>;
+  definitionId?: string;
+}): Promise<any> {
+  const context = await ensureOrgContext();
+  const result = await createIncomingWebhookEndpoint({
+    ...data,
+    organizationId: context.organizationId,
+  });
+  revalidatePath("/integrations/apps-api");
+  return result;
+}
+
+export async function getIncomingWebhookEndpointsAction(): Promise<any> {
+  const context = await ensureOrgContext();
+  return getIncomingWebhookEndpoints(context.organizationId);
+}
+
+export async function deleteIncomingWebhookEndpointAction(
+  id: string,
+): Promise<any> {
+  const context = await ensureOrgContext();
+  await deleteIncomingWebhookEndpoint(id, context.organizationId);
+  revalidatePath("/integrations/apps-api");
+}
+
+export async function getIncomingWebhookAuditLogsAction(): Promise<any> {
+  const context = await ensureOrgContext();
+  return getIncomingWebhookAuditLogs(context.organizationId);
 }
 
 // --- V2 API Keys ---

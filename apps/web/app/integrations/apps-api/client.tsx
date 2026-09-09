@@ -19,6 +19,15 @@ import {
   History,
   Settings2,
   Loader2,
+  ArrowDownLeft,
+  ArrowUpRight,
+  Activity,
+  CheckCircle2,
+  XCircle,
+  Play,
+  Eye,
+  ShieldCheck,
+  Radio,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Breadcrumbs } from "../../../components/breadcrumbs";
@@ -36,11 +45,17 @@ import {
   getDeviceSetupTokensAction,
   getV3ApiClientsAction,
   getWebhookSubscriptionsAction,
+  updateWebhookSubscriptionAction,
+  deleteWebhookSubscriptionAction,
+  getWebhookLogsAction,
+  createIncomingWebhookEndpointAction,
+  getIncomingWebhookEndpointsAction,
+  deleteIncomingWebhookEndpointAction,
+  getIncomingWebhookAuditLogsAction,
   createDeviceSetupTokenAction,
   createV3ApiClientAction,
   createWebhookSubscriptionAction,
   deleteV3ApiClientAction,
-  deleteWebhookSubscriptionAction,
   regenerateV3ClientSecretAction,
   updateV3ApiClientAction,
 } from "../../actions/api-management";
@@ -241,6 +256,27 @@ function AppsApiContent() {
     staleTime: 60 * 1000,
   });
 
+  const { data: webhookLogs = [], isLoading: isLoadingWebhookLogs } = useQuery<any[]>({
+    queryKey: ["webhook-logs"],
+    queryFn: () => getWebhookLogsAction(),
+    enabled: activeTab === "webhooks",
+    staleTime: 30 * 1000,
+  });
+
+  const { data: incomingEndpoints = [], isLoading: isLoadingIncomingEndpoints } = useQuery<any[]>({
+    queryKey: ["incoming-endpoints"],
+    queryFn: getIncomingWebhookEndpointsAction,
+    enabled: activeTab === "webhooks",
+    staleTime: 60 * 1000,
+  });
+
+  const { data: incomingAuditLogs = [], isLoading: isLoadingIncomingAuditLogs } = useQuery<any[]>({
+    queryKey: ["incoming-audit-logs"],
+    queryFn: getIncomingWebhookAuditLogsAction,
+    enabled: activeTab === "webhooks",
+    staleTime: 30 * 1000,
+  });
+
   const { data: deviceTokens = [], isLoading: isLoadingDeviceTokens } = useQuery<any[]>({
     queryKey: ["device-tokens"],
     queryFn: getDeviceSetupTokensAction,
@@ -267,12 +303,24 @@ function AppsApiContent() {
   const [v3Result, setV3Result] = useState<any>(null);
   const [editingV3Client, setEditingV3Client] = useState<any>(null);
 
+  // Webhooks Tab Local Mode: "outgoing" or "incoming"
+  const [webhookSubMode, setWebhookSubMode] = useState<"outgoing" | "incoming">("outgoing");
+
   const [showWebhookDialog, setShowWebhookDialog] = useState(false);
+  const [editingWebhook, setEditingWebhook] = useState<any>(null);
   const [newWebhook, setNewWebhook] = useState({
     name: "",
     url: "",
     events: [] as string[],
   });
+
+  const [showIncomingDialog, setShowIncomingDialog] = useState(false);
+  const [newIncomingWebhook, setNewIncomingWebhook] = useState({
+    name: "",
+    secret: "",
+  });
+
+  const [selectedLogPayload, setSelectedLogPayload] = useState<any>(null);
 
   const [showDeviceDialog, setShowDeviceDialog] = useState(false);
   const [newDevice, setNewDevice] = useState({
@@ -334,6 +382,16 @@ function AppsApiContent() {
     onError: () => toast.error("Failed to add webhook subscription"),
   });
 
+  const updateWebhookMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: any }) => updateWebhookSubscriptionAction(id, payload),
+    onSuccess: () => {
+      setEditingWebhook(null);
+      queryClient.invalidateQueries({ queryKey: ["webhooks"] });
+      toast.success("Webhook updated successfully");
+    },
+    onError: () => toast.error("Failed to update webhook"),
+  });
+
   const deleteWebhookMutation = useMutation({
     mutationFn: deleteWebhookSubscriptionAction,
     onSuccess: () => {
@@ -341,6 +399,26 @@ function AppsApiContent() {
       toast.success("Webhook subscription deleted");
     },
     onError: () => toast.error("Failed to delete webhook subscription"),
+  });
+
+  const createIncomingEndpointMutation = useMutation({
+    mutationFn: createIncomingWebhookEndpointAction,
+    onSuccess: () => {
+      setShowIncomingDialog(false);
+      setNewIncomingWebhook({ name: "", secret: "" });
+      queryClient.invalidateQueries({ queryKey: ["incoming-endpoints"] });
+      toast.success("Incoming webhook endpoint created");
+    },
+    onError: () => toast.error("Failed to create incoming webhook endpoint"),
+  });
+
+  const deleteIncomingEndpointMutation = useMutation({
+    mutationFn: deleteIncomingWebhookEndpointAction,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["incoming-endpoints"] });
+      toast.success("Incoming webhook endpoint deleted");
+    },
+    onError: () => toast.error("Failed to delete incoming endpoint"),
   });
 
   const provisionDeviceMutation = useMutation({
@@ -1145,171 +1223,484 @@ function AppsApiContent() {
 
       {activeTab === "webhooks" && (
         <div className="space-y-6">
-          <div className="flex justify-between items-center">
+          {/* Header & Mode Selector Bar */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
             <div className="space-y-1">
-              <h2 className="text-lg font-bold text-foreground tracking-tight">
-                Webhook subscriptions
+              <h2 className="text-lg font-bold text-foreground tracking-tight flex items-center gap-2">
+                <Webhook className="w-5 h-5 text-primary" /> Webhook Engine
               </h2>
               <p className="text-[13px] text-muted-foreground">
-                Receive real-time notifications when events happen in your
-                organization.
+                Configure event-driven HTTP push dispatches (Outgoing) and receiving webhooks (Incoming).
               </p>
             </div>
-            <Dialog
-              open={showWebhookDialog}
-              onOpenChange={setShowWebhookDialog}>
-              <DialogTrigger asChild>
-                <Button className="gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
-                  <Plus size={16} />
-                  Add webhook
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-125 rounded-xl">
-                <DialogHeader>
-                  <DialogTitle className="text-base font-bold tracking-tight">
-                    Add webhook subscription
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-muted-foreground">
-                    Configure a new endpoint to receive real-time notifications.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-3">
-                  <div className="grid gap-1.5">
-                    <Label
-                      htmlFor="webhook-name"
-                      className="text-xs font-semibold">
-                      Friendly name
-                    </Label>
-                    <Input
-                      id="webhook-name"
-                      value={newWebhook.name}
-                      onChange={e =>
-                        setNewWebhook({ ...newWebhook, name: e.target.value })
-                      }
-                      placeholder="My Production Webhook"
-                      className="h-10 text-sm rounded-lg"
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label
-                      htmlFor="webhook-url"
-                      className="text-xs font-semibold">
-                      Payload URL
-                    </Label>
-                    <Input
-                      id="webhook-url"
-                      value={newWebhook.url}
-                      onChange={e =>
-                        setNewWebhook({ ...newWebhook, url: e.target.value })
-                      }
-                      placeholder="https://api.myapp.com/webhooks"
-                      className="h-10 text-sm rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Events to subscribe
-                    </Label>
-                    <div className="grid grid-cols-2 gap-3 p-3 bg-muted rounded-lg border border-border">
-                      {availableEvents.map(ev => (
-                        <div key={ev} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`event-${ev}`}
-                            checked={newWebhook.events.includes(ev)}
-                            onCheckedChange={checked => {
-                              const events = checked
-                                ? [...newWebhook.events, ev]
-                                : newWebhook.events.filter(e => e !== ev);
-                              setNewWebhook({ ...newWebhook, events });
-                            }}
-                          />
-                          <label
-                            htmlFor={`event-${ev}`}
-                            className="text-xs font-semibold text-foreground uppercase cursor-pointer">
-                            {ev.replace(".", " ")}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter className="gap-2 sm:gap-0">
-                  <Button
-                    variant="outline"
-                    className="h-9 text-xs rounded-lg"
-                    onClick={() => setShowWebhookDialog(false)}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => createWebhookMutation.mutate(newWebhook)}
-                    disabled={!newWebhook.url || newWebhook.events.length === 0 || createWebhookMutation.isPending}
-                    className="h-9 text-xs rounded-lg gap-1.5">
-                    {createWebhookMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                    Create subscription
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+
+            <div className="flex items-center gap-2 bg-muted/60 p-1 rounded-lg border border-border">
+              <button
+                type="button"
+                onClick={() => setWebhookSubMode("outgoing")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors",
+                  webhookSubMode === "outgoing"
+                    ? "bg-card text-foreground shadow-sm border border-border"
+                    : "text-muted-foreground hover:text-foreground",
+                )}>
+                <ArrowUpRight className="w-3.5 h-3.5 text-indigo-500" /> Outgoing ({webhooks.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setWebhookSubMode("incoming")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md transition-colors",
+                  webhookSubMode === "incoming"
+                    ? "bg-card text-foreground shadow-sm border border-border"
+                    : "text-muted-foreground hover:text-foreground",
+                )}>
+                <ArrowDownLeft className="w-3.5 h-3.5 text-emerald-500" /> Incoming ({incomingEndpoints.length})
+              </button>
+            </div>
           </div>
 
-          {isLoadingWebhooks ? (
-            <div className="space-y-3">
-              <V3ClientSkeleton />
-              <V3ClientSkeleton />
-            </div>
-          ) : webhooks.length === 0 ? (
-            <div className="bg-card p-14 rounded-xl border border-dashed border-border flex flex-col items-center text-center">
-              <div className="p-3 bg-muted rounded-lg mb-3 border border-border">
-                <Webhook className="w-7 h-7 text-muted-foreground" />
+          {/* MODE: OUTGOING WEBHOOKS */}
+          {webhookSubMode === "outgoing" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                    Outgoing Subscriptions
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Subscribe external endpoints to organization platform events with HMAC-SHA256 signatures.
+                  </p>
+                </div>
+                <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
+                      <Plus size={16} /> Add webhook
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-125 rounded-xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-base font-bold tracking-tight">
+                        Add webhook subscription
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground">
+                        Configure a new endpoint to receive real-time notifications.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-3">
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="webhook-name" className="text-xs font-semibold">
+                          Friendly name
+                        </Label>
+                        <Input
+                          id="webhook-name"
+                          value={newWebhook.name}
+                          onChange={e => setNewWebhook({ ...newWebhook, name: e.target.value })}
+                          placeholder="My Production Webhook"
+                          className="h-10 text-sm rounded-lg"
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="webhook-url" className="text-xs font-semibold">
+                          Payload URL
+                        </Label>
+                        <Input
+                          id="webhook-url"
+                          value={newWebhook.url}
+                          onChange={e => setNewWebhook({ ...newWebhook, url: e.target.value })}
+                          placeholder="https://api.myapp.com/webhooks"
+                          className="h-10 text-sm rounded-lg"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          Events to subscribe
+                        </Label>
+                        <div className="grid grid-cols-2 gap-3 p-3 bg-muted rounded-lg border border-border">
+                          {availableEvents.map(ev => (
+                            <div key={ev} className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`event-${ev}`}
+                                checked={newWebhook.events.includes(ev)}
+                                onCheckedChange={checked => {
+                                  const events = checked
+                                    ? [...newWebhook.events, ev]
+                                    : newWebhook.events.filter(e => e !== ev);
+                                  setNewWebhook({ ...newWebhook, events });
+                                }}
+                              />
+                              <label
+                                htmlFor={`event-${ev}`}
+                                className="text-xs font-semibold text-foreground uppercase cursor-pointer">
+                                {ev.replace(".", " ")}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button
+                        variant="outline"
+                        className="h-9 text-xs rounded-lg"
+                        onClick={() => setShowWebhookDialog(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => createWebhookMutation.mutate(newWebhook)}
+                        disabled={!newWebhook.url || newWebhook.events.length === 0 || createWebhookMutation.isPending}
+                        className="h-9 text-xs rounded-lg gap-1.5">
+                        {createWebhookMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        Create subscription
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
-              <h3 className="text-base font-bold text-foreground mb-1 tracking-tight">
-                No webhooks configured
-              </h3>
-              <p className="text-[13px] text-muted-foreground max-w-sm">
-                Listen to real-time events from the API and trigger external
-                workflows in your own stack.
-              </p>
-            </div>
-          ) : (
-            <div className="grid gap-4">
-              {webhooks.map(wh => (
-                <div
-                  key={wh.id}
-                  className="bg-card p-5 rounded-xl border border-border shadow-sm flex justify-between items-center group hover:border-accent hover:shadow-md transition-all">
-                  <div className="space-y-3">
-                    <div>
-                      <div className="font-bold text-sm text-foreground tracking-tight">
-                        {wh.name || "Untitled webhook"}
+
+              {isLoadingWebhooks ? (
+                <div className="space-y-3">
+                  <V3ClientSkeleton />
+                  <V3ClientSkeleton />
+                </div>
+              ) : webhooks.length === 0 ? (
+                <div className="bg-card p-14 rounded-xl border border-dashed border-border flex flex-col items-center text-center">
+                  <div className="p-3 bg-muted rounded-lg mb-3 border border-border">
+                    <Webhook className="w-7 h-7 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-base font-bold text-foreground mb-1 tracking-tight">
+                    No webhooks configured
+                  </h3>
+                  <p className="text-[13px] text-muted-foreground max-w-sm">
+                    Listen to real-time events from the API and trigger external workflows in your own stack.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {webhooks.map(wh => (
+                    <div
+                      key={wh.id}
+                      className="bg-card p-5 rounded-xl border border-border shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 group hover:border-accent hover:shadow-md transition-all">
+                      <div className="space-y-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-bold text-sm text-foreground tracking-tight">
+                            {wh.name || "Untitled webhook"}
+                          </span>
+                          <Badge
+                            variant={wh.isActive ? "default" : "secondary"}
+                            className={cn(
+                              "text-[10px] font-bold px-2 py-0.2 border-none",
+                              wh.isActive
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                : "bg-muted text-muted-foreground",
+                            )}>
+                            {wh.isActive ? "Active" : "Paused"}
+                          </Badge>
+                        </div>
+
+                        <div className="text-xs text-muted-foreground flex flex-wrap items-center gap-3">
+                          <span className="flex items-center gap-1 font-mono">
+                            <Globe size={13} className="text-muted-foreground" />
+                            <code className="bg-muted px-1.5 py-0.5 rounded border border-border text-foreground">
+                              {wh.url}
+                            </code>
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                          {wh.events.map((e: string) => (
+                            <Badge
+                              key={e}
+                              variant="secondary"
+                              className="bg-muted text-muted-foreground border-none font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
+                              {e}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                        <Globe size={12} className="text-muted-foreground" />
-                        <code className="bg-muted px-1 py-0.2 rounded border border-border font-mono text-xs text-foreground">
-                          {wh.url}
-                        </code>
+
+                      <div className="flex items-center gap-2 self-end md:self-center">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 text-xs gap-1 font-medium"
+                          onClick={() => {
+                            copyToClipboard(wh.secret);
+                            toast.info("Signing secret copied to clipboard");
+                          }}>
+                          <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" /> Copy Secret
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg"
+                          onClick={() => setEditingWebhook(wh)}
+                          title="Edit Webhook">
+                          <Settings2 size={16} />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 rounded-lg"
+                          onClick={() => deleteWebhookMutation.mutate(wh.id)}
+                          title="Delete Webhook">
+                          <Trash2 size={16} />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {wh.events.map((e: string) => (
-                        <Badge
-                          key={e}
-                          variant="secondary"
-                          className="bg-muted text-muted-foreground border-none font-bold text-[9px] uppercase px-2 py-0.5 rounded-md">
-                          {e}
-                        </Badge>
-                      ))}
-                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Delivery Audit Logs */}
+              <div className="pt-6 border-t border-border space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-indigo-500" /> Outgoing Delivery Logs
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Recent HTTP dispatch attempts and response statuses.
+                    </p>
                   </div>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-destructive/60 focus-visible:ring-offset-1 transition-opacity h-8 w-8 rounded-lg"
-                    onClick={() => deleteWebhookMutation.mutate(wh.id)}
-                    aria-label="Delete webhook"
-                    title="Delete webhook">
-                    <Trash2 size={16} />
+                    size="sm"
+                    className="gap-1 text-xs text-muted-foreground"
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ["webhook-logs"] })}>
+                    <RefreshCw className="w-3 h-3" /> Refresh Logs
                   </Button>
                 </div>
-              ))}
+
+                <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
+                  <div className="max-h-64 overflow-y-auto divide-y divide-border">
+                    {isLoadingWebhookLogs ? (
+                      <div className="p-4 text-center text-xs text-muted-foreground">Loading delivery logs...</div>
+                    ) : webhookLogs.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-muted-foreground">No outgoing webhook delivery logs recorded yet.</div>
+                    ) : (
+                      webhookLogs.map((log: any) => (
+                        <div key={log.id} className="p-3 text-xs flex items-center justify-between hover:bg-muted/30 transition-colors">
+                          <div className="flex items-center gap-3">
+                            {log.status === "SUCCESS" ? (
+                              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-destructive shrink-0" />
+                            )}
+                            <div>
+                              <div className="font-semibold text-foreground flex items-center gap-2">
+                                <span>{log.event}</span>
+                                <Badge variant="outline" className="font-mono text-[10px]">
+                                  HTTP {log.responseStatus || "ERR"}
+                                </Badge>
+                              </div>
+                              <div className="text-[11px] text-muted-foreground mt-0.5">
+                                Subscription: {log.subscription?.name || log.subscriptionId} &bull; {new Date(log.createdAt).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-[11px] gap-1"
+                              onClick={() => setSelectedLogPayload(log.payload)}>
+                              <Eye className="w-3 h-3" /> Payload
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MODE: INCOMING WEBHOOKS */}
+          {webhookSubMode === "incoming" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                    Incoming Webhook Endpoints
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Create secure HTTP endpoints to receive incoming webhook callbacks from third-party services.
+                  </p>
+                </div>
+                <Dialog open={showIncomingDialog} onOpenChange={setShowIncomingDialog}>
+                  <DialogTrigger asChild>
+                    <Button className="gap-1.5 h-9 px-4 text-xs font-semibold rounded-lg shadow-sm">
+                      <Plus size={16} /> Create Endpoint
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md rounded-xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-base font-bold tracking-tight">
+                        Create Incoming Webhook Endpoint
+                      </DialogTitle>
+                      <DialogDescription className="text-xs text-muted-foreground">
+                        Generate a dedicated receiver URL to accept incoming webhooks from external systems.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-3">
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="incoming-name" className="text-xs font-semibold">
+                          Endpoint Name
+                        </Label>
+                        <Input
+                          id="incoming-name"
+                          value={newIncomingWebhook.name}
+                          onChange={e => setNewIncomingWebhook({ ...newIncomingWebhook, name: e.target.value })}
+                          placeholder="e.g. Stripe Payment Receiver"
+                          className="h-10 text-sm rounded-lg"
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor="incoming-secret" className="text-xs font-semibold">
+                          Signing Secret (Optional)
+                        </Label>
+                        <Input
+                          id="incoming-secret"
+                          value={newIncomingWebhook.secret}
+                          onChange={e => setNewIncomingWebhook({ ...newIncomingWebhook, secret: e.target.value })}
+                          placeholder="Auto-generated if left blank"
+                          className="h-10 text-sm rounded-lg font-mono"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        onClick={() => createIncomingEndpointMutation.mutate(newIncomingWebhook)}
+                        disabled={!newIncomingWebhook.name || createIncomingEndpointMutation.isPending}
+                        className="w-full text-xs rounded-lg gap-1.5">
+                        {createIncomingEndpointMutation.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        Create Endpoint
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {isLoadingIncomingEndpoints ? (
+                <div className="space-y-3">
+                  <V3ClientSkeleton />
+                </div>
+              ) : incomingEndpoints.length === 0 ? (
+                <div className="bg-card p-14 rounded-xl border border-dashed border-border flex flex-col items-center text-center">
+                  <div className="p-3 bg-muted rounded-lg mb-3 border border-border">
+                    <Radio className="w-7 h-7 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-base font-bold text-foreground mb-1 tracking-tight">
+                    No incoming webhook endpoints
+                  </h3>
+                  <p className="text-[13px] text-muted-foreground max-w-sm">
+                    Create an endpoint to start accepting incoming webhooks from Stripe, Shopify, or custom platforms.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {incomingEndpoints.map(ep => {
+                    const receiverUrl = `https://api.scryme.tech/v3/webhooks/incoming/org/${ep.id}`;
+                    return (
+                      <div
+                        key={ep.id}
+                        className="bg-card p-5 rounded-xl border border-border shadow-sm flex flex-col gap-3 hover:border-accent transition-all">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="font-bold text-sm text-foreground">
+                              {ep.name}
+                            </span>
+                            <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                              Endpoint ID: {ep.id}
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            onClick={() => deleteIncomingEndpointMutation.mutate(ep.id)}>
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        <div className="p-3 bg-muted/60 rounded-lg border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Receiver URL</span>
+                            <code className="font-mono text-[11px] text-foreground break-all">{receiverUrl}</code>
+                          </div>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="h-7 text-xs font-semibold gap-1 shrink-0"
+                            onClick={() => copyToClipboard(receiverUrl)}>
+                            <Copy className="w-3 h-3" /> Copy URL
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Incoming Audit Logs */}
+              <div className="pt-6 border-t border-border space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                      <ArrowDownLeft className="w-4 h-4 text-emerald-500" /> Incoming Received Audit Logs
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Audit trail of incoming HTTP callbacks processed by the receiver.
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 text-xs text-muted-foreground"
+                    onClick={() => queryClient.invalidateQueries({ queryKey: ["incoming-audit-logs"] })}>
+                    <RefreshCw className="w-3 h-3" /> Refresh Audit
+                  </Button>
+                </div>
+
+                <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
+                  <div className="max-h-64 overflow-y-auto divide-y divide-border">
+                    {isLoadingIncomingAuditLogs ? (
+                      <div className="p-4 text-center text-xs text-muted-foreground">Loading audit logs...</div>
+                    ) : incomingAuditLogs.length === 0 ? (
+                      <div className="p-6 text-center text-xs text-muted-foreground">No incoming webhook callbacks received yet.</div>
+                    ) : (
+                      incomingAuditLogs.map((audit: any) => (
+                        <div key={audit.id} className="p-3 text-xs flex items-center justify-between hover:bg-muted/30 transition-colors">
+                          <div>
+                            <div className="font-semibold text-foreground flex items-center gap-2">
+                              <span>Incoming Payload Received</span>
+                              <Badge variant="outline" className="font-mono text-[10px]">
+                                {audit.details?.endpointId || "Endpoint"}
+                              </Badge>
+                            </div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">
+                              {new Date(audit.createdAt).toLocaleString()}
+                            </div>
+                          </div>
+
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-[11px] gap-1"
+                            onClick={() => setSelectedLogPayload(audit.details?.body || audit.details)}>
+                            <Eye className="w-3 h-3" /> Body
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1505,7 +1896,85 @@ const order = await scryme.b2b.createOrder("scryme-hq", {
         </div>
       )}
 
-      {/* --- SHEET --- */}
+      {/* --- PAYLOAD DIALOG --- */}
+      <Dialog open={!!selectedLogPayload} onOpenChange={open => !open && setSelectedLogPayload(null)}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold">Webhook Log Payload</DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Raw JSON payload dispatched or received.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-3 bg-muted rounded-lg font-mono text-xs overflow-x-auto max-h-80 border border-border">
+            <pre>{JSON.stringify(selectedLogPayload, null, 2)}</pre>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="text-xs" onClick={() => setSelectedLogPayload(null)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- EDIT OUTGOING WEBHOOK SHEET --- */}
+      <Sheet open={!!editingWebhook} onOpenChange={open => !open && setEditingWebhook(null)}>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="text-base font-bold">Edit Webhook Subscription</SheetTitle>
+            <SheetDescription className="text-xs text-muted-foreground">
+              Update webhook endpoint URL, friendly name, and events.
+            </SheetDescription>
+          </SheetHeader>
+          {editingWebhook && (
+            <div className="py-4 space-y-4">
+              <div className="grid gap-1.5">
+                <Label className="text-xs font-semibold">Name</Label>
+                <Input
+                  value={editingWebhook.name || ""}
+                  onChange={e => setEditingWebhook({ ...editingWebhook, name: e.target.value })}
+                  className="h-10 text-sm rounded-lg"
+                />
+              </div>
+
+              <div className="grid gap-1.5">
+                <Label className="text-xs font-semibold">Payload URL</Label>
+                <Input
+                  value={editingWebhook.url || ""}
+                  onChange={e => setEditingWebhook({ ...editingWebhook, url: e.target.value })}
+                  className="h-10 text-sm rounded-lg font-mono"
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-muted rounded-xl border border-border">
+                <span className="text-xs font-semibold">Active Status</span>
+                <Switch
+                  checked={editingWebhook.isActive}
+                  onCheckedChange={checked => setEditingWebhook({ ...editingWebhook, isActive: checked })}
+                />
+              </div>
+            </div>
+          )}
+          <SheetFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" className="text-xs" onClick={() => setEditingWebhook(null)}>
+              Cancel
+            </Button>
+            <Button
+              className="text-xs"
+              onClick={() => updateWebhookMutation.mutate({
+                id: editingWebhook.id,
+                payload: {
+                  name: editingWebhook.name,
+                  url: editingWebhook.url,
+                  isActive: editingWebhook.isActive,
+                },
+              })}>
+              Save Changes
+            </Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* --- EDIT V3 CLIENT SHEET --- */}
       <Sheet
         open={!!editingV3Client}
         onOpenChange={open => !open && setEditingV3Client(null)}>

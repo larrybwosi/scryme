@@ -1,5 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { WebhookController } from "../webhook.controller";
+import { WebhookService } from "../../../infrastructure/services/webhook.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
 import { Reflector } from "@nestjs/core";
@@ -20,6 +21,18 @@ describe("WebhookController Security and Metadata", () => {
     },
   };
 
+  const mockWebhookService = {
+    updateSubscription: vi.fn(),
+    dispatchTestPayload: vi.fn(),
+    getLogs: vi.fn(),
+    getLogById: vi.fn(),
+    redeliverLog: vi.fn(),
+    createIncomingEndpoint: vi.fn(),
+    listIncomingEndpoints: vi.fn(),
+    deleteIncomingEndpoint: vi.fn(),
+    handleIncomingPayload: vi.fn(),
+  };
+
   const mockRedis = {
     get: vi.fn(),
     setex: vi.fn(),
@@ -30,6 +43,7 @@ describe("WebhookController Security and Metadata", () => {
       controllers: [WebhookController],
       providers: [
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: WebhookService, useValue: mockWebhookService },
         { provide: RedisService, useValue: mockRedis },
         Reflector,
       ],
