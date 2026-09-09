@@ -36,10 +36,27 @@ export default function DeveloperLoginPage() {
       if (res.success) {
         router.push("/developer/dashboard");
       } else {
-        setError(res.error || "Invalid developer credentials.");
+        const isRateLimit =
+          res.error?.includes("TOO_MANY_REQUESTS") ||
+          res.error?.includes("429") ||
+          res.error?.includes("Too many requests");
+        setError(
+          isRateLimit
+            ? "Too many login attempts. Please wait a moment and try again."
+            : res.error || "Invalid developer credentials."
+        );
       }
     } catch (err: any) {
-      setError(err?.message || "Failed to log into developer account.");
+      const isRateLimit =
+        err?.status === 429 ||
+        err?.message?.includes("TOO_MANY_REQUESTS") ||
+        err?.message?.includes("429") ||
+        err?.message?.includes("Too many requests");
+      setError(
+        isRateLimit
+          ? "Too many login attempts. Please wait a moment and try again."
+          : err?.message || "Failed to log into developer account."
+      );
     } finally {
       setIsSubmitting(false);
     }

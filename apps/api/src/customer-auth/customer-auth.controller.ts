@@ -1,7 +1,9 @@
 import { Controller, All, Req, Res, Get } from "@nestjs/common";
+import { SkipThrottle } from "@nestjs/throttler";
 import { CustomerAuthService } from "./customer-auth.service";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 
+@SkipThrottle()
 @AllowPublic()
 @Controller("customer-auth")
 export class CustomerAuthController {
