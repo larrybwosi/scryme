@@ -133,7 +133,7 @@ export async function createWebhookSubscription(data: {
   organizationId: string;
   apiClientId?: string;
 }) {
-  const secret = crypto.randomBytes(32).toString("hex");
+  const secret = "whsec_" + crypto.randomBytes(24).toString("hex");
 
   return db.webhookSubscription.create({
     data: {
@@ -151,12 +151,106 @@ export async function getWebhookSubscriptions(organizationId: string) {
   });
 }
 
+export async function updateWebhookSubscription(
+  id: string,
+  organizationId: string,
+  data: Partial<{
+    name: string;
+    url: string;
+    events: string[];
+    isActive: boolean;
+  }>,
+) {
+  return db.webhookSubscription.updateMany({
+    where: { id, organizationId },
+    data,
+  });
+}
+
 export async function deleteWebhookSubscription(
   id: string,
   organizationId: string,
 ): Promise<Prisma.BatchPayload> {
   return db.webhookSubscription.deleteMany({
     where: { id, organizationId },
+  });
+}
+
+export async function getWebhookLogs(
+  organizationId: string,
+  subscriptionId?: string,
+) {
+  return db.webhookLog.findMany({
+    where: {
+      subscription: {
+        organizationId,
+        ...(subscriptionId ? { id: subscriptionId } : {}),
+      },
+    },
+    include: {
+      subscription: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
+}
+
+// --- Incoming Webhook Endpoint Actions ---
+
+export async function createIncomingWebhookEndpoint(data: {
+  name: string;
+  organizationId: string;
+  secret?: string;
+  headers?: Record<string, any>;
+  definitionId?: string;
+}) {
+  const secret =
+    data.secret || "whsec_in_" + crypto.randomBytes(24).toString("hex");
+
+  return db.workflowEngineWebhook.create({
+    data: {
+      organizationId: data.organizationId,
+      definitionId: data.definitionId,
+      name: data.name,
+      direction: "INCOMING",
+      endpointUrl: secret,
+      secret,
+      headers: data.headers || {},
+    },
+  });
+}
+
+export async function getIncomingWebhookEndpoints(organizationId: string) {
+  return db.workflowEngineWebhook.findMany({
+    where: {
+      organizationId,
+      direction: "INCOMING",
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+export async function deleteIncomingWebhookEndpoint(
+  id: string,
+  organizationId: string,
+) {
+  return db.workflowEngineWebhook.deleteMany({
+    where: {
+      id,
+      organizationId,
+      direction: "INCOMING",
+    },
+  });
+}
+
+export async function getIncomingWebhookAuditLogs(organizationId: string) {
+  return db.workflowEngineAuditLog.findMany({
+    where: {
+      organizationId,
+      action: "INCOMING_WEBHOOK_RECEIVED",
+    },
+    orderBy: { createdAt: "desc" },
+    take: 50,
   });
 }
 
