@@ -1,5 +1,11 @@
 # mcp
 
+## 2.1.0-next.0
+
+### Minor Changes
+
+- 5905d54: Update
+
 ## 2.0.0
 
 ### Major Changes
