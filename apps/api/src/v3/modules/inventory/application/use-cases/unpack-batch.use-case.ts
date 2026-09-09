@@ -42,6 +42,26 @@ export class UnpackBatchUseCase {
         throw new NotFoundException("Bulk stock batch not found.");
       }
 
+      // SECURITY (Sentinel): Validate targetOrgUnitId to prevent cross-tenant IDOR/BOLA unit association.
+      if (dto.targetOrgUnitId) {
+        const validOrgUnit = await tx.organizationUnit.findFirst({
+          where: { id: dto.targetOrgUnitId, organizationId },
+        });
+        if (!validOrgUnit) {
+          throw new BadRequestException("Invalid target organization unit.");
+        }
+      }
+
+      // SECURITY (Sentinel): Validate targetSystemUnitId existence and active status.
+      if (dto.targetSystemUnitId) {
+        const validSystemUnit = await tx.systemUnit.findFirst({
+          where: { id: dto.targetSystemUnitId, isActive: true },
+        });
+        if (!validSystemUnit) {
+          throw new BadRequestException("Invalid target system unit.");
+        }
+      }
+
       if (
         new Decimal(bulkBatch.currentQuantity.toString()).lessThan(
           dto.quantityToUnpack,
