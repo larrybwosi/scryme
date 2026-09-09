@@ -51,6 +51,12 @@ describe("UnpackBatchUseCase", () => {
       productVariantStock: {
         update: vi.fn(),
       },
+      organizationUnit: {
+        findFirst: vi.fn(),
+      },
+      systemUnit: {
+        findFirst: vi.fn(),
+      },
     };
     prisma = {
       client: {
@@ -86,6 +92,7 @@ describe("UnpackBatchUseCase", () => {
   it("should unpack a batch successfully", async () => {
     mockTx.stockBatch.findFirst.mockResolvedValue(mockBulkBatch);
     mockTx.stockBatch.create.mockResolvedValue({ id: "base-batch-1" });
+    mockTx.systemUnit.findFirst.mockResolvedValue({ id: "piece-unit-id", isActive: true });
 
     const dto: UnpackBatchDto = {
       batchId: "batch-1",
@@ -217,5 +224,41 @@ describe("UnpackBatchUseCase", () => {
         unitsPerPackage: 10,
       }),
     ).rejects.toThrow(BadRequestException);
+  });
+
+  it("should throw BadRequestException if targetOrgUnitId does not belong to organization", async () => {
+    mockTx.stockBatch.findFirst.mockResolvedValue(mockBulkBatch);
+    mockTx.organizationUnit.findFirst.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute("org-1", "member-1", {
+        batchId: "batch-1",
+        quantityToUnpack: 1,
+        unitsPerPackage: 10,
+        targetOrgUnitId: "invalid-org-unit-id",
+      }),
+    ).rejects.toThrow(new BadRequestException("Invalid target organization unit."));
+
+    expect(mockTx.organizationUnit.findFirst).toHaveBeenCalledWith({
+      where: { id: "invalid-org-unit-id", organizationId: "org-1" },
+    });
+  });
+
+  it("should throw BadRequestException if targetSystemUnitId is invalid or inactive", async () => {
+    mockTx.stockBatch.findFirst.mockResolvedValue(mockBulkBatch);
+    mockTx.systemUnit.findFirst.mockResolvedValue(null);
+
+    await expect(
+      useCase.execute("org-1", "member-1", {
+        batchId: "batch-1",
+        quantityToUnpack: 1,
+        unitsPerPackage: 10,
+        targetSystemUnitId: "invalid-system-unit-id",
+      }),
+    ).rejects.toThrow(new BadRequestException("Invalid target system unit."));
+
+    expect(mockTx.systemUnit.findFirst).toHaveBeenCalledWith({
+      where: { id: "invalid-system-unit-id", isActive: true },
+    });
   });
 });
