@@ -3,7 +3,7 @@ import { passkeyClient } from "@better-auth/passkey/client";
 
 const isDev = process.env.NODE_ENV === "development";
 const defaultAppUrl = isDev
-  ? "http://localhost:3000"
+  ? "http://localhost:3005"
   : "https://scryme.tech";
 
 export const authClient: any = createAuthClient({
