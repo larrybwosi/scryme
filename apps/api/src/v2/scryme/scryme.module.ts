@@ -4,9 +4,10 @@ import { ScrymeController } from "./scryme.controller";
 import { ScrymeApprovalService } from "./scryme-approval.service";
 import { ScrymeNotificationService } from "./scryme-notification.service";
 import { PrismaModule } from "../../prisma/prisma.module";
+import { ServicesModule } from "../../v3/modules/services/services.module";
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ServicesModule],
   providers: [ScrymeService, ScrymeApprovalService, ScrymeNotificationService],
   controllers: [ScrymeController],
   exports: [ScrymeService, ScrymeApprovalService, ScrymeNotificationService],

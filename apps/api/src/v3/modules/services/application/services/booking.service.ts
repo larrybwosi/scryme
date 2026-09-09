@@ -1,13 +1,14 @@
-import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import { Injectable, BadRequestException, ConflictException, NotFoundException, Optional } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CreateBookingDto, CompleteBookingDto } from "../dto/service.dto";
-import { BookingStatus, MovementType, PricingModel, TransactionType, TransactionChannel, PaymentStatus, DepositType, TransactionStatus } from "@repo/db";
+import { BookingAssignmentStatus, BookingEventSource, BookingStatus, MovementType, PricingModel, TransactionType, TransactionChannel, PaymentStatus, DepositType, TransactionStatus } from "@repo/db";
 import { notificationEngine } from "@repo/notifications";
 import { InventoryMovementService } from "@/v3/modules/inventory/application/services/inventory-movement.service";
 import { StaffSchedulingService } from "./staff-scheduling.service";
 import { CalComService } from "./calcom.service";
 import { Prisma } from "@repo/db";
 import { rrulestr } from "rrule";
+import { SchedulingQueueService } from "../../infrastructure/jobs/scheduling-queue.service";
 
 @Injectable()
 export class BookingService {
@@ -16,6 +17,7 @@ export class BookingService {
     private readonly inventoryMovementService: InventoryMovementService,
     private readonly staffSchedulingService: StaffSchedulingService,
     private readonly calComService: CalComService,
+    @Optional() private readonly schedulingQueue?: SchedulingQueueService,
   ) {}
 
   /**
@@ -27,7 +29,11 @@ export class BookingService {
    * @param dto - Booking creation payload including service ID, scheduled start time, staff, and resources.
    * @returns The created ServiceBooking record.
    */
-  async createBooking(orgId: string, dto: CreateBookingDto & { customerContact?: string }) {
+  async createBooking(
+    orgId: string,
+    dto: CreateBookingDto & { customerContact?: string },
+    requireAssignment = false,
+  ) {
     const contact = dto.customerContact?.trim();
     const isEmail = contact?.includes("@");
 
@@ -35,6 +41,10 @@ export class BookingService {
     const [service, existingCustomer, customerValid, locationValid, staffCount, resourceCount, defaultLocation] = await Promise.all([
       this.prisma.client.service.findFirst({
         where: { id: dto.serviceId, organizationId: orgId },
+        include: {
+          staff: { select: { memberId: true } },
+          resources: { select: { resourceId: true } },
+        },
       }),
       !dto.customerId && contact
         ? this.prisma.client.customer.findFirst({
@@ -126,15 +136,61 @@ export class BookingService {
       throw new BadRequestException("End time must be after start time");
     }
 
+    if ((!dto.staffIds || dto.staffIds.length === 0) && service.staff?.length) {
+      for (const candidate of service.staff) {
+        const availability = await this.staffSchedulingService.checkStaffAvailability(
+          candidate.memberId,
+          startTime,
+          endTime,
+          { organizationId: orgId, locationId: dto.locationId },
+        );
+        if (availability.available) {
+          dto.staffIds = [candidate.memberId];
+          break;
+        }
+      }
+    }
+    if (requireAssignment && !dto.staffIds?.length) {
+      throw new ConflictException("No qualified staff member is available for this booking");
+    }
+
+    if ((!dto.resourceIds || dto.resourceIds.length === 0) && service.resources?.length) {
+      for (const candidate of service.resources) {
+        const conflict = await this.prisma.client.serviceBooking.findFirst({
+          where: {
+            organizationId: orgId,
+            status: { in: [BookingStatus.REQUESTED, BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+            scheduledStartTime: { lt: totalEndTime },
+            scheduledEndTime: { gt: totalStartTime },
+            resources: { some: { resourceId: candidate.resourceId } },
+          },
+          select: { id: true },
+        });
+        if (!conflict) {
+          dto.resourceIds = [candidate.resourceId];
+          break;
+        }
+      }
+      if (!dto.resourceIds?.length) {
+        throw new ConflictException("No required service resource is available");
+      }
+    }
+
     // Concurrently validate staff schedules, Cal.com availability, and booking overlaps
     if (dto.staffIds && dto.staffIds.length > 0) {
       await Promise.all(
         dto.staffIds.map(async (staffId) => {
           const [isAvailable, calAvailability, overlap] = await Promise.all([
-            this.staffSchedulingService.isStaffAvailable(staffId, startTime, endTime),
+            typeof this.staffSchedulingService.checkStaffAvailability === "function"
+              ? this.staffSchedulingService.checkStaffAvailability(staffId, startTime, endTime, {
+                  organizationId: orgId,
+                  locationId: dto.locationId,
+                }).then(result => result.available)
+              : this.staffSchedulingService.isStaffAvailable(staffId, startTime, endTime),
             this.calComService.fetchAvailabilityFromCal(staffId, startTime),
             this.prisma.client.serviceBooking.findFirst({
               where: {
+                organizationId: orgId,
                 staff: { some: { memberId: staffId } },
                 status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
                 OR: [
@@ -168,6 +224,7 @@ export class BookingService {
         dto.resourceIds.map(async (resourceId) => {
           const overlap = await this.prisma.client.serviceBooking.findFirst({
             where: {
+              organizationId: orgId,
               resources: { some: { resourceId: resourceId } },
               status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
               OR: [
@@ -209,6 +266,14 @@ export class BookingService {
         resources: dto.resourceIds ? {
           create: dto.resourceIds.map(id => ({ resourceId: id }))
         } : undefined,
+        events: {
+          create: {
+            organizationId: orgId,
+            source: BookingEventSource.ADMIN,
+            type: "BOOKING_CREATED",
+            toStatus: BookingStatus.SCHEDULED,
+          },
+        },
       },
     });
 
@@ -337,6 +402,7 @@ export class BookingService {
       }
     }
 
+    await this.schedulingQueue?.scheduleBooking(orgId, booking.id);
     return booking;
   }
 
@@ -515,9 +581,33 @@ export class BookingService {
    * @param orgId - Unique tenant organization identifier.
    * @returns Array of ServiceBooking objects with populated service, customer, staff, and resource details.
    */
-  async getBookings(orgId: string) {
+  async getBookings(
+    orgId: string,
+    filters: {
+      from?: Date;
+      to?: Date;
+      memberId?: string;
+      locationId?: string;
+      status?: BookingStatus[];
+      limit?: number;
+      cursor?: string;
+    } = {},
+  ) {
+    if (filters.from && filters.to && filters.to <= filters.from) {
+      throw new BadRequestException("Invalid booking date range");
+    }
     return this.prisma.client.serviceBooking.findMany({
-      where: { organizationId: orgId },
+      where: {
+        organizationId: orgId,
+        ...(filters.from ? { scheduledEndTime: { gt: filters.from } } : {}),
+        ...(filters.to ? { scheduledStartTime: { lt: filters.to } } : {}),
+        ...(filters.memberId ? { staff: { some: { memberId: filters.memberId } } } : {}),
+        ...(filters.locationId ? { locationId: filters.locationId } : {}),
+        ...(filters.status?.length ? { status: { in: filters.status } } : {}),
+      },
+      ...(filters.cursor ? { cursor: { id: filters.cursor }, skip: 1 } : {}),
+      take: Math.min(filters.limit || 100, 250),
+      orderBy: [{ scheduledStartTime: "asc" }, { id: "asc" }],
       select: {
         id: true,
         locationId: true,
@@ -652,17 +742,185 @@ export class BookingService {
    * @param status - Target BookingStatus enum value.
    * @returns The updated ServiceBooking record.
    */
-  async updateBookingStatus(orgId: string, id: string, status: BookingStatus) {
+  async updateBookingStatus(
+    orgId: string,
+    id: string,
+    status: BookingStatus,
+    revision?: number,
+    actorMemberId?: string,
+    source: BookingEventSource = BookingEventSource.ADMIN,
+    reason?: string,
+  ) {
     const booking = await this.prisma.client.serviceBooking.findFirst({
-      where: { id, organizationId: orgId }
+      where: { id, organizationId: orgId },
     });
-
     if (!booking) throw new NotFoundException("Booking not found");
+    if (revision !== undefined && booking.revision !== revision) {
+      throw new ConflictException("Booking changed; refresh before trying again");
+    }
 
-    return this.prisma.client.serviceBooking.update({
-      where: { id },
-      data: { status }
+    const transitions: Record<BookingStatus, BookingStatus[]> = {
+      REQUESTED: [BookingStatus.SCHEDULED, BookingStatus.CANCELLED],
+      SCHEDULED: [BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED, BookingStatus.NOSHOW],
+      IN_PROGRESS: [BookingStatus.COMPLETED, BookingStatus.CANCELLED],
+      COMPLETED: [],
+      CANCELLED: [],
+      NOSHOW: [],
+    };
+    if (!transitions[booking.status].includes(status)) {
+      throw new BadRequestException(
+        `Cannot transition booking from ${booking.status} to ${status}`,
+      );
+    }
+
+    const update = await this.prisma.client.serviceBooking.updateMany({
+      where: { id, organizationId: orgId, revision: booking.revision },
+      data: {
+        status,
+        revision: { increment: 1 },
+        ...(status === BookingStatus.IN_PROGRESS ? { actualStartTime: new Date() } : {}),
+      },
     });
+    if (!update.count) throw new ConflictException("Booking was updated concurrently");
+
+    await this.prisma.client.bookingEvent.create({
+      data: {
+        organizationId: orgId,
+        bookingId: id,
+        source,
+        type: `STATUS_${status}`,
+        actorMemberId,
+        fromStatus: booking.status,
+        toStatus: status,
+        metadata: reason ? { reason } : undefined,
+      },
+    });
+    return this.getBookingById(orgId, id);
+  }
+
+  async respondToAssignment(
+    orgId: string,
+    bookingId: string,
+    memberId: string,
+    response: BookingAssignmentStatus,
+    revision: number,
+    reason?: string,
+    source: BookingEventSource = BookingEventSource.ADMIN,
+  ) {
+    if (response !== BookingAssignmentStatus.ACCEPTED && response !== BookingAssignmentStatus.DECLINED) {
+      throw new BadRequestException("Assignment response must be ACCEPTED or DECLINED");
+    }
+    const booking = await this.prisma.client.serviceBooking.findFirst({
+      where: { id: bookingId, organizationId: orgId },
+      select: { id: true, revision: true, status: true },
+    });
+    if (!booking) throw new NotFoundException("Booking not found");
+    if (booking.revision !== revision) throw new ConflictException("Stale assignment action");
+
+    const assignment = await this.prisma.client.bookingStaff.findFirst({
+      where: { bookingId, memberId, booking: { organizationId: orgId } },
+    });
+    if (!assignment) throw new NotFoundException("Booking assignment not found");
+    if (assignment.status === response) return this.getBookingById(orgId, bookingId);
+
+    await this.prisma.client.$transaction([
+      this.prisma.client.bookingStaff.update({
+        where: { id: assignment.id },
+        data: { status: response, respondedAt: new Date(), responseReason: reason },
+      }),
+      this.prisma.client.bookingEvent.create({
+        data: {
+          organizationId: orgId,
+          bookingId,
+          source,
+          actorMemberId: memberId,
+          type: `ASSIGNMENT_${response}`,
+          metadata: reason ? { reason } : undefined,
+        },
+      }),
+    ]);
+    return this.getBookingById(orgId, bookingId);
+  }
+
+  async rescheduleBooking(
+    orgId: string,
+    bookingId: string,
+    data: {
+      scheduledStartTime: Date;
+      scheduledEndTime?: Date;
+      staffIds?: string[];
+      resourceIds?: string[];
+      revision: number;
+    },
+    actorMemberId?: string,
+  ) {
+    const booking = await this.prisma.client.serviceBooking.findFirst({
+      where: { id: bookingId, organizationId: orgId },
+      include: { service: true, staff: true, resources: true },
+    });
+    if (!booking) throw new NotFoundException("Booking not found");
+    if (booking.revision !== data.revision) throw new ConflictException("Booking changed; refresh first");
+    if (booking.status === BookingStatus.COMPLETED || booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException("A closed booking cannot be rescheduled");
+    }
+
+    const endTime = data.scheduledEndTime || new Date(
+      data.scheduledStartTime.getTime() +
+      (booking.service.estimatedDuration || 30) * 60_000,
+    );
+    const staffIds = data.staffIds || booking.staff.map(item => item.memberId);
+    for (const memberId of staffIds) {
+      const result = await this.staffSchedulingService.checkStaffAvailability(
+        memberId,
+        data.scheduledStartTime,
+        endTime,
+        { organizationId: orgId, locationId: booking.locationId || undefined, excludeBookingId: bookingId },
+      );
+      if (!result.available) {
+        throw new ConflictException(`Staff ${memberId} unavailable: ${result.reasons.join(", ")}`);
+      }
+    }
+
+    const resourceIds = data.resourceIds || booking.resources.map(item => item.resourceId);
+    const resourceConflict = await this.prisma.client.serviceBooking.findFirst({
+      where: {
+        id: { not: bookingId },
+        organizationId: orgId,
+        status: { in: [BookingStatus.REQUESTED, BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+        scheduledStartTime: { lt: endTime },
+        scheduledEndTime: { gt: data.scheduledStartTime },
+        resources: { some: { resourceId: { in: resourceIds } } },
+      },
+    });
+    if (resourceConflict) throw new ConflictException("A selected resource is already booked");
+
+    await this.prisma.client.$transaction(async tx => {
+      const updated = await tx.serviceBooking.updateMany({
+        where: { id: bookingId, organizationId: orgId, revision: data.revision },
+        data: {
+          scheduledStartTime: data.scheduledStartTime,
+          scheduledEndTime: endTime,
+          revision: { increment: 1 },
+        },
+      });
+      if (!updated.count) throw new ConflictException("Booking was updated concurrently");
+      await tx.bookingStaff.deleteMany({ where: { bookingId } });
+      await tx.bookingResource.deleteMany({ where: { bookingId } });
+      if (staffIds.length) await tx.bookingStaff.createMany({ data: staffIds.map(memberId => ({ bookingId, memberId })) });
+      if (resourceIds.length) await tx.bookingResource.createMany({ data: resourceIds.map(resourceId => ({ bookingId, resourceId })) });
+      await tx.bookingEvent.create({
+        data: {
+          organizationId: orgId,
+          bookingId,
+          source: BookingEventSource.ADMIN,
+          actorMemberId,
+          type: "BOOKING_RESCHEDULED",
+          metadata: { previousStart: booking.scheduledStartTime, newStart: data.scheduledStartTime },
+        },
+      });
+    });
+    await this.schedulingQueue?.scheduleBooking(orgId, bookingId);
+    return this.getBookingById(orgId, bookingId);
   }
 
   /**

@@ -1,32 +1,23 @@
-import { createClient } from "next-sanity";
 import type { Metadata } from "next";
+import { client } from "@/sanity/lib/client";
+import { sanityFetch } from "@/sanity/lib/live";
 import { urlFor } from "@/sanity/lib/image";
+import { projectId, dataset } from "@/sanity/env";
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
-const apiVersion = "2023-05-03";
+export { client };
 
 // Determine if we should use the actual Sanity Client or Fallback
 const PROJECT_ID_PLACEHOLDER = ["NEXT_PUBLIC_SANITY_PROJECT_ID", "PLACEHOLDER"].join("_");
 const DATASET_PLACEHOLDER = ["NEXT_PUBLIC_SANITY_DATASET", "PLACEHOLDER"].join("_");
 
-const isConfigured =
-  projectId &&
-  dataset &&
+export const isConfigured =
+  Boolean(projectId) &&
+  Boolean(dataset) &&
   projectId !== "your-project-id" &&
   dataset !== "production-mock-stub" &&
   projectId !== "your-sanity-project-id" &&
   projectId !== PROJECT_ID_PLACEHOLDER &&
   dataset !== DATASET_PLACEHOLDER;
-
-export const client = isConfigured
-  ? createClient({
-      projectId,
-      dataset,
-      apiVersion,
-      useCdn: true, // Enable edge cache for blazingly fast loads
-    })
-  : null;
 
 export interface Author {
   name: string;
@@ -303,7 +294,7 @@ export const FALLBACK_POSTS: Post[] = [
 ];
 
 export async function getPosts(): Promise<Post[]> {
-  if (!client) {
+  if (!isConfigured) {
     return FALLBACK_POSTS;
   }
 
@@ -322,7 +313,8 @@ export async function getPosts(): Promise<Post[]> {
       },
       body
     }`;
-    const posts = await client.fetch<Post[]>(query);
+    const { data } = await sanityFetch({ query });
+    const posts = data as Post[];
     if (!posts || posts.length === 0) {
       return FALLBACK_POSTS;
     }
@@ -334,7 +326,7 @@ export async function getPosts(): Promise<Post[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {
-  if (!client) {
+  if (!isConfigured) {
     return FALLBACK_POSTS.find((p) => p.slug.current === slug) || null;
   }
 
@@ -353,7 +345,8 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
       },
       body
     }`;
-    const post = await client.fetch<Post | null>(query, { slug });
+    const { data } = await sanityFetch({ query, params: { slug } });
+    const post = data as Post | null;
     if (!post) {
       return FALLBACK_POSTS.find((p) => p.slug.current === slug) || null;
     }
@@ -988,11 +981,12 @@ export const DEFAULT_PRICING_CONTENT: PricingPageContent = {
 
 // Site content GROQ Fetchers
 export async function getHomePageContent(): Promise<HomePageContent> {
-  if (!client) {
+  if (!isConfigured) {
     return DEFAULT_HOME_CONTENT;
   }
   try {
-    const data = await client.fetch<HomePageContent | null>(`*[_type == "homePage"][0] {
+    const { data } = await sanityFetch({
+      query: `*[_type == "homePage"][0] {
       sections,
       heroTitle,
       heroSubtitle,
@@ -1024,35 +1018,36 @@ export async function getHomePageContent(): Promise<HomePageContent> {
       posTeaserSubtitle,
       posTeaserImage,
       seo
-    }`);
-    if (!data) return DEFAULT_HOME_CONTENT;
+    }`});
+    const content = data as HomePageContent | null;
+    if (!content) return DEFAULT_HOME_CONTENT;
     return {
-      sections: data.sections,
-      heroTitle: data.heroTitle || DEFAULT_HOME_CONTENT.heroTitle,
-      heroSubtitle: data.heroSubtitle || DEFAULT_HOME_CONTENT.heroSubtitle,
-      heroImage: data.heroImage || DEFAULT_HOME_CONTENT.heroImage,
-      heroVideo: data.heroVideo?.url ? data.heroVideo : undefined,
-      reconciledToday: data.reconciledToday ?? DEFAULT_HOME_CONTENT.reconciledToday,
-      brands: data.brands && data.brands.length > 0 ? data.brands : DEFAULT_HOME_CONTENT.brands,
-      modules: data.modules && data.modules.length > 0 ? data.modules : DEFAULT_HOME_CONTENT.modules,
-      stats: data.stats && data.stats.length > 0 ? data.stats : DEFAULT_HOME_CONTENT.stats,
-      testimonials: data.testimonials && data.testimonials.length > 0 ? data.testimonials : DEFAULT_HOME_CONTENT.testimonials,
-      storefrontTitle: data.storefrontTitle || DEFAULT_HOME_CONTENT.storefrontTitle,
-      storefrontSubtitle: data.storefrontSubtitle || DEFAULT_HOME_CONTENT.storefrontSubtitle,
-      storefrontImage: data.storefrontImage || DEFAULT_HOME_CONTENT.storefrontImage,
-      multiBranchTitle: data.multiBranchTitle || DEFAULT_HOME_CONTENT.multiBranchTitle,
-      multiBranchSubtitle: data.multiBranchSubtitle || DEFAULT_HOME_CONTENT.multiBranchSubtitle,
-      multiBranchImage: data.multiBranchImage || DEFAULT_HOME_CONTENT.multiBranchImage,
-      cmsTitle: data.cmsTitle || DEFAULT_HOME_CONTENT.cmsTitle,
-      cmsSubtitle: data.cmsSubtitle || DEFAULT_HOME_CONTENT.cmsSubtitle,
-      cmsImage: data.cmsImage || DEFAULT_HOME_CONTENT.cmsImage,
-      crmTeaserTitle: data.crmTeaserTitle || DEFAULT_HOME_CONTENT.crmTeaserTitle,
-      crmTeaserSubtitle: data.crmTeaserSubtitle || DEFAULT_HOME_CONTENT.crmTeaserSubtitle,
-      crmTeaserImage: data.crmTeaserImage || DEFAULT_HOME_CONTENT.crmTeaserImage,
-      posTeaserTitle: data.posTeaserTitle || DEFAULT_HOME_CONTENT.posTeaserTitle,
-      posTeaserSubtitle: data.posTeaserSubtitle || DEFAULT_HOME_CONTENT.posTeaserSubtitle,
-      posTeaserImage: data.posTeaserImage || DEFAULT_HOME_CONTENT.posTeaserImage,
-      seo: data.seo,
+      sections: content.sections,
+      heroTitle: content.heroTitle || DEFAULT_HOME_CONTENT.heroTitle,
+      heroSubtitle: content.heroSubtitle || DEFAULT_HOME_CONTENT.heroSubtitle,
+      heroImage: content.heroImage || DEFAULT_HOME_CONTENT.heroImage,
+      heroVideo: content.heroVideo?.url ? content.heroVideo : undefined,
+      reconciledToday: content.reconciledToday ?? DEFAULT_HOME_CONTENT.reconciledToday,
+      brands: content.brands && content.brands.length > 0 ? content.brands : DEFAULT_HOME_CONTENT.brands,
+      modules: content.modules && content.modules.length > 0 ? content.modules : DEFAULT_HOME_CONTENT.modules,
+      stats: content.stats && content.stats.length > 0 ? content.stats : DEFAULT_HOME_CONTENT.stats,
+      testimonials: content.testimonials && content.testimonials.length > 0 ? content.testimonials : DEFAULT_HOME_CONTENT.testimonials,
+      storefrontTitle: content.storefrontTitle || DEFAULT_HOME_CONTENT.storefrontTitle,
+      storefrontSubtitle: content.storefrontSubtitle || DEFAULT_HOME_CONTENT.storefrontSubtitle,
+      storefrontImage: content.storefrontImage || DEFAULT_HOME_CONTENT.storefrontImage,
+      multiBranchTitle: content.multiBranchTitle || DEFAULT_HOME_CONTENT.multiBranchTitle,
+      multiBranchSubtitle: content.multiBranchSubtitle || DEFAULT_HOME_CONTENT.multiBranchSubtitle,
+      multiBranchImage: content.multiBranchImage || DEFAULT_HOME_CONTENT.multiBranchImage,
+      cmsTitle: content.cmsTitle || DEFAULT_HOME_CONTENT.cmsTitle,
+      cmsSubtitle: content.cmsSubtitle || DEFAULT_HOME_CONTENT.cmsSubtitle,
+      cmsImage: content.cmsImage || DEFAULT_HOME_CONTENT.cmsImage,
+      crmTeaserTitle: content.crmTeaserTitle || DEFAULT_HOME_CONTENT.crmTeaserTitle,
+      crmTeaserSubtitle: content.crmTeaserSubtitle || DEFAULT_HOME_CONTENT.crmTeaserSubtitle,
+      crmTeaserImage: content.crmTeaserImage || DEFAULT_HOME_CONTENT.crmTeaserImage,
+      posTeaserTitle: content.posTeaserTitle || DEFAULT_HOME_CONTENT.posTeaserTitle,
+      posTeaserSubtitle: content.posTeaserSubtitle || DEFAULT_HOME_CONTENT.posTeaserSubtitle,
+      posTeaserImage: content.posTeaserImage || DEFAULT_HOME_CONTENT.posTeaserImage,
+      seo: content.seo,
     };
   } catch (error) {
     console.warn("Sanity fetch error for homePage, falling back to default:", error);
@@ -1061,11 +1056,12 @@ export async function getHomePageContent(): Promise<HomePageContent> {
 }
 
 export async function getAboutPageContent(): Promise<AboutPageContent> {
-  if (!client) {
+  if (!isConfigured) {
     return DEFAULT_ABOUT_CONTENT;
   }
   try {
-    const data = await client.fetch<AboutPageContent | null>(`*[_type == "aboutPage"][0] {
+    const { data } = await sanityFetch({
+      query: `*[_type == "aboutPage"][0] {
       heroTitle,
       heroSubtitle,
       stats,
@@ -1076,19 +1072,20 @@ export async function getAboutPageContent(): Promise<AboutPageContent> {
       values,
       team,
       seo
-    }`);
-    if (!data) return DEFAULT_ABOUT_CONTENT;
+    }`});
+    const content = data as AboutPageContent | null;
+    if (!content) return DEFAULT_ABOUT_CONTENT;
     return {
-      heroTitle: data.heroTitle || DEFAULT_ABOUT_CONTENT.heroTitle,
-      heroSubtitle: data.heroSubtitle || DEFAULT_ABOUT_CONTENT.heroSubtitle,
-      stats: data.stats && data.stats.length > 0 ? data.stats : DEFAULT_ABOUT_CONTENT.stats,
-      missionTitle: data.missionTitle || DEFAULT_ABOUT_CONTENT.missionTitle,
-      missionText: data.missionText && data.missionText.length > 0 ? data.missionText : DEFAULT_ABOUT_CONTENT.missionText,
-      missionImage: data.missionImage || DEFAULT_ABOUT_CONTENT.missionImage,
-      timeline: data.timeline && data.timeline.length > 0 ? data.timeline : DEFAULT_ABOUT_CONTENT.timeline,
-      values: data.values && data.values.length > 0 ? data.values : DEFAULT_ABOUT_CONTENT.values,
-      team: data.team && data.team.length > 0 ? data.team : DEFAULT_ABOUT_CONTENT.team,
-      seo: data.seo,
+      heroTitle: content.heroTitle || DEFAULT_ABOUT_CONTENT.heroTitle,
+      heroSubtitle: content.heroSubtitle || DEFAULT_ABOUT_CONTENT.heroSubtitle,
+      stats: content.stats && content.stats.length > 0 ? content.stats : DEFAULT_ABOUT_CONTENT.stats,
+      missionTitle: content.missionTitle || DEFAULT_ABOUT_CONTENT.missionTitle,
+      missionText: content.missionText && content.missionText.length > 0 ? content.missionText : DEFAULT_ABOUT_CONTENT.missionText,
+      missionImage: content.missionImage || DEFAULT_ABOUT_CONTENT.missionImage,
+      timeline: content.timeline && content.timeline.length > 0 ? content.timeline : DEFAULT_ABOUT_CONTENT.timeline,
+      values: content.values && content.values.length > 0 ? content.values : DEFAULT_ABOUT_CONTENT.values,
+      team: content.team && content.team.length > 0 ? content.team : DEFAULT_ABOUT_CONTENT.team,
+      seo: content.seo,
     };
   } catch (error) {
     console.warn("Sanity fetch error for aboutPage, falling back to default:", error);
@@ -1097,26 +1094,28 @@ export async function getAboutPageContent(): Promise<AboutPageContent> {
 }
 
 export async function getPricingPageContent(): Promise<PricingPageContent> {
-  if (!client) {
+  if (!isConfigured) {
     return DEFAULT_PRICING_CONTENT;
   }
   try {
-    const data = await client.fetch<PricingPageContent | null>(`*[_type == "pricingPage"][0] {
+    const { data } = await sanityFetch({
+      query: `*[_type == "pricingPage"][0] {
       heroTitle,
       heroSubtitle,
       plans,
       comparisonRows,
       faqItems,
       seo
-    }`);
-    if (!data) return DEFAULT_PRICING_CONTENT;
+    }`});
+    const content = data as PricingPageContent | null;
+    if (!content) return DEFAULT_PRICING_CONTENT;
     return {
-      heroTitle: data.heroTitle || DEFAULT_PRICING_CONTENT.heroTitle,
-      heroSubtitle: data.heroSubtitle || DEFAULT_PRICING_CONTENT.heroSubtitle,
-      plans: data.plans && data.plans.length > 0 ? data.plans : DEFAULT_PRICING_CONTENT.plans,
-      comparisonRows: data.comparisonRows && data.comparisonRows.length > 0 ? data.comparisonRows : DEFAULT_PRICING_CONTENT.comparisonRows,
-      faqItems: data.faqItems && data.faqItems.length > 0 ? data.faqItems : DEFAULT_PRICING_CONTENT.faqItems,
-      seo: data.seo,
+      heroTitle: content.heroTitle || DEFAULT_PRICING_CONTENT.heroTitle,
+      heroSubtitle: content.heroSubtitle || DEFAULT_PRICING_CONTENT.heroSubtitle,
+      plans: content.plans && content.plans.length > 0 ? content.plans : DEFAULT_PRICING_CONTENT.plans,
+      comparisonRows: content.comparisonRows && content.comparisonRows.length > 0 ? content.comparisonRows : DEFAULT_PRICING_CONTENT.comparisonRows,
+      faqItems: content.faqItems && content.faqItems.length > 0 ? content.faqItems : DEFAULT_PRICING_CONTENT.faqItems,
+      seo: content.seo,
     };
   } catch (error) {
     console.warn("Sanity fetch error for pricingPage, falling back to default:", error);
@@ -1125,17 +1124,18 @@ export async function getPricingPageContent(): Promise<PricingPageContent> {
 }
 
 export async function getSiteSettings(): Promise<SiteSettings | null> {
-  if (!client) {
+  if (!isConfigured) {
     return null;
   }
   try {
-    const data = await client.fetch<SiteSettings | null>(`*[_type == "siteSettings"][0] {
+    const { data } = await sanityFetch({
+      query: `*[_type == "siteSettings"][0] {
       siteTitle,
       siteDescription,
       siteKeywords,
       defaultOgImage
-    }`);
-    return data;
+    }`});
+    return data as SiteSettings | null;
   } catch (error) {
     console.warn("Sanity fetch error for siteSettings:", error);
     return null;
@@ -1154,13 +1154,30 @@ export interface CmsPage {
 }
 
 export async function getCmsPage(slug: string): Promise<CmsPage | null> {
-  if (!client) return null;
-  return client.fetch<CmsPage | null>(`*[_type in ["page", "productPage"] && slug.current == $slug][0]{_id, _updatedAt, title, slug, pageType, summary, sections, seo}`, {slug}, {next: {revalidate: 60, tags: [`page:${slug}`]}});
+  if (!isConfigured) return null;
+  try {
+    const { data } = await sanityFetch({
+      query: `*[_type in ["page", "productPage"] && slug.current == $slug][0]{_id, _updatedAt, title, slug, pageType, summary, sections, seo}`,
+      params: { slug },
+    });
+    return data as CmsPage | null;
+  } catch (error) {
+    console.warn(`Sanity fetch error for CmsPage "${slug}":`, error);
+    return null;
+  }
 }
 
 export async function getCmsRoutes(): Promise<Array<{slug: string; updatedAt: string; noIndex?: boolean}>> {
-  if (!client) return [];
-  return client.fetch(`*[_type in ["page", "productPage"] && defined(slug.current)]{ "slug": slug.current, "updatedAt": _updatedAt, "noIndex": seo.noIndex }`, {}, {next: {revalidate: 300, tags: ['cms-routes']}});
+  if (!isConfigured) return [];
+  try {
+    const { data } = await sanityFetch({
+      query: `*[_type in ["page", "productPage"] && defined(slug.current)]{ "slug": slug.current, "updatedAt": _updatedAt, "noIndex": seo.noIndex }`,
+    });
+    return (data as Array<{slug: string; updatedAt: string; noIndex?: boolean}>) || [];
+  } catch (error) {
+    console.warn("Sanity fetch error for CmsRoutes:", error);
+    return [];
+  }
 }
 
 export async function getPageMetadata(params: {

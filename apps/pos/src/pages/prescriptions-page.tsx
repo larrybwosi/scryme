@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { usePosStore } from '@/store/store';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { usePrinter } from '@/hooks/use-printer';
+import { trackPosEvent } from '@/lib/openpanel';
 import {
   FileText,
   Search,
@@ -110,6 +111,7 @@ export function PrescriptionsPage() {
   const dispensedCount = useMemo(() => prescriptions.filter(r => r.status === 'dispensed').length, [prescriptions]);
 
   const handleVerifyRx = (rxId: string) => {
+    const rxToVerify = prescriptions.find(r => r.id === rxId);
     setPrescriptions(prev =>
       prev.map(rx =>
         rx.id === rxId
@@ -122,6 +124,9 @@ export function PrescriptionsPage() {
           : rx
       )
     );
+    if (rxToVerify) {
+      trackPosEvent('pos_prescription_verified', { rxNumber: rxToVerify.rxNumber, medication: rxToVerify.medicationName });
+    }
     toast.success('Prescription verified by Pharmacist');
   };
 
@@ -151,6 +156,7 @@ export function PrescriptionsPage() {
 
     setPrescriptions(prev => [newRecord, ...prev]);
     setIsLogRxOpen(false);
+    trackPosEvent('pos_prescription_logged', { rxNumber: newRxNumber, medication: newMedicationName });
     toast.success(`Prescription ${newRxNumber} logged successfully`);
 
     // Reset form

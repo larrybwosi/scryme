@@ -2,15 +2,21 @@ import type { Metadata } from "next";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Documentation — Scryme Scale System",
-  description:
-    "Read our comprehensive documentation covering workspace configuration, offline database sync, storefront website generation, multi-branch operations, and stock setups.",
-  alternates: {
-    canonical: "/docs",
-  },
-};
+export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getCmsPage("docs");
+  return getPageMetadata({
+    pageSeo: page?.seo,
+    fallbackTitle: "Documentation — Scryme Scale System",
+    fallbackDescription:
+      "Read our comprehensive documentation covering workspace configuration, offline database sync, storefront website generation, multi-branch operations, and stock setups.",
+    canonicalPath: "/docs",
+  });
+}
 
 const docSections = [
   {
@@ -54,7 +60,16 @@ const docSections = [
   },
 ];
 
-export default function DocsPage() {
+export default async function DocsPage() {
+  const cmsPage = await getCmsPage("docs");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   return (
     <main
       style={{ background: colors.inkBg }}

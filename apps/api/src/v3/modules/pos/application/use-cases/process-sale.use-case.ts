@@ -4,12 +4,14 @@ import {
   UnauthorizedException,
   Inject,
   forwardRef,
+  Optional,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { LoyaltyService } from "../../../loyalty/application/loyalty.service";
 import { VoucherStatus } from "@repo/db";
 import { InvoiceUseCase } from "../../../finance/application/use-cases/invoice.use-case";
 import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
+import { OpenPanelService } from "@/common/openpanel/openpanel.service";
 
 @Injectable()
 export class ProcessSaleUseCase {
@@ -19,6 +21,7 @@ export class ProcessSaleUseCase {
     @Inject(forwardRef(() => InvoiceUseCase))
     private readonly invoiceUseCase: InvoiceUseCase,
     private readonly inventoryMovementService: InventoryMovementService,
+    @Optional() private readonly openPanelService?: OpenPanelService,
   ) {}
 
   async execute(ctx: any, dto: any) {
@@ -157,6 +160,14 @@ export class ProcessSaleUseCase {
         return { transaction: t, total, customerId: cId };
       },
     );
+
+    this.openPanelService?.trackEvent("pos.sale.completed", mId, {
+      organizationId: orgId,
+      locationId: locId,
+      total,
+      transactionNumber: transaction.number,
+      itemsCount: productItems.length + (dto.serviceItems?.length || 0),
+    });
 
     const complianceData = await this.handlePostSale(
       orgId,

@@ -70,7 +70,7 @@ export default function CheckinPage() {
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [scanSuccess, setScanSuccess] = useState<boolean>(false);
-  
+
   // --- Version State ---
   const [appVersion, setAppVersion] = useState<string>('');
 
@@ -130,8 +130,8 @@ export default function CheckinPage() {
       if (document.activeElement === passwordInputRef.current) return;
 
       const now = Date.now();
-      
-      // Scanners type very fast (usually <50ms between keys). 
+
+      // Scanners type very fast (usually <50ms between keys).
       // If gap is large (>100ms), it's likely a manual human typing or a new scan starting.
       if (now - lastKeyTime.current > 100) {
         scannerBuffer.current = '';
@@ -153,10 +153,10 @@ export default function CheckinPage() {
       // We exclude control keys (Shift, Alt, etc) by checking key length
       if (e.key.length === 1) {
         scannerBuffer.current += e.key;
-        
-        // UX Polish: If the user clicked away and focus is lost, 
+
+        // UX Polish: If the user clicked away and focus is lost,
         // using a scanner shouldn't feel broken.
-        // However, if the user IS focused on the Card Input, 
+        // However, if the user IS focused on the Card Input,
         // `handleCardIdChange` will also fire.
         // We sync them up by forcing the input to update if it's not focused.
         if (document.activeElement !== cardInputRef.current) {
@@ -192,19 +192,19 @@ export default function CheckinPage() {
     setIsScanning(true);
     setError('');
     setScanSuccess(false);
-    
+
     // Set focus to card input so keyboard scanners work immediately
     cardInputRef.current?.focus();
-    
+
     setTimeout(() => {
         if (!scanSuccess) setIsScanning(false);
-    }, 10000); 
+    }, 10000);
   };
 
   const handleCardIdChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setCardId(e.target.value);
     // Keep buffer in sync if user is typing manually
-    scannerBuffer.current = e.target.value; 
+    scannerBuffer.current = e.target.value;
     setError('');
   };
 
@@ -289,7 +289,7 @@ export default function CheckinPage() {
 
   // --- Confirmation Dialog Logic ---
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
-  
+
   const handleResetRequest = () => {
       setResetDialogOpen(true);
   };
@@ -355,7 +355,7 @@ export default function CheckinPage() {
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-slate-500">© {new Date().getFullYear()} Skryme LLC. All rights reserved.</div>
+        <div className="relative z-10 text-xs text-slate-500">© {new Date().getFullYear()} Scryme LLC. All rights reserved.</div>
       </div>
 
       {/* --- RIGHT SIDE: Login Form --- */}
@@ -365,7 +365,7 @@ export default function CheckinPage() {
         </div>
 
         <Card className="w-full max-w-md bg-white/70 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 shadow-2xl relative z-20 backdrop-blur-sm">
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -538,7 +538,7 @@ export default function CheckinPage() {
           </CardFooter>
         </Card>
       </div>
-      
+
       {/* Alert Dialog for Reset */}
       {/* Using a custom modal if AlertDialog is not available, but assuming similar UI structure or basic modal */}
        {resetDialogOpen && (

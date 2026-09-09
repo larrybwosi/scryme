@@ -111,9 +111,6 @@ export class CreateOrderUseCase {
     if (hasServices) {
       let extraSubtotal = new Prisma.Decimal(0);
       let extraTaxTotal = new Prisma.Decimal(0);
-
-      // ⚡ Bolt Optimization: Batch pre-fetch all requested services with their tax rates
-      // to eliminate the N+1 query bottleneck inside the loop.
       const serviceIds = Array.from(
         new Set(dto.services!.map(s => s.serviceId)),
       );
@@ -133,10 +130,6 @@ export class CreateOrderUseCase {
 
       // Map-based lookup for O(1) constant-time resolution.
       const serviceMap = new Map(services.map(s => [s.id, s]));
-
-      // ⚡ Bolt Optimization: Parallelize service booking creations.
-      // Launching scheduling for multiple booking service inputs concurrently via Promise.all.
-      // This collapses sequential blocking Cal.com/availability IO requests from O(N) to O(1).
       const bookingPromises = dto.services!.map(async (srvInput) => {
         const service = serviceMap.get(srvInput.serviceId);
         if (!service) {
@@ -209,8 +202,6 @@ export class CreateOrderUseCase {
         );
       }
 
-      // ⚡ Bolt Optimization: Batch write service items and service booking links.
-      // Executes all transactional creation and update operations in parallel, dropping round-trip latency to O(1).
       await Promise.all([...serviceItemCreates, ...serviceBookingUpdates]);
 
       // Update Transaction totals
@@ -243,11 +234,6 @@ export class CreateOrderUseCase {
         },
       });
     }
-
-    // 4. Trigger downstream notification events concurrently
-    // ⚡ Bolt Optimization: Parallelize independent post-order event dispatches
-    // (realtime update, webhook dispatch, Windmill event trigger, and Scryme notification).
-    // Collapses 4 sequential asynchronous network/messaging roundtrips down to a flat O(1) concurrent latency profile.
     await Promise.all([
       this.realtimeService
         .publish(`order:${transaction.id}`, "order.created", transaction)

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ScrymeService } from "../scryme.service";
 import { PrismaService } from "../../../prisma/prisma.service";
 import { ScrymeApprovalService } from "../scryme-approval.service";
+import { BookingService } from "../../../v3/modules/services/application/services/booking.service";
 import { createHmac } from "crypto";
 import { BadRequestException } from "@nestjs/common";
 import { Test, TestingModule } from "@nestjs/testing";
@@ -47,12 +48,19 @@ describe("ScrymeService", () => {
     notifyRequester: vi.fn(),
   };
 
+  const mockBookingService = {
+    respondToAssignment: vi.fn(),
+    updateBookingStatus: vi.fn(),
+    completeBooking: vi.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ScrymeService,
         { provide: PrismaService, useValue: mockPrisma },
         { provide: ScrymeApprovalService, useValue: mockScrymeApprovalService },
+        { provide: BookingService, useValue: mockBookingService },
       ],
     }).compile();
 

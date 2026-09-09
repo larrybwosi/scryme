@@ -6,7 +6,9 @@ import {
   addEdge,
   Background,
   Controls,
+  Handle,
   MiniMap,
+  Position,
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
@@ -43,6 +45,8 @@ import {
   Mail,
   MessageSquare,
   MoreHorizontal,
+  PanelLeftClose,
+  PanelLeftOpen,
   Play,
   Plus,
   RefreshCw,
@@ -254,14 +258,26 @@ function Icon({ name }: { name: string }) {
 function WorkflowNode({ data, selected }: NodeProps<StudioNode>) {
   const conditionCount = data.conditions?.rules?.length || 0;
   const hasConfig = data.config && Object.keys(data.config).length > 0;
+  const isLogic = data.kind === "logic";
+  const isTrigger = data.kind === "trigger";
 
   return (
     <div
       className={cn(
-        "w-64 rounded-xl border bg-card/95 shadow-xl transition-all backdrop-blur",
+        "relative w-64 rounded-xl border bg-card/95 shadow-xl transition-all backdrop-blur",
         selected ? "border-primary ring-2 ring-primary/30" : "border-border/80 hover:border-border"
       )}
     >
+      {/* Target Input Handle (Left) */}
+      {!isTrigger && (
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="input"
+          className="!size-3.5 !border-2 !border-background !bg-primary transition-all hover:!scale-125 hover:!bg-primary/80"
+        />
+      )}
+
       <div className={cn("flex items-center gap-3 border-b px-3.5 py-3 rounded-t-xl", `node-accent-${data.color}`)}>
         <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background/90 text-foreground shadow-sm">
           <Icon name={data.icon} />
@@ -279,7 +295,7 @@ function WorkflowNode({ data, selected }: NodeProps<StudioNode>) {
         {data.description || "Step configured in studio."}
       </div>
 
-      {data.kind === "logic" && conditionCount > 0 && (
+      {isLogic && conditionCount > 0 && (
         <div className="mx-3 mb-2 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1.5 text-[11px] text-emerald-600 dark:text-emerald-400">
           <div className="flex items-center gap-1.5 font-medium">
             <GitBranch size={12} />
@@ -293,7 +309,7 @@ function WorkflowNode({ data, selected }: NodeProps<StudioNode>) {
         </div>
       )}
 
-      {data.config && Object.keys(data.config).length > 0 && data.kind !== "logic" && (
+      {data.config && Object.keys(data.config).length > 0 && !isLogic && (
         <div className="mx-3 mb-2 space-y-1 rounded-md border border-muted bg-muted/30 px-2.5 py-1.5 text-[10px]">
           {Object.entries(data.config).slice(0, 2).map(([key, val]) => (
             <div key={key} className="flex justify-between gap-2 truncate">
@@ -315,6 +331,39 @@ function WorkflowNode({ data, selected }: NodeProps<StudioNode>) {
           <span className="size-1.5 rounded-full bg-emerald-500" />
         )}
       </div>
+
+      {/* Output Handles (Right) */}
+      {isLogic ? (
+        <>
+          <div className="absolute -right-3 top-1/3 flex items-center gap-1">
+            <span className="text-[9px] font-bold text-emerald-500 pointer-events-none select-none pr-1">TRUE</span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id="true"
+              style={{ top: "35%" }}
+              className="!size-3.5 !border-2 !border-background !bg-emerald-500 transition-all hover:!scale-125"
+            />
+          </div>
+          <div className="absolute -right-3 top-2/3 flex items-center gap-1">
+            <span className="text-[9px] font-bold text-rose-500 pointer-events-none select-none pr-1">FALSE</span>
+            <Handle
+              type="source"
+              position={Position.Right}
+              id="false"
+              style={{ top: "65%" }}
+              className="!size-3.5 !border-2 !border-background !bg-rose-500 transition-all hover:!scale-125"
+            />
+          </div>
+        </>
+      ) : (
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="output"
+          className="!size-3.5 !border-2 !border-background !bg-primary transition-all hover:!scale-125 hover:!bg-primary/80"
+        />
+      )}
     </div>
   );
 }
@@ -366,10 +415,18 @@ export default function WorkflowsPage() {
   const [search, setSearch] = useState("");
   const [paletteSearch, setPaletteSearch] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isProvisioning, setIsProvisioning] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("action");
   const [testMode, setTestMode] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+
+  // New Enterprise Workflow Dialog state
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isCreatingWorkflow, setIsCreatingWorkflow] = useState(false);
+  const [newWorkflowName, setNewWorkflowName] = useState("");
+  const [newWorkflowDescription, setNewWorkflowDescription] = useState("");
+  const [newWorkflowTriggerType, setNewWorkflowTriggerType] = useState("EVENT");
+  const [newWorkflowKey, setNewWorkflowKey] = useState("");
 
   // Customization state for Workflow Schema Provisioning
   const [workflowSettings, setWorkflowSettings] = useState<Record<string, any>>({});
@@ -413,7 +470,18 @@ export default function WorkflowsPage() {
     setSelectedPath(path);
   };
 
-  const onConnect = (connection: Connection) => setEdges((items) => addEdge({ ...connection, animated: true }, items));
+  const onConnect = (connection: Connection) =>
+    setEdges((items) =>
+      addEdge(
+        {
+          ...connection,
+          type: "smoothstep",
+          animated: true,
+          style: { strokeWidth: 2, stroke: "#6366f1" },
+        },
+        items
+      )
+    );
 
   const addNode = (item: (typeof palette)[number]) => {
     const id = `${item.kind}-${Date.now()}`;
@@ -468,6 +536,45 @@ export default function WorkflowsPage() {
       toast.error("Failed to save workflow");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleCreateWorkflow = async () => {
+    if (!newWorkflowName.trim()) {
+      toast.error("Please provide a workflow name");
+      return;
+    }
+    const resolvedKey = (newWorkflowKey.trim() || newWorkflowName.toLowerCase().replace(/[^a-z0-9_]/g, "_")).replace(/^f\/dealio\//, "");
+
+    setIsCreatingWorkflow(true);
+    try {
+      const response = await fetch("/api/workflows/definitions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: resolvedKey,
+          name: newWorkflowName.trim(),
+          description: newWorkflowDescription.trim(),
+          triggerType: newWorkflowTriggerType,
+          config: { studio: { nodes: [], edges: [] } },
+        }),
+      });
+
+      if (!response.ok) throw new Error("Failed to create workflow");
+
+      toast.success(`Workflow '${newWorkflowName}' created successfully!`);
+      setIsCreateDialogOpen(false);
+      setNewWorkflowName("");
+      setNewWorkflowDescription("");
+      setNewWorkflowKey("");
+      setNewWorkflowTriggerType("EVENT");
+
+      await mutate();
+      setSelectedPath(resolvedKey);
+    } catch {
+      toast.error("Unable to create new workflow definition");
+    } finally {
+      setIsCreatingWorkflow(false);
     }
   };
 
@@ -565,7 +672,17 @@ export default function WorkflowsPage() {
       <main className="workflow-studio flex h-[calc(100vh-4rem)] min-h-[680px] flex-col overflow-hidden bg-background text-foreground">
         {/* Top Navigation Bar */}
         <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card/80 px-5 backdrop-blur z-10">
-          <div className="flex min-w-0 items-center gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 text-muted-foreground hover:text-foreground"
+              onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+              title={isSidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            </Button>
+            <Separator orientation="vertical" className="h-4" />
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Zap className="text-primary fill-primary/20" size={18} />
               <span className="font-semibold text-foreground">Automations</span>
@@ -598,6 +715,77 @@ export default function WorkflowsPage() {
               </div>
             </div>
 
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5 text-xs font-medium">
+                  <Plus size={14} /> New Workflow
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2 text-base">
+                    <Sparkles className="text-primary" size={18} /> Create Enterprise Workflow
+                  </DialogTitle>
+                  <DialogDescription className="text-xs">
+                    Design custom event-driven or scheduled automations for your workspace.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Workflow Name</Label>
+                    <Input
+                      value={newWorkflowName}
+                      onChange={(e) => setNewWorkflowName(e.target.value)}
+                      placeholder="e.g. High Value Order Approval"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Description</Label>
+                    <Textarea
+                      value={newWorkflowDescription}
+                      onChange={(e) => setNewWorkflowDescription(e.target.value)}
+                      placeholder="Describe the trigger and actions of this automation..."
+                      className="min-h-16 text-xs"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Trigger Mode</Label>
+                      <Select value={newWorkflowTriggerType} onValueChange={setNewWorkflowTriggerType}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="EVENT" className="text-xs">System Event</SelectItem>
+                          <SelectItem value="SCHEDULED" className="text-xs">Scheduled Cron</SelectItem>
+                          <SelectItem value="WEBHOOK" className="text-xs">Incoming Webhook</SelectItem>
+                          <SelectItem value="MANUAL" className="text-xs">Manual Execution</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">Workflow Identifier Key</Label>
+                      <Input
+                        value={newWorkflowKey}
+                        onChange={(e) => setNewWorkflowKey(e.target.value)}
+                        placeholder="e.g. order_approval"
+                        className="h-8 text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" size="sm" onClick={() => setIsCreateDialogOpen(false)} className="text-xs">
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleCreateWorkflow} disabled={isCreatingWorkflow} className="text-xs font-semibold">
+                    {isCreatingWorkflow ? "Creating..." : "Create Workflow"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
             <Button variant="ghost" size="sm" onClick={() => setActiveTab("history")} className="gap-1.5 text-xs">
               <History size={14} /> Execution History
             </Button>
@@ -613,106 +801,162 @@ export default function WorkflowsPage() {
         {/* Studio Body */}
         <div className="flex min-h-0 flex-1">
           {/* Left Sidebar: Workflow Selector & Palette */}
-          <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-card/60 backdrop-blur-sm">
-            <div className="border-b p-3.5 space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Workflows</p>
-                  <p className="text-xs text-muted-foreground">{workflows.length} available automations</p>
-                </div>
+          <aside
+            className={cn(
+              "flex shrink-0 flex-col border-r border-border bg-card/60 backdrop-blur-sm transition-all duration-300",
+              isSidebarCollapsed ? "w-16" : "w-80"
+            )}
+          >
+            {isSidebarCollapsed ? (
+              /* Collapsed Compact View */
+              <div className="flex h-full flex-col items-center py-3 gap-4">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 text-xs gap-1"
-                  onClick={() => {
-                    setInspectorTab("provisioning");
-                    toast.info("Select a workflow or customize provisioning options in the inspector");
-                  }}
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 rounded-lg hover:bg-accent"
+                  onClick={() => setIsSidebarCollapsed(false)}
+                  title="Expand Sidebar"
                 >
-                  <SlidersHorizontal size={12} /> Provision
+                  <PanelLeftOpen size={18} />
                 </Button>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={13} />
-                <Input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search workflows..."
-                  className="h-8 pl-8 text-xs"
-                />
-              </div>
-            </div>
-
-            {/* Workflow List */}
-            <div className="max-h-48 overflow-y-auto border-b p-2">
-              {isLoading ? (
-                <div className="p-4 text-center text-xs text-muted-foreground">Loading workflows...</div>
-              ) : (
-                filteredWorkflows.map((workflow) => {
-                  const isSelected = workflow.path === selectedWorkflow?.path;
-                  return (
+                <Separator className="w-8" />
+                <div className="flex flex-col items-center gap-2 overflow-y-auto w-full px-2">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground rotate-90 my-2">Workflows</p>
+                  {workflows.slice(0, 5).map((w) => (
                     <button
-                      key={workflow.path}
-                      onClick={() => selectWorkflow(workflow.path)}
+                      key={w.path}
+                      onClick={() => selectWorkflow(w.path)}
+                      title={w.name}
                       className={cn(
-                        "mb-1 flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all",
-                        isSelected ? "bg-primary/10 text-primary font-medium ring-1 ring-primary/30" : "hover:bg-accent text-foreground"
+                        "flex size-9 items-center justify-center rounded-lg transition-all",
+                        w.path === selectedWorkflow?.path
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
                       )}
                     >
-                      <span className={cn("mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md", isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
-                        <Zap size={14} />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1.5">
-                          <span className="truncate text-xs font-semibold">{workflow.name}</span>
-                          {workflow.isProvisioned && <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />}
-                        </span>
-                        <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">{workflow.description}</span>
-                      </span>
+                      <Zap size={16} />
                     </button>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Component Palette Header */}
-            <div className="border-b px-3.5 py-2.5 bg-muted/20">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Add Steps & Palette</p>
-                <Badge variant="secondary" className="text-[10px]">{palette.length} elements</Badge>
+                  ))}
+                </div>
+                <Separator className="w-8 mt-auto" />
+                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground rotate-90 my-2">Palette</p>
+                <div className="flex flex-col items-center gap-2 pb-3">
+                  {palette.slice(0, 6).map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => addNode(item)}
+                      title={`Add ${item.label}`}
+                      className="flex size-9 items-center justify-center rounded-lg border border-border/60 bg-card text-foreground hover:border-primary hover:bg-accent shadow-xs"
+                    >
+                      <Icon name={item.icon} />
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="relative mt-2">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={13} />
-                <Input
-                  value={paletteSearch}
-                  onChange={(e) => setPaletteSearch(e.target.value)}
-                  placeholder="Filter palette..."
-                  className="h-7 pl-8 text-xs bg-background"
-                />
-              </div>
-            </div>
-
-            {/* Palette Grid */}
-            <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
-              {filteredPalette.map((item) => (
-                <div
-                  key={item.label}
-                  onClick={() => addNode(item)}
-                  className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-card p-2.5 text-left transition-all hover:border-primary/50 hover:bg-accent/80 hover:shadow-sm"
-                >
-                  <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg text-foreground border border-border/40 shadow-xs", `node-accent-${item.color}`)}>
-                    <Icon name={item.icon} />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary">{item.label}</p>
-                      <Plus size={12} className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+            ) : (
+              /* Expanded Full Sidebar */
+              <>
+                <div className="border-b p-3.5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Workflows</p>
+                      <p className="text-xs text-muted-foreground">{workflows.length} available automations</p>
                     </div>
-                    <p className="truncate text-[10px] text-muted-foreground">{item.description}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => {
+                        setInspectorTab("provisioning");
+                        toast.info("Select a workflow or customize provisioning options in the inspector");
+                      }}
+                    >
+                      <SlidersHorizontal size={12} /> Provision
+                    </Button>
+                  </div>
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={13} />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search workflows..."
+                      className="h-8 pl-8 text-xs"
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
+
+                {/* Workflow List */}
+                <div className="max-h-48 overflow-y-auto border-b p-2">
+                  {isLoading ? (
+                    <div className="p-4 text-center text-xs text-muted-foreground">Loading workflows...</div>
+                  ) : (
+                    filteredWorkflows.map((workflow) => {
+                      const isSelected = workflow.path === selectedWorkflow?.path;
+                      return (
+                        <button
+                          key={workflow.path}
+                          onClick={() => selectWorkflow(workflow.path)}
+                          className={cn(
+                            "mb-1 flex w-full items-start gap-2.5 rounded-lg p-2.5 text-left transition-all",
+                            isSelected ? "bg-primary/10 text-primary font-medium ring-1 ring-primary/30" : "hover:bg-accent text-foreground"
+                          )}
+                        >
+                          <span className={cn("mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md", isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                            <Zap size={14} />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="flex items-center gap-1.5">
+                              <span className="truncate text-xs font-semibold">{workflow.name}</span>
+                              {workflow.isProvisioned && <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />}
+                            </span>
+                            <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">{workflow.description}</span>
+                          </span>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Component Palette Header */}
+                <div className="border-b px-3.5 py-2.5 bg-muted/20">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Add Steps & Palette</p>
+                    <Badge variant="secondary" className="text-[10px]">{palette.length} elements</Badge>
+                  </div>
+                  <div className="relative mt-2">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={13} />
+                    <Input
+                      value={paletteSearch}
+                      onChange={(e) => setPaletteSearch(e.target.value)}
+                      placeholder="Filter palette..."
+                      className="h-7 pl-8 text-xs bg-background"
+                    />
+                  </div>
+                </div>
+
+                {/* Palette Grid */}
+                <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
+                  {filteredPalette.map((item) => (
+                    <div
+                      key={item.label}
+                      onClick={() => addNode(item)}
+                      className="group flex cursor-pointer items-center gap-3 rounded-lg border border-border/60 bg-card p-2.5 text-left transition-all hover:border-primary/50 hover:bg-accent/80 hover:shadow-sm"
+                    >
+                      <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg text-foreground border border-border/40 shadow-xs", `node-accent-${item.color}`)}>
+                        <Icon name={item.icon} />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between">
+                          <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary">{item.label}</p>
+                          <Plus size={12} className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                        </div>
+                        <p className="truncate text-[10px] text-muted-foreground">{item.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </aside>
 
           {/* Main Canvas / Visualizer Panel */}
@@ -1074,21 +1318,323 @@ export default function WorkflowsPage() {
                       </div>
                     )}
 
-                    {/* Step Config Parameters */}
-                    {activeNode.data.config && Object.keys(activeNode.data.config).length > 0 && (
+                    {/* Specialized Step Config Parameters based on kind & icon */}
+                    {activeNode.data.kind === "trigger" && (
                       <div className="space-y-3">
-                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Step Parameters</Label>
-                        <div className="space-y-2">
-                          {Object.entries(activeNode.data.config).map(([key, val]) => (
-                            <div key={key}>
-                              <Label className="text-[11px] text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1")}</Label>
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Trigger Configuration</Label>
+                        {activeNode.data.icon === "clock" ? (
+                          <>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Schedule Preset</Label>
+                              <Select
+                                value={activeNode.data.config?.preset || "custom"}
+                                onValueChange={(val) => {
+                                  let cronVal = activeNode.data.config?.cron || "0 9 * * 1";
+                                  if (val === "hourly") cronVal = "0 * * * *";
+                                  if (val === "daily_9am") cronVal = "0 9 * * *";
+                                  if (val === "weekly_mon") cronVal = "0 9 * * 1";
+                                  if (val === "monthly_1st") cronVal = "0 9 1 * *";
+                                  updateConfigValue("preset", val);
+                                  updateConfigValue("cron", cronVal);
+                                }}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="hourly" className="text-xs">Every Hour (0 * * * *)</SelectItem>
+                                  <SelectItem value="daily_9am" className="text-xs">Daily at 9:00 AM (0 9 * * *)</SelectItem>
+                                  <SelectItem value="weekly_mon" className="text-xs">Weekly on Mon 9 AM (0 9 * * 1)</SelectItem>
+                                  <SelectItem value="monthly_1st" className="text-xs">1st of Month 9 AM (0 9 1 * *)</SelectItem>
+                                  <SelectItem value="custom" className="text-xs">Custom Cron Expression</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Cron Expression</Label>
                               <Input
-                                value={String(val)}
-                                onChange={(e) => updateConfigValue(key, e.target.value)}
+                                value={activeNode.data.config?.cron || "0 9 * * 1"}
+                                onChange={(e) => updateConfigValue("cron", e.target.value)}
+                                placeholder="0 9 * * 1"
                                 className="mt-0.5 h-8 text-xs font-mono"
                               />
                             </div>
-                          ))}
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Timezone</Label>
+                              <Select
+                                value={activeNode.data.config?.timezone || "UTC"}
+                                onValueChange={(val) => updateConfigValue("timezone", val)}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="UTC" className="text-xs">UTC (Universal Time)</SelectItem>
+                                  <SelectItem value="America/New_York" className="text-xs">America/New_York (EST)</SelectItem>
+                                  <SelectItem value="Europe/London" className="text-xs">Europe/London (GMT)</SelectItem>
+                                  <SelectItem value="Africa/Nairobi" className="text-xs">Africa/Nairobi (EAT)</SelectItem>
+                                  <SelectItem value="Asia/Tokyo" className="text-xs">Asia/Tokyo (JST)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">System Event Type</Label>
+                              <Select
+                                value={activeNode.data.config?.eventType || "customer.created"}
+                                onValueChange={(val) => updateConfigValue("eventType", val)}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="customer.created" className="text-xs">Customer Created (customer.created)</SelectItem>
+                                  <SelectItem value="order.completed" className="text-xs">Order Completed (order.completed)</SelectItem>
+                                  <SelectItem value="inventory.low_stock" className="text-xs">Low Stock Alert (inventory.low_stock)</SelectItem>
+                                  <SelectItem value="payment.received" className="text-xs">Payment Received (payment.received)</SelectItem>
+                                  <SelectItem value="shift.started" className="text-xs">Staff Shift Started (shift.started)</SelectItem>
+                                  <SelectItem value="custom" className="text-xs">Custom Event Identifier</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Event Source Filter</Label>
+                              <Input
+                                value={activeNode.data.config?.source || "system"}
+                                onChange={(e) => updateConfigValue("source", e.target.value)}
+                                placeholder="system, crm, pos..."
+                                className="mt-0.5 h-8 text-xs font-mono"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {activeNode.data.kind === "action" && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Action Parameters</Label>
+                        {activeNode.data.icon === "mail" ? (
+                          <>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Recipient Email / Handle</Label>
+                              <Input
+                                value={activeNode.data.config?.recipient || "{{customer.email}}"}
+                                onChange={(e) => updateConfigValue("recipient", e.target.value)}
+                                placeholder="{{customer.email}}"
+                                className="mt-0.5 h-8 text-xs font-mono"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Subject Line</Label>
+                              <Input
+                                value={activeNode.data.config?.subject || "Welcome to Scryme"}
+                                onChange={(e) => updateConfigValue("subject", e.target.value)}
+                                className="mt-0.5 h-8 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Email Template</Label>
+                              <Select
+                                value={activeNode.data.config?.template || "welcome_v1"}
+                                onValueChange={(val) => updateConfigValue("template", val)}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="welcome_v1" className="text-xs">Welcome Customer (welcome_v1)</SelectItem>
+                                  <SelectItem value="order_receipt" className="text-xs">Order Receipt (order_receipt)</SelectItem>
+                                  <SelectItem value="stock_digest" className="text-xs">Stock Alert Digest (stock_digest)</SelectItem>
+                                  <SelectItem value="custom" className="text-xs">Custom Raw Template</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </>
+                        ) : activeNode.data.icon === "message" ? (
+                          <>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Scryme Chat Channel</Label>
+                              <Select
+                                value={activeNode.data.config?.channel || "general"}
+                                onValueChange={(val) => updateConfigValue("channel", val)}
+                              >
+                                <SelectTrigger className="mt-0.5 h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="general" className="text-xs">#general</SelectItem>
+                                  <SelectItem value="sales-alerts" className="text-xs">#sales-alerts</SelectItem>
+                                  <SelectItem value="inventory-warnings" className="text-xs">#inventory-warnings</SelectItem>
+                                  <SelectItem value="management" className="text-xs">#management</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">Message Template</Label>
+                              <Textarea
+                                value={activeNode.data.config?.message || ""}
+                                onChange={(e) => updateConfigValue("message", e.target.value)}
+                                placeholder="Automated alert message..."
+                                className="mt-0.5 min-h-16 text-xs"
+                              />
+                            </div>
+                          </>
+                        ) : activeNode.data.icon === "code" ? (
+                          <>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="col-span-1">
+                                <Label className="text-[11px] text-muted-foreground">Method</Label>
+                                <Select
+                                  value={activeNode.data.config?.method || "POST"}
+                                  onValueChange={(val) => updateConfigValue("method", val)}
+                                >
+                                  <SelectTrigger className="mt-0.5 h-8 text-xs font-mono">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="GET" className="text-xs font-mono">GET</SelectItem>
+                                    <SelectItem value="POST" className="text-xs font-mono">POST</SelectItem>
+                                    <SelectItem value="PUT" className="text-xs font-mono">PUT</SelectItem>
+                                    <SelectItem value="DELETE" className="text-xs font-mono">DELETE</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="col-span-2">
+                                <Label className="text-[11px] text-muted-foreground">Endpoint URL</Label>
+                                <Input
+                                  value={activeNode.data.config?.url || ""}
+                                  onChange={(e) => updateConfigValue("url", e.target.value)}
+                                  placeholder="https://api.example.com/webhook"
+                                  className="mt-0.5 h-8 text-xs font-mono"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-[11px] text-muted-foreground">HTTP Headers</Label>
+                              <Input
+                                value={activeNode.data.config?.headers || "Content-Type: application/json"}
+                                onChange={(e) => updateConfigValue("headers", e.target.value)}
+                                placeholder="Header: Value"
+                                className="mt-0.5 h-8 text-xs font-mono"
+                              />
+                            </div>
+                          </>
+                        ) : (
+                          <div className="space-y-2">
+                            {Object.entries(activeNode.data.config || {}).map(([key, val]) => (
+                              <div key={key}>
+                                <Label className="text-[11px] text-muted-foreground capitalize">{key.replace(/([A-Z])/g, " $1")}</Label>
+                                <Input
+                                  value={String(val)}
+                                  onChange={(e) => updateConfigValue(key, e.target.value)}
+                                  className="mt-0.5 h-8 text-xs font-mono"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {activeNode.data.kind === "delay" && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Timing & Pause</Label>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Duration String</Label>
+                          <Input
+                            value={activeNode.data.config?.duration || "15m"}
+                            onChange={(e) => updateConfigValue("duration", e.target.value)}
+                            placeholder="e.g. 15m, 2h, 1d"
+                            className="mt-0.5 h-8 text-xs font-mono"
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Pause Behavior</Label>
+                          <Select
+                            value={activeNode.data.config?.pauseType || "duration"}
+                            onValueChange={(val) => updateConfigValue("pauseType", val)}
+                          >
+                            <SelectTrigger className="mt-0.5 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="duration" className="text-xs">Wait Fixed Duration</SelectItem>
+                              <SelectItem value="until_time" className="text-xs">Wait Until Timestamp</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeNode.data.kind === "data" && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Data Record Settings</Label>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Entity Type</Label>
+                          <Select
+                            value={activeNode.data.config?.entity || "Customer"}
+                            onValueChange={(val) => updateConfigValue("entity", val)}
+                          >
+                            <SelectTrigger className="mt-0.5 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Customer" className="text-xs">CRM Customer</SelectItem>
+                              <SelectItem value="InventoryBatch" className="text-xs">Inventory Batch</SelectItem>
+                              <SelectItem value="SalesTransaction" className="text-xs">Sales Transaction</SelectItem>
+                              <SelectItem value="PurchaseOrder" className="text-xs">Purchase Order</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Action</Label>
+                          <Select
+                            value={activeNode.data.config?.action || "update"}
+                            onValueChange={(val) => updateConfigValue("action", val)}
+                          >
+                            <SelectTrigger className="mt-0.5 h-8 text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="create" className="text-xs">Create New Record</SelectItem>
+                              <SelectItem value="update" className="text-xs">Update Existing Record</SelectItem>
+                              <SelectItem value="upsert" className="text-xs">Upsert (Create or Update)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Target Record ID Expression</Label>
+                          <Input
+                            value={activeNode.data.config?.targetId || "{{payload.customerId}}"}
+                            onChange={(e) => updateConfigValue("targetId", e.target.value)}
+                            placeholder="{{payload.id}}"
+                            className="mt-0.5 h-8 text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {activeNode.data.kind === "webhook" && (
+                      <div className="space-y-3">
+                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Outgoing Webhook Settings</Label>
+                        <div>
+                          <Label className="text-[11px] text-muted-foreground">Event Name</Label>
+                          <Input
+                            value={activeNode.data.config?.eventName || "workflow.completed"}
+                            onChange={(e) => updateConfigValue("eventName", e.target.value)}
+                            placeholder="workflow.completed"
+                            className="mt-0.5 h-8 text-xs font-mono"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between rounded-md border p-2 bg-muted/20">
+                          <Label className="text-xs font-medium">Retry On Failure</Label>
+                          <Switch
+                            checked={activeNode.data.config?.retryOnFailure !== false}
+                            onCheckedChange={(checked) => updateConfigValue("retryOnFailure", checked)}
+                          />
                         </div>
                       </div>
                     )}

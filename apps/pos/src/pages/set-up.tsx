@@ -16,6 +16,9 @@ import {
   QrCode,
   RefreshCw,
   CheckCircle2,
+  Server,
+  Wifi,
+  Search,
 } from 'lucide-react';
 
 // shadcn components
@@ -47,7 +50,7 @@ interface SetupData {
 
 // --- Sub-Components ---
 
-const SetupTokenInstructions = ({ onBack, apiUrl }: { onBack: () => void, apiUrl: string }) => {
+const SetupTokenInstructions = ({ onBack }: { onBack: () => void}) => {
   return (
     <div className="space-y-6 w-full max-w-md mx-auto">
       <div className="space-y-2">
@@ -88,7 +91,7 @@ const SetupTokenInstructions = ({ onBack, apiUrl }: { onBack: () => void, apiUrl
       </div>
 
       <Button variant="outline" className="w-full h-11 rounded-none border-zinc-300 dark:border-zinc-700" asChild>
-        <a href={`${apiUrl}/integrations/apps-api?tab=devices`} target="_blank" rel="noreferrer">
+        <a href={`https://app.scryme.tech/integrations/apps-api?tab=devices`} target="_blank" rel="noreferrer">
           Open Dashboard <ExternalLink className="w-4 h-4 ml-2" />
         </a>
       </Button>
@@ -333,7 +336,7 @@ const SetupTokenStep = ({
               value={rawApiUrl}
               onChange={e => setApiUrl(e.target.value)}
               className="h-10 text-xs font-mono rounded-none border-zinc-200"
-              placeholder="https://api.example.com"
+              placeholder="https://api.scryme.tech"
             />
             <Button
               type="button"
@@ -477,26 +480,72 @@ const SetupTokenStep = ({
   );
 };
 
-const DeviceTypeStep = ({
+export const DeviceTypeStep = ({
   onNext
 }: {
   onNext: (type: 'MAIN_HUB' | 'KDS' | 'TABLET', hubIp?: string) => void
 }) => {
-  const [deviceType, setDeviceType] = useState<'MAIN_HUB' | 'KDS' | 'TABLET'>('MAIN_HUB');
+  const [networkMode, setNetworkMode] = useState<'HUB' | 'SPOKE'>('HUB');
+  const [spokeRole, setSpokeRole] = useState<'TABLET' | 'KDS' | 'REGISTER'>('TABLET');
   const [hubIp, setHubIp] = useState('');
   const [deviceName, setDeviceName] = useState('');
+  const [isDiscovering, setIsDiscovering] = useState(false);
+  const [discoveryStatus, setDiscoveryStatus] = useState<string | null>(null);
+
+  const handleAutoDiscover = async () => {
+    setIsDiscovering(true);
+    setDiscoveryStatus(null);
+    try {
+      const { invoke } = await import('@tauri-apps/api/core');
+      const localIp = await invoke<string>('get_local_ip_command');
+
+      if (localIp) {
+        try {
+          const status = await invoke<any>('get_hub_status');
+          if (status?.is_running) {
+            setHubIp(localIp);
+            setDiscoveryStatus(`Main Hub detected on this device (${localIp})`);
+            setIsDiscovering(false);
+            return;
+          }
+        } catch {}
+
+        setHubIp(localIp);
+        setDiscoveryStatus(`Local IP detected: ${localIp}. Please confirm Main Hub IP if running on another device.`);
+      } else {
+        setDiscoveryStatus('Could not auto-detect IP automatically. Please enter Main Hub IP manually.');
+      }
+    } catch (err) {
+      setDiscoveryStatus('Auto-discovery available on desktop app. Please enter Hub IP manually.');
+    } finally {
+      setIsDiscovering(false);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onNext(deviceType, hubIp);
+    if (deviceName) {
+      localStorage.setItem('DEVICE_NAME', deviceName);
+    }
+    if (networkMode === 'HUB') {
+      onNext('MAIN_HUB', undefined);
+    } else {
+      const finalType = spokeRole === 'KDS' ? 'KDS' : 'TABLET';
+      onNext(finalType, hubIp);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 w-full max-w-md mx-auto">
+    <form onSubmit={handleSubmit} className="space-y-6 w-full max-w-md mx-auto">
       <div className="space-y-4">
-        <Label className="text-base font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
-          Select Device Role
-        </Label>
+        <div className="space-y-1">
+          <Label className="text-base font-semibold text-zinc-900 dark:text-zinc-100 uppercase tracking-wider">
+            Restaurant Initialization Mode
+          </Label>
+          <p className="text-xs text-zinc-500">
+            Choose how this device will operate on your restaurant network.
+          </p>
+        </div>
 
         <div className="space-y-2">
           <Label htmlFor="deviceName" className="text-xs font-bold uppercase text-zinc-500">
@@ -504,56 +553,121 @@ const DeviceTypeStep = ({
           </Label>
           <Input
             id="deviceName"
-            placeholder="e.g. Kitchen KDS 1, Front Desk Hub..."
+            placeholder="e.g. Main Counter POS, Kitchen KDS 1, Patio Tablet..."
             value={deviceName}
             onChange={(e) => setDeviceName(e.target.value)}
-            className="rounded-none border-zinc-200 dark:border-zinc-800 focus-visible:ring-blue-600 mb-4"
+            className="rounded-none border-zinc-200 dark:border-zinc-800 focus-visible:ring-blue-600"
             required
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
-          {[
-            { id: 'MAIN_HUB', label: 'Main Hub / Register', Icon: Monitor, desc: 'Primary POS with full management capabilities.' },
-            { id: 'KDS', label: 'Kitchen Display (KDS)', Icon: ChefHat, desc: 'Display and manage kitchen orders.' },
-            { id: 'TABLET', label: 'Waiter Tablet', Icon: TabletIcon, desc: 'Mobile ordering for wait staff.' },
-          ].map((type) => (
+        {/* Level 1: Hub vs Spoke Selection */}
+        <div className="space-y-2">
+          <Label className="text-xs font-bold uppercase text-zinc-500">Network Mode</Label>
+          <div className="grid grid-cols-2 gap-3">
             <button
-              key={type.id}
               type="button"
-              onClick={() => setDeviceType(type.id as any)}
+              onClick={() => setNetworkMode('HUB')}
               className={cn(
-                "flex items-start gap-4 p-4 border transition-all text-left",
-                deviceType === type.id
+                "flex flex-col items-start gap-2 p-4 border text-left transition-all",
+                networkMode === 'HUB'
                   ? "border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 ring-1 ring-blue-600"
                   : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950"
               )}
             >
-              <type.Icon className={cn("w-6 h-6 mt-1", deviceType === type.id ? "text-blue-600" : "text-zinc-400")} />
+              <Server className={cn("w-6 h-6", networkMode === 'HUB' ? "text-blue-600" : "text-zinc-400")} />
               <div>
-                <p className="font-bold text-sm uppercase tracking-tight">{type.label}</p>
-                <p className="text-xs text-zinc-500">{type.desc}</p>
+                <p className="font-bold text-sm uppercase tracking-tight">Main Hub (Server)</p>
+                <p className="text-[11px] text-zinc-500 leading-tight">Primary POS hosting local network sync & order server.</p>
               </div>
             </button>
-          ))}
+
+            <button
+              type="button"
+              onClick={() => setNetworkMode('SPOKE')}
+              className={cn(
+                "flex flex-col items-start gap-2 p-4 border text-left transition-all",
+                networkMode === 'SPOKE'
+                  ? "border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 ring-1 ring-blue-600"
+                  : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950"
+              )}
+            >
+              <Wifi className={cn("w-6 h-6", networkMode === 'SPOKE' ? "text-blue-600" : "text-zinc-400")} />
+              <div>
+                <p className="font-bold text-sm uppercase tracking-tight">Spoke Client</p>
+                <p className="text-[11px] text-zinc-500 leading-tight">Secondary device connecting remotely to Main Hub.</p>
+              </div>
+            </button>
+          </div>
         </div>
 
-        {deviceType !== 'MAIN_HUB' && (
-          <div className="space-y-2 pt-4 animate-in fade-in slide-in-from-top-2">
-            <Label htmlFor="hubIp" className="text-xs font-bold uppercase text-zinc-500">
-              Main Hub IP Address
-            </Label>
-            <Input
-              id="hubIp"
-              placeholder="e.g. 192.168.1.50"
-              value={hubIp}
-              onChange={(e) => setHubIp(e.target.value)}
-              className="rounded-none border-zinc-200 dark:border-zinc-800 focus-visible:ring-blue-600"
-              required
-            />
-            <p className="text-[10px] text-zinc-400 italic">
-              Find this IP in the Main Hub's "Hub Overview" or KDS settings.
-            </p>
+        {/* Level 2: Spoke Client Sub-roles & IP Configuration */}
+        {networkMode === 'SPOKE' && (
+          <div className="space-y-4 pt-2 border-t border-zinc-200 dark:border-zinc-800 animate-in fade-in slide-in-from-top-2">
+            <div className="space-y-2">
+              <Label className="text-xs font-bold uppercase text-zinc-500">Select Spoke Role</Label>
+              <div className="grid grid-cols-1 gap-2">
+                {[
+                  { id: 'TABLET', label: 'Waiter Tablet', Icon: TabletIcon, desc: 'Mobile order taking for wait staff.' },
+                  { id: 'KDS', label: 'Kitchen Display (KDS)', Icon: ChefHat, desc: 'Kitchen station ticket display & management.' },
+                  { id: 'REGISTER', label: 'Secondary Register', Icon: Monitor, desc: 'Secondary checkout terminal linked to Hub.' },
+                ].map((type) => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => setSpokeRole(type.id as any)}
+                    className={cn(
+                      "flex items-center gap-3 p-3 border transition-all text-left",
+                      spokeRole === type.id
+                        ? "border-blue-600 bg-blue-50/30 dark:bg-blue-900/10 ring-1 ring-blue-600"
+                        : "border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-950"
+                    )}
+                  >
+                    <type.Icon className={cn("w-5 h-5 shrink-0", spokeRole === type.id ? "text-blue-600" : "text-zinc-400")} />
+                    <div>
+                      <p className="font-bold text-xs uppercase tracking-tight">{type.label}</p>
+                      <p className="text-[10px] text-zinc-500">{type.desc}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="hubIp" className="text-xs font-bold uppercase text-zinc-500">
+                  Main Hub IP Address
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleAutoDiscover}
+                  disabled={isDiscovering}
+                  className="h-6 px-2 text-[10px] uppercase font-mono font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30"
+                >
+                  {isDiscovering ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Search className="w-3 h-3 mr-1" />}
+                  Auto-Discover Hub
+                </Button>
+              </div>
+
+              <Input
+                id="hubIp"
+                placeholder="e.g. 192.168.1.50"
+                value={hubIp}
+                onChange={(e) => setHubIp(e.target.value)}
+                className="rounded-none border-zinc-200 dark:border-zinc-800 focus-visible:ring-blue-600 font-mono text-xs"
+                required
+              />
+
+              {discoveryStatus ? (
+                <p className="text-[10px] text-blue-600 font-medium">{discoveryStatus}</p>
+              ) : (
+                <p className="text-[10px] text-zinc-400 italic">
+                  Find the Hub IP in the Main Hub's "Hub Overview" page or network settings.
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -728,7 +842,7 @@ export default function SetupPage() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <SetupTokenInstructions onBack={() => setViewMode('form')} apiUrl={useAuthStore.getState().apiUrl} />
+                <SetupTokenInstructions onBack={() => setViewMode('form')} />
               </motion.div>
             ) : (
               <motion.div

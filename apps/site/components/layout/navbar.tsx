@@ -18,17 +18,36 @@ import {
   Sparkles,
   ArrowRight,
   Users,
-  BarChart3,
   Globe2,
   Cpu,
   Lock,
+  LayoutDashboard,
+  Code2,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts, modules } from "@/lib/scryme-tokens";
 import { ThemeToggle } from "./theme-toggle";
+import { authClient } from "@/lib/auth-client";
+import Image from "next/image";
 
-const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+const defaultWebUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3000"
+    : "https://app.scryme.tech";
+
+const defaultCrmUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://localhost:3001"
+    : "https://crm.scryme.tech";
+
+const webUrl =
+  process.env.NEXT_PUBLIC_WEB_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  defaultWebUrl;
+
+const crmUrl = process.env.NEXT_PUBLIC_CRM_URL || defaultCrmUrl;
 
 function captureNavigationCta(
   ctaLabel: string,
@@ -116,9 +135,13 @@ const resourceLinks = [
 ];
 
 export function Navbar() {
+  const session = authClient.useSession();
+  const user = session?.data?.user;
+
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<"products" | "solutions" | "resources" | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<"products" | "solutions" | "resources" | null>("products");
 
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -154,12 +177,14 @@ export function Navbar() {
     const handleClickOutside = (event: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setActiveMenu(null);
+        setUserMenuOpen(false);
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setActiveMenu(null);
+        setUserMenuOpen(false);
         setMobileOpen(false);
       }
     };
@@ -171,6 +196,12 @@ export function Navbar() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    setUserMenuOpen(false);
+    setMobileOpen(false);
+  };
 
   return (
     <header
@@ -555,29 +586,106 @@ export function Navbar() {
 
           <ThemeToggle />
 
-          <Link
-            href={`${webUrl}/login`}
-            className="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors text-[rgba(241,233,216,0.8)] hover:text-[#F1E9D8]"
-            style={{ fontFamily: fonts.body }}
-            onClick={() => captureNavigationCta("Sign in", `${webUrl}/login`, "signin")}
-          >
-            Sign in
-          </Link>
+          {!user ? (
+            <>
+              <Link
+                href="/login"
+                className="px-3.5 py-2 rounded-lg text-sm font-medium transition-colors text-[rgba(241,233,216,0.8)] hover:text-[#F1E9D8]"
+                style={{ fontFamily: fonts.body }}
+                onClick={() => captureNavigationCta("Sign in", "/login", "signin")}
+              >
+                Sign in
+              </Link>
 
-          <Link
-            href="/demo"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: colors.brass,
-              color: colors.inkBg,
-              fontFamily: fonts.body,
-              boxShadow: "0 4px 14px rgba(200,154,75,0.25)",
-            }}
-            onClick={() => captureNavigationCta("Book a demo", "/demo", "primary")}
-          >
-            <span>Book a Demo</span>
-            <ArrowUpRight size={15} />
-          </Link>
+              <Link
+                href="/demo"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                style={{
+                  background: colors.brass,
+                  color: colors.inkBg,
+                  fontFamily: fonts.body,
+                  boxShadow: "0 4px 14px rgba(200,154,75,0.25)",
+                }}
+                onClick={() => captureNavigationCta("Book a demo", "/demo", "primary")}
+              >
+                <span>Book a Demo</span>
+                <ArrowUpRight size={15} />
+              </Link>
+            </>
+          ) : (
+            <div className="relative">
+              <button
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full border border-[rgba(200,154,75,0.3)] bg-[rgba(200,154,75,0.08)] hover:border-[#C89A4B] transition-all"
+                title={user.name || user.email}
+              >
+                {user.image ? (
+                  <Image
+                    src={user.image}
+                    alt={user.name || "User Avatar"}
+                    width={28}
+                    height={28}
+                    className="w-7 h-7 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-[#C89A4B] text-[#0B1220] flex items-center justify-center text-xs font-bold font-mono">
+                    {(user.name || user.email || "U").substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-xs font-medium text-[#F1E9D8] max-w-[110px] truncate">
+                  {user.name || user.email.split("@")[0]}
+                </span>
+                <ChevronDown size={13} className={cn("text-[#C89A4B] transition-transform", userMenuOpen && "rotate-180")} />
+              </button>
+
+              {/* User Navigation Dropdown Menu */}
+              {userMenuOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-60 rounded-xl p-2 shadow-2xl border bg-[#121B2E] border-[rgba(241,233,216,0.12)] space-y-1 z-50 text-xs"
+                >
+                  <div className="px-3 py-2 border-b border-[rgba(241,233,216,0.08)] mb-1">
+                    <div className="font-semibold text-[#F1E9D8] truncate">{user.name || "Account"}</div>
+                    <div className="text-[11px] text-[rgba(241,233,216,0.5)] truncate">{user.email}</div>
+                  </div>
+
+                  <a
+                    href={`${webUrl}/dashboard`}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[rgba(241,233,216,0.8)] hover:text-[#F1E9D8] hover:bg-[#0B1220] transition-colors"
+                  >
+                    <LayoutDashboard size={15} className="text-[#C89A4B]" />
+                    <span>Web App Suite</span>
+                  </a>
+
+                  <a
+                    href={crmUrl}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[rgba(241,233,216,0.8)] hover:text-[#F1E9D8] hover:bg-[#0B1220] transition-colors"
+                  >
+                    <Users size={15} className="text-indigo-400" />
+                    <span>CRM & Marketing</span>
+                  </a>
+
+                  <Link
+                    href="/developer/dashboard"
+                    onClick={() => setUserMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[rgba(241,233,216,0.8)] hover:text-[#F1E9D8] hover:bg-[#0B1220] transition-colors"
+                  >
+                    <Code2 size={15} className="text-emerald-400" />
+                    <span>Developer Console</span>
+                  </Link>
+
+                  <div className="border-t border-[rgba(241,233,216,0.08)] pt-1 mt-1">
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-300 hover:bg-rose-500/10 transition-colors"
+                    >
+                      <LogOut size={15} />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Mobile Hamburger Toggle */}
@@ -723,28 +831,65 @@ export function Navbar() {
               <ThemeToggle />
             </div>
 
-            <Link
-              href={`${webUrl}/login`}
-              className="w-full text-center py-2.5 rounded-lg text-sm font-medium border text-[#F1E9D8]"
-              style={{ borderColor: colors.inkLine }}
-              onClick={() => {
-                captureNavigationCta("Sign in", `${webUrl}/login`, "signin");
-                setMobileOpen(false);
-              }}
-            >
-              Sign in to Console
-            </Link>
+            {!user ? (
+              <>
+                <Link
+                  href="/login"
+                  className="w-full text-center py-2.5 rounded-lg text-sm font-medium border text-[#F1E9D8]"
+                  style={{ borderColor: colors.inkLine }}
+                  onClick={() => {
+                    captureNavigationCta("Sign in", "/login", "signin");
+                    setMobileOpen(false);
+                  }}
+                >
+                  Sign in
+                </Link>
 
-            <Link
-              href="/demo"
-              className="w-full text-center py-2.5 rounded-lg text-sm font-semibold bg-[#C89A4B] text-[#0B1220]"
-              onClick={() => {
-                captureNavigationCta("Book a demo", "/demo", "primary");
-                setMobileOpen(false);
-              }}
-            >
-              Book an Enterprise Demo
-            </Link>
+                <Link
+                  href="/demo"
+                  className="w-full text-center py-2.5 rounded-lg text-sm font-semibold bg-[#C89A4B] text-[#0B1220]"
+                  onClick={() => {
+                    captureNavigationCta("Book a demo", "/demo", "primary");
+                    setMobileOpen(false);
+                  }}
+                >
+                  Book an Enterprise Demo
+                </Link>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <a
+                  href={`${webUrl}/dashboard`}
+                  className="w-full text-center py-2.5 rounded-lg text-sm font-semibold bg-[#C89A4B] text-[#0B1220] block"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Go to Web App Suite
+                </a>
+
+                <a
+                  href={crmUrl}
+                  className="w-full text-center py-2.5 rounded-lg text-sm font-medium border border-[rgba(241,233,216,0.2)] text-[#F1E9D8] block"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Go to CRM App
+                </a>
+
+                <Link
+                  href="/developer/dashboard"
+                  className="w-full text-center py-2.5 rounded-lg text-sm font-medium border border-[rgba(241,233,216,0.2)] text-[#F1E9D8] block"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Developer Console
+                </Link>
+
+                <button
+                  onClick={handleSignOut}
+                  className="w-full text-center py-2.5 rounded-lg text-sm font-medium text-rose-300 bg-rose-500/10 border border-rose-500/20"
+                >
+                  Sign Out ({user.email})
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

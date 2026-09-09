@@ -66,6 +66,11 @@ export class RegisterPettyCashUseCase {
     }
 
     if (!fundId) {
+      const defaultFund = await this.ensureDefaultFund(organizationId, memberId, locationId);
+      fundId = defaultFund?.id;
+    }
+
+    if (!fundId) {
       throw new NotFoundException(
         "No active petty cash fund found for this organization.",
       );
@@ -98,7 +103,57 @@ export class RegisterPettyCashUseCase {
       if (funds.length > 0) return funds;
     }
 
-    return this.pettyCashUseCase.getFunds(organizationId);
+    let funds = await this.pettyCashUseCase.getFunds(organizationId);
+    if (funds.length === 0) {
+      const defaultFund = await this.ensureDefaultFund(organizationId, ctx.memberId || undefined, locationId);
+      if (defaultFund) {
+        funds = await this.pettyCashUseCase.getFunds(organizationId);
+      }
+    }
+
+    return funds;
+  }
+
+  private async ensureDefaultFund(organizationId: string, memberId?: string, locationId?: string) {
+    let fund = await this.prisma.client.pettyCashFund.findFirst({
+      where: { organizationId, isActive: true },
+    });
+
+    if (!fund) {
+      let responsibleMemberId = memberId;
+      if (!responsibleMemberId) {
+        const member = await this.prisma.client.member.findFirst({
+          where: { organizationId, isActive: true },
+          select: { id: true },
+        });
+        responsibleMemberId = member?.id;
+      }
+
+      if (!responsibleMemberId) {
+        const anyMember = await this.prisma.client.member.findFirst({
+          where: { organizationId },
+          select: { id: true },
+        });
+        responsibleMemberId = anyMember?.id;
+      }
+
+      if (responsibleMemberId) {
+        fund = await this.prisma.client.pettyCashFund.create({
+          data: {
+            name: "Main Petty Cash",
+            amount: 100000,
+            floatAmount: 100000,
+            currencyCode: "KES",
+            organizationId,
+            responsibleMemberId,
+            locationId: locationId || undefined,
+            isActive: true,
+          },
+        });
+      }
+    }
+
+    return fund;
   }
 
   async getRecentTransactions(ctx: V3ApiContext, limit = 10) {

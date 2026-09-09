@@ -1,20 +1,20 @@
 model Organization {
-  id           String   @id @default(cuid())
-  name         String
-  slug         String   @unique
+  id                 String    @id @default(cuid())
+  name               String
+  slug               String    @unique
   taxId              String? // KRA PIN for Kenya
   registrationNumber String?
-  deletedAt    DateTime?
-  version      Int      @default(0)
-  logo         String?
-  banner       String?
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
-  customFields Json?
-  email        String?
-  phone        String?
-  address      String?
+  deletedAt          DateTime?
+  version            Int       @default(0)
+  logo               String?
+  banner             String?
+  description        String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
+  customFields       Json?
+  email              String?
+  phone              String?
+  address            String?
 
   // Platform admin controls
   isSuspended      Boolean   @default(false)
@@ -25,17 +25,17 @@ model Organization {
   defaultLocationId  String?
   defaultWarehouseId String?
 
-  campaigns     Campaign[]        @relation("OrgCampaigns")
-  campaignSegments CampaignSegment[] @relation("OrgCampaignSegments")
+  campaigns         Campaign[]         @relation("OrgCampaigns")
+  campaignSegments  CampaignSegment[]  @relation("OrgCampaignSegments")
   campaignWorkflows CampaignWorkflow[] @relation("OrgCampaignWorkflows")
 
-  members     Member[]
-  invitations Invitation[]
-  customers   Customer[]   @relation("OrgCustomers")
+  members         Member[]
+  invitations     Invitation[]
+  customers       Customer[]       @relation("OrgCustomers")
   companyContacts CompanyContact[] @relation("OrgCompanyContacts")
-  categories  Category[]
-  products    Product[]
-  suppliers   Supplier[]
+  categories      Category[]
+  products        Product[]
+  suppliers       Supplier[]
 
   transactions     Transaction[]
   returns          Return[]
@@ -71,14 +71,14 @@ model Organization {
   budgetAlerts      BudgetAlert[]
   departments       Department[]
 
-  expenseCategories        ExpenseCategory[]
-  pettyCashFunds           PettyCashFund[]
-  utilityAccounts          UtilityAccount[]
-  expenseApprovalRequired  Boolean           @default(false) // Whether expenses require approval
-  expenseApprovalThreshold Decimal?          @db.Decimal(10, 2) // Amount above which approval is required
-  pettyCashAutoApproveThreshold Decimal?     @db.Decimal(10, 2) // Amount below which petty cash is auto-approved
-  expenseReceiptRequired   Boolean           @default(true) // Whether receipts are mandatory
-  expenseReceiptThreshold  Decimal?          @db.Decimal(10, 2) // Amount above which receipt is required
+  expenseCategories             ExpenseCategory[]
+  pettyCashFunds                PettyCashFund[]
+  utilityAccounts               UtilityAccount[]
+  expenseApprovalRequired       Boolean           @default(false) // Whether expenses require approval
+  expenseApprovalThreshold      Decimal?          @db.Decimal(10, 2) // Amount above which approval is required
+  pettyCashAutoApproveThreshold Decimal?          @db.Decimal(10, 2) // Amount below which petty cash is auto-approved
+  expenseReceiptRequired        Boolean           @default(true) // Whether receipts are mandatory
+  expenseReceiptThreshold       Decimal?          @db.Decimal(10, 2) // Amount above which receipt is required
 
   activeExpenseWorkflowId String?
   activeExpenseWorkflow   ApprovalWorkflow? @relation("ActiveOrgWorkflow", fields: [activeExpenseWorkflowId], references: [id], onDelete: SetNull)
@@ -122,28 +122,28 @@ model Organization {
   stockReportTemplates StockReportTemplate[]
   stockReports         GeneratedStockReport[]
 
-  supplierInvoices SupplierInvoice[]
-  purchaseReturns  PurchaseReturn[]
-  supplierDocuments SupplierDocument[]
-  supplierPriceHistories SupplierPriceHistory[]
+  supplierInvoices            SupplierInvoice[]
+  purchaseReturns             PurchaseReturn[]
+  supplierDocuments           SupplierDocument[]
+  supplierPriceHistories      SupplierPriceHistory[]
   batchIngredientConsumptions BatchIngredientConsumption[]
   qualityIncidents            QualityIncident[]
   recalls                     Recall[]
 
-  taxAuthorities         TaxAuthority[]
-  taxFilings             TaxFiling[]
-  integrations           OrganizationIntegration[]
-  hulyConfiguration      HulyConfiguration?
+  taxAuthorities             TaxAuthority[]
+  taxFilings                 TaxFiling[]
+  integrations               OrganizationIntegration[]
+  hulyConfiguration          HulyConfiguration?
   notificationTemplates      NotificationTemplate[]
   notificationDispatches     NotificationDispatch[]
   notificationChannelConfigs NotificationChannelConfig[]
-  apiKeys                ApiKey[]
-  deviceSetupTokens      DeviceSetupToken[]
-  deviceRegistries       DeviceRegistry[]
+  apiKeys                    ApiKey[]
+  deviceSetupTokens          DeviceSetupToken[]
+  deviceRegistries           DeviceRegistry[]
 
-  priceLists          PriceList[]
-  pricingRules        PricingRule[]
-  pricingBundles      PricingBundle[]
+  priceLists     PriceList[]
+  pricingRules   PricingRule[]
+  pricingBundles PricingBundle[]
 
   ledgerAccounts      LedgerAccount[]
   journalEntries      JournalEntry[]
@@ -190,20 +190,22 @@ model Organization {
   loyaltyPrograms LoyaltyProgram[]
 
   // Service Module Relations
-  serviceCategories ServiceCategory[]
-  services          Service[]
-  serviceResources  ServiceResource[]
-  serviceBookings   ServiceBooking[]
-  bookingRecurrences BookingRecurrence[]
-  staffShifts       StaffShift[]
+  serviceCategories        ServiceCategory[]
+  services                 Service[]
+  serviceResources         ServiceResource[]
+  serviceBookings          ServiceBooking[]
+  bookingRecurrences       BookingRecurrence[]
+  staffShifts              StaffShift[]
+  scheduleOverrides        StaffScheduleOverride[]
+  bookingEvents            BookingEvent[]
   bookingVerificationCodes BookingVerificationCode[]
 
   standaloneDevices StandaloneDevice[]
 
-  qcTemplates        QCTemplate[]
-  qcResults          QCResult[]
-  cycleCountConfigs  CycleCountConfig[]
-  serialNumbers      SerialNumber[]
+  qcTemplates       QCTemplate[]
+  qcResults         QCResult[]
+  cycleCountConfigs CycleCountConfig[]
+  serialNumbers     SerialNumber[]
 
   // Custom Workflows Automation Engine
   workflowEngineDefinitions WorkflowEngineDefinition[]
@@ -223,12 +225,12 @@ model Organization {
   reportChannels    ReportChannel[]
 
   // CRM Relations
-  crmObjectDefinitions     CrmObjectDefinition[]     @relation("OrgCrmObjects")
-  crmRecords               CrmRecord[]               @relation("OrgCrmRecords")
+  crmObjectDefinitions       CrmObjectDefinition[]       @relation("OrgCrmObjects")
+  crmRecords                 CrmRecord[]                 @relation("OrgCrmRecords")
   crmRelationshipDefinitions CrmRelationshipDefinition[] @relation("OrgCrmRelationships")
-  crmActivities            CrmActivity[]             @relation("OrgCrmActivities")
-  crmNotes                 CrmNote[]                 @relation("OrgCrmNotes")
-  crmFollowUps             CrmFollowUp[]             @relation("OrgCrmFollowUps")
+  crmActivities              CrmActivity[]               @relation("OrgCrmActivities")
+  crmNotes                   CrmNote[]                   @relation("OrgCrmNotes")
+  crmFollowUps               CrmFollowUp[]               @relation("OrgCrmFollowUps")
 
   @@index([slug])
   @@map("organization")
@@ -271,31 +273,31 @@ model Member {
   cardId  String?
   pinHash String?
 
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role      MemberRole
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role             MemberRole
   membershipStatus MembershipStatus @default(ACTIVE)
-  banReason String?
-  isActive  Boolean          @default(true)
-  deletedAt DateTime?
-  version   Int        @default(0)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  phone     String?
-  email     String?
-  address   String?
-  age       String?
-  gender    String?
-  tags      String?
+  banReason        String?
+  isActive         Boolean          @default(true)
+  deletedAt        DateTime?
+  version          Int              @default(0)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  phone            String?
+  email            String?
+  address          String?
+  age              String?
+  gender           String?
+  tags             String?
 
-  jobTitle               String?
-  employmentType         EmploymentType?
-  joiningDate            DateTime?
-  emergencyContactName   String?
-  emergencyContactPhone  String?
+  jobTitle                 String?
+  employmentType           EmploymentType?
+  joiningDate              DateTime?
+  emergencyContactName     String?
+  emergencyContactPhone    String?
   emergencyContactRelation String?
 
-  managerId String?
-  manager   Member?  @relation("MemberManager", fields: [managerId], references: [id], onDelete: SetNull)
+  managerId    String?
+  manager      Member?  @relation("MemberManager", fields: [managerId], references: [id], onDelete: SetNull)
   subordinates Member[] @relation("MemberManager")
 
   auditLogs    AuditLog[]
@@ -311,8 +313,8 @@ model Member {
   uploadedAttachments  Attachment[]        @relation("MemberUploadedAttachments")
   documents            Attachment[]        @relation("MemberDocuments")
 
-  headedDepartments     Department[]          @relation("DepartmentHead")
-  mpesaPaymentRequests  MpesaPaymentRequest[]
+  headedDepartments    Department[]          @relation("DepartmentHead")
+  mpesaPaymentRequests MpesaPaymentRequest[]
 
   departmentMemberships DepartmentMember[]
 
@@ -328,7 +330,7 @@ model Member {
   isGuest        Boolean   @default(false)
   guestExpiresAt DateTime? // Expiration for the guest account
 
-  status     Status      @default(OFFLINE)
+  status Status @default(OFFLINE)
 
   customRoles      CustomRole[] @relation("MemberCustomRoles")
   roleGroups       RoleGroup[]  @relation("MemberRoleGroups")
@@ -353,19 +355,20 @@ model Member {
   bakeryRoles BakeryBaker[]
 
   // Cal.com Integration
-  calComId       String?
-  calComApiKey   String? // Encrypted
+  calComId     String?
+  calComApiKey String? // Encrypted
 
   // Service Module Relations
   serviceAssignments ServiceStaffAssignment[]
   staffShifts        StaffShift[]
+  scheduleOverrides  StaffScheduleOverride[]
   bookingAssignments BookingStaff[]
 
   submittedExpenses        Expense[]          @relation("ExpenseSubmitter")
   approvedExpenses         Expense[]          @relation("ExpenseApprover")
   createdRecurringExpenses RecurringExpense[] @relation("RecurringExpenseCreator")
 
-  responsibleFunds       PettyCashFund[] @relation("ResponsibleForFund")
+  responsibleFunds      PettyCashFund[]        @relation("ResponsibleForFund")
   pettyCashTransactions PettyCashTransaction[]
 
   // Approval Relations
@@ -374,24 +377,24 @@ model Member {
   approvalStepActions ApprovalStepAction[] @relation("ApprovalStepActionMember")
 
   // Budget Relations
-  createdBudgets         Budget[]       @relation("BudgetCreator")
-  generatedBudgetReports BudgetReport[] @relation("BudgetReportGenerator")
+  createdBudgets         Budget[]          @relation("BudgetCreator")
+  generatedBudgetReports BudgetReport[]    @relation("BudgetReportGenerator")
   journalEntries         JournalEntry[]
-  recurringBills         RecurringBill[] @relation
+  recurringBills         RecurringBill[]   @relation
   qualityIncidents       QualityIncident[] @relation("IncidentReporter")
-  qcResults              QCResult[] @relation("QCPerformer")
+  qcResults              QCResult[]        @relation("QCPerformer")
 
-  supplierReviews        SupplierReview[] @relation("SupplierReviewer")
-  favoriteSuppliers      FavoriteSupplier[] @relation("MemberFavoriteSuppliers")
+  supplierReviews   SupplierReview[]   @relation("SupplierReviewer")
+  favoriteSuppliers FavoriteSupplier[] @relation("MemberFavoriteSuppliers")
 
   // CRM Relations
-  ownedCrmRecords        CrmRecord[]    @relation("CrmRecordOwner")
-  crmActivities          CrmActivity[]  @relation("CrmActivityMember")
-  crmNotes               CrmNote[]      @relation("CrmNoteCreator")
-  crmFollowUps           CrmFollowUp[]  @relation("CrmFollowUpAssignedTo")
+  ownedCrmRecords CrmRecord[]   @relation("CrmRecordOwner")
+  crmActivities   CrmActivity[] @relation("CrmActivityMember")
+  crmNotes        CrmNote[]     @relation("CrmNoteCreator")
+  crmFollowUps    CrmFollowUp[] @relation("CrmFollowUpAssignedTo")
 
-  createdCampaigns       Campaign[]     @relation("CampaignCreator")
-  approvedCampaigns      Campaign[]     @relation("CampaignApprover")
+  createdCampaigns  Campaign[] @relation("CampaignCreator")
+  approvedCampaigns Campaign[] @relation("CampaignApprover")
 
   // Purchase Relations
   createdPurchases Purchase[]        @relation("PurchaseCreator")
@@ -419,8 +422,8 @@ model Member {
   reconciliationsReviewed  StockReconciliation[] @relation("ReconciliationReviewer")
   actionAuditLogs          ActionAuditLog[]
 
-  approvedTransfers       StockTransfer[] @relation("ApprovedByMember")
-  qualityCheckedTransfers StockTransfer[] @relation("TransferQualityChecker")
+  approvedTransfers       StockTransfer[]   @relation("ApprovedByMember")
+  qualityCheckedTransfers StockTransfer[]   @relation("TransferQualityChecker")
   approvedAdjustments     StockAdjustment[] @relation("AdjustmentApprover")
   assemblies              Assembly[]
 
@@ -555,13 +558,13 @@ model Invitation {
   inviterId      String
   inviter        User             @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
-  departmentIds  String[]         @default([])
-  customRoleIds  String[]         @default([])
-  roleGroupIds   String[]         @default([])
+  departmentIds String[] @default([])
+  customRoleIds String[] @default([])
+  roleGroupIds  String[] @default([])
 
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
-  isGuestInvite  Boolean          @default(false) // Flag to identify guest invitations
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  isGuestInvite Boolean  @default(false) // Flag to identify guest invitations
 
   @@index([email])
   @@index([organizationId])
@@ -603,9 +606,9 @@ model OrganizationSettings {
   enforceMfa             Boolean @default(false)
 
   // --- Attendance Auto-Checkout Settings ---
-  enableAutoCheckout Boolean @default(false)
-  autoCheckoutTime   String? // Store as "HH:mm" in organization's local timezone (e.g., "17:00")
-  enableBakerySystem     Boolean @default(false) // Add this line
+  enableAutoCheckout      Boolean @default(false)
+  autoCheckoutTime        String? // Store as "HH:mm" in organization's local timezone (e.g., "17:00")
+  enableBakerySystem      Boolean @default(false) // Add this line
   enabledPlugins          Json    @default("[]")
   defaultInvoiceTemplate  String  @default("default")
   defaultReceiptTemplate  String  @default("default")
@@ -616,16 +619,19 @@ model OrganizationSettings {
   managersCanManageShifts Boolean @default(false)
 
   // --- Expense Settings ---
-  mileageRate            Decimal @default(0) @db.Decimal(19, 4)
+  mileageRate Decimal @default(0) @db.Decimal(19, 4)
 
   // --- Automation Settings ---
-  supplierInvoiceReminderSchedule Int[] @default([0, 3, 7, 14, 30])
+  supplierInvoiceReminderSchedule Int[]   @default([0, 3, 7, 14, 30])
+  bookingReminderMinutes          Int[]   @default([1440, 120])
+  bookingAssignmentTimeoutMinutes Int     @default(30)
+  bookingEscalationEnabled        Boolean @default(true)
 
   // --- Pricing Strategy Settings ---
-  priceSyncMode              PriceSyncMode     @default(MANUAL)
-  supplierSelectionStrategy  SupplierSelection @default(PREFERRED)
-  minMarginThreshold         Decimal           @default(0.10) @db.Decimal(5, 2)
-  priceApprovalThreshold     Decimal           @default(0.20) @db.Decimal(5, 2)
+  priceSyncMode             PriceSyncMode     @default(MANUAL)
+  supplierSelectionStrategy SupplierSelection @default(PREFERRED)
+  minMarginThreshold        Decimal           @default(0.10) @db.Decimal(5, 2)
+  priceApprovalThreshold    Decimal           @default(0.20) @db.Decimal(5, 2)
 
   // --- Bot Integration Settings ---
   telegramBotEnabled Boolean @default(false)
@@ -670,10 +676,10 @@ model Department {
   subDepartments Department[] @relation("DepartmentHierarchy")
 
   // --- External Entity Links ---
-  locationId     String?
-  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  costCenterId   String?
-  costCenter     CostCenter?        @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+  locationId   String?
+  location     InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  costCenterId String?
+  costCenter   CostCenter?        @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
 
   // --- Integration Tracking ---
   scrymeChannelId String?

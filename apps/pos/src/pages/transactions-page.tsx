@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { cn, processFileDownload } from '@/lib/utils';
 import { usePrinter } from '@/hooks/use-printer';
+import { trackPosEvent } from '@/lib/openpanel';
 import { usePosStore } from '@/store/store';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { usePendingSales, useNetworkStatus, useRetrySale, useDeleteSale, useOldSalesCheck } from '@/hooks/sales';
@@ -228,6 +229,7 @@ export function TransactionsPage() {
   const handleDownloadInvoice = async (tx: Transaction) => {
     if (!tx.invoiceLink || isDownloading) return;
     setIsDownloading(true);
+    trackPosEvent('pos_invoice_downloaded', { txId: tx.id, number: tx.number });
     const loadingToastId = toast.loading('Downloading invoice...', { description: `Order: ${tx.number || tx.id}` });
     try {
       const blob = await invoke<number[]>('get_invoice_blob_command', { url: tx.invoiceLink });
@@ -291,6 +293,7 @@ export function TransactionsPage() {
     if (!tx.invoiceLink) return;
     try {
       toast.info('Sending invoice to printer...');
+      trackPosEvent('pos_invoice_printed', { txId: tx.id, number: tx.number });
       const branchName = useAuthStore.getState().currentLocation?.name;
       await printDocument('invoice', { invoiceUrl: tx.invoiceLink, number: tx.number || tx.id }, settings, branchName);
       toast.success('Print job sent');

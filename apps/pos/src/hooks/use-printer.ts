@@ -7,6 +7,14 @@ import { PrintResult } from '@/types/print-types';
 import { v4 as uuidv4 } from 'uuid';
 import posthog from 'posthog-js';
 
+let printQueueChain: Promise<any> = Promise.resolve();
+
+const enqueuePrintJob = <T>(jobFn: () => Promise<T>): Promise<T> => {
+  const result = printQueueChain.then(jobFn, jobFn);
+  printQueueChain = result.catch(() => {});
+  return result;
+};
+
 export const usePrinter = () => {
   const store = usePrinterStore();
   const [loading, setLoading] = useState(false);
@@ -57,29 +65,27 @@ export const usePrinter = () => {
     settings: any,
     branchName?: string
   ) => {
-    // Note: We don't need to look up printerId manually here anymore,
-    // because the backend 'print_job' does that lookup based on the 'type' (job_type).
-
-    // However, we should check if the store has a config for it to fail fast UI side
     const printerId = store.assignments[type];
     if (!printerId) {
       throw new Error(`No printer assigned for ${type}s. Please check your printer settings.`);
     }
 
-    try {
-      const result = await invoke('print_job', {
-        jobType: type,
-        order,
-        settings,
-        branchName
-      });
+    return enqueuePrintJob(async () => {
+      try {
+        const result = await invoke('print_job', {
+          jobType: type,
+          order,
+          settings,
+          branchName
+        });
 
-      console.log('Print Job Success:', result);
-      return true;
-    } catch (err) {
-      console.error('Print Failed:', err);
-      throw err;
-    }
+        console.log('Print Job Success:', result);
+        return true;
+      } catch (err) {
+        console.error('Print Failed:', err);
+        throw err;
+      }
+    });
   };
 
   const printNative = async (

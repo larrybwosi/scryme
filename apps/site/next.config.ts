@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+const isDev = process.env.NODE_ENV === "development";
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 const isEuPostHog = posthogHost?.includes("eu.i.posthog.com");
 const posthogAssetsHost = isEuPostHog
@@ -8,9 +9,15 @@ const posthogAssetsHost = isEuPostHog
   : "https://us-assets.i.posthog.com";
 const posthogIngestHost = posthogHost || "https://us.i.posthog.com";
 
+const defaultApiUrl = isDev
+  ? "http://localhost:3002"
+  : "https://api.scryme.tech";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+
 const nextConfig: NextConfig = {
   output: "standalone",
   skipTrailingSlashRedirect: true,
+  transpilePackages: ["@repo/auth", "@repo/db", "@repo/shared", "@repo/env", "@repo/notifications"],
   experimental: {
     webpackMemoryOptimizations: true,
   },
@@ -37,29 +44,23 @@ const nextConfig: NextConfig = {
         source: "/ingest/:path*",
         destination: `${posthogIngestHost}/:path*`,
       },
+      {
+        source: "/.well-known/:path*",
+        destination: `${apiUrl}/.well-known/:path*`,
+      },
     ];
   },
   async redirects() {
     const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
     return [
       {
-        source: "/login",
-        destination: `${webUrl}/login`,
-        permanent: false,
-      },
-      {
         source: "/signup",
-        destination: `${webUrl}/sign-up`,
-        permanent: false,
-      },
-      {
-        source: "/sign-up",
-        destination: `${webUrl}/sign-up`,
+        destination: "/sign-up",
         permanent: false,
       },
       {
         source: "/contact",
-        destination: `${webUrl}/sign-up`,
+        destination: "/sign-up",
         permanent: false,
       },
     ];

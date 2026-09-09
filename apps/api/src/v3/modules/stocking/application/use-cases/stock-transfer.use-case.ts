@@ -134,7 +134,9 @@ export class StockTransferUseCase {
 
       const stockMap = new Map(stocks.map((s) => [s.variantId, s]));
 
-      // Aggregate requested quantities per variant to handle potential duplicate variant lines correctly.
+      // ⚡ Bolt Optimization: Aggregate requested quantities per unique variantId in-memory and execute stock updates concurrently via Promise.all.
+      // Doing this concurrently per unique variant ensures exactly one database update per variant, reducing query roundtrips
+      // from O(N) sequential blocking roundtrips down to 1 flat parallel roundtrip, while avoiding database row-lock contention and deadlocks.
       const aggregatedRequested = new Map<string, number>();
       for (const item of transfer.items) {
         const current = aggregatedRequested.get(item.variantId) || 0;
@@ -155,12 +157,6 @@ export class StockTransferUseCase {
         }
       }
 
-      // ⚡ Bolt Optimization: Perform consolidated stock updates per unique variant.
-      // Doing this concurrently for each item in transfer.items can lead to concurrent updates
-      // on the exact same row (compound key variantId_locationId), which causes database lock contention,
-      // bottlenecks, or serialization/deadlock errors in transactions.
-      // Aggregating quantities and updating per unique variant ensures exactly one update per unique variant,
-      // reducing query roundtrips from O(N) to O(U) where U is unique variants, and eliminating race conditions.
       await Promise.all(
         Array.from(aggregatedRequested.entries()).map(([variantId, totalRequested]) =>
           tx.productVariantStock.update({

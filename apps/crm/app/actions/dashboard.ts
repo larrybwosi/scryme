@@ -12,80 +12,78 @@ export async function getDashboardStats() {
   const { organizationId } = context;
 
   try {
-    // 1. Total Revenue (from completed transactions)
-    const revenue = await db.transaction.aggregate({
-      where: {
-        organizationId,
-        status: 'COMPLETED',
-      },
-      _sum: {
-        finalTotal: true,
-      },
-    });
+    // ⚡ Bolt: Performance Optimization (Parallelized DB Reads)
+    // Parallelize independent initial queries (revenue aggregate, leadDef, totalCustomers, dealDef, settings)
+    // using Promise.all to collapse 5 sequential roundtrips down to 1 concurrent roundtrip.
+    const [revenue, leadDef, totalCustomers, dealDef, settings] = await Promise.all([
+      db.transaction.aggregate({
+        where: {
+          organizationId,
+          status: 'COMPLETED',
+        },
+        _sum: {
+          finalTotal: true,
+        },
+      }),
+      db.crmObjectDefinition.findUnique({
+        where: { organizationId_name: { organizationId, name: 'lead' } },
+      }),
+      db.customer.count({
+        where: { organizationId },
+      }),
+      db.crmObjectDefinition.findUnique({
+        where: { organizationId_name: { organizationId, name: 'deal' } },
+      }),
+      db.organizationSettings.findUnique({
+        where: { organizationId },
+        select: { defaultCurrency: true },
+      }),
+    ]);
 
-    // 2. Active Leads
-    const leadDef = await db.crmObjectDefinition.findUnique({
-      where: { organizationId_name: { organizationId, name: 'lead' } }
-    });
-
-    let activeLeadsCount = 0;
-    if (leadDef) {
-        activeLeadsCount = await db.crmRecord.count({
+    // ⚡ Bolt: Parallelize dependent active lead & open deal count queries concurrently.
+    const [activeLeadsCount, openDealsCount] = await Promise.all([
+      leadDef
+        ? db.crmRecord.count({
             where: {
-                objectId: leadDef.id,
-                organizationId,
-                NOT: {
+              objectId: leadDef.id,
+              organizationId,
+              NOT: {
+                data: {
+                  path: ['status'],
+                  equals: 'qualified',
+                },
+              },
+            },
+          })
+        : Promise.resolve(0),
+      dealDef
+        ? db.crmRecord.count({
+            where: {
+              objectId: dealDef.id,
+              organizationId,
+              AND: [
+                {
+                  NOT: {
                     data: {
-                        path: ['status'],
-                        equals: 'qualified'
-                    }
-                }
-            }
-        });
-    }
-
-    // 3. Total Customers
-    const totalCustomers = await db.customer.count({
-      where: { organizationId },
-    });
-
-    // 4. Open Deals
-    const dealDef = await db.crmObjectDefinition.findUnique({
-        where: { organizationId_name: { organizationId, name: 'deal' } }
-    });
-    let openDealsCount = 0;
-    if (dealDef) {
-        openDealsCount = await db.crmRecord.count({
-            where: {
-                objectId: dealDef.id,
-                organizationId,
-                AND: [
-                    {
-                        NOT: {
-                            data: {
-                                path: ['stage'],
-                                equals: 'closed_won'
-                            }
-                        }
+                      path: ['stage'],
+                      equals: 'closed_won',
                     },
-                    {
-                        NOT: {
-                            data: {
-                                path: ['stage'],
-                                equals: 'closed_lost'
-                            }
-                        }
-                    }
-                ]
-            }
-        });
-    }
+                  },
+                },
+                {
+                  NOT: {
+                    data: {
+                      path: ['stage'],
+                      equals: 'closed_lost',
+                    },
+                  },
+                },
+              ],
+            },
+          })
+        : Promise.resolve(0),
+    ]);
 
-    // Fetch Organization Default Currency
-    const settings = await db.organizationSettings.findUnique({
-      where: { organizationId },
-      select: { defaultCurrency: true }
-    });
     const currency = settings?.defaultCurrency || 'USD';
 
     return {
@@ -115,15 +113,18 @@ export async function getRecentActivity() {
     const { organizationId } = context;
 
     try {
-        const recentCustomers = await db.customer.findMany({
-            where: { organizationId },
-            orderBy: { createdAt: 'desc' },
-            take: 5,
-        });
-
-        const leadDef = await db.crmObjectDefinition.findUnique({
-            where: { organizationId_name: { organizationId, name: 'lead' } }
-        });
+        // ⚡ Bolt: Performance Optimization (Parallelized DB Reads)
+        // Parallelize initial queries for recent customers and lead definition using Promise.all.
+        const [recentCustomers, leadDef] = await Promise.all([
+            db.customer.findMany({
+                where: { organizationId },
+                orderBy: { createdAt: 'desc' },
+                take: 5,
+            }),
+            db.crmObjectDefinition.findUnique({
+                where: { organizationId_name: { organizationId, name: 'lead' } },
+            }),
+        ]);
 
         let recentLeads: any[] = [];
         if (leadDef) {

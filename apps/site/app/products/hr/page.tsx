@@ -16,9 +16,21 @@ import { IndexGrid } from "@/components/products/index-grid";
 import { LedgerCardGrid } from "@/components/products/ledger-card-grid";
 import { StructuredData } from "@/components/seo/structured-data";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
+
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
+  const cmsPage = await getCmsPage("products/hr");
+  if (cmsPage?.seo) {
+    return getPageMetadata({
+      pageSeo: cmsPage.seo,
+      fallbackTitle: "HR & Workforce Management Software — Unified Employee Records",
+      fallbackDescription: "Scryme HR manages payroll, workforce attendance, compliance, and employee schedules, syncing human capital costs directly into the Finance ledger.",
+      canonicalPath: "/products/hr",
+    });
+  }
   const content = await getHomePageContent();
   const moduleData = content.modules?.find((m) => m.code === "HR" || m.href?.endsWith("/hr"));
   return getPageMetadata({
@@ -73,7 +85,16 @@ const includedCards = [
   },
 ];
 
-export default function HrPage() {
+export default async function HrPage() {
+  const cmsPage = await getCmsPage("products/hr");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",

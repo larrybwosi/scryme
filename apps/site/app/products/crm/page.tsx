@@ -20,9 +20,21 @@ import { CrmPipelineMock } from "@/components/products/crm/crm-pipeline-mock";
 import { CrmContactMock } from "@/components/products/crm/crm-contact-mock";
 import { CrmAnalyticsMock } from "@/components/products/crm/crm-analytics-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { getHomePageContent, getPageMetadata } from "@/lib/sanity";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
+
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
+  const cmsPage = await getCmsPage("products/crm");
+  if (cmsPage?.seo) {
+    return getPageMetadata({
+      pageSeo: cmsPage.seo,
+      fallbackTitle: "Cloud CRM Software for Growing Sales Teams",
+      fallbackDescription: "Scryme CRM gives sales teams a visual pipeline, unified contact records, automated follow-ups, and real-time analytics to close more deals faster.",
+      canonicalPath: "/products/crm",
+    });
+  }
   const content = await getHomePageContent();
   const moduleData = content.modules?.find((m) => m.code === "CRM" || m.href?.endsWith("/crm"));
   return getPageMetadata({
@@ -77,7 +89,16 @@ const includedCards = [
   },
 ];
 
-export default function CrmPage() {
+export default async function CrmPage() {
+  const cmsPage = await getCmsPage("products/crm");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Product",

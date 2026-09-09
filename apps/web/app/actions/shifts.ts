@@ -368,6 +368,274 @@ export async function addStaffBreak(
   }
 }
 
+export async function getSchedulingWorkspace(from: string, to: string) {
+  const session = await getServerAuth();
+  if (!session?.organizationId) return { success: false, error: "Unauthorized" };
+
+  const start = new Date(from);
+  const end = new Date(to);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || end <= start) {
+    return { success: false, error: "Invalid schedule date range" };
+  }
+
+  try {
+    const [bookings, overrides, services, locations, settings] = await Promise.all([
+      db.serviceBooking.findMany({
+        where: {
+          organizationId: session.organizationId,
+          scheduledStartTime: { lt: end },
+          scheduledEndTime: { gt: start },
+        },
+        include: {
+          customer: { select: { id: true, name: true, email: true, phone: true } },
+          staff: { include: { member: { select: { id: true, user: { select: { name: true, email: true, image: true } } } } } },
+          resources: { include: { resource: { select: { id: true, name: true, type: true } } } },
+        },
+        orderBy: { scheduledStartTime: "asc" },
+        take: 250,
+      }),
+      db.staffScheduleOverride.findMany({
+        where: {
+          organizationId: session.organizationId,
+          startTime: { lt: end },
+          endTime: { gt: start },
+        },
+        include: { member: { select: { id: true, user: { select: { name: true, email: true, image: true } } } } },
+        orderBy: { startTime: "asc" },
+      }),
+      db.service.findMany({
+        where: { organizationId: session.organizationId, isActive: true },
+        select: { id: true, name: true, estimatedDuration: true, price: true },
+        orderBy: { name: "asc" },
+      }),
+      db.inventoryLocation.findMany({
+        where: { organizationId: session.organizationId, isActive: true },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
+      db.organizationSettings.findUnique({
+        where: { organizationId: session.organizationId },
+        select: { defaultTimezone: true },
+      }),
+    ]);
+    return {
+      success: true,
+      data: {
+        bookings: bookings.map(item => ({ ...item, price: item.price.toString() })),
+        overrides,
+        services: services.map(item => ({ ...item, price: item.price.toString() })),
+        locations,
+        timezone: settings?.defaultTimezone || "UTC",
+      },
+    };
+  } catch (error: any) {
+    console.error("Error loading scheduling workspace:", error);
+    return { success: false, error: error.message || "Failed to load scheduling workspace" };
+  }
+}
+
+export async function transitionScheduledBooking(
+  bookingId: string,
+  revision: number,
+  status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "NOSHOW",
+) {
+  const session = await getServerAuth();
+  const permission = await checkShiftManagementPermission(session);
+  if (!permission.success) return permission;
+
+  const booking = await db.serviceBooking.findFirst({
+    where: { id: bookingId, organizationId: session!.organizationId },
+  });
+  if (!booking) return { success: false, error: "Booking not found" };
+  if (booking.revision !== revision) return { success: false, error: "Booking changed. Refresh and try again." };
+
+  const validTransitions: Record<string, string[]> = {
+    REQUESTED: ["CANCELLED"],
+    SCHEDULED: ["IN_PROGRESS", "CANCELLED", "NOSHOW"],
+    IN_PROGRESS: ["COMPLETED", "CANCELLED"],
+    COMPLETED: [],
+    CANCELLED: [],
+    NOSHOW: [],
+  };
+  if (!validTransitions[booking.status]?.includes(status)) {
+    return { success: false, error: `Cannot move ${booking.status} booking to ${status}` };
+  }
+
+  const updated = await db.serviceBooking.updateMany({
+    where: { id: bookingId, organizationId: session!.organizationId, revision },
+    data: {
+      status,
+      revision: { increment: 1 },
+      ...(status === "IN_PROGRESS" ? { actualStartTime: new Date() } : {}),
+      ...(status === "COMPLETED" ? { actualEndTime: new Date() } : {}),
+    },
+  });
+  if (!updated.count) return { success: false, error: "Booking was updated concurrently" };
+  await db.bookingEvent.create({
+    data: {
+      organizationId: session!.organizationId,
+      bookingId,
+      source: "ADMIN",
+      type: `STATUS_${status}`,
+      fromStatus: booking.status,
+      toStatus: status,
+    },
+  });
+  revalidatePath("/staff/shifts");
+  return { success: true };
+}
+
+export async function createScheduledBooking(data: {
+  memberId: string;
+  serviceId: string;
+  scheduledStartTime: string;
+  scheduledEndTime?: string;
+  locationId?: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  notes?: string;
+}) {
+  const session = await getServerAuth();
+  const permission = await checkShiftManagementPermission(session);
+  if (!permission.success) return permission;
+
+  try {
+    const startTime = new Date(data.scheduledStartTime);
+    if (!Number.isFinite(startTime.getTime())) {
+      return { success: false, error: "Invalid scheduled start time" };
+    }
+
+    const member = await db.member.findFirst({
+      where: { id: data.memberId, organizationId: session!.organizationId },
+      select: { id: true },
+    });
+    if (!member) return { success: false, error: "Staff member not found" };
+
+    const service = await db.service.findFirst({
+      where: { id: data.serviceId, organizationId: session!.organizationId },
+    });
+    if (!service) return { success: false, error: "Service not found" };
+
+    let endTime: Date;
+    if (data.scheduledEndTime) {
+      endTime = new Date(data.scheduledEndTime);
+      if (!Number.isFinite(endTime.getTime()) || endTime <= startTime) {
+        return { success: false, error: "End time must be after start time" };
+      }
+    } else {
+      const durationMinutes = service.estimatedDuration || 60;
+      endTime = new Date(startTime.getTime() + durationMinutes * 60 * 1000);
+    }
+
+    let customerId: string | undefined = undefined;
+    if (data.customerEmail || data.customerPhone || data.customerName) {
+      let existingCustomer = null;
+      if (data.customerEmail || data.customerPhone) {
+        existingCustomer = await db.customer.findFirst({
+          where: {
+            organizationId: session!.organizationId,
+            OR: [
+              ...(data.customerEmail ? [{ email: data.customerEmail }] : []),
+              ...(data.customerPhone ? [{ phone: data.customerPhone }] : []),
+            ],
+          },
+        });
+      }
+
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else if (data.customerName || data.customerEmail) {
+        const createdCustomer = await db.customer.create({
+          data: {
+            organizationId: session!.organizationId,
+            name: data.customerName || "Walk-in Customer",
+            email: data.customerEmail || null,
+            phone: data.customerPhone || null,
+          },
+        });
+        customerId = createdCustomer.id;
+      }
+    }
+
+    const booking = await db.serviceBooking.create({
+      data: {
+        organizationId: session!.organizationId,
+        serviceId: service.id,
+        serviceName: service.name,
+        price: service.price,
+        pricingModel: service.pricingModel,
+        scheduledStartTime: startTime,
+        scheduledEndTime: endTime,
+        locationId: data.locationId || null,
+        notes: data.notes || null,
+        customerId: customerId || null,
+        status: "SCHEDULED",
+        staff: {
+          create: {
+            memberId: data.memberId,
+            status: "ACCEPTED",
+          },
+        },
+      },
+      include: {
+        customer: { select: { id: true, name: true, email: true, phone: true } },
+        staff: { include: { member: { select: { id: true, user: { select: { name: true, email: true, image: true } } } } } },
+        resources: { include: { resource: { select: { id: true, name: true, type: true } } } },
+      },
+    });
+
+    await db.bookingEvent.create({
+      data: {
+        organizationId: session!.organizationId,
+        bookingId: booking.id,
+        source: "ADMIN",
+        type: "CREATED",
+        toStatus: "SCHEDULED",
+        actorMemberId: session!.memberId || null,
+      },
+    });
+
+    revalidatePath("/staff/shifts");
+    return {
+      success: true,
+      data: {
+        ...booking,
+        price: booking.price.toString(),
+      },
+    };
+  } catch (error: any) {
+    console.error("Error creating scheduled booking:", error);
+    return { success: false, error: error.message || "Failed to create schedule" };
+  }
+}
+
+export async function createScheduleOverride(data: {
+  memberId: string;
+  type: "WORKING" | "UNAVAILABLE" | "LEAVE" | "BLACKOUT";
+  startTime: string;
+  endTime: string;
+  reason?: string;
+  locationId?: string;
+}) {
+  const session = await getServerAuth();
+  const permission = await checkShiftManagementPermission(session);
+  if (!permission.success) return permission;
+  const startTime = new Date(data.startTime);
+  const endTime = new Date(data.endTime);
+  if (endTime <= startTime) return { success: false, error: "End must follow start" };
+  const member = await db.member.findFirst({
+    where: { id: data.memberId, organizationId: session!.organizationId },
+    select: { id: true },
+  });
+  if (!member) return { success: false, error: "Member not found" };
+  const override = await db.staffScheduleOverride.create({
+    data: { ...data, startTime, endTime, organizationId: session!.organizationId },
+  });
+  revalidatePath("/staff/shifts");
+  return { success: true, data: override };
+}
+
 export async function deleteStaffBreak(breakId: string) {
   const session = await getServerAuth();
   const permission = await checkShiftManagementPermission(session);

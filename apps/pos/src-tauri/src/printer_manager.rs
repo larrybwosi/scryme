@@ -64,13 +64,26 @@ async fn print_raw_to_printer(
     data: Vec<u8>,
 ) -> Result<String, String> {
     if let Some(printer) = config {
-        // We exclusively use the native path for print_job,
-        // even if the config says "network", we treat the target as a system printer name
-        // if the user has it installed.
-        // NOTE: The requirement was to use the native printer functions.
-        print_system_raw_bytes(printer.target, data)
-            .await
-            .map_err(|e| format!("Native print failed: {:?}", e))
+        if printer.method == "network" || printer.target.contains('.') || printer.target.contains(':') {
+            let port = printer.port;
+            let mut retries = 3;
+            let mut last_err = String::new();
+            while retries > 0 {
+                match print_network_raw_bytes(printer.target.clone(), port, data.clone()).await {
+                    Ok(msg) => return Ok(msg),
+                    Err(e) => {
+                        last_err = format!("{:?}", e);
+                        retries -= 1;
+                        tokio::time::sleep(tokio::time::Duration::from_millis(250)).await;
+                    }
+                }
+            }
+            Err(format!("Network print failed after retries: {}", last_err))
+        } else {
+            print_system_raw_bytes(printer.target, data)
+                .await
+                .map_err(|e| format!("Native print failed: {:?}", e))
+        }
     } else {
         Err("Printer not configured".into())
     }
@@ -94,30 +107,29 @@ pub async fn print_pdf_to_system_printer(
 
     #[cfg(target_os = "windows")]
     {
-        use tauri_plugin_shell::ShellExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-        let sidecar = _app.shell().sidecar("binaries/sumatrapdf")
-            .map_err(|e| format!("Failed to create sidecar: {}", e))?;
-
-        let output = sidecar
+        let output = tokio::process::Command::new("powershell")
             .args([
-                "-print-to",
-                &printer_name,
-                "-silent",
-                &file_path,
+                "-Command",
+                &format!(
+                    "Start-Process -FilePath '{}' -Verb PrintTo -ArgumentList '\"{}\"' -WindowStyle Hidden",
+                    file_path, printer_name
+                ),
             ])
+            .creation_flags(CREATE_NO_WINDOW)
             .output()
             .await
-            .map_err(|e| format!("SumatraPDF execution failed: {}", e))?;
+            .map_err(|e| format!("Windows native PDF print execution failed: {}", e))?;
 
         // Clean up
         let _ = std::fs::remove_file(path);
 
         if output.status.success() {
-            Ok("PDF sent to Windows printer via SumatraPDF".into())
+            Ok("PDF sent to Windows printer natively".into())
         } else {
             Err(format!(
-                "SumatraPDF failed: {}",
+                "Windows print failed: {}",
                 String::from_utf8_lossy(&output.stderr)
             ))
         }
@@ -339,27 +351,11 @@ pub async fn print_job(
     match job_type.as_str() {
         "receipt" => print_receipt_native(app, order, settings, branch_name).await,
         "kitchen" => print_kitchen_native(app, order, settings, branch_name).await,
-        "bar" => {
-            if let Some(pdf_bytes) = order.get("pdfBytes").and_then(|v| v.as_array()) {
-                let bytes: Vec<u8> = pdf_bytes.iter().filter_map(|v| v.as_u64().map(|b| b as u8)).collect();
-                let printer_config = get_printer_config(app.clone()).await?;
-                let target = printer_config.bar_printer.or(printer_config.receipt_printer).ok_or("Bar printer not configured")?.target;
-                print_pdf_to_system_printer(&app, target, bytes).await
-            } else {
-                print_bar_native(app, order, settings, branch_name).await
-            }
-        },
+        "bar" => print_bar_native(app, order, settings, branch_name).await,
         "bill" => {
             #[cfg(feature = "restaurant")]
             {
-                if let Some(pdf_bytes) = order.get("pdfBytes").and_then(|v| v.as_array()) {
-                    let bytes: Vec<u8> = pdf_bytes.iter().filter_map(|v| v.as_u64().map(|b| b as u8)).collect();
-                    let printer_config = get_printer_config(app.clone()).await?;
-                    let target = printer_config.bill_printer.or(printer_config.receipt_printer).ok_or("Bill printer not configured")?.target;
-                    print_pdf_to_system_printer(&app, target, bytes).await
-                } else {
-                    print_bill_native(app, order, settings, branch_name).await
-                }
+                print_bill_native(app, order, settings, branch_name).await
             }
             #[cfg(not(feature = "restaurant"))]
             {

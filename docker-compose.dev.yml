@@ -16,6 +16,21 @@ services:
     networks:
       - app-network
 
+  customer-postgres:
+    image: postgres:17-alpine
+    container_name: scryme-customer-pg
+    restart: always
+    environment:
+      - POSTGRES_USER=${CUSTOMER_DB_USER:-postgres}
+      - POSTGRES_PASSWORD=${CUSTOMER_DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${CUSTOMER_DB_NAME:-customer_db}
+    ports:
+      - "5433:5432"
+    volumes:
+      - customer_postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   redis:
     image: redis:7-alpine
     container_name: scryme-redis
@@ -30,6 +45,7 @@ services:
 
 volumes:
   postgres_data:
+  customer_postgres_data:
   redis_data:
 
 networks:

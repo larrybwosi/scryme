@@ -17,8 +17,9 @@ describe("RegisterPettyCashUseCase", () => {
     prisma = {
       client: {
         expenseCategory: { findFirst: vi.fn(), create: vi.fn() },
-        pettyCashFund: { findFirst: vi.fn(), findMany: vi.fn() },
+        pettyCashFund: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn() },
         pettyCashTransaction: { findMany: vi.fn() },
+        member: { findFirst: vi.fn() },
       },
     };
 
@@ -121,6 +122,7 @@ describe("RegisterPettyCashUseCase", () => {
 
     prisma.client.expenseCategory.findFirst.mockResolvedValue({ id: "cat_1" });
     prisma.client.pettyCashFund.findFirst.mockResolvedValue(null);
+    prisma.client.member.findFirst.mockResolvedValue(null);
 
     await expect(useCase.execute(ctx, dto)).rejects.toThrow(NotFoundException);
   });

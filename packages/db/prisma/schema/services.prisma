@@ -18,6 +18,26 @@ enum DepositType {
   PERCENTAGE
 }
 
+enum BookingAssignmentStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum ScheduleOverrideType {
+  WORKING
+  UNAVAILABLE
+  LEAVE
+  BLACKOUT
+}
+
+enum BookingEventSource {
+  ADMIN
+  PUBLIC
+  SCRYME
+  SYSTEM
+}
+
 model ServiceCategory {
   id             String       @id @default(cuid())
   name           String
@@ -26,12 +46,12 @@ model ServiceCategory {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   services       Service[]
 
-  parentId       String?
-  parent         ServiceCategory? @relation("ServiceCategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  subcategories  ServiceCategory[] @relation("ServiceCategoryHierarchy")
+  parentId      String?
+  parent        ServiceCategory?  @relation("ServiceCategoryHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  subcategories ServiceCategory[] @relation("ServiceCategoryHierarchy")
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -46,34 +66,34 @@ model Service {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  categoryId     String
-  category       ServiceCategory @relation(fields: [categoryId], references: [id])
+  categoryId String
+  category   ServiceCategory @relation(fields: [categoryId], references: [id])
 
-  pricingModel   PricingModel @default(FIXED)
-  price          Decimal      @db.Decimal(12, 2)
-  minPrice       Decimal?     @db.Decimal(12, 2) // For VARIABLE pricing
+  pricingModel PricingModel @default(FIXED)
+  price        Decimal      @db.Decimal(12, 2)
+  minPrice     Decimal?     @db.Decimal(12, 2) // For VARIABLE pricing
 
   requiresDeposit Boolean     @default(false)
   depositAmount   Decimal?    @db.Decimal(12, 2)
   depositType     DepositType @default(FIXED)
 
-  estimatedDuration Int?      // In minutes
-  bufferTimeBefore  Int       @default(0) // In minutes
-  bufferTimeAfter   Int       @default(0) // In minutes
+  estimatedDuration Int? // In minutes
+  bufferTimeBefore  Int  @default(0) // In minutes
+  bufferTimeAfter   Int  @default(0) // In minutes
 
-  isActive       Boolean      @default(true)
-  customFields   Json?
+  isActive     Boolean @default(true)
+  customFields Json?
 
   // Relations
-  bookings       ServiceBooking[]
-  materials      ServiceMaterial[]
-  resources      ServiceResourceAssignment[]
-  staff          ServiceStaffAssignment[]
-  taxRates       ServiceTaxRate[]
+  bookings         ServiceBooking[]
+  materials        ServiceMaterial[]
+  resources        ServiceResourceAssignment[]
+  staff            ServiceStaffAssignment[]
+  taxRates         ServiceTaxRate[]
   transactionItems TransactionServiceItem[]
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, sku])
   @@index([organizationId])
@@ -81,14 +101,14 @@ model Service {
 }
 
 model ServiceMaterial {
-  id             String       @id @default(cuid())
-  serviceId      String
-  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 
-  variantId      String
-  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
-  quantity       Decimal      @db.Decimal(12, 4)
+  quantity Decimal @db.Decimal(12, 4)
 
   @@unique([serviceId, variantId])
   @@map("service_material")
@@ -97,173 +117,183 @@ model ServiceMaterial {
 model ServiceResource {
   id             String       @id @default(cuid())
   name           String
-  type           String?      // e.g., "Room", "Equipment"
+  type           String? // e.g., "Room", "Equipment"
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  isActive       Boolean      @default(true)
+  isActive Boolean @default(true)
 
-  assignments    ServiceResourceAssignment[]
-  bookings       BookingResource[]
+  assignments ServiceResourceAssignment[]
+  bookings    BookingResource[]
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@map("service_resource")
 }
 
 model ServiceResourceAssignment {
-  id             String       @id @default(cuid())
-  serviceId      String
-  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  resourceId     String
-  resource       ServiceResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  id         String          @id @default(cuid())
+  serviceId  String
+  service    Service         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  resourceId String
+  resource   ServiceResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@unique([serviceId, resourceId])
   @@map("service_resource_assignment")
 }
 
 model ServiceStaffAssignment {
-  id             String       @id @default(cuid())
-  serviceId      String
-  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  memberId       String
-  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member  @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([serviceId, memberId])
   @@map("service_staff_assignment")
 }
 
 model ServiceTaxRate {
-  id             String       @id @default(cuid())
-  serviceId      String
-  service        Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  taxRateId      String
-  taxRate        TaxRate      @relation(fields: [taxRateId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  taxRateId String
+  taxRate   TaxRate @relation(fields: [taxRateId], references: [id], onDelete: Cascade)
 
   @@unique([serviceId, taxRateId])
   @@map("service_tax_rate")
 }
 
 model ServiceBooking {
-  id             String       @id @default(cuid())
-  locationId     String?
-  location       InventoryLocation? @relation(fields: [locationId], references: [id])
+  id         String             @id @default(cuid())
+  locationId String?
+  location   InventoryLocation? @relation(fields: [locationId], references: [id])
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  serviceId      String
-  service        Service      @relation(fields: [serviceId], references: [id])
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
 
-  customerId     String?
-  customer       Customer?    @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
 
-  status         BookingStatus @default(REQUESTED)
+  status BookingStatus @default(REQUESTED)
 
   scheduledStartTime DateTime
   scheduledEndTime   DateTime?
 
-  actualStartTime    DateTime?
-  actualEndTime      DateTime?
+  actualStartTime DateTime?
+  actualEndTime   DateTime?
 
-  notes          String?
-  customFields   Json?
+  notes        String?
+  customFields Json?
 
   // Snapshots
-  serviceName    String
-  price          Decimal      @db.Decimal(12, 2)
-  pricingModel   PricingModel
+  serviceName  String
+  price        Decimal      @db.Decimal(12, 2)
+  pricingModel PricingModel
 
   // Relations
-  staff          BookingStaff[]
-  resources      BookingResource[]
-  materials      BookingConsumedMaterial[]
+  staff     BookingStaff[]
+  resources BookingResource[]
+  materials BookingConsumedMaterial[]
 
-  recurrenceId   String?
-  recurrence     BookingRecurrence? @relation(fields: [recurrenceId], references: [id], onDelete: SetNull)
+  recurrenceId String?
+  recurrence   BookingRecurrence? @relation(fields: [recurrenceId], references: [id], onDelete: SetNull)
 
-  transactionId  String?
-  transaction    Transaction? @relation(fields: [transactionId], references: [id])
+  transactionId   String?
+  transaction     Transaction?            @relation(fields: [transactionId], references: [id])
   transactionItem TransactionServiceItem?
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  revision Int            @default(1)
+  events   BookingEvent[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([serviceId])
   @@index([customerId])
   @@index([status])
+  @@index([organizationId, scheduledStartTime, status])
+  @@index([locationId, scheduledStartTime])
   @@map("service_booking")
 }
 
 model BookingRecurrence {
-  id              String           @id @default(cuid())
-  organizationId  String
-  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  rule            String           // RRULE string
-  startDate       DateTime
-  endDate         DateTime?
+  rule      String // RRULE string
+  startDate DateTime
+  endDate   DateTime?
 
-  bookings        ServiceBooking[]
+  bookings ServiceBooking[]
 
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@map("booking_recurrence")
 }
 
 model StaffShift {
-  id              String       @id @default(cuid())
-  memberId        String
-  member          Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  memberId       String
+  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  dayOfWeek       Int          // 0 (Sunday) to 6 (Saturday)
-  startTime       String       // "HH:mm"
-  endTime         String       // "HH:mm"
+  dayOfWeek      Int // 0 (Sunday) to 6 (Saturday)
+  startTime      String // "HH:mm"
+  endTime        String // "HH:mm"
+  locationId     String?
+  effectiveFrom  DateTime?
+  effectiveUntil DateTime?
 
-  isActive        Boolean      @default(true)
+  isActive Boolean @default(true)
 
-  breaks          StaffBreak[]
+  breaks StaffBreak[]
 
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([memberId, dayOfWeek, startTime])
   @@index([organizationId])
+  @@index([organizationId, dayOfWeek, isActive])
+  @@index([memberId, effectiveFrom, effectiveUntil])
   @@map("staff_shift")
 }
 
 model StaffBreak {
-  id              String     @id @default(cuid())
-  shiftId         String
-  shift           StaffShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  id      String     @id @default(cuid())
+  shiftId String
+  shift   StaffShift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
 
-  startTime       String     // "HH:mm"
-  endTime         String     // "HH:mm"
-  description     String?
+  startTime   String // "HH:mm"
+  endTime     String // "HH:mm"
+  description String?
 
   @@map("staff_break")
 }
 
 model BookingVerificationCode {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  phoneNumber    String?
-  email          String?
-  code           String
+  phoneNumber String?
+  email       String?
+  code        String
 
-  expiresAt      DateTime
-  verifiedAt     DateTime?
+  expiresAt  DateTime
+  verifiedAt DateTime?
 
-  createdAt      DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([organizationId])
   @@index([phoneNumber])
@@ -272,36 +302,79 @@ model BookingVerificationCode {
 }
 
 model BookingStaff {
-  id             String       @id @default(cuid())
+  id             String                  @id @default(cuid())
   bookingId      String
-  booking        ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking        ServiceBooking          @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   memberId       String
-  member         Member       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member         Member                  @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  status         BookingAssignmentStatus @default(PENDING)
+  respondedAt    DateTime?
+  responseReason String?
 
   @@unique([bookingId, memberId])
+  @@index([memberId, status])
   @@map("booking_staff")
 }
 
-model BookingResource {
-  id             String       @id @default(cuid())
+model StaffScheduleOverride {
+  id             String               @id @default(cuid())
+  organizationId String
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  locationId     String?
+  type           ScheduleOverrideType
+  startTime      DateTime
+  endTime        DateTime
+  reason         String?
+  approvedById   String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([organizationId, startTime, endTime])
+  @@index([memberId, startTime, endTime])
+  @@map("staff_schedule_override")
+}
+
+model BookingEvent {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   bookingId      String
-  booking        ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  resourceId     String
-  resource       ServiceResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  booking        ServiceBooking     @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  source         BookingEventSource
+  type           String
+  actorMemberId  String?
+  fromStatus     BookingStatus?
+  toStatus       BookingStatus?
+  metadata       Json?
+  createdAt      DateTime           @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([bookingId, createdAt])
+  @@map("booking_event")
+}
+
+model BookingResource {
+  id         String          @id @default(cuid())
+  bookingId  String
+  booking    ServiceBooking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  resourceId String
+  resource   ServiceResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@unique([bookingId, resourceId])
   @@map("booking_resource")
 }
 
 model BookingConsumedMaterial {
-  id             String       @id @default(cuid())
-  bookingId      String
-  booking        ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  id        String         @id @default(cuid())
+  bookingId String
+  booking   ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  variantId      String
-  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
-  quantity       Decimal      @db.Decimal(12, 4)
+  quantity Decimal @db.Decimal(12, 4)
 
   @@unique([bookingId, variantId])
   @@map("booking_consumed_material")

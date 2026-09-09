@@ -113,7 +113,7 @@ export class SchemaService {
         name: "lastName",
         label: "Last Name",
         type: CrmFieldType.TEXT,
-        isRequired: true,
+        isRequired: false,
         order: 2,
         isSystem: true,
       },

@@ -40,11 +40,6 @@ const serverSchema = z.object({
   CUSTOMER_GOOGLE_CLIENT_SECRET: z.string().optional(),
   CUSTOMER_AUTH_STRATEGY: z.string().optional(),
 
-  // Slack Integration
-  SLACK_CLIENT_ID: z.string().optional(),
-  SLACK_CLIENT_SECRET: z.string().optional(),
-  SLACK_REDIRECT_URI: z.string().optional(),
-
   // Redis
   REDIS_HOST: z.string().default("localhost"),
   REDIS_PORT: z.coerce.number().default(6379),

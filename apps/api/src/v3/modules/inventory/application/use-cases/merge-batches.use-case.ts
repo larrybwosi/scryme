@@ -35,6 +35,19 @@ export class MergeBatchesUseCase {
     // Map ensures we preserve input order and handle missing IDs (as nulls) for validation.
     const batches = batchIds.map((id) => batchesMap.get(id) || null);
 
+    // SECURITY (Sentinel): IDOR/BOLA Mitigation - Explicitly validate targetLocationId ownership.
+    // Ensure the target inventory location exists and belongs strictly to the caller's organization.
+    const targetLocation = await this.prisma.client.inventoryLocation.findFirst({
+      where: {
+        id: targetLocationId,
+        organizationId,
+      },
+    });
+
+    if (!targetLocation) {
+      throw new NotFoundException("Target location not found");
+    }
+
     // Validation
     const firstBatch = batches[0];
     if (!firstBatch || firstBatch.organizationId !== organizationId) {

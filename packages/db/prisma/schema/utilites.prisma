@@ -511,3 +511,24 @@ model Address {
   @@index([businessAccountId])
   @@map("address")
 }
+
+model PosReleaseBinary {
+  id          String   @id @default(cuid())
+  version     String
+  platform    String   // "windows", "macos", "linux"
+  variant     String   // "retail", "restaurant", "supermarket", "pharmacy", "standalone"
+  fileName    String
+  fileUrl     String
+  storageKey  String
+  sizeBytes   BigInt?
+  mimeType    String?
+  sha256      String?
+  releaseTag  String
+  isLatest    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([platform, variant, version])
+  @@index([platform, variant, isLatest])
+  @@map("pos_release_binary")
+}

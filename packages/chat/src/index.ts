@@ -1,4 +1,32 @@
 import { chat } from "./client";
+import type { CustomMessage } from "@scryme/chat";
+
+export {
+  CustomMessageSchema,
+  MessageNodeSchema,
+  ConditionSchema,
+  ValidationSchema,
+  DataSourceSchema,
+  CustomMessageThemeSchema,
+  PredefinedCustomMessageTypeSchema,
+  MessageActionSchema,
+  createApprovalMessage,
+  createReportMessage,
+  createFormMessage,
+  createTaskCardMessage,
+  type CustomMessage,
+  type MessageNode,
+  type ConditionSchemaType,
+  type ValidationSchemaType,
+  type CustomMessageTheme,
+  type PredefinedCustomMessageType,
+  type MessageAction,
+  type CreateApprovalMessageOptions,
+  type CreateReportMessageOptions,
+  type CreateFormMessageOptions,
+  type CreateTaskCardMessageOptions,
+  type FormFieldConfig,
+} from "@scryme/chat";
 
 export interface ScrymeChatWorkspace {
   id: string;
@@ -11,6 +39,8 @@ export interface ScrymeChatMessage {
   attachments?: any[];
   actions?: ScrymeChatAction[];
   threadId?: string;
+  customMessage?: CustomMessage;
+  metadata?: Record<string, any>;
 }
 
 export interface ScrymeChatAction {
@@ -102,7 +132,7 @@ export class ScrymeChatApiClient {
       ownerEmail: ownerEmail || "admin@scryme.tech",
       ...(initialMembers ? { initialMembers } : {}),
     });
-      console.log(data)
+    console.log(data);
     const workspace = data?.data?.workspace || data?.data?.workspace;
     return {
       id: workspace.id,
@@ -166,9 +196,6 @@ export class ScrymeChatApiClient {
   }
 
   /**
-   * Add a member to a workspace using V3 API.
-   */
-  /**
    * List members in a workspace using V3 API.
    */
   async listWorkspaceMembers(workspaceSlug: string): Promise<any[]> {
@@ -180,6 +207,9 @@ export class ScrymeChatApiClient {
     }
   }
 
+  /**
+   * Add a member to a workspace using V3 API.
+   */
   async addWorkspaceMember(
     workspaceSlug: string,
     email: string,
@@ -221,12 +251,18 @@ export class ScrymeChatApiClient {
       workspaceSlug,
       channelSlugOrId,
     );
-    return chat.channel.message.create(channelId, {
+    const metadata = {
+      ...(message.metadata || {}),
+      ...(message.customMessage ? { customMessage: message.customMessage } : {}),
+    };
+    const payload: any = {
       content: message.content,
       attachments: message.attachments,
-      // actions: message.actions,
+      actions: message.actions,
       threadId: message.threadId,
-    });
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+    };
+    return chat.channel.message.create(channelId, payload);
   }
 
   /**
@@ -242,11 +278,17 @@ export class ScrymeChatApiClient {
       workspaceSlug,
       channelSlugOrId,
     );
-    return chat.message.update(channelId, messageId, {
+    const metadata = {
+      ...(message.metadata || {}),
+      ...(message.customMessage ? { customMessage: message.customMessage } : {}),
+    };
+    const payload: any = {
       content: message.content,
-      // actions: message.actions,
-      // attachments: message.attachments,
-    });
+      actions: message.actions,
+      attachments: message.attachments,
+      ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
+    };
+    return chat.message.update(channelId, messageId, payload);
   }
 
   /**
@@ -262,7 +304,7 @@ export class ScrymeChatApiClient {
       return {
         id: member.userId || member.user?.id || member.id,
         email: member.user?.email,
-        name:member.user?.name,
+        name: member.user?.name,
       };
     }
     return null;

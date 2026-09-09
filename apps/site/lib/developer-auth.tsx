@@ -31,6 +31,15 @@ export interface OAuthClientItem {
   public?: boolean;
 }
 
+export interface WebhookItem {
+  id: string;
+  url: string;
+  events: string[];
+  isActive: boolean;
+  secret?: string;
+  createdAt: string;
+}
+
 export interface DeveloperUser {
   id: string;
   name: string;
@@ -48,24 +57,36 @@ interface DeveloperAuthContextType {
   logout: () => Promise<void>;
   apiKeys: ApiKeyItem[];
   oauthClients: OAuthClientItem[];
+  webhooks: WebhookItem[];
   fetchOAuthClients: () => Promise<void>;
+  fetchApiKeys: () => Promise<void>;
+  fetchWebhooks: () => Promise<void>;
   createApiKey: (name: string, environment: "LIVE" | "TEST") => Promise<ApiKeyItem>;
-  toggleApiKey: (id: string) => void;
-  deleteApiKey: (id: string) => void;
+  toggleApiKey: (id: string) => Promise<void>;
+  deleteApiKey: (id: string) => Promise<void>;
   createOAuthClient: (data: { name: string; redirectUris: string[]; scopes?: string[]; corsOrigins?: string[]; uri?: string; tos?: string; policy?: string; public?: boolean }) => Promise<OAuthClientItem>;
   rotateOAuthSecret: (id: string) => Promise<string>;
   toggleOAuthClient: (id: string) => Promise<void>;
   deleteOAuthClient: (id: string) => Promise<void>;
+  createWebhook: (url: string, events: string[]) => Promise<WebhookItem>;
+  deleteWebhook: (id: string) => Promise<void>;
 }
 
 const DeveloperAuthContext = createContext<DeveloperAuthContextType | undefined>(undefined);
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
+const getNormalizedApiUrl = (path: string): string => {
+  const base = (process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech").replace(/\/$/, "");
+  const hasApiPrefix = base.endsWith("/api");
+  const normalizedBase = hasApiPrefix ? base : `${base}/api`;
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return `${normalizedBase}${normalizedPath}`;
+};
 
 export function DeveloperAuthProvider({ children }: { children: React.ReactNode }) {
   const session = authClient.useSession();
   const [apiKeys, setApiKeys] = useState<ApiKeyItem[]>([]);
   const [oauthClients, setOauthClients] = useState<OAuthClientItem[]>([]);
+  const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
 
   const sessionUser = session?.data?.user;
 
@@ -101,9 +122,22 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     };
   };
 
+  const mapRawApiKey = (k: any): ApiKeyItem => {
+    return {
+      id: k.id,
+      name: k.name || "API Key",
+      keyPrefix: k.keyPrefix || k.prefix || "sk_",
+      fullKey: k.fullKey,
+      environment: k.environment || "LIVE",
+      isActive: k.isActive !== undefined ? k.isActive : (k.enabled ?? true),
+      createdAt: k.createdAt ? new Date(k.createdAt).toISOString() : new Date().toISOString(),
+      lastUsedAt: k.lastUsedAt || (k.lastRequest ? new Date(k.lastRequest).toISOString() : undefined),
+    };
+  };
+
   const fetchOAuthClients = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients`, {
+      const res = await fetch(getNormalizedApiUrl("/v3/auth/oauth/clients"), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -125,15 +159,74 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
+  const fetchApiKeys = useCallback(async () => {
+    try {
+      const res = await fetch(getNormalizedApiUrl("/v3/auth/api-keys"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const body = await res.json();
+        const data = body.data || body;
+        if (Array.isArray(data)) {
+          setApiKeys(data.map(mapRawApiKey));
+        }
+      } else {
+        console.warn("Failed to fetch API keys from API:", res.status);
+      }
+    } catch (err) {
+      console.error("Failed fetching API keys:", err);
+    }
+  }, []);
+
+  const fetchWebhooks = useCallback(async () => {
+    try {
+      const res = await fetch(getNormalizedApiUrl("/v3/developer/webhooks"), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const body = await res.json();
+        const data = body.data || body;
+        if (Array.isArray(data)) {
+          setWebhooks(
+            data.map((w: any) => ({
+              id: w.id,
+              url: w.url,
+              events: w.events || [],
+              isActive: w.isActive ?? true,
+              secret: w.secret,
+              createdAt: w.createdAt ? new Date(w.createdAt).toISOString() : new Date().toISOString(),
+            }))
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Failed fetching webhooks:", err);
+    }
+  }, []);
+
   const userId = user?.id;
 
   useEffect(() => {
     if (userId) {
       fetchOAuthClients();
+      fetchApiKeys();
+      fetchWebhooks();
     } else {
       setOauthClients([]);
+      setApiKeys([]);
+      setWebhooks([]);
     }
-  }, [userId, fetchOAuthClients]);
+  }, [userId, fetchOAuthClients, fetchApiKeys, fetchWebhooks]);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -179,32 +272,72 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
   };
 
   const createApiKey = async (name: string, environment: "LIVE" | "TEST"): Promise<ApiKeyItem> => {
-    const randomHex = Math.random().toString(36).substring(2, 10);
-    const secretHex = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const prefix = `sk_${environment.toLowerCase()}_${randomHex}_`;
-    const fullKey = `${prefix}${secretHex}`;
+    const res = await fetch(getNormalizedApiUrl("/v3/auth/api-keys"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ name, environment }),
+    });
 
-    const newKey: ApiKeyItem = {
-      id: `key_${Date.now()}`,
-      name,
-      keyPrefix: prefix,
-      fullKey,
-      environment,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      lastUsedAt: "Just now",
-    };
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.message || errJson.error || `Failed to create API key (${res.status})`);
+    }
 
-    setApiKeys((prev) => [newKey, ...prev]);
-    return newKey;
+    const resBody = await res.json();
+    const createdRaw = resBody.data || resBody;
+    const mapped = mapRawApiKey(createdRaw);
+
+    setApiKeys((prev) => [mapped, ...prev]);
+    return mapped;
   };
 
-  const toggleApiKey = (id: string) => {
-    setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: !k.isActive } : k)));
+  const toggleApiKey = async (id: string) => {
+    const existing = apiKeys.find((k) => k.id === id);
+    if (!existing) return;
+
+    const newActiveState = !existing.isActive;
+    setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: newActiveState } : k)));
+
+    try {
+      const res = await fetch(getNormalizedApiUrl(`/v3/auth/api-keys/${id}/toggle`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: !newActiveState } : k)));
+      }
+    } catch (err) {
+      setApiKeys((prev) => prev.map((k) => (k.id === id ? { ...k, isActive: !newActiveState } : k)));
+      console.error("Error toggling API key status:", err);
+    }
   };
 
-  const deleteApiKey = (id: string) => {
+  const deleteApiKey = async (id: string) => {
     setApiKeys((prev) => prev.filter((k) => k.id !== id));
+
+    try {
+      const res = await fetch(getNormalizedApiUrl(`/v3/auth/api-keys/${id}`), {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        fetchApiKeys();
+      }
+    } catch (err) {
+      console.error("Error deleting API key:", err);
+      fetchApiKeys();
+    }
   };
 
   const createOAuthClient = async (data: {
@@ -220,13 +353,15 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     const payload = {
       name: data.name,
       redirectUris: data.redirectUris,
+      ...(data.scopes ? { scopes: data.scopes } : {}),
+      ...(data.corsOrigins ? { corsOrigins: data.corsOrigins } : {}),
       ...(data.uri ? { uri: data.uri } : {}),
       ...(data.tos ? { tos: data.tos } : {}),
       ...(data.policy ? { policy: data.policy } : {}),
       ...(data.public !== undefined ? { public: data.public } : {}),
     };
 
-    const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients`, {
+    const res = await fetch(getNormalizedApiUrl("/v3/auth/oauth/clients"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -261,21 +396,17 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
       throw new Error("OAuth client not found");
     }
 
-    const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients/${id}`, {
-      method: "PUT",
+    const res = await fetch(getNormalizedApiUrl(`/v3/auth/oauth/clients/${id}/rotate-secret`), {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({
-        name: existing.name,
-        redirectUris: existing.redirectUris,
-      }),
     });
 
     if (!res.ok) {
       const errJson = await res.json().catch(() => ({}));
-      throw new Error(errJson.message || errJson.error || "Failed to update OAuth client");
+      throw new Error(errJson.message || errJson.error || "Failed to rotate OAuth client secret");
     }
 
     const resBody = await res.json();
@@ -300,7 +431,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     );
 
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients/${id}`, {
+      const res = await fetch(getNormalizedApiUrl(`/v3/auth/oauth/clients/${id}`), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -329,7 +460,7 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     setOauthClients((prev) => prev.filter((c) => c.id !== id));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/v3/auth/oauth/clients/${id}`, {
+      const res = await fetch(getNormalizedApiUrl(`/v3/auth/oauth/clients/${id}`), {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -346,6 +477,57 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
     }
   };
 
+  const createWebhook = async (url: string, events: string[]): Promise<WebhookItem> => {
+    const res = await fetch(getNormalizedApiUrl("/v3/developer/webhooks"), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ url, events }),
+    });
+
+    if (!res.ok) {
+      const errJson = await res.json().catch(() => ({}));
+      throw new Error(errJson.message || errJson.error || "Failed to register webhook");
+    }
+
+    const resBody = await res.json();
+    const created = resBody.data || resBody;
+    const item: WebhookItem = {
+      id: created.id || `wh_${Date.now()}`,
+      url: created.url || url,
+      events: created.events || events,
+      isActive: created.isActive ?? true,
+      secret: created.secret || `whsec_${Math.random().toString(36).substring(2, 15)}`,
+      createdAt: created.createdAt ? new Date(created.createdAt).toISOString() : new Date().toISOString(),
+    };
+
+    setWebhooks((prev) => [item, ...prev]);
+    return item;
+  };
+
+  const deleteWebhook = async (id: string) => {
+    setWebhooks((prev) => prev.filter((w) => w.id !== id));
+
+    try {
+      const res = await fetch(getNormalizedApiUrl(`/v3/developer/webhooks/${id}`), {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        fetchWebhooks();
+      }
+    } catch (err) {
+      console.error("Error deleting webhook:", err);
+      fetchWebhooks();
+    }
+  };
+
   return (
     <DeveloperAuthContext.Provider
       value={{
@@ -357,7 +539,10 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
         logout,
         apiKeys,
         oauthClients,
+        webhooks,
         fetchOAuthClients,
+        fetchApiKeys,
+        fetchWebhooks,
         createApiKey,
         toggleApiKey,
         deleteApiKey,
@@ -365,6 +550,8 @@ export function DeveloperAuthProvider({ children }: { children: React.ReactNode 
         rotateOAuthSecret,
         toggleOAuthClient,
         deleteOAuthClient,
+        createWebhook,
+        deleteWebhook,
       }}
     >
       {children}

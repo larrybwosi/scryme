@@ -3,15 +3,21 @@ import Link from "next/link";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
+import { PageBuilder } from "@/components/sections/page-builder";
+import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
-export const metadata: Metadata = {
-  title: "Integrations — Connect Your Ecosystem",
-  description:
-    "Connect Scryme Technologies with other external services.",
-  alternates: {
-    canonical: "/integrations",
-  },
-};
+export const revalidate = 60;
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getCmsPage("integrations");
+  return getPageMetadata({
+    pageSeo: page?.seo,
+    fallbackTitle: "Integrations — Connect Your Ecosystem",
+    fallbackDescription:
+      "Connect Scryme Technologies with other external services.",
+    canonicalPath: "/integrations",
+  });
+}
 
 const integrations = [
   {
@@ -31,7 +37,16 @@ const integrations = [
   },
 ];
 
-export default function IntegrationsPage() {
+export default async function IntegrationsPage() {
+  const cmsPage = await getCmsPage("integrations");
+  if (cmsPage?.sections?.length) {
+    return (
+      <main id="main-content">
+        <PageBuilder sections={cmsPage.sections} />
+      </main>
+    );
+  }
+
   return (
     <main
       style={{ background: colors.inkBg }}

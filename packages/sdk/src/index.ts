@@ -277,11 +277,75 @@ export const getSDK = (config: SDKConfig) => {
         sdk.client.post(`/public/${orgSlug}/services/otp/verify`, data),
       createPublicBooking: (orgSlug: string, data: { serviceId: string; verificationId: string; scheduledStartTime: string; notes?: string }) =>
         sdk.client.post(`/public/${orgSlug}/services/bookings`, data),
+      getBookings: (orgSlug: string, params: SchedulingCalendarParams) =>
+        sdk.client.get(`/${orgSlug}/services/bookings`, { params }),
+      getBooking: (orgSlug: string, bookingId: string) =>
+        sdk.client.get(`/${orgSlug}/services/bookings/${bookingId}`),
+      rescheduleBooking: (orgSlug: string, bookingId: string, data: RescheduleBookingInput) =>
+        sdk.client.patch(`/${orgSlug}/services/bookings/${bookingId}/reschedule`, data),
+      transitionBooking: (orgSlug: string, bookingId: string, data: BookingTransitionInput) =>
+        sdk.client.patch(`/${orgSlug}/services/bookings/${bookingId}/status`, data),
+      respondToAssignment: (orgSlug: string, bookingId: string, data: AssignmentResponseInput) =>
+        sdk.client.patch(`/${orgSlug}/services/bookings/${bookingId}/assignment`, data),
+      getCoverage: (orgSlug: string, params: SchedulingCalendarParams) =>
+        sdk.client.get(`/${orgSlug}/services/calendar/coverage`, { params }),
+      getScheduleOverrides: (orgSlug: string, params: SchedulingCalendarParams) =>
+        sdk.client.get(`/${orgSlug}/services/schedule/overrides`, { params }),
+      createScheduleOverride: (orgSlug: string, memberId: string, data: ScheduleOverrideInput) =>
+        sdk.client.post(`/${orgSlug}/services/staff/${memberId}/overrides`, data),
+      deleteScheduleOverride: (orgSlug: string, overrideId: string) =>
+        sdk.client.delete(`/${orgSlug}/services/schedule/overrides/${overrideId}`),
     },
   };
 
   return sdk;
 };
+
+export type SchedulingBookingStatus =
+  | "REQUESTED"
+  | "SCHEDULED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "NOSHOW";
+
+export interface SchedulingCalendarParams {
+  from: string;
+  to: string;
+  memberId?: string;
+  locationId?: string;
+  status?: SchedulingBookingStatus[];
+  limit?: number;
+  cursor?: string;
+}
+
+export interface RescheduleBookingInput {
+  scheduledStartTime: string;
+  scheduledEndTime?: string;
+  staffIds?: string[];
+  resourceIds?: string[];
+  revision: number;
+}
+
+export interface BookingTransitionInput {
+  status: SchedulingBookingStatus;
+  revision: number;
+  reason?: string;
+}
+
+export interface AssignmentResponseInput {
+  response: "ACCEPTED" | "DECLINED";
+  revision: number;
+  reason?: string;
+}
+
+export interface ScheduleOverrideInput {
+  type: "WORKING" | "UNAVAILABLE" | "LEAVE" | "BLACKOUT";
+  startTime: string;
+  endTime: string;
+  reason?: string;
+  locationId?: string;
+}
 
 export interface BakeryBatchListResponse {
   data: any[];

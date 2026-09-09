@@ -60,7 +60,8 @@ export default function PettyCashPage() {
         method: 'GET',
         path: `api/v3/:orgSlug/pos/petty-cash/funds`,
       });
-      setFunds(response.data || []);
+      const fundsList = Array.isArray(response) ? response : (response?.data || []);
+      setFunds(fundsList);
     } catch (error) {
       console.error('Failed to fetch petty cash funds:', error);
     } finally {
@@ -76,7 +77,8 @@ export default function PettyCashPage() {
         method: 'GET',
         path: `api/v3/:orgSlug/pos/petty-cash/transactions?limit=10`,
       });
-      setTransactions(response.data || []);
+      const txList = Array.isArray(response) ? response : (response?.data || []);
+      setTransactions(txList);
     } catch (error) {
       console.error('Failed to fetch petty cash transactions:', error);
     } finally {

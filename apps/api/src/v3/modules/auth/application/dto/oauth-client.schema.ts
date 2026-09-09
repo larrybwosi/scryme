@@ -5,6 +5,8 @@ export const CreateOAuthClientSchema = z.object({
   redirectUris: z
     .array(z.string().url("Must be a valid URL"))
     .min(1, "At least one redirect URI is required"),
+  scopes: z.array(z.string()).optional(),
+  corsOrigins: z.array(z.string()).optional(),
   icon: z.string().url("Must be a valid URL").optional(),
   uri: z.string().url("Must be a valid URL").optional(),
   tos: z.string().url("Must be a valid URL").optional(),

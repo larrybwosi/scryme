@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   UseGuards,
@@ -41,6 +42,13 @@ import {
   CompleteBookingDto,
 } from "../../application/dto/service.dto";
 import { GetShiftsQueryDto } from "../../application/dto/shift.dto";
+import {
+  AssignmentResponseDto,
+  BookingTransitionDto,
+  CalendarQueryDto,
+  CreateScheduleOverrideDto,
+  RescheduleBookingDto,
+} from "../../application/dto/scheduling.dto";
 import { BookingStatus } from "@repo/db";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 
@@ -339,8 +347,16 @@ export class ServicesController {
   })
   @ApiResponse({ status: 200, description: "Returns all service bookings for the organization" })
   @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
-  async getBookings(@Req() req: any) {
-    return this.bookingService.getBookings(req.organization.id);
+  async getBookings(@Req() req: any, @Query() query: CalendarQueryDto) {
+    return this.bookingService.getBookings(req.organization.id, {
+      from: query.from ? new Date(query.from) : undefined,
+      to: query.to ? new Date(query.to) : undefined,
+      memberId: query.memberId,
+      locationId: query.locationId,
+      status: query.status,
+      limit: query.limit,
+      cursor: query.cursor,
+    });
   }
 
   @Get("bookings/:id")
@@ -382,9 +398,17 @@ export class ServicesController {
   async updateBookingStatus(
     @Req() req: any,
     @Param("id") id: string,
-    @Body("status") status: BookingStatus
+    @Body() dto: BookingTransitionDto
   ) {
-    return this.bookingService.updateBookingStatus(req.organization.id, id, status);
+    return this.bookingService.updateBookingStatus(
+      req.organization.id,
+      id,
+      dto.status,
+      dto.revision,
+      req.v3Context?.memberId,
+      undefined,
+      dto.reason,
+    );
   }
 
   @Patch("bookings/:id/complete")
@@ -406,6 +430,91 @@ export class ServicesController {
     @Body() dto: CompleteBookingDto
   ) {
     return this.bookingService.completeBooking(req.organization.id, id, req.user.id, dto);
+  }
+
+  @Patch("bookings/:id/reschedule")
+  @Permissions("services:write")
+  @ApiOperation({ summary: "Reschedule and optionally reassign a booking", operationId: "Services_RescheduleBooking" })
+  async rescheduleBooking(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() dto: RescheduleBookingDto,
+  ) {
+    return this.bookingService.rescheduleBooking(
+      req.organization.id,
+      id,
+      {
+        ...dto,
+        scheduledStartTime: new Date(dto.scheduledStartTime),
+        scheduledEndTime: dto.scheduledEndTime ? new Date(dto.scheduledEndTime) : undefined,
+      },
+      req.v3Context?.memberId,
+    );
+  }
+
+  @Patch("bookings/:id/assignment")
+  @Permissions("services:write")
+  @ApiOperation({ summary: "Accept or decline a staff assignment", operationId: "Services_RespondToAssignment" })
+  async respondToAssignment(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() dto: AssignmentResponseDto,
+  ) {
+    return this.bookingService.respondToAssignment(
+      req.organization.id,
+      id,
+      req.v3Context.memberId,
+      dto.response as any,
+      dto.revision,
+      dto.reason,
+    );
+  }
+
+  @Get("calendar/coverage")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "Get booking and roster coverage", operationId: "Services_GetCoverage" })
+  async getCoverage(@Req() req: any, @Query() query: CalendarQueryDto) {
+    return this.staffScheduling.getCoverage(
+      req.organization.id,
+      new Date(query.from),
+      new Date(query.to),
+      query.locationId,
+    );
+  }
+
+  @Get("schedule/overrides")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "List leave and schedule overrides", operationId: "Services_GetScheduleOverrides" })
+  async getScheduleOverrides(@Req() req: any, @Query() query: CalendarQueryDto) {
+    return this.staffScheduling.getOverrides(
+      req.organization.id,
+      new Date(query.from),
+      new Date(query.to),
+      query.memberId,
+    );
+  }
+
+  @Post("staff/:memberId/overrides")
+  @Permissions("services:manage")
+  @ApiOperation({ summary: "Create leave or a one-off schedule override", operationId: "Services_CreateScheduleOverride" })
+  async createScheduleOverride(
+    @Req() req: any,
+    @Param("memberId") memberId: string,
+    @Body() dto: CreateScheduleOverrideDto,
+  ) {
+    return this.staffScheduling.createOverride(req.organization.id, memberId, {
+      ...dto,
+      startTime: new Date(dto.startTime),
+      endTime: new Date(dto.endTime),
+      approvedById: req.v3Context?.memberId,
+    });
+  }
+
+  @Delete("schedule/overrides/:id")
+  @Permissions("services:manage")
+  @ApiOperation({ summary: "Delete a schedule override", operationId: "Services_DeleteScheduleOverride" })
+  async deleteScheduleOverride(@Req() req: any, @Param("id") id: string) {
+    return this.staffScheduling.deleteOverride(req.organization.id, id);
   }
 
   @Post("bookings/recurrence/:recurrenceId/cancel")

@@ -12,20 +12,42 @@ export class OpenPanelService implements OnModuleInit {
     const clientSecret = env.OPENPANEL_CLIENT_SECRET;
     const host = env.OPENPANEL_HOST;
 
-    if (clientId && clientSecret) {
+    const isValidClientId =
+      clientId &&
+      !clientId.includes("PLACEHOLDER") &&
+      clientId !== "your-openpanel-client-id";
+
+    if (isValidClientId) {
       try {
+        const validSecret =
+          clientSecret &&
+          !clientSecret.includes("PLACEHOLDER") &&
+          clientSecret !== "your-openpanel-client-secret"
+            ? clientSecret
+            : undefined;
+
+        const validHost =
+          host &&
+          !host.includes("PLACEHOLDER")
+            ? host
+            : undefined;
+
         this.client = new OpenPanel({
           clientId,
-          clientSecret,
-          apiUrl: host || undefined,
+          clientSecret: validSecret,
+          apiUrl: validHost,
         });
         this.logger.log("OpenPanel SDK initialized successfully");
       } catch (error) {
         this.logger.error("Failed to initialize OpenPanel SDK", error);
       }
     } else {
-      this.logger.log("OpenPanel credentials missing, tracking disabled");
+      this.logger.log("OpenPanel credentials missing or unconfigured, backend tracking disabled");
     }
+  }
+
+  async trackEvent(event: string, profileId?: string, properties?: Record<string, unknown>) {
+    await this.track({ event, profileId, properties });
   }
 
   async track(payload: { profileId?: string; event: string; properties?: Record<string, unknown> }) {
