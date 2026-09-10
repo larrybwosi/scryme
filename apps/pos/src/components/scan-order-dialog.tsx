@@ -39,14 +39,18 @@ export function ScanOrderDialog({ open, onOpenChange }: ScanOrderDialogProps) {
 
   // Focus input when opened
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
     if (open) {
-      setTimeout(() => {
+      timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 100);
       setCode('');
       setDetails(null);
       setError(null);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [open]);
 
   // Listen for global scanner events when dialog is open

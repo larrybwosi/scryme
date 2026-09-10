@@ -98,12 +98,16 @@ const DropdownFilter = ({ config, className }: DropdownFilterProps) => {
     : config.options;
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
     if (isOpen && config.searchable) {
       // Small delay to allow animation to start
-      setTimeout(() => searchInputRef.current?.focus(), 50);
+      timer = setTimeout(() => searchInputRef.current?.focus(), 50);
     } else {
       setSearchTerm('');
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, [isOpen, config.searchable]);
 
   const handleSelect = (value: string) => {

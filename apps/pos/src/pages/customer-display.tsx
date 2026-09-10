@@ -107,6 +107,7 @@ export default function CustomerDisplay() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [promoIndex, setPromoIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const completionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [paymentDetails, setPaymentDetails] = useState<PaymentPayload>({ type: 'CLEAR' });
   const [showCompletionMessage, setShowCompletionMessage] = useState(false);
 
@@ -131,7 +132,8 @@ export default function CustomerDisplay() {
       if (payload.type === 'CLEAR_COMPLETED') {
         setPaymentDetails({ type: 'CLEAR' });
         setShowCompletionMessage(true);
-        setTimeout(() => setShowCompletionMessage(false), 4000);
+        if (completionTimeoutRef.current) clearTimeout(completionTimeoutRef.current);
+        completionTimeoutRef.current = setTimeout(() => setShowCompletionMessage(false), 4000);
       } else {
         setPaymentDetails(payload);
       }
@@ -140,6 +142,7 @@ export default function CustomerDisplay() {
     return () => {
       clearInterval(timer);
       clearInterval(promoTimer);
+      if (completionTimeoutRef.current) clearTimeout(completionTimeoutRef.current);
       unlistenCart.then(f => f());
       unlistenPayment.then(f => f());
     };
