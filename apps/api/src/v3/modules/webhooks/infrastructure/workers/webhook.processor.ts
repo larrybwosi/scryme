@@ -15,7 +15,7 @@ export class WebhookProcessor extends WorkerHost {
 
   async process(job: Job<any, any, string>): Promise<any> {
     if (job.name === "deliver") {
-      const { subscriptionId, event, payload, url, secret } = job.data;
+      const { subscriptionId, event, payload, url, secret, headers: customHeaders } = job.data;
 
       // @security Validate URL to prevent SSRF
       if (!(await isSafeUrl(url))) {
@@ -36,21 +36,25 @@ export class WebhookProcessor extends WorkerHost {
         event,
         payload,
       );
-      const signature = this.webhookService.generateSignature(payload, secret);
+      const signature = secret ? this.webhookService.generateSignature(payload, secret) : "";
 
       try {
-        if (!(await isSafeUrl(url))) {
-          throw new Error(`Potentially unsafe webhook URL: ${url}`);
-        }
+        const dispatchHeaders: Record<string, string> = {
+          "Content-Type": "application/json",
+          "User-Agent": "Dealio-WebhookEngine/1.0",
+          "X-Dealio-Event": event,
+          ...(signature && {
+            "X-Dealio-Signature": signature,
+            "X-Hub-Signature-256": `sha256=${signature}`,
+          }),
+          ...(customHeaders || {}),
+        };
 
         const response = await fetch(url, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Dealio-Signature": signature,
-            "X-Dealio-Event": event,
-          },
-          body: JSON.stringify(payload),
+          headers: dispatchHeaders,
+          body: typeof payload === "string" ? payload : JSON.stringify(payload),
+          signal: AbortSignal.timeout(10000),
         });
 
         const responseBody = await response.text();

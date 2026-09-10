@@ -343,9 +343,25 @@ export class WebhookService {
   }
 
   generateSignature(payload: any, secret: string): string {
+    const rawPayload =
+      typeof payload === "string" ? payload : JSON.stringify(payload);
     return crypto
       .createHmac("sha256", secret)
-      .update(JSON.stringify(payload))
+      .update(rawPayload)
       .digest("hex");
+  }
+
+  verifySignature(secret: string, payload: any, signatureHeader: string): boolean {
+    if (!secret || !signatureHeader) return false;
+
+    const rawPayload =
+      typeof payload === "string" ? payload : JSON.stringify(payload);
+    const expectedSig = this.generateSignature(rawPayload, secret);
+    const cleanSig = signatureHeader.replace(/^sha256=/, "");
+
+    const expectedHash = crypto.createHash("sha256").update(expectedSig).digest();
+    const actualHash = crypto.createHash("sha256").update(cleanSig).digest();
+
+    return crypto.timingSafeEqual(expectedHash, actualHash);
   }
 }
