@@ -22,6 +22,14 @@ export class PhysicalReconciliationUseCase {
   ) {}
 
   async generateCountSheet(organizationId: string, locationId: string) {
+    // SECURITY (Sentinel): IDOR/BOLA Prevention - Verify locationId belongs to organizationId
+    const location = await this.prisma.client.inventoryLocation.findFirst({
+      where: { id: locationId, organizationId },
+    });
+    if (!location) {
+      throw new NotFoundException("Location not found");
+    }
+
     /**
      * OPTIMIZATION (Bolt ⚡): Replaced broad 'include' statements with a highly targeted nested 'select' block.
      * Fetching only essential scalar fields (sku, name, productName) avoids over-fetching heavy fields
@@ -62,6 +70,14 @@ export class PhysicalReconciliationUseCase {
     dto: SubmitReconciliationDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
+      // SECURITY (Sentinel): IDOR/BOLA Prevention - Verify locationId belongs to organizationId
+      const location = await tx.inventoryLocation.findFirst({
+        where: { id: dto.locationId, organizationId },
+      });
+      if (!location) {
+        throw new NotFoundException("Location not found");
+      }
+
       // ⚡ Bolt Optimization: Batch fetch all relevant stock records in a single query
       // to eliminate N+1 database round-trips.
       const variantIds = dto.items.map((i) => i.variantId);

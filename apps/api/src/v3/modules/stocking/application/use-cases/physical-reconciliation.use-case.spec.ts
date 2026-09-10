@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { PhysicalReconciliationUseCase } from "./physical-reconciliation.use-case";
+import { NotFoundException } from "@nestjs/common";
 import { ReconciliationStatus } from "@repo/db";
 
 describe("PhysicalReconciliationUseCase", () => {
@@ -14,6 +15,9 @@ describe("PhysicalReconciliationUseCase", () => {
 
   beforeEach(() => {
     mockTx = {
+      inventoryLocation: {
+        findFirst: vi.fn(),
+      },
       productVariantStock: {
         findMany: vi.fn(),
         update: vi.fn(),
@@ -41,6 +45,7 @@ describe("PhysicalReconciliationUseCase", () => {
     prisma = {
       client: {
         $transaction: vi.fn(async (callback) => await callback(mockTx)),
+        inventoryLocation: mockTx.inventoryLocation,
         productVariantStock: mockTx.productVariantStock,
         stockReconciliation: mockTx.stockReconciliation,
       },
@@ -58,6 +63,11 @@ describe("PhysicalReconciliationUseCase", () => {
 
   describe("generateCountSheet", () => {
     it("should fetch stock with targeted select block and map correctly", async () => {
+      mockTx.inventoryLocation.findFirst.mockResolvedValue({
+        id: mockLocationId,
+        organizationId: mockOrgId,
+      });
+
       const mockStocks = [
         {
           variantId: "var-1",
@@ -78,6 +88,10 @@ describe("PhysicalReconciliationUseCase", () => {
         mockOrgId,
         mockLocationId,
       );
+
+      expect(mockTx.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: mockLocationId, organizationId: mockOrgId },
+      });
 
       // Verify targeted select database call
       expect(mockTx.productVariantStock.findMany).toHaveBeenCalledWith({
@@ -110,10 +124,30 @@ describe("PhysicalReconciliationUseCase", () => {
         },
       ]);
     });
+
+    it("should throw NotFoundException if location does not belong to organization", async () => {
+      mockTx.inventoryLocation.findFirst.mockResolvedValue(null);
+
+      await expect(
+        physicalReconciliationUseCase.generateCountSheet(
+          mockOrgId,
+          "unowned-loc",
+        ),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockTx.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "unowned-loc", organizationId: mockOrgId },
+      });
+    });
   });
 
   describe("submit", () => {
     it("should submit reconciliation sheet and create record in a transaction", async () => {
+      mockTx.inventoryLocation.findFirst.mockResolvedValue({
+        id: mockLocationId,
+        organizationId: mockOrgId,
+      });
+
       mockTx.productVariantStock.findMany.mockResolvedValue([
         {
           variantId: "var-1",
@@ -184,6 +218,33 @@ describe("PhysicalReconciliationUseCase", () => {
       });
 
       expect(result).toEqual({ id: "rec-123" });
+    });
+
+    it("should throw NotFoundException if submission location does not belong to organization", async () => {
+      mockTx.inventoryLocation.findFirst.mockResolvedValue(null);
+
+      const dto = {
+        locationId: "unowned-loc",
+        description: "Year-end audit",
+        items: [
+          {
+            variantId: "var-1",
+            actualQuantity: 12,
+          },
+        ],
+      };
+
+      await expect(
+        physicalReconciliationUseCase.submit(
+          mockOrgId,
+          mockMemberId,
+          dto,
+        ),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockTx.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "unowned-loc", organizationId: mockOrgId },
+      });
     });
   });
 
