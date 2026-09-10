@@ -24,6 +24,11 @@ export class CreateWebhookDto {
   @IsArray()
   @IsString({ each: true })
   events: string[];
+
+  @ApiPropertyOptional({ example: { "X-Custom-Auth": "SecretToken" } })
+  @IsOptional()
+  @IsObject()
+  headers?: Record<string, string>;
 }
 
 export class UpdateWebhookDto {
@@ -47,6 +52,11 @@ export class UpdateWebhookDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ example: { "X-Custom-Auth": "SecretToken" } })
+  @IsOptional()
+  @IsObject()
+  headers?: Record<string, string>;
 }
 
 export class CreateIncomingWebhookDto {
