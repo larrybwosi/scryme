@@ -79,21 +79,25 @@ export async function initializeCOA() {
         { name: "Operating Expenses", code: "6000", type: AccountType.EXPENSE, subType: AccountSubType.OPERATING_EXPENSE },
     ];
 
-    for (const account of standardAccounts) {
-        await db.ledgerAccount.upsert({
-            where: {
-                organizationId_code: {
-                    organizationId: auth.organizationId,
-                    code: account.code,
+    // Parallelize upsert operations across all standard accounts using Promise.all
+    // Collapses execution latency from 10 sequential roundtrips to 1 concurrent roundtrip
+    await Promise.all(
+        standardAccounts.map(account =>
+            db.ledgerAccount.upsert({
+                where: {
+                    organizationId_code: {
+                        organizationId: auth.organizationId,
+                        code: account.code,
+                    },
                 },
-            },
-            update: {},
-            create: {
-                ...account,
-                organizationId: auth.organizationId,
-            },
-        });
-    }
+                update: {},
+                create: {
+                    ...account,
+                    organizationId: auth.organizationId,
+                },
+            })
+        )
+    );
 
     revalidatePath("/finance/accounting/coa");
     return { success: true };
