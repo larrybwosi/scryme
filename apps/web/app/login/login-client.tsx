@@ -103,20 +103,47 @@ function LoginPageContent({
               router.push("/dashboard");
             }
           },
-          onError: (ctx: { error?: { message?: string } }) => {
+          onError: (ctx: { error?: { message?: string; status?: number } }) => {
             setLoginStatus("error");
-            toast.error(ctx.error?.message || "Passkey authentication failed.");
+            const isRateLimit =
+              ctx.error?.status === 429 ||
+              ctx.error?.message?.includes("TOO_MANY_REQUESTS") ||
+              ctx.error?.message?.includes("429") ||
+              ctx.error?.message?.includes("Too many requests");
+            toast.error(
+              isRateLimit
+                ? "Too many login attempts. Please wait a moment and try again."
+                : ctx.error?.message || "Passkey authentication failed.",
+            );
           },
         },
       });
 
       if (result?.error) {
         setLoginStatus("error");
-        toast.error(result.error.message || "Passkey authentication failed.");
+        const isRateLimit =
+          result.error.status === 429 ||
+          result.error.message?.includes("TOO_MANY_REQUESTS") ||
+          result.error.message?.includes("429") ||
+          result.error.message?.includes("Too many requests");
+        toast.error(
+          isRateLimit
+            ? "Too many login attempts. Please wait a moment and try again."
+            : result.error.message || "Passkey authentication failed.",
+        );
       }
     } catch (error: any) {
       setLoginStatus("error");
-      toast.error(error?.message || "Passkey authentication failed.");
+      const isRateLimit =
+        error?.status === 429 ||
+        error?.message?.includes("TOO_MANY_REQUESTS") ||
+        error?.message?.includes("429") ||
+        error?.message?.includes("Too many requests");
+      toast.error(
+        isRateLimit
+          ? "Too many login attempts. Please wait a moment and try again."
+          : error?.message || "Passkey authentication failed.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -131,9 +158,18 @@ function LoginPageContent({
         provider,
         callbackURL: callbackUrl || "/dashboard",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error);
-      toast.error("Login failed. Please try again.");
+      const isRateLimit =
+        error?.status === 429 ||
+        error?.message?.includes("TOO_MANY_REQUESTS") ||
+        error?.message?.includes("429") ||
+        error?.message?.includes("Too many requests");
+      toast.error(
+        isRateLimit
+          ? "Too many login attempts. Please wait a moment and try again."
+          : "Login failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -157,11 +193,29 @@ function LoginPageContent({
         }
       } else if (result.error) {
         setLoginStatus("error");
-        toast.error(result.error.message || "Invalid credentials");
+        const isRateLimit =
+          result.error.status === 429 ||
+          result.error.message?.includes("TOO_MANY_REQUESTS") ||
+          result.error.message?.includes("429") ||
+          result.error.message?.includes("Too many requests");
+        toast.error(
+          isRateLimit
+            ? "Too many login attempts. Please wait a moment and try again."
+            : result.error.message || "Invalid credentials",
+        );
       }
-    } catch (error) {
+    } catch (error: any) {
       setLoginStatus("error");
-      toast.error("A system error occurred. Please try again later.");
+      const isRateLimit =
+        error?.status === 429 ||
+        error?.message?.includes("TOO_MANY_REQUESTS") ||
+        error?.message?.includes("429") ||
+        error?.message?.includes("Too many requests");
+      toast.error(
+        isRateLimit
+          ? "Too many login attempts. Please wait a moment and try again."
+          : "A system error occurred. Please try again later.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -170,14 +224,21 @@ function LoginPageContent({
   const handleForgotPassword = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     try {
-      await requestPasswordReset({
+      const { data: result, error } = await authClient.forgetPassword({
         email: data.email,
         redirectTo: "/reset-password",
       });
-      setLoginStatus("reset-email-sent");
-      toast.success("Reset email sent!");
-    } catch (error) {
-      toast.error("Failed to send reset email. Please contact support.");
+
+      if (error) {
+        toast.error(error.message || "Failed to send reset email.");
+      } else {
+        setLoginStatus("reset-email-sent");
+        toast.success("Reset email sent! Check your inbox.");
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.message || "Failed to send reset email. Please contact support.",
+      );
     } finally {
       setIsLoading(false);
     }

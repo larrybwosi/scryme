@@ -111,12 +111,16 @@ export const auth = betterAuth({
     "http://localhost:3007",
   ],
   rateLimit: {
-    enabled: true,
+    enabled: env.NODE_ENV !== "test",
     window: 60, // 60 seconds
     max: 1000, // Relaxed default max requests per window
     storage: "secondary-storage", // Store in Redis secondary-storage
     customRules: {
       "/get-session": false, // Disable rate limiting completely for get-session to prevent false positive logouts
+      "/sign-in/email": env.NODE_ENV === "development" ? false : { window: 60, max: 20 },
+      "/sign-up/email": env.NODE_ENV === "development" ? false : { window: 60, max: 20 },
+      "/sign-in/passkey": env.NODE_ENV === "development" ? false : { window: 60, max: 20 },
+      "/sign-in/social": env.NODE_ENV === "development" ? false : { window: 60, max: 20 },
     },
   },
   secondaryStorage: {

@@ -24,8 +24,8 @@
     }
   },
   "dependencies": {
-    "@repo/db": "workspace:*",
     "@repo/chat": "workspace:*",
+    "@repo/db": "workspace:*",
     "@repo/typescript-config": "workspace:^",
     "axios": "^1.6.2",
     "handlebars": "^4.7.8",
@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "@types/nodemailer": "^8.0.1",
     "tsup": "^8.5.1",
     "vitest": "^4.1.5"
   }

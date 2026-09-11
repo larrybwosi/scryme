@@ -13,8 +13,8 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Skip proxy processing for invitation routes
-  if (pathname.startsWith("/invite")) {
+  // Skip proxy processing for invitation and reset-password routes
+  if (pathname.startsWith("/invite") || pathname === "/reset-password") {
     return NextResponse.next();
   }
 

@@ -1,6 +1,9 @@
-import { Module, Global, forwardRef } from "@nestjs/common";
+import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
-import { WebhookController } from "./interfaces/http/webhook.controller";
+import {
+  WebhookController,
+  PublicIncomingWebhookController,
+} from "./interfaces/http/webhook.controller";
 import { WebhookService } from "./infrastructure/services/webhook.service";
 import { WebhookProcessor } from "./infrastructure/workers/webhook.processor";
 
@@ -10,7 +13,7 @@ import { WebhookProcessor } from "./infrastructure/workers/webhook.processor";
       name: "webhooks",
     }),
   ],
-  controllers: [WebhookController],
+  controllers: [WebhookController, PublicIncomingWebhookController],
   providers: [WebhookService, WebhookProcessor],
   exports: [WebhookService],
 })

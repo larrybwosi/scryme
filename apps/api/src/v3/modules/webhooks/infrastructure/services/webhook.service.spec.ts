@@ -45,7 +45,31 @@ describe("WebhookService", () => {
 
     await service.dispatch("test.event", "org-1", { foo: "bar" });
 
-    expect(mockPrisma.client.webhookSubscription.findMany).toHaveBeenCalled();
+    expect(mockPrisma.client.webhookSubscription.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org-1",
+        isActive: true,
+        events: { has: "test.event" },
+      },
+    });
     expect(queueMock.add).toHaveBeenCalledTimes(2);
+  });
+
+  it("should generate and verify timing-safe HMAC signatures", () => {
+    const secret = "whsec_test_secret_key_12345";
+    const payload = { orderId: "ord_100", amount: 2500 };
+
+    const signature = service.generateSignature(payload, secret);
+    expect(signature).toBeDefined();
+    expect(typeof signature).toBe("string");
+
+    const isValid = service.verifySignature(secret, payload, signature);
+    expect(isValid).toBe(true);
+
+    const isPrefixedValid = service.verifySignature(secret, payload, `sha256=${signature}`);
+    expect(isPrefixedValid).toBe(true);
+
+    const isInvalid = service.verifySignature(secret, payload, "invalid_sig");
+    expect(isInvalid).toBe(false);
   });
 });

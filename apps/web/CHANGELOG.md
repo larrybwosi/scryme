@@ -1,5 +1,11 @@
 # web
 
+## 7.1.0-next.0
+
+### Minor Changes
+
+- 5905d54: Update
+
 ## 7.0.0
 
 ### Major Changes

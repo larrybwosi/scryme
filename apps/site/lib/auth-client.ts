@@ -3,7 +3,7 @@ import { passkeyClient } from "@better-auth/passkey/client";
 
 const isDev = process.env.NODE_ENV === "development";
 const defaultAppUrl = isDev
-  ? "http://localhost:3000"
+  ? "http://localhost:3005"
   : "https://scryme.tech";
 
 export const authClient: any = createAuthClient({
@@ -17,5 +17,8 @@ export const authClient: any = createAuthClient({
 export const signIn: typeof authClient.signIn = authClient.signIn;
 export const signUp: typeof authClient.signUp = authClient.signUp;
 export const useSession: typeof authClient.useSession = authClient.useSession;
-export const requestPasswordReset: typeof authClient.requestPasswordReset =
-  authClient.requestPasswordReset;
+export const forgetPassword: typeof authClient.forgetPassword =
+  authClient.forgetPassword;
+export const resetPassword: typeof authClient.resetPassword =
+  authClient.resetPassword;
+export const requestPasswordReset = authClient.forgetPassword;

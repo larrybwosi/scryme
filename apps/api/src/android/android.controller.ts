@@ -658,13 +658,17 @@ export class AndroidController {
     });
 
     try {
-      const targetMember = await this.prisma.client.member.findUnique({
-        where: { id: dto.memberId },
-        include: { user: { select: { email: true } } },
-      });
-      const config = await this.prisma.client.scrymeConfiguration.findUnique({
-        where: { organizationId },
-      });
+      // ⚡ Bolt Optimization: Parallelize independent target member lookup and Scryme workspace configuration query.
+      // Running these read queries concurrently using Promise.all reduces database latency from O(2T) to O(T).
+      const [targetMember, config] = await Promise.all([
+        this.prisma.client.member.findUnique({
+          where: { id: dto.memberId },
+          include: { user: { select: { email: true } } },
+        }),
+        this.prisma.client.scrymeConfiguration.findUnique({
+          where: { organizationId },
+        }),
+      ]);
       if (config && config.isActive && config.workspaceSlug && targetMember?.user?.email) {
         const scrymeUser = await this.scrymeClient.findUserByEmail(config.workspaceSlug, targetMember.user.email);
         if (scrymeUser?.id) {

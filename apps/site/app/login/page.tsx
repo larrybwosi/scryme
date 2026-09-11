@@ -67,7 +67,16 @@ function LoginFormContent() {
       });
 
       if (res.error) {
-        setError(res.error.message || "Invalid credentials.");
+        const isRateLimit =
+          res.error.status === 429 ||
+          res.error.message?.includes("TOO_MANY_REQUESTS") ||
+          res.error.message?.includes("429") ||
+          res.error.message?.includes("Too many requests");
+        setError(
+          isRateLimit
+            ? "Too many login attempts. Please wait a moment and try again."
+            : res.error.message || "Invalid credentials."
+        );
       } else {
         if (callbackUrl) {
           if (callbackUrl.startsWith("/")) {
@@ -80,7 +89,16 @@ function LoginFormContent() {
         }
       }
     } catch (err: any) {
-      setError(err?.message || "An authentication error occurred.");
+      const isRateLimit =
+        err?.status === 429 ||
+        err?.message?.includes("TOO_MANY_REQUESTS") ||
+        err?.message?.includes("429") ||
+        err?.message?.includes("Too many requests");
+      setError(
+        isRateLimit
+          ? "Too many login attempts. Please wait a moment and try again."
+          : err?.message || "An authentication error occurred."
+      );
     } finally {
       setIsSubmitting(false);
     }
