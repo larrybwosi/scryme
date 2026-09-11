@@ -4,6 +4,10 @@
 
 ### Minor Changes
 
+## 10.1.0
+
+### Minor Changes
+
 - 71f1311: Update
 
 ## 10.1.0-next.0
