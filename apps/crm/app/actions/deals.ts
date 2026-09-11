@@ -102,20 +102,23 @@ export async function createDeal(input: any) {
       },
     });
 
-    // Handle associations
-    if (associatedCustomerId && associatedCustomerId !== "none") {
-      const customer = await db.customer.findUnique({
-        where: { id: associatedCustomerId },
-      });
+    // Handle associations concurrently using Promise.all to reduce sequential database roundtrips from O(2T) to O(T)
+    const hasCustomer = associatedCustomerId && associatedCustomerId !== "none";
+    const hasCompany = associatedCompanyId && associatedCompanyId !== "none";
+
+    if (hasCustomer || hasCompany) {
+      const [customer, company] = await Promise.all([
+        hasCustomer
+          ? db.customer.findUnique({ where: { id: associatedCustomerId } })
+          : Promise.resolve(null),
+        hasCompany
+          ? db.businessAccount.findUnique({ where: { id: associatedCompanyId } })
+          : Promise.resolve(null),
+      ]);
+
       if (customer?.crmRecordId) {
         await createAssociation(customer.crmRecordId, deal.id, "contact_deals");
       }
-    }
-
-    if (associatedCompanyId && associatedCompanyId !== "none") {
-      const company = await db.businessAccount.findUnique({
-        where: { id: associatedCompanyId },
-      });
       if (company?.crmRecordId) {
         await createAssociation(company.crmRecordId, deal.id, "company_deals");
       }
@@ -157,9 +160,16 @@ async function createAssociation(
     }
 
     if (sourceName) {
-      let sourceDef = await db.crmObjectDefinition.findUnique({
-        where: { organizationId_name: { organizationId, name: sourceName } },
-      });
+      // Parallelize sourceDef and targetDef lookups to reduce sequential database latency
+      let [sourceDef, targetDef] = await Promise.all([
+        db.crmObjectDefinition.findUnique({
+          where: { organizationId_name: { organizationId, name: sourceName } },
+        }),
+        db.crmObjectDefinition.findUnique({
+          where: { organizationId_name: { organizationId, name: targetName } },
+        }),
+      ]);
+
       if (!sourceDef) {
         sourceDef = await db.crmObjectDefinition.create({
           data: {
@@ -172,9 +182,6 @@ async function createAssociation(
         });
       }
 
-      let targetDef = await db.crmObjectDefinition.findUnique({
-        where: { organizationId_name: { organizationId, name: targetName } },
-      });
       if (!targetDef) {
         targetDef = await db.crmObjectDefinition.create({
           data: {
@@ -252,20 +259,23 @@ export async function updateDeal(dealId: string, input: any) {
       },
     });
 
-    // Handle associations
-    if (associatedCustomerId && associatedCustomerId !== "none") {
-      const customer = await db.customer.findUnique({
-        where: { id: associatedCustomerId },
-      });
+    // Handle associations concurrently using Promise.all to reduce sequential database roundtrips from O(2T) to O(T)
+    const hasCustomer = associatedCustomerId && associatedCustomerId !== "none";
+    const hasCompany = associatedCompanyId && associatedCompanyId !== "none";
+
+    if (hasCustomer || hasCompany) {
+      const [customer, company] = await Promise.all([
+        hasCustomer
+          ? db.customer.findUnique({ where: { id: associatedCustomerId } })
+          : Promise.resolve(null),
+        hasCompany
+          ? db.businessAccount.findUnique({ where: { id: associatedCompanyId } })
+          : Promise.resolve(null),
+      ]);
+
       if (customer?.crmRecordId) {
         await createAssociation(customer.crmRecordId, dealId, "contact_deals");
       }
-    }
-
-    if (associatedCompanyId && associatedCompanyId !== "none") {
-      const company = await db.businessAccount.findUnique({
-        where: { id: associatedCompanyId },
-      });
       if (company?.crmRecordId) {
         await createAssociation(company.crmRecordId, dealId, "company_deals");
       }
