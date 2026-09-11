@@ -429,7 +429,18 @@ export class ServicesController {
     @Param("id") id: string,
     @Body() dto: CompleteBookingDto
   ) {
-    return this.bookingService.completeBooking(req.organization.id, id, req.user.id, dto);
+    // SECURITY (Sentinel): Resolve memberId from v3Context or user context to ensure
+    // inventory movement records (StockMovement.memberId) reference a valid organization
+    // Member ID rather than a global User ID, preventing database foreign key failures
+    // and misattribution in multi-tenant audit trails.
+    const memberId =
+      req.v3Context?.memberId || req.user?.memberId || req.user?.id;
+    return this.bookingService.completeBooking(
+      req.organization.id,
+      id,
+      memberId,
+      dto,
+    );
   }
 
   @Patch("bookings/:id/reschedule")
