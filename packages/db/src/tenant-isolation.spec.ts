@@ -38,7 +38,7 @@ describe("Tenant Data Isolation - Database Level", () => {
       },
     };
 
-    const extensionObj = createTenantExtendedClient(dummyBaseClient);
+    const extensionObj: any = createTenantExtendedClient(dummyBaseClient);
     const allOpsFn = extensionObj.query.$allModels.$allOperations;
 
     await runWithTenant({ organizationId: "org-aaa" }, async () => {
@@ -63,7 +63,7 @@ describe("Tenant Data Isolation - Database Level", () => {
       },
     };
 
-    const extensionObj = createTenantExtendedClient(dummyBaseClient);
+    const extensionObj: any = createTenantExtendedClient(dummyBaseClient);
     const allOpsFn = extensionObj.query.$allModels.$allOperations;
 
     await runWithTenant({ organizationId: "org-aaa" }, async () => {
@@ -92,7 +92,7 @@ describe("Tenant Data Isolation - Database Level", () => {
       },
     };
 
-    const extensionObj = createTenantExtendedClient(dummyBaseClient);
+    const extensionObj: any = createTenantExtendedClient(dummyBaseClient);
     const allOpsFn = extensionObj.query.$allModels.$allOperations;
 
     await runWithTenant({ organizationId: "org-aaa" }, async () => {
@@ -123,7 +123,7 @@ describe("Tenant Data Isolation - Database Level", () => {
       },
     };
 
-    const extensionObj = createTenantExtendedClient(dummyBaseClient);
+    const extensionObj: any = createTenantExtendedClient(dummyBaseClient);
     const allOpsFn = extensionObj.query.$allModels.$allOperations;
 
     await runWithTenant({ organizationId: "org-aaa" }, async () => {
