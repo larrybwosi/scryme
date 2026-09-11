@@ -1,4 +1,5 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 export type OrderStatus = "new" | "in_progress" | "done" | "urgent" | "voided";
 export type OrderType = "dine" | "takeout" | "delivery" | "drive";
@@ -69,9 +70,12 @@ export const useKdsStore = create<KdsStore>((set, get) => ({
     return { orders: [...state.orders, order] };
   }),
 
-  updateOrderStatus: (orderId, status) => set((state) => ({
-    orders: state.orders.map(o => o.id === orderId ? { ...o, status } : o)
-  })),
+  updateOrderStatus: (orderId, status) => {
+    trackPosEvent(POS_EVENTS.KDS_STATUS_UPDATED, { orderId, status });
+    set((state) => ({
+      orders: state.orders.map(o => o.id === orderId ? { ...o, status } : o)
+    }));
+  },
 
   updateItemStatus: (orderId, itemId, status) => set((state) => ({
     orders: state.orders.map(o => o.id === orderId ? {
@@ -98,9 +102,12 @@ export const useKdsStore = create<KdsStore>((set, get) => ({
     })
   })),
 
-  bumpOrder: (orderId) => set((state) => ({
-    orders: state.orders.map(o => o.id === orderId ? { ...o, status: 'done', bumpedAt: Date.now() } : o)
-  })),
+  bumpOrder: (orderId) => {
+    trackPosEvent(POS_EVENTS.KDS_STATUS_UPDATED, { orderId, status: 'done', action: 'bump' });
+    set((state) => ({
+      orders: state.orders.map(o => o.id === orderId ? { ...o, status: 'done', bumpedAt: Date.now() } : o)
+    }));
+  },
 
   recallOrder: (orderId) => set((state) => ({
     orders: state.orders.map(o => o.id === orderId ? { ...o, status: 'in_progress', bumpedAt: undefined } : o)

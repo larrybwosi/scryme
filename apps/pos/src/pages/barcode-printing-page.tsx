@@ -48,6 +48,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { BarcodeService, type BarcodeFormat } from "@/lib/barcode-service";
 import { LabelService, type PrintLabelItem, type LabelPrintConfig, type LabelSize } from "@/lib/label-service";
 import { usePosStore } from "@/store/store";
+import { trackPosEvent, POS_EVENTS } from "@/lib/openpanel";
 
 type WorkspaceTab = "print" | "register";
 type RegisterStep = "select" | "configure" | "success";
@@ -250,6 +251,12 @@ function PrintLabelsPanel() {
 
     try {
       await printPromise;
+      trackPosEvent(POS_EVENTS.BARCODE_PRINTED, {
+        totalLabels,
+        itemsCount: printQueue.length,
+        printerName: config.printerName,
+        size: config.size,
+      });
     } catch {
       // Error surface handled by toast.promise
     } finally {

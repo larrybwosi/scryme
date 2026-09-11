@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { useScannerStore } from '@/store/barcode-scanner';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 interface ScanPayload {
   message: string;
@@ -41,6 +42,10 @@ export const useScanner = () => {
     try {
       const unlistenData = await listen<ScanPayload>('scanner-data', event => {
         console.log(`[${event.payload.source}] Barcode Received:`, event.payload.message);
+        trackPosEvent(POS_EVENTS.SCANNER_USED, {
+          source: event.payload.source,
+          barcode: event.payload.message,
+        });
         // 2. Use getState() inside listeners to prevent stale closures
         useScannerStore.getState().addScannedItem(event.payload.message);
       });
