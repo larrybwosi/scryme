@@ -3,6 +3,7 @@ import {
   CanActivate,
   ExecutionContext,
   NotFoundException,
+  ForbiddenException,
 } from "@nestjs/common";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { PrismaService } from "@/prisma/prisma.service";
@@ -48,6 +49,31 @@ export class MultiTenancyGuard implements CanActivate {
     }
 
     request.organization = organization;
+
+    const user = request.user;
+    const isSuperAdmin =
+      user?.role === "SUPER_ADMIN" || user?.systemRole === "SUPER_ADMIN";
+    const v3Context = request.v3Context;
+    const isClientCredentials = v3Context?.authType === "v3_client";
+    const isCustomer = v3Context?.authType === "v3_customer";
+
+    // Enforce strict membership verification for non-superadmin member users
+    if (user && !isSuperAdmin && !isClientCredentials && !isCustomer) {
+      const member = await this.prisma.client.member.findFirst({
+        where: {
+          organizationId: organization.id,
+          userId: user.id,
+          deletedAt: null,
+        },
+      });
+
+      if (!member || !member.isActive) {
+        throw new ForbiddenException(
+          "Access denied: You are not an active member of this organization",
+        );
+      }
+    }
+
     return true;
   }
 }
