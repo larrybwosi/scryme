@@ -59,6 +59,11 @@ jobs:
         run: |
           if [ -f .changeset/pre.json ]; then
             npx changeset pre exit
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "chore(release): exit prerelease mode on main"
+            git push origin main
           fi
 
       - name: Check for Pending Changesets
