@@ -1,5 +1,12 @@
 # site
 
+## 2.1.0
+
+### Minor Changes
+
+- aa6bc76: Update
+- 71f1311: Update
+
 ## 2.1.0-next.0
 
 ### Minor Changes

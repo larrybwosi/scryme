@@ -1,5 +1,12 @@
 # crm
 
+## 8.1.0
+
+### Minor Changes
+
+- aa6bc76: Update
+- 71f1311: Update
+
 ## 8.1.0-next.0
 
 ### Minor Changes
