@@ -6,6 +6,7 @@
 
 - 71f1311: Update
 
+>>>>>>> nextgen
 ## 2.1.0-next.0
 
 ### Minor Changes

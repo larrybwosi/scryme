@@ -23,10 +23,6 @@ export class PermissionsGuard implements CanActivate {
       context.getHandler(),
     );
 
-    if (!requiredPermissions) {
-      return true;
-    }
-
     let request: any;
     if (context.getType() === ("graphql" as any)) {
       const gqlContext = GqlExecutionContext.create(context);
@@ -39,7 +35,8 @@ export class PermissionsGuard implements CanActivate {
     const user = request.user;
     const organization = request.organization || v3Context?.organization;
 
-    const isSuperAdmin = user?.role === "SUPER_ADMIN" || user?.systemRole === "SUPER_ADMIN";
+    const isSuperAdmin =
+      user?.role === "SUPER_ADMIN" || user?.systemRole === "SUPER_ADMIN";
     if (isSuperAdmin) {
       return true;
     }
@@ -47,7 +44,43 @@ export class PermissionsGuard implements CanActivate {
     const isClientCredentials = v3Context?.authType === "v3_client";
     const isCustomer = v3Context?.authType === "v3_customer";
 
-    if (!organization || (!isClientCredentials && !isCustomer && !user && !v3Context?.memberId)) {
+    // Validate active organization membership for member user requests
+    if (organization && !isClientCredentials && !isCustomer && (user || v3Context?.memberId)) {
+      const memberPermissions = await this.getMemberPermissions(
+        organization.id,
+        user?.id,
+        v3Context?.memberId,
+      );
+
+      if (memberPermissions.length === 0) {
+        throw new ForbiddenException(
+          "Access denied: You are not an active member of this organization",
+        );
+      }
+
+      if (!requiredPermissions) {
+        return true;
+      }
+
+      const hasPermission = requiredPermissions.every((permission) =>
+        this.hasPermission(memberPermissions, permission),
+      );
+
+      if (!hasPermission) {
+        throw new ForbiddenException("Insufficient permissions");
+      }
+
+      return true;
+    }
+
+    if (!requiredPermissions) {
+      return true;
+    }
+
+    if (
+      !organization ||
+      (!isClientCredentials && !isCustomer && !user && !v3Context?.memberId)
+    ) {
       throw new ForbiddenException(
         "User/Member or Organization not identified",
       );
@@ -58,7 +91,6 @@ export class PermissionsGuard implements CanActivate {
     if (isClientCredentials) {
       permissions = v3Context?.scopes || [];
     } else if (isCustomer) {
-      // Default storefront customer permissions for catalogs, cart, bookings, etc.
       permissions = [
         "catalog:product:read",
         "services:read",
@@ -67,12 +99,6 @@ export class PermissionsGuard implements CanActivate {
         "customer:read",
         "customer:update",
       ];
-    } else {
-      permissions = await this.getMemberPermissions(
-        organization.id,
-        user?.id,
-        v3Context?.memberId,
-      );
     }
 
     const hasPermission = requiredPermissions.every((permission) =>
@@ -98,14 +124,13 @@ export class PermissionsGuard implements CanActivate {
       return cached;
     }
 
-    const member = await this.prisma.client.member.findUnique({
+    const member = await this.prisma.client.member.findFirst({
       where: memberId
-        ? { id: memberId, organizationId }
+        ? { id: memberId, organizationId, deletedAt: null }
         : {
-            organizationId_userId: {
-              organizationId,
-              userId: userId!,
-            },
+            organizationId,
+            userId: userId!,
+            deletedAt: null,
           },
       include: {
         organization: {
@@ -122,7 +147,7 @@ export class PermissionsGuard implements CanActivate {
       },
     });
 
-    if (!member) return [];
+    if (!member || !member.isActive) return [];
 
     if (member.role === "OWNER") {
       const allPermissions = ["*"];
