@@ -165,7 +165,7 @@ export const TENANT_MODELS = new Set<string>([
 export function isTenantModel(modelName: string): boolean {
   if (!modelName) return false;
   if (TENANT_MODELS.has(modelName)) return true;
-  for (const model of TENANT_MODELS) {
+  for (const model of Array.from(TENANT_MODELS)) {
     if (model.toLowerCase() === modelName.toLowerCase()) {
       return true;
     }

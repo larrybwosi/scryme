@@ -14,7 +14,7 @@
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
-    "@repo/sdk": "workspace:*",
+    "@scryme/sdk": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.1.18",
