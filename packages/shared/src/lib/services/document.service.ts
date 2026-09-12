@@ -10,7 +10,7 @@ import {
 } from "@repo/documents/server";
 import { storageService } from "../../storage";
 import { db } from "@repo/db";
-import { notificationEngine } from "@repo/notifications";
+import { notificationEngine } from "../../services/notification";
 import React from "react";
 import QRCode from "qrcode";
 import { randomInt } from "crypto";
