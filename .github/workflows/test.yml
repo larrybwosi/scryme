@@ -275,7 +275,7 @@ jobs:
             if [ "${{ needs.filter.outputs.pkg_documents }}" == "true" ]; then FILTER="$FILTER --filter=@repo/documents..."; fi
             if [ "${{ needs.filter.outputs.pkg_env }}" == "true" ]; then FILTER="$FILTER --filter=@repo/env..."; fi
             if [ "${{ needs.filter.outputs.pkg_notifications }}" == "true" ]; then FILTER="$FILTER --filter=@repo/notifications..."; fi
-            if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ]; then FILTER="$FILTER --filter=@repo/sdk..."; fi
+            if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ]; then FILTER="$FILTER --filter=@scryme/sdk..."; fi
             if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ]; then FILTER="$FILTER --filter=@repo/shared..."; fi
             if [ "${{ needs.filter.outputs.pkg_ui }}" == "true" ]; then FILTER="$FILTER --filter=@repo/ui..."; fi
 
