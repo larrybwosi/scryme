@@ -29,6 +29,7 @@ import {
 } from '@repo/ui/components/ui/tooltip';
 import { invoke } from '@tauri-apps/api/core';
 import { formatDistanceToNow, parseISO, format } from 'date-fns';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 export default function ManageTablesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -48,7 +49,12 @@ export default function ManageTablesPage() {
   const addTable = usePosStore(state => state.addTable);
   const updateTable = usePosStore(state => state.updateTable);
   const deleteTable = usePosStore(state => state.deleteTable);
-  const setTableStatus = usePosStore(state => state.setTableStatus);
+  const setTableStatusStore = usePosStore(state => state.setTableStatus);
+  const setTableStatus = (id: string, status: Table['status']) => {
+    setTableStatusStore(id, status);
+    const table = tables.find(t => t.id === id);
+    trackPosEvent(POS_EVENTS.TABLE_SELECTED, { tableId: id, tableNumber: table?.number, status });
+  };
 
   const [formData, setFormData] = useState<Omit<Table, 'id'>>({
     number: '',

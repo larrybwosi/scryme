@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { invoke } from '@tauri-apps/api/core';
 import { usePosStore } from '@/store/store';
 import { useCashDrawer } from '@/hooks/use-cash-drawer';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 export default function PettyCashPage() {
   const { openPhysicalDrawer } = useCashDrawer();
@@ -140,6 +141,12 @@ export default function PettyCashPage() {
 
       // Open physical drawer
       await openPhysicalDrawer();
+
+      trackPosEvent(POS_EVENTS.PETTY_CASH_LOGGED, {
+        amount: parseFloat(amount),
+        description,
+        hasReceipt: !!receiptUrl,
+      });
 
       toast.success('Petty cash expense registered successfully');
       setAmount('');

@@ -29,6 +29,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useProcessSale, PaymentMethod, PaymentStatus } from '@/hooks/sales';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { useCashDrawer } from '@/hooks/use-cash-drawer';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 import { logger } from '@/lib/logger';
 import { format } from 'date-fns';
 import { convertFileSrc, invoke } from '@tauri-apps/api/core';
@@ -74,6 +75,8 @@ export function SupermarketPOS() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    trackPosEvent(POS_EVENTS.SUPERMARKET_MODE_USED);
+
     const checkActiveShift = async () => {
       if (import.meta.env.MODE === 'standalone') return;
       if (typeof navigator !== 'undefined' && navigator.webdriver) {

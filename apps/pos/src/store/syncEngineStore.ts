@@ -1,5 +1,6 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
 import { invoke } from '@tauri-apps/api/core';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';
 
@@ -163,11 +164,20 @@ export const useSyncEngineStore = create<SyncEngineState>((set, get) => ({
     if (!get().isOnline) return;
 
     set({ isSyncing: true });
-    await Promise.allSettled([
+    const results = await Promise.allSettled([
       get().syncProducts(forceFullSync),
       get().syncCustomers(),
       get().syncPricing(),
     ]);
     set({ isSyncing: false });
+
+    const allSuccessful = results.every(
+      (r) => r.status === 'fulfilled' && r.value === true
+    );
+    if (allSuccessful) {
+      trackPosEvent(POS_EVENTS.SYNC_COMPLETED, { forceFullSync });
+    } else {
+      trackPosEvent(POS_EVENTS.SYNC_FAILED, { forceFullSync });
+    }
   },
 }));
