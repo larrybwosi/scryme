@@ -16,7 +16,7 @@ import {
   OverviewData,
   StockItem,
 } from "@/types/bakery";
-import { BakeryBatchListResponse } from "@repo/sdk";
+import type { FormattedBatch as BakeryBatchListResponse } from "@/types/bakery";
 
 // fallow-ignore-next-line unused-types
 export type { StockItem, OverviewData };
