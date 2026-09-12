@@ -52,7 +52,6 @@ export * from './catalogGetProductsParams';
 export * from './catalogGetServicesParams';
 export * from './checkB2BAvailabilityDto';
 export * from './checkInDto';
-export * from './checkoutDto';
 export * from './checkOutDto';
 export * from './checkoutResponseDto';
 export * from './cmsCustomFieldsDto';
