@@ -18,7 +18,6 @@
     "@repo/auth": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/env": "workspace:*",
-    "@repo/notifications": "workspace:*",
     "@repo/shared": "workspace:*",
     "@sanity/icons": "^5.1.0",
     "@sanity/image-url": "^2.1.1",

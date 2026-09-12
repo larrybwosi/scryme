@@ -14,7 +14,7 @@ export const authOptions: BetterAuthOptions = {
     enabled: true,
     async sendResetPassword({ user, url, token }) {
       try {
-        const { sendEmail } = await import("@repo/notifications");
+        const { sendEmail } = await import("@repo/shared/services/notification");
         const resetUrl = url || `https://app.scryme.tech/reset-password?token=${token}`;
         await sendEmail({
           to: user.email,

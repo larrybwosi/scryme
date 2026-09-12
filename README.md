@@ -38,10 +38,9 @@ Our core logic, database client, configurations, and utilities are modularized i
 
 - **[`@repo/db`](./packages/db)**: The database layer wrapper enclosing the Prisma schema, PostgreSQL client singleton, and database seeding scripts.
 - **[`@repo/auth`](./packages/auth)**: Shared identity and multi-tenant authorization utilities powered by Better Auth.
-- **[`@repo/shared`](./packages/shared)**: General helper utilities, custom resilient Redis clients (with in-memory fallback), SSRF-blocking URL filters, M-PesaSTK pushes, and Ably real-time publishers.
+- **[`@repo/shared`](./packages/shared)**: General helper utilities, multi-channel notification engine (emails, Handlebars templates, Scryme Chat, Discord, webhooks), custom resilient Redis clients, SSRF-blocking URL filters, M-Pesa STK pushes, and Socket.IO publishers.
 - **[`@repo/ui`](./packages/ui)**: Unified React component library containing Radix UI accessible primitives, styled with Tailwind CSS v4, and housing custom global barcode scanner key-event filters.
 - **[`@repo/documents`](./packages/documents)**: Clean PDF receipt, invoice, and balance sheet engines powered by React-PDF.
-- **[`@repo/notifications`](./packages/notifications)**: Multi-channel messaging gateway orchestrating SMTP/Nodemailer HTML emails, handlebars template compiles, and SMS services.
 - **[`@repo/chat`](./packages/scryme)**: Developer-centric API client mapping token exchange and message publishing against the Scryme Chat API.
 - **[`@repo/sdk`](./packages/sdk)**: Central client SDK containing shared HTTP wrappers and pre-configured request interceptors.
 - **[`@scryme/sdk`](./packages/v3-sdk)**: Rigorous TypeScript API client compiler generated directly from our core OpenAPI 3.0 specification.
