@@ -193,16 +193,11 @@ export class CustomerController {
       },
     });
 
-    // 🛡️ Sentinel: Authentication & BOLA Hardening - Verify user linked via customer.userId if available,
-    // otherwise fallback to email lookup. This prevents potential cross-user credential verification mismatches
-    // when multiple user profiles exist or when customer profile is explicitly linked to a specific userId.
-    const user = customer?.userId
-      ? await this.prisma.client.user.findUnique({
-          where: { id: customer.userId },
-        })
-      : await this.prisma.client.user.findUnique({
-          where: { email: dto.email },
-        });
+    // 🛡️ Sentinel: Authentication & BOLA Hardening - Verify user credentials for the customer profile email.
+    // Ensure user lookup is strictly scoped by email to prevent cross-user credential verification mismatches.
+    const user = await this.prisma.client.user.findUnique({
+      where: { email: dto.email },
+    });
 
     // Mitigate timing attacks and username/email enumeration side-channels:
     // Always perform a cryptographically heavy bcrypt.compare with a valid dummy hash

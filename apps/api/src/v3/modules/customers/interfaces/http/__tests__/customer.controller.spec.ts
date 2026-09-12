@@ -41,13 +41,12 @@ describe("CustomerController", () => {
   });
 
   describe("login", () => {
-    it("should authenticate customer using userId when customer is linked to user", async () => {
+    it("should authenticate customer successfully when credentials match", async () => {
       const hashedPassword = await bcrypt.hash("password123", 10);
       const mockCustomer = {
         id: "cust-1",
         email: "john@example.com",
         name: "John Doe",
-        userId: "user-999",
       };
       const mockUser = {
         id: "user-999",
@@ -77,48 +76,13 @@ describe("CustomerController", () => {
         },
       });
 
-      // Verify user was fetched using customer.userId
       expect(mockPrisma.client.user.findUnique).toHaveBeenCalledWith({
-        where: { id: "user-999" },
+        where: { email: "john@example.com" },
       });
 
       expect(result.success).toBe(true);
       expect(result.user).toEqual(mockCustomer);
       expect(mockRedis.setex).toHaveBeenCalled();
-    });
-
-    it("should fallback to finding user by email when customer has no userId", async () => {
-      const hashedPassword = await bcrypt.hash("password123", 10);
-      const mockCustomer = {
-        id: "cust-2",
-        email: "jane@example.com",
-        name: "Jane Doe",
-        userId: null,
-      };
-      const mockUser = {
-        id: "user-888",
-        email: "jane@example.com",
-        password: hashedPassword,
-      };
-
-      mockPrisma.client.customer.findUnique.mockResolvedValue(mockCustomer);
-      mockPrisma.client.user.findUnique.mockResolvedValue(mockUser);
-
-      const req = {
-        organization: { id: "org-123", slug: "test-org" },
-        headers: {},
-      };
-
-      const result = await controller.login(req, {
-        email: "jane@example.com",
-        password: "password123",
-      });
-
-      expect(mockPrisma.client.user.findUnique).toHaveBeenCalledWith({
-        where: { email: "jane@example.com" },
-      });
-
-      expect(result.success).toBe(true);
     });
 
     it("should throw UnauthorizedException on invalid password", async () => {
