@@ -348,7 +348,7 @@ function BulkReceiveDialog({
           supplier: line.supplier,
         }))
       };
-      return sdk.bakery.receiveIngredients(normalizedPayload as any);
+      return sdk.bakery.createIngredient(normalizedPayload as any);
     },
     onSuccess: (responseData, variables) => {
       toast.success(
