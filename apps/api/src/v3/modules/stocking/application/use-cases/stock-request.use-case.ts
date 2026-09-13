@@ -124,6 +124,15 @@ export class StockRequestUseCase {
         );
       }
 
+      // SECURITY (Sentinel): Validate that fromLocationId belongs to the caller's organizationId
+      // to prevent cross-tenant BOLA/IDOR location association and unauthorized inventory transfer creation.
+      const fromLocation = await tx.inventoryLocation.findFirst({
+        where: { id: dto.fromLocationId, organizationId },
+      });
+      if (!fromLocation) {
+        throw new NotFoundException("Source location not found");
+      }
+
       const transferNumber = `TR-REQ-${request.requestNumber}-${Date.now()}`;
 
       // ⚡ Bolt Optimization: Pre-index request.items by variantId to eliminate O(N * M) nested lookup inside the loop.

@@ -53,6 +53,9 @@ describe("StockRequestUseCase", () => {
       supplier: {
         findFirst: vi.fn(),
       },
+      inventoryLocation: {
+        findFirst: vi.fn(),
+      },
       stockRequestItem: {
         updateMany: vi.fn(),
       },
@@ -95,6 +98,10 @@ describe("StockRequestUseCase", () => {
       toLocationId: "loc-to",
       items: [{ variantId: "v1", unitCostAtRequest: 100 }],
     });
+    mockTx.inventoryLocation.findFirst.mockResolvedValue({
+      id: "loc-from",
+      organizationId: mockOrgId,
+    });
 
     const dto = {
       fromLocationId: "loc-from",
@@ -124,6 +131,32 @@ describe("StockRequestUseCase", () => {
         data: { allocatedQuantity: { increment: 5 } },
       }),
     );
+  });
+
+  it("should throw NotFoundException when fulfilling from transfer with unowned fromLocationId", async () => {
+    mockTx.stockRequest.findFirst.mockResolvedValue({
+      id: mockRequestId,
+      requestNumber: "REQ-001",
+      organizationId: mockOrgId,
+      status: StockRequestStatus.APPROVED,
+      toLocationId: "loc-to",
+      items: [{ variantId: "v1", unitCostAtRequest: 100 }],
+    });
+    mockTx.inventoryLocation.findFirst.mockResolvedValue(null);
+
+    const dto = {
+      fromLocationId: "other-org-location",
+      items: [{ variantId: "v1", requestedQuantity: 5 }],
+    };
+
+    await expect(
+      stockRequestUseCase.fulfillFromTransfer(
+        mockOrgId,
+        mockMemberId,
+        mockRequestId,
+        dto,
+      ),
+    ).rejects.toThrow(NotFoundException);
   });
 
   it("should fulfill from purchase", async () => {
