@@ -124,41 +124,42 @@ export class DepartmentUseCase {
     dto: CreateDepartmentDto,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): IDOR validation for linked entities.
-    if (dto.parentId) {
-      const parent = await this.prisma.client.department.findFirst({
-        where: { id: dto.parentId, organizationId },
-      });
-      if (!parent) {
-        throw new BadRequestException("Parent department not found");
-      }
-    }
+    // ⚡ Bolt Optimization: Execute independent IDOR validation queries in parallel using Promise.all.
+    // Reduces sequential DB roundtrips from O(4T) to O(1T) concurrent execution.
+    const [parent, head, location, costCenter] = await Promise.all([
+      dto.parentId
+        ? this.prisma.client.department.findFirst({
+            where: { id: dto.parentId, organizationId },
+          })
+        : Promise.resolve(null),
+      dto.headId
+        ? this.prisma.client.member.findFirst({
+            where: { id: dto.headId, organizationId },
+          })
+        : Promise.resolve(null),
+      dto.locationId
+        ? this.prisma.client.inventoryLocation.findFirst({
+            where: { id: dto.locationId, organizationId },
+          })
+        : Promise.resolve(null),
+      dto.costCenterId
+        ? this.prisma.client.costCenter.findFirst({
+            where: { id: dto.costCenterId, organizationId },
+          })
+        : Promise.resolve(null),
+    ]);
 
-    if (dto.headId) {
-      const head = await this.prisma.client.member.findFirst({
-        where: { id: dto.headId, organizationId },
-      });
-      if (!head) {
-        throw new BadRequestException("Head member not found");
-      }
+    if (dto.parentId && !parent) {
+      throw new BadRequestException("Parent department not found");
     }
-
-    if (dto.locationId) {
-      const location = await this.prisma.client.inventoryLocation.findFirst({
-        where: { id: dto.locationId, organizationId },
-      });
-      if (!location) {
-        throw new BadRequestException("Location not found");
-      }
+    if (dto.headId && !head) {
+      throw new BadRequestException("Head member not found");
     }
-
-    if (dto.costCenterId) {
-      const costCenter = await this.prisma.client.costCenter.findFirst({
-        where: { id: dto.costCenterId, organizationId },
-      });
-      if (!costCenter) {
-        throw new BadRequestException("Cost center not found");
-      }
+    if (dto.locationId && !location) {
+      throw new BadRequestException("Location not found");
+    }
+    if (dto.costCenterId && !costCenter) {
+      throw new BadRequestException("Cost center not found");
     }
 
     const department = await this.prisma.client.department.create({
@@ -239,41 +240,42 @@ export class DepartmentUseCase {
 
     if (!currentDepartment) throw new NotFoundException("Department not found");
 
-    // SECURITY (Sentinel): IDOR validation for linked entities.
-    if (dto.parentId) {
-      const parent = await this.prisma.client.department.findFirst({
-        where: { id: dto.parentId, organizationId },
-      });
-      if (!parent) {
-        throw new BadRequestException("Parent department not found");
-      }
-    }
+    // ⚡ Bolt Optimization: Execute independent IDOR validation queries in parallel using Promise.all.
+    // Reduces sequential DB roundtrips from O(4T) to O(1T) concurrent execution.
+    const [parent, head, location, costCenter] = await Promise.all([
+      dto.parentId
+        ? this.prisma.client.department.findFirst({
+            where: { id: dto.parentId, organizationId },
+          })
+        : Promise.resolve(null),
+      dto.headId
+        ? this.prisma.client.member.findFirst({
+            where: { id: dto.headId, organizationId },
+          })
+        : Promise.resolve(null),
+      dto.locationId
+        ? this.prisma.client.inventoryLocation.findFirst({
+            where: { id: dto.locationId, organizationId },
+          })
+        : Promise.resolve(null),
+      dto.costCenterId
+        ? this.prisma.client.costCenter.findFirst({
+            where: { id: dto.costCenterId, organizationId },
+          })
+        : Promise.resolve(null),
+    ]);
 
-    if (dto.headId) {
-      const head = await this.prisma.client.member.findFirst({
-        where: { id: dto.headId, organizationId },
-      });
-      if (!head) {
-        throw new BadRequestException("Head member not found");
-      }
+    if (dto.parentId && !parent) {
+      throw new BadRequestException("Parent department not found");
     }
-
-    if (dto.locationId) {
-      const location = await this.prisma.client.inventoryLocation.findFirst({
-        where: { id: dto.locationId, organizationId },
-      });
-      if (!location) {
-        throw new BadRequestException("Location not found");
-      }
+    if (dto.headId && !head) {
+      throw new BadRequestException("Head member not found");
     }
-
-    if (dto.costCenterId) {
-      const costCenter = await this.prisma.client.costCenter.findFirst({
-        where: { id: dto.costCenterId, organizationId },
-      });
-      if (!costCenter) {
-        throw new BadRequestException("Cost center not found");
-      }
+    if (dto.locationId && !location) {
+      throw new BadRequestException("Location not found");
+    }
+    if (dto.costCenterId && !costCenter) {
+      throw new BadRequestException("Cost center not found");
     }
 
     const department = await this.prisma.client.department.update({
