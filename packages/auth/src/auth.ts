@@ -59,7 +59,7 @@ export const auth = betterAuth({
         after: async (user: ExtendedUser) => {
           try {
             const { sendSystemNotification } =
-              await import("@repo/notifications");
+              await import("@repo/shared/services/notification");
             await sendSystemNotification(
               `🎉 *New User Joined*\n• *Name*: ${user.name || "N/A"}\n• *Email*: ${user.email}\n• *Role*: ${user.role || "MEMBER"}\n• *ID*: \`${user.id}\``,
             );

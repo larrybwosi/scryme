@@ -21,7 +21,6 @@
     "@repo/db": "1.0.0",
     "@repo/documents": "0.1.0",
     "@repo/env": "1.0.0",
-    "@repo/notifications": "0.1.0",
     "@repo/sdk": "10.1.0-next.0",
     "@repo/shared": "0.1.0",
     "@repo/ui": "0.1.0",

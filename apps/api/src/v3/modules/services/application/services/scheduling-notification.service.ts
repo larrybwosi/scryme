@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { BookingStatus } from "@repo/db";
 import { ScrymeChatAction, ScrymeChatApiClient } from "@repo/chat";
-import { notificationEngine } from "@repo/notifications";
+import { notificationEngine } from "@repo/shared/services/notification";
 import { PrismaService } from "@/prisma/prisma.service";
 
 export type SchedulingNotificationKind =

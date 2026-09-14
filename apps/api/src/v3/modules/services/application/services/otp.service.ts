@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, NotFoundException } from "@nestjs/comm
 import { randomInt } from "crypto";
 import { PrismaService } from "@/prisma/prisma.service";
 import { BookingStatus } from "@repo/db";
-import { notificationEngine } from "@repo/notifications";
+import { notificationEngine } from "@repo/shared/services/notification";
 import { RequestOtpDto, VerifyOtpDto } from "../dto/public-booking.dto";
 
 @Injectable()

@@ -49,7 +49,6 @@
     "@repo/db": "workspace:*",
     "@repo/documents": "workspace:*",
     "@repo/env": "workspace:*",
-    "@repo/notifications": "workspace:*",
     "@repo/shared": "workspace:*",
     "@sentry/nestjs": "^10.65.0",
     "@upstash/redis": "^1.38.0",

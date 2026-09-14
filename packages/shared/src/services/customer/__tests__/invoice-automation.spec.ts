@@ -42,7 +42,7 @@ vi.mock("@repo/db", () => ({
   db: mockPrisma,
 }));
 
-vi.mock("@repo/notifications", () => ({
+vi.mock("../../notification", () => ({
   NotificationEngine: class {
     notify = mockNotify;
   },

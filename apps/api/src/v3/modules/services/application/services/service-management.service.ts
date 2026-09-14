@@ -1,7 +1,7 @@
 import { Injectable, ConflictException, NotFoundException, BadRequestException, Inject } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CreateServiceDto, CreateServiceCategoryDto, UpdateServiceDto, UpdateServiceCategoryDto, UpdateServiceResourceDto, CreateServiceResourceDto } from "../dto/service.dto";
-import { notificationEngine } from "@repo/notifications";
+import { notificationEngine } from "@repo/shared/services/notification";
 import * as crypto from "crypto";
 
 @Injectable()

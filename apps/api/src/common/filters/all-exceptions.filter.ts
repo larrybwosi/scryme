@@ -9,7 +9,7 @@ import { ApiError } from "@repo/shared/api/v2";
 import { env } from "@repo/env";
 import { redactSensitiveData } from "../utils/redaction";
 import * as Sentry from "@sentry/nestjs";
-import { notifySystemAdminsOfError } from "@repo/notifications/system";
+import { notifySystemAdminsOfError } from "@repo/shared/services/notification/system";
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {

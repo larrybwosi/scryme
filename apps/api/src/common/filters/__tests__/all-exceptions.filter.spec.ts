@@ -2,7 +2,7 @@ import { AllExceptionsFilter } from "../all-exceptions.filter";
 import { ArgumentsHost, HttpException, HttpStatus, BadRequestException, NotFoundException, InternalServerErrorException } from "@nestjs/common";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as Sentry from "@sentry/nestjs";
-import { notifySystemAdminsOfError } from "@repo/notifications/system";
+import { notifySystemAdminsOfError } from "@repo/shared/services/notification/system";
 
 vi.mock("@sentry/nestjs", () => ({
   captureException: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock("@sentry/nestjs", () => ({
   }),
 }));
 
-vi.mock("@repo/notifications/system", () => ({
+vi.mock("@repo/shared/services/notification/system", () => ({
   notifySystemAdminsOfError: vi.fn().mockResolvedValue(undefined),
 }));
 
