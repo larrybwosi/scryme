@@ -78,7 +78,7 @@ describe("TraceBatchUseCase", () => {
     );
   });
 
-  it("should throw NotFoundException if batch belongs to another organization", async () => {
+  it("should throw NotFoundException if batch belongs to another organization (non-CUID)", async () => {
     repository.findById.mockResolvedValue({
       id: "batch-1",
       organizationId: "other-org",
@@ -87,5 +87,19 @@ describe("TraceBatchUseCase", () => {
     await expect(useCase.execute("org-1", "batch-1")).rejects.toThrow(
       NotFoundException,
     );
+  });
+
+  it("should throw NotFoundException immediately if fast-path CUID belongs to another organization without executing fallback queries", async () => {
+    const mockCuid = "clj8zksc0000008mi3z3403g6";
+    const foreignBatch = { id: mockCuid, organizationId: "other-org" };
+    repository.getTraceability.mockResolvedValue(foreignBatch);
+
+    await expect(useCase.execute("org-1", mockCuid)).rejects.toThrow(
+      NotFoundException,
+    );
+
+    expect(repository.getTraceability).toHaveBeenCalledWith(mockCuid);
+    expect(repository.findById).not.toHaveBeenCalled();
+    expect(repository.findByBatchNumber).not.toHaveBeenCalled();
   });
 });
