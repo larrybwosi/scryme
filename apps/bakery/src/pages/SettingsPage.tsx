@@ -57,7 +57,7 @@ import { useDeleteConfirmation } from '@/lib/providers/delete-modal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import { toast } from 'sonner';
 import sdk from '@/lib/sdk';
-import { getSDK } from '@repo/sdk';
+import { ScrymeClientSDK as getSDK } from '@scryme/sdk/client';
 import { invoke } from '@tauri-apps/api/core';
 import { isTauri, isOfflineMode } from '@/lib/sdk';
 import { sanitizeApiUrl } from '@/utils/url';
@@ -147,11 +147,12 @@ export default function SettingsPage() {
     }
     setIsTestingKey(true);
     try {
-      const tempSdk = getSDK({
-        apiKey: formData.apiKey,
+      const tempSdk = new getSDK({
+        clientId: 'bakery-app',
+        orgSlug: 'default-org',
         baseURL: sanitizeApiUrl(formData.apiEndpointUrl) || import.meta.env.VITE_API_URL || "https://api.scryme.tech/api/v2"
       });
-      await tempSdk.client.get('/bakery');
+      await tempSdk.axiosInstance.get('/bakery', { headers: { 'x-api-key': formData.apiKey } });
       setKeyTested(true);
       toast.success('Access Key validated');
     } catch (error) {

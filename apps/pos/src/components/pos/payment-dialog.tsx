@@ -51,6 +51,7 @@ import { useCashDrawer } from '@/hooks/use-cash-drawer';
 import { useGiftCard } from '@/hooks/use-gift-card';
 import { sendOrderToKitchen } from '@/lib/kds';
 import posthog from 'posthog-js';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 
@@ -415,6 +416,7 @@ const PaymentModal = ({
       setDetectedPayment(data);
       setMpesaStatus('SUCCESS');
       setMpesaWaiting(false);
+      trackPosEvent(POS_EVENTS.MPESA_STK_SUCCESS, { receipt: data.receipt, amount: data.amount });
       setTimeout(() => {
         addPayment({
           method: PaymentMethod.MPESA,
@@ -586,6 +588,7 @@ const PaymentModal = ({
   const handleMpesaStkTrigger = async () => {
     const amount = parseFloat(amountInput);
     if (!amount || amount <= 0) return;
+    const normPhone = normalizePhoneNumber(mpesaPhone, PHONE_CONFIG);
     const payload: ProcessSaleInput = {
       ...getCommonPayloadFields(),
       paymentMethod: PaymentMethod.MPESA,
@@ -593,23 +596,25 @@ const PaymentModal = ({
       amountReceived: amount,
       change: 0,
       mpesaType: MpesaFlowType.STK_PUSH,
-      mpesaPhoneNumber: normalizePhoneNumber(mpesaPhone, PHONE_CONFIG),
+      mpesaPhoneNumber: normPhone,
       payments: [
         {
           method: PaymentMethod.MPESA,
           amount: amount,
           meta: {
             mpesaType: MpesaFlowType.STK_PUSH,
-            mpesaPhoneNumber: normalizePhoneNumber(mpesaPhone, PHONE_CONFIG),
+            mpesaPhoneNumber: normPhone,
           },
         },
       ],
     };
     try {
+      trackPosEvent(POS_EVENTS.MPESA_STK_REQUESTED, { phone: normPhone, amount });
       await createSale(payload);
       setMpesaStatus('WAITING');
       setMpesaWaiting(true);
     } catch (err: any) {
+      trackPosEvent(POS_EVENTS.MPESA_STK_FAILED, { phone: normPhone, error: err?.message });
       setValidationErrors([err?.message || 'Failed to trigger STK Push. Please retry.']);
     }
   };
@@ -686,6 +691,19 @@ const PaymentModal = ({
         table_number: tableNumber,
       });
 
+      trackPosEvent(POS_EVENTS.SALE_COMPLETED, {
+        total: totalPayable,
+        subtotal: priceBeforeTax,
+        tax: calculatedTax,
+        discount: editableDiscount,
+        paymentMethod: primaryMethod,
+        itemsCount: cartItems.length,
+        orderType,
+        hasCustomer: !!customer,
+        tableNumber,
+        isOffline: !navigator.onLine,
+      });
+
       // Deduct local stock immediately on sale
       deductStockForOrderItems(cartItems);
 
@@ -696,6 +714,7 @@ const PaymentModal = ({
       onPaymentComplete(completedOrder);
       onClose();
     } catch (err: any) {
+      trackPosEvent(POS_EVENTS.SALE_FAILED, { error: err?.message, paymentMethod: primaryMethod });
       setValidationErrors([err?.message || 'Error completing sale. Please try again.']);
     }
   };

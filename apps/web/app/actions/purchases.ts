@@ -178,14 +178,19 @@ export async function receivePurchaseItems(
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   await db.$transaction(async tx => {
-    for (const item of items) {
-      await tx.purchaseItem.update({
-        where: { id: item.itemId },
-        data: {
-          receivedQuantity: { increment: item.quantity },
-        },
-      });
-    }
+    // ⚡ Bolt Optimization: Parallelize purchase item updates using Promise.all
+    // Replaces sequential `for...of` loop awaiting queries one-by-one with concurrent execution,
+    // reducing database roundtrip latency from O(N) sequential blocking roundtrips down to 1 parallel roundtrip.
+    await Promise.all(
+      items.map(item =>
+        tx.purchaseItem.update({
+          where: { id: item.itemId },
+          data: {
+            receivedQuantity: { increment: item.quantity },
+          },
+        }),
+      ),
+    );
 
     // Check if all items received
     const purchase = await tx.purchase.findUnique({

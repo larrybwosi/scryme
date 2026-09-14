@@ -17,7 +17,16 @@ export class TraceBatchUseCase {
 
     if (isCuidLike) {
       const traceBatch = await this.stockBatchRepository.getTraceability(identifier);
-      if (traceBatch && traceBatch.organizationId === organizationId) {
+      if (traceBatch) {
+        // SECURITY (Sentinel): BOLA/IDOR Prevention & Tenant Isolation.
+        // If the CUID exists but belongs to a foreign organization, immediately reject with NotFoundException
+        // without attempting fallback repository queries (findById / findByBatchNumber).
+        // This prevents timing oracles/side-channel probing and eliminates redundant DB lookups on foreign tenant records.
+        if (traceBatch.organizationId !== organizationId) {
+          throw new NotFoundException(
+            `Batch with identifier ${identifier} not found`,
+          );
+        }
         return traceBatch;
       }
     }

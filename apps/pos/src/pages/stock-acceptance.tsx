@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { FileReceiveDialog } from '@/components/file-receive';
 import posthog from 'posthog-js';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 // --- Interfaces matching Rust Data Structures ---
 
@@ -256,6 +257,13 @@ export default function StockAcceptancePage() {
         shipment_type: selectedShipment.type,
         items_count: itemsPayload.length,
         reference_number: selectedShipment.referenceNumber,
+      });
+
+      trackPosEvent(POS_EVENTS.STOCK_DELIVERY_RECEIVED, {
+        shipmentId: selectedShipment.id,
+        shipmentType: selectedShipment.type,
+        itemsCount: itemsPayload.length,
+        referenceNumber: selectedShipment.referenceNumber,
       });
       toast.success('Shipment received successfully');
       handleBackToList();

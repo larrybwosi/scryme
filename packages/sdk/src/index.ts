@@ -1,501 +1,85 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { getScrymeV3API as originalGetScrymeV3API } from "./generated/scryme";
+import type { AxiosInstance } from "axios";
 
-export interface SDKConfig {
-  baseURL: string;
-  onUnauthorized?: () => void;
-  apiKey?: string;
+export * from "./generated/scryme";
+export * from "./generated/model/index";
+
+function getEnvOrgSlug(): string | undefined {
+  if (typeof process !== "undefined" && process.env) {
+    const slug = process.env.SCRYME_ORG_SLUG || process.env.NEXT_PUBLIC_SCRYME_ORG_SLUG;
+    if (slug) return slug;
+  }
+  try {
+    const getMeta = new Function("return typeof import.meta !== 'undefined' ? import.meta : undefined");
+    const meta = getMeta();
+    if (meta && meta.env) {
+      const slug = meta.env.VITE_SCRYME_ORG_SLUG || meta.env.SCRYME_ORG_SLUG;
+      if (slug) return slug;
+    }
+  } catch (e) {}
+  return undefined;
 }
 
-export const getSDK = (config: SDKConfig) => {
-  const client: AxiosInstance = axios.create({
-    baseURL: config.baseURL,
-    headers: config.apiKey ? { "x-api-key": config.apiKey } : {},
+function expectsOrgSlug(fn: Function): boolean {
+  const fnStr = fn.toString();
+  const match = fnStr.match(/^\s*(?:async\s+)?\(([^)]+)\)/);
+  if (!match) {
+    const singleMatch = fnStr.match(/^\s*(\w+)\s*=>/);
+    return singleMatch ? singleMatch[1] === "orgSlug" : false;
+  }
+  const firstParam = match[1].split(",")[0].split(":")[0].trim();
+  return firstParam === "orgSlug";
+}
+
+function getStringParamCount(fn: Function): number {
+  const fnStr = fn.toString();
+  const match = fnStr.match(/^\s*(?:async\s+)?\(([^)]+)\)/);
+  if (!match) return 0;
+  const params = match[1].split(",").map(p => p.trim());
+  let count = 0;
+  for (const param of params) {
+    const cleanParam = param.split(":")[0].split("=")[0].trim();
+    const lower = cleanParam.toLowerCase();
+    if (
+      lower === "params" ||
+      lower === "options" ||
+      lower.endsWith("dto") ||
+      lower.endsWith("body") ||
+      lower.endsWith("payload")
+    ) {
+      break;
+    }
+    count++;
+  }
+  return count;
+}
+
+export const getScrymeV3API = (axiosInstance?: AxiosInstance, defaultOrgSlug?: string) => {
+  const api = originalGetScrymeV3API(axiosInstance);
+
+  return new Proxy(api, {
+    get(target, prop, receiver) {
+      const originalValue = Reflect.get(target, prop, receiver);
+      if (typeof originalValue === "function") {
+        if (expectsOrgSlug(originalValue)) {
+          return function (this: any, ...args: any[]) {
+            const stringParamsExpected = getStringParamCount(originalValue);
+            const stringArgsPassed = args.filter(arg => typeof arg === "string").length;
+
+            // If the caller passed fewer string arguments than expected, they omitted orgSlug
+            if (stringArgsPassed < stringParamsExpected) {
+              const envSlug = defaultOrgSlug || getEnvOrgSlug() || "default-org";
+              return originalValue.apply(this, [envSlug, ...args]);
+            }
+            return originalValue.apply(this, args);
+          };
+        }
+      }
+      return originalValue;
+    }
   });
-
-  client.interceptors.response.use(
-    (response: AxiosResponse) => {
-      // If it matches the StandardResponse format, unwrap it
-      if (
-        response.data &&
-        response.data.success === true &&
-        response.data.data !== undefined
-      ) {
-        const metadata = response.data.meta || response.data.metadata;
-        if (metadata) {
-          return {
-            ...response,
-            data: {
-              data: response.data.data,
-              metadata,
-            },
-          };
-        }
-
-        if (response.data.timestamp) {
-          return {
-            ...response,
-            data: response.data.data,
-          };
-        }
-      }
-      return response;
-    },
-    (error: any) => {
-      if (error.response?.status === 401 && config.onUnauthorized) {
-        config.onUnauthorized();
-      }
-      return Promise.reject(error);
-    },
-  );
-
-  const sdk = {
-    client: {
-      getBaseURL: () => client.defaults.baseURL,
-      setBaseURL: (url: string) => {
-        client.defaults.baseURL = url;
-      },
-      get: <T = any>(url: string, config?: any) =>
-        client.get<T>(url, config).then((r: AxiosResponse<T>) => r.data),
-      post: <T = any>(url: string, data?: any, config?: any) =>
-        client.post<T>(url, data, config).then((r: AxiosResponse<T>) => r.data),
-      put: <T = any>(url: string, data?: any, config?: any) =>
-        client.put<T>(url, data, config).then((r: AxiosResponse<T>) => r.data),
-      patch: <T = any>(url: string, data?: any, config?: any) =>
-        client
-          .patch<T>(url, data, config)
-          .then((r: AxiosResponse<T>) => r.data),
-      delete: <T = any>(url: string, config?: any) =>
-        client.delete<T>(url, config).then((r: AxiosResponse<T>) => r.data),
-    },
-    setApiKey: (key: string) => {
-      client.defaults.headers.common["x-api-key"] = key;
-    },
-    setMemberToken: (token: string) => {
-      client.defaults.headers.common["x-member-token"] = token;
-    },
-    auth: {
-      getAuthStatus: () => sdk.client.get("/auth/status"),
-      logout: () => sdk.client.post("/auth/logout"),
-      terminalLogin: (cardId: string, pin: string, locationId?: string) =>
-        sdk.client.post("/members/login", { cardId, pin, locationId }),
-    },
-    catalog: {
-      getProducts: (params?: any) =>
-        sdk.client.get("/catalog/products", { params }),
-      createProduct: (data: any) => sdk.client.post("/catalog/products", data),
-      getProduct: (id: string) => sdk.client.get(`/catalog/products/${id}`),
-      updateProduct: (id: string, data: any) =>
-        sdk.client.patch(`/catalog/products/${id}`, data),
-      deleteProduct: (id: string) =>
-        sdk.client.delete(`/catalog/products/${id}`),
-      getVariants: (params?: any) =>
-        sdk.client.get("/catalog/variants", { params }),
-      getCategories: (params?: any) =>
-        sdk.client.get("/catalog/categories", { params }),
-      createCategory: (data: any) =>
-        sdk.client.post("/catalog/categories", data),
-      getCategory: (id: string) => sdk.client.get(`/catalog/categories/${id}`),
-      updateCategory: (id: string, data: any) =>
-        sdk.client.patch(`/catalog/categories/${id}`, data),
-      deleteCategory: (id: string) =>
-        sdk.client.delete(`/catalog/categories/${id}`),
-    },
-    inventory: {
-      getInventory: (params?: any) => sdk.client.get("/inventory", { params }),
-      list: (params?: any) => sdk.client.get("/inventory", { params }),
-    },
-    pos: {
-      getLocations: (params?: any) =>
-        sdk.client.get("/pos/locations", { params }),
-      listLocations: (params?: any) =>
-        sdk.client.get("/pos/locations", { params }),
-      registerPettyCash: (orgSlug: string, data: any) =>
-        sdk.client.post(`/${orgSlug}/pos/petty-cash`, data),
-      getPettyCashFunds: (orgSlug: string) =>
-        sdk.client.get(`/${orgSlug}/pos/petty-cash/funds`),
-    },
-    bakery: {
-      getAuthStatus: () => sdk.client.get("/bakery/auth/status"),
-      getMe: () => sdk.client.get("/devices/me"),
-      sso: () => sdk.client.post("/bakery/auth/sso"),
-      logout: () => sdk.client.post("/bakery/auth/logout"),
-      getOverview: () => sdk.client.get("/bakery"),
-      getIngredients: () => sdk.client.get("/bakery/ingredients"),
-      getIngredientRecords: () => sdk.client.get("/bakery/ingredients/records"),
-      getRecipes: () => sdk.client.get("/bakery/recipes"),
-      getRecipe: (id: string) => sdk.client.get(`/bakery/recipes/${id}`),
-      createRecipe: (data: CreateRecipeInput) =>
-        sdk.client.post("/bakery/recipes", data),
-      updateRecipe: (id: string, data: Partial<CreateRecipeInput>) =>
-        sdk.client.patch(`/bakery/recipes/${id}`, data),
-      deleteRecipe: (id: string) => sdk.client.delete(`/bakery/recipes/${id}`),
-      duplicateRecipe: (id: string) =>
-        sdk.client.post(`/bakery/recipes/${id}/duplicate`),
-      generateRecipeAi: (prompt: string) =>
-        sdk.client.post("/bakery/recipes/generate", { prompt }),
-      getBatches: (params?: { status?: BatchStatus; recipeId?: string }) =>
-        sdk.client.get("/bakery/batches", { params }),
-      getBatch: (id: string) => sdk.client.get(`/bakery/batches/${id}`),
-      getBatchTraceability: (id: string) =>
-        sdk.client.get(`/bakery/batches/${id}/traceability`),
-      createBatch: (data: CreateBatchInput) =>
-        sdk.client.post("/bakery/batches", data),
-      updateBatch: (
-        id: string,
-        data: Partial<CreateBatchInput> & { status?: BatchStatus },
-      ) => sdk.client.patch(`/bakery/batches/${id}`, data),
-      deleteBatch: (id: string) => sdk.client.delete(`/bakery/batches/${id}`),
-      startBatch: (id: string) =>
-        sdk.client.post(`/bakery/batches/${id}/start`),
-      completeBatch: (id: string, data: CompleteBatchInput) =>
-        sdk.client.post(`/bakery/batches/${id}/complete`, data),
-      cancelBatch: (id: string) =>
-        sdk.client.post(`/bakery/batches/${id}/cancel`),
-      duplicateBatch: (id: string) =>
-        sdk.client.post(`/bakery/batches/${id}/duplicate`),
-      getTemplates: () => sdk.client.get("/bakery/templates"),
-      createTemplate: (data: CreateTemplateInput) =>
-        sdk.client.post("/bakery/templates", data),
-      updateTemplate: (id: string, data: Partial<CreateTemplateInput>) =>
-        sdk.client.patch(`/bakery/templates/${id}`, data),
-      deleteTemplate: (id: string) =>
-        sdk.client.delete(`/bakery/templates/${id}`),
-      duplicateTemplate: (id: string) =>
-        sdk.client.post(`/bakery/templates/${id}/duplicate`),
-      createBatchFromTemplate: (id: string) =>
-        sdk.client.post(`/bakery/templates/${id}/create-batch`),
-      getCategories: () => sdk.client.get("/bakery/categories"),
-      getCategory: (id: string) => sdk.client.get(`/bakery/categories/${id}`),
-      createCategory: (data: { name: string; description?: string | null }) =>
-        sdk.client.post("/bakery/categories", data),
-      updateCategory: (
-        id: string,
-        data: { name?: string; description?: string | null },
-      ) => sdk.client.put(`/bakery/categories/${id}`, data),
-      deleteCategory: (id: string) =>
-        sdk.client.delete(`/bakery/categories/${id}`),
-      getSettings: () => sdk.client.get("/bakery/settings"),
-      updateSettings: (data: BakerySettingsUpdate) =>
-        sdk.client.put("/bakery/settings", data),
-      getBakers: () => sdk.client.get("/bakery/bakers"),
-      addBaker: (data: AddBakerInput) =>
-        sdk.client.post("/bakery/bakers", data),
-      updateBaker: (id: string, data: Partial<AddBakerInput>) =>
-        sdk.client.patch(`/bakery/bakers/${id}`, data),
-      removeBaker: (id: string) => sdk.client.delete(`/bakery/bakers/${id}`),
-      getPartners: () => sdk.client.get("/bakery/partners"),
-      createPartner: (data: CreateDeliveryPartnerInput) =>
-        sdk.client.post("/bakery/partners", data),
-      getPartner: (id: string) => sdk.client.get(`/bakery/partners/${id}`),
-      updatePartner: (id: string, data: Partial<CreateDeliveryPartnerInput>) =>
-        sdk.client.patch(`/bakery/partners/${id}`, data),
-      adjustPartnerWallet: (
-        id: string,
-        data: {
-          amount: number;
-          type?: WalletTransactionType;
-          notes?: string | null;
-        },
-      ) => sdk.client.post(`/bakery/partners/${id}/wallet/adjust`, data),
-      dispatchDelivery: (data: {
-        transactionId: string;
-        partnerId: string;
-        driverId?: string | null;
-        notes?: string | null;
-      }) => sdk.client.post("/bakery/deliveries/dispatch", data),
-      reconcileDelivery: (data: {
-        fulfillmentId: string;
-        status: DeliveryStatus;
-        notes?: string | null;
-      }) => sdk.client.post("/bakery/deliveries/reconcile", data),
-      getActiveDeliveries: () => sdk.client.get("/bakery/deliveries/active"),
-      receiveIngredients: (data: ReceiveIngredientsInput) =>
-        sdk.client.post("/bakery/ingredients/receive", data),
-      createIngredient: (data: any) =>
-        sdk.client.post("/bakery/ingredients", data),
-      updateIngredient: (id: string, data: any) =>
-        sdk.client.patch(`/bakery/ingredients/${id}`, data),
-      deleteIngredient: (id: string) =>
-        sdk.client.delete(`/bakery/ingredients/${id}`),
-    },
-    workflows: {
-      getAvailable: () => sdk.client.get("/workflows/available"),
-      provision: (data: { path: string; settings: any }) =>
-        sdk.client.post("/workflows/provision", data),
-      trigger: (data: { path: string; inputs: any }) =>
-        sdk.client.post("/workflows/trigger", data),
-      getHistory: (params?: { path?: string }) =>
-        sdk.client.get("/workflows/history", { params }),
-    },
-    b2b: {
-      getCatalog: (orgSlug: string) =>
-        sdk.client.get(`/${orgSlug}/b2b/catalog`),
-      getInvoices: (orgSlug: string) =>
-        sdk.client.get(`/${orgSlug}/b2b/invoices`),
-      getOrders: (orgSlug: string) => sdk.client.get(`/${orgSlug}/b2b/orders`),
-      createOrder: (orgSlug: string, data: any) =>
-        sdk.client.post(`/${orgSlug}/b2b/orders`, data),
-    },
-    cart: {
-      getCart: (orgSlug: string, sessionId?: string) =>
-        sdk.client.get(`/${orgSlug}/cart`, { params: { sessionId } }),
-      addItem: (
-        orgSlug: string,
-        data: {
-          productId?: string;
-          variantId?: string;
-          serviceId?: string;
-          bookingDetails?: any;
-          quantity: number;
-          customerId?: string;
-          sessionId?: string;
-        },
-      ) => sdk.client.post(`/${orgSlug}/cart/items`, data),
-      removeItem: (
-        orgSlug: string,
-        data: { productId?: string; variantId?: string; serviceId?: string; customerId?: string; sessionId?: string },
-      ) => sdk.client.delete(`/${orgSlug}/cart/items`, { data }),
-    },
-    customers: {
-      getCustomer: (orgSlug: string, id: string) =>
-        sdk.client.get(`/${orgSlug}/customers/${id}`),
-      updateCustomer: (orgSlug: string, id: string, data: any) =>
-        sdk.client.patch(`/${orgSlug}/customers/${id}`, data),
-    },
-    services: {
-      getPublicServices: (orgSlug: string) =>
-        sdk.client.get(`/public/${orgSlug}/services`),
-      getPublicCategories: (orgSlug: string) =>
-        sdk.client.get(`/public/${orgSlug}/services/categories`),
-      getPublicService: (orgSlug: string, id: string) =>
-        sdk.client.get(`/public/${orgSlug}/services/${id}`),
-      getServiceAvailability: (orgSlug: string, id: string, date?: string) =>
-        sdk.client.get(`/public/${orgSlug}/services/${id}/availability`, { params: { date } }),
-      requestOtp: (orgSlug: string, data: { email?: string; phoneNumber?: string }) =>
-        sdk.client.post(`/public/${orgSlug}/services/otp/request`, data),
-      verifyOtp: (orgSlug: string, data: { email?: string; phoneNumber?: string; code: string }) =>
-        sdk.client.post(`/public/${orgSlug}/services/otp/verify`, data),
-      createPublicBooking: (orgSlug: string, data: { serviceId: string; verificationId: string; scheduledStartTime: string; notes?: string }) =>
-        sdk.client.post(`/public/${orgSlug}/services/bookings`, data),
-      getBookings: (orgSlug: string, params: SchedulingCalendarParams) =>
-        sdk.client.get(`/${orgSlug}/services/bookings`, { params }),
-      getBooking: (orgSlug: string, bookingId: string) =>
-        sdk.client.get(`/${orgSlug}/services/bookings/${bookingId}`),
-      rescheduleBooking: (orgSlug: string, bookingId: string, data: RescheduleBookingInput) =>
-        sdk.client.patch(`/${orgSlug}/services/bookings/${bookingId}/reschedule`, data),
-      transitionBooking: (orgSlug: string, bookingId: string, data: BookingTransitionInput) =>
-        sdk.client.patch(`/${orgSlug}/services/bookings/${bookingId}/status`, data),
-      respondToAssignment: (orgSlug: string, bookingId: string, data: AssignmentResponseInput) =>
-        sdk.client.patch(`/${orgSlug}/services/bookings/${bookingId}/assignment`, data),
-      getCoverage: (orgSlug: string, params: SchedulingCalendarParams) =>
-        sdk.client.get(`/${orgSlug}/services/calendar/coverage`, { params }),
-      getScheduleOverrides: (orgSlug: string, params: SchedulingCalendarParams) =>
-        sdk.client.get(`/${orgSlug}/services/schedule/overrides`, { params }),
-      createScheduleOverride: (orgSlug: string, memberId: string, data: ScheduleOverrideInput) =>
-        sdk.client.post(`/${orgSlug}/services/staff/${memberId}/overrides`, data),
-      deleteScheduleOverride: (orgSlug: string, overrideId: string) =>
-        sdk.client.delete(`/${orgSlug}/services/schedule/overrides/${overrideId}`),
-    },
-  };
-
-  return sdk;
 };
 
-export type SchedulingBookingStatus =
-  | "REQUESTED"
-  | "SCHEDULED"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "NOSHOW";
-
-export interface SchedulingCalendarParams {
-  from: string;
-  to: string;
-  memberId?: string;
-  locationId?: string;
-  status?: SchedulingBookingStatus[];
-  limit?: number;
-  cursor?: string;
-}
-
-export interface RescheduleBookingInput {
-  scheduledStartTime: string;
-  scheduledEndTime?: string;
-  staffIds?: string[];
-  resourceIds?: string[];
-  revision: number;
-}
-
-export interface BookingTransitionInput {
-  status: SchedulingBookingStatus;
-  revision: number;
-  reason?: string;
-}
-
-export interface AssignmentResponseInput {
-  response: "ACCEPTED" | "DECLINED";
-  revision: number;
-  reason?: string;
-}
-
-export interface ScheduleOverrideInput {
-  type: "WORKING" | "UNAVAILABLE" | "LEAVE" | "BLACKOUT";
-  startTime: string;
-  endTime: string;
-  reason?: string;
-  locationId?: string;
-}
-
-export interface BakeryBatchListResponse {
-  data: any[];
-  metadata?: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-export type RecipeDifficulty = "EASY" | "MEDIUM" | "HARD" | "EXPERT";
-export type BatchStatus = "PLANNED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
-export type ExpirationStatus = "FRESH" | "NEAR_EXPIRY" | "EXPIRED" | "DISPOSED";
-export type DisposalReason =
-  | "EXPIRED"
-  | "NEAR_EXPIRY_UNSOLD"
-  | "DAMAGED"
-  | "QUALITY_ISSUE"
-  | "CONTAMINATION"
-  | "RECALL"
-  | "OTHER";
-export type DeliveryBenefitType =
-  "COMMISSION" | "FIXED_FEE" | "PROFIT_MARGIN" | "NONE";
-export type ReconciliationPolicy =
-  "RETURN_TO_STOCK" | "MARK_AS_WASTE" | "PARTNER_CHARGED";
-export type WalletTransactionType =
-  | "BENEFIT_ACCRUAL"
-  | "WITHDRAWAL"
-  | "ADJUSTMENT"
-  | "RECONCILIATION_CHARGE"
-  | "DEPOSIT";
-export type DeliveryStatus = "DELIVERED" | "FAILED" | "RETURNED";
-
-export interface CreateRecipeInput {
-  name: string;
-  categoryId: string;
-  producesVariantId: string;
-  yieldQuantity: number;
-  systemUnitId?: string | null;
-  orgUnitId?: string | null;
-  costPrice?: number | null;
-  description?: string | null;
-  prepTime?: number | null;
-  bakeTime?: number | null;
-  totalTime?: number | null;
-  difficulty?: RecipeDifficulty;
-  temperatureCelsius?: number | null;
-  servingSize?: string | null;
-  instructions?: string | null;
-  notes?: string | null;
-  tags?: string[];
-  ingredients?: {
-    ingredientVariantId: string;
-    quantity: number;
-    systemUnitId?: string | null;
-    orgUnitId?: string | null;
-    preparationNotes?: string | null;
-  }[];
-}
-
-export interface CreateBatchInput {
-  recipeId: string;
-  plannedQuantity: number;
-  systemUnitId?: string | null;
-  orgUnitId?: string | null;
-  recipeMultiplier?: number;
-  scheduledStartAt?: string | Date;
-  date?: string;
-  time?: string;
-  leadBakerId?: string | null;
-  notes?: string | null;
-  outputLocationId?: string | null;
-  tags?: string[];
-}
-
-export interface CompleteBatchInput {
-  actualQuantity: number;
-  wasteQuantity?: number;
-  wasteReason?: string | null;
-  qcData?: any;
-  notes?: string | null;
-  ingredientConsumptions?: {
-    stockBatchId: string;
-    quantity: number;
-  }[];
-}
-
-export interface CreateTemplateInput {
-  name: string;
-  recipeId: string;
-  quantity: number;
-  systemUnitId?: string | null;
-  orgUnitId?: string | null;
-  recipeMultiplier?: number;
-  duration?: number | null;
-  leadBakerId?: string | null;
-  notes?: string | null;
-  isActive?: boolean;
-  shelfLifeDays?: number | null;
-}
-
-export interface BakerySettingsUpdate {
-  defaultBakerId?: string | null;
-  autoCreateDailyBatches?: boolean;
-  expiryWarningDays?: number;
-  authMode?: "SSO" | "CARD_PIN";
-  batchPrefix?: string;
-  batchSeparator?: string;
-  batchDateFormat?: string;
-  batchSequence?: string;
-  autoApproveBatches?: boolean;
-  lowStockAlerts?: boolean;
-  timezone?: string;
-}
-
-export interface AddBakerInput {
-  memberId: string;
-  specialties?: string[];
-  isActive?: boolean;
-}
-
-export interface CreateDeliveryPartnerInput {
-  name: string;
-  email?: string | null;
-  phone?: string | null;
-  address?: string | null;
-  commissionRate?: number | null;
-  fixedFee?: number | null;
-  benefitType?: DeliveryBenefitType;
-  reconciliationPolicy?: ReconciliationPolicy;
-  isActive?: boolean;
-}
-
-export interface ReceiveIngredientsInput {
-  receiptReference: string;
-  receiptDate?: string | Date;
-  notes?: string | null;
-  lines: {
-    ingredientId: string;
-    quantity: number;
-    unitCost: number;
-    lotNumber?: string | null;
-    expiryDate?: string | Date | null;
-    supplier?: string | null;
-  }[];
-}
-
-export type Product = any;
-export type ProductType = any;
-export type ProductVariant = any;
-export type MemberRole = any;
-export type BakeryBranding = any;
+export * from "./base";
+export * from "./client";
+export * from "./server";

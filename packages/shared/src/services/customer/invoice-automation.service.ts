@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@repo/db";
-import { NotificationEngine } from "@repo/notifications";
+import { NotificationEngine } from "../notification";
 import { runAutomation } from "../automation";
 
 const notificationEngine = new NotificationEngine();

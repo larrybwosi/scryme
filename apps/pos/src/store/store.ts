@@ -2,6 +2,7 @@ import { createWithEqualityFn as create } from 'zustand/traditional';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import posthog from 'posthog-js';
 import { invoke } from '@tauri-apps/api/core';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 import { sendOrderToKitchen } from '@/lib/kds';
 import { type BusinessType, getBusinessConfig, getDefaultSidebarItems } from '../lib/business-configs';
 import { AutoPrintConfig, DEFAULT_AUTO_PRINT_CONFIG } from '../types/print-types';
@@ -1134,7 +1135,17 @@ export const usePosStore = create<PosStore>()(
           currentOrder: { ...state.currentOrder, orderType: type },
         })),
 
-      addItemToOrder: (product, variantId, unit, quantity, options) =>
+      addItemToOrder: (product, variantId, unit, quantity, options) => {
+        trackPosEvent(POS_EVENTS.CART_ITEM_ADDED, {
+          productId: product.productId,
+          productName: product.name || product.productName,
+          variantId,
+          unitId: unit.unitId,
+          quantity,
+          price: (unit as any).price,
+          isWholesale: options?.isWholesale || false,
+        });
+
         set(state => {
           const existingItemIndex = state.currentOrder.items.findIndex(
             i =>
@@ -1178,7 +1189,8 @@ export const usePosStore = create<PosStore>()(
               items: [...state.currentOrder.items, newItem],
             },
           };
-        }),
+        });
+      },
 
       updateItemQuantity: (productId, variantId, unitId, quantity) =>
         set(state => ({
@@ -2173,7 +2185,16 @@ export const usePosStore = create<PosStore>()(
       // HELD ORDERS (Enterprise Hold Sale Feature)
       // ==========================================
 
-      holdCurrentOrder: (reason, priority = 'normal') =>
+      holdCurrentOrder: (reason, priority = 'normal') => {
+        const { currentOrder } = get();
+        if (currentOrder.items.length > 0) {
+          trackPosEvent(POS_EVENTS.ORDER_HELD, {
+            itemsCount: currentOrder.items.length,
+            reason,
+            priority,
+          });
+        }
+
         set(state => {
           if (state.currentOrder.items.length === 0) return state;
 
@@ -2232,9 +2253,20 @@ export const usePosStore = create<PosStore>()(
               loyaltyPoints: 0,
             },
           };
-        }),
+        });
+      },
 
-      retrieveHeldOrder: id =>
+      retrieveHeldOrder: id => {
+        const { heldOrders } = get();
+        const held = heldOrders.find(o => o.id === id);
+        if (held) {
+          trackPosEvent(POS_EVENTS.HELD_ORDER_RESTORED, {
+            holdId: id,
+            itemsCount: held.items.length,
+            totalAmount: held.estimatedTotal,
+          });
+        }
+
         set(state => {
           const heldOrder = state.heldOrders.find(o => o.id === id);
           if (!heldOrder) return state;
@@ -2254,7 +2286,8 @@ export const usePosStore = create<PosStore>()(
               loyaltyPoints: heldOrder.loyaltyPoints,
             },
           };
-        }),
+        });
+      },
 
       deleteHeldOrder: id =>
         set(state => ({

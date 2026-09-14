@@ -3,3 +3,4 @@ export * from './record.service';
 export * from './relation.service';
 export * from './schema.service';
 export * from './customer';
+export * from './notification';

@@ -6,6 +6,7 @@ import { Order, BusinessSettings } from '@/store/store';
 import { PrintResult } from '@/types/print-types';
 import { v4 as uuidv4 } from 'uuid';
 import posthog from 'posthog-js';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 let printQueueChain: Promise<any> = Promise.resolve();
 
@@ -115,6 +116,10 @@ export const usePrinter = () => {
 
       store.updatePrintJob(jobId, { status: 'success' });
       posthog.capture("receipt_printed", { job_type: type });
+      trackPosEvent(
+        type === 'kitchen' ? POS_EVENTS.KITCHEN_TICKET_PRINTED : POS_EVENTS.RECEIPT_PRINTED,
+        { jobType: type, orderId: order.id, copies }
+      );
       return { success: true, jobId };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

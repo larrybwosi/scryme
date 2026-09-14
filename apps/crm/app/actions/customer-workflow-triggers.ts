@@ -54,33 +54,45 @@ export async function dispatchCustomerWorkflowTrigger(
       },
     });
 
-    for (const workflow of activeWorkflows) {
+    // Filter active workflows matching the trigger event
+    const matchingWorkflows = activeWorkflows.filter((workflow) => {
       const nodes = (workflow.nodes as any[]) || [];
       const triggerNode = nodes.find((n) => n.type === "trigger");
-      if (
+      return (
         triggerNode &&
         (triggerNode.data?.event === event ||
           triggerNode.data?.label?.toLowerCase().includes(event.toLowerCase().replace(/_/g, " ")))
-      ) {
-        const customer = await db.customer.findUnique({
-          where: { id: payload.customerId },
-        });
+      );
+    });
 
-        if (customer && customer.crmRecordId) {
-          await db.campaignWorkflowInstance.create({
-            data: {
-              workflowId: workflow.id,
-              recordId: customer.crmRecordId,
-              status: "COMPLETED",
-              currentNodeId: triggerNode.id,
-              context: {
-                triggeredByEvent: event,
-                payload,
-                executedAt: new Date().toISOString(),
+    if (matchingWorkflows.length > 0) {
+      // ⚡ Bolt Performance Optimization:
+      // 1. Hoist db.customer.findUnique out of the iteration loop to query customer record ONCE (O(1) vs O(N) DB calls).
+      // 2. Parallelize campaignWorkflowInstance.create calls using Promise.all to collapse execution latency from O(N) sequential roundtrips to 1 parallel roundtrip.
+      const customer = await db.customer.findUnique({
+        where: { id: payload.customerId },
+      });
+
+      if (customer && customer.crmRecordId) {
+        await Promise.all(
+          matchingWorkflows.map((workflow) => {
+            const nodes = (workflow.nodes as any[]) || [];
+            const triggerNode = nodes.find((n) => n.type === "trigger")!;
+            return db.campaignWorkflowInstance.create({
+              data: {
+                workflowId: workflow.id,
+                recordId: customer.crmRecordId!,
+                status: "COMPLETED",
+                currentNodeId: triggerNode.id,
+                context: {
+                  triggeredByEvent: event,
+                  payload,
+                  executedAt: new Date().toISOString(),
+                },
               },
-            },
-          });
-        }
+            });
+          })
+        );
       }
     }
 

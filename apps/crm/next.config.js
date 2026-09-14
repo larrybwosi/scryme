@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
+const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@repo/ui", "@react-pdf/renderer", "@repo/documents", "@repo/shared"],
   output: "standalone",
@@ -63,3 +63,5 @@ module.exports = {
     ],
   },
 };
+
+export default nextConfig;

@@ -59,7 +59,7 @@ export const auth = betterAuth({
         after: async (user: ExtendedUser) => {
           try {
             const { sendSystemNotification } =
-              await import("@repo/notifications");
+              await import("@repo/shared/services/notification");
             await sendSystemNotification(
               `🎉 *New User Joined*\n• *Name*: ${user.name || "N/A"}\n• *Email*: ${user.email}\n• *Role*: ${user.role || "MEMBER"}\n• *ID*: \`${user.id}\``,
             );
@@ -117,10 +117,13 @@ export const auth = betterAuth({
     storage: "secondary-storage", // Store in Redis secondary-storage
     customRules: {
       "/get-session": false, // Disable rate limiting completely for get-session to prevent false positive logouts
-      "/sign-in/email": env.NODE_ENV === "development" ? false : { window: 60, max: 20 },
-      "/sign-up/email": env.NODE_ENV === "development" ? false : { window: 60, max: 20 },
-      "/sign-in/passkey": env.NODE_ENV === "development" ? false : { window: 60, max: 20 },
-      "/sign-in/social": env.NODE_ENV === "development" ? false : { window: 60, max: 20 },
+      // Relax sign-in and sign-up rate limits to prevent false-positive 429 errors while retaining brute-force protection
+      "/sign-in/*": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+      "/sign-in/email": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+      "/sign-in/passkey": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+      "/sign-in/social": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+      "/sign-up/*": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+      "/sign-up/email": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
     },
   },
   secondaryStorage: {

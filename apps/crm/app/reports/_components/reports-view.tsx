@@ -4,6 +4,7 @@ import React from "react";
 import { BarChart3, FileText, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@repo/ui/components/ui/card";
 import { Button } from "@repo/ui/components/ui/button";
+import { trackCrmEvent, CRM_EVENTS } from "../../../lib/openpanel";
 
 export function ReportsView() {
   return (
@@ -31,7 +32,12 @@ export function ReportsView() {
                 <CardDescription className="text-xs">{report.desc}</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="outline" size="sm" className="w-full h-8 text-xs gap-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs gap-1.5"
+                  onClick={() => trackCrmEvent(CRM_EVENTS.REPORT_VIEWED, { reportTitle: report.title })}
+                >
                   <FileText size={13} />
                   View Report
                 </Button>

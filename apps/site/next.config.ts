@@ -17,7 +17,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
 const nextConfig: NextConfig = {
   output: "standalone",
   skipTrailingSlashRedirect: true,
-  transpilePackages: ["@repo/auth", "@repo/db", "@repo/shared", "@repo/env", "@repo/notifications"],
+  transpilePackages: ["@repo/auth", "@repo/db", "@repo/shared", "@repo/env"],
   experimental: {
     webpackMemoryOptimizations: true,
   },

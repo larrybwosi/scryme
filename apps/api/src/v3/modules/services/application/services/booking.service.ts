@@ -2,7 +2,7 @@ import { Injectable, BadRequestException, ConflictException, NotFoundException, 
 import { PrismaService } from "@/prisma/prisma.service";
 import { CreateBookingDto, CompleteBookingDto } from "../dto/service.dto";
 import { BookingAssignmentStatus, BookingEventSource, BookingStatus, MovementType, PricingModel, TransactionType, TransactionChannel, PaymentStatus, DepositType, TransactionStatus } from "@repo/db";
-import { notificationEngine } from "@repo/notifications";
+import { notificationEngine } from "@repo/shared/services/notification";
 import { InventoryMovementService } from "@/v3/modules/inventory/application/services/inventory-movement.service";
 import { StaffSchedulingService } from "./staff-scheduling.service";
 import { CalComService } from "./calcom.service";

@@ -1,6 +1,6 @@
 'use client';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { MemberRole } from '@repo/sdk';
+export type MemberRole = 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'BAKER' | 'STAFF' | 'MEMBER';
 import { toast } from 'sonner';
 import sdk from '@/lib/sdk';
 

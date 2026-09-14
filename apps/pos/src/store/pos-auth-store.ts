@@ -2,6 +2,7 @@ import { createWithEqualityFn as create } from 'zustand/traditional';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { invoke } from '@tauri-apps/api/core';
 import { API_ENDPOINT_DEFAULT } from '@/lib/api-config';
+import { identifyPosUser, clearPosUser, trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 type LocationType =
   'RETAIL_SHOP' | 'WAREHOUSE' | 'DISTRIBUTION' | 'PRODUCTION' | 'SUPPLIER' | 'CUSTOMER' | 'TEMPORARY' | 'OTHER';
@@ -137,9 +138,36 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
             sessionUpdatedAt: Date.now(),
           };
         });
+
+        identifyPosUser({
+          profileId: member.id,
+          name: member.name,
+          email: member.email || undefined,
+          organizationId: member.organizationId,
+          locationId: get().currentLocation?.id,
+          locationName: get().currentLocation?.name,
+          deviceType: get().deviceType,
+          isRestoredSession: isRestored,
+        });
+
+        if (!isRestored) {
+          trackPosEvent(POS_EVENTS.STAFF_CHECKIN, {
+            memberId: member.id,
+            memberName: member.name,
+            locationId: get().currentLocation?.id,
+          });
+        }
       },
 
       clearMemberSession: () => {
+        const currentMember = get().currentMember;
+        if (currentMember) {
+          trackPosEvent(POS_EVENTS.STAFF_CHECKOUT, {
+            memberId: currentMember.id,
+            memberName: currentMember.name,
+          });
+        }
+
         set(state => {
           const newCheckedInMembers = state.currentMember
             ? state.checkedInMembers.filter(m => m.id !== state.currentMember?.id)
@@ -152,6 +180,19 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
             sessionUpdatedAt: newCheckedInMembers.length > 0 ? Date.now() : null,
           };
         });
+
+        const remaining = get().currentMember;
+        if (remaining) {
+          identifyPosUser({
+            profileId: remaining.id,
+            name: remaining.name,
+            email: remaining.email || undefined,
+            organizationId: remaining.organizationId,
+            locationId: get().currentLocation?.id,
+          });
+        } else {
+          clearPosUser();
+        }
       },
 
       switchMember: async (memberId: string) => {
@@ -163,6 +204,20 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
           set({
             currentMember: member,
             sessionUpdatedAt: Date.now(),
+          });
+
+          identifyPosUser({
+            profileId: member.id,
+            name: member.name,
+            email: member.email || undefined,
+            organizationId: member.organizationId,
+            locationId: get().currentLocation?.id,
+          });
+
+          trackPosEvent(POS_EVENTS.STAFF_SWITCHED, {
+            previousMemberId,
+            newMemberId: member.id,
+            memberName: member.name,
           });
 
           // Trigger cart swap if configured (handled by usePosStore or a listener)
@@ -227,9 +282,19 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         } else {
           localStorage.removeItem('HUB_IP_ADDRESS');
         }
+
+        trackPosEvent(POS_EVENTS.DEVICE_SETUP_COMPLETED, {
+          deviceType,
+          locationId: get().currentLocation?.id,
+          locationName: get().currentLocation?.name,
+        });
       },
 
       resetDevice: () => {
+        trackPosEvent(POS_EVENTS.DEVICE_RESET, {
+          locationId: get().currentLocation?.id,
+        });
+        clearPosUser();
         set({
           isConfigured: false,
           currentLocation: null,
@@ -400,6 +465,12 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         // Location details are already returned in the provisioned response
         const location = device.location;
 
+        trackPosEvent(POS_EVENTS.DEVICE_PROVISIONED, {
+          locationId,
+          locationName: location?.name || device?.name || 'Terminal',
+          orgSlug,
+        });
+
         set({
           // Do not set isConfigured here so that the Success UI can play out.
           // completeSetup() will be called after the animation.
@@ -445,6 +516,12 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
 
           // 2. Update local state
           set({ currentLocation: location });
+
+          trackPosEvent(POS_EVENTS.LOCATION_SWITCHED, {
+            previousLocationId: previousLocation?.id,
+            newLocationId: location.id,
+            newLocationName: location.name,
+          });
 
           // 3. Call switch_location command to load cached products and trigger sync
           const products = await invoke('switch_location', {

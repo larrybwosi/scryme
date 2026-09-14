@@ -4,7 +4,7 @@ import {
   RequestMethod,
   NestModule,
 } from "@nestjs/common";
-import { APP_GUARD, RouterModule } from "@nestjs/core";
+import { APP_GUARD, APP_INTERCEPTOR, RouterModule } from "@nestjs/core";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { GraphQLModule } from "@nestjs/graphql";
 import { MercuriusDriver, MercuriusDriverConfig } from "@nestjs/mercurius";
@@ -26,6 +26,7 @@ import { CommonModule } from "./common/common.module";
 import { OpenPanelModule } from "./common/openpanel/openpanel.module";
 import { V2AuthGuard } from "./auth/v2-auth.guard";
 import { AuthorizationGuard } from "./common/guards/authorization.guard";
+import { TenantContextInterceptor } from "./common/interceptors/tenant-context.interceptor";
 import { CorrelationIdMiddleware } from "./common/middleware/correlation-id.middleware";
 import { BullModule } from "@nestjs/bullmq";
 import { ScheduleModule } from "@nestjs/schedule";
@@ -96,6 +97,10 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TenantContextInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: MultiTenantThrottlerGuard,

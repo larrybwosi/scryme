@@ -4,7 +4,7 @@ import { PrismaService } from "../../../../prisma/prisma.service";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { BadRequestException } from "@nestjs/common";
 
-vi.mock("@repo/notifications", () => ({
+vi.mock("@repo/shared/services/notification", () => ({
   notificationEngine: {
     notify: vi.fn().mockResolvedValue(true),
   },

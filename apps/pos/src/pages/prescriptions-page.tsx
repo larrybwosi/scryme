@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { usePosStore } from '@/store/store';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { usePrinter } from '@/hooks/use-printer';
-import { trackPosEvent } from '@/lib/openpanel';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 import {
   FileText,
   Search,
@@ -125,7 +125,7 @@ export function PrescriptionsPage() {
       )
     );
     if (rxToVerify) {
-      trackPosEvent('pos_prescription_verified', { rxNumber: rxToVerify.rxNumber, medication: rxToVerify.medicationName });
+      trackPosEvent(POS_EVENTS.PRESCRIPTION_VERIFIED, { rxNumber: rxToVerify.rxNumber, medication: rxToVerify.medicationName });
     }
     toast.success('Prescription verified by Pharmacist');
   };
@@ -156,7 +156,7 @@ export function PrescriptionsPage() {
 
     setPrescriptions(prev => [newRecord, ...prev]);
     setIsLogRxOpen(false);
-    trackPosEvent('pos_prescription_logged', { rxNumber: newRxNumber, medication: newMedicationName });
+    trackPosEvent(POS_EVENTS.PRESCRIPTION_LOGGED, { rxNumber: newRxNumber, medication: newMedicationName });
     toast.success(`Prescription ${newRxNumber} logged successfully`);
 
     // Reset form
@@ -503,6 +503,10 @@ export function PrescriptionsPage() {
                       ],
                     };
                     await printDocument('label', orderPayload, settings, branchName);
+                    trackPosEvent(POS_EVENTS.PRESCRIPTION_LABEL_PRINTED, {
+                      rxNumber: selectedRxForPrint.rxNumber,
+                      medication: selectedRxForPrint.medicationName,
+                    });
                     toast.success(`Sent dispensing label for ${selectedRxForPrint.rxNumber} to printer!`);
                   } catch (err: any) {
                     console.error('Prescription label print failed:', err);

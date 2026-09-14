@@ -132,8 +132,12 @@ const tooltipStyle = {
 const axisTick = { fontSize: 11, fill: "var(--color-muted-foreground)" };
 
 import { getCurrencySymbol } from "../../../lib/utils";
+import { trackCrmEvent, CRM_EVENTS } from "../../../lib/openpanel";
 
 export function DashboardView() {
+  React.useEffect(() => {
+    trackCrmEvent(CRM_EVENTS.DASHBOARD_VIEWED);
+  }, []);
   const { data: stats, isLoading: statsLoading } = useSWR(
     "dashboard-stats",
     () => getDashboardStats(),

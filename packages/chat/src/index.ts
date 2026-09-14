@@ -262,7 +262,7 @@ export class ScrymeChatApiClient {
       threadId: message.threadId,
       ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     };
-    return chat.channel.message.create(channelId, payload);
+    return chat.channel.message.create(workspaceSlug, channelId, payload);
   }
 
   /**
@@ -288,7 +288,7 @@ export class ScrymeChatApiClient {
       attachments: message.attachments,
       ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     };
-    return chat.message.update(channelId, messageId, payload);
+    return chat.channel.message.update(workspaceSlug, channelId, messageId, payload);
   }
 
   /**

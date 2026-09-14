@@ -84,6 +84,9 @@ describe("Stocking Edge Cases", () => {
         findFirst: vi.fn(),
         update: vi.fn(),
       },
+      inventoryLocation: {
+        findFirst: vi.fn().mockResolvedValue({ id: mockLocationA, organizationId: mockOrgId }),
+      },
       stockRequestItem: {
         updateMany: vi.fn(),
       },

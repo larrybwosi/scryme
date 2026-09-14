@@ -7,10 +7,10 @@ export default function OverviewPage() {
   useEffect(() => {
     // Verify provisioning by fetching current device info
     sdk.bakery.getMe()
-      .then((device) => {
+      .then((device: any) => {
         console.log('Device provisioned successfully:', device);
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error('Failed to verify provisioning:', error);
         toast.error('Device provisioning verification failed. Please check your setup.');
       });
