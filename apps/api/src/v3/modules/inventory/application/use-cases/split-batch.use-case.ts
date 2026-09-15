@@ -21,6 +21,22 @@ export class SplitBatchUseCase {
     memberId: string,
     splits: { quantity: number; notes?: string }[],
   ) {
+    // SECURITY (Sentinel): Input validation - Ensure splits is a non-empty array with positive, non-zero quantities
+    // to prevent unauthorized stock inflation via negative deductions or invalid child batch creation.
+    if (!Array.isArray(splits) || splits.length === 0) {
+      throw new BadRequestException("At least one valid split entry is required");
+    }
+
+    for (const split of splits) {
+      if (
+        typeof split?.quantity !== "number" ||
+        isNaN(split.quantity) ||
+        split.quantity <= 0
+      ) {
+        throw new BadRequestException("Split quantity must be a positive number");
+      }
+    }
+
     const parentBatch = await this.stockBatchRepository.findById(batchId);
 
     if (!parentBatch || parentBatch.organizationId !== organizationId) {

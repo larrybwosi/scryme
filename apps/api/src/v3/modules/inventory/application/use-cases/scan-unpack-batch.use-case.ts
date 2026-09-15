@@ -35,6 +35,9 @@ export class ScanUnpackBatchUseCase {
             },
             where: {
               stockTransfer: {
+                // SECURITY (Sentinel): BOLA/IDOR protection - filter stockTransfer by tenant organizationId
+                // to prevent processing active transfers belonging to foreign organizations.
+                organizationId,
                 status: {
                   in: [
                     StockTransferStatus.SHIPPED,
