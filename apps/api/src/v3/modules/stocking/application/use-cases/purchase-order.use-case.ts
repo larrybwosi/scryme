@@ -42,13 +42,14 @@ export class PurchaseOrderUseCase {
       throw new NotFoundException("Supplier not found");
     }
 
-    return this.prisma.client.$transaction(async (tx) => {
-      let subTotal = 0;
-      for (const item of dto.items) {
-        subTotal += item.orderedQuantity * item.unitCost;
-      }
+    // ⚡ Bolt Optimization: Calculate subTotal upfront before starting the transaction.
+    const subTotal = dto.items.reduce(
+      (sum, item) => sum + item.orderedQuantity * item.unitCost,
+      0,
+    );
 
-      const purchase = await tx.purchase.create({
+    const purchase = await this.prisma.client.$transaction(async (tx) => {
+      return tx.purchase.create({
         data: {
           organizationId,
           memberId,
@@ -81,20 +82,22 @@ export class PurchaseOrderUseCase {
           member: { include: { user: true } },
         },
       });
-
-      // Emit Windmill event for approval
-      await emitPurchaseApprovalRequested(organizationId, {
-        purchaseOrderId: purchase.id,
-        orderNumber: purchase.purchaseNumber,
-        requestedBy: purchase.member.user.name || "Unknown",
-        totalAmount: Number(purchase.totalAmount),
-        currency: purchase.currency,
-      }).catch((err) =>
-        console.error("[v3 PurchaseOrder] Failed to emit Windmill event:", err),
-      );
-
-      return purchase;
     });
+
+    // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
+    // Emitting Windmill events outside the $transaction block releases database locks immediately
+    // and prevents network latency from holding open database connections.
+    emitPurchaseApprovalRequested(organizationId, {
+      purchaseOrderId: purchase.id,
+      orderNumber: purchase.purchaseNumber,
+      requestedBy: purchase.member?.user?.name || "Unknown",
+      totalAmount: Number(purchase.totalAmount),
+      currency: purchase.currency,
+    }).catch((err) =>
+      console.error("[v3 PurchaseOrder] Failed to emit Windmill event:", err),
+    );
+
+    return purchase;
   }
 
   async receive(
