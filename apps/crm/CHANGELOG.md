@@ -1,5 +1,7 @@
 # crm
 
+## 8.1.0
+
 ## 8.1.0-next.1
 
 ### Minor Changes

@@ -1,5 +1,7 @@
 # site
 
+## 2.1.0
+
 ## 2.1.0-next.1
 
 ### Minor Changes
