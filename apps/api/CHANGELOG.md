@@ -2,6 +2,8 @@
 
 ## 7.1.0
 
+## 7.1.0
+
 ### Minor Changes
 
 - aa6bc76: Update
