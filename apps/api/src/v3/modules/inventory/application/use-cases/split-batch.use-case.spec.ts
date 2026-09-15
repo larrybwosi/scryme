@@ -145,6 +145,30 @@ describe("SplitBatchUseCase", () => {
     ).rejects.toThrow(NotFoundException);
   });
 
+  it("should throw BadRequestException if splits is empty or not an array", async () => {
+    await expect(
+      useCase.execute("org-1", "parent-1", "m1", []),
+    ).rejects.toThrow(BadRequestException);
+
+    await expect(
+      useCase.execute("org-1", "parent-1", "m1", null as any),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it("should throw BadRequestException if any split quantity is negative, zero, or NaN", async () => {
+    await expect(
+      useCase.execute("org-1", "parent-1", "m1", [{ quantity: -10 }]),
+    ).rejects.toThrow(BadRequestException);
+
+    await expect(
+      useCase.execute("org-1", "parent-1", "m1", [{ quantity: 0 }]),
+    ).rejects.toThrow(BadRequestException);
+
+    await expect(
+      useCase.execute("org-1", "parent-1", "m1", [{ quantity: NaN }]),
+    ).rejects.toThrow(BadRequestException);
+  });
+
   it("should throw BadRequestException if split quantity exceeds parent currentQuantity", async () => {
     const parentBatch = new StockBatchEntity(
       "parent-1",
