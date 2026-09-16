@@ -13,6 +13,8 @@ describe("WebhookService", () => {
     client: {
       webhookSubscription: {
         findMany: vi.fn(),
+        updateMany: vi.fn(),
+        findFirstOrThrow: vi.fn(),
       },
     },
   };
@@ -71,5 +73,52 @@ describe("WebhookService", () => {
 
     const isInvalid = service.verifySignature(secret, payload, "invalid_sig");
     expect(isInvalid).toBe(false);
+  });
+
+  describe("updateSubscription", () => {
+    it("should update webhook subscription scoped by organizationId", async () => {
+      const updatedSub = {
+        id: "sub-1",
+        name: "Updated Hook",
+        url: "https://example.com/webhook",
+        events: ["order.created"],
+        organizationId: "org-1",
+      };
+
+      vi.mocked(mockPrisma.client.webhookSubscription.updateMany).mockResolvedValue({ count: 1 } as any);
+      vi.mocked(mockPrisma.client.webhookSubscription.findFirstOrThrow).mockResolvedValue(updatedSub as any);
+
+      const result = await service.updateSubscription("sub-1", "org-1", {
+        name: "Updated Hook",
+        url: "https://example.com/webhook",
+      });
+
+      expect(mockPrisma.client.webhookSubscription.updateMany).toHaveBeenCalledWith({
+        where: { id: "sub-1", organizationId: "org-1" },
+        data: {
+          name: "Updated Hook",
+          url: "https://example.com/webhook",
+        },
+      });
+
+      expect(mockPrisma.client.webhookSubscription.findFirstOrThrow).toHaveBeenCalledWith({
+        where: { id: "sub-1", organizationId: "org-1" },
+      });
+
+      expect(result).toEqual(updatedSub);
+    });
+
+    it("should throw NotFoundException if subscription does not belong to organizationId", async () => {
+      vi.mocked(mockPrisma.client.webhookSubscription.updateMany).mockResolvedValue({ count: 0 } as any);
+
+      await expect(
+        service.updateSubscription("sub-foreign", "org-1", { name: "Hack" }),
+      ).rejects.toThrow("Webhook subscription not found");
+
+      expect(mockPrisma.client.webhookSubscription.updateMany).toHaveBeenCalledWith({
+        where: { id: "sub-foreign", organizationId: "org-1" },
+        data: { name: "Hack" },
+      });
+    });
   });
 });
