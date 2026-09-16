@@ -68,8 +68,8 @@ COPY --from=installer --chown=mcpser:nodejs /app/apps/mcp/dist ./apps/mcp/dist
 COPY --from=installer --chown=mcpser:nodejs /app/apps/mcp/package.json ./apps/mcp/package.json
 
 # Copy internal packages if mcp depends on them
-COPY --from=installer --chown=mcpser:nodejs /app/packages/v3-sdk/dist ./packages/v3-sdk/dist
-COPY --from=installer --chown=mcpser:nodejs /app/packages/v3-sdk/package.json ./packages/v3-sdk/package.json
+COPY --from=installer --chown=mcpser:nodejs /app/packages/sdk/dist ./packages/sdk/dist
+COPY --from=installer --chown=mcpser:nodejs /app/packages/sdk/package.json ./packages/sdk/package.json
 
 # Copy entrypoint script safely from the pruner stage root
 COPY --from=pruner --chown=mcpser:nodejs /app/entrypoint.sh ./entrypoint.sh

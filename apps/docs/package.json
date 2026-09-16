@@ -4,9 +4,9 @@
   "version": "2.1.0",
   "type": "module",
   "scripts": {
-    "predev": "cp ../../packages/v3-sdk/openapi.json src/openapi.json",
+    "predev": "cp ../../packages/sdk/openapi.json src/openapi.json",
     "dev": "vite",
-    "prebuild": "cp ../../packages/v3-sdk/openapi.json src/openapi.json",
+    "prebuild": "cp ../../packages/sdk/openapi.json src/openapi.json",
     "build": "vite build",
     "preview": "vite preview"
   },

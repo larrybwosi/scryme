@@ -280,7 +280,7 @@ jobs:
 
       - name: Publish to Crates.io
         run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ needs.release-management.outputs.isPrerelease == 'true' && '--allow-dirty' || '' }}
-        working-directory: packages/v3-sdk/rust
+        working-directory: packages/sdk/rust
 
   publish-docker:
     name: Publish Docker Images
