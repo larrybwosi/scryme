@@ -62,8 +62,8 @@ export class StockTransferUseCase {
       throw new BadRequestException("One or more invalid variants requested");
     }
 
-    return this.prisma.client.$transaction(async (tx) => {
-      const transfer = await tx.stockTransfer.create({
+    const transfer = await this.prisma.client.$transaction(async (tx) => {
+      return tx.stockTransfer.create({
         data: {
           organizationId,
           requestedById: memberId,
@@ -87,24 +87,25 @@ export class StockTransferUseCase {
           items: { include: { variant: { include: { product: true } } } },
         },
       });
-
-      // Emit Windmill Event
-      await emitStockTransferCreated(organizationId, {
-        transferId: transfer.id,
-        transferNumber: transfer.transferNumber,
-        fromLocation: transfer.fromLocation.name,
-        toLocation: transfer.toLocation.name,
-        priority: transfer.priority,
-        items: transfer.items.map((i) => ({
-          variantName: `${i.variant.product.name} ${i.variant.name || ""}`,
-          quantity: Number(i.requestedQuantity),
-        })),
-      }).catch((err) =>
-        console.error("[v3 StockTransfer] Failed to emit created event:", err),
-      );
-
-      return transfer;
     });
+
+    // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
+    // Emitting Windmill events outside the $transaction block releases database locks immediately.
+    emitStockTransferCreated(organizationId, {
+      transferId: transfer.id,
+      transferNumber: transfer.transferNumber,
+      fromLocation: transfer.fromLocation.name,
+      toLocation: transfer.toLocation.name,
+      priority: transfer.priority,
+      items: transfer.items.map((i) => ({
+        variantName: `${i.variant.product.name} ${i.variant.name || ""}`,
+        quantity: Number(i.requestedQuantity),
+      })),
+    }).catch((err) =>
+      console.error("[v3 StockTransfer] Failed to emit created event:", err),
+    );
+
+    return transfer;
   }
 
   async approve(organizationId: string, memberId: string, transferId: string) {
@@ -190,7 +191,7 @@ export class StockTransferUseCase {
     transferId: string,
     dto: ShipTransferDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    const updatedTransfer = await this.prisma.client.$transaction(async (tx) => {
       // SECURITY (Sentinel): Using findFirst instead of findUnique because
       // StockTransfer lacks a composite unique index on [id, organizationId].
       const transfer = await tx.stockTransfer.findFirst({
@@ -351,19 +352,21 @@ export class StockTransferUseCase {
         },
       });
 
-      // Emit Windmill Event
-      await emitStockTransferShipped(organizationId, {
-        transferId: updatedTransfer.id,
-        transferNumber: updatedTransfer.transferNumber,
-        shippedAt: updatedTransfer.shippedDate!.toISOString(),
-        carrier: updatedTransfer.carrier || undefined,
-        trackingNumber: updatedTransfer.trackingNumber || undefined,
-      }).catch((err) =>
-        console.error("[v3 StockTransfer] Failed to emit shipped event:", err),
-      );
-
       return updatedTransfer;
     });
+
+    // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
+    emitStockTransferShipped(organizationId, {
+      transferId: updatedTransfer.id,
+      transferNumber: updatedTransfer.transferNumber,
+      shippedAt: updatedTransfer.shippedDate!.toISOString(),
+      carrier: updatedTransfer.carrier || undefined,
+      trackingNumber: updatedTransfer.trackingNumber || undefined,
+    }).catch((err) =>
+      console.error("[v3 StockTransfer] Failed to emit shipped event:", err),
+    );
+
+    return updatedTransfer;
   }
 
   async receive(
@@ -372,7 +375,7 @@ export class StockTransferUseCase {
     transferId: string,
     dto: ReceiveTransferDto,
   ) {
-    return this.prisma.client.$transaction(async (tx) => {
+    const completedTransfer = await this.prisma.client.$transaction(async (tx) => {
       // SECURITY (Sentinel): Using findFirst instead of findUnique because
       // StockTransfer lacks a composite unique index on [id, organizationId].
       const transfer = await tx.stockTransfer.findFirst({
@@ -507,18 +510,20 @@ export class StockTransferUseCase {
         include: { receivedBy: { include: { user: true } } },
       });
 
-      // Emit Windmill Event
-      await emitStockTransferReceived(organizationId, {
-        transferId: completedTransfer.id,
-        transferNumber: completedTransfer.transferNumber,
-        receivedAt: completedTransfer.receivedDate!.toISOString(),
-        receivedBy: completedTransfer.receivedBy?.user.name || "Unknown",
-      }).catch((err) =>
-        console.error("[v3 StockTransfer] Failed to emit received event:", err),
-      );
-
       return completedTransfer;
     });
+
+    // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
+    emitStockTransferReceived(organizationId, {
+      transferId: completedTransfer.id,
+      transferNumber: completedTransfer.transferNumber,
+      receivedAt: completedTransfer.receivedDate!.toISOString(),
+      receivedBy: completedTransfer.receivedBy?.user?.name || "Unknown",
+    }).catch((err) =>
+      console.error("[v3 StockTransfer] Failed to emit received event:", err),
+    );
+
+    return completedTransfer;
   }
 
   async findAll(organizationId: string, pagination: PaginationQueryDto) {

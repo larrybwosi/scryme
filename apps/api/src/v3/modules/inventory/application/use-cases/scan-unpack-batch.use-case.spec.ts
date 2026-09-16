@@ -73,7 +73,7 @@ describe("ScanUnpackBatchUseCase", () => {
     ],
   };
 
-  it("should query stockBatch using findFirst scoped by organizationId (IDOR protection)", async () => {
+  it("should query stockBatch using findFirst scoped by organizationId and filter transferItems by organizationId (IDOR protection)", async () => {
     mockTx.stockBatch.findFirst.mockResolvedValue(mockBatch);
     mockTx.stockBatch.create.mockResolvedValue({ id: "base-batch-100" });
 
@@ -83,6 +83,15 @@ describe("ScanUnpackBatchUseCase", () => {
     expect(mockTx.stockBatch.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: "batch-100", organizationId: "org-1" },
+        include: expect.objectContaining({
+          transferItems: expect.objectContaining({
+            where: expect.objectContaining({
+              stockTransfer: expect.objectContaining({
+                organizationId: "org-1",
+              }),
+            }),
+          }),
+        }),
       }),
     );
   });

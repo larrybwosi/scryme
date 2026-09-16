@@ -13,3 +13,7 @@
 ## 2026-08-17 - [Parallel DB Queries and Map Indexing in WorkflowsService]
 **Learning:** Performing sequential database queries (such as `windmillWorkflow.findMany` and `windmillConfiguration.findUnique`) in service methods introduces unnecessary network wait times. Additionally, performing linear search scans (`.find()`) inside mapping loops creates an $O(N \times M)$ CPU bottleneck. Combining independent queries via `Promise.all` and pre-indexing relational arrays into a `Map` structure converts execution to $O(1)$ constant-time lookups and $O(N + M)$ overall complexity.
 **Action:** Always group independent read queries with `Promise.all` and pre-index collections into `Map` structures before mapping or filtering over lists.
+
+## 2026-09-15 - [Decoupling External Network Emissions from Prisma Transactions]
+**Learning:** Awaiting external HTTP/event emissions (such as Windmill workflow triggers or webhooks) inside active Prisma `$transaction` blocks unnecessarily holds database connections and row locks open for the full duration of external network roundtrips. Moving event emissions outside `$transaction` callbacks allows database transactions to commit and release connection pool resources immediately.
+**Action:** Always execute and commit database mutations inside `$transaction` first, then trigger non-critical external event emissions or webhooks outside the transaction scope.
