@@ -107,22 +107,26 @@ export class WebhookService {
       throw new BadRequestException("Insecure webhook URL blocked");
     }
 
-    const existing = await this.prisma.client.webhookSubscription.findFirst({
+    // 🛡️ SECURITY (Sentinel): BOLA/IDOR Defense in Depth
+    // Use updateMany with composite filter { id, organizationId } because WebhookSubscription
+    // lacks a composite unique index on [id, organizationId]. Prisma's standard `update` ignores non-unique
+    // fields in `where` clauses, which could allow cross-tenant updates if invoked directly.
+    const result = await this.prisma.client.webhookSubscription.updateMany({
       where: { id, organizationId },
-    });
-
-    if (!existing) {
-      throw new NotFoundException("Webhook subscription not found");
-    }
-
-    return this.prisma.client.webhookSubscription.update({
-      where: { id },
       data: {
         ...(dto.name !== undefined && { name: dto.name }),
         ...(dto.url !== undefined && { url: dto.url }),
         ...(dto.events !== undefined && { events: dto.events }),
         ...(dto.isActive !== undefined && { isActive: dto.isActive }),
       },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException("Webhook subscription not found");
+    }
+
+    return this.prisma.client.webhookSubscription.findFirstOrThrow({
+      where: { id, organizationId },
     });
   }
 
