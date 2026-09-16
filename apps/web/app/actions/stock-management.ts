@@ -356,93 +356,107 @@ export async function updateStockTransferStatus(
       updateData.shippedById = context.memberId;
       updateData.shippedDate = new Date();
 
-      // Deduct stock from source location
-      for (const item of transfer.items) {
-        await tx.productVariantStock.update({
-          where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId: transfer.fromLocationId,
+      // ⚡ Bolt Optimization: Execute stock updates and movement logs concurrently using Promise.all,
+      // collapsing 2N sequential database queries into 1 parallel roundtrip.
+      await Promise.all(
+        transfer.items.flatMap(item => [
+          tx.productVariantStock.update({
+            where: {
+              variantId_locationId: {
+                variantId: item.variantId,
+                locationId: transfer.fromLocationId,
+              },
             },
-          },
-          data: {
-            currentStock: { decrement: item.requestedQuantity },
-            availableStock: { decrement: item.requestedQuantity },
-          },
-        });
-
-        // Record movement
-        await tx.stockMovement.create({
-          data: {
-            organizationId: context.organizationId,
-            variantId: item.variantId,
-            quantity: item.requestedQuantity.mul(-1),
-            fromLocationId: transfer.fromLocationId,
-            toLocationId: transfer.toLocationId,
-            movementType: "TRANSFER",
-            referenceId: transfer.id,
-            referenceType: "StockTransfer",
-            memberId: context.memberId,
-            notes: `Transfer ${transfer.transferNumber} Shipped`,
-          },
-        });
-      }
+            data: {
+              currentStock: { decrement: item.requestedQuantity },
+              availableStock: { decrement: item.requestedQuantity },
+            },
+          }),
+          tx.stockMovement.create({
+            data: {
+              organizationId: context.organizationId,
+              variantId: item.variantId,
+              quantity: item.requestedQuantity.mul(-1),
+              fromLocationId: transfer.fromLocationId,
+              toLocationId: transfer.toLocationId,
+              movementType: "TRANSFER",
+              referenceId: transfer.id,
+              referenceType: "StockTransfer",
+              memberId: context.memberId,
+              notes: `Transfer ${transfer.transferNumber} Shipped`,
+            },
+          }),
+        ]),
+      );
     } else if (status === "COMPLETED") {
       updateData.receivedById = context.memberId;
       updateData.receivedDate = new Date();
       updateData.completedDate = new Date();
 
-      // Add stock to destination location
-      for (const item of transfer.items) {
-        const stock = await tx.productVariantStock.findUnique({
-          where: {
-            variantId_locationId: {
-              variantId: item.variantId,
-              locationId: transfer.toLocationId,
-            },
-          },
-        });
+      // ⚡ Bolt Optimization: Batch fetch existing stock records and missing product variants up-front,
+      // converting up to 3N sequential queries into 2 batched read queries and 1 concurrent write batch via Promise.all.
+      const variantIds = Array.from(
+        new Set(transfer.items.map(i => i.variantId)),
+      );
 
-        if (stock) {
-          await tx.productVariantStock.update({
-            where: { id: stock.id },
-            data: {
-              currentStock: { increment: item.requestedQuantity },
-              availableStock: { increment: item.requestedQuantity },
-            },
-          });
-        } else {
-          const variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-          });
-          await tx.productVariantStock.create({
+      const existingStocks = await tx.productVariantStock.findMany({
+        where: {
+          locationId: transfer.toLocationId,
+          variantId: { in: variantIds },
+        },
+      });
+      const stockMap = new Map(existingStocks.map(s => [s.variantId, s]));
+
+      const missingVariantIds = variantIds.filter(vId => !stockMap.has(vId));
+      let variantMap = new Map<string, { productId: string }>();
+      if (missingVariantIds.length > 0) {
+        const variants = await tx.productVariant.findMany({
+          where: { id: { in: missingVariantIds } },
+          select: { id: true, productId: true },
+        });
+        variantMap = new Map(variants.map(v => [v.id, v]));
+      }
+
+      await Promise.all(
+        transfer.items.flatMap(item => {
+          const stock = stockMap.get(item.variantId);
+          const stockOp = stock
+            ? tx.productVariantStock.update({
+                where: { id: stock.id },
+                data: {
+                  currentStock: { increment: item.requestedQuantity },
+                  availableStock: { increment: item.requestedQuantity },
+                },
+              })
+            : tx.productVariantStock.create({
+                data: {
+                  organizationId: context.organizationId,
+                  productId: variantMap.get(item.variantId)!.productId,
+                  variantId: item.variantId,
+                  locationId: transfer.toLocationId,
+                  currentStock: item.requestedQuantity,
+                  availableStock: item.requestedQuantity,
+                },
+              });
+
+          const movementOp = tx.stockMovement.create({
             data: {
               organizationId: context.organizationId,
-              productId: variant!.productId,
               variantId: item.variantId,
-              locationId: transfer.toLocationId,
-              currentStock: item.requestedQuantity,
-              availableStock: item.requestedQuantity,
+              quantity: item.requestedQuantity,
+              fromLocationId: transfer.fromLocationId,
+              toLocationId: transfer.toLocationId,
+              movementType: "TRANSFER",
+              referenceId: transfer.id,
+              referenceType: "StockTransfer",
+              memberId: context.memberId,
+              notes: `Transfer ${transfer.transferNumber} Completed`,
             },
           });
-        }
 
-        // Record movement
-        await tx.stockMovement.create({
-          data: {
-            organizationId: context.organizationId,
-            variantId: item.variantId,
-            quantity: item.requestedQuantity,
-            fromLocationId: transfer.fromLocationId,
-            toLocationId: transfer.toLocationId,
-            movementType: "TRANSFER",
-            referenceId: transfer.id,
-            referenceType: "StockTransfer",
-            memberId: context.memberId,
-            notes: `Transfer ${transfer.transferNumber} Completed`,
-          },
-        });
-      }
+          return [stockOp, movementOp];
+        }),
+      );
     }
 
     return tx.stockTransfer.update({
