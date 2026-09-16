@@ -1,5 +1,11 @@
 # web
 
+## 7.1.0
+
+### Patch Changes
+
+- @scryme/sdk@10.1.0
+
 ## 7.1.0-next.1
 
 ### Minor Changes
