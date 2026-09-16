@@ -6,8 +6,7 @@ const posPackageJsonPath = path.join(__dirname, "../apps/pos/package.json");
 const paths = [
   path.join(__dirname, "../apps/pos/package.json"),
   path.join(__dirname, "../apps/bakery/package.json"),
-  path.join(__dirname, "../packages/v3-sdk/package.json"),
-  path.join(__dirname, "../packages/sdk/package.json")
+    path.join(__dirname, "../packages/sdk/package.json")
 ];
 
 function parseSemver(v) {

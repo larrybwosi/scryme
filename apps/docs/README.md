@@ -43,7 +43,7 @@
    ```bash
    pnpm --filter docs dev
    ```
-   The development server will automatically run the `predev` lifecycle script to copy `packages/v3-sdk/openapi.json` into the docs assets folder.
+   The development server will automatically run the `predev` lifecycle script to copy `packages/sdk/openapi.json` into the docs assets folder.
 
 ---
 

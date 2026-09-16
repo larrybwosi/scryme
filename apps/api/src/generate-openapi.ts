@@ -28,7 +28,7 @@ async function generate() {
     include: [V3Module, ...V3_SUB_MODULES],
   });
 
-  const outputPath = path.resolve(process.cwd(), "../../packages/v3-sdk/openapi.json");
+  const outputPath = path.resolve(process.cwd(), "../../packages/sdk/openapi.json");
 
   // Ensure directory exists
   const dir = path.dirname(outputPath);
