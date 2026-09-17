@@ -610,8 +610,8 @@ export function ProductPageClient({
             value={activeTab}
             onValueChange={setActiveTab}
             className="w-full">
-            <div className="bg-background rounded-xl p-1 border shadow-sm mb-6 inline-flex dark:border-zinc-800">
-              <TabsList className="bg-transparent border-none p-0 h-auto">
+            <div className="bg-background rounded-xl p-1 border shadow-sm mb-6 flex max-w-full overflow-x-auto dark:border-zinc-800">
+              <TabsList className="bg-transparent border-none p-0 h-auto flex flex-nowrap shrink-0">
                 {[
                   { value: "overview", label: "Overview", icon: Package },
                   { value: "cms", label: "CMS Studio", icon: Sparkles },
@@ -633,10 +633,10 @@ export function ProductPageClient({
                     key={tab.value}
                     value={tab.value}
                     className={cn(
-                      "flex items-center gap-2 px-6 py-2.5 rounded-lg transition-all data-[state=active]:bg-zinc-900 data-[state=active]:text-white data-[state=active]:shadow-md dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900",
+                      "flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-medium whitespace-nowrap rounded-lg transition-all data-[state=active]:bg-zinc-900 data-[state=active]:text-white data-[state=active]:shadow-md dark:data-[state=active]:bg-zinc-100 dark:data-[state=active]:text-zinc-900 shrink-0",
                     )}>
-                    <tab.icon className="w-4 h-4" />
-                    {tab.label}
+                    <tab.icon className="w-4 h-4 shrink-0" />
+                    <span>{tab.label}</span>
                   </TabsTrigger>
                 ))}
               </TabsList>
