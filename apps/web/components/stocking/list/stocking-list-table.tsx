@@ -21,10 +21,12 @@ import {
   MoreHorizontal,
   ArrowLeftRight,
   PackageSearch,
+  PackagePlus,
   Package,
   ArrowUpDown,
 } from "lucide-react";
 import { AuditStockModal } from "../../inventory/audit-stock-modal";
+import { RestockModal, RestockItemInfo } from "./restock-modal";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface StockLevel {
@@ -41,15 +43,24 @@ interface StockLevel {
   availableStock: number;
   reservedStock: number;
   incomingStock: number;
+  buyingPrice?: number;
 }
 
 interface StockingListTableProps {
   data: StockLevel[];
+  locations?: Array<{ id: string; name: string }>;
+  suppliers?: Array<{ id: string; name: string }>;
 }
 
-export function StockingListTable({ data }: StockingListTableProps) {
+export function StockingListTable({
+  data,
+  locations = [],
+  suppliers = [],
+}: StockingListTableProps) {
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [selectedRestockItem, setSelectedRestockItem] = useState<RestockItemInfo | null>(null);
+  const [isRestockModalOpen, setIsRestockModalOpen] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -156,6 +167,25 @@ export function StockingListTable({ data }: StockingListTableProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuItem
                 onClick={() => {
+                  setSelectedRestockItem({
+                    productId: item.productId,
+                    variantId: item.variantId,
+                    name: item.name,
+                    variantName: item.variantName,
+                    sku: item.sku,
+                    currentStock: item.currentStock,
+                    locationId: item.locationId,
+                    locationName: item.locationName,
+                    buyingPrice: item.buyingPrice,
+                    supplierName: item.supplierName,
+                  });
+                  setIsRestockModalOpen(true);
+                }}>
+                <PackagePlus className="mr-2 h-4 w-4" />
+                <span>Restock Product</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
                   setSelectedItem({
                     ...item,
                     unitPrice: 0,
@@ -225,6 +255,22 @@ export function StockingListTable({ data }: StockingListTableProps) {
           isOpen={isAuditModalOpen}
           onClose={() => setIsAuditModalOpen(false)}
           product={selectedItem as any}
+        />
+      )}
+
+      {selectedRestockItem && (
+        <RestockModal
+          isOpen={isRestockModalOpen}
+          onClose={() => {
+            setIsRestockModalOpen(false);
+            setSelectedRestockItem(null);
+          }}
+          product={selectedRestockItem}
+          locations={locations}
+          suppliers={suppliers}
+          onSuccess={() => {
+            router.refresh();
+          }}
         />
       )}
     </div>
