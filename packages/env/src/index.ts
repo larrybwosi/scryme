@@ -12,6 +12,16 @@ const isNextJs =
 const isNestJs = !isBrowser && !isNextJs;
 
 // ─────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────
+const sanitizeUrl = (val: unknown) => {
+  if (typeof val !== "string" || val === "" || val.includes("PLACEHOLDER")) {
+    return undefined;
+  }
+  return val;
+};
+
+// ─────────────────────────────────────────────
 // Schemas
 // ─────────────────────────────────────────────
 const serverSchema = z.object({
@@ -19,7 +29,7 @@ const serverSchema = z.object({
     .enum(["development", "test", "production"])
     .default("development"),
   DATABASE_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().default("postgresql://postgres:postgres@localhost:5432/scryme"),
   ),
   DATABASE_POOL_SIZE: z.string().optional(),
@@ -28,7 +38,10 @@ const serverSchema = z.object({
 
   // Auth
   BETTER_AUTH_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
-  BETTER_AUTH_URL: z.url().default("http://localhost:3000"),
+  BETTER_AUTH_URL: z.preprocess(
+    sanitizeUrl,
+    z.url().default("http://localhost:3000"),
+  ),
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -78,7 +91,7 @@ const serverSchema = z.object({
 
   // RustFS (S3 Compatible) Configuration
   RUSTFS_ENDPOINT: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().optional(),
   ),
   RUSTFS_ACCESS_KEY: z.string().optional(),
@@ -87,14 +100,17 @@ const serverSchema = z.object({
   RUSTFS_BUCKET: z.string().default("dealio-uploads"),
   RUSTFS_FORCE_PATH_STYLE: z.coerce.boolean().default(true),
   RUSTFS_PUBLIC_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().optional(),
   ),
 
   // Realtime Configuration
   REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
   ABLY_API_KEY: z.string().optional(),
-  SOCKET_URL: z.url().default("http://localhost:3002"),
+  SOCKET_URL: z.preprocess(
+    sanitizeUrl,
+    z.url().default("http://localhost:3002"),
+  ),
 
   // Sentry Configuration
   SENTRY_DSN: z.string().optional(),
@@ -120,23 +136,23 @@ const serverSchema = z.object({
 
 const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().default("http://localhost:3000"),
   ),
   NEXT_PUBLIC_API_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().default("http://localhost:3002"),
   ),
   NEXT_PUBLIC_WEB_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().default("http://localhost:3000"),
   ),
   NEXT_PUBLIC_CRM_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().default("http://localhost:3001"),
   ),
   NEXT_PUBLIC_ADMIN_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().default("http://localhost:3007"),
   ),
   NEXT_PUBLIC_COOKIE_DOMAIN: z.string().optional(),
@@ -144,7 +160,7 @@ const clientSchema = z.object({
   // Realtime Configuration
   NEXT_PUBLIC_REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
   NEXT_PUBLIC_SOCKET_URL: z.preprocess(
-    (val) => (val === "" ? undefined : val),
+    sanitizeUrl,
     z.url().default("http://localhost:3002"),
   ),
 
