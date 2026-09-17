@@ -1,8 +1,10 @@
 import { Metadata } from "next";
 import { getSupplierById } from "../../../actions/supplier";
+import { getInventoryProducts } from "../../../actions/inventory";
 import { SupplierDetailsHeader } from "../../../../components/supplier/SupplierDetailsHeader";
 import { ProductCatalog } from "../../../../components/supplier/ProductCatalog";
 import { SupplierDeliveries } from "../../../../components/supplier/SupplierDeliveries";
+import { CreateSupplierPODialog } from "../../../../components/supplier/create-supplier-po-dialog";
 import {
   Tabs,
   TabsContent,
@@ -52,7 +54,10 @@ export default async function SupplierDetailsPage({
   params,
 }: SupplierDetailsPageProps) {
   const resolvedParams = await params;
-  const supplier = await getSupplierById(resolvedParams.id);
+  const [supplier, inventoryProducts] = await Promise.all([
+    getSupplierById(resolvedParams.id),
+    getInventoryProducts({ supplierId: resolvedParams.id }).catch(() => []),
+  ]);
 
   if (!supplier) {
     notFound();
@@ -118,12 +123,12 @@ export default async function SupplierDetailsPage({
 
             {/* Actions */}
             <div className="flex items-center gap-2 shrink-0">
-              <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium border border-border bg-background text-foreground hover:bg-accent transition-colors">
-                Edit
-              </button>
-              <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium border border-primary bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
-                New Order
-              </button>
+              <CreateSupplierPODialog
+                supplierId={supplier.id}
+                supplierName={supplier.name}
+                supplierProducts={supplier.products || []}
+                allProducts={inventoryProducts}
+              />
             </div>
           </div>
 
