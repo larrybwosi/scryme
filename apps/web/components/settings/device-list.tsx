@@ -105,9 +105,11 @@ export function DeviceList({ devices }: { devices: any[] }) {
 
   const handleEditPermissions = (device: any) => {
     setSelectedDevice(device);
-    setPermissions(device.apiKey.permissions || []);
+    const existingPermissions =
+      device.apiKey?.permissions || device.v3ApiClient?.scopes || [];
+    setPermissions(existingPermissions);
     setJsonPermissions(
-      JSON.stringify(device.apiKey.permissions || [], null, 2),
+      JSON.stringify(existingPermissions, null, 2),
     );
     setIsPermissionsOpen(true);
   };
@@ -130,12 +132,16 @@ export function DeviceList({ devices }: { devices: any[] }) {
           finalPermissions = permissions;
         }
 
-        await updateDevicePermissions(
-          selectedDevice.apiKeyId,
-          finalPermissions,
-        );
-        toast.success("Permissions updated successfully");
-        setIsPermissionsOpen(false);
+        if (selectedDevice?.apiKeyId) {
+          await updateDevicePermissions(
+            selectedDevice.apiKeyId,
+            finalPermissions,
+          );
+          toast.success("Permissions updated successfully");
+          setIsPermissionsOpen(false);
+        } else {
+          toast.error("Cannot edit permissions for devices without an API key");
+        }
       } catch (error) {
         toast.error("Failed to update permissions");
         console.error(error);
@@ -239,9 +245,14 @@ export function DeviceList({ devices }: { devices: any[] }) {
                   <div className="flex items-center gap-2 text-slate-600">
                     <Clock className="w-3.5 h-3.5" />
                     <span className="text-sm">
-                      {device.apiKey.lastUsedAt
+                      {device.apiKey?.lastUsedAt
                         ? format(
                             new Date(device.apiKey.lastUsedAt),
+                            "MMM d, h:mm a",
+                          )
+                        : device.lastSeenAt
+                        ? format(
+                            new Date(device.lastSeenAt),
                             "MMM d, h:mm a",
                           )
                         : "Never"}
