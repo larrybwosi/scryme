@@ -21,7 +21,15 @@ Run these scripts from either the workspace root using filters, or directly with
 - **`pnpm run db:migrate:dev`**: Generate and apply a new Prisma database migration (development).
 - **`pnpm run db:migrate:deploy`**: Apply pending migrations to the database (production).
 - **`pnpm run db:seed`**: Execute the seed script against the active database.
-- **`pnpm run studio`**: Open Prisma Studio interface.
+- **`pnpm run studio`**: Open Prisma Studio interface locally.
+
+---
+
+## 🔒 Production Prisma Studio Access
+
+Prisma Studio does not feature built-in authentication. When deploying Prisma Studio to production, manage access securely using Traefik HTTP Basic Auth or SSH tunneling.
+
+For full deployment instructions, configuration examples, and security best practices, refer to the **[Secure Prisma Studio Deployment Guide](../../docs/prisma-studio-deployment.md)**.
 
 ---
 
