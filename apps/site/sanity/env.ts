@@ -1,14 +1,37 @@
 export const apiVersion =
   process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-07-15";
 
-export const dataset =
-  process.env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
-  process.env.NEXT_PUBLIC_SANITY_DATASET ||
-  process.env.SANITY_DATASET ||
-  "production";
+function getSanitizedProjectId(rawProjectId?: string): string {
+  if (
+    !rawProjectId ||
+    rawProjectId.includes("PLACEHOLDER") ||
+    !/^[a-z0-9-]+$/.test(rawProjectId)
+  ) {
+    return "ce88cj7n";
+  }
+  return rawProjectId;
+}
 
-export const projectId =
+function getSanitizedDataset(rawDataset?: string): string {
+  if (
+    !rawDataset ||
+    rawDataset.includes("PLACEHOLDER") ||
+    !/^[a-z0-9~_.-]+$/.test(rawDataset)
+  ) {
+    return "production";
+  }
+  return rawDataset;
+}
+
+const rawProjectId =
   process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID ||
   process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ||
-  process.env.SANITY_PROJECT_ID ||
-  "ce88cj7n";
+  process.env.SANITY_PROJECT_ID;
+
+const rawDataset =
+  process.env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
+  process.env.NEXT_PUBLIC_SANITY_DATASET ||
+  process.env.SANITY_DATASET;
+
+export const dataset = getSanitizedDataset(rawDataset);
+export const projectId = getSanitizedProjectId(rawProjectId);
