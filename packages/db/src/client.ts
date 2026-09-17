@@ -1,3 +1,48 @@
+
+const PRISMA_FILTER_OPERATORS = new Set([
+  "equals", "in", "notIn", "lt", "lte", "gt", "gte",
+  "contains", "startsWith", "endsWith", "mode", "not",
+  "set", "push", "is", "isNot", "some", "every", "none",
+  "search", "has", "hasEvery", "hasSome", "isEmpty",
+]);
+
+function isPrimitiveValue(val: any): boolean {
+  if (val === null || val === undefined) return true;
+  const type = typeof val;
+  return type === "string" || type === "number" || type === "boolean" || type === "bigint" || val instanceof Date;
+}
+
+function normalizeWhereClause(where: any): any {
+  if (!where || typeof where !== "object" || Array.isArray(where)) {
+    return where;
+  }
+
+  const normalized: Record<string, any> = {};
+
+  for (const [key, val] of Object.entries(where)) {
+    if (
+      val &&
+      typeof val === "object" &&
+      !Array.isArray(val) &&
+      !(val instanceof Date) &&
+      !(val.constructor && val.constructor.name === "Decimal")
+    ) {
+      const subKeys = Object.keys(val);
+      const isFilterObject = subKeys.some((k) => PRISMA_FILTER_OPERATORS.has(k));
+      const allPrimitives = subKeys.length > 0 && subKeys.every((k) => isPrimitiveValue((val as any)[k]));
+
+      if (!isFilterObject && allPrimitives) {
+        Object.assign(normalized, val);
+      } else {
+        normalized[key] = val;
+      }
+    } else {
+      normalized[key] = val;
+    }
+  }
+
+  return normalized;
+}
 import { Pool, Client } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../generated/client";
@@ -104,7 +149,7 @@ export function createTenantExtendedClient<T extends PrismaClient>(baseClient: T
           ];
 
           if (readFilterOps.includes(operation)) {
-            args.where = args.where || {};
+            args.where = normalizeWhereClause(args.where || {});
             if (args.where.organizationId === undefined) {
               args.where.organizationId = activeOrgId;
             } else if (
@@ -115,9 +160,10 @@ export function createTenantExtendedClient<T extends PrismaClient>(baseClient: T
               args.where.organizationId = activeOrgId;
             }
           } else if (operation === "findUnique" || operation === "findUniqueOrThrow") {
-            // Transform findUnique into findFirst with organizationId filter
+            // Transform findUnique into findFirst with organizationId filter and normalized where
             const newArgs = { ...args };
-            newArgs.where = { ...(newArgs.where || {}), organizationId: activeOrgId };
+            newArgs.where = normalizeWhereClause(newArgs.where || {});
+            newArgs.where.organizationId = activeOrgId;
             const client = baseClient as any;
             const targetModel = client[model] || client[model.toLowerCase()];
             if (targetModel && typeof targetModel.findFirst === "function") {
@@ -148,7 +194,7 @@ export function createTenantExtendedClient<T extends PrismaClient>(baseClient: T
             const client = baseClient as any;
             const targetModel = client[model] || client[model.toLowerCase()];
             if (targetModel && typeof targetModel.findFirst === "function") {
-              const checkWhere = { ...(args.where || {}), organizationId: activeOrgId };
+              const checkWhere = normalizeWhereClause({ ...(args.where || {}), organizationId: activeOrgId });
               const record = await targetModel.findFirst({ where: checkWhere });
               if (!record) {
                 throw new Error(`Record in ${model} not found for active organization`);
