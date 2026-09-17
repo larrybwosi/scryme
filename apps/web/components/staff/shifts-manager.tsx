@@ -452,6 +452,9 @@ export function ShiftsManager({
               <Badge variant="outline">{workspace.timezone}</Badge>
               {canManage && (
                 <>
+                  <Button onClick={() => openNewShiftModal()}>
+                    <Plus data-icon="inline-start" />Add Shift
+                  </Button>
                   <Button onClick={() => {
                     setBookingForm(current => ({
                       ...current,
@@ -459,7 +462,7 @@ export function ShiftsManager({
                       serviceId: current.serviceId || workspace.services[0]?.id || "",
                     }));
                     setBookingDialogOpen(true);
-                  }}>
+                  }} variant="outline">
                     <Plus data-icon="inline-start" />Add Schedule
                   </Button>
                   <Button onClick={() => setLeaveDialogOpen(true)} variant="outline"><Plus data-icon="inline-start" />Override</Button>
