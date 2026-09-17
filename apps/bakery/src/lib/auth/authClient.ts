@@ -7,8 +7,17 @@ import {
 } from "better-auth/client/plugins";
 import { ac, ADMIN, CASHIER, DEVELOPER } from "./permissions";
 
+function getValidAuthUrl(url: string | undefined, defaultUrl: string): string {
+  if (!url || typeof url !== "string") return defaultUrl;
+  if (url.includes("PLACEHOLDER")) return defaultUrl;
+  if (!url.startsWith("http://") && !url.startsWith("https://")) return defaultUrl;
+  return url;
+}
+
+const defaultAuthUrl = "https://api.scryme.tech";
+
 export const authClient: any = createAuthClient({
-  baseURL: process.env.BETTER_AUTH_URL,
+  baseURL: getValidAuthUrl(process.env.BETTER_AUTH_URL, defaultAuthUrl),
   plugins: [
     customSessionClient(),
     adminClient({

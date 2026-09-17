@@ -1,16 +1,33 @@
 import { createAuthClient } from "better-auth/react";
 import { passkeyClient } from "@better-auth/passkey/client";
 
+function getValidAuthUrl(
+  urls: (string | undefined)[],
+  defaultUrl: string,
+): string {
+  for (const url of urls) {
+    if (
+      url &&
+      typeof url === "string" &&
+      !url.includes("PLACEHOLDER") &&
+      (url.startsWith("http://") || url.startsWith("https://"))
+    ) {
+      return url;
+    }
+  }
+  return defaultUrl;
+}
+
 const isDev = process.env.NODE_ENV === "development";
 const defaultAppUrl = isDev
   ? "http://localhost:3001"
   : "https://crm.scryme.tech";
 
 export const authClient: any = createAuthClient({
-  baseURL:
-    process.env.NEXT_PUBLIC_APP_URL ||
-    process.env.NEXT_PUBLIC_CRM_URL ||
+  baseURL: getValidAuthUrl(
+    [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_CRM_URL],
     defaultAppUrl,
+  ),
   plugins: [passkeyClient()],
 });
 
