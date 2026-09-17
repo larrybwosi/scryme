@@ -63,7 +63,8 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
     set({ status: 'loading', error: null, socketClient: null, authRetryCount: 0 });
 
     const configuredApiUrl = useAuthStore.getState().apiUrl || getApiEndpoint();
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || configuredApiUrl || 'http://localhost:3002';
+    const productionFallback = 'https://api.scryme.tech';
+    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || configuredApiUrl || (import.meta.env.DEV ? 'http://localhost:3002' : productionFallback);
 
     const initSocket = async () => {
       const { io } = await import('socket.io-client');

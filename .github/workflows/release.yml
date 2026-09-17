@@ -249,6 +249,54 @@ jobs:
           prerelease: ${{ needs.release-management.outputs.isPrerelease }}
           args: ${{ steps.target.outputs.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.variant }}
 
+  publish-bakery:
+    name: Publish Bakery (windows-latest)
+    runs-on: windows-latest
+    needs: [release-management, set-version, build-packages]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-packages
+          path: packages
+
+      - name: Build and Publish Bakery App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || secrets.NEXT_PUBLIC_API_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: ./apps/bakery
+          tagName: v${{ needs.set-version.outputs.version }}
+          releaseName: "v${{ needs.set-version.outputs.version }}"
+          releaseBody: "Release v${{ needs.set-version.outputs.version }}"
+          releaseDraft: true
+          prerelease: ${{ needs.release-management.outputs.isPrerelease }}
+          args: --target x86_64-pc-windows-msvc
+
   publish-crates:
     name: Publish Rust SDK to Crates.io
     continue-on-error: true
@@ -331,7 +379,7 @@ jobs:
   create-tag:
     name: Create Tag and Publish Release
     runs-on: ubuntu-latest
-    needs: [release-management, set-version, publish-pos, publish-crates, publish-docker]
+    needs: [release-management, set-version, publish-pos, publish-bakery, publish-crates, publish-docker]
     if: needs.release-management.outputs.published == 'true'
     steps:
       - name: Checkout Repo
