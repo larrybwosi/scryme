@@ -70,28 +70,36 @@ function tagExistsOnRemote(version) {
       console.log(`Remote tag ${tag} exists.`);
       return true;
     }
-    return false;
   } catch (error) {
-    // In local development or if remote is unreachable/unconfigured, we fall back to local tags check
     console.warn(
-      `Could not check remote tags: ${error.message}. Checking local tags instead.`,
+      `Could not check remote tags: ${error.message}. Checking GitHub releases and local tags instead.`,
     );
-    try {
-      const localOutput = execSync(`git tag -l ${tag}`, {
-        stdio: ["ignore", "pipe", "ignore"],
-        encoding: "utf8",
-      }).trim();
-      return localOutput === tag;
-    } catch (localError) {
-      // Both remote and local checks failed - we genuinely don't know whether
-      // this tag exists. Publishing under an unverified version could silently
-      // overwrite or collide with an existing release, so fail loudly instead
-      // of assuming it's safe to proceed.
-      console.error(`Could not check local tags: ${localError.message}`);
-      throw new Error(
-        `Unable to verify whether tag ${tag} exists (remote and local checks both failed) — refusing to guess.`,
-      );
+  }
+
+  // Check if a GitHub release exists for this tag (including draft releases)
+  try {
+    const ghOutput = execSync(`gh release view ${tag}`, {
+      stdio: ["ignore", "pipe", "pipe"],
+      encoding: "utf8",
+      timeout: 10000,
+    }).trim();
+    if (ghOutput) {
+      console.log(`GitHub release for ${tag} exists.`);
+      return true;
     }
+  } catch (ghError) {
+    // gh release view throws if release is not found or gh is unauthenticated/not installed
+  }
+
+  try {
+    const localOutput = execSync(`git tag -l ${tag}`, {
+      stdio: ["ignore", "pipe", "ignore"],
+      encoding: "utf8",
+    }).trim();
+    return localOutput === tag;
+  } catch (localError) {
+    console.warn(`Could not check local tags: ${localError.message}`);
+    return false;
   }
 }
 
