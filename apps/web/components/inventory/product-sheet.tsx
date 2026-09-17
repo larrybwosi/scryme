@@ -16,7 +16,9 @@ import { Label } from "@repo/ui/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
@@ -25,6 +27,8 @@ import {
   updateProduct,
   getProduct,
   checkProductUniqueness,
+  getSystemUnits,
+  getOrganizationUnits,
 } from "../../app/actions/inventory";
 import { CategoryDialog } from "./category-dialog";
 import { toast } from "sonner";
@@ -154,6 +158,11 @@ export function ProductSheet({
   const open = controlledOpen !== undefined ? controlledOpen : isOpen;
   const setOpen = onOpenChange !== undefined ? onOpenChange : setIsOpen;
 
+  const [units, setUnits] = useState<{
+    systemUnits: any[];
+    organizationUnits: any[];
+  }>({ systemUnits: [], organizationUnits: [] });
+
   const [formData, setFormData] = useState({
     name: "",
     sku: "",
@@ -164,7 +173,22 @@ export function ProductSheet({
     initialStock: 0,
     imageUrls: [] as string[],
     type: "FINISHED_GOOD",
+    stockingUnitId: null as string | null,
+    stockingOrgUnitId: null as string | null,
   });
+
+  useEffect(() => {
+    if (open) {
+      Promise.all([getSystemUnits(), getOrganizationUnits()]).then(
+        ([sysUnits, orgUnits]) => {
+          setUnits({
+            systemUnits: sysUnits || [],
+            organizationUnits: orgUnits || [],
+          });
+        },
+      );
+    }
+  }, [open]);
 
   const [isCheckingUniqueness, setIsCheckingUniqueness] = useState(false);
   const [uniqueness, setUniqueness] = useState({ sku: true, slug: true });
@@ -230,6 +254,8 @@ export function ProductSheet({
               initialStock: 0,
               imageUrls: product.imageUrls,
               type: product.type || "FINISHED_GOOD",
+              stockingUnitId: variant?.stockingUnitId || null,
+              stockingOrgUnitId: variant?.stockingOrgUnitId || null,
             });
           }
         } catch {
@@ -250,11 +276,15 @@ export function ProductSheet({
         initialStock: 0,
         imageUrls: [],
         type: "FINISHED_GOOD",
+        stockingUnitId: null,
+        stockingOrgUnitId: null,
       });
       setIsManualSku(false);
       setIsManualSlug(false);
     }
   }, [productId, open]);
+
+  const isRaw = formData.type === "RAW_MATERIAL";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,13 +300,20 @@ export function ProductSheet({
           slug: formData.slug,
           categoryId: formData.categoryId,
           buyingPrice: formData.buyingPrice,
-          retailPrice: formData.retailPrice,
+          retailPrice: isRaw ? undefined : formData.retailPrice,
           imageUrls: formData.imageUrls,
           type: formData.type,
+          stockingUnitId: formData.stockingUnitId,
+          stockingOrgUnitId: formData.stockingOrgUnitId,
         });
         toast.success("Item updated successfully");
       } else {
-        await createProduct(formData);
+        await createProduct({
+          ...formData,
+          retailPrice: isRaw ? undefined : formData.retailPrice,
+          stockingUnitId: formData.stockingUnitId,
+          stockingOrgUnitId: formData.stockingOrgUnitId,
+        });
         toast.success("Item created successfully");
       }
       setOpen(false);
@@ -288,7 +325,7 @@ export function ProductSheet({
   };
 
   const margin =
-    formData.buyingPrice > 0 && formData.retailPrice > 0
+    !isRaw && formData.buyingPrice > 0 && formData.retailPrice > 0
       ? (
           ((formData.retailPrice - formData.buyingPrice) /
             formData.retailPrice) *
@@ -518,7 +555,11 @@ export function ProductSheet({
                   step={2}
                 />
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div
+                    className={cn(
+                      "grid gap-4",
+                      isRaw ? "grid-cols-1" : "grid-cols-2",
+                    )}>
                     <FieldWrapper>
                       <FieldLabel htmlFor="buying-price">Cost Price</FieldLabel>
                       <div className="relative">
@@ -544,36 +585,38 @@ export function ProductSheet({
                       </div>
                     </FieldWrapper>
 
-                    <FieldWrapper>
-                      <FieldLabel htmlFor="retail-price">
-                        Retail Price
-                      </FieldLabel>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-[13px] font-medium pointer-events-none">
-                          {symbol}
-                        </span>
-                        <Input
-                          id="retail-price"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          value={formData.retailPrice || ""}
-                          onChange={e =>
-                            setFormData({
-                              ...formData,
-                              retailPrice: parseFloat(e.target.value) || 0,
-                            })
-                          }
-                          required
-                          className="h-9 pl-7 text-sm bg-background border-border focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring placeholder:text-muted-foreground/40"
-                        />
-                      </div>
-                    </FieldWrapper>
+                    {!isRaw && (
+                      <FieldWrapper>
+                        <FieldLabel htmlFor="retail-price">
+                          Retail Price
+                        </FieldLabel>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-[13px] font-medium pointer-events-none">
+                            {symbol}
+                          </span>
+                          <Input
+                            id="retail-price"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            value={formData.retailPrice || ""}
+                            onChange={e =>
+                              setFormData({
+                                ...formData,
+                                retailPrice: parseFloat(e.target.value) || 0,
+                              })
+                            }
+                            required
+                            className="h-9 pl-7 text-sm bg-background border-border focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring placeholder:text-muted-foreground/40"
+                          />
+                        </div>
+                      </FieldWrapper>
+                    )}
                   </div>
 
                   {/* Margin indicator */}
-                  {margin !== null && (
+                  {!isRaw && margin !== null && (
                     <div
                       className={cn(
                         "flex items-center gap-2 px-3 py-2 rounded-md border text-[12px] font-medium transition-all",
@@ -598,28 +641,97 @@ export function ProductSheet({
                     </div>
                   )}
 
-                  {!productId && (
-                    <FieldWrapper className="w-1/2 pr-2">
-                      <FieldLabel htmlFor="initial-stock">
-                        Default Variant Stock
+                  <div className="grid grid-cols-2 gap-4">
+                    <FieldWrapper>
+                      <FieldLabel htmlFor="restock-unit">
+                        Restock Unit (Optional)
                       </FieldLabel>
-                      <Input
-                        id="initial-stock"
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        value={formData.initialStock || ""}
-                        onChange={e =>
-                          setFormData({
-                            ...formData,
-                            initialStock: parseInt(e.target.value) || 0,
-                          })
+                      <Select
+                        value={
+                          formData.stockingUnitId ||
+                          formData.stockingOrgUnitId ||
+                          "none"
                         }
-                        required
-                        className="h-9 text-sm bg-background border-border focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring placeholder:text-muted-foreground/40"
-                      />
+                        onValueChange={val => {
+                          if (val === "none") {
+                            setFormData(prev => ({
+                              ...prev,
+                              stockingUnitId: null,
+                              stockingOrgUnitId: null,
+                            }));
+                          } else {
+                            const isOrg = units.organizationUnits.some(
+                              u => u.id === val,
+                            );
+                            setFormData(prev => ({
+                              ...prev,
+                              stockingUnitId: isOrg ? null : val,
+                              stockingOrgUnitId: isOrg ? val : null,
+                            }));
+                          }
+                        }}>
+                        <SelectTrigger
+                          id="restock-unit"
+                          className="h-9 text-sm border-border focus:ring-1 focus:ring-ring focus:border-ring bg-background">
+                          <SelectValue placeholder="Default (Base Unit)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none" className="text-sm">
+                            Default (Base Unit)
+                          </SelectItem>
+                          {units.systemUnits.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel>System Units</SelectLabel>
+                              {units.systemUnits.map(u => (
+                                <SelectItem
+                                  key={u.id}
+                                  value={u.id}
+                                  className="text-sm">
+                                  {u.name} ({u.symbol})
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          )}
+                          {units.organizationUnits.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel>Organization Units</SelectLabel>
+                              {units.organizationUnits.map(u => (
+                                <SelectItem
+                                  key={u.id}
+                                  value={u.id}
+                                  className="text-sm">
+                                  {u.name} ({u.symbol})
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </FieldWrapper>
-                  )}
+
+                    {!productId && (
+                      <FieldWrapper>
+                        <FieldLabel htmlFor="initial-stock">
+                          Default Variant Stock
+                        </FieldLabel>
+                        <Input
+                          id="initial-stock"
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          value={formData.initialStock || ""}
+                          onChange={e =>
+                            setFormData({
+                              ...formData,
+                              initialStock: parseInt(e.target.value) || 0,
+                            })
+                          }
+                          required
+                          className="h-9 text-sm bg-background border-border focus-visible:ring-1 focus-visible:ring-ring focus-visible:border-ring placeholder:text-muted-foreground/40"
+                        />
+                      </FieldWrapper>
+                    )}
+                  </div>
                 </div>
               </section>
 

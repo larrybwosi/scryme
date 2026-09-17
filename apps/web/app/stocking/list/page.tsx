@@ -61,7 +61,11 @@ export default async function StockingListPage({
         suppliers={suppliers}
       />
 
-      <StockingListTable data={stockLevels} />
+      <StockingListTable
+        data={stockLevels}
+        locations={locations}
+        suppliers={suppliers}
+      />
     </div>
   );
 }

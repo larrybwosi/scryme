@@ -29,6 +29,7 @@ If you are developing connected applications or integrating a third-party portal
 - **[Customer Single Sign-On & Authentication Guide](./docs/customer-authentication.md)**
 - **[Connected Apps & V3 Catalog Guide](./docs/v3-connected-apps-catalog.md)**
 - **[Admin App Deployment & DB Guide](./docs/admin-deployment.md)**
+- **[Secure Prisma Studio Deployment Guide](./docs/prisma-studio-deployment.md)**
 
 ---
 

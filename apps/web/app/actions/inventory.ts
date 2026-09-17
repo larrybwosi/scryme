@@ -174,10 +174,12 @@ export async function createProduct(data: {
   slug?: string;
   categoryId: string;
   buyingPrice: number;
-  retailPrice: number;
+  retailPrice?: number;
   initialStock: number;
   imageUrls: string[];
   type?: any;
+  stockingUnitId?: string | null;
+  stockingOrgUnitId?: string | null;
 }): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId)
@@ -199,6 +201,12 @@ export async function createProduct(data: {
       },
     });
 
+    const isRaw = data.type === "RAW_MATERIAL";
+    const retailPriceDecimal =
+      !isRaw && data.retailPrice !== undefined && data.retailPrice !== null
+        ? new Decimal(data.retailPrice)
+        : null;
+
     // 2. Create the Default Variant
     const variant = await tx.productVariant.create({
       data: {
@@ -206,26 +214,28 @@ export async function createProduct(data: {
         name: "Default",
         sku: data.sku,
         buyingPrice: new Decimal(data.buyingPrice),
-        retailPrice: new Decimal(data.retailPrice),
+        retailPrice: retailPriceDecimal,
         attributes: {}, // Required by schema
         baseUnitId: pieceUnit.systemUnitId,
         baseOrgUnitId: pieceUnit.orgUnitId,
-        stockingUnitId: pieceUnit.systemUnitId,
-        stockingOrgUnitId: pieceUnit.orgUnitId,
+        stockingUnitId: data.stockingUnitId || pieceUnit.systemUnitId,
+        stockingOrgUnitId: data.stockingOrgUnitId || pieceUnit.orgUnitId,
       },
     });
 
-    // 2b. Create Default Selling Unit
-    await tx.variantSellingUnit.create({
-      data: {
-        variantId: variant.id,
-        systemUnitId: pieceUnit.systemUnitId,
-        orgUnitId: pieceUnit.orgUnitId,
-        retailPrice: new Decimal(data.retailPrice),
-        conversionMultiplier: new Decimal(1),
-        isActive: true,
-      },
-    });
+    // 2b. Create Default Selling Unit if not raw product
+    if (!isRaw) {
+      await tx.variantSellingUnit.create({
+        data: {
+          variantId: variant.id,
+          systemUnitId: pieceUnit.systemUnitId,
+          orgUnitId: pieceUnit.orgUnitId,
+          retailPrice: retailPriceDecimal,
+          conversionMultiplier: new Decimal(1),
+          isActive: true,
+        },
+      });
+    }
 
     // Find default location
     const defaultLocation =
@@ -338,6 +348,8 @@ export async function updateProduct(
     pointsOnPurchase?: number;
     loyaltyPointsOverride?: number;
     customFields?: any;
+    stockingUnitId?: string | null;
+    stockingOrgUnitId?: string | null;
   },
 ): Promise<any> {
   const context = await getServerAuth();
@@ -368,6 +380,7 @@ export async function updateProduct(
       },
     });
 
+    const isRaw = data.type === "RAW_MATERIAL";
     const variant = await tx.productVariant.findFirst({
       where: { productId: id },
     });
@@ -410,6 +423,39 @@ export async function updateProduct(
                 : undefined,
           },
         });
+    } else if (
+      data.buyingPrice !== undefined ||
+      data.retailPrice !== undefined ||
+      data.stockingUnitId !== undefined ||
+      data.stockingOrgUnitId !== undefined
+    ) {
+      const firstVariant = await tx.productVariant.findFirst({
+        where: { productId: id },
+      });
+      if (firstVariant) {
+        await tx.productVariant.update({
+          where: { id: firstVariant.id },
+          data: {
+            buyingPrice:
+              data.buyingPrice !== undefined
+                ? new Decimal(data.buyingPrice)
+                : undefined,
+            retailPrice: isRaw
+              ? null
+              : data.retailPrice !== undefined
+                ? new Decimal(data.retailPrice)
+                : undefined,
+            stockingUnitId:
+              data.stockingUnitId !== undefined
+                ? data.stockingUnitId
+                : undefined,
+            stockingOrgUnitId:
+              data.stockingOrgUnitId !== undefined
+                ? data.stockingOrgUnitId
+                : undefined,
+          },
+        });
+      }
       }
     }
 

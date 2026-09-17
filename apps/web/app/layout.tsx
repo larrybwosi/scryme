@@ -46,6 +46,11 @@ export const metadata: Metadata = {
       "Complete enterprise resource planning, multi-branch inventory management, POS control, financial accounting, and staff administration.",
     creator: "@scryme",
   },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 export const viewport: Viewport = {

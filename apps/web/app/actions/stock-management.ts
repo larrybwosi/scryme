@@ -894,6 +894,132 @@ export async function createStockRequest(data: {
   return result;
 }
 
+export async function restockVariant(data: {
+  variantId: string;
+  locationId: string;
+  quantity: number;
+  supplierId?: string;
+  purchasePrice?: number;
+  batchNumber?: string;
+  expiryDate?: Date | string;
+  notes?: string;
+}): Promise<{ success: boolean; message: string }> {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId) {
+    throw new Error("Unauthorized");
+  }
+
+  if (data.quantity <= 0) {
+    throw new Error("Restock quantity must be greater than zero.");
+  }
+
+  if (!data.locationId) {
+    throw new Error("Target location is required.");
+  }
+
+  const variant = await db.productVariant.findUnique({
+    where: { id: data.variantId },
+    select: { id: true, productId: true, sku: true, buyingPrice: true },
+  });
+
+  if (!variant) {
+    throw new Error("Product variant not found.");
+  }
+
+  const qtyDecimal = new Decimal(data.quantity);
+  const priceDecimal = data.purchasePrice !== undefined && data.purchasePrice !== null
+    ? new Decimal(data.purchasePrice)
+    : (variant.buyingPrice || new Decimal(0));
+
+  const batchNum = data.batchNumber?.trim()
+    || `RST-${variant.sku || "VAR"}-${Date.now().toString().slice(-6)}`;
+
+  await db.$transaction(async tx => {
+    // 1. Create StockBatch
+    const batch = await tx.stockBatch.create({
+      data: {
+        organizationId: context.organizationId,
+        variantId: data.variantId,
+        locationId: data.locationId,
+        supplierId: data.supplierId || undefined,
+        initialQuantity: qtyDecimal,
+        currentQuantity: qtyDecimal,
+        purchasePrice: priceDecimal,
+        batchNumber: batchNum,
+        expiryDate: data.expiryDate ? new Date(data.expiryDate) : undefined,
+        receivedDate: new Date(),
+      },
+    });
+
+    // 2. Create StockAdjustment
+    const adjustment = await tx.stockAdjustment.create({
+      data: {
+        organizationId: context.organizationId,
+        variantId: data.variantId,
+        locationId: data.locationId,
+        memberId: context.memberId!,
+        stockBatchId: batch.id,
+        quantity: qtyDecimal,
+        reason: "RECEIVED_PURCHASE",
+        status: "APPROVED",
+        notes: data.notes || "Restock product variant",
+      },
+    });
+
+    // 3. Create StockMovement
+    await tx.stockMovement.create({
+      data: {
+        organizationId: context.organizationId,
+        variantId: data.variantId,
+        stockBatchId: batch.id,
+        quantity: qtyDecimal,
+        toLocationId: data.locationId,
+        movementType: "PURCHASE_RECEIPT",
+        adjustmentId: adjustment.id,
+        memberId: context.memberId!,
+        notes: data.notes || "Restock product variant",
+      },
+    });
+
+    // 4. Update or Create ProductVariantStock
+    const stockRecord = await tx.productVariantStock.findUnique({
+      where: {
+        variantId_locationId: {
+          variantId: data.variantId,
+          locationId: data.locationId,
+        },
+      },
+    });
+
+    if (stockRecord) {
+      await tx.productVariantStock.update({
+        where: { id: stockRecord.id },
+        data: {
+          currentStock: { increment: qtyDecimal },
+          availableStock: { increment: qtyDecimal },
+        },
+      });
+    } else {
+      await tx.productVariantStock.create({
+        data: {
+          organizationId: context.organizationId,
+          productId: variant.productId,
+          variantId: data.variantId,
+          locationId: data.locationId,
+          currentStock: qtyDecimal,
+          availableStock: qtyDecimal,
+        },
+      });
+    }
+  });
+
+  revalidatePath("/stocking/list");
+  revalidatePath(`/locations/${data.locationId}`);
+  revalidatePath("/inventory");
+
+  return { success: true, message: "Variant restocked successfully." };
+}
+
 export async function getExpiryReportData(params: {
   locationId?: string;
 }): Promise<any[]> {

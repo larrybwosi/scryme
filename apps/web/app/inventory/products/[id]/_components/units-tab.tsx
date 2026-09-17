@@ -51,11 +51,13 @@ export function UnitsTab({
       {product.variants?.map((variant: any) => (
         <Card
           key={variant.id}
-          className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
+          className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800 overflow-hidden">
           <CardHeader>
-            <CardTitle>Units for Variant: {variant.name}</CardTitle>
-            <CardDescription>
-              Configure primary and selling units.
+            <CardTitle className="text-base sm:text-lg">
+              Units for Variant: {variant.name}
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Configure primary, stocking, and selling units.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-8">
@@ -165,14 +167,14 @@ export function UnitsTab({
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <Label className="text-base font-bold">
                   Selling Units
                 </Label>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="gap-2"
+                  className="gap-2 shrink-0"
                   onClick={async () => {
                     const newSellingUnits = [
                       ...(variant.sellingUnits || []),
@@ -201,18 +203,19 @@ export function UnitsTab({
                   <PlusCircle className="w-4 h-4" /> Add Selling Unit
                 </Button>
               </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Conversion Multiplier</TableHead>
-                    <TableHead>Retail Price</TableHead>
-                    <TableHead>Wholesale Price</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-12"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <div className="overflow-x-auto rounded-lg border border-border">
+                <Table className="min-w-[600px]">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Unit</TableHead>
+                      <TableHead>Conversion Multiplier</TableHead>
+                      <TableHead>Retail Price</TableHead>
+                      <TableHead>Wholesale Price</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-12"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                   {variant.sellingUnits?.map((su: any, idx: number) => (
                     <TableRow key={su.id || idx}>
                       <TableCell>
@@ -392,6 +395,7 @@ export function UnitsTab({
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </div>
           </CardContent>
         </Card>

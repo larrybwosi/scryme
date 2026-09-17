@@ -16,7 +16,8 @@ export default function RealtimeInitializer() {
   const isConfigured = useAuthStore((state) => state.isConfigured);
   const isAuthInitialized = useAuthStore((state) => state.isInitialized);
   const updateProductStock = usePosStore((state) => state.updateProductStock);
-  const organizationId = useAuthStore((state) => state.deviceConfig?.orgSlug);
+  const orgSlug = useAuthStore((state) => state.deviceConfig?.orgSlug);
+  const organizationId = currentMember?.organizationId || orgSlug;
   const currentLocationId = useAuthStore((state) => state.currentLocation?.id);
   const queryClient = useQueryClient();
 
