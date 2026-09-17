@@ -1,3 +1,4 @@
+import { getRedisClient } from "@repo/shared/redis";
 import {
   Injectable,
   OnModuleInit,
@@ -95,6 +96,85 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
             env.CUSTOMER_GOOGLE_CLIENT_SECRET || "google-client-secret",
         },
       },
+      rateLimit: {
+        enabled: env.NODE_ENV !== "test",
+        window: 60,
+        max: 1000,
+        storage: "secondary-storage",
+        customRules: {
+          "/get-session": false,
+          "/sign-in/*": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+          "/sign-in/email": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+          "/sign-in/passkey": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+          "/sign-in/social": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+          "/sign-up/*": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+          "/sign-up/email": env.NODE_ENV === "development" ? false : { window: 60, max: 60 },
+        },
+      },
+      secondaryStorage: {
+        get: async (key: string): Promise<string | null> => {
+          try {
+            const redis = await getRedisClient();
+            const value = await redis.get(key);
+            if (value === null || value === undefined) return null;
+            if (typeof value === "string") return value;
+            return JSON.stringify(value);
+          } catch (e: unknown) {
+            return null;
+          }
+        },
+        set: async (key: string, value: string, ttl?: number): Promise<void> => {
+          try {
+            const redis = await getRedisClient();
+            if (ttl) {
+              await redis.setex(key, ttl, value);
+            } else {
+              await redis.setex(key, 3600, value);
+            }
+          } catch (e: unknown) {
+            // ignore
+          }
+        },
+        delete: async (key: string): Promise<void> => {
+          try {
+            const redis = await getRedisClient();
+            await redis.del(key);
+          } catch (e: unknown) {
+            // ignore
+          }
+        },
+        getAndDelete: async (key: string): Promise<string | null> => {
+          try {
+            const redis = await getRedisClient();
+            const value = await redis.get(key);
+            if (value !== null && value !== undefined) {
+              await redis.del(key);
+            }
+            if (value === null || value === undefined) return null;
+            if (typeof value === "string") return value;
+            return JSON.stringify(value);
+          } catch (e: unknown) {
+            return null;
+          }
+        },
+        increment: async (key: string, ttl: number = 60): Promise<number> => {
+          try {
+            const redis = await getRedisClient();
+            const value = await redis.incr(key);
+            if (value === 1) {
+              await redis.expire(key, Math.max(1, ttl));
+            } else {
+              const currentTtl = await redis.ttl(key);
+              if (currentTtl < 0) {
+                await redis.expire(key, Math.max(1, ttl));
+              }
+            }
+            return value;
+          } catch (e: unknown) {
+            return 0;
+          }
+        },
+      } as any,
       databaseHooks: {
         user: {
           create: {

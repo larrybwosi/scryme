@@ -174,10 +174,19 @@ export const auth = betterAuth({
         return null;
       }
     },
-    increment: async (key: string, amount: number = 1): Promise<number> => {
+    increment: async (key: string, ttl: number = 60): Promise<number> => {
       try {
         const redis = await getRedisClient();
-        return await redis.incrby(key, amount);
+        const value = await redis.incr(key);
+        if (value === 1) {
+          await redis.expire(key, Math.max(1, ttl));
+        } else {
+          const currentTtl = await redis.ttl(key);
+          if (currentTtl < 0) {
+            await redis.expire(key, Math.max(1, ttl));
+          }
+        }
+        return value;
       } catch (e: unknown) {
         console.error("Redis increment error:", e);
         return 0;
