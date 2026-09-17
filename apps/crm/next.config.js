@@ -1,4 +1,11 @@
 /** @type {import('next').NextConfig} */
+function getValidApiUrl(envUrl, defaultUrl) {
+  if (!envUrl || typeof envUrl !== "string") return defaultUrl;
+  if (envUrl.includes("PLACEHOLDER")) return defaultUrl;
+  if (!envUrl.startsWith("http://") && !envUrl.startsWith("https://")) return defaultUrl;
+  return envUrl;
+}
+
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@repo/ui", "@react-pdf/renderer", "@repo/documents", "@repo/shared"],
@@ -22,7 +29,7 @@ const nextConfig = {
     const defaultApiUrl = isDev
       ? "http://localhost:3002"
       : "https://api.scryme.tech";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+    const apiUrl = getValidApiUrl(process.env.NEXT_PUBLIC_API_URL, defaultApiUrl);
 
     return [
       {

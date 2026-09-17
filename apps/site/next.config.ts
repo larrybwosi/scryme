@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
+function getValidApiUrl(envUrl: string | undefined, defaultUrl: string): string {
+  if (!envUrl) return defaultUrl;
+  if (envUrl.includes("PLACEHOLDER")) return defaultUrl;
+  if (!envUrl.startsWith("http://") && !envUrl.startsWith("https://")) return defaultUrl;
+  return envUrl;
+}
+
 const isDev = process.env.NODE_ENV === "development";
 const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 const isEuPostHog = posthogHost?.includes("eu.i.posthog.com");
@@ -12,7 +19,7 @@ const posthogIngestHost = posthogHost || "https://us.i.posthog.com";
 const defaultApiUrl = isDev
   ? "http://localhost:3002"
   : "https://api.scryme.tech";
-const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+const apiUrl = getValidApiUrl(process.env.NEXT_PUBLIC_API_URL, defaultApiUrl);
 
 const nextConfig: NextConfig = {
   output: "standalone",
