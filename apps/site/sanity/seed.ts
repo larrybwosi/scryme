@@ -349,7 +349,7 @@ export async function seedSanity() {
 
   try {
     const writeClient = createClient({
-      projectId,
+      projectId:'l0v9sncz',
       dataset,
       apiVersion,
       token,
