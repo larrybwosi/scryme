@@ -241,7 +241,7 @@ export const bakery = {
   getAuthStatus: () => client.get('/bakery/auth/status'),
   sso: () => client.post('/bakery/auth/sso'),
   logout: () => client.post('/bakery/auth/logout'),
-  getMe: () => client.get('/bakery/me'),
+  getMe: () => client.get('/devices/me'),
 };
 
 // Catalog submodule extensions for bakery app
