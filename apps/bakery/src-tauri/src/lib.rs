@@ -108,11 +108,7 @@ pub fn run() {
             } else {
                 option_env!("VITE_API_URL").unwrap_or("https://api.scryme.tech")
             };
-            let api_url = if base_api_url.ends_with("/api/v2") {
-                base_api_url.to_string()
-            } else {
-                format!("{}/api/v2", base_api_url.trim_end_matches('/'))
-            };
+            let api_url = base_api_url.trim().trim_end_matches('/').replace("/api/v2", "").replace("/api/v3", "").to_string();
             tauri::async_runtime::spawn(sync::start_sync_worker(db_pool, api_url));
 
             // Set up tray icon

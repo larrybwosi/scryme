@@ -147,21 +147,34 @@ class ApiClient {
   }
 
   private async request<T = any>(config: { method: string; path: string; data?: any }): Promise<T> {
+    let resData: any;
     if (isTauri()) {
-       return tauriInvoke<T>('authenticated_api_request', {
+       resData = await tauriInvoke<T>('authenticated_api_request', {
          method: config.method,
          path: config.path,
          body: config.data
        });
+    } else {
+      const { method, path, data } = config;
+      const axiosMethod = method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete';
+
+      if (axiosMethod === 'get' || axiosMethod === 'delete') {
+        resData = await this.axiosInstance[axiosMethod](path).then(res => res.data);
+      } else {
+        resData = await this.axiosInstance[axiosMethod](path, data).then(res => res.data);
+      }
     }
 
-    const { method, path, data } = config;
-    const axiosMethod = method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete';
-
-    if (axiosMethod === 'get' || axiosMethod === 'delete') {
-      return this.axiosInstance[axiosMethod](path).then(res => res.data);
+    if (resData && typeof resData === 'object' && resData.success !== undefined && 'data' in resData) {
+      if (resData.meta || resData.metadata) {
+        return {
+          data: resData.data,
+          metadata: resData.meta || resData.metadata,
+        } as any;
+      }
+      return resData.data;
     }
-    return this.axiosInstance[axiosMethod](path, data).then(res => res.data);
+    return resData;
   }
 
   // Locations Service
@@ -185,7 +198,7 @@ class ApiClient {
 
 // Singleton instance
 export const apiClient = new ApiClient(
-  import.meta.env.VITE_API_URL || 'https://api.scryme.tech/api/v2'
+  import.meta.env.VITE_API_URL || 'https://api.scryme.tech'
 );
 
 const queryClient = new QueryClient({

@@ -150,7 +150,7 @@ export default function SettingsPage() {
       const tempSdk = new getSDK({
         clientId: 'bakery-app',
         orgSlug: 'default-org',
-        baseURL: sanitizeApiUrl(formData.apiEndpointUrl) || import.meta.env.VITE_API_URL || "https://api.scryme.tech/api/v2"
+        baseURL: sanitizeApiUrl(formData.apiEndpointUrl) || import.meta.env.VITE_API_URL || "https://api.scryme.tech"
       });
       await tempSdk.axiosInstance.get('/bakery', { headers: { 'x-api-key': formData.apiKey } });
       setKeyTested(true);
@@ -391,7 +391,7 @@ export default function SettingsPage() {
                             setFormData({ ...formData, apiEndpointUrl: e.target.value });
                             setApiTested(false);
                           }}
-                          placeholder="https://api.scryme.tech/api/v2"
+                          placeholder="https://api.scryme.tech"
                           className="pr-10"
                         />
                         {apiTested && (
