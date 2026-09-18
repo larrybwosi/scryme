@@ -54,19 +54,23 @@ describe('ApiRealtimeService', () => {
     redis = module.get<RealtimeRedisService>(RealtimeRedisService);
   });
 
-  it('should publish to Socket.io gateway', async () => {
-    await service.publish('v2:test', 'test-event', { data: 123 });
+  it('should publish to both v3 and v2 Socket.io gateways', async () => {
+    await service.publish('organization:org1:inventory', 'stock-update', { data: 123 });
 
-    expect(redis.saveMessage).toHaveBeenCalledWith('v2:test', 'test-event', { data: 123 });
-    expect(v2Gateway.server.to).toHaveBeenCalledWith('v2:test');
-    expect(v2Gateway.server.emit).toHaveBeenCalledWith('test-event', { data: 123 });
+    expect(redis.saveMessage).toHaveBeenCalledWith('organization:org1:inventory', 'stock-update', { data: 123 });
+    expect(v3Gateway.server.to).toHaveBeenCalledWith('organization:org1:inventory');
+    expect(v3Gateway.server.emit).toHaveBeenCalledWith('stock-update', { data: 123 });
+    expect(v2Gateway.server.to).toHaveBeenCalledWith('organization:org1:inventory');
+    expect(v2Gateway.server.emit).toHaveBeenCalledWith('stock-update', { data: 123 });
   });
 
-  it('should route v3 channels to v3Gateway in Socket.io', async () => {
+  it('should route v3 channels to both gateways', async () => {
     await service.publish('v3:orders', 'test-event', { data: 123 });
 
     expect(v3Gateway.server.to).toHaveBeenCalledWith('v3:orders');
     expect(v3Gateway.server.emit).toHaveBeenCalledWith('test-event', { data: 123 });
+    expect(v2Gateway.server.to).toHaveBeenCalledWith('v3:orders');
+    expect(v2Gateway.server.emit).toHaveBeenCalledWith('test-event', { data: 123 });
   });
 
   it('should handle deltas when requested in Socket.io', async () => {
@@ -81,6 +85,7 @@ describe('ApiRealtimeService', () => {
 
     expect(redis.getLastState).toHaveBeenCalledWith('v2:test', 'update');
     expect(createDelta).toHaveBeenCalledWith(oldState, newState);
+    expect(v3Gateway.server.emit).toHaveBeenCalledWith('update:delta', delta);
     expect(v2Gateway.server.emit).toHaveBeenCalledWith('update:delta', delta);
   });
 });
