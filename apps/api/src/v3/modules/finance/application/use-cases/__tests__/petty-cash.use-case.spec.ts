@@ -149,4 +149,38 @@ describe("PettyCashUseCase", () => {
       );
     });
   });
+
+  describe("getFundTransactions", () => {
+    it("should return fund transactions with tenant scoping", async () => {
+      const mockFund = { id: "fund-1", organizationId: "org-1" };
+      const mockTransactions = [
+        { id: "tx-1", fundId: "fund-1", amount: 100, description: "Office supplies" },
+      ];
+
+      mockPrismaClient.pettyCashFund.findFirst.mockResolvedValue(mockFund);
+      mockPrismaClient.pettyCashTransaction.findMany.mockResolvedValue(mockTransactions);
+
+      const result = await useCase.getFundTransactions("org-1", "fund-1");
+
+      expect(result).toEqual(mockTransactions);
+      expect(mockPrismaClient.pettyCashFund.findFirst).toHaveBeenCalledWith({
+        where: { id: "fund-1", organizationId: "org-1" },
+      });
+      expect(mockPrismaClient.pettyCashTransaction.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { fundId: "fund-1", fund: { organizationId: "org-1" } },
+        }),
+      );
+    });
+
+    it("should throw NotFoundException if fund does not belong to organization", async () => {
+      mockPrismaClient.pettyCashFund.findFirst.mockResolvedValue(null);
+
+      await expect(
+        useCase.getFundTransactions("org-1", "unauthorized-fund"),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(mockPrismaClient.pettyCashTransaction.findMany).not.toHaveBeenCalled();
+    });
+  });
 });
