@@ -57,7 +57,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { PosService } from "@/v2/pos/pos.service";
 import { PosSaleService } from "@/v2/pos/pos-sale.service";
 import { PosCustomerService } from "@/v2/pos/pos-customer.service";
-import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { AllowPublic } from "@/v3/common/auth";
 
 @ApiTags("V3 POS")
 @Controller(":orgSlug/pos")

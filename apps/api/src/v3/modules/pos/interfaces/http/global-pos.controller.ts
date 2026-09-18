@@ -4,7 +4,7 @@ import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { ProvisionResponseDto } from "../../application/dto/pos.dto";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
-import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { AllowPublic } from "@/v3/common/auth";
 
 @ApiTags("V3 Global POS")
 @Controller(["global/pos", "pos"])

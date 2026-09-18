@@ -32,7 +32,7 @@ import {
 } from "../../application/dto/invoice.dto";
 import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
 import { Permissions } from "../../../../common/decorators/permissions.decorator";
-import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { AllowPublic } from "@/v3/common/auth";
 import * as Fastify from "fastify";
 
 @ApiTags("V3 Finance")

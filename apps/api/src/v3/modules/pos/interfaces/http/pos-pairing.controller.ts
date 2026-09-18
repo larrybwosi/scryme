@@ -9,7 +9,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from "@nestjs/swagger";
-import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { AllowPublic } from "@/v3/common/auth";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { RequireMember } from "@/v3/common/decorators/require-member.decorator";

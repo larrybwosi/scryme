@@ -35,7 +35,7 @@ import {
 import { Status } from "@repo/db";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
-import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { AllowPublic } from "@/v3/common/auth";
 import { PrismaService } from "@/prisma/prisma.service";
 
 @ApiTags("V3 Members")

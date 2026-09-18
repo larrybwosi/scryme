@@ -7,8 +7,8 @@ import {
 import { V3AuthCoreService } from "../../modules/auth-core/infrastructure/services/v3-auth-core.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ModuleRef, Reflector } from "@nestjs/core";
-import { ALLOW_PUBLIC_KEY } from "@/common/decorators/auth.decorator";
-import { REQUIRE_MEMBER_KEY } from "@/v3/common/decorators/require-member.decorator";
+import { ALLOW_PUBLIC_KEY } from "../decorators/auth.decorator";
+import { REQUIRE_MEMBER_KEY } from "../decorators/require-member.decorator";
 import { AuthService } from "@/auth/auth.service";
 import { CustomerAuthService } from "@/customer-auth/customer-auth.service";
 import { env } from "@repo/env";
@@ -99,110 +99,13 @@ export class V3AuthGuard implements CanActivate {
     }
 
     // 2. Try better-auth session token
-    if (!payload) {
-      try {
-        const authService = this.moduleRef.get(AuthService, { strict: false });
-        if (authService) {
-          const session = await authService.auth.api.getSession({
-            headers: {
-              authorization: `Bearer ${token}`,
-            },
-          });
-          if (session) {
-            const user = session.user as any;
-            const orgId = organization?.id || user.activeOrganizationId || (session.session as any).activeOrganizationId;
-            if (orgId) {
-              const customer = await this.prisma.client.customer.findUnique({
-                where: {
-                  organizationId_email: {
-                    organizationId: orgId,
-                    email: user.email,
-                  },
-                },
-              });
-
-              if (customer) {
-                payload = {
-                  type: "v3_customer",
-                  customerId: customer.id,
-                  customerEmail: customer.email,
-                  customerName: customer.name,
-                  organizationId: orgId,
-                  clientId: null,
-                  scopes: [],
-                };
-                request.user = user;
-              }
-            }
-          }
-        }
-      } catch (err) {
-        // Ignored
-      }
+    if (!payload && token) {
+      payload = await this.verifyBetterAuthSession(token, organization, request);
     }
 
     // 3. Try Customer Auth (Better Auth) session verification in-process
-    if (!payload) {
-      try {
-        const customerAuthService = this.moduleRef.get(CustomerAuthService, { strict: false });
-        if (customerAuthService) {
-          const headers = new Headers();
-          headers.set("authorization", `Bearer ${token}`);
-          const session = await customerAuthService.auth.api.getSession({
-            headers,
-          });
-
-          if (session) {
-            const user = session.user;
-            const targetOrgId = organization?.id;
-            if (targetOrgId && user) {
-              // Try Better Auth external mapping
-              const mapping = await this.prisma.client.externalMapping.findFirst({
-                where: {
-                  organizationId: targetOrgId,
-                  provider: "BETTER_AUTH",
-                  externalId: user.id,
-                  entityType: "CUSTOMER",
-                },
-              });
-
-              const customerId = mapping?.internalId;
-              let customer = null;
-
-              if (customerId) {
-                customer = await this.prisma.client.customer.findUnique({
-                  where: { id: customerId },
-                });
-              }
-
-              if (!customer && user.email) {
-                customer = await this.prisma.client.customer.findUnique({
-                  where: {
-                    organizationId_email: {
-                      organizationId: targetOrgId,
-                      email: user.email,
-                    },
-                  },
-                });
-              }
-
-              if (customer) {
-                payload = {
-                  type: "v3_customer",
-                  customerId: customer.id,
-                  customerEmail: customer.email,
-                  customerName: customer.name,
-                  organizationId: targetOrgId,
-                  clientId: null,
-                  scopes: [],
-                };
-              }
-            }
-          }
-        }
-      } catch (err) {
-        // Ignored
-      }
+    if (!payload && token) {
+      payload = await this.verifyCustomerAuthSession(token, organization);
     }
 
     // 4. Try POS Device X-API-KEY / Client ID lookup
@@ -312,5 +215,123 @@ export class V3AuthGuard implements CanActivate {
     request.organization = organization;
 
     return true;
+  }
+
+  private async verifyBetterAuthSession(
+    token: string,
+    organization: any,
+    request: any,
+  ): Promise<any | null> {
+    try {
+      const authService = this.moduleRef.get(AuthService, { strict: false });
+      if (!authService) return null;
+
+      const session = await authService.auth.api.getSession({
+        headers: {
+          authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!session) return null;
+
+      const user = session.user as any;
+      const orgId =
+        organization?.id ||
+        user.activeOrganizationId ||
+        (session.session as any).activeOrganizationId;
+
+      if (!orgId) return null;
+
+      const customer = await this.prisma.client.customer.findUnique({
+        where: {
+          organizationId_email: {
+            organizationId: orgId,
+            email: user.email,
+          },
+        },
+      });
+
+      if (!customer) return null;
+
+      request.user = user;
+      return {
+        type: "v3_customer",
+        customerId: customer.id,
+        customerEmail: customer.email,
+        customerName: customer.name,
+        organizationId: orgId,
+        clientId: null,
+        scopes: [],
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  private async verifyCustomerAuthSession(
+    token: string,
+    organization: any,
+  ): Promise<any | null> {
+    try {
+      const customerAuthService = this.moduleRef.get(CustomerAuthService, {
+        strict: false,
+      });
+      if (!customerAuthService) return null;
+
+      const headers = new Headers();
+      headers.set("authorization", `Bearer ${token}`);
+      const session = await customerAuthService.auth.api.getSession({
+        headers,
+      });
+
+      if (!session) return null;
+
+      const user = session.user;
+      const targetOrgId = organization?.id;
+      if (!targetOrgId || !user) return null;
+
+      const mapping = await this.prisma.client.externalMapping.findFirst({
+        where: {
+          organizationId: targetOrgId,
+          provider: "BETTER_AUTH",
+          externalId: user.id,
+          entityType: "CUSTOMER",
+        },
+      });
+
+      const customerId = mapping?.internalId;
+      let customer = null;
+
+      if (customerId) {
+        customer = await this.prisma.client.customer.findUnique({
+          where: { id: customerId },
+        });
+      }
+
+      if (!customer && user.email) {
+        customer = await this.prisma.client.customer.findUnique({
+          where: {
+            organizationId_email: {
+              organizationId: targetOrgId,
+              email: user.email,
+            },
+          },
+        });
+      }
+
+      if (!customer) return null;
+
+      return {
+        type: "v3_customer",
+        customerId: customer.id,
+        customerEmail: customer.email,
+        customerName: customer.name,
+        organizationId: targetOrgId,
+        clientId: null,
+        scopes: [],
+      };
+    } catch {
+      return null;
+    }
   }
 }

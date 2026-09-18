@@ -35,7 +35,7 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
-import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { AllowPublic } from "@/v3/common/auth";
 
 @ApiTags("V3 Webhooks")
 @ApiBearerAuth()

@@ -15,7 +15,7 @@ import {
   Options,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from "@nestjs/swagger";
-import { AllowPublic } from "@/common/decorators/auth.decorator";
+import { AllowPublic } from "@/v3/common/auth";
 import { ExchangeTokenUseCase } from "../../application/use-cases/exchange-token.use-case";
 import { OAuthClientManagementUseCase } from "../../application/use-cases/oauth-client-management.use-case";
 import { ApiKeyManagementUseCase } from "../../application/use-cases/api-key-management.use-case";
