@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
   }
 
   // 2. Proxy API requests for bakery
-  if (pathname.startsWith('/api/v2')) {
+  if (pathname.startsWith('/api')) {
     const targetUrl = new URL(req.url, API_PROXY_TARGET);
 
     const options = {
@@ -91,5 +91,5 @@ function serveFile(filePath, res) {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Bakery production static server running on http://0.0.0.0:${PORT}`);
   console.log(`Serving static files from: ${DIST_DIR}`);
-  console.log(`Proxying /api/v2 requests to: ${API_PROXY_TARGET}`);
+  console.log(`Proxying /api requests to: ${API_PROXY_TARGET}`);
 });

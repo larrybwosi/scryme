@@ -30,11 +30,7 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
             }
         };
 
-        let api_base_url = if api_base_url.ends_with("/api/v2") {
-            api_base_url
-        } else {
-            format!("{}/api/v2", api_base_url.trim_end_matches('/'))
-        };
+        let api_base_url = api_base_url.trim().trim_end_matches('/').replace("/api/v2", "").replace("/api/v3", "").to_string();
 
         let api_key = match get_api_key_and_url(&pool).await {
             Ok(Some((key, _))) => key,

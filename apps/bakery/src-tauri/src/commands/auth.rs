@@ -136,9 +136,9 @@ impl BakeryAuthState {
                 config.base_url.clone()
             } else {
                 if cfg!(debug_assertions) {
-                    "http://localhost:3002/api/v2".to_string()
+                    "http://localhost:3002".to_string()
                 } else {
-                    "https://api.scryme.tech/api/v2".to_string()
+                    "https://api.scryme.tech".to_string()
                 }
             };
 
@@ -161,10 +161,20 @@ impl BakeryAuthState {
         let full_url = if path.starts_with("http") {
             path.to_string()
         } else {
+            let clean_path = path.trim_start_matches('/');
+            let resolved_path = if clean_path.contains(":orgSlug") || clean_path.contains("{orgSlug}") {
+                if let Some(ref slug) = org_slug {
+                    clean_path.replace(":orgSlug", slug).replace("{orgSlug}", slug)
+                } else {
+                    clean_path.to_string()
+                }
+            } else {
+                clean_path.to_string()
+            };
             format!(
                 "{}/{}",
                 base_url.trim_end_matches('/'),
-                path.trim_start_matches('/')
+                resolved_path
             )
         };
 
@@ -327,15 +337,11 @@ pub async fn switch_active_member(
 #[tauri::command]
 pub async fn validate_api_endpoint(api_url: String) -> BackendResult<bool> {
     let client = reqwest::Client::new();
-
-    let base_url = if api_url.ends_with("/api/v2") {
-        api_url
-    } else {
-        format!("{}/api/v2", api_url.trim_end_matches('/'))
-    };
+    let sanitized = api_url.trim().trim_end_matches('/');
+    let clean_url = sanitized.replace("/api/v2", "").replace("/api/v3", "");
 
     let response = client
-        .get(format!("{}/health", base_url))
+        .get(format!("{}/api/v3/health", clean_url))
         .send()
         .await
         .map_err(BackendError::Network)?;
@@ -359,16 +365,13 @@ pub async fn provision_device_with_token(
     };
 
     let base_api_url = api_url_override.as_deref().unwrap_or(default_api_url);
-    let api_url = if base_api_url.ends_with("/api/v2") {
-        base_api_url.to_string()
-    } else {
-        format!("{}/api/v2", base_api_url.trim_end_matches('/'))
-    };
+    let clean_url = base_api_url.trim().trim_end_matches('/').replace("/api/v2", "").replace("/api/v3", "");
 
     let response = client
-        .post(format!("{}/devices/provision", api_url))
+        .post(format!("{}/api/v3/global/pos/provision", clean_url))
         .json(&serde_json::json!({
             "setupToken": setup_token,
+            "token": setup_token,
             "macAddress": mac_address,
             "serialNumber": serial_number,
         }))
@@ -390,23 +393,29 @@ pub async fn provision_device_with_token(
 
     let result: serde_json::Value = response.json().await.map_err(BackendError::Network)?;
     
-    let api_key = result["data"]["apiKey"]
+    let is_wrapped = result.get("success").is_some();
+    let target = if is_wrapped { &result["data"] } else { &result };
+
+    let api_key = target["apiKey"]
         .as_str()
+        .or_else(|| target["clientId"].as_str())
         .ok_or_else(|| BackendError::Internal("No API Key returned from server".to_string()))?;
 
-    let org_slug = result["data"]["organization"]["slug"]
+    let org_slug = target["organization"]["slug"]
         .as_str()
+        .or_else(|| target["organization"]["orgSlug"].as_str())
         .unwrap_or_default()
         .to_string();
 
-    let location_id = result["data"]["locationId"]
+    let location_id = target["device"]["locationId"]
         .as_str()
-        .or_else(|| result["data"]["location"]["id"].as_str())
+        .or_else(|| target["locationId"].as_str())
+        .or_else(|| target["location"]["id"].as_str())
         .unwrap_or_default()
         .to_string();
 
     let new_config = DeviceConfig {
-        base_url: api_url,
+        base_url: clean_url,
         location_id,
         device_key: api_key.to_string(),
         org_slug,
@@ -458,34 +467,87 @@ pub async fn login_cloud_command(
     state: State<'_, BakeryAuthState>,
     card_id: String,
     pin: String,
-    _location_id: Option<String>,
+    location_id: Option<String>,
 ) -> BackendResult<serde_json::Value> {
-    let sdk_client = state.build_sdk_client()?;
+    let request = state.build_request(reqwest::Method::POST, "api/v3/:orgSlug/pos/login")?;
 
-    let terminal_login_dto = scryme_sdk::models::TerminalLoginDto {
-        card_id,
-        pin,
+    let device_key = {
+        let config_guard = state.device_config.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+        config_guard.as_ref().map(|c| c.device_key.clone())
     };
 
-    let login_res = scryme_sdk::apis::v3_members_terminal_api::terminal_members_controller_login(
-        &sdk_client.config,
-        terminal_login_dto,
-    )
-    .await
-    .map_err(|e| BackendError::Auth(format!("Login failed: {}", e)))?;
+    let body = serde_json::json!({
+        "cardId": card_id,
+        "pin": pin,
+        "locationId": location_id,
+        "deviceKey": device_key
+    });
 
-    let token = login_res.token.clone();
-    let member_dto = login_res.member.clone();
+    let res = request
+        .json(&body)
+        .send()
+        .await
+        .map_err(BackendError::Network)?;
+
+    let status = res.status();
+    let text = res
+        .text()
+        .await
+        .map_err(BackendError::Network)?;
+
+    if !status.is_success() {
+        return Err(BackendError::Auth(format!("Login failed: {} - {}", status, text)));
+    }
+
+    let json: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|e| BackendError::Internal(format!("JSON parse error: {}", e)))?;
+
+    let target = if json.get("data").is_some() && !json["data"].is_null() {
+        &json["data"]
+    } else {
+        &json
+    };
+
+    let (token_val, member_val, restored_val) = if let Some(access_token_obj) = target.get("accessToken").and_then(|v| v.as_object()) {
+        let nested_token = access_token_obj.get("token").or_else(|| access_token_obj.get("accessToken"));
+        let nested_member = access_token_obj.get("member").or_else(|| target.get("member"));
+        let nested_restored = access_token_obj.get("restoredSession").or_else(|| access_token_obj.get("restored_session")).or_else(|| target.get("restoredSession")).or_else(|| target.get("restored_session"));
+        (nested_token, nested_member, nested_restored)
+    } else {
+        let direct_token = target.get("token").or_else(|| target.get("accessToken"));
+        let direct_member = target.get("member");
+        let direct_restored = target.get("restoredSession").or_else(|| target.get("restored_session"));
+        (direct_token, direct_member, direct_restored)
+    };
+
+    let token = token_val
+        .and_then(|t| t.as_str())
+        .ok_or_else(|| BackendError::Auth(format!("Missing token in login response: {}", text)))?
+        .to_string();
+
+    let member_json = member_val
+        .ok_or_else(|| BackendError::Auth(format!("Missing member in login response: {}", text)))?;
+
+    let member_id = member_json["id"].as_str().unwrap_or_default().to_string();
+    let member_name = member_json["name"]
+        .as_str()
+        .or_else(|| member_json["user"]["name"].as_str())
+        .unwrap_or_default()
+        .to_string();
+    let member_role = member_json["role"].as_str().map(|s| s.to_string());
 
     let member = MemberProfile {
-        id: member_dto.id.clone(),
-        name: member_dto.user.name.clone(),
-        role: Some(format!("{:?}", member_dto.role)),
+        id: member_id,
+        name: member_name,
+        role: member_role,
     };
 
+    let restored_session = restored_val.and_then(|r| r.as_bool()).unwrap_or(false);
+
     let data = serde_json::json!({
+        "token": token,
         "member": member,
-        "restoredSession": login_res.restored_session.unwrap_or(false),
+        "restoredSession": restored_session,
     });
 
     let mut active_id_guard = state.active_member_id.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;

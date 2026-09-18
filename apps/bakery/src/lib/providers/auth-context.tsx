@@ -112,7 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: { cardId: string; pin: string; locationId?: string }) => {
     setIsLoading(true);
     try {
-      let response;
+      let response: any;
       if (isTauri()) {
         response = await tauriInvoke<any>('login_cloud_command', {
           cardId: credentials.cardId,
@@ -123,18 +123,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         response = await sdk.auth.terminalLogin(credentials.cardId, credentials.pin, credentials.locationId);
       }
 
-      // In Tauri mode, the token is managed by the Rust backend and might be stripped from the response
-      if (response.token) {
-        sdk.setMemberToken(response.token);
-        localStorage.setItem('bakery_member_token', response.token);
+      const token = response.token || response.accessToken || response.data?.token || response.data?.accessToken;
+      if (token) {
+        sdk.setMemberToken(token);
+        localStorage.setItem('bakery_member_token', token);
+      }
+
+      const member = response.member || response.data?.member;
+      if (!member) {
+        throw new Error('Member profile missing from response');
       }
 
       const userObj = {
-        id: response.member.id,
-        name: response.member.name,
-        email: response.member.email,
-        role: response.member.role,
-        memberId: response.member.id,
+        id: member.id,
+        name: member.name || member.user?.name || 'Baker',
+        email: member.email || member.user?.email || 'baker@scryme.tech',
+        role: member.role,
+        memberId: member.id,
       };
 
       if (isTauri()) {
@@ -144,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(userObj);
       localStorage.setItem('bakery_user', JSON.stringify(userObj));
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+      throw new Error(error.response?.data?.message || error.message || 'Login failed');
     } finally {
       setIsLoading(false);
     }

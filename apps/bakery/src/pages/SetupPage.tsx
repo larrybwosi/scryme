@@ -43,7 +43,7 @@ export default function SetupPage() {
   const [isDetectingHardware, setIsDetectingHardware] = useState(false);
   const [showApiUrl, setShowApiUrl] = useState(false);
   const [apiUrl, setApiUrl] = useState(
-    import.meta.env.VITE_API_URL || "https://api.scryme.tech/api/v2",
+    import.meta.env.VITE_API_URL || "https://api.scryme.tech",
   );
   const [isValidatingApi, setIsValidatingApi] = useState(false);
 
@@ -198,7 +198,7 @@ export default function SetupPage() {
                         type="url"
                         value={apiUrl}
                         onChange={(e) => setApiUrl(e.target.value)}
-                        placeholder="https://api.yourdomain.com/api/v2"
+                        placeholder="https://api.yourdomain.com"
                         className="pl-10 h-10 text-xs border-amber-200 focus:ring-amber-500 focus:border-amber-500"
                       />
                     </div>
