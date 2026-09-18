@@ -81,7 +81,21 @@ export async function getInvoiceDownloadUrl(
 ): Promise<string> {
   try {
     const token = generateDocumentToken("invoice", invoiceId, organizationId);
-    let apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
+    let rawApiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const defaultApiUrl =
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:3002"
+        : "https://api.scryme.tech";
+
+    let apiUrl = defaultApiUrl;
+    if (
+      rawApiUrl &&
+      typeof rawApiUrl === "string" &&
+      !rawApiUrl.includes("PLACEHOLDER") &&
+      (rawApiUrl.startsWith("http://") || rawApiUrl.startsWith("https://"))
+    ) {
+      apiUrl = rawApiUrl;
+    }
 
     try {
       const parsed = new URL(apiUrl);
@@ -96,7 +110,7 @@ export async function getInvoiceDownloadUrl(
       console.error("Failed to parse API URL in getInvoiceDownloadUrl:", e);
     }
 
-    return `${apiUrl}/public-invoices/${invoiceId}/download?token=${token}`;
+    return `${apiUrl}/v3/public-invoices/${invoiceId}/download?token=${token}`;
   } catch (error) {
     console.error("Error generating invoice download token:", error);
     throw new Error("Failed to generate secure download link");
