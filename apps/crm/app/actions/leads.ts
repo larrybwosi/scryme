@@ -5,16 +5,32 @@ import { db } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+async function getOrCreateLeadDefinition(organizationId: string) {
+  let leadDef = await db.crmObjectDefinition.findUnique({
+    where: { organizationId_name: { organizationId, name: "lead" } },
+  });
+
+  if (!leadDef) {
+    leadDef = await db.crmObjectDefinition.create({
+      data: {
+        organizationId,
+        name: "lead",
+        label: "Lead",
+        labelPlural: "Leads",
+        isSystem: true,
+      },
+    });
+  }
+
+  return leadDef;
+}
+
 export async function getLeads() {
   try {
     const auth = await getServerAuth();
     if (!auth?.organizationId) redirect("/login");
     const organizationId = auth.organizationId;
-    const leadDef = await db.crmObjectDefinition.findUnique({
-      where: { organizationId_name: { organizationId, name: "lead" } },
-    });
-
-    if (!leadDef) return [];
+    const leadDef = await getOrCreateLeadDefinition(organizationId);
 
     return await db.crmRecord.findMany({
       where: {
@@ -34,11 +50,7 @@ export async function createLead(data: any) {
     const auth = await getServerAuth();
     if (!auth?.organizationId) redirect("/login");
     const organizationId = auth.organizationId;
-    const leadDef = await db.crmObjectDefinition.findUnique({
-      where: { organizationId_name: { organizationId, name: "lead" } },
-    });
-
-    if (!leadDef) throw new Error("Lead definition not found");
+    const leadDef = await getOrCreateLeadDefinition(organizationId);
 
     const lead = await db.crmRecord.create({
       data: {
