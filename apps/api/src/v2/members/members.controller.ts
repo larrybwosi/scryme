@@ -17,7 +17,7 @@ import { Permissions, AllowPublic } from "../../common/decorators/auth.decorator
 
 @ApiTags("Members")
 @ApiSecurity("x-api-key")
-@Controller("members")
+@Controller(["members", "users/members"])
 export class MembersController {
   constructor(private readonly membersService: MembersService) {}
 

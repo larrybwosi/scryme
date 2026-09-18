@@ -36,7 +36,11 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     'bakery:template:view',
     'bakery:template:manage',
     'pos:product:read',
+    'product:read:all',
     'product:view:stock_levels',
+    'inventory_location:read:all',
+    'members:read',
+    'members:write',
   ],
   STAFF: [
     'pos:auth',

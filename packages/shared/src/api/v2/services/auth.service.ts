@@ -51,11 +51,15 @@ export async function verifyMemberToken(token: string) {
   const secret = process.env.JWT_SECRET;
   if (!secret) return null;
   try {
-    return jwt.verify(token, secret, { algorithms: ['HS256'], issuer: 'dealio-v2-api' }) as {
-      memberId: string;
-      organizationId: string;
-      attendanceLogId: string;
-    };
+    const payload = jwt.verify(token, secret, { algorithms: ['HS256'] }) as any;
+    if (payload && payload.memberId && payload.organizationId) {
+      return {
+        memberId: payload.memberId as string,
+        organizationId: payload.organizationId as string,
+        attendanceLogId: (payload.attendanceLogId || "") as string,
+      };
+    }
+    return null;
   } catch (err) {
     return null;
   }
