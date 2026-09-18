@@ -51,6 +51,7 @@ export class BakeryController {
   ) {}
 
   @Get()
+  @Get("overview")
   @RequirePermission("bakery:batch:view")
   async getOverview(@v2Context() ctx: V2ApiContext) {
     return this.bakeryService.getBakeryOverview(ctx);
@@ -281,6 +282,7 @@ export class BakeryController {
   }
 
   @Put("categories/:id")
+  @Patch("categories/:id")
   @RequirePermission("bakery:recipe:manage")
   @UsePipes(new ZodValidationPipe(UpdateBakeryCategorySchema))
   async updateCategory(
@@ -308,6 +310,7 @@ export class BakeryController {
   }
 
   @Put("settings")
+  @Patch("settings")
   @RequirePermission("bakery:settings:manage")
   @UsePipes(new ZodValidationPipe(UpdateBakerySettingsSchema))
   async updateSettings(@v2Context() ctx: V2ApiContext, @Body() data: any) {

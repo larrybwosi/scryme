@@ -82,6 +82,13 @@ scrymeSDK.axiosInstance.interceptors.response.use(
 // Client wrapper handling HTTP calls, routing through Tauri IPC proxy when running in Tauri
 const originalAxios = scrymeSDK.axiosInstance;
 
+const formatApiPath = (url: string): string => {
+  if (!url || url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/api/")) return url;
+  if (url.startsWith("/v2/") || url.startsWith("/v3/")) return `/api${url}`;
+  return `/api/v2${url.startsWith("/") ? "" : "/"}${url}`;
+};
+
 const unwrapResponse = (data: any) => {
   if (data && typeof data === 'object' && data.success !== undefined && 'data' in data) {
     if (data.meta || data.metadata) {
@@ -117,7 +124,7 @@ export const client = {
         path,
       });
     } else {
-      const res = await originalAxios.get<T>(url, config);
+      const res = await originalAxios.get<T>(targetUrl, config);
       resData = res.data;
     }
     return unwrapResponse(resData);

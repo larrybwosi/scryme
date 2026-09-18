@@ -61,6 +61,12 @@ export class V2AuthGuard implements CanActivate {
 
     // 2. Authenticate Member
     let memberToken = request.headers["x-member-token"] as string;
+    if (!memberToken && request.headers["authorization"]) {
+      const authHeader = request.headers["authorization"] as string;
+      if (authHeader.toLowerCase().startsWith("bearer ")) {
+        memberToken = authHeader.substring(7).trim();
+      }
+    }
     if (!memberToken) {
       memberToken = (request as any).cookies?.["dealio_member_token"];
     }

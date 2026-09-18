@@ -48,12 +48,12 @@ export interface Attendance {
 }
 
 const paths = {
-  list: () => sdk.client.get('/users/members'),
-  create: (data: Partial<Member>) => sdk.client.post('/users/members', data),
-  get: (memberId: string) => sdk.client.get(`/users/members/${memberId}`),
+  list: () => sdk.client.get('/members'),
+  create: (data: Partial<Member>) => sdk.client.post('/members', data),
+  get: (memberId: string) => sdk.client.get(`/members/${memberId}`),
   update: (memberId: string, data: Partial<Member>) =>
-    sdk.client.patch(`/users/members/${memberId}`, data),
-  delete: (memberId: string) => sdk.client.delete(`/users/members/${memberId}`),
+    sdk.client.patch(`/members/${memberId}`, data),
+  delete: (memberId: string) => sdk.client.delete(`/members/${memberId}`),
 };
 
 // Members
@@ -150,7 +150,7 @@ export const useUnbanMember = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (memberId: string) => sdk.client.post(`/users/members/${memberId}/unban`),
+    mutationFn: (memberId: string) => sdk.client.post(`/members/${memberId}/unban`),
     onSuccess: (data: any, memberId) => {
       queryClient.invalidateQueries({
         queryKey: ['members'],
@@ -177,7 +177,7 @@ interface ChangePinPayload {
 
 // 2. Define the API function
 const changeMemberPin = async (payload: ChangePinPayload): Promise<Member> => {
-    return sdk.client.patch(`/users/members/${payload.memberId}/pin`, {
+    return sdk.client.patch(`/members/${payload.memberId}/pin`, {
         pin: payload.newPin,
         memberId: payload.memberId,
     });
