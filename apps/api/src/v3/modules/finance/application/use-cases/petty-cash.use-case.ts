@@ -170,8 +170,10 @@ export class PettyCashUseCase {
       throw new NotFoundException("Petty cash fund not found");
     }
 
+    // 🛡️ Sentinel: Defense in Depth / BOLA Prevention - Enforce strict tenant isolation by scoping
+    // transaction list queries directly with relation filter `fund: { organizationId }`
     return await this.prisma.client.pettyCashTransaction.findMany({
-      where: { fundId },
+      where: { fundId, fund: { organizationId } },
       // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
       // of large relation trees while ensuring all scalar fields are present.
       select: {
