@@ -21,22 +21,22 @@ services:
       retries: 3
       start_period: 90s
     environment:
-      - PORT=${SITE_PORT:-3005}
-      - NEXT_PUBLIC_SANITY_PROJECT_ID=${NEXT_PUBLIC_SANITY_PROJECT_ID}
-      - NEXT_PUBLIC_SANITY_DATASET=${NEXT_PUBLIC_SANITY_DATASET}
-      - SANITY_API_TOKEN=${SANITY_API_TOKEN}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
-      - NEXT_PUBLIC_WEB_URL=${NEXT_PUBLIC_WEB_URL:-https://scryme.tech}
-      - NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN}
-      - NEXT_PUBLIC_POSTHOG_HOST=${NEXT_PUBLIC_POSTHOG_HOST:-https://eu.i.posthog.com}
-      - NODE_ENV=production
+      PORT: ${SITE_PORT:-3005}
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${NEXT_PUBLIC_SANITY_PROJECT_ID}
+      NEXT_PUBLIC_SANITY_DATASET: ${NEXT_PUBLIC_SANITY_DATASET}
+      SANITY_API_TOKEN: ${SANITY_API_TOKEN}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+      NEXT_PUBLIC_WEB_URL: ${NEXT_PUBLIC_WEB_URL:-https://scryme.tech}
+      NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN: ${NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN}
+      NEXT_PUBLIC_POSTHOG_HOST: ${NEXT_PUBLIC_POSTHOG_HOST:-https://eu.i.posthog.com}
+      NODE_ENV: production
 
-   sanity-seeder:
-     build:
-       context: ../../
-       dockerfile: apps/site/Dockerfile.seeder
-     environment:
-       NEXT_PUBLIC_SANITY_PROJECT_ID: "${NEXT_PUBLIC_SANITY_PROJECT_ID:-mock-project-id}"
-       NEXT_PUBLIC_SANITY_DATASET: "${NEXT_PUBLIC_SANITY_DATASET:-production}"
-       SANITY_API_TOKEN: "${SANITY_API_TOKEN}"
-     restart: "no"
+  sanity-seeder:
+    build:
+      context: ../../
+      dockerfile: apps/site/Dockerfile.seeder
+    environment:
+      NEXT_PUBLIC_SANITY_PROJECT_ID: ${NEXT_PUBLIC_SANITY_PROJECT_ID:-mock-project-id}
+      NEXT_PUBLIC_SANITY_DATASET: ${NEXT_PUBLIC_SANITY_DATASET:-production}
+      SANITY_API_TOKEN: ${SANITY_API_TOKEN}
+    restart: "no"
