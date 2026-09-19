@@ -100,6 +100,66 @@ export class McpServerService implements OnModuleInit {
       }
     );
 
+    this.server.registerTool(
+      "get_categories",
+      {
+        description: "Retrieve list of product and service categories for an organization",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+        },
+      },
+      async ({ orgSlug }) => {
+        return callSdk(orgSlug, (config) => v3.servicesGetCategories(orgSlug, config));
+      }
+    );
+
+    this.server.registerTool(
+      "create_category",
+      {
+        description: "Create a new category for products or services",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          name: z.string().describe("Category name"),
+          description: z.string().optional().describe("Category description"),
+          parentId: z.string().optional().describe("Parent category UUID for nested structures"),
+        },
+      },
+      async ({ orgSlug, ...dto }) => {
+        return callSdk(orgSlug, (config) => v3.servicesCreateCategory(orgSlug, dto as any, config));
+      }
+    );
+
+    this.server.registerTool(
+      "update_category",
+      {
+        description: "Update an existing category's details",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          id: z.string().describe("Category UUID"),
+          name: z.string().optional().describe("Updated category name"),
+          description: z.string().optional().describe("Updated description"),
+          parentId: z.string().optional().describe("Updated parent category UUID"),
+        },
+      },
+      async ({ orgSlug, id, ...dto }) => {
+        return callSdk(orgSlug, (config) => v3.servicesUpdateCategory(orgSlug, id, dto as any, config));
+      }
+    );
+
+    this.server.registerTool(
+      "delete_category",
+      {
+        description: "Delete or deactivate a category by UUID",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          id: z.string().describe("Category UUID"),
+        },
+      },
+      async ({ orgSlug, id }) => {
+        return callSdk(orgSlug, (config) => v3.servicesDeleteCategory(orgSlug, id, config));
+      }
+    );
+
     // ==========================================
     // 2. CUSTOMER TOOLS
     // ==========================================
@@ -289,6 +349,54 @@ export class McpServerService implements OnModuleInit {
       }
     );
 
+    this.server.registerTool(
+      "request_inventory_adjustment",
+      {
+        description: "Submit a stock adjustment request (e.g. damaged items, audit correction, stocktake)",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          locationId: z.string().describe("Location or warehouse UUID"),
+          variantId: z.string().describe("Product variant UUID"),
+          quantityDelta: z.number().describe("Quantity change (positive to increase, negative to decrease)"),
+          reason: z.string().describe("Reason for adjustment (e.g. DAMAGED, AUDIT_DISCREPANCY, SPOILAGE)"),
+          notes: z.string().optional().describe("Additional notes or justification"),
+        },
+      },
+      async ({ orgSlug, ...dto }) => {
+        return callSdk(orgSlug, (config) => v3.inventoryRequestAdjustment(orgSlug, config), { data: dto });
+      }
+    );
+
+    this.server.registerTool(
+      "get_inventory_adjustments",
+      {
+        description: "Retrieve a list of inventory stock adjustment requests and history",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          locationId: z.string().optional().describe("Filter adjustments by location UUID"),
+          status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional().describe("Filter by status"),
+        },
+      },
+      async ({ orgSlug, locationId, status }) => {
+        return callSdk(orgSlug, (config) => v3.inventoryGetAdjustments(orgSlug, { locationId, status } as any, config));
+      }
+    );
+
+    this.server.registerTool(
+      "quick_stock_inquiry",
+      {
+        description: "Perform a quick stock quantity lookup for a product variant or SKU",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          variantId: z.string().optional().describe("Product variant UUID"),
+          sku: z.string().optional().describe("Product SKU identifier"),
+        },
+      },
+      async ({ orgSlug, variantId, sku }) => {
+        return callSdk(orgSlug, (config) => v3.inventoryQuickStockInquiry(orgSlug, { ...config, params: { variantId, sku } }));
+      }
+    );
+
     // ==========================================
     // 4. ORDER TOOLS
     // ==========================================
@@ -470,7 +578,7 @@ export class McpServerService implements OnModuleInit {
     );
 
     // ==========================================
-    // 7. MEMBER TOOLS
+    // 7. MEMBER & STAFF OPERATIONS TOOLS
     // ==========================================
 
     this.server.registerTool(
@@ -500,6 +608,75 @@ export class McpServerService implements OnModuleInit {
       },
       async ({ orgSlug, ...dto }) => {
         return callSdk(orgSlug, (config) => v3.membersControllerCreateMember(orgSlug, dto as any, config));
+      }
+    );
+
+    this.server.registerTool(
+      "get_staff_shifts",
+      {
+        description: "Retrieve scheduled staff shifts across the organization",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          memberId: z.string().optional().describe("Filter shifts by specific staff member UUID"),
+          startDate: z.string().optional().describe("ISO start date range filter"),
+          endDate: z.string().optional().describe("ISO end date range filter"),
+        },
+      },
+      async ({ orgSlug, memberId, startDate, endDate }) => {
+        if (memberId) {
+          return callSdk(orgSlug, (config) => v3.servicesGetStaffShifts(orgSlug, memberId, config));
+        }
+        return callSdk(orgSlug, (config) => v3.servicesGetShifts(orgSlug, { startDate, endDate } as any, config));
+      }
+    );
+
+    this.server.registerTool(
+      "create_staff_shift",
+      {
+        description: "Schedule a work shift for a staff member",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          memberId: z.string().describe("Staff member UUID"),
+          startTime: z.string().describe("Shift start time ISO string"),
+          endTime: z.string().describe("Shift end time ISO string"),
+          locationId: z.string().optional().describe("Assigned branch/location UUID"),
+        },
+      },
+      async ({ orgSlug, memberId, ...dto }) => {
+        return callSdk(orgSlug, (config) => v3.servicesCreateShift(orgSlug, memberId, dto as any, config));
+      }
+    );
+
+    this.server.registerTool(
+      "add_shift_break",
+      {
+        description: "Add a rest or meal break to an active or scheduled staff shift",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          shiftId: z.string().describe("Shift UUID"),
+          startTime: z.string().describe("Break start time ISO string"),
+          endTime: z.string().describe("Break end time ISO string"),
+          type: z.enum(["MEAL", "REST", "OTHER"]).optional().describe("Break type"),
+        },
+      },
+      async ({ orgSlug, shiftId, ...dto }) => {
+        return callSdk(orgSlug, (config) => v3.servicesAddBreak(orgSlug, shiftId, dto as any, config));
+      }
+    );
+
+    this.server.registerTool(
+      "get_attendance_logs",
+      {
+        description: "Retrieve staff clock-in and clock-out attendance logs",
+        inputSchema: {
+          orgSlug: z.string().describe("The organization's unique slug"),
+          memberId: z.string().optional().describe("Filter logs by member UUID"),
+          startDate: z.string().optional().describe("ISO start date"),
+          endDate: z.string().optional().describe("ISO end date"),
+        },
+      },
+      async ({ orgSlug, memberId, startDate, endDate }) => {
+        return callSdk(orgSlug, (config) => v3.attendanceControllerGetLogs(orgSlug, { memberId, startDate, endDate } as any, config));
       }
     );
 

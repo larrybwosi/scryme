@@ -12,6 +12,7 @@ import { Test } from "@nestjs/testing";
 import { McpModule } from "./mcp.module";
 import { AuthService } from "./auth.service";
 import { McpServerService } from "./mcp-server.service";
+import { McpController } from "./mcp.controller";
 
 describe("Scryme V3 MCP Server NestJS Architecture & Tool Suite", () => {
   beforeEach(() => {
@@ -38,6 +39,10 @@ describe("Scryme V3 MCP Server NestJS Architecture & Tool Suite", () => {
       "create_product",
       "get_services",
       "create_service",
+      "get_categories",
+      "create_category",
+      "update_category",
+      "delete_category",
       "get_customers",
       "register_customer",
       "update_customer",
@@ -49,6 +54,9 @@ describe("Scryme V3 MCP Server NestJS Architecture & Tool Suite", () => {
       "trace_batch",
       "split_batch",
       "merge_batches",
+      "request_inventory_adjustment",
+      "get_inventory_adjustments",
+      "quick_stock_inquiry",
       "get_orders",
       "create_order",
       "update_order_status",
@@ -62,6 +70,10 @@ describe("Scryme V3 MCP Server NestJS Architecture & Tool Suite", () => {
       "get_profit_loss",
       "get_members",
       "create_member",
+      "get_staff_shifts",
+      "create_staff_shift",
+      "add_shift_break",
+      "get_attendance_logs",
       "get_stock_transfers",
       "create_stock_transfer",
       "receive_stock_transfer",
@@ -102,18 +114,45 @@ describe("Scryme V3 MCP Server NestJS Architecture & Tool Suite", () => {
       },
     };
 
-    vi.mocked(axios.post).mockResolvedValueOnce(mockTokenResponse);
+    vi.mocked(axios.post).mockResolvedValue(mockTokenResponse);
 
     const moduleRef = await Test.createTestingModule({
       imports: [McpModule],
     }).compile();
 
     const authService = moduleRef.get<AuthService>(AuthService);
-    await authService.ensureAuthenticated("test-org-slug");
 
-    expect(axios.post).toHaveBeenCalled();
+    // Test concurrent calls deduplication
+    const [token1, token2] = await Promise.all([
+      authService.ensureAuthenticated("test-org-slug"),
+      authService.ensureAuthenticated("test-org-slug"),
+    ]);
+
+    expect(token1).toBe("mock_jwt_access_token_123");
+    expect(token2).toBe("mock_jwt_access_token_123");
+    expect(axios.post).toHaveBeenCalledTimes(1);
     expect(axios.defaults.baseURL).toBe("https://api.scryme.tech");
     expect(axios.defaults.headers.common["Authorization"]).toBe("Bearer mock_jwt_access_token_123");
     expect(axios.defaults.headers.common["x-org-slug"]).toBe("test-org-slug");
+  });
+
+  it("should return health and status monitoring info from McpController", async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [McpModule],
+    }).compile();
+
+    const mcpServerService = moduleRef.get<McpServerService>(McpServerService);
+    mcpServerService.onModuleInit();
+
+    const controller = moduleRef.get<McpController>(McpController, { strict: false });
+
+    const health = controller.getHealth();
+    expect(health.status).toBe("ok");
+    expect(health.activeSessions).toBe(0);
+
+    const status = controller.getStatus();
+    expect(status.server).toBe("scryme-v3");
+    expect(status.status).toBe("online");
+    expect(status.toolsCount).toBeGreaterThanOrEqual(44);
   });
 });

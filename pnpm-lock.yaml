@@ -777,7 +777,7 @@ importers:
   apps/mcp:
     dependencies:
       '@modelcontextprotocol/sdk':
-        specifier: ^1.4.1
+        specifier: ^1.30.0
         version: 1.30.0(zod@4.4.3)
       '@nestjs/common':
         specifier: ^11.1.27
