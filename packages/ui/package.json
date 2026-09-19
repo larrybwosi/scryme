@@ -8,20 +8,24 @@
   "exports": {
     ".": {
       "types": "./src/index.tsx",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./src/index.tsx"
     },
     "./globals.css": "./src/globals.css",
     "./components/*": {
       "types": "./src/components/*.tsx",
-      "import": "./dist/components/*.js"
+      "import": "./dist/components/*.js",
+      "default": "./src/components/*.tsx"
     },
     "./lib/*": {
       "types": "./src/lib/*.ts",
-      "import": "./dist/lib/*.js"
+      "import": "./dist/lib/*.js",
+      "default": "./src/lib/*.ts"
     },
     "./hooks/*": {
       "types": "./src/hooks/*.ts",
-      "import": "./dist/hooks/*.js"
+      "import": "./dist/hooks/*.js",
+      "default": "./src/hooks/*.ts"
     }
   },
   "dependencies": {

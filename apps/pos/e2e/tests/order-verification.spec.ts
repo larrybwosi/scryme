@@ -213,7 +213,20 @@ test.describe('Order Creation and Invoice Download Flow', () => {
         version: 0
       };
 
+      const posState = {
+        state: {
+          settings: {
+            businessType: 'retail',
+            businessName: 'Test Store',
+            taxRate: 5,
+            currency: 'KSH',
+          },
+        },
+        version: 0
+      };
+
       localStorage.setItem('pos-auth-storage-v3', JSON.stringify(authState));
+      localStorage.setItem('scryme-pos-storage-v1', JSON.stringify(posState));
       localStorage.setItem('DEVICE_ID', 'test-device');
       localStorage.setItem('DEVICE_ROLE', 'MAIN_HUB');
     }, { now: currentTimestamp, locId: MOCK_LOCATION_ID });
