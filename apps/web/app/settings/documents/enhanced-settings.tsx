@@ -8,6 +8,8 @@ import {
   getMockInvoiceData,
   getMockReceiptData,
   getMockWaybillData,
+  isV3Template,
+  getMockV3Data,
 } from "@repo/documents";
 import { PDFViewer } from "@react-pdf/renderer";
 import { Button } from "@repo/ui/components/ui/button";
@@ -173,13 +175,9 @@ export function EnhancedDocumentSettings({
   };
 
   const getMockDataForType = (type: DocumentType, templateId?: string) => {
-    // eslint-disable-next-line
-    const { isV3Template } = require("@repo/documents/server");
     const isV3 = isV3Template(templateId);
 
     if (isV3 && (type === "INVOICE" || type === "RECEIPT")) {
-      // eslint-disable-next-line
-      const { getMockV3Data } = require("@repo/documents/server");
       return getMockV3Data(type === "INVOICE" ? "invoice" : "receipt", {
         ...organization,
         invoiceConfig,
