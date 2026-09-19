@@ -300,6 +300,7 @@ test.describe('Supermarket POS Flow', () => {
       // Inject some CSS to hide potential blocking overlays that aren't critical for the test
       const style = document.createElement('style');
       style.innerHTML = `
+        #splash-root { display: none !important; opacity: 0 !important; }
         .sonner-toaster, [data-sonner-toaster] { display: none !important; }
         #connection-status-banner { display: none !important; }
         .ud-root { display: none !important; }
