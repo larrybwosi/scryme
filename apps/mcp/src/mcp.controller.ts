@@ -10,6 +10,32 @@ export class McpController {
 
   constructor(private readonly mcpServerService: McpServerService) {}
 
+  @Get("health")
+  getHealth() {
+    return {
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      activeSessions: Object.keys(this.transports).length,
+    };
+  }
+
+  @Get("status")
+  getStatus() {
+    const registeredTools = (this.mcpServerService.server as any)._registeredTools || {};
+    const registeredResources = (this.mcpServerService.server as any)._registeredResources || {};
+    const registeredPrompts = (this.mcpServerService.server as any)._registeredPrompts || {};
+
+    return {
+      server: "scryme-v3",
+      status: "online",
+      activeSessions: Object.keys(this.transports).length,
+      toolsCount: Object.keys(registeredTools).length,
+      resourcesCount: Object.keys(registeredResources).length,
+      promptsCount: Object.keys(registeredPrompts).length,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   @Get("sse")
   async handleSse(@Req() req: FastifyRequest, @Res() res: FastifyReply) {
     this.logger.log("Establish SSE connection request received.");
