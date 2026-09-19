@@ -350,6 +350,235 @@ export class StaffSchedulingService {
     });
   }
 
+  async getStaffTasks(
+    orgId: string,
+    filters: {
+      memberId?: string;
+      shiftId?: string;
+      status?: "TODO" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+      priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+    },
+  ) {
+    return this.prisma.client.staffTask.findMany({
+      where: {
+        organizationId: orgId,
+        ...(filters.memberId ? { memberId: filters.memberId } : {}),
+        ...(filters.shiftId ? { shiftId: filters.shiftId } : {}),
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.priority ? { priority: filters.priority } : {}),
+      },
+      include: {
+        member: {
+          select: {
+            id: true,
+            role: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+        location: { select: { id: true, name: true } },
+        shift: { select: { id: true, dayOfWeek: true, startTime: true, endTime: true } },
+      },
+      orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+    });
+  }
+
+  async createStaffTask(
+    orgId: string,
+    data: {
+      title: string;
+      description?: string;
+      priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+      dueDate?: Date;
+      memberId?: string;
+      shiftId?: string;
+      locationId?: string;
+      notes?: string;
+      checklist?: any;
+      createdById?: string;
+    },
+  ) {
+    if (!data.title || !data.title.trim()) {
+      throw new BadRequestException("Task title is required");
+    }
+
+    return this.prisma.client.staffTask.create({
+      data: {
+        ...data,
+        organizationId: orgId,
+        title: data.title.trim(),
+      },
+      include: {
+        member: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+        location: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  async updateStaffTask(
+    orgId: string,
+    taskId: string,
+    data: {
+      title?: string;
+      description?: string;
+      priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+      status?: "TODO" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+      dueDate?: Date | null;
+      memberId?: string | null;
+      shiftId?: string | null;
+      locationId?: string | null;
+      notes?: string;
+      checklist?: any;
+    },
+  ) {
+    const task = await this.prisma.client.staffTask.findFirst({
+      where: { id: taskId, organizationId: orgId },
+    });
+    if (!task) throw new NotFoundException("Task not found");
+
+    return this.prisma.client.staffTask.update({
+      where: { id: taskId },
+      data,
+      include: {
+        member: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, email: true } },
+          },
+        },
+        location: { select: { id: true, name: true } },
+      },
+    });
+  }
+
+  async getShiftTrades(
+    orgId: string,
+    filters: { memberId?: string; status?: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" },
+  ) {
+    return this.prisma.client.shiftTradeRequest.findMany({
+      where: {
+        organizationId: orgId,
+        ...(filters.status ? { status: filters.status } : {}),
+        ...(filters.memberId
+          ? { OR: [{ requesterMemberId: filters.memberId }, { targetMemberId: filters.memberId }] }
+          : {}),
+      },
+      include: {
+        requesterMember: { select: { id: true, user: { select: { name: true, email: true } } } },
+        targetMember: { select: { id: true, user: { select: { name: true, email: true } } } },
+        shift: { select: { id: true, dayOfWeek: true, startTime: true, endTime: true, memberId: true } },
+        offeredShift: { select: { id: true, dayOfWeek: true, startTime: true, endTime: true, memberId: true } },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+  }
+
+  async requestShiftTrade(
+    orgId: string,
+    requesterMemberId: string,
+    data: {
+      shiftId: string;
+      offeredShiftId?: string;
+      targetMemberId?: string;
+      type?: string;
+      reason?: string;
+    },
+  ) {
+    const shift = await this.prisma.client.staffShift.findFirst({
+      where: { id: data.shiftId, organizationId: orgId },
+    });
+    if (!shift) throw new NotFoundException("Shift not found");
+    if (shift.memberId !== requesterMemberId) {
+      throw new BadRequestException("You can only trade your own shifts");
+    }
+
+    return this.prisma.client.shiftTradeRequest.create({
+      data: {
+        organizationId: orgId,
+        requesterMemberId,
+        shiftId: data.shiftId,
+        offeredShiftId: data.offeredShiftId || null,
+        targetMemberId: data.targetMemberId || null,
+        type: data.type || "SWAP",
+        reason: data.reason || null,
+      },
+      include: {
+        requesterMember: { select: { id: true, user: { select: { name: true, email: true } } } },
+        targetMember: { select: { id: true, user: { select: { name: true, email: true } } } },
+        shift: { select: { id: true, dayOfWeek: true, startTime: true, endTime: true } },
+      },
+    });
+  }
+
+  async processShiftTrade(
+    orgId: string,
+    tradeId: string,
+    actorMemberId: string,
+    action: "APPROVE" | "REJECT" | "CANCEL",
+  ) {
+    const trade = await this.prisma.client.shiftTradeRequest.findFirst({
+      where: { id: tradeId, organizationId: orgId },
+      include: { shift: true, offeredShift: true },
+    });
+    if (!trade) throw new NotFoundException("Shift trade request not found");
+
+    if (action === "CANCEL") {
+      return this.prisma.client.shiftTradeRequest.update({
+        where: { id: tradeId },
+        data: { status: "CANCELLED" },
+      });
+    }
+
+    if (action === "REJECT") {
+      return this.prisma.client.shiftTradeRequest.update({
+        where: { id: tradeId },
+        data: { status: "REJECTED", approvedById: actorMemberId },
+      });
+    }
+
+    if (action === "APPROVE") {
+      if (trade.type === "SWAP" && trade.offeredShift && trade.targetMemberId) {
+        await this.prisma.client.$transaction([
+          this.prisma.client.staffShift.update({
+            where: { id: trade.shiftId },
+            data: { memberId: trade.targetMemberId },
+          }),
+          this.prisma.client.staffShift.update({
+            where: { id: trade.offeredShiftId! },
+            data: { memberId: trade.requesterMemberId },
+          }),
+          this.prisma.client.shiftTradeRequest.update({
+            where: { id: tradeId },
+            data: { status: "APPROVED", approvedById: actorMemberId },
+          }),
+        ]);
+      } else if (trade.targetMemberId) {
+        await this.prisma.client.$transaction([
+          this.prisma.client.staffShift.update({
+            where: { id: trade.shiftId },
+            data: { memberId: trade.targetMemberId },
+          }),
+          this.prisma.client.shiftTradeRequest.update({
+            where: { id: tradeId },
+            data: { status: "APPROVED", approvedById: actorMemberId },
+          }),
+        ]);
+      } else {
+        await this.prisma.client.shiftTradeRequest.update({
+          where: { id: tradeId },
+          data: { status: "APPROVED", approvedById: actorMemberId },
+        });
+      }
+      return { status: "APPROVED" };
+    }
+
+    throw new BadRequestException("Invalid action");
+  }
+
   async getCoverage(orgId: string, from: Date, to: Date, locationId?: string) {
     const [shifts, overrides, bookings] = await Promise.all([
       this.getShifts(orgId, { isActive: true, locationId, from, to }),

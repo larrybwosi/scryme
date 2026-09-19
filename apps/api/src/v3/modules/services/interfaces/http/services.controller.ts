@@ -188,6 +188,62 @@ export class ServicesController {
     return this.staffScheduling.getShifts(req.v3Context.organizationId, query);
   }
 
+  @Get("tasks")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "Get staff tasks", operationId: "Services_GetStaffTasks" })
+  async getStaffTasks(
+    @Req() req: any,
+    @Query() query: { memberId?: string; shiftId?: string; status?: any; priority?: any },
+  ) {
+    return this.staffScheduling.getStaffTasks(req.v3Context.organizationId, query);
+  }
+
+  @Post("tasks")
+  @Permissions("services:write")
+  @ApiOperation({ summary: "Create a staff task", operationId: "Services_CreateStaffTask" })
+  async createStaffTask(@Req() req: any, @Body() dto: any) {
+    return this.staffScheduling.createStaffTask(req.v3Context.organizationId, {
+      ...dto,
+      createdById: req.v3Context?.memberId,
+      dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+    });
+  }
+
+  @Patch("tasks/:id")
+  @Permissions("services:write")
+  @ApiOperation({ summary: "Update a staff task", operationId: "Services_UpdateStaffTask" })
+  async updateStaffTask(@Req() req: any, @Param("id") id: string, @Body() dto: any) {
+    return this.staffScheduling.updateStaffTask(req.v3Context.organizationId, id, {
+      ...dto,
+      dueDate: dto.dueDate !== undefined ? (dto.dueDate ? new Date(dto.dueDate) : null) : undefined,
+    });
+  }
+
+  @Get("shifts/trades")
+  @Permissions("services:read")
+  @ApiOperation({ summary: "List shift trade requests", operationId: "Services_GetShiftTrades" })
+  async getShiftTrades(@Req() req: any, @Query() query: { memberId?: string; status?: any }) {
+    return this.staffScheduling.getShiftTrades(req.v3Context.organizationId, query);
+  }
+
+  @Post("shifts/trades")
+  @Permissions("services:write")
+  @ApiOperation({ summary: "Request a shift trade or swap", operationId: "Services_RequestShiftTrade" })
+  async requestShiftTrade(@Req() req: any, @Body() dto: any) {
+    return this.staffScheduling.requestShiftTrade(req.v3Context.organizationId, req.v3Context.memberId, dto);
+  }
+
+  @Post("shifts/trades/:id/process")
+  @Permissions("services:manage")
+  @ApiOperation({ summary: "Approve, reject, or cancel a shift trade request", operationId: "Services_ProcessShiftTrade" })
+  async processShiftTrade(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() dto: { action: "APPROVE" | "REJECT" | "CANCEL" },
+  ) {
+    return this.staffScheduling.processShiftTrade(req.v3Context.organizationId, id, req.v3Context.memberId, dto.action);
+  }
+
   @Get(":id")
   @Permissions("services:read")
   @ApiOperation({

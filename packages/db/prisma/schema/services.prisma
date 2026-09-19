@@ -31,6 +31,27 @@ enum ScheduleOverrideType {
   BLACKOUT
 }
 
+enum ShiftTradeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 enum BookingEventSource {
   ADMIN
   PUBLIC
@@ -257,7 +278,13 @@ model StaffShift {
 
   isActive Boolean @default(true)
 
-  breaks StaffBreak[]
+  departmentId String?
+  roleTags     String[] @default([])
+
+  breaks       StaffBreak[]
+  tradeRequests ShiftTradeRequest[] @relation("ShiftTradeShift")
+  offeredTrades ShiftTradeRequest[] @relation("ShiftTradeOfferedShift")
+  tasks        StaffTask[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -353,6 +380,70 @@ model BookingEvent {
   @@index([organizationId, createdAt])
   @@index([bookingId, createdAt])
   @@map("booking_event")
+}
+
+model ShiftTradeRequest {
+  id             String           @id @default(cuid())
+  organizationId String
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  requesterMemberId String
+  requesterMember   Member        @relation("TradeRequester", fields: [requesterMemberId], references: [id], onDelete: Cascade)
+
+  targetMemberId    String?
+  targetMember      Member?       @relation("TradeTarget", fields: [targetMemberId], references: [id], onDelete: SetNull)
+
+  shiftId        String
+  shift          StaffShift       @relation("ShiftTradeShift", fields: [shiftId], references: [id], onDelete: Cascade)
+
+  offeredShiftId String?
+  offeredShift   StaffShift?      @relation("ShiftTradeOfferedShift", fields: [offeredShiftId], references: [id], onDelete: SetNull)
+
+  type           String           @default("SWAP") // SWAP, OFFER, BID
+  status         ShiftTradeStatus @default(PENDING)
+  reason         String?
+
+  approvedById   String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([organizationId, status])
+  @@index([requesterMemberId])
+  @@index([targetMemberId])
+  @@map("shift_trade_request")
+}
+
+model StaffTask {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(TODO)
+  dueDate     DateTime?
+
+  memberId String?
+  member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
+
+  shiftId String?
+  shift   StaffShift? @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+
+  locationId String?
+  location   InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+
+  checklist Json?
+  notes     String?
+  createdById String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId, status])
+  @@index([memberId, status])
+  @@index([shiftId])
+  @@map("staff_task")
 }
 
 model BookingResource {
