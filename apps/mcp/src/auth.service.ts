@@ -7,6 +7,7 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private cachedToken: string | null = null;
   private tokenExpiresAt = 0;
+  private inflightTokenPromise: Promise<string> | null = null;
   public readonly v3 = getScrymeV3API(axios as any);
 
   async ensureAuthenticated(orgSlug?: string): Promise<string> {
@@ -21,29 +22,39 @@ export class AuthService {
     }
 
     const now = Date.now();
-    if (!this.cachedToken || now >= this.tokenExpiresAt - 300 * 1000) {
-      this.logger.log("Exchanging client credentials for a new V3 access token...");
-      try {
-        const apiBaseUrl = process.env.SCRYME_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
-        axios.defaults.baseURL = apiBaseUrl;
+    const needsRefresh = !this.cachedToken || now >= this.tokenExpiresAt - 300 * 1000;
 
-        const response = await this.v3.authExchangeToken(
-          { clientId, clientSecret },
-          { headers: { "Content-Type": "application/json" } }
-        );
+    if (needsRefresh) {
+      if (!this.inflightTokenPromise) {
+        this.inflightTokenPromise = (async () => {
+          this.logger.log("Exchanging client credentials for a new V3 access token...");
+          try {
+            const apiBaseUrl = process.env.SCRYME_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
+            axios.defaults.baseURL = apiBaseUrl;
 
-        if (response.data && response.data.data && response.data.data.access_token) {
-          this.cachedToken = response.data.data.access_token;
-          const expiresIn = response.data.data.expires_in || 3600;
-          this.tokenExpiresAt = Date.now() + expiresIn * 1000;
-          this.logger.log("Successfully obtained new V3 access token.");
-        } else {
-          throw new Error("Invalid response format from token exchange endpoint.");
-        }
-      } catch (error: any) {
-        this.logger.error(`Error exchanging client credentials: ${error.message || error}`);
-        throw error;
+            const response = await this.v3.authExchangeToken(
+              { clientId, clientSecret },
+              { headers: { "Content-Type": "application/json" } }
+            );
+
+            if (response.data && response.data.data && response.data.data.access_token) {
+              this.cachedToken = response.data.data.access_token;
+              const expiresIn = response.data.data.expires_in || 3600;
+              this.tokenExpiresAt = Date.now() + expiresIn * 1000;
+              this.logger.log("Successfully obtained new V3 access token.");
+              return this.cachedToken;
+            } else {
+              throw new Error("Invalid response format from token exchange endpoint.");
+            }
+          } catch (error: any) {
+            this.logger.error(`Error exchanging client credentials: ${error.message || error}`);
+            throw error;
+          } finally {
+            this.inflightTokenPromise = null;
+          }
+        })();
       }
+      await this.inflightTokenPromise;
     }
 
     axios.defaults.baseURL = process.env.SCRYME_API_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
@@ -54,7 +65,7 @@ export class AuthService {
       delete axios.defaults.headers.common["x-org-slug"];
     }
 
-    return this.cachedToken;
+    return this.cachedToken!;
   }
 
   async callSdk<T>(
@@ -83,12 +94,23 @@ export class AuthService {
       };
     } catch (error: any) {
       const errorPayload = error.response?.data || error.message || error;
-      this.logger.error(`Scryme V3 API Call Error: ${JSON.stringify(errorPayload)}`);
+      const status = error.response?.status;
+      this.logger.error(`Scryme V3 API Call Error [${status || "Network"}]: ${JSON.stringify(errorPayload)}`);
+
+      const structuredError = {
+        success: false,
+        error: {
+          message: errorPayload?.message || "Error executing Scryme V3 API request",
+          statusCode: status || 500,
+          details: errorPayload,
+        },
+      };
+
       return {
         content: [
           {
             type: "text",
-            text: `Error calling V3 API: ${JSON.stringify(errorPayload, null, 2)}`,
+            text: JSON.stringify(structuredError, null, 2),
           },
         ],
         isError: true,
