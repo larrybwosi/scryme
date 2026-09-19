@@ -22,6 +22,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Loader2, PackagePlus } from "lucide-react";
 import { restockVariant } from "@/app/actions/stock-management";
+import { uploadFileAction } from "@/app/actions/sales";
 import { toast } from "sonner";
 
 export interface RestockItemInfo {
@@ -35,6 +36,7 @@ export interface RestockItemInfo {
   locationName?: string;
   buyingPrice?: number;
   supplierName?: string;
+  requiresExpiryTracking?: boolean;
 }
 
 interface LocationOption {
@@ -75,6 +77,8 @@ export function RestockModal({
   const [batchNumber, setBatchNumber] = useState<string>("");
   const [expiryDate, setExpiryDate] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [documentName, setDocumentName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // Sync state when product changes or opens
@@ -101,8 +105,30 @@ export function RestockModal({
       return;
     }
 
+    const requiresExpiry = product.requiresExpiryTracking ?? true;
+    if (requiresExpiry && !expiryDate) {
+      toast.error("Expiry date is required for this product.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      let documentAttachment: any = undefined;
+
+      if (documentFile) {
+        const formData = new FormData();
+        formData.append("file", documentFile);
+        const uploadRes = await uploadFileAction(formData);
+
+        documentAttachment = {
+          fileName: uploadRes.fileName,
+          fileUrl: uploadRes.fileUrl,
+          mimeType: uploadRes.mimeType,
+          sizeBytes: uploadRes.sizeBytes,
+          description: documentName.trim() || uploadRes.fileName || "Restock document attachment",
+        };
+      }
+
       const parsedPrice = purchasePrice ? parseFloat(purchasePrice) : undefined;
       const res = await restockVariant({
         variantId: product.variantId,
@@ -113,6 +139,7 @@ export function RestockModal({
         batchNumber: batchNumber ? batchNumber : undefined,
         expiryDate: expiryDate ? expiryDate : undefined,
         notes: notes ? notes : undefined,
+        documentAttachment,
       });
 
       if (res.success) {
@@ -232,12 +259,38 @@ export function RestockModal({
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="expiryDate">Expiry Date (Optional)</Label>
+                <Label htmlFor="expiryDate">
+                  Expiry Date {(product.requiresExpiryTracking ?? true) ? "*" : "(Optional)"}
+                </Label>
                 <Input
                   id="expiryDate"
                   type="date"
                   value={expiryDate}
                   onChange={(e) => setExpiryDate(e.target.value)}
+                  required={product.requiresExpiryTracking ?? true}
+                />
+              </div>
+            </div>
+
+            {/* Document Attachment & Document Name */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="documentFile">Upload Document (Optional)</Label>
+                <Input
+                  id="documentFile"
+                  type="file"
+                  onChange={(e) => setDocumentFile(e.target.files?.[0] || null)}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="documentName">Document Name (Optional)</Label>
+                <Input
+                  id="documentName"
+                  type="text"
+                  placeholder="e.g. Supplier Invoice / Delivery Note"
+                  value={documentName}
+                  onChange={(e) => setDocumentName(e.target.value)}
                 />
               </div>
             </div>

@@ -178,6 +178,7 @@ export function StockingListTable({
                     locationName: item.locationName,
                     buyingPrice: item.buyingPrice,
                     supplierName: item.supplierName,
+                    requiresExpiryTracking: (item as any).requiresExpiryTracking,
                   });
                   setIsRestockModalOpen(true);
                 }}>

@@ -7,7 +7,16 @@ export class StorageCoreService {
    */
   static generateShortUrlInfo(shortCodeOverride?: string) {
     const shortCode = shortCodeOverride || generateShortCode();
-    const shortUrl = `${env.NEXT_PUBLIC_API_URL}/s/${shortCode}`;
+    let baseUrl = env.NEXT_PUBLIC_API_URL || "https://api.scryme.tech";
+
+    if (
+      process.env.NODE_ENV === "production" &&
+      (baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1"))
+    ) {
+      baseUrl = "https://api.scryme.tech";
+    }
+
+    const shortUrl = `${baseUrl.replace(/\/$/, "")}/s/${shortCode}`;
     return { shortCode, shortUrl };
   }
 
