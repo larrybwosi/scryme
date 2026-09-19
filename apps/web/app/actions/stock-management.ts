@@ -734,6 +734,7 @@ export async function getStockLevels(params: {
             incomingStock: incomingT.add(incomingP).toNumber(),
             buyingPrice: variant.buyingPrice?.toNumber() ?? 0,
             retailPrice: variant.retailPrice?.toNumber() ?? 0,
+            requiresExpiryTracking: variant.requiresExpiryTracking ?? true,
           };
         });
       } else {
@@ -768,6 +769,7 @@ export async function getStockLevels(params: {
             incomingStock: incomingT.add(incomingP).toNumber(),
             buyingPrice: variant.buyingPrice?.toNumber() ?? 0,
             retailPrice: variant.retailPrice?.toNumber() ?? 0,
+            requiresExpiryTracking: variant.requiresExpiryTracking ?? true,
           },
         ];
       }
@@ -903,6 +905,13 @@ export async function restockVariant(data: {
   batchNumber?: string;
   expiryDate?: Date | string;
   notes?: string;
+  documentAttachment?: {
+    fileName: string;
+    fileUrl: string;
+    mimeType: string;
+    sizeBytes?: number;
+    description?: string;
+  };
 }): Promise<{ success: boolean; message: string }> {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId) {
@@ -919,11 +928,15 @@ export async function restockVariant(data: {
 
   const variant = await db.productVariant.findUnique({
     where: { id: data.variantId },
-    select: { id: true, productId: true, sku: true, buyingPrice: true },
+    select: { id: true, productId: true, sku: true, buyingPrice: true, requiresExpiryTracking: true },
   });
 
   if (!variant) {
     throw new Error("Product variant not found.");
+  }
+
+  if (variant.requiresExpiryTracking && !data.expiryDate) {
+    throw new Error("Expiry date is required for products with expiry tracking.");
   }
 
   const qtyDecimal = new Decimal(data.quantity);
@@ -1008,6 +1021,27 @@ export async function restockVariant(data: {
           locationId: data.locationId,
           currentStock: qtyDecimal,
           availableStock: qtyDecimal,
+        },
+      });
+    }
+
+    // 5. Create Document Attachment if provided
+    if (data.documentAttachment) {
+      const { StorageCoreService } = await import("@repo/shared/storage");
+      const { shortCode, shortUrl } = StorageCoreService.generateShortUrlInfo();
+
+      await tx.attachment.create({
+        data: {
+          fileName: data.documentAttachment.fileName,
+          fileUrl: data.documentAttachment.fileUrl,
+          shortCode,
+          shortUrl,
+          mimeType: data.documentAttachment.mimeType,
+          sizeBytes: data.documentAttachment.sizeBytes,
+          description: data.documentAttachment.description || "Restock document attachment",
+          organizationId: context.organizationId,
+          memberId: context.memberId!,
+          stockBatchId: batch.id,
         },
       });
     }
