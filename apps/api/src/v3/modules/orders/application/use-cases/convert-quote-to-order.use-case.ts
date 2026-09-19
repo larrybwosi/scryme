@@ -45,14 +45,27 @@ export class ConvertQuoteToOrderUseCase {
     }
 
     // 2. Update Transaction to Order
-    const updatedTransaction = await this.prisma.client.transaction.update({
-      where: { id: quoteId },
+    // SECURITY (Sentinel): BOLA / Tenant Isolation Mitigation - Transaction lacks composite unique index on [id, organizationId].
+    // Prisma's update query with `{ where: { id: quoteId } }` ignores non-unique organizationId filters in 'where' clause at runtime.
+    // Using updateMany scoped strictly by { id: quoteId, organizationId } guarantees database-level multi-tenant isolation,
+    // preventing potential cross-tenant IDOR quote modifications or race conditions.
+    const updateResult = await this.prisma.client.transaction.updateMany({
+      where: { id: quoteId, organizationId },
       data: {
         type: "SALES_ORDER",
         status: "PENDING_CONFIRMATION",
         confirmedAt: new Date(),
       },
     });
+
+    if (updateResult.count === 0) {
+      throw new NotFoundException("Quote not found or unauthorized");
+    }
+
+    const updatedTransaction =
+      await this.prisma.client.transaction.findFirstOrThrow({
+        where: { id: quoteId, organizationId },
+      });
 
     // 3. Trigger events
     await this.realtimeService.publish(
