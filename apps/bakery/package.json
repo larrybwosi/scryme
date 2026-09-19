@@ -13,8 +13,7 @@
     "tauri": "tauri",
     "preview": "vite preview",
     "test:frontend": "vitest run",
-    "type-check": "pnpm exec tsc --noEmit",
-    "prebuild": "pnpm --filter @scryme/sdk generate:rust"
+    "type-check": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

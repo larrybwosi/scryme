@@ -68,6 +68,8 @@ import {
   RefreshCcw,
   Printer,
   Users,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

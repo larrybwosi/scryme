@@ -22,26 +22,40 @@ export async function getDevices(): Promise<any[]> {
 }
 
 export async function updateDevicePermissions(
-  apiKeyId: string,
+  keyId: string,
   permissions: string[],
 ) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
-  // Verify the API key belongs to the organization
+  // Verify whether keyId belongs to a legacy ApiKey or a V3ApiClient in this organization
   const apiKey = await db.apiKey.findUnique({
     where: {
-      id: apiKeyId,
+      id: keyId,
       organizationId: auth.organizationId,
     },
   });
 
-  if (!apiKey) throw new Error("API Key not found");
+  if (apiKey) {
+    await db.apiKey.update({
+      where: { id: keyId },
+      data: { permissions },
+    });
+  } else {
+    const v3Client = await db.v3ApiClient.findUnique({
+      where: {
+        id: keyId,
+        organizationId: auth.organizationId,
+      },
+    });
 
-  await db.apiKey.update({
-    where: { id: apiKeyId },
-    data: { permissions },
-  });
+    if (!v3Client) throw new Error("API Key or V3 Client not found");
+
+    await db.v3ApiClient.update({
+      where: { id: keyId },
+      data: { scopes: permissions },
+    });
+  }
 
   revalidatePath("/settings/devices");
 }
