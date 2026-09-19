@@ -27,6 +27,7 @@ import { Plus, Trash2, Loader2, ShoppingBag } from "lucide-react";
 
 const poSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
+  dueDate: z.string().optional(),
   items: z
     .array(
       z.object({
@@ -58,32 +59,51 @@ export function CreateSupplierPODialog({
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Combine products supplied by this supplier or fallback to all products
+  // Combine products supplied by this supplier with all inventory products so user can select any variant
   const availableVariants = (() => {
-    if (supplierProducts.length > 0) {
-      return supplierProducts.map((sp: any) => ({
-        id: sp.variantId || sp.variant?.id,
-        name: `${sp.product?.name || "Product"} ${
-          sp.variant?.name && sp.variant?.name !== "Default"
-            ? `(${sp.variant.name})`
-            : ""
-        }`,
-        unitCost: Number(sp.costPrice || sp.variant?.unitPrice || 0),
-      })).filter(v => Boolean(v.id));
-    }
-    return allProducts.map((p: any) => ({
-      id: p.variantId || p.id,
-      name: `${p.name} ${
-        p.variantName && p.variantName !== "Default" ? `(${p.variantName})` : ""
-      }`,
-      unitCost: Number(p.costPrice || p.unitPrice || 0),
-    })).filter(v => Boolean(v.id));
+    const variantMap = new Map<string, { id: string; name: string; unitCost: number }>();
+
+    supplierProducts.forEach((sp: any) => {
+      const vId = sp.variantId || sp.variant?.id;
+      if (vId) {
+        const pName = sp.product?.name || "Product";
+        const vName = sp.variant?.name;
+        const displayName = vName && vName !== "Default" ? `${pName} (${vName})` : pName;
+        variantMap.set(vId, {
+          id: vId,
+          name: displayName,
+          unitCost: Number(sp.costPrice || sp.variant?.unitPrice || 0),
+        });
+      }
+    });
+
+    allProducts.forEach((p: any) => {
+      const vId = p.variantId || p.id;
+      if (vId && !variantMap.has(vId)) {
+        const pName = p.name || "Product";
+        const vName = p.variantName;
+        const displayName = vName && vName !== "Default" ? `${pName} (${vName})` : pName;
+        variantMap.set(vId, {
+          id: vId,
+          name: displayName,
+          unitCost: Number(p.costPrice || p.unitPrice || 0),
+        });
+      }
+    });
+
+    return Array.from(variantMap.values());
   })();
+
+  // Calculate default due date (30 days from now)
+  const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
 
   const form = useForm<POFormValues>({
     resolver: zodResolver(poSchema) as any,
     defaultValues: {
       supplierId: supplierId,
+      dueDate: defaultDueDate,
       items: [
         {
           variantId: availableVariants[0]?.id || "",
@@ -93,6 +113,16 @@ export function CreateSupplierPODialog({
       ],
     },
   });
+
+  const handlePaymentTermsChange = (days: string) => {
+    if (!days) return;
+    const daysNum = parseInt(days, 10);
+    if (!isNaN(daysNum)) {
+      const d = new Date();
+      d.setDate(d.getDate() + daysNum);
+      form.setValue("dueDate", d.toISOString().split("T")[0]);
+    }
+  };
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -104,12 +134,14 @@ export function CreateSupplierPODialog({
       try {
         await createPurchase({
           supplierId: values.supplierId,
+          dueDate: values.dueDate ? new Date(values.dueDate) : undefined,
           items: values.items,
         });
         toast.success(`Purchase order created for ${supplierName}`);
         setOpen(false);
         form.reset({
           supplierId,
+          dueDate: defaultDueDate,
           items: [
             {
               variantId: availableVariants[0]?.id || "",
@@ -139,6 +171,44 @@ export function CreateSupplierPODialog({
           <DialogTitle>New Purchase Order — {supplierName}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
+          {/* Repayment Due Time / Due Date Configuration */}
+          <div className="grid grid-cols-2 gap-4 p-3.5 bg-muted/40 rounded-lg border border-border">
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">
+                Payment Terms Preset
+              </label>
+              <Select onValueChange={handlePaymentTermsChange}>
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Select terms..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Due Immediately (Net 0)</SelectItem>
+                  <SelectItem value="7">7 Days (Net 7)</SelectItem>
+                  <SelectItem value="15">15 Days (Net 15)</SelectItem>
+                  <SelectItem value="30">30 Days (Net 30)</SelectItem>
+                  <SelectItem value="60">60 Days (Net 60)</SelectItem>
+                  <SelectItem value="90">90 Days (Net 90)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground mb-1 block">
+                Repayment Due Date
+              </label>
+              <Input
+                type="date"
+                className="bg-background"
+                {...form.register("dueDate")}
+              />
+              {form.formState.errors.dueDate && (
+                <p className="text-xs text-red-500 mt-1">
+                  {form.formState.errors.dueDate.message}
+                </p>
+              )}
+            </div>
+          </div>
+
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-sm font-semibold text-foreground">

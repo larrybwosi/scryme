@@ -102,6 +102,7 @@ export async function createPurchase(data: {
   supplierId: string;
   items: { variantId: string; quantity: number; unitCost: number }[];
   purchaseNumber?: string;
+  dueDate?: Date;
 }): Promise<any> {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
@@ -119,7 +120,12 @@ export async function createPurchase(data: {
     purchaseNumber = `PO-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
   }
 
-  return await db.$transaction(async tx => {
+  const supplier = await db.supplier.findUnique({
+    where: { id: data.supplierId },
+    select: { name: true },
+  });
+
+  const createdPurchase = await db.$transaction(async tx => {
     const purchase = await tx.purchase.create({
       data: {
         organizationId: auth.organizationId,
@@ -127,6 +133,7 @@ export async function createPurchase(data: {
         supplierId: data.supplierId,
         purchaseNumber,
         totalAmount: totalAmount,
+        dueDate: data.dueDate,
         status: "DRAFT",
         items: {
           create: data.items.map(item => ({
@@ -169,6 +176,32 @@ export async function createPurchase(data: {
     revalidatePath("/finance/purchases");
     return purchase;
   });
+
+  // Dispatch ScrymeChat alert if Scryme is configured
+  try {
+    const org = await db.organization.findUnique({
+      where: { id: auth.organizationId },
+      select: { slug: true, scrymeConfiguration: true },
+    });
+
+    if (org?.scrymeConfiguration && org.slug) {
+      const { ScrymeChatApiClient } = await import("@repo/chat");
+      const scrymeClient = new ScrymeChatApiClient();
+
+      const dueDateStr = data.dueDate
+        ? new Date(data.dueDate).toLocaleDateString()
+        : "N/A";
+
+      await scrymeClient.sendMessage(org.slug, "general", {
+        content: `📦 **New Purchase Order Created**\n- **Order #**: ${purchaseNumber}\n- **Supplier**: ${supplier?.name || "Supplier"}\n- **Total Amount**: KES ${totalAmount.toLocaleString()}\n- **Repayment Due Date**: ${dueDateStr}`,
+      });
+    }
+  } catch (err: any) {
+    console.error("Failed to send ScrymeChat notification for purchase order:", err?.message || err);
+  }
+
+  revalidatePath(`/inventory/supplier/${data.supplierId}`);
+  return createdPurchase;
 }
 
 export async function receivePurchaseItems(
