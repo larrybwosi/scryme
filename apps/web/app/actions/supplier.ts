@@ -321,6 +321,9 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
         },
       },
       purchases: {
+        include: {
+          items: true,
+        },
         orderBy: { orderDate: "desc" },
         take: 10,
       },

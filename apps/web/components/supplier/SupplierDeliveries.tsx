@@ -58,6 +58,46 @@ export function SupplierDeliveries({ purchases }: SupplierDeliveriesProps) {
     }
   };
 
+  const getRepaymentIndicator = (purchase: any) => {
+    if (purchase.paymentStatus === "PAID") {
+      return (
+        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 font-semibold text-[10px] py-0.5 px-2">
+          PAID
+        </Badge>
+      );
+    }
+
+    if (!purchase.dueDate) {
+      return (
+        <span className="text-xs text-muted-foreground">—</span>
+      );
+    }
+
+    const now = new Date();
+    const due = new Date(purchase.dueDate);
+    const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return (
+        <Badge className="bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20 font-semibold text-[10px] py-0.5 px-2">
+          OVERDUE ({Math.abs(diffDays)}d)
+        </Badge>
+      );
+    } else if (diffDays <= 5) {
+      return (
+        <Badge className="bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20 font-semibold text-[10px] py-0.5 px-2">
+          DUE SOON ({diffDays}d)
+        </Badge>
+      );
+    } else {
+      return (
+        <span className="text-xs font-medium text-foreground">
+          Due {format(due, "MMM dd, yyyy")}
+        </span>
+      );
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center bg-white p-4 rounded-2xl border shadow-sm">
@@ -97,7 +137,7 @@ export function SupplierDeliveries({ purchases }: SupplierDeliveriesProps) {
             <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b">
               <TableHead className="font-bold py-4 pl-6">Order ID</TableHead>
               <TableHead className="font-bold">Order Date</TableHead>
-              <TableHead className="font-bold">Expected Date</TableHead>
+              <TableHead className="font-bold">Repayment Due</TableHead>
               <TableHead className="font-bold">Items</TableHead>
               <TableHead className="font-bold">Total Amount</TableHead>
               <TableHead className="font-bold">Status</TableHead>
@@ -133,16 +173,14 @@ export function SupplierDeliveries({ purchases }: SupplierDeliveriesProps) {
                   <TableCell className="text-sm font-medium text-[#1D1D1F]">
                     {format(new Date(purchase.orderDate), "MMM dd, yyyy")}
                   </TableCell>
-                  <TableCell className="text-sm font-medium text-muted-foreground">
-                    {purchase.expectedDate
-                      ? format(new Date(purchase.expectedDate), "MMM dd, yyyy")
-                      : "N/A"}
+                  <TableCell className="text-sm font-medium">
+                    {getRepaymentIndicator(purchase)}
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
                       className="font-bold text-[10px] bg-gray-50 border-gray-200">
-                      8 ITEMS
+                      {purchase.items?.length || 1} ITEMS
                     </Badge>
                   </TableCell>
                   <TableCell className="font-bold text-[#1D1D1F]">
