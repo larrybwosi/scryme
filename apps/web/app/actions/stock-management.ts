@@ -235,6 +235,214 @@ export async function createStockTransfer(data: {
   return result;
 }
 
+export async function receiveTransferStockWithBatches(data: {
+  transferId: string;
+  notes?: string;
+  documentRef?: string;
+  items: {
+    transferItemId: string;
+    quantity: number;
+    batchNumber?: string;
+    supplierBatchNumber?: string;
+    expiryDate?: Date | string;
+    receivedDate?: Date | string;
+  }[];
+}) {
+  const context = await getServerAuth();
+  if (!context?.organizationId || !context.memberId)
+    throw new Error("Unauthorized");
+
+  const transfer = await db.stockTransfer.findUnique({
+    where: { id: data.transferId, organizationId: context.organizationId },
+    include: { items: { include: { variant: { include: { product: true } } } }, fromLocation: true, toLocation: true },
+  });
+
+  if (!transfer) throw new Error("Stock transfer not found");
+
+  await db.$transaction(async tx => {
+    for (const itemInput of data.items) {
+      const tItem = transfer.items.find(i => i.id === itemInput.transferItemId);
+      if (!tItem) continue;
+
+      const receivedQty = Number(itemInput.quantity);
+      if (receivedQty <= 0) continue;
+
+      // 1. Update transfer item received quantity
+      await tx.stockTransferItem.update({
+        where: { id: tItem.id },
+        data: {
+          receivedQuantity: { increment: receivedQty },
+        },
+      });
+
+      // 2. Create StockBatch at destination location
+      const batchNo = itemInput.batchNumber || `XFER-${transfer.transferNumber}-${tItem.id.slice(-4)}`;
+      const expDate = itemInput.expiryDate ? new Date(itemInput.expiryDate) : null;
+      const recDate = itemInput.receivedDate ? new Date(itemInput.receivedDate) : new Date();
+
+      const batch = await tx.stockBatch.create({
+        data: {
+          organizationId: context.organizationId,
+          variantId: tItem.variantId,
+          locationId: transfer.toLocationId,
+          batchNumber: batchNo,
+          supplierBatchNumber: itemInput.supplierBatchNumber || null,
+          initialQuantity: receivedQty,
+          currentQuantity: receivedQty,
+          purchasePrice: Number(tItem.unitCost || 0),
+          expiryDate: expDate,
+          receivedDate: recDate,
+        },
+      });
+
+      // 3. Update transfer item link
+      await tx.stockTransferItem.update({
+        where: { id: tItem.id },
+        data: { stockBatchId: batch.id },
+      });
+
+      // 4. Update destination ProductVariantStock
+      const pvStock = await tx.productVariantStock.findUnique({
+        where: {
+          variantId_locationId: {
+            variantId: tItem.variantId,
+            locationId: transfer.toLocationId,
+          },
+        },
+      });
+
+      if (pvStock) {
+        await tx.productVariantStock.update({
+          where: { id: pvStock.id },
+          data: {
+            currentStock: { increment: receivedQty },
+            availableStock: { increment: receivedQty },
+          },
+        });
+      } else {
+        await tx.productVariantStock.create({
+          data: {
+            organizationId: context.organizationId,
+            productId: tItem.variant.productId,
+            variantId: tItem.variantId,
+            locationId: transfer.toLocationId,
+            currentStock: receivedQty,
+            availableStock: receivedQty,
+          },
+        });
+      }
+
+      // 5. Create stock movement record
+      await tx.stockMovement.create({
+        data: {
+          organizationId: context.organizationId,
+          variantId: tItem.variantId,
+          fromLocationId: transfer.fromLocationId,
+          toLocationId: transfer.toLocationId,
+          stockBatchId: batch.id,
+          quantity: receivedQty,
+          movementType: "TRANSFER",
+          referenceType: "StockTransfer",
+          referenceId: transfer.id,
+          memberId: context.memberId,
+          notes: data.notes || `Received Transfer ${transfer.transferNumber}`,
+        },
+      });
+
+      // 6. Audit log entry
+      await tx.stockAuditLog.create({
+        data: {
+          organizationId: context.organizationId,
+          entityType: "StockTransfer",
+          entityId: transfer.id,
+          action: "STOCK_TRANSFERRED",
+          newValue: `Received ${receivedQty} units of ${tItem.variant.product.name} at ${transfer.toLocation.name}`,
+          performedBy: context.memberId,
+          metadata: {
+            batchId: batch.id,
+            batchNumber: batchNo,
+            supplierBatchNumber: itemInput.supplierBatchNumber,
+            documentRef: data.documentRef,
+          },
+        },
+      });
+    }
+
+    // Evaluate transfer overall completion status
+    const updatedTransfer = await tx.stockTransfer.findUnique({
+      where: { id: data.transferId },
+      include: { items: true },
+    });
+
+    if (updatedTransfer) {
+      const allReceived = updatedTransfer.items.every(
+        i => Number(i.receivedQuantity || 0) >= Number(i.requestedQuantity || 0),
+      );
+
+      await tx.stockTransfer.update({
+        where: { id: data.transferId },
+        data: {
+          status: allReceived ? "COMPLETED" : "SHIPPED",
+          receivedById: context.memberId,
+          receivedDate: new Date(),
+          completedDate: allReceived ? new Date() : undefined,
+        },
+      });
+    }
+  });
+
+  revalidatePath("/stocking/reception");
+  revalidatePath("/stocking/transfers");
+  revalidatePath(`/stocking/transfers/${data.transferId}`);
+}
+
+export async function getPendingTransfersForReception() {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const transfers = await db.stockTransfer.findMany({
+    where: {
+      organizationId: context.organizationId,
+      status: { in: ["SHIPPED", "APPROVED", "IN_TRANSIT" as any] },
+    },
+    include: {
+      fromLocation: true,
+      toLocation: true,
+      items: {
+        include: {
+          variant: {
+            include: { product: true },
+          },
+        },
+      },
+    },
+    orderBy: { requestedDate: "desc" },
+  });
+
+  return transfers.map(t => ({
+    id: t.id,
+    transferNumber: t.transferNumber,
+    fromLocationName: t.fromLocation?.name || "N/A",
+    toLocationName: t.toLocation?.name || "N/A",
+    toLocationId: t.toLocationId,
+    status: t.status,
+    requestedDate: t.requestedDate,
+    items: t.items.map(item => ({
+      id: item.id,
+      variantId: item.variantId,
+      productName: item.variant.product.name,
+      variantName: item.variant.name,
+      sku: item.variant.sku,
+      requestedQuantity: Number(item.requestedQuantity.toString()),
+      receivedQuantity: Number((item.receivedQuantity || 0).toString()),
+      pendingQuantity: Math.max(
+        0,
+        Number(item.requestedQuantity.toString()) - Number((item.receivedQuantity || 0).toString()),
+      ),
+    })),
+  }));
+}
+
 export async function updateStockTransfer(
   id: string,
   data: {
