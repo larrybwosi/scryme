@@ -244,19 +244,19 @@ export async function receivePurchaseStockWithBatches(data: {
     throw new Error("Purchase Order not found");
   }
 
-  // Resolve location (use provided or primary/first location for organization)
+  // Resolve location (use provided or default/first location for organization)
   let targetLocationId = data.locationId;
   if (!targetLocationId) {
-    const primaryLoc = await db.inventoryLocation.findFirst({
-      where: { organizationId: auth.organizationId, isPrimary: true },
+    const defaultLoc = await db.inventoryLocation.findFirst({
+      where: { organizationId: auth.organizationId, isDefault: true },
     }) || await db.inventoryLocation.findFirst({
       where: { organizationId: auth.organizationId },
     });
 
-    if (!primaryLoc) {
+    if (!defaultLoc) {
       throw new Error("No inventory location found for organization");
     }
-    targetLocationId = primaryLoc.id;
+    targetLocationId = defaultLoc.id;
   }
 
   await db.$transaction(async tx => {
@@ -298,30 +298,42 @@ export async function receivePurchaseStockWithBatches(data: {
         },
       });
 
-      // 3. Increment or upsert inventory stock
-      const existingInventory = await tx.inventory.findFirst({
+      // 3. Increment or upsert product variant stock
+      const existingStock = await tx.productVariantStock.findUnique({
         where: {
-          variantId: pItem.variantId,
-          locationId: targetLocationId,
+          variantId_locationId: {
+            variantId: pItem.variantId,
+            locationId: targetLocationId,
+          },
         },
       });
 
-      if (existingInventory) {
-        await tx.inventory.update({
-          where: { id: existingInventory.id },
+      if (existingStock) {
+        await tx.productVariantStock.update({
+          where: { id: existingStock.id },
           data: {
-            quantity: { increment: receivedQty },
+            currentStock: { increment: receivedQty },
+            availableStock: { increment: receivedQty },
           },
         });
       } else {
-        await tx.inventory.create({
-          data: {
-            organizationId: auth.organizationId,
-            variantId: pItem.variantId,
-            locationId: targetLocationId,
-            quantity: receivedQty,
-          },
+        const variant = await tx.productVariant.findUnique({
+          where: { id: pItem.variantId },
+          select: { productId: true },
         });
+
+        if (variant) {
+          await tx.productVariantStock.create({
+            data: {
+              organizationId: auth.organizationId,
+              productId: variant.productId,
+              variantId: pItem.variantId,
+              locationId: targetLocationId,
+              currentStock: receivedQty,
+              availableStock: receivedQty,
+            },
+          });
+        }
       }
 
       // 4. Log Stock Movement
@@ -329,14 +341,13 @@ export async function receivePurchaseStockWithBatches(data: {
         data: {
           organizationId: auth.organizationId,
           variantId: pItem.variantId,
-          locationId: targetLocationId,
+          toLocationId: targetLocationId,
           stockBatchId: batch.id,
           quantity: receivedQty,
-          type: "IN",
-          reason: "PURCHASE_RECEIPT",
+          movementType: "PURCHASE_RECEIPT",
           referenceType: "Purchase",
           referenceId: purchase.id,
-          performedBy: auth.memberId,
+          memberId: auth.memberId,
           notes: data.notes || itemInput.notes || `Received PO ${purchase.purchaseNumber}`,
         },
       });
@@ -416,43 +427,61 @@ export async function getPendingPurchasesForReception() {
               product: true,
             },
           },
-          batches: true,
         },
       },
     },
     orderBy: { createdAt: "desc" },
   });
 
+  // Batch fetch stock batches for purchase items
+  const purchaseItemIds = purchases.flatMap(p => p.items.map(i => i.id));
+  const batches = await db.stockBatch.findMany({
+    where: {
+      purchaseItemId: { in: purchaseItemIds },
+    },
+  });
+
+  const batchesByPurchaseItem = new Map<string, typeof batches>();
+  for (const b of batches) {
+    if (!b.purchaseItemId) continue;
+    const list = batchesByPurchaseItem.get(b.purchaseItemId) || [];
+    list.push(b);
+    batchesByPurchaseItem.set(b.purchaseItemId, list);
+  }
+
   return purchases.map(p => ({
     id: p.id,
     purchaseNumber: p.purchaseNumber,
-    supplierName: p.supplier.name,
+    supplierName: p.supplier?.name || "N/A",
     supplierId: p.supplierId,
     orderDate: p.orderDate,
     dueDate: p.dueDate,
     status: p.status,
     totalAmount: Number(p.totalAmount?.toString() || 0),
-    items: p.items.map(item => ({
-      id: item.id,
-      variantId: item.variantId,
-      productName: item.variant.product.name,
-      variantName: item.variant.name,
-      sku: item.variant.sku,
-      orderedQuantity: Number(item.orderedQuantity.toString()),
-      receivedQuantity: Number(item.receivedQuantity.toString()),
-      pendingQuantity: Math.max(
-        0,
-        Number(item.orderedQuantity.toString()) - Number(item.receivedQuantity.toString()),
-      ),
-      unitCost: Number(item.unitCost.toString()),
-      existingBatches: item.batches.map(b => ({
-        id: b.id,
-        batchNumber: b.batchNumber,
-        supplierBatchNumber: b.supplierBatchNumber,
-        currentQuantity: Number(b.currentQuantity.toString()),
-        expiryDate: b.expiryDate,
-      })),
-    })),
+    items: p.items.map(item => {
+      const itemBatches = batchesByPurchaseItem.get(item.id) || [];
+      return {
+        id: item.id,
+        variantId: item.variantId,
+        productName: item.variant.product.name,
+        variantName: item.variant.name,
+        sku: item.variant.sku,
+        orderedQuantity: Number(item.orderedQuantity.toString()),
+        receivedQuantity: Number(item.receivedQuantity.toString()),
+        pendingQuantity: Math.max(
+          0,
+          Number(item.orderedQuantity.toString()) - Number(item.receivedQuantity.toString()),
+        ),
+        unitCost: Number(item.unitCost.toString()),
+        existingBatches: itemBatches.map(b => ({
+          id: b.id,
+          batchNumber: b.batchNumber,
+          supplierBatchNumber: b.supplierBatchNumber,
+          currentQuantity: Number(b.currentQuantity.toString()),
+          expiryDate: b.expiryDate,
+        })),
+      };
+    }),
   }));
 }
 

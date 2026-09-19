@@ -4,12 +4,12 @@ import {
   getPendingPurchasesForReception,
   getBatchTraceabilityList,
   receivePurchaseStockWithBatches,
-} from "../actions/purchases";
+} from "../../actions/purchases";
 import {
   getPendingTransfersForReception,
   receiveTransferStockWithBatches,
-  getLocations,
-} from "../actions/stock-management";
+} from "../../actions/stock-management";
+import { getLocations } from "../../actions/locations";
 
 export async function fetchReceptionOverviewData(search?: string) {
   const [pendingPurchases, pendingTransfers, batchList, locations] =

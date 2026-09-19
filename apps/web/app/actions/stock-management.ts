@@ -301,28 +301,7 @@ export async function receiveTransferStockWithBatches(data: {
         data: { stockBatchId: batch.id },
       });
 
-      // 4. Update destination Inventory quantity
-      const existingInventory = await tx.inventory.findFirst({
-        where: { variantId: tItem.variantId, locationId: transfer.toLocationId },
-      });
-
-      if (existingInventory) {
-        await tx.inventory.update({
-          where: { id: existingInventory.id },
-          data: { quantity: { increment: receivedQty } },
-        });
-      } else {
-        await tx.inventory.create({
-          data: {
-            organizationId: context.organizationId,
-            variantId: tItem.variantId,
-            locationId: transfer.toLocationId,
-            quantity: receivedQty,
-          },
-        });
-      }
-
-      // Also update productVariantStock if present
+      // 4. Update destination ProductVariantStock
       const pvStock = await tx.productVariantStock.findUnique({
         where: {
           variantId_locationId: {
@@ -358,17 +337,14 @@ export async function receiveTransferStockWithBatches(data: {
         data: {
           organizationId: context.organizationId,
           variantId: tItem.variantId,
-          locationId: transfer.toLocationId,
           fromLocationId: transfer.fromLocationId,
           toLocationId: transfer.toLocationId,
           stockBatchId: batch.id,
           quantity: receivedQty,
-          type: "IN",
           movementType: "TRANSFER",
-          reason: "TRANSFER_RECEIPT",
           referenceType: "StockTransfer",
           referenceId: transfer.id,
-          performedBy: context.memberId,
+          memberId: context.memberId,
           notes: data.notes || `Received Transfer ${transfer.transferNumber}`,
         },
       });
@@ -440,17 +416,17 @@ export async function getPendingTransfersForReception() {
         },
       },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { requestedDate: "desc" },
   });
 
   return transfers.map(t => ({
     id: t.id,
     transferNumber: t.transferNumber,
-    fromLocationName: t.fromLocation.name,
-    toLocationName: t.toLocation.name,
+    fromLocationName: t.fromLocation?.name || "N/A",
+    toLocationName: t.toLocation?.name || "N/A",
     toLocationId: t.toLocationId,
     status: t.status,
-    createdAt: t.createdAt,
+    requestedDate: t.requestedDate,
     items: t.items.map(item => ({
       id: item.id,
       variantId: item.variantId,
