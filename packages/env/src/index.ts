@@ -202,23 +202,24 @@ const clientSchema = z.object({
 // Env file loader (Node.js only — skipped in browser)
 // ─────────────────────────────────────────────
 
-// Indirect require, hidden from bundler static analysis (webpack/Turbopack)
-// so this code path isn't eagerly resolved/bundled for client or edge runtimes.
-const nodeRequire: NodeJS.Require | undefined =
-  typeof require !== "undefined"
-    ? // eslint-disable-next-line no-eval
-      (eval("require") as NodeJS.Require)
-    : undefined;
+function getNodeRequire(): NodeJS.Require | undefined {
+  if (isBrowser) return undefined;
+  if (typeof process === "undefined" || !process.versions?.node) return undefined;
+  if (typeof require !== "undefined") return require;
+  try {
+    // eslint-disable-next-line no-eval
+    return eval("require") as NodeJS.Require;
+  } catch {
+    return undefined;
+  }
+}
 
 function loadEnvFiles() {
   if (isBrowser) return;
   // Only run in an actual Node.js process (not edge runtime), where
   // process.versions.node is present.
-  if (
-    typeof process === "undefined" ||
-    !process.versions?.node ||
-    !nodeRequire
-  ) {
+  const nodeRequire = getNodeRequire();
+  if (!nodeRequire) {
     return;
   }
 
