@@ -1,5 +1,7 @@
 "use client";
 
+import { normalizeOpenPanelUrl } from "@repo/env";
+
 import React from "react";
 import { OpenPanelComponent } from "@openpanel/nextjs";
 
@@ -15,10 +17,7 @@ export function OpenPanelProvider() {
     return null;
   }
 
-  const apiUrl =
-    host && !host.includes("PLACEHOLDER")
-      ? host
-      : undefined;
+  const apiUrl = normalizeOpenPanelUrl(host);
 
   return (
     <OpenPanelComponent

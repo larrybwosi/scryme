@@ -21,6 +21,22 @@ const sanitizeUrl = (val: unknown) => {
   return val;
 };
 
+export function normalizeOpenPanelUrl(url?: string): string | undefined {
+  if (!url || typeof url !== "string") return undefined;
+  let trimmed = url.trim();
+  if (!trimmed || trimmed.includes("PLACEHOLDER") || trimmed === "your-openpanel-host") {
+    return undefined;
+  }
+  if (!/^https?:\/\//i.test(trimmed)) {
+    trimmed = `https://${trimmed}`;
+  }
+  trimmed = trimmed.replace(/\/+$/, "");
+  if (!trimmed.endsWith("/api")) {
+    trimmed = `${trimmed}/api`;
+  }
+  return trimmed;
+}
+
 // ─────────────────────────────────────────────
 // Schemas
 // ─────────────────────────────────────────────

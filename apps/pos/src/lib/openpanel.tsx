@@ -1,3 +1,4 @@
+import { normalizeOpenPanelUrl } from "@repo/env";
 import React, { useEffect } from "react";
 import { OpenPanel } from "@openpanel/web";
 
@@ -99,10 +100,7 @@ export function getOpenPanelInstance(): OpenPanel | null {
 
   const envHost = typeof process !== "undefined" ? process.env?.VITE_OPENPANEL_HOST : undefined;
   const host = envHost !== undefined ? envHost : import.meta.env.VITE_OPENPANEL_HOST;
-  const apiUrl =
-    host && !host.includes("PLACEHOLDER")
-      ? host
-      : undefined;
+  const apiUrl = normalizeOpenPanelUrl(host);
 
   if (!openPanelInstance) {
     try {
