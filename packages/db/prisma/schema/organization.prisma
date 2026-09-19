@@ -199,6 +199,8 @@ model Organization {
   scheduleOverrides        StaffScheduleOverride[]
   bookingEvents            BookingEvent[]
   bookingVerificationCodes BookingVerificationCode[]
+  shiftTradeRequests       ShiftTradeRequest[]
+  staffTasks               StaffTask[]
 
   standaloneDevices StandaloneDevice[]
 
@@ -363,6 +365,9 @@ model Member {
   staffShifts        StaffShift[]
   scheduleOverrides  StaffScheduleOverride[]
   bookingAssignments BookingStaff[]
+  tradeRequestsRequested ShiftTradeRequest[] @relation("TradeRequester")
+  tradeRequestsTargeted  ShiftTradeRequest[] @relation("TradeTarget")
+  staffTasks             StaffTask[]
 
   submittedExpenses        Expense[]          @relation("ExpenseSubmitter")
   approvedExpenses         Expense[]          @relation("ExpenseApprover")
