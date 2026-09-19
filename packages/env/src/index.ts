@@ -4,11 +4,11 @@ import { z } from "zod";
 // Environment detection
 // ─────────────────────────────────────────────
 const isBrowser = typeof window !== "undefined";
-const isNextJs =
-  (!isBrowser &&
-    typeof process !== "undefined" &&
-    !!process.env.NEXT_RUNTIME) ||
-  !!process.env.__NEXT_PRIVATE_ORIGIN;
+let isNextRuntime = false;
+if (!isBrowser && typeof process !== "undefined") {
+  isNextRuntime = !!process.env.NEXT_RUNTIME || !!process.env.__NEXT_PRIVATE_ORIGIN;
+}
+const isNextJs = isNextRuntime;
 const isNestJs = !isBrowser && !isNextJs;
 
 // ─────────────────────────────────────────────
