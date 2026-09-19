@@ -145,26 +145,32 @@ export async function createExpense(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  // Generate expense number
-  const count = await db.expense.count({
-    where: { organizationId: auth.organizationId },
-  });
-  const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
-
-  return await db.$transaction(async tx => {
-    const org = await tx.organization.findUnique({
+  // ⚡ Bolt Optimization: Parallelize independent read queries outside the transaction.
+  // Fetching expense count, org approval threshold, and default currency in a single concurrent
+  // Promise.all roundtrip reduces database roundtrip latency from O(3T) to O(1T) and minimizes
+  // transaction duration and row lock holding time.
+  const [count, org, orgSettings] = await Promise.all([
+    db.expense.count({
+      where: { organizationId: auth.organizationId },
+    }),
+    db.organization.findUnique({
       where: { id: auth.organizationId },
       select: { expenseApprovalThreshold: true },
-    });
-
-    const threshold = org?.expenseApprovalThreshold
-      ? Number(org.expenseApprovalThreshold)
-      : 0;
-    const status = data.amount > threshold ? "PENDING_APPROVAL" : "PENDING";
-    const orgSettings = await tx.organizationSettings.findUnique({
+    }),
+    db.organizationSettings.findUnique({
       where: { organizationId: auth.organizationId },
-    });
+      select: { defaultCurrency: true },
+    }),
+  ]);
 
+  const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
+  const threshold = org?.expenseApprovalThreshold
+    ? Number(org.expenseApprovalThreshold)
+    : 0;
+  const status = data.amount > threshold ? "PENDING_APPROVAL" : "PENDING";
+  const currencyCode = orgSettings?.defaultCurrency || "USD";
+
+  return await db.$transaction(async tx => {
     const expense = await tx.expense.create({
       data: {
         organizationId: auth.organizationId,
@@ -172,7 +178,7 @@ export async function createExpense(data: {
         expenseNumber,
         description: data.description,
         amount: data.amount,
-        currencyCode: orgSettings?.defaultCurrency || "USD",
+        currencyCode,
         categoryId: data.categoryId,
         expenseDate: data.expenseDate,
         paymentMethod: data.paymentMethod,
@@ -259,9 +265,14 @@ export async function recordUtilityBill(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  const account = await db.utilityAccount.findUnique({
-    where: { id: data.utilityAccountId },
-  });
+  // ⚡ Bolt Optimization: Parallelize independent utility account lookup and category resolution.
+  // Executing both read operations concurrently via Promise.all collapses latency from O(2T) to O(1T).
+  const [account, categoryId] = await Promise.all([
+    db.utilityAccount.findUnique({
+      where: { id: data.utilityAccountId },
+    }),
+    getUtilityCategoryId(auth.organizationId),
+  ]);
 
   if (!account) throw new Error("Utility account not found");
 
@@ -269,7 +280,7 @@ export async function recordUtilityBill(data: {
   const expense = await createExpense({
     description: data.description || `${account.name} Bill`,
     amount: data.amount,
-    categoryId: (await getUtilityCategoryId(auth.organizationId)) || "", // Need to find or create a Utilities category
+    categoryId: categoryId || "",
     expenseDate: data.billDate,
     paymentMethod: data.paymentMethod,
     utilityAccountId: data.utilityAccountId,
