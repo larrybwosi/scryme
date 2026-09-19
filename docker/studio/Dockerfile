@@ -53,7 +53,7 @@ ENV PORT=5555
 RUN groupadd --system --gid 1001 nodejs
 RUN useradd --system --uid 1001 -g nodejs studio
 
-RUN chown -R studio:nodejs /pnpm
+RUN mkdir -p /pnpm && chown -R studio:nodejs /pnpm
 
 COPY --from=installer --chown=studio:nodejs /app/node_modules ./node_modules
 COPY --from=installer --chown=studio:nodejs /app/packages/db ./packages/db

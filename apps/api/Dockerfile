@@ -80,7 +80,7 @@ RUN useradd --system --uid 1001 -g nodejs nestjs
 RUN pnpm add -g prisma@7.8.0 tsx@4.21.0
 
 # Set up pnpm and prisma engines permissions for the non-root user
-RUN chown -R nestjs:nodejs /pnpm
+RUN mkdir -p /pnpm && chown -R nestjs:nodejs /pnpm
 
 # Copy node_modules and built outputs preserving workspace paths
 COPY --from=installer --chown=nestjs:nodejs /app/node_modules ./node_modules
