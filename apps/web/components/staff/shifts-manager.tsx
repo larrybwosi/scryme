@@ -13,6 +13,8 @@ import {
   List,
   Pencil,
   Plus,
+  ArrowLeftRight,
+  CheckSquare,
   Search,
   ShieldAlert,
   Trash2,
@@ -42,9 +44,12 @@ import {
   deleteStaffBreak,
   deleteStaffShift,
   getSchedulingWorkspace,
+  processShiftTrade,
+  requestShiftTrade,
   transitionScheduledBooking,
   updateStaffShift,
 } from "../../app/actions/shifts";
+import { createStaffTask, updateStaffTask, deleteStaffTask } from "../../app/actions/tasks";
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const STATUS_LABELS: Record<string, string> = {
@@ -93,12 +98,43 @@ type Override = {
   reason: string | null;
   member: Member;
 };
+type ShiftTrade = {
+  id: string;
+  requesterMemberId: string;
+  targetMemberId: string | null;
+  shiftId: string;
+  offeredShiftId: string | null;
+  type: string;
+  status: string;
+  reason: string | null;
+  requesterMember: Member;
+  targetMember: Member | null;
+  shift: { id: string; dayOfWeek: number; startTime: string; endTime: string };
+  offeredShift?: { id: string; dayOfWeek: number; startTime: string; endTime: string } | null;
+};
+type StaffTaskItem = {
+  id: string;
+  title: string;
+  description: string | null;
+  priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+  status: "TODO" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  dueDate: string | Date | null;
+  memberId: string | null;
+  shiftId: string | null;
+  locationId: string | null;
+  notes: string | null;
+  member: Member | null;
+  location: { id: string; name: string } | null;
+};
 type Workspace = {
   bookings: Booking[];
   overrides: Override[];
   services: { id: string; name: string; estimatedDuration: number | null; price: string }[];
   locations: { id: string; name: string }[];
   timezone: string;
+  tradeRequests?: ShiftTrade[];
+  tasks?: StaffTaskItem[];
+  departments?: { id: string; name: string }[];
 };
 
 interface ShiftsManagerProps {
@@ -148,6 +184,22 @@ export function ShiftsManager({
   const [isPending, startTransition] = useTransition();
   const [shiftForm, setShiftForm] = useState({ memberId: allMembers[0]?.id || "", dayOfWeek: "1", startTime: "09:00", endTime: "17:00", isActive: true });
   const [breakForm, setBreakForm] = useState({ startTime: "12:00", endTime: "13:00", description: "Break" });
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false);
+  const [tradeDialogOpen, setTradeDialogOpen] = useState(false);
+  const [taskForm, setTaskForm] = useState({
+    title: "",
+    description: "",
+    priority: "MEDIUM" as "LOW" | "MEDIUM" | "HIGH" | "URGENT",
+    memberId: allMembers[0]?.id || "",
+    locationId: "none",
+    dueDate: "",
+  });
+  const [tradeForm, setTradeForm] = useState({
+    shiftId: "",
+    offeredShiftId: "none",
+    targetMemberId: "none",
+    reason: "",
+  });
   const [leaveForm, setLeaveForm] = useState({ memberId: allMembers[0]?.id || "", type: "LEAVE", startTime: "", endTime: "", reason: "" });
   const [bookingForm, setBookingForm] = useState({
     memberId: allMembers[0]?.id || "",
@@ -185,6 +237,8 @@ export function ShiftsManager({
   const todayBookings = workspace.bookings.filter(booking => isSameDay(new Date(booking.scheduledStartTime), new Date())).length;
   const pendingAssignments = workspace.bookings.reduce((count, booking) => count + booking.staff.filter(item => item.status === "PENDING").length, 0);
   const onLeave = workspace.overrides.filter(item => ["LEAVE", "BLACKOUT", "UNAVAILABLE"].includes(item.type)).length;
+  const pendingTrades = useMemo(() => (workspace.tradeRequests || []).filter(item => item.status === "PENDING"), [workspace.tradeRequests]);
+  const activeTasks = useMemo(() => (workspace.tasks || []).filter(item => item.status !== "COMPLETED" && item.status !== "CANCELLED"), [workspace.tasks]);
 
   const loadWeek = (start: Date) => {
     const end = new Date(start);
@@ -375,6 +429,84 @@ export function ShiftsManager({
     });
   };
 
+  const submitTask = (event: React.FormEvent) => {
+    event.preventDefault();
+    startTransition(async () => {
+      const result: any = await createStaffTask({
+        title: taskForm.title,
+        description: taskForm.description || undefined,
+        priority: taskForm.priority,
+        memberId: taskForm.memberId || undefined,
+        locationId: taskForm.locationId !== "none" ? taskForm.locationId : undefined,
+        dueDate: taskForm.dueDate ? new Date(taskForm.dueDate).toISOString() : undefined,
+      });
+      if (!result.success || !result.data) {
+        toast.error(result.error || "Could not create task");
+        return;
+      }
+      setWorkspace(current => ({
+        ...current,
+        tasks: [result.data, ...(current.tasks || [])],
+      }));
+      setTaskDialogOpen(false);
+      setTaskForm({ title: "", description: "", priority: "MEDIUM", memberId: allMembers[0]?.id || "", locationId: "none", dueDate: "" });
+      toast.success("Task created");
+    });
+  };
+
+  const handleTaskStatusToggle = (task: StaffTaskItem) => {
+    startTransition(async () => {
+      const nextStatus = task.status === "COMPLETED" ? "TODO" : "COMPLETED";
+      const result = await updateStaffTask(task.id, { status: nextStatus });
+      if (!result.success) {
+        toast.error(result.error || "Could not update task");
+        return;
+      }
+      setWorkspace(current => ({
+        ...current,
+        tasks: (current.tasks || []).map(t => t.id === task.id ? { ...t, status: nextStatus } : t),
+      }));
+      toast.success(nextStatus === "COMPLETED" ? "Task completed" : "Task reopened");
+    });
+  };
+
+  const submitTradeRequest = (event: React.FormEvent) => {
+    event.preventDefault();
+    startTransition(async () => {
+      const result: any = await requestShiftTrade({
+        shiftId: tradeForm.shiftId,
+        offeredShiftId: tradeForm.offeredShiftId !== "none" ? tradeForm.offeredShiftId : undefined,
+        targetMemberId: tradeForm.targetMemberId !== "none" ? tradeForm.targetMemberId : undefined,
+        reason: tradeForm.reason || undefined,
+      });
+      if (!result.success || !result.data) {
+        toast.error(result.error || "Could not submit trade request");
+        return;
+      }
+      setWorkspace(current => ({
+        ...current,
+        tradeRequests: [result.data, ...(current.tradeRequests || [])],
+      }));
+      setTradeDialogOpen(false);
+      toast.success("Shift trade request submitted");
+    });
+  };
+
+  const handleProcessTrade = (tradeId: string, action: "APPROVE" | "REJECT" | "CANCEL") => {
+    startTransition(async () => {
+      const result = await processShiftTrade(tradeId, action);
+      if (!result.success) {
+        toast.error(result.error || "Could not process trade request");
+        return;
+      }
+      setWorkspace(current => ({
+        ...current,
+        tradeRequests: (current.tradeRequests || []).map(tr => tr.id === tradeId ? { ...tr, status: action === "APPROVE" ? "APPROVED" : action === "REJECT" ? "REJECTED" : "CANCELLED" } : tr),
+      }));
+      toast.success(`Trade request ${action.toLowerCase()}d`);
+    });
+  };
+
   const submitBooking = (event: React.FormEvent) => {
     event.preventDefault();
     startTransition(async () => {
@@ -438,7 +570,17 @@ export function ShiftsManager({
             <TabsList>
               <TabsTrigger value="calendar"><CalendarDays data-icon="inline-start" />Calendar</TabsTrigger>
               <TabsTrigger value="roster"><Users data-icon="inline-start" />Roster</TabsTrigger>
+              <TabsTrigger value="tasks"><CheckSquare data-icon="inline-start" />Tasks ({activeTasks.length})</TabsTrigger>
+              <TabsTrigger value="trades"><ArrowLeftRight data-icon="inline-start" />Shift Trades ({pendingTrades.length})</TabsTrigger>
             </TabsList>
+            <div className="flex flex-wrap items-center gap-2">
+              <Button onClick={() => setTaskDialogOpen(true)} variant="outline">
+                <Plus data-icon="inline-start" />Add Task
+              </Button>
+              <Button onClick={() => setTradeDialogOpen(true)} variant="outline">
+                <ArrowLeftRight data-icon="inline-start" />Trade Shift
+              </Button>
+            </div>
             <div className="flex flex-wrap items-center gap-2">
               <Button variant="outline" size="icon" onClick={() => moveWeek(-1)} disabled={isPending} aria-label="Previous week"><ChevronLeft /></Button>
               <Button variant="outline" onClick={() => {
@@ -540,6 +682,135 @@ export function ShiftsManager({
               {!filteredBookings.length && <TableRow><TableCell colSpan={5} className="py-12 text-center text-muted-foreground">No bookings match this view.</TableCell></TableRow>}
             </TableBody></Table></Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="tasks">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div>
+                <CardTitle>Staff Tasks & Operational Checklists</CardTitle>
+                <CardDescription>Assign and track daily operational duties across shift members.</CardDescription>
+              </div>
+              <Button onClick={() => setTaskDialogOpen(true)}>
+                <Plus data-icon="inline-start" />Create Task
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Task Title</TableHead>
+                    <TableHead>Assignee</TableHead>
+                    <TableHead>Priority</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(workspace.tasks || []).map(task => (
+                    <TableRow key={task.id}>
+                      <TableCell>
+                        <div>
+                          <span className={`font-medium ${task.status === "COMPLETED" ? "line-through text-muted-foreground" : ""}`}>{task.title}</span>
+                          {task.description && <p className="text-xs text-muted-foreground">{task.description}</p>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {task.member ? (task.member.user.name || task.member.user.email) : "Unassigned"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={task.priority === "URGENT" || task.priority === "HIGH" ? "destructive" : "outline"}>
+                          {task.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{task.location?.name || "All Locations"}</TableCell>
+                      <TableCell>
+                        <Badge variant={task.status === "COMPLETED" ? "secondary" : "default"}>
+                          {task.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleTaskStatusToggle(task)}
+                          disabled={isPending}
+                        >
+                          {task.status === "COMPLETED" ? "Reopen" : "Mark Done"}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!(workspace.tasks || []).length && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                        No operational tasks created yet.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="trades">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+              <div>
+                <CardTitle>Shift Swaps & Trade Requests</CardTitle>
+                <CardDescription>Manage open shift biddings and peer-to-peer shift trade approvals.</CardDescription>
+              </div>
+              <Button onClick={() => setTradeDialogOpen(true)}>
+                <ArrowLeftRight data-icon="inline-start" />Request Trade
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Requester</TableHead>
+                    <TableHead>Shift</TableHead>
+                    <TableHead>Target Member</TableHead>
+                    <TableHead>Reason</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(workspace.tradeRequests || []).map(trade => (
+                    <TableRow key={trade.id}>
+                      <TableCell className="font-medium">{trade.requesterMember.user.name || trade.requesterMember.user.email}</TableCell>
+                      <TableCell className="font-mono text-xs">{DAYS[trade.shift.dayOfWeek]} {trade.shift.startTime}–{trade.shift.endTime}</TableCell>
+                      <TableCell>{trade.targetMember ? (trade.targetMember.user.name || trade.targetMember.user.email) : "Open Shift (Any)"}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{trade.reason || "No reason specified"}</TableCell>
+                      <TableCell>
+                        <Badge variant={trade.status === "APPROVED" ? "secondary" : trade.status === "PENDING" ? "outline" : "destructive"}>
+                          {trade.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {trade.status === "PENDING" && canManage && (
+                          <div className="flex items-center justify-end gap-1">
+                            <Button size="sm" onClick={() => handleProcessTrade(trade.id, "APPROVE")} disabled={isPending}>Approve</Button>
+                            <Button size="sm" variant="outline" onClick={() => handleProcessTrade(trade.id, "REJECT")} disabled={isPending}>Reject</Button>
+                          </div>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {!(workspace.tradeRequests || []).length && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-12 text-center text-muted-foreground">
+                        No shift trade requests submitted.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="roster">
@@ -829,6 +1100,102 @@ export function ShiftsManager({
               <Button type="submit" disabled={isPending} className="w-full">Add Break</Button>
             </form>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
+        <DialogContent>
+          <form onSubmit={submitTask}>
+            <DialogHeader>
+              <DialogTitle>Create Staff Task</DialogTitle>
+              <DialogDescription>Assign operational tasks and checklists to staff or shifts.</DialogDescription>
+            </DialogHeader>
+            <FieldGroup className="py-5">
+              <Field>
+                <FieldLabel>Title</FieldLabel>
+                <Input value={taskForm.title} onChange={e => setTaskForm(c => ({ ...c, title: e.target.value }))} placeholder="Task title" required />
+              </Field>
+              <Field>
+                <FieldLabel>Description</FieldLabel>
+                <Input value={taskForm.description} onChange={e => setTaskForm(c => ({ ...c, description: e.target.value }))} placeholder="Task details" />
+              </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field>
+                  <FieldLabel>Priority</FieldLabel>
+                  <Select value={taskForm.priority} onValueChange={p => setTaskForm(c => ({ ...c, priority: p as any }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LOW">Low</SelectItem>
+                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="HIGH">High</SelectItem>
+                      <SelectItem value="URGENT">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </Field>
+                <Field>
+                  <FieldLabel>Assignee</FieldLabel>
+                  <Select value={taskForm.memberId} onValueChange={m => setTaskForm(c => ({ ...c, memberId: m }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {allMembers.map(m => (
+                        <SelectItem key={m.id} value={m.id}>{m.user.name || m.user.email}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </Field>
+              </div>
+            </FieldGroup>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setTaskDialogOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={isPending || !taskForm.title.trim()}>Create Task</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={tradeDialogOpen} onOpenChange={setTradeDialogOpen}>
+        <DialogContent>
+          <form onSubmit={submitTradeRequest}>
+            <DialogHeader>
+              <DialogTitle>Request Shift Trade / Swap</DialogTitle>
+              <DialogDescription>Trade or swap your scheduled shift with another team member.</DialogDescription>
+            </DialogHeader>
+            <FieldGroup className="py-5">
+              <Field>
+                <FieldLabel>Your Shift to Trade</FieldLabel>
+                <Select value={tradeForm.shiftId} onValueChange={s => setTradeForm(c => ({ ...c, shiftId: s }))}>
+                  <SelectTrigger><SelectValue placeholder="Select shift" /></SelectTrigger>
+                  <SelectContent>
+                    {shifts.map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {DAYS[s.dayOfWeek]} {s.startTime}–{s.endTime} ({s.member.user.name || s.member.user.email})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel>Target Member (Optional)</FieldLabel>
+                <Select value={tradeForm.targetMemberId} onValueChange={m => setTradeForm(c => ({ ...c, targetMemberId: m }))}>
+                  <SelectTrigger><SelectValue placeholder="Any team member" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Open to Anyone</SelectItem>
+                    {allMembers.map(m => (
+                      <SelectItem key={m.id} value={m.id}>{m.user.name || m.user.email}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field>
+                <FieldLabel>Reason</FieldLabel>
+                <Input value={tradeForm.reason} onChange={e => setTradeForm(c => ({ ...c, reason: e.target.value }))} placeholder="Reason for trade request" />
+              </Field>
+            </FieldGroup>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setTradeDialogOpen(false)}>Cancel</Button>
+              <Button type="submit" disabled={isPending || !tradeForm.shiftId}>Submit Request</Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

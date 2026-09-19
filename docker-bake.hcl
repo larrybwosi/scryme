@@ -1,5 +1,5 @@
 group "default" {
-  targets = ["api", "crm", "web", "site", "docs", "admin"]
+  targets = ["api", "crm", "web", "site", "docs", "admin", "prisma-studio"]
 }
 
 variable "REPO_LOWER" {
@@ -69,14 +69,14 @@ target "admin" {
   }
 }
 
-# target "prisma-studio" {
-#   context = "."
-#   dockerfile = "docker/studio/Dockerfile"
-#   tags = [
-#     "ghcr.io/${REPO_LOWER}/prisma-studio:latest",
-#     "ghcr.io/${REPO_LOWER}/prisma-studio:${VERSION}"
-#   ]
-# }
+target "prisma-studio" {
+  context = "."
+  dockerfile = "docker/studio/Dockerfile"
+  tags = [
+    "ghcr.io/${REPO_LOWER}/prisma-studio:latest",
+    "ghcr.io/${REPO_LOWER}/prisma-studio:${VERSION}"
+  ]
+}
 
 target "docs" {
   context = "."

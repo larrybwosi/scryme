@@ -22,7 +22,11 @@ docker compose up -d api
 
 # Run database migrations explicitly
 echo "Deploying database migrations..."
-docker compose exec -T api prisma migrate deploy
+docker compose exec -T api prisma migrate deploy || (
+  echo "Attempting to resolve failed migrations..."
+  docker compose exec -T api prisma migrate resolve --rolled-back "20260919000000_enterprise_scheduling_and_tasks" || true
+  docker compose exec -T api prisma migrate deploy
+)
 
 # Run database seeding
 echo "Seeding database..."

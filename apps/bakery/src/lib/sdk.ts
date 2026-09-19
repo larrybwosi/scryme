@@ -125,7 +125,7 @@ export const client = {
         path,
       });
     } else {
-      const res = await originalAxios.get<T>(formattedUrl, config);
+      const res = await originalAxios.get<T>(url, config);
       resData = res.data;
     }
     return unwrapResponse(resData);

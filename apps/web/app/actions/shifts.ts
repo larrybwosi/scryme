@@ -175,6 +175,9 @@ export async function createStaffShift(data: {
   startTime: string;
   endTime: string;
   isActive?: boolean;
+  locationId?: string;
+  departmentId?: string;
+  roleTags?: string[];
 }) {
   const session = await getServerAuth();
   const permission = await checkShiftManagementPermission(session);
@@ -208,10 +211,14 @@ export async function createStaffShift(data: {
         startTime: data.startTime,
         endTime: data.endTime,
         isActive: data.isActive !== false,
+        locationId: data.locationId || null,
+        departmentId: data.departmentId || null,
+        roleTags: data.roleTags || [],
       },
     });
 
     revalidatePath("/staff");
+    revalidatePath("/staff/shifts");
     revalidatePath(`/staff/${data.memberId}`);
     return { success: true, data: shift };
   } catch (error: any) {
@@ -227,6 +234,9 @@ export async function updateStaffShift(
     startTime?: string;
     endTime?: string;
     isActive?: boolean;
+    locationId?: string | null;
+    departmentId?: string | null;
+    roleTags?: string[];
   },
 ) {
   const session = await getServerAuth();
@@ -287,10 +297,14 @@ export async function updateStaffShift(
         startTime: data.startTime,
         endTime: data.endTime,
         isActive: data.isActive,
+        ...(data.locationId !== undefined ? { locationId: data.locationId } : {}),
+        ...(data.departmentId !== undefined ? { departmentId: data.departmentId } : {}),
+        ...(data.roleTags !== undefined ? { roleTags: data.roleTags } : {}),
       },
     });
 
     revalidatePath("/staff");
+    revalidatePath("/staff/shifts");
     revalidatePath(`/staff/${shift.memberId}`);
     return { success: true, data: updated };
   } catch (error: any) {
@@ -379,7 +393,7 @@ export async function getSchedulingWorkspace(from: string, to: string) {
   }
 
   try {
-    const [bookings, overrides, services, locations, settings] = await Promise.all([
+    const [bookings, overrides, services, locations, settings, tradeRequests, tasks, departments] = await Promise.all([
       db.serviceBooking.findMany({
         where: {
           organizationId: session.organizationId,
@@ -417,6 +431,29 @@ export async function getSchedulingWorkspace(from: string, to: string) {
         where: { organizationId: session.organizationId },
         select: { defaultTimezone: true },
       }),
+      db.shiftTradeRequest.findMany({
+        where: { organizationId: session.organizationId },
+        include: {
+          requesterMember: { select: { id: true, user: { select: { name: true, email: true, image: true } } } },
+          targetMember: { select: { id: true, user: { select: { name: true, email: true, image: true } } } },
+          shift: { select: { id: true, dayOfWeek: true, startTime: true, endTime: true, memberId: true } },
+          offeredShift: { select: { id: true, dayOfWeek: true, startTime: true, endTime: true, memberId: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      db.staffTask.findMany({
+        where: { organizationId: session.organizationId },
+        include: {
+          member: { select: { id: true, user: { select: { name: true, email: true, image: true } } } },
+          location: { select: { id: true, name: true } },
+        },
+        orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+      }),
+      db.department.findMany({
+        where: { organizationId: session.organizationId },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
     return {
       success: true,
@@ -426,6 +463,9 @@ export async function getSchedulingWorkspace(from: string, to: string) {
         services: services.map(item => ({ ...item, price: item.price.toString() })),
         locations,
         timezone: settings?.defaultTimezone || "UTC",
+        tradeRequests,
+        tasks,
+        departments,
       },
     };
   } catch (error: any) {
@@ -634,6 +674,166 @@ export async function createScheduleOverride(data: {
   });
   revalidatePath("/staff/shifts");
   return { success: true, data: override };
+}
+
+export async function requestShiftTrade(data: {
+  shiftId: string;
+  offeredShiftId?: string;
+  targetMemberId?: string;
+  type?: "SWAP" | "OFFER" | "BID";
+  reason?: string;
+}) {
+  const session = await getServerAuth();
+  if (!session || !session.organizationId || !session.memberId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const shift = await db.staffShift.findFirst({
+      where: { id: data.shiftId, organizationId: session.organizationId },
+    });
+    if (!shift) {
+      return { success: false, error: "Shift not found" };
+    }
+
+    if (shift.memberId !== session.memberId) {
+      return { success: false, error: "You can only trade or swap your own shifts" };
+    }
+
+    if (data.offeredShiftId) {
+      const offered = await db.staffShift.findFirst({
+        where: { id: data.offeredShiftId, organizationId: session.organizationId },
+      });
+      if (!offered) {
+        return { success: false, error: "Offered shift not found" };
+      }
+    }
+
+    const trade = await db.shiftTradeRequest.create({
+      data: {
+        organizationId: session.organizationId,
+        requesterMemberId: session.memberId,
+        targetMemberId: data.targetMemberId || null,
+        shiftId: data.shiftId,
+        offeredShiftId: data.offeredShiftId || null,
+        type: data.type || "SWAP",
+        reason: data.reason || null,
+        status: "PENDING",
+      },
+      include: {
+        requesterMember: { select: { id: true, user: { select: { name: true, email: true, image: true } } } },
+        targetMember: { select: { id: true, user: { select: { name: true, email: true, image: true } } } },
+        shift: { select: { id: true, dayOfWeek: true, startTime: true, endTime: true } },
+      },
+    });
+
+    revalidatePath("/staff/shifts");
+    return { success: true, data: trade };
+  } catch (error: any) {
+    console.error("Error requesting shift trade:", error);
+    return { success: false, error: error.message || "Failed to request shift trade" };
+  }
+}
+
+export async function processShiftTrade(
+  tradeId: string,
+  action: "APPROVE" | "REJECT" | "CANCEL",
+) {
+  const session = await getServerAuth();
+  if (!session || !session.organizationId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const permission = await checkShiftManagementPermission(session);
+  const isManagerOrAdmin = permission.success;
+
+  try {
+    const trade = await db.shiftTradeRequest.findFirst({
+      where: { id: tradeId, organizationId: session.organizationId },
+      include: {
+        shift: true,
+        offeredShift: true,
+      },
+    });
+
+    if (!trade) {
+      return { success: false, error: "Shift trade request not found" };
+    }
+
+    if (action === "CANCEL") {
+      if (trade.requesterMemberId !== session.memberId && !isManagerOrAdmin) {
+        return { success: false, error: "Forbidden: Only requester or admin can cancel" };
+      }
+
+      await db.shiftTradeRequest.update({
+        where: { id: tradeId },
+        data: { status: "CANCELLED" },
+      });
+
+      revalidatePath("/staff/shifts");
+      return { success: true };
+    }
+
+    if (!isManagerOrAdmin) {
+      return { success: false, error: "Forbidden: Manager or Admin permission required" };
+    }
+
+    if (action === "REJECT") {
+      await db.shiftTradeRequest.update({
+        where: { id: tradeId },
+        data: { status: "REJECTED", approvedById: session.memberId || null },
+      });
+
+      revalidatePath("/staff/shifts");
+      return { success: true };
+    }
+
+    if (action === "APPROVE") {
+      if (trade.type === "SWAP" && trade.offeredShift && trade.targetMemberId) {
+        // Swap shift assignments between requester and target member
+        await db.$transaction([
+          db.staffShift.update({
+            where: { id: trade.shiftId },
+            data: { memberId: trade.targetMemberId },
+          }),
+          db.staffShift.update({
+            where: { id: trade.offeredShiftId! },
+            data: { memberId: trade.requesterMemberId },
+          }),
+          db.shiftTradeRequest.update({
+            where: { id: tradeId },
+            data: { status: "APPROVED", approvedById: session.memberId || null },
+          }),
+        ]);
+      } else if (trade.targetMemberId) {
+        // Assign requester's shift directly to target member
+        await db.$transaction([
+          db.staffShift.update({
+            where: { id: trade.shiftId },
+            data: { memberId: trade.targetMemberId },
+          }),
+          db.shiftTradeRequest.update({
+            where: { id: tradeId },
+            data: { status: "APPROVED", approvedById: session.memberId || null },
+          }),
+        ]);
+      } else {
+        await db.shiftTradeRequest.update({
+          where: { id: tradeId },
+          data: { status: "APPROVED", approvedById: session.memberId || null },
+        });
+      }
+
+      revalidatePath("/staff/shifts");
+      revalidatePath("/staff");
+      return { success: true };
+    }
+
+    return { success: false, error: "Invalid action" };
+  } catch (error: any) {
+    console.error("Error processing shift trade:", error);
+    return { success: false, error: error.message || "Failed to process shift trade" };
+  }
 }
 
 export async function deleteStaffBreak(breakId: string) {

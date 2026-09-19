@@ -440,6 +440,7 @@ model InventoryLocation {
   // Stock Reconciliation Relations
   stockReconciliations      StockReconciliation[]
   serviceBookings           ServiceBooking[]
+  staffTasks                StaffTask[]
 
   // API Key Relations
   apiKeys                   ApiKey[]
