@@ -64,8 +64,8 @@ USER studio
 
 EXPOSE 5555
 
-HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-5555} || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+  CMD wget --no-verbose --tries=1 -O - http://localhost:${PORT:-5555}/ > /dev/null || exit 1
 
 WORKDIR /app/packages/db
 

@@ -287,6 +287,16 @@ services:
         condition: service_healthy
     networks:
       - scryme-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 -O - http://localhost:${STUDIO_PORT:-5555}/ > /dev/null || exit 1",
+        ]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
   postgres_data:
