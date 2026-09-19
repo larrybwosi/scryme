@@ -132,9 +132,10 @@ export function DeviceList({ devices }: { devices: any[] }) {
           finalPermissions = permissions;
         }
 
-        if (selectedDevice?.apiKeyId) {
+        const keyId = selectedDevice?.apiKeyId || selectedDevice?.v3ApiClientId || selectedDevice?.v3ApiClient?.id;
+        if (keyId) {
           await updateDevicePermissions(
-            selectedDevice.apiKeyId,
+            keyId,
             finalPermissions,
           );
           toast.success("Permissions updated successfully");

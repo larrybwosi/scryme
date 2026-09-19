@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { useRealtimeStore } from '@/store/realtimeStore';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { usePosStore } from '@/store/store';
+import { useSyncEngineStore } from '@/store/syncEngineStore';
 import { invoke } from '@tauri-apps/api/core';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -20,6 +21,10 @@ export default function RealtimeInitializer() {
   const organizationId = currentMember?.organizationId || orgSlug;
   const currentLocationId = useAuthStore((state) => state.currentLocation?.id);
   const queryClient = useQueryClient();
+
+  const syncProducts = useSyncEngineStore((state) => state.syncProducts);
+  const syncCustomers = useSyncEngineStore((state) => state.syncCustomers);
+  const syncPricing = useSyncEngineStore((state) => state.syncPricing);
 
   // ── Initialize Realtime once auth is ready ──────────────────────────────────
   useEffect(() => {
@@ -75,11 +80,25 @@ export default function RealtimeInitializer() {
     if (!isConfigured || !currentMember || !organizationId) return;
 
     const channel = `organization:${organizationId}:inventory`;
+
     const unsubStockUpdate = subscribe(channel, 'stock-update', (data: any) => {
         console.log('[Realtime] Stock update received:', data);
         if (data.productId && typeof data.newStock === 'number') {
             updateProductStock(data.productId, data.newStock);
         }
+        syncProducts().catch(console.error);
+    });
+
+    const unsubProductCreated = subscribe(channel, 'product-created', async () => {
+        console.log('[Realtime] Product created received');
+        await syncProducts().catch(console.error);
+        queryClient.invalidateQueries({ queryKey: ['pos-products'] });
+    });
+
+    const unsubProductUpdated = subscribe(channel, 'product-updated', async () => {
+        console.log('[Realtime] Product updated received');
+        await syncProducts().catch(console.error);
+        queryClient.invalidateQueries({ queryKey: ['pos-products'] });
     });
 
     const unsubProductDeleted = subscribe(channel, 'product-deleted', async (data: any) => {
@@ -90,18 +109,21 @@ export default function RealtimeInitializer() {
                     productId: data.productId,
                     locationId: currentLocationId || 'standalone'
                 });
-                queryClient.invalidateQueries({ queryKey: ['pos-products'] });
             } catch (err) {
                 console.error('Failed to delete local product:', err);
             }
         }
+        await syncProducts().catch(console.error);
+        queryClient.invalidateQueries({ queryKey: ['pos-products'] });
     });
 
     return () => {
         unsubStockUpdate();
+        unsubProductCreated();
+        unsubProductUpdated();
         unsubProductDeleted();
     };
-  }, [organizationId, subscribe, updateProductStock, currentLocationId, queryClient]);
+  }, [organizationId, subscribe, updateProductStock, currentLocationId, queryClient, syncProducts]);
 
   // ── Customer & Pricing sync ─────────────────────────────────────────────────
   useEffect(() => {
@@ -110,16 +132,41 @@ export default function RealtimeInitializer() {
       const pricingChannel = `organization:${organizationId}:pricing`;
       const customersChannel = `organization:${organizationId}:customers`;
 
+      const unsubPriceListCreated = subscribe(pricingChannel, 'price-list-created', async () => {
+          console.log('[Realtime] Price list created received');
+          await syncPricing().catch(console.error);
+          queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+      });
+
+      const unsubPriceListUpdated = subscribe(pricingChannel, 'price-list-updated', async () => {
+          console.log('[Realtime] Price list updated received');
+          await syncPricing().catch(console.error);
+          queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+      });
+
       const unsubPriceListDeleted = subscribe(pricingChannel, 'price-list-deleted', async (data: any) => {
           console.log('[Realtime] Price list deletion received:', data);
           if (data.priceListId) {
               try {
                   await invoke('delete_local_price_list_command', { id: data.priceListId });
-                  queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
               } catch (err) {
                   console.error('Failed to delete local price list:', err);
               }
           }
+          await syncPricing().catch(console.error);
+          queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+      });
+
+      const unsubCustomerCreated = subscribe(customersChannel, 'customer-created', async () => {
+          console.log('[Realtime] Customer created received');
+          await syncCustomers().catch(console.error);
+          queryClient.invalidateQueries({ queryKey: ['pos-customers'] });
+      });
+
+      const unsubCustomerUpdated = subscribe(customersChannel, 'customer-updated', async () => {
+          console.log('[Realtime] Customer updated received');
+          await syncCustomers().catch(console.error);
+          queryClient.invalidateQueries({ queryKey: ['pos-customers'] });
       });
 
       const unsubCustomerDeleted = subscribe(customersChannel, 'customer-deleted', async (data: any) => {
@@ -127,16 +174,47 @@ export default function RealtimeInitializer() {
           if (data.customerId) {
               try {
                   await invoke('delete_local_customer_command', { id: data.customerId });
-                  queryClient.invalidateQueries({ queryKey: ['pos-customers'] });
               } catch (err) {
                   console.error('Failed to delete local customer:', err);
               }
           }
+          await syncCustomers().catch(console.error);
+          queryClient.invalidateQueries({ queryKey: ['pos-customers'] });
       });
 
       return () => {
+          unsubPriceListCreated();
+          unsubPriceListUpdated();
           unsubPriceListDeleted();
+          unsubCustomerCreated();
+          unsubCustomerUpdated();
           unsubCustomerDeleted();
+      };
+  }, [organizationId, subscribe, queryClient, syncPricing, syncCustomers]);
+
+  // ── Orders & Sales sync ───────────────────────────────────────────────────
+  useEffect(() => {
+      if (!isConfigured || !currentMember || !organizationId) return;
+
+      const ordersChannel = `organization:${organizationId}:orders`;
+
+      const unsubOrderCreated = subscribe(ordersChannel, 'order-created', () => {
+          console.log('[Realtime] Order created received');
+          queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+          queryClient.invalidateQueries({ queryKey: ['sales-history'] });
+          queryClient.invalidateQueries({ queryKey: ['pos-orders'] });
+      });
+
+      const unsubSaleCreated = subscribe(ordersChannel, 'sale-created', () => {
+          console.log('[Realtime] Sale created received');
+          queryClient.invalidateQueries({ queryKey: ['pos-sales'] });
+          queryClient.invalidateQueries({ queryKey: ['sales-history'] });
+          queryClient.invalidateQueries({ queryKey: ['pos-orders'] });
+      });
+
+      return () => {
+          unsubOrderCreated();
+          unsubSaleCreated();
       };
   }, [organizationId, subscribe, queryClient]);
 

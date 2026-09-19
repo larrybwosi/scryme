@@ -27,6 +27,8 @@ interface SubscribedChannelInfo {
   refCount: number;
 }
 
+type EventCallback = (data: any) => void;
+
 interface RealtimeState {
   provider: 'socketio';
   socketClient: Socket | null;
@@ -36,9 +38,10 @@ interface RealtimeState {
   authRetryCount: number;
   error: string | null;
   activeChannels: Map<string, SubscribedChannelInfo>;
+  listeners: Map<string, Set<EventCallback>>;
   initialize: () => void;
   publish: (channel: string, event: string, data: any) => Promise<void>;
-  subscribe: (channel: string, event: string, callback: (data: any) => void, options?: { rewind?: number }) => () => void;
+  subscribe: (channel: string, event: string, callback: EventCallback, options?: { rewind?: number }) => () => void;
 }
 
 export const useRealtimeStore = create<RealtimeState>((set, get) => ({
@@ -50,6 +53,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
   authRetryCount: 0,
   error: null,
   activeChannels: new Map<string, SubscribedChannelInfo>(),
+  listeners: new Map<string, Set<EventCallback>>(),
 
   initialize: () => {
     const { socketClient, connectionState } = get();
@@ -60,7 +64,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
 
     if (socketClient) socketClient.disconnect();
 
-    set({ status: 'loading', error: null, socketClient: null, authRetryCount: 0 });
+    set({ status: 'loading', error: null, socketClient: null, authRetryCount: 0, connectionState: 'connecting' });
 
     const configuredApiUrl = useAuthStore.getState().apiUrl || getApiEndpoint();
     const productionFallback = 'https://api.scryme.tech';
@@ -70,8 +74,13 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
       const { io } = await import('socket.io-client');
       const cleanUrl = socketUrl.replace(/\/+$/, '');
       const socket = io(`${cleanUrl}/v3`, {
-        transports: ['websocket'],
+        transports: ['websocket', 'polling'],
         autoConnect: false,
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        timeout: 20000,
       });
 
       socket.on('connect', () => {
@@ -94,6 +103,20 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
         activeChannels.forEach((info) => {
           socket.emit('join', { channel: info.channel, options: info.options });
         });
+      });
+
+      socket.onAny((event: string, data: any) => {
+        const { listeners } = get();
+        const eventListeners = listeners.get(event);
+        if (eventListeners) {
+          eventListeners.forEach((cb) => {
+            try {
+              cb(data);
+            } catch (err) {
+              console.error(`[Realtime] Listener error for event ${event}:`, err);
+            }
+          });
+        }
       });
 
       socket.on('disconnect', (reason) => {
@@ -125,11 +148,19 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
                   tokenToUse = respAny?.data?.tokenRequest?.token || respAny?.token || respAny?.accessToken || null;
                 }
               }
-              if (tokenToUse) {
-                socket.auth = { token: tokenToUse };
+
+              const finalToken = tokenToUse || 'socket-io-realtime';
+
+              socket.auth = { token: finalToken };
+              if (socket.io?.opts) {
+                socket.io.opts.extraHeaders = {
+                  ...socket.io.opts.extraHeaders,
+                  Authorization: `Bearer ${finalToken}`,
+                };
               }
               socket.connect();
           } catch (error) {
+              socket.auth = { token: 'socket-io-realtime' };
               socket.connect();
           }
       };
@@ -149,7 +180,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
   },
 
   subscribe: (channelName, event, callback, options) => {
-    const { socketClient, activeChannels } = get();
+    const { socketClient, activeChannels, listeners } = get();
 
     // Track active channel subscription
     const existing = activeChannels.get(channelName);
@@ -159,29 +190,32 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
       activeChannels.set(channelName, { channel: channelName, options, refCount: 1 });
     }
 
-    if (socketClient) {
-      socketClient.emit('join', { channel: channelName, options });
-      const internalCallback = (data: any) => {
-          callback(data);
-      };
-      socketClient.on(event, internalCallback);
-      return () => {
-          socketClient.off(event, internalCallback);
-          const current = activeChannels.get(channelName);
-          if (current) {
-            current.refCount -= 1;
-            if (current.refCount <= 0) {
-              activeChannels.delete(channelName);
-            }
-          }
-      };
+    // Register callback in listeners map
+    let eventSet = listeners.get(event);
+    if (!eventSet) {
+      eventSet = new Set();
+      listeners.set(event, eventSet);
     }
+    eventSet.add(callback);
+
+    if (socketClient && socketClient.connected) {
+      socketClient.emit('join', { channel: channelName, options });
+    }
+
     return () => {
-      const current = activeChannels.get(channelName);
-      if (current) {
-        current.refCount -= 1;
-        if (current.refCount <= 0) {
-          activeChannels.delete(channelName);
+      const currentListeners = get().listeners.get(event);
+      if (currentListeners) {
+        currentListeners.delete(callback);
+        if (currentListeners.size === 0) {
+          get().listeners.delete(event);
+        }
+      }
+
+      const currentChannel = get().activeChannels.get(channelName);
+      if (currentChannel) {
+        currentChannel.refCount -= 1;
+        if (currentChannel.refCount <= 0) {
+          get().activeChannels.delete(channelName);
         }
       }
     };

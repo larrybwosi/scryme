@@ -7,7 +7,7 @@ function getSanitizedProjectId(rawProjectId?: string): string {
     rawProjectId.includes("PLACEHOLDER") ||
     !/^[a-z0-9-]+$/.test(rawProjectId)
   ) {
-    return "ce88cj7n";
+    return "l0v9sncz";
   }
   return rawProjectId;
 }

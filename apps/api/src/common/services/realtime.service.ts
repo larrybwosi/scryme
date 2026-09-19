@@ -35,13 +35,10 @@ export class ApiRealtimeService {
     // Save history for ALL channels in Socket.io
     await this.redis.saveMessage(channel, event, data);
 
-    if (
-      channel.startsWith("v3:") ||
-      channel.includes("order:") ||
-      channel.includes("inventory:")
-    ) {
+    if (this.v3Gateway?.server) {
       this.v3Gateway.server.to(channel).emit(finalEvent, finalData);
-    } else {
+    }
+    if (this.v2Gateway?.server) {
       this.v2Gateway.server.to(channel).emit(finalEvent, finalData);
     }
   }
