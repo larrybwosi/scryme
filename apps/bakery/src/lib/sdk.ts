@@ -105,8 +105,9 @@ const unwrapResponse = (data: any) => {
 export const client = {
   get: async <T = any>(url: string, config?: any): Promise<any> => {
     let resData: any;
+    const formattedUrl = formatApiPath(url);
     if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
-      let path = url;
+      let path = formattedUrl;
       if (config?.params) {
         const searchParams = new URLSearchParams();
         Object.entries(config.params).forEach(([key, value]) => {
@@ -124,7 +125,7 @@ export const client = {
         path,
       });
     } else {
-      const res = await originalAxios.get<T>(targetUrl, config);
+      const res = await originalAxios.get<T>(formattedUrl, config);
       resData = res.data;
     }
     return unwrapResponse(resData);
@@ -132,14 +133,15 @@ export const client = {
 
   post: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
     let resData: any;
+    const formattedUrl = formatApiPath(url);
     if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
       resData = await tauriInvoke<T>('authenticated_api_request', {
         method: 'POST',
-        path: url,
+        path: formattedUrl,
         body: data,
       });
     } else {
-      const res = await originalAxios.post<T>(url, data, config);
+      const res = await originalAxios.post<T>(formattedUrl, data, config);
       resData = res.data;
     }
     return unwrapResponse(resData);
@@ -147,14 +149,15 @@ export const client = {
 
   put: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
     let resData: any;
+    const formattedUrl = formatApiPath(url);
     if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
       resData = await tauriInvoke<T>('authenticated_api_request', {
         method: 'PUT',
-        path: url,
+        path: formattedUrl,
         body: data,
       });
     } else {
-      const res = await originalAxios.put<T>(url, data, config);
+      const res = await originalAxios.put<T>(formattedUrl, data, config);
       resData = res.data;
     }
     return unwrapResponse(resData);
@@ -162,14 +165,15 @@ export const client = {
 
   patch: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
     let resData: any;
+    const formattedUrl = formatApiPath(url);
     if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
       resData = await tauriInvoke<T>('authenticated_api_request', {
         method: 'PATCH',
-        path: url,
+        path: formattedUrl,
         body: data,
       });
     } else {
-      const res = await originalAxios.patch<T>(url, data, config);
+      const res = await originalAxios.patch<T>(formattedUrl, data, config);
       resData = res.data;
     }
     return unwrapResponse(resData);
@@ -177,13 +181,14 @@ export const client = {
 
   delete: async <T = any>(url: string, config?: any): Promise<any> => {
     let resData: any;
+    const formattedUrl = formatApiPath(url);
     if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
       resData = await tauriInvoke<T>('authenticated_api_request', {
         method: 'DELETE',
-        path: url,
+        path: formattedUrl,
       });
     } else {
-      const res = await originalAxios.delete<T>(url, config);
+      const res = await originalAxios.delete<T>(formattedUrl, config);
       resData = res.data;
     }
     return unwrapResponse(resData);
