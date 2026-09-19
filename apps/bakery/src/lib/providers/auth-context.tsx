@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import sdk, { isTauri, isOfflineMode } from '@/lib/sdk';
 import { tauriInvoke } from '@/lib/tauri-bridge';
-import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -57,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const status = await sdk.bakery.getAuthStatus();
         setHasDeviceKey(status.hasDeviceKey);
 
-        if (status.hasMemberToken) {
+        if (status.hasMemberToken || (isTauri() && localStorage.getItem('bakery_user'))) {
           // Sync token to Rust if in Tauri
           if (isTauri() && memberToken) {
             const savedUser = localStorage.getItem('bakery_user');
@@ -71,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
 
-          // In a real app, we might want to fetch the actual user profile here
           const savedUser = localStorage.getItem('bakery_user');
           if (savedUser) {
             setUser(JSON.parse(savedUser));

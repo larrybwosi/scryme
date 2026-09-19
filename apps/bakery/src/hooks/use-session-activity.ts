@@ -14,18 +14,16 @@ export const useSessionActivityListener = () => {
 
     const checkSession = async () => {
       try {
-        // We use authenticated_api_request to ping and verify token
+        const orgSlug = localStorage.getItem('bakery_org_slug') || 'default-org';
         const response = await tauriInvoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: '/bakery/attendance/status', // Using /bakery/attendance/status to verify the member attendance status
+          path: `/v3/${orgSlug}/pos/me`,
         });
 
-        // Ensure compatibility with both wrapped and unwrapped response payloads
-        const isCheckedIn = response?.data?.isCheckedIn ?? response?.isCheckedIn;
+        const isCheckedIn = response?.isCheckedIn ?? response?.data?.isCheckedIn ?? true;
 
-        // If it returns successfully and member is checked in, the session is valid
-        if (response && isCheckedIn) {
-          // Session is valid
+        if (response && (isCheckedIn || response?.memberId || response?.data?.memberId)) {
+          // Session valid
         } else {
           console.warn('Session invalid or expired according to server, clearing session');
           logout();
@@ -64,7 +62,7 @@ export const useSessionActivityListener = () => {
   // Throttled function to handle activity if needed in the future for local timeouts
   const handleActivity = useMemo(
     () => throttle(() => {
-      // In the future, update a local activity timestamp here
+      // Update local activity timestamp if needed in future
     }, 5000),
     []
   );

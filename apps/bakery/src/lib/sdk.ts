@@ -47,7 +47,7 @@ export const setApiKey = (key: string) => {
   }
 };
 
-// Request interceptor to attach authentication headers
+// Request interceptor to attach authentication headers when in browser/non-Tauri mode
 scrymeSDK.axiosInstance.interceptors.request.use((config: any) => {
   const orgSlug = (typeof window !== 'undefined' && localStorage.getItem('bakery_org_slug')) || 'default-org';
   const locationId = typeof window !== 'undefined' && localStorage.getItem('bakery_location_id');
@@ -83,10 +83,10 @@ scrymeSDK.axiosInstance.interceptors.response.use(
 const originalAxios = scrymeSDK.axiosInstance;
 
 const formatApiPath = (url: string): string => {
-  if (!url || url.startsWith("http://") || url.startsWith("https://")) return url;
-  if (url.startsWith("/api/")) return url;
-  if (url.startsWith("/v2/") || url.startsWith("/v3/")) return `/api${url}`;
-  return `/api/v2${url.startsWith("/") ? "" : "/"}${url}`;
+  if (!url || url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/api/')) return url;
+  if (url.startsWith('/v2/') || url.startsWith('/v3/')) return `/api${url}`;
+  return `/api/v2${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 const unwrapResponse = (data: any) => {

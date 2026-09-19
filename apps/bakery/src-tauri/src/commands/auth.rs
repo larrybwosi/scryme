@@ -4,7 +4,7 @@ use bcrypt::verify;
 use chrono::Utc;
 use keyring::Entry;
 use sqlx::SqlitePool;
-use tauri::{State};
+use tauri::State;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
 use reqwest::header::HeaderValue;
@@ -427,6 +427,147 @@ pub async fn provision_device_with_token(
     *config_guard = Some(new_config);
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn start_device_setup_command(
+    state: State<'_, BakeryAuthState>,
+    base_url: String,
+    device_key: String,
+    org_slug: String,
+) -> BackendResult<()> {
+    let mut config = state.device_config.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+    *config = Some(DeviceConfig {
+        base_url,
+        location_id: String::new(),
+        device_key,
+        org_slug,
+    });
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_locations_command(
+    state: State<'_, BakeryAuthState>,
+) -> BackendResult<serde_json::Value> {
+    let request = state.build_request(reqwest::Method::GET, "api/v3/:orgSlug/pos/locations")?;
+
+    let res = request
+        .send()
+        .await
+        .map_err(BackendError::Network)?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(BackendError::Internal(format!(
+            "Failed to fetch locations: {} - {}",
+            status, err_body
+        )));
+    }
+
+    let mut data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(BackendError::Network)?;
+
+    if data["success"].as_bool().unwrap_or(false) && data.get("data").is_some() {
+        data = data["data"].clone();
+    }
+
+    Ok(data)
+}
+
+#[tauri::command]
+pub async fn create_pairing_session_command(
+    state: State<'_, BakeryAuthState>,
+) -> BackendResult<serde_json::Value> {
+    let request = state.build_request(
+        reqwest::Method::POST,
+        "api/v3/pos/pairing/session",
+    )?;
+
+    let res = request
+        .send()
+        .await
+        .map_err(BackendError::Network)?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(BackendError::Internal(format!("Failed to create pairing session: {} - {}", status, err_body)));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(BackendError::Network)?;
+
+    Ok(data)
+}
+
+#[tauri::command]
+pub async fn get_pairing_session_status_command(
+    state: State<'_, BakeryAuthState>,
+    session_id: String,
+) -> BackendResult<serde_json::Value> {
+    let path = format!("api/v3/pos/pairing/session/{}/status", session_id);
+    let request = state.build_request(reqwest::Method::GET, &path)?;
+
+    let res = request
+        .send()
+        .await
+        .map_err(BackendError::Network)?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(BackendError::Internal(format!("Failed to check session status: {} - {}", status, err_body)));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(BackendError::Network)?;
+
+    Ok(data)
+}
+
+#[tauri::command]
+pub async fn authorize_pairing_session_command(
+    state: State<'_, BakeryAuthState>,
+    session_id: String,
+    location_id: Option<String>,
+    device_name: Option<String>,
+    device_type: Option<String>,
+) -> BackendResult<serde_json::Value> {
+    let path = format!("api/v3/pos/pairing/session/{}/authorize", session_id);
+    let mut request = state.build_request(reqwest::Method::POST, &path)?;
+
+    let body = serde_json::json!({
+        "locationId": location_id,
+        "deviceName": device_name,
+        "deviceType": device_type,
+    });
+    request = request.json(&body);
+
+    let res = request
+        .send()
+        .await
+        .map_err(BackendError::Network)?;
+
+    let status = res.status();
+    if !status.is_success() {
+        let err_body = res.text().await.unwrap_or_default();
+        return Err(BackendError::Internal(format!("Failed to authorize session: {} - {}", status, err_body)));
+    }
+
+    let data: serde_json::Value = res
+        .json()
+        .await
+        .map_err(BackendError::Network)?;
+
+    Ok(data)
 }
 
 #[tauri::command]
