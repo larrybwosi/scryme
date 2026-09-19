@@ -104,6 +104,6 @@ DO $$ BEGIN
         ALTER TABLE "staff_task" ADD CONSTRAINT "staff_task_shiftId_fkey" FOREIGN KEY ("shiftId") REFERENCES "staff_shift"("id") ON DELETE SET NULL ON UPDATE CASCADE;
     END IF;
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'staff_task_locationId_fkey') THEN
-        ALTER TABLE "staff_task" ADD CONSTRAINT "staff_task_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "inventory_location"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+        ALTER TABLE "staff_task" ADD CONSTRAINT "staff_task_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
     END IF;
 END $$;
