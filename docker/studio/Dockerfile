@@ -69,4 +69,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
 
 WORKDIR /app/packages/db
 
-CMD ["pnpm", "exec", "prisma", "studio", "--port", "5555", "--hostname", "0.0.0.0", "--browser", "none"]
+CMD ["pnpm", "exec", "prisma", "studio", "--port", "5555", "--browser", "none"]
