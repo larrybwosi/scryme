@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { OpenPanel } from "@openpanel/sdk";
-import { env } from "@repo/env";
+import { env, normalizeOpenPanelUrl } from "@repo/env";
 
 @Injectable()
 export class OpenPanelService implements OnModuleInit {
@@ -26,11 +26,7 @@ export class OpenPanelService implements OnModuleInit {
             ? clientSecret
             : undefined;
 
-        const validHost =
-          host &&
-          !host.includes("PLACEHOLDER")
-            ? host
-            : undefined;
+        const validHost = normalizeOpenPanelUrl(host);
 
         this.client = new OpenPanel({
           clientId,
