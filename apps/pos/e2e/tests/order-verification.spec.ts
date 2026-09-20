@@ -33,6 +33,7 @@ test.describe('Order Creation and Invoice Download Flow', () => {
         if (cmd === 'authenticated_api_request') return { isCheckedIn: true, memberId: 'test-mem' };
         if (cmd === 'get_device_config' || cmd.includes('get_device_config')) return {
             location_id: 'cljr7yv7c000108m73ge56fjr',
+            org_slug: 'test-org',
             allow_negative_stock: false,
             base_url: 'http://localhost:3000',
             device_key: 'test-key'

@@ -20,7 +20,7 @@ test.describe('Supermarket POS Flow', () => {
 
         // Handle plugin calls
         if (cmd.startsWith('plugin:')) {
-            if (cmd.includes('get_device_config')) return { location_id: 'test-loc', allow_negative_stock: false };
+            if (cmd.includes('get_device_config')) return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
             if (cmd.includes('app|version')) return '3.3.0';
             if (cmd.includes('store|load')) return 1;
             if (cmd.includes('store|get')) return null;
@@ -41,7 +41,7 @@ test.describe('Supermarket POS Flow', () => {
         };
 
         if (cmd === 'authenticated_api_request') return { isCheckedIn: true, memberId: 'test-mem' };
-        if (cmd === 'get_device_config') return { location_id: 'test-loc', allow_negative_stock: false };
+        if (cmd === 'get_device_config') return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
         if (cmd === 'get_locations_command') return { locations: [{
             id: 'test-loc',
             name: 'Test Store',
