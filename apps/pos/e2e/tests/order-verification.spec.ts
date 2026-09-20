@@ -30,6 +30,7 @@ test.describe('Order Creation and Invoice Download Flow', () => {
       const mockInvoke = async (cmd, args) => {
         console.log('Mocked invoke called:', cmd, JSON.stringify(args));
 
+        if (cmd === 'authenticated_api_request') return { isCheckedIn: true, memberId: 'test-mem' };
         if (cmd === 'get_device_config' || cmd.includes('get_device_config')) return {
             location_id: 'cljr7yv7c000108m73ge56fjr',
             allow_negative_stock: false,

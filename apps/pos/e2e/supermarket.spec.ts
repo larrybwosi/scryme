@@ -40,6 +40,7 @@ test.describe('Supermarket POS Flow', () => {
             }
         };
 
+        if (cmd === 'authenticated_api_request') return { isCheckedIn: true, memberId: 'test-mem' };
         if (cmd === 'get_device_config') return { location_id: 'test-loc', allow_negative_stock: false };
         if (cmd === 'get_locations_command') return { locations: [{
             id: 'test-loc',
