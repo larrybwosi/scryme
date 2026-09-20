@@ -17,7 +17,7 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { ProductionService } from "../../application/services/production.service";
-import { BakeryReportService } from "@/v2/bakery/reports/bakery-report.service";
+import { ProductionReportService } from "../../reports/production-report.service";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { AllowPublic } from "@/v3/common/auth";
@@ -26,7 +26,7 @@ import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { AuditInterceptor } from "../../../../common/interceptors/audit.interceptor";
-import type { V3ApiContext } from "@repo/shared/api/v2";
+import type { V3ApiContext } from "@repo/shared/api/v3";
 import {
   CreateRecipeDto,
   UpdateRecipeDto,
@@ -56,7 +56,7 @@ import {
 export class ProductionController {
   constructor(
     private readonly productionService: ProductionService,
-    private readonly bakeryReportService: BakeryReportService,
+    private readonly productionReportService: ProductionReportService,
   ) {}
 
   @Get()
@@ -411,7 +411,7 @@ export class ProductionController {
     return this.productionService.deleteCategory(ctx.organizationId, id);
   }
 
-  // Settings & Bakers
+  // Settings & Staff / Bakers / Operators
   @Get("settings")
   @Permissions("production:settings:read")
   @ApiOperation({ summary: "Get production settings" })
@@ -435,20 +435,24 @@ export class ProductionController {
   @ApiOperation({ summary: "Trigger test production report" })
   async testReport(@v3Context() ctx: V3ApiContext) {
     const { organizationId } = ctx;
-    await this.bakeryReportService.generateAndSendReport(organizationId, 7);
+    await this.productionReportService.generateAndSendReport(organizationId, 7);
     return { status: "success", message: "Test report triggered" };
   }
 
   @Get("bakers")
+  @Get("staff")
+  @Get("operators")
   @Permissions("production:settings:read")
-  @ApiOperation({ summary: "List bakers" })
+  @ApiOperation({ summary: "List production staff/bakers/operators" })
   async getBakers(@v3Context() ctx: V3ApiContext) {
     return this.productionService.getBakers(ctx.organizationId);
   }
 
   @Post("bakers")
+  @Post("staff")
+  @Post("operators")
   @Permissions("production:settings:write")
-  @ApiOperation({ summary: "Add baker" })
+  @ApiOperation({ summary: "Add production staff/baker/operator" })
   async addBaker(
     @v3Context() ctx: V3ApiContext,
     @Body() body: AddBakerDto,
@@ -457,8 +461,10 @@ export class ProductionController {
   }
 
   @Patch("bakers/:id")
+  @Patch("staff/:id")
+  @Patch("operators/:id")
   @Permissions("production:settings:write")
-  @ApiOperation({ summary: "Update baker" })
+  @ApiOperation({ summary: "Update production staff/baker/operator" })
   async updateBaker(
     @v3Context() ctx: V3ApiContext,
     @Param("id") id: string,
@@ -468,8 +474,10 @@ export class ProductionController {
   }
 
   @Delete("bakers/:id")
+  @Delete("staff/:id")
+  @Delete("operators/:id")
   @Permissions("production:settings:write")
-  @ApiOperation({ summary: "Remove baker" })
+  @ApiOperation({ summary: "Remove production staff/baker/operator" })
   async removeBaker(
     @v3Context() ctx: V3ApiContext,
     @Param("id") id: string,
@@ -514,7 +522,7 @@ export class ProductionController {
     );
   }
 
-  // Bakery Auth Compatibility
+  // Production Auth & Device Compatibility
   @AllowPublic()
   @Post("auth/setup")
   @ApiOperation({ summary: "Setup production device authentication" })

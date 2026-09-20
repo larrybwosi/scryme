@@ -14,7 +14,7 @@ import { AutomationService } from "./automation.service";
 import type { CreateWorkflowDefinitionDto, TriggerWorkflowDto, CreateWebhookDto } from "./dto/automation.dto";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 import { v3Context } from "../v3/common/decorators/v3-context.decorator";
-import type { V3ApiContext } from "@repo/shared/api/v2";
+import type { V3ApiContext } from "@repo/shared/api/v3";
 import { V3AuthGuard } from "../v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "../v3/common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "../v3/common/guards/permissions.guard";

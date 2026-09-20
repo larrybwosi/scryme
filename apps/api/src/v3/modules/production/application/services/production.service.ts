@@ -8,8 +8,8 @@ import {
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { AuthService } from "../../../auth/auth.service";
-import { type V3ApiContext } from "@repo/shared/api/v2";
-import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v2";
+import { type V3ApiContext } from "@repo/shared/api/v3";
+import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v3";
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";

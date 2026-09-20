@@ -60,6 +60,7 @@ export default defineConfig([
       realtime: "src/realtime/index.ts",
       storage: "src/storage/index.ts",
       "api/v2": "src/api/v2/index.ts",
+      "api/v3": "src/api/v3/index.ts",
       lib: "src/lib/index.ts",
       actions: "src/actions/index.ts",
       "services/customer": "src/services/customer/index.ts",

@@ -14,7 +14,7 @@ import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { RequireMember } from "@/v3/common/decorators/require-member.decorator";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
-import { type V3ApiContext } from "@repo/shared/api/v2";
+import { type V3ApiContext } from "@repo/shared/api/v3";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { PosPairingService } from "../../application/services/pos-pairing.service";
 import { PrismaService } from "@/prisma/prisma.service";

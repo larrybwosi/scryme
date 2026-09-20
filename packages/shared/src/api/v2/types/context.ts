@@ -1,3 +1,5 @@
+import type { V3ApiContext } from "../../v3/types/context";
+
 export interface V2ApiContext {
   organizationId: string;
   deviceId?: string;
@@ -19,15 +21,4 @@ export interface V2ApiContext {
   requestStartTime: number;
 }
 
-export interface V3ApiContext {
-  organizationId: string;
-  orgSlug: string;
-  clientId: string;
-  memberId?: string;
-  deviceId?: string;
-  locationId?: string;
-  scopes: string[];
-  authType: string;
-  organization: any;
-  permissions: string[];
-}
+export type { V3ApiContext };

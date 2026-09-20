@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { V3ApiContext } from "@repo/shared/api/v2";
+import { V3ApiContext } from "@repo/shared/api/v3";
 import { RegisterPettyCashDto } from "../dto/petty-cash.dto";
 import { ExpenseUseCase } from "../../../finance/application/use-cases/expense.use-case";
 import { PettyCashUseCase } from "../../../finance/application/use-cases/petty-cash.use-case";
