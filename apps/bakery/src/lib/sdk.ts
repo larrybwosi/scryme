@@ -2,8 +2,8 @@ import { ScrymeClientSDK } from '@scryme/sdk/client';
 import { invoke } from '@tauri-apps/api/core';
 import { sanitizeApiUrl } from '@/utils/url';
 import { tauriInvoke } from './tauri-bridge';
+import { API_ROUTES, getOrgSlug } from '@/config/api';
 
-// Check if running in Tauri
 export const isTauri = () => {
   return (
     typeof window !== 'undefined' &&
@@ -23,7 +23,6 @@ const initialApiUrl = sanitizeApiUrl(
 
 const initialOrgSlug = (typeof window !== 'undefined' ? localStorage.getItem('bakery_org_slug')) || 'default-org';
 
-// Initialize ScrymeClientSDK instance
 export const scrymeSDK = new ScrymeClientSDK({
   clientId: 'bakery-app',
   orgSlug: initialOrgSlug,
@@ -47,47 +46,11 @@ export const setApiKey = (key: string) => {
   }
 };
 
-// Request interceptor to attach authentication headers when in browser/non-Tauri mode
-scrymeSDK.axiosInstance.interceptors.request.use((config: any) => {
-  const orgSlug = (typeof window !== 'undefined' && localStorage.getItem('bakery_org_slug')) || 'default-org';
-  const locationId = typeof window !== 'undefined' && localStorage.getItem('bakery_location_id');
-
-  config.headers['x-org-slug'] = orgSlug;
-  if (locationId) {
-    config.headers['x-location-id'] = locationId;
-  }
-
-  if (memberTokenState) {
-    config.headers['x-member-token'] = memberTokenState;
-    if (!config.headers['Authorization']) {
-      config.headers['Authorization'] = `Bearer ${memberTokenState}`;
-    }
-  } else if (apiKeyState) {
-    config.headers['x-api-key'] = apiKeyState;
-  }
-  return config;
-});
-
-// Response interceptor for 401 unauthorized handling
-scrymeSDK.axiosInstance.interceptors.response.use(
-  (response: any) => response,
-  (error: any) => {
-    if (error?.response?.status === 401 && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('bakery-unauthorized'));
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Client wrapper handling HTTP calls, routing through Tauri IPC proxy when running in Tauri
-const originalAxios = scrymeSDK.axiosInstance;
-
 const formatApiPath = (url: string): string => {
   if (!url || url.startsWith('http://') || url.startsWith('https://')) return url;
   if (url.startsWith('/api/')) return url;
-  if (url.startsWith('/v2/') || url.startsWith('/v3/')) return `/api${url}`;
 
-  const orgSlug = (typeof window !== 'undefined' && localStorage.getItem('bakery_org_slug')) || 'default-org';
+  const orgSlug = getOrgSlug();
   return `/api/v3/${orgSlug}/production${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
@@ -106,93 +69,62 @@ const unwrapResponse = (data: any) => {
 
 export const client = {
   get: async <T = any>(url: string, config?: any): Promise<any> => {
-    let resData: any;
-    const formattedUrl = formatApiPath(url);
-    if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
-      let path = formattedUrl;
-      if (config?.params) {
-        const searchParams = new URLSearchParams();
-        Object.entries(config.params).forEach(([key, value]) => {
-          if (value !== undefined && value !== null) {
-            searchParams.append(key, String(value));
-          }
-        });
-        const qs = searchParams.toString();
-        if (qs) {
-          path += (path.includes('?') ? '&' : '?') + qs;
+    let path = formatApiPath(url);
+    if (config?.params) {
+      const searchParams = new URLSearchParams();
+      Object.entries(config.params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
         }
-      }
-      resData = await tauriInvoke<T>('authenticated_api_request', {
-        method: 'GET',
-        path,
       });
-    } else {
-      const res = await originalAxios.get<T>(formattedUrl, config);
-      resData = res.data;
+      const qs = searchParams.toString();
+      if (qs) {
+        path += (path.includes('?') ? '&' : '?') + qs;
+      }
     }
+    const resData = await tauriInvoke<T>('authenticated_api_request', {
+      method: 'GET',
+      path,
+    });
     return unwrapResponse(resData);
   },
 
   post: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
-    let resData: any;
     const formattedUrl = formatApiPath(url);
-    if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
-      resData = await tauriInvoke<T>('authenticated_api_request', {
-        method: 'POST',
-        path: formattedUrl,
-        body: data,
-      });
-    } else {
-      const res = await originalAxios.post<T>(formattedUrl, data, config);
-      resData = res.data;
-    }
+    const resData = await tauriInvoke<T>('authenticated_api_request', {
+      method: 'POST',
+      path: formattedUrl,
+      body: data,
+    });
     return unwrapResponse(resData);
   },
 
   put: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
-    let resData: any;
     const formattedUrl = formatApiPath(url);
-    if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
-      resData = await tauriInvoke<T>('authenticated_api_request', {
-        method: 'PUT',
-        path: formattedUrl,
-        body: data,
-      });
-    } else {
-      const res = await originalAxios.put<T>(formattedUrl, data, config);
-      resData = res.data;
-    }
+    const resData = await tauriInvoke<T>('authenticated_api_request', {
+      method: 'PUT',
+      path: formattedUrl,
+      body: data,
+    });
     return unwrapResponse(resData);
   },
 
   patch: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
-    let resData: any;
     const formattedUrl = formatApiPath(url);
-    if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
-      resData = await tauriInvoke<T>('authenticated_api_request', {
-        method: 'PATCH',
-        path: formattedUrl,
-        body: data,
-      });
-    } else {
-      const res = await originalAxios.patch<T>(formattedUrl, data, config);
-      resData = res.data;
-    }
+    const resData = await tauriInvoke<T>('authenticated_api_request', {
+      method: 'PATCH',
+      path: formattedUrl,
+      body: data,
+    });
     return unwrapResponse(resData);
   },
 
   delete: async <T = any>(url: string, config?: any): Promise<any> => {
-    let resData: any;
     const formattedUrl = formatApiPath(url);
-    if (isTauri() && !url.startsWith('http') && config?.useProxy !== false) {
-      resData = await tauriInvoke<T>('authenticated_api_request', {
-        method: 'DELETE',
-        path: formattedUrl,
-      });
-    } else {
-      const res = await originalAxios.delete<T>(formattedUrl, config);
-      resData = res.data;
-    }
+    const resData = await tauriInvoke<T>('authenticated_api_request', {
+      method: 'DELETE',
+      path: formattedUrl,
+    });
     return unwrapResponse(resData);
   },
 
@@ -205,7 +137,6 @@ export const client = {
   },
 };
 
-// Bakery domain module
 export const bakery = {
   getBatches: (filters?: any) => client.get('/batches', { params: filters }),
   getBatch: (id: string) => client.get(`/batches/${id}`),
@@ -228,7 +159,7 @@ export const bakery = {
   getTemplates: () => client.get('/templates'),
   createTemplate: (data: any) => client.post('/templates', data),
   updateTemplate: (id: string, data: any) => client.patch(`/templates/${id}`, data),
-  deleteTemplate: (id: string) => client.delete('/templates/${id}`),
+  deleteTemplate: (id: string) => client.delete(`/templates/${id}`),
   duplicateTemplate: (id: string) => client.post(`/templates/${id}/duplicate`),
   createBatchFromTemplate: (id: string) => client.post(`/templates/${id}/create-batch`),
 
@@ -258,7 +189,6 @@ export const bakery = {
   getMe: () => client.get('/devices/me'),
 };
 
-// Catalog submodule extensions for bakery app
 const catalog = {
   ...scrymeSDK.catalog,
   getProducts: (params?: any) => client.get('/catalog/products', { params }),
@@ -274,29 +204,23 @@ const catalog = {
   deleteCategory: (categoryId: string) => client.delete(`/catalog/categories/${categoryId}`),
 };
 
-// POS submodule extensions
 const pos = {
   ...scrymeSDK.pos,
-  listLocations: () => client.get('/inventory/locations'),
+  listLocations: () => client.get(API_ROUTES.INVENTORY.LOCATIONS()),
 };
 
-// Inventory submodule extensions
 const inventory = {
   ...scrymeSDK.inventory,
   list: () => client.get('/inventory'),
 };
 
-// Auth submodule extensions
 const auth = {
   ...scrymeSDK.auth,
   terminalLogin: (cardId: string, pin: string, locationId?: string) => {
-    const orgSlug = (typeof window !== 'undefined' && localStorage.getItem('bakery_org_slug')) || 'default-org';
-    const deviceKey = typeof window !== 'undefined' && localStorage.getItem('bakery_api_key');
-    return client.post(`/api/v3/${orgSlug}/pos/login`, { cardId, pin, locationId, deviceKey });
+    return client.post(API_ROUTES.POS.LOGIN(), { cardId, pin, locationId });
   },
 };
 
-// Main SDK export bundle
 const sdk = {
   ...scrymeSDK,
   client,
@@ -309,16 +233,7 @@ const sdk = {
   setApiKey,
 };
 
-// Persistent token loading on startup
-if (typeof window !== 'undefined' && !isTauri()) {
-  const memberToken = localStorage.getItem('bakery_member_token');
-  if (memberToken) {
-    setMemberToken(memberToken);
-  }
-}
-
-// Tauri IPC setup
-if (isTauri()) {
+if (typeof window !== 'undefined') {
   const memberToken = localStorage.getItem('bakery_member_token');
   const memberId = localStorage.getItem('bakery_member_id');
   const savedUser = localStorage.getItem('bakery_user');
