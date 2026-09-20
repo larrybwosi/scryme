@@ -20,7 +20,6 @@ import { WorkflowsModule } from "./workflows/workflows.module";
 import { ScrymeModule } from "./scryme/scryme.module";
 
 export const V2_SUB_MODULES = [
-  BakeryModule,
   CatalogModule,
   InventoryModule,
   PosModule,

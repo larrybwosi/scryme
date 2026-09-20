@@ -21,7 +21,7 @@ const initialApiUrl = sanitizeApiUrl(
     'https://api.scryme.tech'
 );
 
-const initialOrgSlug = (typeof window !== 'undefined' ? localStorage.getItem('bakery_org_slug') : null) || 'default-org';
+const initialOrgSlug = (typeof window !== 'undefined' ? localStorage.getItem('bakery_org_slug')) || 'default-org';
 
 // Initialize ScrymeClientSDK instance
 export const scrymeSDK = new ScrymeClientSDK({
@@ -86,7 +86,9 @@ const formatApiPath = (url: string): string => {
   if (!url || url.startsWith('http://') || url.startsWith('https://')) return url;
   if (url.startsWith('/api/')) return url;
   if (url.startsWith('/v2/') || url.startsWith('/v3/')) return `/api${url}`;
-  return `/api/v2${url.startsWith('/') ? '' : '/'}${url}`;
+
+  const orgSlug = (typeof window !== 'undefined' && localStorage.getItem('bakery_org_slug')) || 'default-org';
+  return `/api/v3/${orgSlug}/production${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 const unwrapResponse = (data: any) => {
@@ -125,7 +127,7 @@ export const client = {
         path,
       });
     } else {
-      const res = await originalAxios.get<T>(url, config);
+      const res = await originalAxios.get<T>(formattedUrl, config);
       resData = res.data;
     }
     return unwrapResponse(resData);
@@ -205,54 +207,54 @@ export const client = {
 
 // Bakery domain module
 export const bakery = {
-  getBatches: (filters?: any) => client.get('/bakery/batches', { params: filters }),
-  getBatch: (id: string) => client.get(`/bakery/batches/${id}`),
-  getBatchTraceability: (id: string) => client.get(`/bakery/batches/${id}/traceability`),
-  createBatch: (data: any) => client.post('/bakery/batches', data),
-  updateBatch: (id: string, data: any) => client.patch(`/bakery/batches/${id}`, data),
-  deleteBatch: (id: string) => client.delete(`/bakery/batches/${id}`),
-  startBatch: (id: string) => client.post(`/bakery/batches/${id}/start`),
-  completeBatch: (batchId: string, data: any) => client.post(`/bakery/batches/${batchId}/complete`, data),
-  cancelBatch: (id: string) => client.post(`/bakery/batches/${id}/cancel`),
-  duplicateBatch: (id: string) => client.post(`/bakery/batches/${id}/duplicate`),
+  getBatches: (filters?: any) => client.get('/batches', { params: filters }),
+  getBatch: (id: string) => client.get(`/batches/${id}`),
+  getBatchTraceability: (id: string) => client.get(`/batches/${id}/traceability`),
+  createBatch: (data: any) => client.post('/batches', data),
+  updateBatch: (id: string, data: any) => client.patch(`/batches/${id}`, data),
+  deleteBatch: (id: string) => client.delete(`/batches/${id}`),
+  startBatch: (id: string) => client.post(`/batches/${id}/start`),
+  completeBatch: (batchId: string, data: any) => client.post(`/batches/${batchId}/complete`, data),
+  cancelBatch: (id: string) => client.post(`/batches/${id}/cancel`),
+  duplicateBatch: (id: string) => client.post(`/batches/${id}/duplicate`),
 
-  getRecipes: () => client.get('/bakery/recipes'),
-  getRecipe: (id: string) => client.get(`/bakery/recipes/${id}`),
-  createRecipe: (data: any) => client.post('/bakery/recipes', data),
-  updateRecipe: (id: string, data: any) => client.patch(`/bakery/recipes/${id}`, data),
-  deleteRecipe: (id: string) => client.delete(`/bakery/recipes/${id}`),
-  generateRecipeAi: (prompt: string) => client.post('/bakery/recipes/generate', { prompt }),
+  getRecipes: () => client.get('/recipes'),
+  getRecipe: (id: string) => client.get(`/recipes/${id}`),
+  createRecipe: (data: any) => client.post('/recipes', data),
+  updateRecipe: (id: string, data: any) => client.patch(`/recipes/${id}`, data),
+  deleteRecipe: (id: string) => client.delete(`/recipes/${id}`),
+  generateRecipeAi: (prompt: string) => client.post('/recipes/generate', { prompt }),
 
-  getTemplates: () => client.get('/bakery/templates'),
-  createTemplate: (data: any) => client.post('/bakery/templates', data),
-  updateTemplate: (id: string, data: any) => client.patch(`/bakery/templates/${id}`, data),
-  deleteTemplate: (id: string) => client.delete(`/bakery/templates/${id}`),
-  duplicateTemplate: (id: string) => client.post(`/bakery/templates/${id}/duplicate`),
-  createBatchFromTemplate: (id: string) => client.post(`/bakery/templates/${id}/create-batch`),
+  getTemplates: () => client.get('/templates'),
+  createTemplate: (data: any) => client.post('/templates', data),
+  updateTemplate: (id: string, data: any) => client.patch(`/templates/${id}`, data),
+  deleteTemplate: (id: string) => client.delete('/templates/${id}`),
+  duplicateTemplate: (id: string) => client.post(`/templates/${id}/duplicate`),
+  createBatchFromTemplate: (id: string) => client.post(`/templates/${id}/create-batch`),
 
-  getSettings: () => client.get('/bakery/settings'),
-  updateSettings: (data: any) => client.patch('/bakery/settings', data),
+  getSettings: () => client.get('/settings'),
+  updateSettings: (data: any) => client.patch('/settings', data),
 
-  getBakers: () => client.get('/bakery/bakers'),
-  addBaker: (data: any) => client.post('/bakery/bakers', data),
-  updateBaker: (id: string, data: any) => client.patch(`/bakery/bakers/${id}`, data),
-  removeBaker: (id: string) => client.delete(`/bakery/bakers/${id}`),
+  getBakers: () => client.get('/bakers'),
+  addBaker: (data: any) => client.post('/bakers', data),
+  updateBaker: (id: string, data: any) => client.patch(`/bakers/${id}`, data),
+  removeBaker: (id: string) => client.delete(`/bakers/${id}`),
 
-  getOverview: () => client.get('/bakery/overview'),
+  getOverview: () => client.get('/overview'),
 
-  getCategories: () => client.get('/bakery/categories'),
-  createCategory: (data: any) => client.post('/bakery/categories', data),
-  updateCategory: (id: string, data: any) => client.patch(`/bakery/categories/${id}`, data),
-  deleteCategory: (id: string) => client.delete(`/bakery/categories/${id}`),
+  getCategories: () => client.get('/categories'),
+  createCategory: (data: any) => client.post('/categories', data),
+  updateCategory: (id: string, data: any) => client.patch(`/categories/${id}`, data),
+  deleteCategory: (id: string) => client.delete(`/categories/${id}`),
 
-  getIngredients: () => client.get('/bakery/ingredients'),
-  createIngredient: (data: any) => client.post('/bakery/ingredients', data),
-  updateIngredient: (id: string, data: any) => client.patch(`/bakery/ingredients/${id}`, data),
-  deleteIngredient: (id: string) => client.delete(`/bakery/ingredients/${id}`),
+  getIngredients: () => client.get('/ingredients'),
+  createIngredient: (data: any) => client.post('/ingredients', data),
+  updateIngredient: (id: string, data: any) => client.patch(`/ingredients/${id}`, data),
+  deleteIngredient: (id: string) => client.delete(`/ingredients/${id}`),
 
-  getAuthStatus: () => client.get('/bakery/auth/status'),
-  sso: () => client.post('/bakery/auth/sso'),
-  logout: () => client.post('/bakery/auth/logout'),
+  getAuthStatus: () => client.get('/auth/status'),
+  sso: () => client.post('/auth/sso'),
+  logout: () => client.post('/auth/logout'),
   getMe: () => client.get('/devices/me'),
 };
 
