@@ -43,6 +43,7 @@ export async function provisionDeviceV3(prisma: any, token: string) {
       deviceType: setupToken.deviceType,
       locationId: setupToken.locationId,
       status: "ACTIVE",
+      lastSeenAt: new Date(),
     },
   });
 

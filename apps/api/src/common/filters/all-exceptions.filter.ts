@@ -4,6 +4,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from "@nestjs/common";
 import { ApiError } from "@repo/shared/api/v2";
 import { env } from "@repo/env";
@@ -13,12 +14,14 @@ import { notifySystemAdminsOfError } from "@repo/shared/services/notification/sy
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<any>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = "Internal server error";
+    let message: any = "Internal server error";
     let code = "INTERNAL_SERVER_ERROR";
     let details: any = undefined;
 
@@ -51,29 +54,40 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // leaking sensitive data (secrets, PII) in server logs or OpenObserve.
     const redactedException = redactSensitiveData(exception);
 
-    // Only log to console.error if status is 5xx (Internal Server Error or above)
+    const request = ctx.getRequest<any>();
+    const method = request?.method || "UNKNOWN";
+    const path = request?.url || "UNKNOWN";
+    const correlationId =
+      request?.headers?.["x-correlation-id"] ||
+      request?.v2Context?.correlationId ||
+      "N/A";
+    const organizationId =
+      request?.v2Context?.organizationId ||
+      request?.v3Context?.organizationId ||
+      request?.organization?.id ||
+      "N/A";
+
+    const formattedMsg = Array.isArray(message) ? message.join(", ") : String(message);
+    const logDetails = `[HTTP ${method} ${path}] [Org: ${organizationId}] [Corr: ${correlationId}] -> Status ${status} (${code}): ${formattedMsg}`;
+
+    // Log 5xx errors as errors and 4xx errors as warnings
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+      this.logger.error(logDetails, (redactedException as any)?.stack);
       console.error("Unhandled Exception:", redactedException);
+    } else {
+      this.logger.warn(logDetails);
     }
 
-    const request = ctx.getRequest<any>();
     const ip =
       (request?.headers?.["x-forwarded-for"] as string) ||
       request?.ip ||
       "unknown";
-    const correlationId =
-      request?.headers?.["x-correlation-id"] ||
-      request?.v2Context?.correlationId;
     const userId = request?.v3Context?.userId || request?.user?.id;
     const email = request?.user?.email;
     const memberId =
       request?.v2Context?.memberId ||
       request?.v3Context?.memberId ||
       request?.user?.memberId;
-    const organizationId =
-      request?.v2Context?.organizationId ||
-      request?.v3Context?.organizationId ||
-      request?.organization?.id;
     const businessAccountId = request?.v3Context?.businessAccountId;
     const clientId = request?.v3Context?.clientId;
 
@@ -90,13 +104,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
             } as any);
           }
 
-          if (organizationId) scope.setTag("organizationId", organizationId);
+          if (organizationId && organizationId !== "N/A") scope.setTag("organizationId", organizationId);
           if (businessAccountId)
             scope.setTag("businessAccountId", businessAccountId);
           if (clientId) scope.setTag("clientId", clientId);
-          if (correlationId) scope.setTag("correlationId", correlationId);
-          scope.setTag("method", request?.method || "unknown");
-          scope.setTag("path", request?.url || "unknown");
+          if (correlationId && correlationId !== "N/A") scope.setTag("correlationId", correlationId);
+          scope.setTag("method", method);
+          scope.setTag("path", path);
           scope.setTag("statusCode", status.toString());
 
           scope.setExtra("v2Context", redactSensitiveData(request?.v2Context));
@@ -107,12 +121,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
           // we reconstruct a clean Error with redacted info to keep Sentry's stack tracing and type parsing.
           let sentryException: any = redactedException;
           if (exception instanceof Error) {
-            const redactedError = new Error(redactedException.message);
-            redactedError.name = redactedException.name;
-            redactedError.stack = redactedException.stack;
+            const redactedError = new Error((redactedException as any).message);
+            redactedError.name = (redactedException as any).name;
+            redactedError.stack = (redactedException as any).stack;
             for (const key of Object.getOwnPropertyNames(redactedException)) {
               if (!["name", "message", "stack"].includes(key)) {
-                (redactedError as any)[key] = redactedException[key];
+                (redactedError as any)[key] = (redactedException as any)[key];
               }
             }
             sentryException = redactedError;
@@ -128,10 +142,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Trigger admin-customized Scryme Chat alert notification for errors
     notifySystemAdminsOfError({
       status,
-      message,
+      message: formattedMsg,
       code,
-      method: request?.method,
-      path: request?.url,
+      method,
+      path,
       correlationId,
       organizationId,
       userId,

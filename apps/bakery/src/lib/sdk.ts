@@ -86,7 +86,9 @@ const formatApiPath = (url: string): string => {
   if (!url || url.startsWith('http://') || url.startsWith('https://')) return url;
   if (url.startsWith('/api/')) return url;
   if (url.startsWith('/v2/') || url.startsWith('/v3/')) return `/api${url}`;
-  return `/api/v2${url.startsWith('/') ? '' : '/'}${url}`;
+  const orgSlug = (typeof window !== 'undefined' && localStorage.getItem('bakery_org_slug')) || 'default-org';
+  const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+  return `/api/v3/${orgSlug}${cleanUrl}`;
 };
 
 const unwrapResponse = (data: any) => {

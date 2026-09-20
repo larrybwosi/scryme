@@ -246,14 +246,14 @@ export function DeviceList({ devices }: { devices: any[] }) {
                   <div className="flex items-center gap-2 text-slate-600">
                     <Clock className="w-3.5 h-3.5" />
                     <span className="text-sm">
-                      {device.apiKey?.lastUsedAt
-                        ? format(
-                            new Date(device.apiKey.lastUsedAt),
-                            "MMM d, h:mm a",
-                          )
-                        : device.lastSeenAt
+                      {device.lastSeenAt
                         ? format(
                             new Date(device.lastSeenAt),
+                            "MMM d, h:mm a",
+                          )
+                        : device.apiKey?.lastUsedAt
+                        ? format(
+                            new Date(device.apiKey.lastUsedAt),
                             "MMM d, h:mm a",
                           )
                         : "Never"}

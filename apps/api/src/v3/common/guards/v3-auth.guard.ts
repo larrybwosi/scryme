@@ -189,6 +189,20 @@ export class V3AuthGuard implements CanActivate {
         : null,
     };
 
+    // Update DeviceRegistry lastSeenAt for V3 devices
+    if (payload.deviceId && typeof this.prisma.client.deviceRegistry?.update === "function") {
+      const clientIp = (
+        (request.headers["x-forwarded-for"] as string) ||
+        (request.headers["x-real-ip"] as string) ||
+        request.ip ||
+        "unknown"
+      ).split(",")[0].trim();
+      this.prisma.client.deviceRegistry.update({
+        where: { id: payload.deviceId },
+        data: { lastSeenAt: new Date(), lastSeenIp: clientIp },
+      }).catch(() => {});
+    }
+
     // If it's a customer, ensure request.user has their customer id
     if (payload.type === "v3_customer") {
       request.user = request.user || {
