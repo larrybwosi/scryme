@@ -1,5 +1,4 @@
 import { Module } from "@nestjs/common";
-import { BakeryModule } from "./bakery/bakery.module";
 import { CatalogModule } from "./catalog/catalog.module";
 import { InventoryModule } from "./inventory/inventory.module";
 import { PosModule } from "./pos/pos.module";

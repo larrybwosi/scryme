@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { V3ApiContext } from "@repo/shared/api/v2";
+import { V3ApiContext } from "@repo/shared/api/v3";
 
 @Injectable()
 export class GetTransactionsUseCase {

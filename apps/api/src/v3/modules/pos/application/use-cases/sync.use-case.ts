@@ -1,10 +1,10 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { type V3ApiContext } from "@repo/shared/api/v2";
+import { type V3ApiContext } from "@repo/shared/api/v3";
 import {
   getPosProducts,
   getPosProductsDelta,
-} from "@repo/shared/api/v2";
+} from "@repo/shared/api/v3";
 import { PosCustomerService } from "@/v2/pos/pos-customer.service";
 
 @Injectable()

@@ -26,7 +26,7 @@ import {
   getPosProducts,
   getPosProductsDelta,
   type V2ApiContext,
-} from "@repo/shared/api/v2";
+} from "@repo/shared/api/v3";
 import { ProcessSaleDto } from "../../application/dto/sale.dto";
 import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";

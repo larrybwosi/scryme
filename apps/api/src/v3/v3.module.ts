@@ -24,6 +24,7 @@ import { StrapiModule } from "./modules/strapi/strapi.module";
 import { ServicesModule } from "./modules/services/services.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { ProductionModule } from "./modules/production/production.module";
+import { DeliveriesModule } from "./modules/deliveries/deliveries.module";
 
 export const V3_SUB_MODULES = [
   V3CommonModule,
@@ -51,6 +52,7 @@ export const V3_SUB_MODULES = [
   ServicesModule,
   AnalyticsModule,
   ProductionModule,
+  DeliveriesModule,
 ];
 
 @Module({

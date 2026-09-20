@@ -1,4 +1,4 @@
-import { V3ApiContext } from "@repo/shared/api/v2";
+import { V3ApiContext } from "@repo/shared/api/v3";
 
 export interface V3AuthHeadersOptions {
   memberToken?: string;
