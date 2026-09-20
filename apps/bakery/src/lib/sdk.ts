@@ -15,18 +15,23 @@ export const isOfflineMode = () => {
   return typeof window !== 'undefined' && (localStorage.getItem('bakery_local_mode') === 'true' || !window.navigator.onLine);
 };
 
-const initialApiUrl = sanitizeApiUrl(
-  (typeof window !== 'undefined' ? localStorage.getItem('bakery_api_url') : null) ||
-    import.meta.env.VITE_API_URL ||
-    'https://api.scryme.tech'
-);
+const getInitialApiUrl = () => {
+  const customUrl = typeof window !== 'undefined' ? localStorage.getItem('bakery_api_url') : null;
+  const envUrl = import.meta.env.VITE_API_URL;
+  return sanitizeApiUrl(customUrl || envUrl || 'https://api.scryme.tech');
+};
 
-const initialOrgSlug = (typeof window !== 'undefined' ? localStorage.getItem('bakery_org_slug')) || 'default-org';
+const getInitialOrgSlug = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('bakery_org_slug') || 'default-org';
+  }
+  return 'default-org';
+};
 
 export const scrymeSDK = new ScrymeClientSDK({
   clientId: 'bakery-app',
-  orgSlug: initialOrgSlug,
-  baseURL: initialApiUrl,
+  orgSlug: getInitialOrgSlug(),
+  baseURL: getInitialApiUrl(),
 });
 
 let memberTokenState: string | null = null;
