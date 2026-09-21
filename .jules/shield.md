@@ -5,3 +5,7 @@
 ## 2026-09-09 - Fast-Path Entity Lookup Tenant Isolation
 **Learning:** Fast-path entity lookups (e.g. querying a batch by CUID directly before falling back to ID/number search in `TraceBatchUseCase`) must immediately reject requests if the entity exists but belongs to a foreign tenant. Allowing execution to fall through to secondary lookup steps like `findById` creates side-channel timing leaks and unnecessary database queries against foreign tenant resources.
 **Action:** When performing fast-path lookups, if an entity is found but `entity.organizationId !== organizationId`, immediately throw `NotFoundException` without attempting secondary repository fallbacks.
+
+## 2026-09-21 - Relational ID Validation in Location Server Actions
+**Learning:** In server actions creating or updating nested hierarchy structures (locations, zones, units), validating only the target record's tenant ownership is insufficient. Relational input fields (`parentLocationId`, `managerId`, `locationId`, `zoneId`) can be exploited in BOLA/IDOR attacks to cross-associate resources with foreign organizations.
+**Action:** Explicitly validate all input foreign key IDs using `findFirst` scoped by `organizationId` before executing database mutations.

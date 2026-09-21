@@ -258,6 +258,22 @@ export async function createLocation(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  if (data.parentLocationId) {
+    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate parent location belongs to current tenant
+    const parent = await db.inventoryLocation.findFirst({
+      where: { id: data.parentLocationId, organizationId: context.organizationId },
+    });
+    if (!parent) throw new Error("Invalid parent location ID or unauthorized");
+  }
+
+  if (data.managerId) {
+    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate manager member belongs to current tenant
+    const manager = await db.member.findFirst({
+      where: { id: data.managerId, organizationId: context.organizationId },
+    });
+    if (!manager) throw new Error("Invalid manager ID or unauthorized");
+  }
+
   const location = await db.$transaction(async tx => {
     if (data.isDefault) {
       await tx.inventoryLocation.updateMany({
@@ -298,6 +314,31 @@ export async function updateLocation(
 ): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
+
+  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target location exists and belongs to current tenant
+  const existingLocation = await db.inventoryLocation.findFirst({
+    where: { id, organizationId: context.organizationId },
+  });
+  if (!existingLocation) throw new Error("Location not found or unauthorized");
+
+  if (data.parentLocationId) {
+    if (data.parentLocationId === id) {
+      throw new Error("Location cannot be its own parent");
+    }
+    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate parent location belongs to current tenant
+    const parent = await db.inventoryLocation.findFirst({
+      where: { id: data.parentLocationId, organizationId: context.organizationId },
+    });
+    if (!parent) throw new Error("Invalid parent location ID or unauthorized");
+  }
+
+  if (data.managerId) {
+    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate manager member belongs to current tenant
+    const manager = await db.member.findFirst({
+      where: { id: data.managerId, organizationId: context.organizationId },
+    });
+    if (!manager) throw new Error("Invalid manager ID or unauthorized");
+  }
 
   const location = await db.$transaction(async tx => {
     if (data.isDefault) {
@@ -381,6 +422,12 @@ export async function createZone(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target location belongs to current tenant
+  const location = await db.inventoryLocation.findFirst({
+    where: { id: data.locationId, organizationId: context.organizationId },
+  });
+  if (!location) throw new Error("Invalid location ID or unauthorized");
+
   const zone = await db.storageZone.create({
     data: {
       ...data,
@@ -451,6 +498,20 @@ export async function createUnit(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target location belongs to current tenant
+  const location = await db.inventoryLocation.findFirst({
+    where: { id: data.locationId, organizationId: context.organizationId },
+  });
+  if (!location) throw new Error("Invalid location ID or unauthorized");
+
+  if (data.zoneId) {
+    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate zone belongs to current tenant and location
+    const zone = await db.storageZone.findFirst({
+      where: { id: data.zoneId, locationId: data.locationId, organizationId: context.organizationId },
+    });
+    if (!zone) throw new Error("Invalid zone ID or unauthorized");
+  }
+
   const unit = await db.storageUnit.create({
     data: {
       ...data,
@@ -474,6 +535,20 @@ export async function updateUnit(
 ): Promise<any> {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
+
+  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target unit exists and belongs to current tenant
+  const existingUnit = await db.storageUnit.findFirst({
+    where: { id, organizationId: context.organizationId },
+  });
+  if (!existingUnit) throw new Error("Unit not found or unauthorized");
+
+  if (data.zoneId) {
+    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate zone belongs to current tenant and unit location
+    const zone = await db.storageZone.findFirst({
+      where: { id: data.zoneId, locationId: existingUnit.locationId, organizationId: context.organizationId },
+    });
+    if (!zone) throw new Error("Invalid zone ID or unauthorized");
+  }
 
   const unit = await db.storageUnit.update({
     where: { id, organizationId: context.organizationId },
