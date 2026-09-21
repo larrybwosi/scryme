@@ -152,6 +152,10 @@ const serverSchema = z.object({
   OPENPANEL_CLIENT_ID: z.string().optional(),
   OPENPANEL_CLIENT_SECRET: z.string().optional(),
   OPENPANEL_HOST: z.string().optional(),
+
+  // Resend Email Configuration
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("Scryme <no-reply@scryme.tech>"),
 });
 
 const clientSchema = z.object({
@@ -354,6 +358,10 @@ function getRawEnv() {
     OPENPANEL_CLIENT_ID: process.env.OPENPANEL_CLIENT_ID,
     OPENPANEL_CLIENT_SECRET: process.env.OPENPANEL_CLIENT_SECRET,
     OPENPANEL_HOST: process.env.OPENPANEL_HOST,
+
+    // Resend Email Configuration
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    EMAIL_FROM: process.env.EMAIL_FROM,
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID: process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
     NEXT_PUBLIC_OPENPANEL_HOST: process.env.NEXT_PUBLIC_OPENPANEL_HOST,
     VITE_OPENPANEL_CLIENT_ID: process.env.VITE_OPENPANEL_CLIENT_ID,

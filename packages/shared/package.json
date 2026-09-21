@@ -134,6 +134,11 @@
       "types": "./src/api/v3/index.ts",
       "import": "./dist/api/v3.js",
       "require": "./dist/api/v3.cjs"
+    },
+    "./services/email": {
+      "types": "./src/services/email/index.ts",
+      "import": "./dist/services/email/index.js",
+      "require": "./dist/services/email/index.cjs"
     }
   },
   "scripts": {
@@ -180,7 +185,8 @@
     "sonner": "latest",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.4.3",
-    "zustand": "^5.0.11"
+    "zustand": "^5.0.11",
+    "resend": "^4.1.2"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

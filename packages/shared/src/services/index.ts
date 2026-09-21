@@ -4,3 +4,4 @@ export * from './relation.service';
 export * from './schema.service';
 export * from './customer';
 export * from './notification';
+export * from "./email";

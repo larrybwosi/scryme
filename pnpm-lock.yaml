@@ -912,7 +912,7 @@ importers:
         version: 1.10.5(@types/react@19.2.14)(posthog-js@1.421.2(@types/react@19.2.14)(react@19.2.6))(react@19.2.6)
       '@react-pdf/renderer':
         specifier: latest
-        version: 4.8.1(react@19.2.6)
+        version: 4.9.0(react@19.2.6)
       '@redfernelec/tauri-plugin-hid-api':
         specifier: ^0.2.3
         version: 0.2.3
@@ -1446,7 +1446,7 @@ importers:
     dependencies:
       '@better-auth/oauth-provider':
         specifier: latest
-        version: 1.7.2(@better-auth/core@1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11))(better-call@1.4.0(zod@4.4.3))
+        version: 1.7.5(@better-auth/core@1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11))(better-call@1.4.0(zod@4.4.3))
       '@better-auth/passkey':
         specifier: ^1.7.1
         version: 1.7.2(@better-auth/core@1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11))(better-call@1.4.0(zod@4.4.3))(nanostores@1.5.2)
@@ -1791,6 +1791,9 @@ importers:
       react-dom:
         specifier: 19.2.6
         version: 19.2.6(react@19.2.6)
+      resend:
+        specifier: ^4.1.2
+        version: 4.8.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       server-only:
         specifier: 0.0.1
         version: 0.0.1
@@ -2945,6 +2948,15 @@ packages:
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
       better-auth: ^1.7.2
+      better-call: 1.4.0
+
+  '@better-auth/oauth-provider@1.7.5':
+    resolution: {integrity: sha512-hVHb1TfydO8hWJXeZaGeJ+1506Fn+8hsffes+TFwi6/gl/ui+GqJVliPhHhuaOqpC1gN8ZFiLr0u8bh0aSnTLg==}
+    peerDependencies:
+      '@better-auth/core': ^1.7.5
+      '@better-auth/utils': 0.4.2
+      '@better-fetch/fetch': 1.3.2
+      better-auth: ^1.7.5
       better-call: 1.4.0
 
   '@better-auth/passkey@1.7.2':
@@ -6655,11 +6667,21 @@ packages:
   '@radix-ui/rect@1.1.3':
     resolution: {integrity: sha512-JtyZR+mqgBibTo8xea3B6ZRmzZiM/YeVBtUkas6zMuXjAlfIFIW2FgqeM9eLyvEaYX66vr6DJMK+4U6LV0KhNw==}
 
+  '@react-email/render@1.1.2':
+    resolution: {integrity: sha512-RnRehYN3v9gVlNMehHPHhyp2RQo7+pSkHDtXPvg3s0GbzM9SQMW4Qrf8GRNvtpLC4gsI+Wt0VatNRUFqjvevbw==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      react: 19.2.6
+      react-dom: 19.2.6
+
   '@react-pdf/fns@3.1.3':
     resolution: {integrity: sha512-0I7pApDr1/RLAKbizuLy/IHTEa93LSPy/bEwYniboC3Xqnp6Od8xFJKbKEzGw2wh/5zKFFwl00g4t9RwgIMc3w==}
 
   '@react-pdf/font@4.1.1':
     resolution: {integrity: sha512-D+4Xb0Ldv7oW4buvdPo/tDtZ95mWFQsg1oLkqgmxRfwJe/qpsk8X5Zq9VJ9F3Lqbj3Lrq+ztz7FFaIv39V1POw==}
+
+  '@react-pdf/font@4.1.2':
+    resolution: {integrity: sha512-RT/jiGWIRjIC9c4S9NiqhEyfuA6YL+DtWL3Rm+k+zQhfeHYvHwGzFxr7ZJzThIMrT8sIQy+mpvFvfYyitEei/Q==}
 
   '@react-pdf/hyphenate@0.1.0':
     resolution: {integrity: sha512-CWulbuusHh2Lnos9ZffT3ZYfjCt332Yl8wjSyCKWbwhbTpe/VdFt53fM5elPp3HU3R6tzH6j3oYlLXDwC2WEHQ==}
@@ -6669,6 +6691,9 @@ packages:
 
   '@react-pdf/layout@5.1.1':
     resolution: {integrity: sha512-lNc8E3kADpyN4dbpXnlDlKI0eWwJoiOLHj8qB1NM9bG9mI+gQ+AWkojV9/IfeRztGZJKza+s6zRmhN4vMtJ+pg==}
+
+  '@react-pdf/layout@5.2.0':
+    resolution: {integrity: sha512-Hzf9cShT1bKkr9tZ+A9qK/wHqUloOCgbNer72EquQS6QzqVGiDdtt6Wh9lQXwkd89U7yZolTLnFqP/dRdoRROw==}
 
   '@react-pdf/paginate@1.0.1':
     resolution: {integrity: sha512-JN6teDqkdpkcRhdGZqyrr7Y8flgTtyI8XS3yaBQLyiGjEBPbR9m/19cz2z3JkqYpApau5pEHZlLjwGqMurWysw==}
@@ -6684,13 +6709,24 @@ packages:
   '@react-pdf/render@4.6.4':
     resolution: {integrity: sha512-IqWHtFo6ZpF+pS34ZMMwUekfG0T9YRd/qaFU68lC2VIU0GJw3OLOUA1JbliZZgV+r9sTHF/UCQzU5t0s/ypZSw==}
 
+  '@react-pdf/render@4.7.0':
+    resolution: {integrity: sha512-UEMgR7gBmCJiKpuu9alY6QeZVNB+7b4DGHc7Hi8QIl+5PfHvyq+TV70N7+ngZ6wN7hF3XSiWz7GDuYxPIx5eRw==}
+
   '@react-pdf/renderer@4.8.1':
     resolution: {integrity: sha512-BZD/wbImXHIT4BeYeX33NmcDUkL1D5KtUokgyKhNChbZL7ccdnkssvW8GbzYRaeCt6jYI3HI7nA6vDA19MFhHQ==}
     peerDependencies:
       react: 19.2.6
 
+  '@react-pdf/renderer@4.9.0':
+    resolution: {integrity: sha512-RAbARMwjcSYEpqpaWoWXz0uOGF1HjAl5hdJr889r5mgkPhF9xhX4CXSvcEbLTgFVj+KWbcar31MzcXYoANk/Ag==}
+    peerDependencies:
+      react: 19.2.6
+
   '@react-pdf/stylesheet@6.3.1':
     resolution: {integrity: sha512-+tlgVBsyG8lKMXJp6XycTnYrFkxAxxoLGbc6DUXKe5sxDxqgtD/AqhlrrpUwewxgCDrcIWmWBUb4E95ZUa+hEg==}
+
+  '@react-pdf/stylesheet@6.3.2':
+    resolution: {integrity: sha512-UR247sNBx2k3RdL8JUCpUiyx39yQsUABagv3uAi91iMZCORE+fSCsOh7MOcEImmpms4GihydLGudbngI5g14PA==}
 
   '@react-pdf/svg@1.1.1':
     resolution: {integrity: sha512-m1GmGxV2wg/3VpoQ0aCJ598fBedCCfN+HtxKx1lq5kdwUWEaTbfXI1DGFAUedprFDd/i24okKFaUhV/KVZIqIQ==}
@@ -6700,6 +6736,9 @@ packages:
 
   '@react-pdf/types@2.13.1':
     resolution: {integrity: sha512-uzEWSHZR8HRjsa7g0yCA+sGX1vC10rm9mBE+Ds3j669y1Ax+1hn+MfIknf8Ae8p3WVNNikUof02pVwLRw6kJng==}
+
+  '@react-pdf/types@2.14.0':
+    resolution: {integrity: sha512-TYHpThdf2sz/d1g+CP9nWjYCJ8BYBUN5ORL6+60A85Js9S/YouK8OXzi+hDpYUSZJTOdYXdRxUNeG2oW8//Ulg==}
 
   '@redfernelec/tauri-plugin-hid-api@0.2.3':
     resolution: {integrity: sha512-gJGK8JkyCWcE+UpphXgVWDresINpZ9O3/eQbyfmTLsEZn2CprAedhtcZrlzmlMYRGKbJiGTocITGZVwnSkaMAg==}
@@ -7371,6 +7410,9 @@ packages:
 
   '@sec-ant/readable-stream@0.4.1':
     resolution: {integrity: sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg==}
+
+  '@selderee/plugin-htmlparser2@0.11.0':
+    resolution: {integrity: sha512-P33hHGdldxGabLFjPPpaTxVolMrzrcegejx+0GxjrIb9Zv48D8yAIA/QTDR2dFl7Uz7urX8aX6+5bCZslr+gWQ==}
 
   '@sentry-internal/browser-utils@8.55.2':
     resolution: {integrity: sha512-GnKod+gL/Y+1FUM/RGV8q6le1CoyiGbT40MitEK7eVwWe+bfTRq1gN7ioupyHFMUg1RlQkDQ4/sENmio/uow5A==}
@@ -10288,6 +10330,7 @@ packages:
   cron-parser@4.9.0:
     resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
     engines: {node: '>=12.0.0'}
+    deprecated: v4 is no longer maintained, upgrade to v5
 
   cron@4.4.0:
     resolution: {integrity: sha512-fkdfq+b+AHI4cKdhZlppHveI/mgz2qpiYxcm+t5E5TsxX7QrLS1VE0+7GENEk9z0EeGPcpSciGv6ez24duWhwQ==}
@@ -11271,6 +11314,9 @@ packages:
   fast-decode-uri-component@1.0.1:
     resolution: {integrity: sha512-WKgKWg5eUxvRZGwW8FvfbaH7AXSh2cL+3j5fMGzUMCxWBJ3dV3a7Wz8y2f/uQ0e3B6WmodD3oS54jTQ9HVTIIg==}
 
+  fast-deep-equal@2.0.1:
+    resolution: {integrity: sha512-bCK/2Z4zLidyB4ReuIsvALH6w31YfAQDmXMqMx6FyfHqvBxtjC0eRumeSu4Bs3XtXwpyIywtSTrVT99BxY1f9w==}
+
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
@@ -11693,6 +11739,7 @@ packages:
 
   glob@10.5.0:
     resolution: {integrity: sha512-DfXN8DfhJ7NH3Oe7cFmu3NCu1wKbkReJ8TorzSAFbSKrlNaQSKfIzqYqVY8zlbs2NLBbWpRiU52GX2PbaBVNkg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@13.0.6:
@@ -11701,6 +11748,7 @@ packages:
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-directory@4.0.1:
     resolution: {integrity: sha512-wHTUcDUoZ1H5/0iVqEudYW4/kAlN5cZ3j/bXn0Dpbizl9iaUVeWSHqiOjsgk6OW2bkLclbBjzewBz6weQ1zA2Q==}
@@ -11912,8 +11960,15 @@ packages:
   html-parse-stringify@4.0.1:
     resolution: {integrity: sha512-0zHsZJrK7S3K2aucXWL6ycoYJ/iNtIcFHC/nYQgFklPtrv5LpJctIiSCroWZWeuoXvuyFdzp6KzjJQ+OT5MfFw==}
 
+  html-to-text@9.0.5:
+    resolution: {integrity: sha512-qY60FjREgVZL03vJU6IfMV4GDjGBIoOyvuFdpBDIX9yTlDw0TjxVBQp+P8NvpdIXNJvfWBTNul7fsAQJq2FNpg==}
+    engines: {node: '>=14'}
+
   html-url-attributes@3.0.1:
     resolution: {integrity: sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ==}
+
+  htmlparser2@8.0.2:
+    resolution: {integrity: sha512-GYdjWKDkbRLkZ5geuHs5NY1puJ+PXwP7+fHPRz06Eirsb9ugf6d8kkXav6ADhcODhFFPMIXyxkxSuMf3D6NCFA==}
 
   http-cache-semantics@4.2.0:
     resolution: {integrity: sha512-dTxcvPXqPvXBQpq5dUr6mEMJX4oIEFv6bwom3FDwKRDsuIjjJGANqhBuoAn9c1RQJIdAKav33ED65E2ys+87QQ==}
@@ -12027,6 +12082,7 @@ packages:
 
   inflight@1.0.6:
     resolution: {integrity: sha512-k92I/b08q4wvFscXCLvqfsHCrjrF7yiXsQuIVvVE7N82W3+aqpzuUdBbfhWcy/FZR3/4IgflMgKLOsvPDrGCJA==}
+    deprecated: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
 
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
@@ -12856,6 +12912,9 @@ packages:
   language-tags@1.0.9:
     resolution: {integrity: sha512-MbjN408fEndfiQXbFQ1vnd+1NoLDsnQW41410oQBXiyXDMYH5z505juWa4KUE1LqxRC7DgOgZDbKLxHIwm27hA==}
     engines: {node: '>=0.10'}
+
+  leac@0.6.0:
+    resolution: {integrity: sha512-y+SqErxb8h7nE/fiEX07jsbuhrpO9lL8eca7/Y1nuWV2moNlXhyd59iDGcRf6moVyDMbmTNzL40SUyrFU/yDpg==}
 
   leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
@@ -14076,6 +14135,9 @@ packages:
   parse5@8.0.1:
     resolution: {integrity: sha512-z1e/HMG90obSGeidlli3hj7cbocou0/wa5HacvI3ASx34PecNjNQeaHNo5WIZpWofN9kgkqV1q5YvXe3F0FoPw==}
 
+  parseley@0.12.1:
+    resolution: {integrity: sha512-e6qHKe3a9HWr0oMRVDTRhKce+bRO8VGQR3NyVwcjwrbhMmFCX9KszEV35+rn4AdilFAq9VPxP/Fe1wC9Qjd2lw==}
+
   parseurl@1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
     engines: {node: '>= 0.8'}
@@ -14134,6 +14196,9 @@ packages:
 
   pdfkit@0.20.1:
     resolution: {integrity: sha512-1rRXK6x5o8I/3dBrBzXfxibpHpkfCnIA7EBAES7pEpGFc/65inMLlA8SalGWpJfal7BGekxeLf6A30IOpQpc5Q==}
+
+  peberminta@0.9.0:
+    resolution: {integrity: sha512-XIxfHpEuSJbITd1H3EeQwpcZbTLHc+VVr8ANI9t5sit565tsI4/xK3KWTUFE2e6QiangUkh3B0jihzmGnNrRsQ==}
 
   peek-stream@1.1.3:
     resolution: {integrity: sha512-FhJ+YbOSBb9/rIl2ZeE/QHEsWn7PqNYt8ARAY3kIgNGOk13g9FGyIY6JIl/xB/3TFRVoTv5as0l11weORrTekA==}
@@ -14685,6 +14750,9 @@ packages:
       '@types/react':
         optional: true
 
+  react-promise-suspense@0.3.4:
+    resolution: {integrity: sha512-I42jl7L3Ze6kZaq+7zXWSunBa3b1on5yfvUW6Eo/3fFOj6dZ5Bqmcd264nJbTK/gn1HjjILAjSwnZbV4RpSaNQ==}
+
   react-redux@9.3.0:
     resolution: {integrity: sha512-KQopgqFo/p/fgmAs5qz6p5RWaNAzq40WAu7fJIXnQpYxFPbJYtsJPWvGeF2rOBaY/kEuV77AVsX8TsQzKm+A/g==}
     peerDependencies:
@@ -14952,6 +15020,10 @@ packages:
   reselect@5.3.0:
     resolution: {integrity: sha512-XGoLeRAVzUTcJ1qkxPQhDJyIZ5d6zzZD9nT7AEZOaaU9UbWclhycElmhO+VD5bFeLuzhPBaOV2oXC8uG35ZSpg==}
 
+  resend@4.8.0:
+    resolution: {integrity: sha512-R8eBOFQDO6dzRTDmaMEdpqrkmgSjPpVXt4nGfWsZdYOet0kqra0xgbvTES6HmCriZEXbmGk3e0DiGIaLFTFSHA==}
+    engines: {node: '>=18'}
+
   resolve-alpn@1.2.1:
     resolution: {integrity: sha512-0a1F4l73/ZFZOakJnQ3FvkJ2+gSTQWz/r2KE5OdDY0TxPm5h4GkqkWWfM47T7HsbnOtcJVEF4epCVy6u7Q3K+g==}
 
@@ -15160,6 +15232,9 @@ packages:
   seek-bzip@2.0.0:
     resolution: {integrity: sha512-SMguiTnYrhpLdk3PwfzHeotrcwi8bNV4iemL9tx9poR/yeaMYwB9VzR1w7b57DuWpuqR8n6oZboi0hj3AxZxQg==}
     hasBin: true
+
+  selderee@0.11.0:
+    resolution: {integrity: sha512-5TF+l7p4+OsnP8BCCvSyZiSPc4x4//p5uPwK8TCnVPJYRmU2aYKMpOXvw8zM5a5JvuuCGN1jmsMwuU2W02ukfA==}
 
   semifies@1.0.0:
     resolution: {integrity: sha512-xXR3KGeoxTNWPD4aBvL5NUpMTT7WMANr3EWnaS190QVkY52lqqcVRD7Q05UVbBhiWDGWMlJEUam9m7uFFGVScw==}
@@ -15615,6 +15690,7 @@ packages:
 
   subscriptions-transport-ws@0.11.0:
     resolution: {integrity: sha512-8D4C6DIH5tGiAIpp5I0wD/xRlNiZAPGHygzCe7VzyzUoxHtawzjNAY9SUTXU05/EY2NMY9/9GF0ycizkXr1CWQ==}
+    deprecated: The `subscriptions-transport-ws` package is no longer maintained. We recommend you use `graphql-ws` instead. For help migrating Apollo software to `graphql-ws`, see https://www.apollographql.com/docs/apollo-server/data/subscriptions/#switching-from-subscriptions-transport-ws    For general help using `graphql-ws`, see https://github.com/enisdenjo/graphql-ws/blob/master/README.md
     peerDependencies:
       graphql: ^15.7.2 || ^16.0.0
 
@@ -15960,6 +16036,7 @@ packages:
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
     engines: {node: ^18 || >=20}
+    deprecated: unmaintained
     hasBin: true
     peerDependencies:
       typescript: 5.7.3
@@ -16367,6 +16444,7 @@ packages:
 
   uuid@10.0.0:
     resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuid@11.1.1:
@@ -16383,6 +16461,7 @@ packages:
 
   uuid@9.0.1:
     resolution: {integrity: sha512-b+1eJOlsR9K8HJpow9Ok3fiWOWSIcIzXodvv0rQjVoOVNpWMpxf1wZNpt4y9h10odCNrqnYp1OBzRktckBe3sA==}
+    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
     hasBin: true
 
   uuidv7@0.4.4:
@@ -16665,6 +16744,7 @@ packages:
   whatwg-encoding@3.1.1:
     resolution: {integrity: sha512-6qN4hJdMwfYBtE3YBTTHhoeuUrDBPZmbQaxWAqSALV/MeEnR5z1xd8UKud2RAkFoPkmB+hli1TZSnyi84xz1vQ==}
     engines: {node: '>=18'}
+    deprecated: Use @exodus/bytes instead for a more spec-conformant and faster implementation
 
   whatwg-mimetype@4.0.0:
     resolution: {integrity: sha512-QaKxh0eNIi2mE9p2vEdzfagOKHCcj1pJ56EEHGQOVxp8r9/iszLUUV7v89x9O1p/T+NlTM5W7jW6+cz4Fq1YVg==}
@@ -16921,6 +17001,9 @@ packages:
 
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
+  zod@4.6.5:
+    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
 
   zustand@4.5.7:
     resolution: {integrity: sha512-CHOUy7mu3lbD6o6LJLfllpjkzhHXSBlX8B9+qPddUsIfeF5S/UZ5q0kmCsnRqT1UHFQZchNFDDzMbQsuesHWlw==}
@@ -18255,16 +18338,6 @@ snapshots:
       '@better-auth/core': 1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2)
       '@better-auth/utils': 0.4.2
 
-  '@better-auth/oauth-provider@1.7.2(@better-auth/core@1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11))(better-call@1.4.0(zod@4.4.3))':
-    dependencies:
-      '@better-auth/core': 1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2)
-      '@better-auth/utils': 0.4.2
-      '@better-fetch/fetch': 1.3.1
-      better-auth: 1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11)
-      better-call: 1.4.0(zod@4.4.3)
-      jose: 6.2.10
-      zod: 4.4.3
-
   '@better-auth/oauth-provider@1.7.2(@better-auth/core@1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.3.3(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(@types/node@20.19.43)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11))(better-call@1.4.0(zod@4.4.3))':
     dependencies:
       '@better-auth/core': 1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2)
@@ -18274,6 +18347,16 @@ snapshots:
       better-call: 1.4.0(zod@4.4.3)
       jose: 6.2.10
       zod: 4.4.3
+
+  '@better-auth/oauth-provider@1.7.5(@better-auth/core@1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11))(better-call@1.4.0(zod@4.4.3))':
+    dependencies:
+      '@better-auth/core': 1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2)
+      '@better-auth/utils': 0.4.2
+      '@better-fetch/fetch': 1.3.1
+      better-auth: 1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11)
+      better-call: 1.4.0(zod@4.4.3)
+      jose: 6.2.10
+      zod: 4.6.5
 
   '@better-auth/passkey@1.7.2(@better-auth/core@1.7.2(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.1)(better-call@1.4.0(zod@4.4.3))(jose@6.2.10)(kysely@0.29.5)(nanostores@1.5.2))(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(better-auth@1.7.2(@opentelemetry/api@1.9.1)(@prisma/client@7.9.1(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(typescript@5.7.3))(mysql2@3.15.3)(next@16.2.12(@opentelemetry/api@1.9.1)(@playwright/test@1.62.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.0)(prisma@7.9.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(magicast@0.5.4)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.7.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11))(better-call@1.4.0(zod@4.4.3))(nanostores@1.5.2)':
     dependencies:
@@ -22318,11 +22401,26 @@ snapshots:
 
   '@radix-ui/rect@1.1.3': {}
 
+  '@react-email/render@1.1.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      html-to-text: 9.0.5
+      prettier: 3.9.6
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+      react-promise-suspense: 0.3.4
+
   '@react-pdf/fns@3.1.3': {}
 
   '@react-pdf/font@4.1.1':
     dependencies:
       '@react-pdf/types': 2.13.1
+      fontkit: 2.0.4
+      is-url: 1.2.4
+      pdfkit: 0.20.1
+
+  '@react-pdf/font@4.1.2':
+    dependencies:
+      '@react-pdf/types': 2.14.0
       fontkit: 2.0.4
       is-url: 1.2.4
       pdfkit: 0.20.1
@@ -22350,6 +22448,19 @@ snapshots:
       queue: 6.0.2
       yoga-layout: 3.2.1
 
+  '@react-pdf/layout@5.2.0':
+    dependencies:
+      '@react-pdf/fns': 3.1.3
+      '@react-pdf/image': 3.1.2
+      '@react-pdf/paginate': 1.0.1
+      '@react-pdf/primitives': 4.4.0
+      '@react-pdf/stylesheet': 6.3.2
+      '@react-pdf/textkit': 7.0.1
+      '@react-pdf/types': 2.14.0
+      emoji-regex-xs: 1.0.0
+      queue: 6.0.2
+      yoga-layout: 3.2.1
+
   '@react-pdf/paginate@1.0.1': {}
 
   '@react-pdf/primitives@4.4.0': {}
@@ -22373,6 +22484,19 @@ snapshots:
       parse-svg-path: 0.1.2
       svg-arc-to-cubic-bezier: 3.2.0
 
+  '@react-pdf/render@4.7.0':
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@react-pdf/fns': 3.1.3
+      '@react-pdf/primitives': 4.4.0
+      '@react-pdf/textkit': 7.0.1
+      '@react-pdf/types': 2.14.0
+      abs-svg-path: 0.1.1
+      color-string: 2.1.4
+      normalize-svg-path: 1.1.0
+      parse-svg-path: 0.1.2
+      svg-arc-to-cubic-bezier: 3.2.0
+
   '@react-pdf/renderer@4.8.1(react@19.2.6)':
     dependencies:
       '@babel/runtime': 7.29.7
@@ -22390,10 +22514,36 @@ snapshots:
       queue: 6.0.2
       react: 19.2.6
 
+  '@react-pdf/renderer@4.9.0(react@19.2.6)':
+    dependencies:
+      '@babel/runtime': 7.29.7
+      '@react-pdf/fns': 3.1.3
+      '@react-pdf/font': 4.1.2
+      '@react-pdf/layout': 5.2.0
+      '@react-pdf/primitives': 4.4.0
+      '@react-pdf/reconciler': 2.0.0(react@19.2.6)
+      '@react-pdf/render': 4.7.0
+      '@react-pdf/types': 2.14.0
+      events: 3.3.0
+      object-assign: 4.1.1
+      pdfkit: 0.20.1
+      prop-types: 15.8.1
+      queue: 6.0.2
+      react: 19.2.6
+
   '@react-pdf/stylesheet@6.3.1':
     dependencies:
       '@react-pdf/fns': 3.1.3
       '@react-pdf/types': 2.13.1
+      color-string: 2.1.4
+      hsl-to-hex: 1.0.0
+      media-engine: 2.0.0
+      postcss-value-parser: 4.2.0
+
+  '@react-pdf/stylesheet@6.3.2':
+    dependencies:
+      '@react-pdf/fns': 3.1.3
+      '@react-pdf/types': 2.14.0
       color-string: 2.1.4
       hsl-to-hex: 1.0.0
       media-engine: 2.0.0
@@ -22415,6 +22565,12 @@ snapshots:
       '@react-pdf/font': 4.1.1
       '@react-pdf/primitives': 4.4.0
       '@react-pdf/stylesheet': 6.3.1
+
+  '@react-pdf/types@2.14.0':
+    dependencies:
+      '@react-pdf/font': 4.1.2
+      '@react-pdf/primitives': 4.4.0
+      '@react-pdf/stylesheet': 6.3.2
 
   '@redfernelec/tauri-plugin-hid-api@0.2.3':
     dependencies:
@@ -23363,6 +23519,11 @@ snapshots:
       - supports-color
 
   '@sec-ant/readable-stream@0.4.1': {}
+
+  '@selderee/plugin-htmlparser2@0.11.0':
+    dependencies:
+      domhandler: 5.0.3
+      selderee: 0.11.0
 
   '@sentry-internal/browser-utils@8.55.2':
     dependencies:
@@ -28069,6 +28230,8 @@ snapshots:
 
   fast-decode-uri-component@1.0.1: {}
 
+  fast-deep-equal@2.0.1: {}
+
   fast-deep-equal@3.1.3: {}
 
   fast-fifo@1.3.2: {}
@@ -28828,7 +28991,22 @@ snapshots:
 
   html-parse-stringify@4.0.1: {}
 
+  html-to-text@9.0.5:
+    dependencies:
+      '@selderee/plugin-htmlparser2': 0.11.0
+      deepmerge: 4.3.1
+      dom-serializer: 2.0.0
+      htmlparser2: 8.0.2
+      selderee: 0.11.0
+
   html-url-attributes@3.0.1: {}
+
+  htmlparser2@8.0.2:
+    dependencies:
+      domelementtype: 2.3.0
+      domhandler: 5.0.3
+      domutils: 3.2.2
+      entities: 4.5.0
 
   http-cache-semantics@4.2.0: {}
 
@@ -30280,6 +30458,8 @@ snapshots:
     dependencies:
       language-subtag-registry: 0.3.23
 
+  leac@0.6.0: {}
+
   leven@3.1.0: {}
 
   leven@4.1.0: {}
@@ -31634,6 +31814,11 @@ snapshots:
     dependencies:
       entities: 8.0.0
 
+  parseley@0.12.1:
+    dependencies:
+      leac: 0.6.0
+      peberminta: 0.9.0
+
   parseurl@1.3.3: {}
 
   path-exists@3.0.0: {}
@@ -31680,6 +31865,8 @@ snapshots:
       fontkit: 2.0.4
       linebreak: 1.1.0
       png-js: 2.0.0
+
+  peberminta@0.9.0: {}
 
   peek-stream@1.1.3:
     dependencies:
@@ -32282,6 +32469,10 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.14
 
+  react-promise-suspense@0.3.4:
+    dependencies:
+      fast-deep-equal: 2.0.1
+
   react-redux@9.3.0(@types/react@19.2.14)(react@19.2.6)(redux@5.0.1):
     dependencies:
       '@types/use-sync-external-store': 0.0.6
@@ -32597,6 +32788,13 @@ snapshots:
   reselect@5.2.0: {}
 
   reselect@5.3.0: {}
+
+  resend@4.8.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+    dependencies:
+      '@react-email/render': 1.1.2(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+    transitivePeerDependencies:
+      - react
+      - react-dom
 
   resolve-alpn@1.2.1: {}
 
@@ -32984,6 +33182,10 @@ snapshots:
   seek-bzip@2.0.0:
     dependencies:
       commander: 6.2.1
+
+  selderee@0.11.0:
+    dependencies:
+      parseley: 0.12.1
 
   semifies@1.0.0: {}
 
@@ -35231,6 +35433,8 @@ snapshots:
   zod@3.25.76: {}
 
   zod@4.4.3: {}
+
+  zod@4.6.5: {}
 
   zustand@4.5.7(@types/react@19.2.14)(immer@11.1.18)(react@19.2.6):
     dependencies:
