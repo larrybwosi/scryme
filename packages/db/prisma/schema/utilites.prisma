@@ -532,3 +532,16 @@ model PosReleaseBinary {
   @@index([platform, variant, isLatest])
   @@map("pos_release_binary")
 }
+
+model SystemDocumentSetting {
+  id           String   @id @default(cuid())
+  documentType String   // "INVOICE", "RECEIPT", "WAYBILL", "DELIVERY_NOTE"
+  templateId   String   @default("") // Empty string for category-level setting, or specific templateId
+  isEnabled    Boolean  @default(false)
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@unique([documentType, templateId])
+  @@index([documentType])
+  @@map("system_document_setting")
+}

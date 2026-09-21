@@ -40,7 +40,7 @@ test.describe('Supermarket POS Flow', () => {
             }
         };
 
-        if (cmd === 'get_device_config' || cmd.includes('get_device_config')) return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
+        if (cmd === 'get_device_config') return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
         if (cmd === 'get_locations_command') return { locations: [{
             id: 'test-loc',
             name: 'Test Store',
