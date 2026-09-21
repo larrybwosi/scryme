@@ -2,13 +2,14 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Supermarket POS Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Forward console logs from the page
     page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    page.on('pageerror', err => console.error('PAGE ERROR EXCEPTION:', err));
 
     const currentTimestamp = Date.now();
 
     // 1. Mock Tauri APIs and Inject state
     await page.addInitScript(() => {
+      (window as any).process = (window as any).process || { env: {} };
       const transformCallback = (cb) => {
           const id = Math.floor(Math.random() * 1000000);
           (window as any)[`_tauri_cb_${id}`] = cb;
@@ -86,12 +87,15 @@ test.describe('Supermarket POS Flow', () => {
         if (cmd.includes('get_unread_notification_count')) return 0;
         if (cmd.includes('get_notification_history')) return [];
         if (cmd.includes('app_version') || cmd.includes('app|version')) return '3.3.0';
+        if (cmd.includes('get_shift')) return { id: 'test-shift', status: 'open' };
         if (cmd.includes('check_kds_hub_status')) return false;
         if (cmd.includes('get_hub_status')) return { is_running: false };
         if (cmd.includes('update_base_url')) return null;
         if (cmd.includes('restore_member_session')) return null;
         if (cmd.includes('store|load') || cmd.includes('store|get')) return null;
-        if (cmd.includes('event|listen') || cmd.includes('updater|check') || cmd.includes('log|log')) return null;
+        if (cmd.includes('plugin:os') || cmd.includes('os|')) return 'linux';
+        if (cmd.includes('plugin:log') || cmd.includes('log|')) return null;
+        if (cmd.includes('event|listen') || cmd.includes('updater|check')) return null;
 
         return null;
       };
