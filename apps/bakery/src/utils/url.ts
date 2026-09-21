@@ -7,5 +7,5 @@ export const sanitizeApiUrl = (url: string): string => {
   const trimmed = url.trim();
   if (!trimmed) return trimmed;
 
-  return trimmed.replace(/\/api\/v3\/?$/, '').replace(/\/+$/, '');
+  return trimmed.replace(/\/api\/(v2|v3)\/?$/, '').replace(/\/+$/, '');
 };

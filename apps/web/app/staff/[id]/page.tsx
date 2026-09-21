@@ -59,6 +59,8 @@ export default async function StaffMemberPage({
   const canManage =
     role === "OWNER" ||
     role === "ADMIN" ||
+    role === "MEMBER" ||
+    role === "DEVELOPER" ||
     (role === "MANAGER" && !!settings?.managersCanManageShifts);
 
   if (!result.success || !result.data) {
@@ -78,7 +80,7 @@ export default async function StaffMemberPage({
 
   return (
     <Suspense>
-      <div className="flex flex-col gap-8 p-8 bg-background min-h-screen overflow-y-scroll">
+      <div className="flex flex-col gap-8 p-8 bg-background min-h-screen">
         <StaffDetailHeader member={member} />
 
         <Tabs defaultValue="overview" className="space-y-6">

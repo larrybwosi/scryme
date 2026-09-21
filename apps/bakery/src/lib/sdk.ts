@@ -1,4 +1,8 @@
+import { ScrymeClientSDK } from '@scryme/sdk/client';
+import { invoke } from '@tauri-apps/api/core';
+import { sanitizeApiUrl } from '@/utils/url';
 import { tauriInvoke } from './tauri-bridge';
+import { API_ROUTES, getOrgSlug } from '@/config/api';
 
 export const isTauri = () => {
   return (
@@ -11,16 +15,48 @@ export const isOfflineMode = () => {
   return typeof window !== 'undefined' && (localStorage.getItem('bakery_local_mode') === 'true' || !window.navigator.onLine);
 };
 
+const getInitialApiUrl = () => {
+  const customUrl = typeof window !== 'undefined' ? localStorage.getItem('bakery_api_url') : null;
+  const envUrl = import.meta.env.VITE_API_URL;
+  return sanitizeApiUrl(customUrl || envUrl || 'https://api.scryme.tech');
+};
+
+const getInitialOrgSlug = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('bakery_org_slug') || 'default-org';
+  }
+  return 'default-org';
+};
+
+export const scrymeSDK = new ScrymeClientSDK({
+  clientId: 'bakery-app',
+  orgSlug: getInitialOrgSlug(),
+  baseURL: getInitialApiUrl(),
+});
+
+let memberTokenState: string | null = null;
+let apiKeyState: string | null = null;
+
 export const setMemberToken = (token: string) => {
+  memberTokenState = token;
   if (typeof window !== 'undefined') {
     localStorage.setItem('bakery_member_token', token);
   }
 };
 
 export const setApiKey = (key: string) => {
+  apiKeyState = key;
   if (typeof window !== 'undefined') {
     localStorage.setItem('bakery_api_key', key);
   }
+};
+
+const formatApiPath = (url: string): string => {
+  if (!url || url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/api/')) return url;
+
+  const orgSlug = getOrgSlug();
+  return `/api/v3/${orgSlug}/production${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
 const unwrapResponse = (data: any) => {
@@ -38,7 +74,7 @@ const unwrapResponse = (data: any) => {
 
 export const client = {
   get: async <T = any>(url: string, config?: any): Promise<any> => {
-    let path = url;
+    let path = formatApiPath(url);
     if (config?.params) {
       const searchParams = new URLSearchParams();
       Object.entries(config.params).forEach(([key, value]) => {
@@ -58,92 +94,108 @@ export const client = {
     return unwrapResponse(resData);
   },
 
-  post: async <T = any>(url: string, data?: any): Promise<any> => {
+  post: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
+    const formattedUrl = formatApiPath(url);
     const resData = await tauriInvoke<T>('authenticated_api_request', {
       method: 'POST',
-      path: url,
+      path: formattedUrl,
       body: data,
     });
     return unwrapResponse(resData);
   },
 
-  put: async <T = any>(url: string, data?: any): Promise<any> => {
+  put: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
+    const formattedUrl = formatApiPath(url);
     const resData = await tauriInvoke<T>('authenticated_api_request', {
       method: 'PUT',
-      path: url,
+      path: formattedUrl,
       body: data,
     });
     return unwrapResponse(resData);
   },
 
-  patch: async <T = any>(url: string, data?: any): Promise<any> => {
+  patch: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
+    const formattedUrl = formatApiPath(url);
     const resData = await tauriInvoke<T>('authenticated_api_request', {
       method: 'PATCH',
-      path: url,
+      path: formattedUrl,
       body: data,
     });
     return unwrapResponse(resData);
   },
 
-  delete: async <T = any>(url: string): Promise<any> => {
+  delete: async <T = any>(url: string, config?: any): Promise<any> => {
+    const formattedUrl = formatApiPath(url);
     const resData = await tauriInvoke<T>('authenticated_api_request', {
       method: 'DELETE',
-      path: url,
+      path: formattedUrl,
     });
     return unwrapResponse(resData);
+  },
+
+  setBaseURL: (url: string) => {
+    scrymeSDK.axiosInstance.defaults.baseURL = url;
+  },
+
+  getBaseURL: () => {
+    return scrymeSDK.axiosInstance.defaults.baseURL || '';
   },
 };
 
 export const bakery = {
-  getBatches: (filters?: any) => tauriInvoke('get_batches', { filters }),
+  getBatches: (filters?: any) => client.get('/batches', { params: filters }),
   getBatch: (id: string) => client.get(`/batches/${id}`),
-  getBatchTraceability: (id: string) => tauriInvoke('get_batch_traceability', { id }),
-  createBatch: (data: any) => tauriInvoke('create_batch', { userId: 'active-user', input: data }),
-  updateBatch: (id: string, data: any) => tauriInvoke('update_batch', { userId: 'active-user', input: { id, ...data } }),
-  deleteBatch: (id: string) => tauriInvoke('delete_batch', { userId: 'active-user', id }),
-  startBatch: (id: string) => tauriInvoke('update_batch_status', { userId: 'active-user', id, status: 'IN_PROGRESS' }),
-  completeBatch: (batchId: string, data: any) => tauriInvoke('update_batch_status', { userId: 'active-user', id: batchId, status: 'COMPLETED' }),
-  cancelBatch: (id: string) => tauriInvoke('update_batch_status', { userId: 'active-user', id, status: 'CANCELLED' }),
+  getBatchTraceability: (id: string) => client.get(`/batches/${id}/traceability`),
+  createBatch: (data: any) => client.post('/batches', data),
+  updateBatch: (id: string, data: any) => client.patch(`/batches/${id}`, data),
+  deleteBatch: (id: string) => client.delete(`/batches/${id}`),
+  startBatch: (id: string) => client.post(`/batches/${id}/start`),
+  completeBatch: (batchId: string, data: any) => client.post(`/batches/${batchId}/complete`, data),
+  cancelBatch: (id: string) => client.post(`/batches/${id}/cancel`),
   duplicateBatch: (id: string) => client.post(`/batches/${id}/duplicate`),
 
-  getRecipes: () => tauriInvoke('get_recipes'),
+  getRecipes: () => client.get('/recipes'),
   getRecipe: (id: string) => client.get(`/recipes/${id}`),
-  createRecipe: (data: any) => tauriInvoke('create_recipe', { userId: 'active-user', input: data }),
-  updateRecipe: (id: string, data: any) => tauriInvoke('update_recipe', { userId: 'active-user', recipe: { id, ...data } }),
-  deleteRecipe: (id: string) => tauriInvoke('delete_recipe', { userId: 'active-user', id }),
+  createRecipe: (data: any) => client.post('/recipes', data),
+  updateRecipe: (id: string, data: any) => client.patch(`/recipes/${id}`, data),
+  deleteRecipe: (id: string) => client.delete(`/recipes/${id}`),
   generateRecipeAi: (prompt: string) => client.post('/recipes/generate', { prompt }),
 
-  getTemplates: () => tauriInvoke('get_templates'),
-  createTemplate: (data: any) => tauriInvoke('create_template', { userId: 'active-user', input: data }),
-  updateTemplate: (id: string, data: any) => tauriInvoke('update_template', { userId: 'active-user', template: { id, ...data } }),
-  deleteTemplate: (id: string) => tauriInvoke('delete_template', { userId: 'active-user', id }),
+  getTemplates: () => client.get('/templates'),
+  createTemplate: (data: any) => client.post('/templates', data),
+  updateTemplate: (id: string, data: any) => client.patch(`/templates/${id}`, data),
+  deleteTemplate: (id: string) => client.delete(`/templates/${id}`),
   duplicateTemplate: (id: string) => client.post(`/templates/${id}/duplicate`),
   createBatchFromTemplate: (id: string) => client.post(`/templates/${id}/create-batch`),
 
-  getSettings: () => tauriInvoke('get_settings', { organizationId: 'local-org' }),
-  updateSettings: (data: any) => tauriInvoke('update_settings', { userId: 'active-user', settings: data }),
+  getSettings: () => client.get('/settings'),
+  updateSettings: (data: any) => client.patch('/settings', data),
 
-  getBakers: () => tauriInvoke('get_bakers'),
-  addBaker: (data: any) => tauriInvoke('create_baker', { userId: 'active-user', baker: data }),
-  updateBaker: (id: string, data: any) => tauriInvoke('update_baker', { userId: 'active-user', baker: { id, ...data } }),
-  removeBaker: (id: string) => tauriInvoke('delete_baker', { userId: 'active-user', id }),
+  getBakers: () => client.get('/bakers'),
+  addBaker: (data: any) => client.post('/bakers', data),
+  updateBaker: (id: string, data: any) => client.patch(`/bakers/${id}`, data),
+  removeBaker: (id: string) => client.delete(`/bakers/${id}`),
 
-  getOverview: () => tauriInvoke('get_overview', { organizationId: 'local-org' }),
+  getOverview: () => client.get('/overview'),
 
-  getCategories: () => tauriInvoke('get_categories'),
-  createCategory: (data: any) => tauriInvoke('create_category', { userId: 'active-user', category: data }),
-  updateCategory: (id: string, data: any) => tauriInvoke('update_category', { userId: 'active-user', category: { id, ...data } }),
-  deleteCategory: (id: string) => tauriInvoke('delete_category', { userId: 'active-user', id }),
+  getCategories: () => client.get('/categories'),
+  createCategory: (data: any) => client.post('/categories', data),
+  updateCategory: (id: string, data: any) => client.patch(`/categories/${id}`, data),
+  deleteCategory: (id: string) => client.delete(`/categories/${id}`),
 
-  getIngredients: () => tauriInvoke('get_ingredients'),
+  getIngredients: () => client.get('/ingredients'),
+  createIngredient: (data: any) => client.post('/ingredients', data),
+  updateIngredient: (id: string, data: any) => client.patch(`/ingredients/${id}`, data),
+  deleteIngredient: (id: string) => client.delete(`/ingredients/${id}`),
 
   getAuthStatus: () => client.get('/auth/status'),
   sso: () => client.post('/auth/sso'),
-  logout: () => tauriInvoke('logout_cloud_command'),
+  logout: () => client.post('/auth/logout'),
   getMe: () => client.get('/devices/me'),
 };
 
 const catalog = {
+  ...scrymeSDK.catalog,
   getProducts: (params?: any) => client.get('/catalog/products', { params }),
   createProduct: (data: any) => client.post('/catalog/products', data),
   getProduct: (productId: string) => client.get(`/catalog/products/${productId}`),
@@ -158,20 +210,24 @@ const catalog = {
 };
 
 const pos = {
-  listLocations: () => tauriInvoke('get_locations_command'),
+  ...scrymeSDK.pos,
+  listLocations: () => client.get(API_ROUTES.INVENTORY.LOCATIONS()),
 };
 
 const inventory = {
+  ...scrymeSDK.inventory,
   list: () => client.get('/inventory'),
 };
 
 const auth = {
+  ...scrymeSDK.auth,
   terminalLogin: (cardId: string, pin: string, locationId?: string) => {
-    return tauriInvoke('login_cloud_command', { cardId, pin, locationId });
+    return client.post(API_ROUTES.POS.LOGIN(), { cardId, pin, locationId });
   },
 };
 
 const sdk = {
+  ...scrymeSDK,
   client,
   bakery,
   catalog,
@@ -198,22 +254,26 @@ if (typeof window !== 'undefined') {
     }
   }
 
-  tauriInvoke<any>('get_settings', { organizationId: 'local-org' })
+  invoke<any>('get_settings', { organizationId: 'local-org' })
     .then((settings) => {
       if (settings?.apiEndpointUrl) {
-        localStorage.setItem('bakery_api_url', settings.apiEndpointUrl);
-        tauriInvoke('update_bakery_api_url', { apiUrl: settings.apiEndpointUrl }).catch(console.error);
+        const sanitizedUrl = sanitizeApiUrl(settings.apiEndpointUrl);
+        localStorage.setItem('bakery_api_url', sanitizedUrl);
+        if (client.getBaseURL() !== sanitizedUrl) {
+          client.setBaseURL(sanitizedUrl);
+        }
+        tauriInvoke('update_bakery_api_url', { apiUrl: sanitizedUrl }).catch(console.error);
       }
     })
     .catch((err) => console.error('Failed to load settings for API URL', err));
 
   if (!isOfflineMode()) {
-    tauriInvoke<any>('get_device_config')
+    invoke<any>('get_device_config')
       .then((config) => {
         if (config?.deviceKey) {
           setApiKey(config.deviceKey);
         } else {
-          return tauriInvoke<string | null>('get_provisioned_api_key');
+          return invoke<string | null>('get_provisioned_api_key');
         }
       })
       .then((apiKey) => {

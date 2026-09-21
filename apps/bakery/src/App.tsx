@@ -10,6 +10,7 @@ import OverviewPage from './pages/OverviewPage'
 import RecipesPage from './pages/RecipesPage'
 import TemplatesPage from './pages/TemplatesPage'
 import BatchesPage from './pages/BatchesPage'
+import IngredientsPage from './pages/IngredientsPage'
 import CategoriesPage from './pages/CategoriesPage'
 import BakersPage from './pages/BakersPage'
 import SettingsPage from './pages/SettingsPage'
@@ -41,6 +42,7 @@ function AppContent() {
           <Route path="/recipes" element={<RecipesPage />} />
           <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/batches" element={<BatchesPage />} />
+          <Route path="/ingredients" element={<IngredientsPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/bakers" element={<BakersPage />} />
           <Route path="/deliveries" element={<DeliveriesPage />} />

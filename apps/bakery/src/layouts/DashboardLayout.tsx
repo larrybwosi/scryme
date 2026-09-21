@@ -42,6 +42,7 @@ const navItems = [
   { id: 'recipes', label: 'Master Recipes', icon: BookOpen, path: '/recipes' },
   { id: 'templates', label: 'Production Templates', icon: File, path: '/templates' },
   { id: 'batches', label: 'Batch Execution', icon: Clock, path: '/batches' },
+  { id: 'ingredients', label: 'Inventory Management', icon: Package, path: '/ingredients' },
   { id: 'categories', label: 'Classifications', icon: PieChart, path: '/categories' },
   { id: 'bakers', label: 'Operator Matrix', icon: Users, path: '/bakers' },
   { id: 'deliveries', label: 'Delivery Tracking', icon: Truck, path: '/deliveries' },

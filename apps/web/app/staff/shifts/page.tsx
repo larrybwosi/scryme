@@ -33,6 +33,8 @@ export default async function ShiftsPage() {
   const canManage =
     role === "OWNER" ||
     role === "ADMIN" ||
+    role === "MEMBER" ||
+    role === "DEVELOPER" ||
     (role === "MANAGER" && !!settings?.managersCanManageShifts);
 
   const now = new Date();
