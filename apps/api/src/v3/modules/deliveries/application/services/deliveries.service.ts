@@ -1,3 +1,4 @@
+import { BenefitType, WalletTxType } from "@repo/db";
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { type V3ApiContext } from "@repo/shared/api/v3";
@@ -65,7 +66,7 @@ export class DeliveriesService {
 
     return this.prisma.client.deliveryPartner.update({
       where: { id },
-      data,
+      data: data as any,
     });
   }
 
@@ -86,7 +87,7 @@ export class DeliveriesService {
           partnerId: id,
           amount: data.amount,
           balanceAfter: newBalance,
-          transactionType: data.type || "ADJUSTMENT",
+          transactionType: (data.type as WalletTxType) || WalletTxType.ADJUSTMENT,
           notes: data.notes,
         },
       }),

@@ -21,12 +21,8 @@ import {
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
-import {
-  type V3ApiContext,
-  getPosProducts,
-  getPosProductsDelta,
-  type V2ApiContext,
-} from "@repo/shared/api/v3";
+import { type V3ApiContext } from "@repo/shared/api/v3";
+import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v2";
 import { ProcessSaleDto } from "../../application/dto/sale.dto";
 import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";
@@ -142,7 +138,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Check-out successful" })
   async checkOut(@v3Context() ctx: V3ApiContext, @Body() body: PosCheckOutDto) {
-    return this.posService.checkOut(ctx as unknown as V2ApiContext, body);
+    return this.posService.checkOut(ctx as any, body);
   }
 
   @Get("attendance/status")
@@ -155,7 +151,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Attendance status" })
   async getAttendanceStatus(@v3Context() ctx: V3ApiContext) {
-    return this.posService.getAttendanceStatus(ctx as unknown as V2ApiContext);
+    return this.posService.getAttendanceStatus(ctx as any);
   }
 
   @Get("me")
@@ -360,7 +356,7 @@ export class PosController {
     if (body.transactionId && body.amount && body.method && !body.saleId) {
       body.saleId = body.transactionId;
     }
-    return this.posService.recordPayment(ctx as unknown as V2ApiContext, body);
+    return this.posService.recordPayment(ctx as any, body);
   }
 
   @Get("incoming")
@@ -372,7 +368,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Incoming shipments" })
   async getIncoming(@v3Context() ctx: V3ApiContext, @Query() query: any) {
-    return this.posService.getIncoming(ctx as unknown as V2ApiContext, query);
+    return this.posService.getIncoming(ctx as any, query);
   }
 
   @Post("transaction/scan")
@@ -387,7 +383,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body("code") code: string,
   ) {
-    return this.posService.scanTransaction(ctx as unknown as V2ApiContext, code);
+    return this.posService.scanTransaction(ctx as any, code);
   }
 
   @Post("transactions/scan")
@@ -402,7 +398,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body("code") code: string,
   ) {
-    return this.posService.scanTransaction(ctx as unknown as V2ApiContext, code);
+    return this.posService.scanTransaction(ctx as any, code);
   }
 
   @Post("ably-auth/context")
@@ -414,7 +410,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Realtime token details" })
   async ablyAuthContext(@v3Context() ctx: V3ApiContext) {
-    return this.posService.ablyAuth(ctx as unknown as V2ApiContext);
+    return this.posService.ablyAuth(ctx as any);
   }
 
   @Get("inventory")
@@ -426,7 +422,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "POS inventory" })
   async getInventory(@v3Context() ctx: V3ApiContext, @Query() query: any) {
-    return this.posService.getInventory(ctx as unknown as V2ApiContext, query);
+    return this.posService.getInventory(ctx as any, query);
   }
 
   @Post("inventory")
@@ -442,7 +438,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosAdjustStockDto,
   ) {
-    return this.posService.adjustStock(ctx as unknown as V2ApiContext, body);
+    return this.posService.adjustStock(ctx as any, body);
   }
 
   @Get("sync")
@@ -497,7 +493,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosCreateCustomerDto,
   ) {
-    return this.posService.createCustomer(ctx as unknown as V2ApiContext, body);
+    return this.posService.createCustomer(ctx as any, body);
   }
 
   @Post("deliveries/dispatch")
@@ -514,7 +510,7 @@ export class PosController {
     @Query("transactionId") transactionId: string,
     @Body() body: PosDispatchDeliveryDto,
   ) {
-    return this.posService.dispatchDelivery(ctx as unknown as V2ApiContext, transactionId, body);
+    return this.posService.dispatchDelivery(ctx as any, transactionId, body);
   }
 
   @Post("deliveries/reconcile-pod")
@@ -530,7 +526,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosReconcileDeliveryDto,
   ) {
-    return this.posService.reconcileDelivery(ctx as unknown as V2ApiContext, body);
+    return this.posService.reconcileDelivery(ctx as any, body);
   }
 
   @Get("stock-requests")
@@ -542,7 +538,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Stock requests" })
   async listStockRequests(@v3Context() ctx: V3ApiContext) {
-    return this.posService.listStockRequests(ctx as unknown as V2ApiContext);
+    return this.posService.listStockRequests(ctx as any);
   }
 
   @Post("stock-requests")
@@ -558,7 +554,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosCreateStockRequestDto,
   ) {
-    return this.posService.createStockRequest(ctx as unknown as V2ApiContext, body);
+    return this.posService.createStockRequest(ctx as any, body);
   }
 
   @Post("stock-requests/:id/cancel")
@@ -574,7 +570,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Param("id") id: string,
   ) {
-    return this.posService.cancelStockRequest(ctx as unknown as V2ApiContext, id);
+    return this.posService.cancelStockRequest(ctx as any, id);
   }
 
   @Get("pricing")
@@ -589,7 +585,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Query("lastSync") lastSync?: string,
   ) {
-    return this.posService.getPricing(ctx as unknown as V2ApiContext, lastSync);
+    return this.posService.getPricing(ctx as any, lastSync);
   }
 
   @Get("pricing/sync")
@@ -604,7 +600,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Query("lastSync") lastSync?: string,
   ) {
-    return this.posService.getPricing(ctx as unknown as V2ApiContext, lastSync);
+    return this.posService.getPricing(ctx as any, lastSync);
   }
 
   @Post("shifts/sync")
@@ -619,7 +615,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosShiftSyncDto,
   ) {
-    return this.posService.syncShifts(ctx as unknown as V2ApiContext, body);
+    return this.posService.syncShifts(ctx as any, body);
   }
 
   @Get("waybill/:id")
@@ -631,7 +627,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Waybill document details" })
   async getWaybill(@v3Context() ctx: V3ApiContext, @Param("id") id: string) {
-    return this.posService.getWaybill(ctx as unknown as V2ApiContext, id);
+    return this.posService.getWaybill(ctx as any, id);
   }
 
   @Get("packing-list/:id")
@@ -646,7 +642,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Param("id") id: string,
   ) {
-    return this.posService.getPackingList(ctx as unknown as V2ApiContext, id);
+    return this.posService.getPackingList(ctx as any, id);
   }
 
   @Get("inventory/requests")
@@ -658,7 +654,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Inventory requests" })
   async listInventoryRequests(@v3Context() ctx: V3ApiContext) {
-    return this.posService.listStockRequests(ctx as unknown as V2ApiContext);
+    return this.posService.listStockRequests(ctx as any);
   }
 
   @Post("inventory/requests")
@@ -674,7 +670,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosCreateStockRequestDto,
   ) {
-    return this.posService.createStockRequest(ctx as unknown as V2ApiContext, body);
+    return this.posService.createStockRequest(ctx as any, body);
   }
 
   @Post("inventory/process")
@@ -690,7 +686,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosAdjustStockDto,
   ) {
-    return this.posService.adjustStock(ctx as unknown as V2ApiContext, body);
+    return this.posService.adjustStock(ctx as any, body);
   }
 
   @Post("purchases/:id/receive")
@@ -707,7 +703,7 @@ export class PosController {
     @Param("id") id: string,
     @Body() body: any,
   ) {
-    return this.posService.receivePurchase(ctx as unknown as V2ApiContext, id, body);
+    return this.posService.receivePurchase(ctx as any, id, body);
   }
 
   @Post("inventory/transfers/:id/receive")
@@ -724,7 +720,7 @@ export class PosController {
     @Param("id") id: string,
     @Body() body: any,
   ) {
-    return this.posService.receiveTransfer(ctx as unknown as V2ApiContext, id, body);
+    return this.posService.receiveTransfer(ctx as any, id, body);
   }
 
   @Post("orders")
@@ -737,7 +733,7 @@ export class PosController {
   })
   @ApiResponse({ status: 201, description: "Order created" })
   async createOrder(@v3Context() ctx: V3ApiContext, @Body() body: any) {
-    return this.posSaleService.handleOrder(ctx as unknown as V2ApiContext, body);
+    return this.posSaleService.handleOrder(ctx as any, body);
   }
 
   @Get("drivers")
@@ -749,7 +745,7 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "List of drivers" })
   async getDrivers(@v3Context() ctx: V3ApiContext) {
-    return this.posService.getDrivers(ctx as unknown as V2ApiContext);
+    return this.posService.getDrivers(ctx as any);
   }
 
   @Post("inventory/transfers")
@@ -765,7 +761,7 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosCreateStockTransferDto,
   ) {
-    return this.posService.createStockTransfer(ctx as unknown as V2ApiContext, body);
+    return this.posService.createStockTransfer(ctx as any, body);
   }
 
   @Post("petty-cash")
@@ -825,6 +821,6 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosRegisterBarcodeDto,
   ) {
-    return this.posService.registerBarcode(ctx as unknown as V2ApiContext, body);
+    return this.posService.registerBarcode(ctx as any, body);
   }
 }

@@ -19,7 +19,7 @@ import {
 import { Button } from '@repo/ui/components/ui/button';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { useBakeryAuth, isStaffMode } from '@/lib/providers/auth-context';
+import { useAuth } from '@/lib/providers/auth-context';
 import { UserSwitcher } from '@/components/UserSwitcher';
 
 const NAV_ITEMS = [
@@ -36,10 +36,11 @@ const NAV_ITEMS = [
 export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentMember, clearMemberSession } = useBakeryAuth();
+  const { user, logout } = useAuth();
+  const currentMember = user;
 
   const handleLogout = () => {
-    clearMemberSession();
+    logout();
     navigate('/login');
   };
 
@@ -73,7 +74,7 @@ export default function DashboardLayout() {
                   </div>
                   <div className="overflow-hidden">
                     <p className="text-xs font-bold text-slate-200 truncate">
-                      {currentMember.firstName} {currentMember.lastName}
+                      {currentMember.name}
                     </p>
                     <p className="text-[10px] text-amber-400/90 font-medium truncate capitalize flex items-center gap-1">
                       <Briefcase className="h-2.5 w-2.5" />
@@ -81,7 +82,7 @@ export default function DashboardLayout() {
                     </p>
                   </div>
                 </div>
-                <UserSwitcher className="shrink-0" />
+                <div><UserSwitcher /></div>
               </div>
             </div>
           )}
