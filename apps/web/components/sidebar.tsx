@@ -118,6 +118,7 @@ const sidebarConfig: SidebarSection[] = [
         items: [
           { title: "Stocking List", href: "/stocking/list" },
           { title: "Transfers", href: "/stocking/transfers" },
+          { title: "Stock Reception", href: "/stocking/reception" },
           { title: "Reorder Rules", href: "/stocking/reorder-rules" },
           { title: "Reports", href: "/stocking/reports" },
           { title: "Audit Trail", href: "/stocking/audit" },
