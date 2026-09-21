@@ -68,7 +68,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   const formattedCurrency = useFormattedCurrency();
   const { data: categories, isLoading: loadingCategories } = useBakeryCategories();
   const { data: ingredients, isLoading: loadingIngredients } = useListIngredients();
-  const { data: settings } = useBakerySettings();
+  const { data: settings } = useBakerySettings() as any;
 
   const [activeTab, setActiveTab] = useState('manual');
   const [aiPrompt, setAiPrompt] = useState('');
@@ -281,7 +281,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                     />
                     <Button
                       onClick={handleGenerateRecipe}
-                      disabled={isGenerating || !aiPrompt.trim()}
+                      disabled={generateRecipeAi.isPending || !aiPrompt.trim()}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       {isGenerating ? (

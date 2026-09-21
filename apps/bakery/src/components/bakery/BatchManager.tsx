@@ -331,7 +331,7 @@ export default function BatchManager() {
   const confirmBatchCompletion = () => {
     if (!qualityCheckBatch) return;
     const ingredientConsumptions = Object.values(selectedStockBatches);
-    completeBatchMutation.mutate(
+    completeBatchMutation.mutateAsync(
       {
         batchId: qualityCheckBatch.id,
         data: {

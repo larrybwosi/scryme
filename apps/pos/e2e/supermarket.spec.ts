@@ -20,7 +20,7 @@ test.describe('Supermarket POS Flow', () => {
 
         // Handle plugin calls
         if (cmd.startsWith('plugin:')) {
-            if (cmd.includes('get_device_config')) return { location_id: 'test-loc', allow_negative_stock: false };
+            if (cmd.includes('get_device_config')) return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
             if (cmd.includes('app|version')) return '3.3.0';
             if (cmd.includes('store|load')) return 1;
             if (cmd.includes('store|get')) return null;
@@ -40,7 +40,7 @@ test.describe('Supermarket POS Flow', () => {
             }
         };
 
-        if (cmd === 'get_device_config') return { location_id: 'test-loc', allow_negative_stock: false };
+        if (cmd === 'get_device_config' || cmd.includes('get_device_config')) return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
         if (cmd === 'get_locations_command') return { locations: [{
             id: 'test-loc',
             name: 'Test Store',
@@ -297,15 +297,25 @@ test.describe('Supermarket POS Flow', () => {
       localStorage.setItem('pos-auth-storage-v3', JSON.stringify(authState));
       localStorage.setItem('scryme-pos-storage-v1', JSON.stringify(posState));
 
-      // Inject some CSS to hide potential blocking overlays that aren't critical for the test
-      const style = document.createElement('style');
-      style.innerHTML = `
-        #splash-root { display: none !important; opacity: 0 !important; }
-        .sonner-toaster, [data-sonner-toaster] { display: none !important; }
-        #connection-status-banner { display: none !important; }
-        .ud-root { display: none !important; }
-      `;
-      document.head.appendChild(style);
+      const appendStyle = () => {
+        const style = document.createElement('style');
+        style.innerHTML = `
+          #splash-root { display: none !important; opacity: 0 !important; }
+          .sonner-toaster, [data-sonner-toaster] { display: none !important; }
+          #connection-status-banner { display: none !important; }
+          .ud-root { display: none !important; }
+        `;
+        if (document.head) {
+          if (document.head) { document.head.appendChild(style); } else if (document.documentElement) { document.documentElement.appendChild(style); } else { document.addEventListener("DOMContentLoaded", () => document.head.appendChild(style)); }
+        } else if (document.documentElement) {
+          document.documentElement.appendChild(style);
+        }
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', appendStyle);
+      } else {
+        appendStyle();
+      }
       localStorage.setItem('DEVICE_ID', 'test-device');
       localStorage.setItem('DEVICE_ROLE', 'MAIN_HUB');
     }, { now: currentTimestamp });
