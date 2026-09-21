@@ -30,9 +30,9 @@ test.describe('Order Creation and Invoice Download Flow', () => {
       const mockInvoke = async (cmd, args) => {
         console.log('Mocked invoke called:', cmd, JSON.stringify(args));
 
-        if (cmd === 'authenticated_api_request') {
-          if (args?.path?.includes('pos/me')) {
-            return { success: true, data: { isCheckedIn: true, memberId: 'test-mem' } };
+        if (cmd.includes('authenticated_api_request')) {
+          if (args?.path?.includes('pos/me') || args?.path?.includes('me')) {
+            return { success: true, isCheckedIn: true, memberId: 'test-mem', data: { isCheckedIn: true, memberId: 'test-mem' } };
           }
           return { success: true, data: {} };
         }

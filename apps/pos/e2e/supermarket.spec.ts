@@ -18,6 +18,13 @@ test.describe('Supermarket POS Flow', () => {
       const mockInvoke = async (cmd, args) => {
         console.log('Mocked invoke called:', cmd, JSON.stringify(args));
 
+        if (cmd.includes('authenticated_api_request')) {
+          if (args?.path?.includes('pos/me') || args?.path?.includes('me')) {
+            return { success: true, isCheckedIn: true, memberId: 'test-mem', data: { isCheckedIn: true, memberId: 'test-mem' } };
+          }
+          return { success: true, data: {} };
+        }
+
         // Handle plugin calls
         if (cmd.startsWith('plugin:')) {
             if (cmd.includes('get_device_config')) return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
@@ -39,13 +46,6 @@ test.describe('Supermarket POS Flow', () => {
                 }
             }
         };
-
-        if (cmd === 'authenticated_api_request') {
-          if (args?.path?.includes('pos/me')) {
-            return { success: true, data: { isCheckedIn: true, memberId: 'test-mem' } };
-          }
-          return { success: true, data: {} };
-        }
 
         if (cmd === 'get_device_config') return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
         if (cmd === 'get_locations_command') return { locations: [{
