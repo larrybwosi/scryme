@@ -25,68 +25,74 @@ test.describe('Supermarket POS Flow', () => {
           return { success: true, data: {} };
         }
 
-        // Handle plugin calls
-        if (cmd.startsWith('plugin:')) {
-            if (cmd.includes('get_device_config')) return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
-            if (cmd.includes('app|version')) return '3.3.0';
-            if (cmd.includes('store|load')) return 1;
-            if (cmd.includes('store|get')) return null;
-            if (cmd.includes('updater|check')) return null;
-            if (cmd.includes('event|listen')) return 123;
-            if (cmd.includes('log|log')) return null;
+        if (cmd.includes('get_device_config')) {
+          return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
         }
 
-        if (cmd === 'get_ably_auth_token_command') return {
-            data: {
-                tokenRequest: {
-                    token: 'mock-jwt-token'
-                },
-                metadata: {
-                    paymentChannel: 'mock-payment-channel'
-                }
-            }
-        };
-
-        if (cmd === 'get_device_config') return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
-        if (cmd === 'get_locations_command') return { locations: [{
-            id: 'test-loc',
-            name: 'Test Store',
-            locationType: 'RETAIL_SHOP',
-            isActive: true,
-            isDefault: true,
-            organizationId: 'test-org'
-          }] };
-        if (cmd === 'resolve_price_batch_command') return [100];
-        if (cmd === 'get_tables_command') return [];
-        if (cmd === 'get_local_ip_command') return '127.0.0.1';
-        if (cmd === 'start_nfc_listener') return null;
-        if (cmd === 'get_system_printers') return [];
-        if (cmd === 'discover_network_printers') return [];
-        if (cmd === 'get_printer_config') return null;
-        if (cmd === 'get_unread_notification_count') return 0;
-        if (cmd === 'get_notification_history') return [];
-        if (cmd === 'get_app_version') return '3.3.0';
-        if (cmd === 'check_kds_hub_status') return false;
-        if (cmd === 'get_hub_status') return { is_running: false };
-        if (cmd === 'search_products_command') {
-            return {
-                products: [
-                  {
-                    productId: 'p1',
-                    productName: 'Milk',
-                    category: 'Dairy',
-                    variants: [{ variantId: 'v1', variantName: 'Whole Milk', barcode: '123' }],
-                    sellableUnits: [{ unitId: 'u1', unitName: '1L', price: 100, isBaseUnit: true }],
-                    stock: 50
-                  }
-                ].filter(p =>
-                    !args.query || p.productName.toLowerCase().includes(args.query.toLowerCase())
-                ),
-                total_count: 1,
-                page: 1,
-                page_size: 50
-            };
+        if (cmd.includes('get_locations')) {
+          return {
+            locations: [{
+              id: 'test-loc',
+              name: 'Test Store',
+              locationType: 'RETAIL_SHOP',
+              isActive: true,
+              isDefault: true,
+              organizationId: 'test-org'
+            }]
+          };
         }
+
+        if (cmd.includes('search_products')) {
+          const query = args?.query || args?.search || '';
+          return {
+            products: [
+              {
+                productId: 'p1',
+                productName: 'Milk',
+                name: 'Milk',
+                category: 'Dairy',
+                variantId: 'v1',
+                variantName: 'Whole Milk',
+                stock: 50,
+                variants: [{ variantId: 'v1', variantName: 'Whole Milk', name: 'Whole Milk', barcode: '123', stock: 50 }],
+                sellableUnits: [{ unitId: 'u1', unitName: '1L', price: 100, isBaseUnit: true }]
+              }
+            ].filter(p => !query || p.productName.toLowerCase().includes(query.toLowerCase())),
+            totalCount: 1,
+            total_count: 1,
+            page: 1,
+            page_size: 50
+          };
+        }
+
+        if (cmd.includes('get_product_by_barcode')) {
+          return {
+            productId: 'p1',
+            productName: 'Milk',
+            name: 'Milk',
+            category: 'Dairy',
+            variants: [{ variantId: 'v1', variantName: 'Whole Milk', name: 'Whole Milk', barcode: '123', stock: 50 }],
+            sellableUnits: [{ unitId: 'u1', unitName: '1L', price: 100, isBaseUnit: true }]
+          };
+        }
+
+        if (cmd.includes('get_ably_auth_token')) return { data: { tokenRequest: { token: 'mock-jwt-token' }, metadata: { paymentChannel: 'mock-payment-channel' } } };
+        if (cmd.includes('resolve_price_batch')) return [100];
+        if (cmd.includes('get_tables')) return [];
+        if (cmd.includes('get_local_ip')) return '127.0.0.1';
+        if (cmd.includes('get_system_printers')) return [];
+        if (cmd.includes('discover_network_printers')) return [];
+        if (cmd.includes('get_printer_config')) return null;
+        if (cmd.includes('get_unread_notification_count')) return 0;
+        if (cmd.includes('get_notification_history')) return [];
+        if (cmd.includes('app_version') || cmd.includes('app|version')) return '3.3.0';
+        if (cmd.includes('check_kds_hub_status')) return false;
+        if (cmd.includes('get_hub_status')) return { is_running: false };
+        if (cmd.includes('update_base_url')) return null;
+        if (cmd.includes('restore_member_session')) return null;
+        if (cmd.includes('store|load') || cmd.includes('store|get')) return null;
+        if (cmd.includes('event|listen') || cmd.includes('updater|check') || cmd.includes('log|log')) return null;
+
         return null;
       };
 
@@ -331,7 +337,6 @@ test.describe('Supermarket POS Flow', () => {
     await page.goto('/');
 
     // Wait for splash screen to disappear and app to load
-    // Check for splash root and wait for it to be removed or hidden
     await page.waitForFunction(() => {
         const splash = document.getElementById('splash-root');
         return !splash || splash.style.opacity === '0' || getComputedStyle(splash).opacity === '0';
@@ -370,13 +375,11 @@ test.describe('Supermarket POS Flow', () => {
     await productItem.click();
 
     // Click Hold (the text might vary depending on the view, so use a more robust locator)
-    // In POS.tsx it's an icon or text inside a button
     const holdButton = page.getByRole('button', { name: /Hold/i });
     await expect(holdButton).toBeVisible();
     await holdButton.click();
 
-    // Verify cart is cleared. Cart header usually shows item count.
-    // In AppLayout it might be different, but let's check for 0 items text
+    // Verify cart is cleared
     await expect(page.getByText(/0 Items/i).or(page.getByText(/empty/i))).toBeVisible();
   });
 });
