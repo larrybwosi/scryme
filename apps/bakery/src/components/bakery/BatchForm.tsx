@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -23,6 +23,11 @@ import {
   Sparkles,
   ChevronRight,
   Tag,
+  Search,
+  ChevronsUpDown,
+  Star,
+  Package,
+  X,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -36,11 +41,20 @@ import { Calendar } from '@repo/ui/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@repo/ui/components/ui/popover';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
+import { Avatar, AvatarFallback } from '@repo/ui/components/ui/avatar';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@repo/ui/components/ui/command';
 
 import { cn } from '@/lib/utils';
-import { BatchStatus } from '@/types/bakery';
+import { BatchStatus, Recipe } from '@/types/bakery';
 import { BatchInput, batchSchema } from '@/validations/bakery';
-import { useCreateBatch, useRecipes, useTemplates, useUpdateBatch, useBakers } from '@/hooks/bakery';
+import {
+  useCreateBatch,
+  useRecipes,
+  useTemplates,
+  useUpdateBatch,
+  useBakers,
+  useBakerySettings,
+} from '@/hooks/bakery';
 import { useUnits } from '@/lib/units/hooks';
 import { AdvancedUnitSelector } from '@/components/common/units/advance-select';
 import { LocationSelect } from '@/components/common/location-select';
@@ -151,7 +165,7 @@ function SourceSelector({
   templates,
   recipeId,
   templateId,
-  onRecipeChange,
+  onSelectRecipe,
   onTemplateChange,
 }: {
   mode: SourceMode;
@@ -160,9 +174,12 @@ function SourceSelector({
   templates: any[];
   recipeId: string;
   templateId?: string;
-  onRecipeChange: (id: string) => void;
+  onSelectRecipe: (recipe: any) => void;
   onTemplateChange: (id: string) => void;
 }) {
+  const [openCombobox, setOpenCombobox] = useState(false);
+  const selectedRecipe = useMemo(() => recipes.find((r: any) => r.id === recipeId), [recipes, recipeId]);
+
   return (
     <div className="space-y-4">
       {/* Mode toggle */}
@@ -181,7 +198,7 @@ function SourceSelector({
           <div>
             <div className="text-sm font-medium leading-none">From Recipe</div>
             <div className={cn('text-xs mt-1', mode === 'recipe' ? 'text-primary-foreground/80' : 'text-muted-foreground')}>
-              Choose a recipe directly
+              Search recipes or product variants
             </div>
           </div>
         </button>
@@ -205,24 +222,165 @@ function SourceSelector({
         </button>
       </div>
 
-      {/* Selection dropdown */}
+      {/* Auto-complete Search Selector */}
       {mode === 'recipe' ? (
-        <Select value={recipeId} onValueChange={onRecipeChange}>
-          <SelectTrigger className="w-full h-10 bg-background">
-            <SelectValue placeholder="Search and select a recipe…" />
-          </SelectTrigger>
-          <SelectContent>
-            {recipes.map((r: any) => (
-              <SelectItem key={r.id} value={r.id}>
-                {r.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="space-y-3">
+          <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                role="combobox"
+                aria-expanded={openCombobox}
+                className="w-full justify-between h-11 bg-background text-sm px-3.5 border-input font-normal hover:bg-accent/50"
+              >
+                {selectedRecipe ? (
+                  <div className="flex items-center gap-2.5 truncate">
+                    <BookOpen className="h-4 w-4 text-primary shrink-0" />
+                    <span className="font-medium text-foreground truncate">{selectedRecipe.name}</span>
+                    {selectedRecipe.category?.name && (
+                      <Badge variant="secondary" className="text-[10px] font-normal py-0 h-4 shrink-0">
+                        {selectedRecipe.category.name}
+                      </Badge>
+                    )}
+                    {selectedRecipe.producesVariant?.sku && (
+                      <Badge variant="outline" className="text-[10px] font-mono py-0 h-4 shrink-0">
+                        SKU: {selectedRecipe.producesVariant.sku}
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground flex items-center gap-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    Search recipe, product variant name, SKU, or category…
+                  </span>
+                )}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Type to search recipes or product variants…" className="h-10 text-sm" />
+                <CommandList className="max-h-[280px]">
+                  <CommandEmpty className="p-4 text-center text-xs text-muted-foreground">
+                    No matching recipes or product variants found.
+                  </CommandEmpty>
+                  <CommandGroup heading="Available Recipes & Variants">
+                    {recipes.map((r: any) => {
+                      const isSelected = r.id === recipeId;
+                      const variantSku = r.producesVariant?.sku;
+                      const productName = r.producesVariant?.product?.name;
+
+                      return (
+                        <CommandItem
+                          key={r.id}
+                          value={`${r.name} ${r.category?.name || ''} ${variantSku || ''} ${productName || ''}`}
+                          onSelect={() => {
+                            onSelectRecipe(r);
+                            setOpenCombobox(false);
+                          }}
+                          className="flex items-center justify-between py-2.5 px-3 cursor-pointer"
+                        >
+                          <div className="flex flex-col gap-0.5 min-w-0 pr-2">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-sm text-foreground truncate">{r.name}</span>
+                              {r.category?.name && (
+                                <Badge variant="secondary" className="text-[10px] font-normal py-0 h-4">
+                                  {r.category.name}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              {productName && <span>Produces: {productName}</span>}
+                              {variantSku && (
+                                <span className="font-mono text-[11px] bg-muted/60 px-1 rounded">
+                                  SKU: {variantSku}
+                                </span>
+                              )}
+                              <span>
+                                Default Yield: {r.yieldQuantity || 1}{' '}
+                                {r.systemUnit?.symbol || r.orgUnit?.symbol || ''}
+                              </span>
+                            </div>
+                          </div>
+                          <Check
+                            className={cn(
+                              'h-4 w-4 text-primary shrink-0',
+                              isSelected ? 'opacity-100' : 'opacity-0'
+                            )}
+                          />
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
+          {/* Recipe & Product Variant Details Preview Card */}
+          {selectedRecipe && (
+            <div className="p-4 rounded-lg border border-primary/20 bg-primary/[0.02] space-y-3 animate-in fade-in-50">
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-primary">Selected Recipe</span>
+                    {selectedRecipe.category?.name && (
+                      <Badge variant="outline" className="text-[10px] py-0 h-4">
+                        {selectedRecipe.category.name}
+                      </Badge>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-semibold text-foreground truncate">{selectedRecipe.name}</h4>
+                  {selectedRecipe.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{selectedRecipe.description}</p>
+                  )}
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+                  onClick={() => onSelectRecipe(null)}
+                  title="Clear selection"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              {selectedRecipe.producesVariant && (
+                <div className="p-3 rounded-md bg-card border border-border/60 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="p-1.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                      <Package className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="font-medium text-foreground block truncate">
+                        Output Variant: {selectedRecipe.producesVariant.name || selectedRecipe.producesVariant.product?.name || 'Standard'}
+                      </span>
+                      {selectedRecipe.producesVariant.sku && (
+                        <span className="font-mono text-[11px] text-muted-foreground">
+                          SKU: {selectedRecipe.producesVariant.sku}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="text-muted-foreground block text-[11px]">Standard Yield</span>
+                    <span className="font-semibold text-foreground">
+                      {selectedRecipe.yieldQuantity || 1}{' '}
+                      {selectedRecipe.systemUnit?.symbol || selectedRecipe.orgUnit?.symbol || ''}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="space-y-2">
           <Select value={templateId || ''} onValueChange={onTemplateChange}>
-            <SelectTrigger className="w-full h-10 bg-background">
+            <SelectTrigger className="w-full h-11 bg-background text-sm">
               <SelectValue placeholder="Choose a saved template…" />
             </SelectTrigger>
             <SelectContent>
@@ -230,7 +388,10 @@ function SourceSelector({
                 <SelectItem key={t.id} value={t.id}>
                   <div className="flex items-center gap-2">
                     <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-                    {t.name}
+                    <span className="font-medium">{t.name}</span>
+                    <span className="text-xs text-muted-foreground font-normal">
+                      ({t.quantity} units)
+                    </span>
                   </div>
                 </SelectItem>
               ))}
@@ -262,6 +423,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
   const { data: recipes = [], isLoading: loadingRecipes } = useRecipes();
   const { data: bakers = [], isLoading: loadingBakers } = useBakers();
   const { data: templates = [], isLoading: loadingTemplates } = useTemplates();
+  const { data: bakerySettings } = useBakerySettings();
   const { systemUnits } = useUnits();
 
   const createBatchMutation = useCreateBatch();
@@ -301,10 +463,54 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
 
   const watchedValues = useWatch({ control });
 
+  // Auto-default Lead Baker from Bakery Settings if not already set
+  useEffect(() => {
+    if (!isEditing && !watchedValues.leadBakerId && bakerySettings?.defaultBakerId) {
+      setValue('leadBakerId', bakerySettings.defaultBakerId, { shouldDirty: true });
+    }
+  }, [isEditing, watchedValues.leadBakerId, bakerySettings?.defaultBakerId, setValue]);
+
   const handleBatchUnitChange = useCallback(
     (value: string | undefined, type: 'system' | 'org') => {
       setValue('systemUnitId', type === 'system' ? value : undefined, { shouldDirty: true });
       setValue('orgUnitId', type === 'org' ? value : undefined, { shouldDirty: true });
+    },
+    [setValue]
+  );
+
+  const handleRecipeSelect = useCallback(
+    (recipe: any) => {
+      if (!recipe) {
+        setValue('recipeId', '', { shouldDirty: true, shouldValidate: true });
+        return;
+      }
+
+      const opt = { shouldDirty: true, shouldValidate: true };
+      setValue('recipeId', recipe.id, opt);
+
+      // Auto-fill target quantity and units from recipe yield
+      if (recipe.yieldQuantity) {
+        setValue('plannedQuantity', Number(recipe.yieldQuantity), opt);
+      }
+      if (recipe.systemUnitId) {
+        setValue('systemUnitId', recipe.systemUnitId, opt);
+        setValue('orgUnitId', undefined, opt);
+      } else if (recipe.orgUnitId) {
+        setValue('orgUnitId', recipe.orgUnitId, opt);
+        setValue('systemUnitId', undefined, opt);
+      }
+
+      // Auto-fill duration from totalTime or prepTime+bakeTime
+      const estDuration =
+        recipe.totalTime || ((recipe.prepTime || 0) + (recipe.bakeTime || 0));
+      if (estDuration && estDuration > 0) {
+        setValue('duration', Number(estDuration), opt);
+      }
+
+      // Auto-fill shelf life if available
+      if (recipe.shelfLifeDays) {
+        setValue('shelfLifeDays', Number(recipe.shelfLifeDays), opt);
+      }
     },
     [setValue]
   );
@@ -330,7 +536,6 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
           setValue('orgUnitId', template.orgUnitId, opt);
           setValue('systemUnitId', undefined, opt);
         } else if ((template as any).unitId) {
-          // Fallback for legacy data
           const isSystem = systemUnits.some((u: any) => u.id === (template as any).unitId);
           setValue('systemUnitId', isSystem ? (template as any).unitId : undefined, opt);
           setValue('orgUnitId', !isSystem ? (template as any).unitId : undefined, opt);
@@ -357,17 +562,19 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
       }
 
       if (shouldAddAnother && !isEditing) {
-        // Keep some values for next batch
-        setValue('recipeId', data.recipeId);
-        setValue('plannedQuantity', data.plannedQuantity);
-        setValue('leadBakerId', data.leadBakerId);
-        toast.success('Batch created. Ready for next one.');
+        // Reset form for next batch while preserving key fields like lead baker & date
+        setValue('recipeId', '');
+        setValue('plannedQuantity', 1);
+        setValue('notes', '');
+        setValue('tags', []);
+        toast.success('Batch created successfully! Ready for the next run.');
       } else {
         toast.success(isEditing ? 'Batch updated successfully' : 'Batch created successfully');
         onSuccess?.();
       }
-    } catch {
-      toast.error('Failed to save batch. Please try again.');
+    } catch (err: any) {
+      console.error('Batch save error:', err);
+      toast.error(err?.message || 'Failed to save batch. Please check form inputs and try again.');
     }
   };
 
@@ -500,7 +707,7 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
             templates={templates}
             recipeId={watchedValues.recipeId}
             templateId={watchedValues.createdFromTemplateId}
-            onRecipeChange={id => setValue('recipeId', id, { shouldDirty: true })}
+            onSelectRecipe={handleRecipeSelect}
             onTemplateChange={handleTemplateSelect}
           />
 
@@ -684,15 +891,38 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                   value={watchedValues.leadBakerId || ''}
                   onValueChange={v => setValue('leadBakerId', v, { shouldDirty: true })}
                 >
-                  <SelectTrigger className="bg-background h-10 text-sm border-input">
+                  <SelectTrigger className="bg-background h-11 text-sm border-input">
                     <SelectValue placeholder="Assign a lead baker…" />
                   </SelectTrigger>
                   <SelectContent>
-                    {activeBakers.map((b: any) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.name}
-                      </SelectItem>
-                    ))}
+                    {activeBakers.map((b: any) => {
+                      const isDefault = b.id === bakerySettings?.defaultBakerId;
+                      const initial = b.name?.charAt(0)?.toUpperCase() || 'B';
+
+                      return (
+                        <SelectItem key={b.id} value={b.id} className="py-2">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <Avatar className="h-5 w-5 shrink-0">
+                              <AvatarFallback className="text-[10px] bg-primary/10 text-primary font-semibold">
+                                {initial}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium text-sm truncate">{b.name}</span>
+                            {isDefault && (
+                              <Badge variant="secondary" className="text-[10px] font-normal py-0 h-4 gap-1 text-amber-600 bg-amber-500/10 border-amber-500/20">
+                                <Star className="h-2.5 w-2.5 fill-amber-500 text-amber-500" />
+                                Default
+                              </Badge>
+                            )}
+                            {b.specialties?.length > 0 && (
+                              <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                                ({b.specialties.join(', ')})
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -719,28 +949,50 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
                       </p>
                     </div>
                   ) : (
-                    <div className="max-h-[200px] overflow-y-auto divide-y divide-border">
+                    <div className="max-h-[220px] overflow-y-auto divide-y divide-border">
                       {availableAssistants.map((baker: any) => {
                         const isSelected = watchedValues.assistantBakerIds?.includes(baker.id);
+                        const initial = baker.name?.charAt(0)?.toUpperCase() || 'B';
+                        const isDefault = baker.id === bakerySettings?.defaultBakerId;
+
                         return (
                           <button
                             key={baker.id}
                             type="button"
                             onClick={() => toggleAssistantBaker(baker.id)}
                             className={cn(
-                              'flex items-center gap-3 w-full px-4 py-2.5 text-left text-sm transition-colors',
-                              isSelected ? 'bg-primary text-primary-foreground' : 'text-foreground hover:bg-accent'
+                              'flex items-center justify-between gap-3 w-full px-3.5 py-2.5 text-left text-sm transition-colors',
+                              isSelected ? 'bg-primary/5 text-foreground' : 'text-foreground hover:bg-accent'
                             )}
                           >
-                            <div
-                              className={cn(
-                                'flex h-4 w-4 items-center justify-center rounded border flex-shrink-0 transition-colors',
-                                isSelected ? 'bg-primary-foreground border-primary-foreground' : 'border-input'
-                              )}
-                            >
-                              {isSelected && <Check className="h-3 w-3 text-primary" />}
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div
+                                className={cn(
+                                  'flex h-4 w-4 items-center justify-center rounded border flex-shrink-0 transition-colors',
+                                  isSelected ? 'bg-primary border-primary text-primary-foreground' : 'border-input'
+                                )}
+                              >
+                                {isSelected && <Check className="h-3 w-3" />}
+                              </div>
+                              <Avatar className="h-5 w-5 shrink-0">
+                                <AvatarFallback className="text-[10px] bg-muted font-semibold">
+                                  {initial}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <span className="font-medium text-xs truncate block">{baker.name}</span>
+                                {baker.specialties?.length > 0 && (
+                                  <span className="text-[10px] text-muted-foreground truncate block">
+                                    {baker.specialties.join(', ')}
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            <span className="font-medium truncate">{baker.name}</span>
+                            {isDefault && (
+                              <Badge variant="outline" className="text-[9px] py-0 h-3.5 text-amber-600 border-amber-500/30 shrink-0">
+                                Default
+                              </Badge>
+                            )}
                           </button>
                         );
                       })}
