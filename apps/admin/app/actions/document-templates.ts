@@ -49,13 +49,14 @@ export async function listSystemDocumentSettings() {
   }
 
   const categories = DOCUMENT_CATEGORIES.map((cat) => {
-    const isCategoryEnabled = categorySettings[cat.id] ?? false;
+    const isCategoryEnabled = categorySettings[cat.id] ?? true;
     const catTemplates = DOCUMENT_REGISTRY.filter((t) => t.type === cat.id).map(
       (tmpl) => {
         const isTemplateEnabled =
-          templateSettings[`${cat.id}:${tmpl.id}`] ?? false;
+          templateSettings[`${cat.id}:${tmpl.id}`] ?? true;
+        const { component: _, ...cleanTmpl } = tmpl;
         return {
-          ...tmpl,
+          ...cleanTmpl,
           isEnabled: isTemplateEnabled,
           isEffectivelyEnabled: isCategoryEnabled && isTemplateEnabled,
         };
