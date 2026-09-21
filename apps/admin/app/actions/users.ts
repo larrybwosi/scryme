@@ -142,3 +142,47 @@ export async function unbanUser(id: string) {
   revalidatePath("/users");
   return updated;
 }
+
+export async function resetUserPassword(
+  userId: string,
+  options?: { newPassword?: string; sendEmail?: boolean }
+) {
+  await requireSuperAdmin();
+
+  const user = await db.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new Error(`User with ID ${userId} not found`);
+  }
+
+  const argon2 = await import("argon2");
+
+  if (options?.sendEmail) {
+    try {
+      const { auth } = await import("@repo/auth/server");
+      const { headers } = await import("next/headers");
+      await (auth.api as any).sendResetPassword({
+        headers: await headers(),
+        body: {
+          email: user.email,
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"}/reset-password`,
+        },
+      });
+      return { success: true, message: `Password reset email sent to ${user.email}` };
+    } catch (e: any) {
+      console.error("Error sending reset password email via Better-Auth:", e);
+      throw new Error(e.message || "Failed to send reset password email");
+    }
+  }
+
+  if (options?.newPassword) {
+    const hashedPassword = await argon2.hash(options.newPassword);
+    await db.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+    revalidatePath("/users");
+    return { success: true, message: `Password updated successfully for ${user.email}` };
+  }
+
+  throw new Error("Either newPassword or sendEmail must be provided");
+}
