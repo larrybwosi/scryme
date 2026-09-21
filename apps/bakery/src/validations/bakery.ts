@@ -41,7 +41,7 @@ const baseRecipeSchema = z.object({
   totalTime: z.coerce.number().int().optional().nullable(),
   difficulty: z.nativeEnum(RecipeDifficulty).optional().nullable(),
   temperatureCelsius: z.coerce.number().int().optional().nullable(),
-  ingredients: z.array(ingredientSchema).optional().default([]),
+  ingredients: z.array(ingredientSchema).min(1, "At least one ingredient is required"),
   description: z.string().optional().nullable(),
   servingSize: z.string().optional().nullable(),
   instructions: z.string().optional().nullable(),
@@ -200,7 +200,7 @@ export const updateBakeryBakerSchema = bakeryBakerSchema.partial().omit({
 export const bakeryCategorySchema = z.object({
   name: z.string().min(1, 'Category name is required'),
   description: z.string().optional().nullable(),
-  organizationId: z.string().min(1, 'A valid organization ID is required'),
+  organizationId: z.string().optional().nullable(),
 });
 
 export const updateBakeryCategorySchema = bakeryCategorySchema.partial();

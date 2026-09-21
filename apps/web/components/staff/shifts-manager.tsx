@@ -659,9 +659,32 @@ export function ShiftsManager({
                         const dayOverride = workspace.overrides.find(item => item.memberId === member.id && isSameDay(new Date(item.startTime), day));
                         const shift = shifts.find(item => item.memberId === member.id && item.dayOfWeek === day.getUTCDay() && item.isActive);
                         return <div key={day.toISOString()} className="flex flex-col gap-2 border-l p-2">
-                          <div className="flex min-h-5 items-center justify-between gap-1 text-xs text-muted-foreground">
-                            <span>{shift ? `${shift.startTime}–${shift.endTime}` : "Off"}</span>
-                            {dayOverride && <Badge variant="destructive">{dayOverride.type}</Badge>}
+                          <div className="flex min-h-5 items-center justify-between gap-1 text-xs text-muted-foreground group/shift">
+                            <span className="font-medium">{shift ? `${shift.startTime}–${shift.endTime}` : "Off"}</span>
+                            <div className="flex items-center gap-1">
+                              {dayOverride && <Badge variant="destructive">{dayOverride.type}</Badge>}
+                              {canManage && (
+                                shift ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditShiftModal(shift)}
+                                    className="p-0.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                                    title="Edit shift"
+                                  >
+                                    <Pencil className="size-3" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => openNewShiftModal(member.id, day.getUTCDay())}
+                                    className="p-0.5 rounded hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
+                                    title="Add shift"
+                                  >
+                                    <Plus className="size-3" />
+                                  </button>
+                                )
+                              )}
+                            </div>
                           </div>
                           {dayBookings.map(booking => <button key={booking.id} type="button" onClick={() => setSelectedBooking(booking)} className="flex flex-col gap-1 rounded-lg border bg-background p-2 text-left shadow-sm transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                             <span className="text-xs font-semibold">{format(new Date(booking.scheduledStartTime), "HH:mm")} {booking.serviceName}</span>

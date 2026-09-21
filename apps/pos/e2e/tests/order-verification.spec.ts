@@ -21,6 +21,7 @@ test.describe('Order Creation and Invoice Download Flow', () => {
 
     // 1. Mock Tauri APIs and Inject state
     await page.addInitScript(() => {
+      (window as any).process = (window as any).process || { env: {} };
       const transformCallback = (cb) => {
           const id = Math.floor(Math.random() * 1000000);
           (window as any)[`_tauri_cb_${id}`] = cb;
@@ -30,117 +31,114 @@ test.describe('Order Creation and Invoice Download Flow', () => {
       const mockInvoke = async (cmd, args) => {
         console.log('Mocked invoke called:', cmd, JSON.stringify(args));
 
-        if (cmd === 'get_device_config' || cmd.includes('get_device_config')) return {
+        if (cmd.includes('authenticated_api_request')) {
+          if (args?.path?.includes('pos/me') || args?.path?.includes('me')) {
+            return { success: true, isCheckedIn: true, memberId: 'test-mem', data: { isCheckedIn: true, memberId: 'test-mem' } };
+          }
+          return { success: true, data: {} };
+        }
+
+        if (cmd.includes('get_device_config')) {
+          return {
             location_id: 'cljr7yv7c000108m73ge56fjr',
+            org_slug: 'test-org',
             allow_negative_stock: false,
             base_url: 'http://localhost:3000',
             device_key: 'test-key'
-        };
-
-        if (cmd === 'get_locations_command') return { locations: [{
-            id: 'cljr7yv7c000108m73ge56fjr',
-            name: 'Test Store',
-            locationType: 'RETAIL_SHOP',
-            isActive: true,
-            isDefault: true,
-            organizationId: 'test-org'
-          }] };
-
-        if (cmd === 'search_products_command') {
-            return {
-                products: [
-                  {
-                    productId: 'p1',
-                    name: 'Test Product',
-                    category: 'Test Category',
-                    variants: [{
-                        variantId: 'cljr7yv7c000208m73ge56fjr',
-                        name: 'Standard Variant',
-                        sku: 'SKU-1',
-                        barcode: '123',
-                        stock: 100,
-                        sellableUnits: [
-                            { unitId: 'cljr7yv7c000308m73ge56fjr', unitName: 'Piece', price: 500, isBaseUnit: true, conversion: 1 }
-                        ]
-                    }],
-                  }
-                ],
-                total_count: 1,
-                page: 1,
-                page_size: 50
-            };
+          };
         }
 
-        if (cmd === 'search_customers_command') {
-            return [
-                {
-                    id: 'cljr7yv7c000008m73ge56fjr',
-                    name: 'John Doe',
-                    email: 'john@example.com',
-                    phone: '0712345678',
-                    loyaltyPoints: 10,
-                    customerType: 'retail',
-                    addresses: [
-                        { id: 'a1', label: 'Home', street: '123 Main St', city: 'Nairobi', isDefault: true }
-                    ]
-                }
-            ];
+        if (cmd.includes('get_locations')) {
+          return {
+            locations: [{
+              id: 'cljr7yv7c000108m73ge56fjr',
+              name: 'Test Store',
+              locationType: 'RETAIL_SHOP',
+              isActive: true,
+              isDefault: true,
+              organizationId: 'test-org'
+            }]
+          };
         }
 
-        if (cmd === 'get_ably_auth_token_command') return {
-            data: {
-                tokenRequest: {
-                    token: 'mock-jwt-token'
-                },
-                metadata: {
-                    paymentChannel: 'mock-payment-channel'
-                }
+        if (cmd.includes('search_products')) {
+          return {
+            products: [
+              {
+                productId: 'p1',
+                productName: 'Test Product',
+                name: 'Test Product',
+                category: 'Test Category',
+                variants: [{
+                  variantId: 'cljr7yv7c000208m73ge56fjr',
+                  variantName: 'Standard Variant',
+                  name: 'Standard Variant',
+                  sku: 'SKU-1',
+                  barcode: '123',
+                  stock: 100,
+                  sellableUnits: [
+                    { unitId: 'cljr7yv7c000308m73ge56fjr', unitName: 'Piece', price: 500, isBaseUnit: true, conversion: 1 }
+                  ]
+                }],
+              }
+            ],
+            totalCount: 1,
+            total_count: 1,
+            page: 1,
+            page_size: 50
+          };
+        }
+
+        if (cmd.includes('search_customers')) {
+          return [
+            {
+              id: 'cljr7yv7c000008m73ge56fjr',
+              name: 'John Doe',
+              email: 'john@example.com',
+              phone: '0712345678',
+              loyaltyPoints: 10,
+              customerType: 'retail',
+              addresses: [
+                { id: 'a1', label: 'Home', street: '123 Main St', city: 'Nairobi', isDefault: true }
+              ]
             }
-        };
-
-        if (cmd === 'get_pos_pricing_command') return [];
-        if (cmd === 'resolve_price_batch_command') return {};
-
-        if (cmd === 'create_order_command') {
-            return {
-                success: true,
-                data: {
-                    data: {
-                        number: 'ORD-12345',
-                        orderId: 'order-uuid-1',
-                        invoiceUrl: 'http://localhost:3000/invoices/inv-123.pdf'
-                    }
-                }
-            };
+          ];
         }
 
-        if (cmd === 'get_invoice_blob_command') {
-            // Return a dummy PDF blob (array of bytes)
-            return Array.from(new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52])); // "%PDF-1.4"
-        }
-
-        // Handle other common commands to prevent errors
-        if (cmd === 'get_app_version' || cmd.includes('app|version')) return '3.3.0';
-        if (cmd === 'get_network_status_command') return true;
-        if (cmd === 'get_unread_notification_count') return 0;
-        if (cmd === 'get_notification_history') return [];
-        if (cmd === 'get_hub_status' || cmd.includes('get_hub_status')) return { is_running: false };
-        if (cmd === 'get_tables_command') return [];
-        if (cmd === 'get_local_ip_command') return '127.0.0.1';
-        if (cmd === 'get_system_printers') return [];
-        if (cmd === 'discover_network_printers') return [];
-        if (cmd.includes('event|listen')) return 123;
-        if (cmd.includes('updater|check')) return null;
-        if (cmd === 'get_ably_auth_token_command') return {
+        if (cmd.includes('create_order')) {
+          return {
+            success: true,
             data: {
-                tokenRequest: {
-                    token: 'mock-jwt-token'
-                },
-                metadata: {
-                    paymentChannel: 'mock-payment-channel'
-                }
+              data: {
+                number: 'ORD-12345',
+                orderId: 'order-uuid-1',
+                invoiceUrl: 'http://localhost:3000/invoices/inv-123.pdf'
+              }
             }
-        };
+          };
+        }
+
+        if (cmd.includes('get_invoice_blob')) {
+          return Array.from(new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52]));
+        }
+
+        if (cmd.includes('get_ably_auth_token')) return { data: { tokenRequest: { token: 'mock-jwt-token' }, metadata: { paymentChannel: 'mock-payment-channel' } } };
+        if (cmd.includes('get_pos_pricing')) return [];
+        if (cmd.includes('resolve_price_batch')) return {};
+        if (cmd.includes('get_app_version') || cmd.includes('app|version')) return '3.3.0';
+        if (cmd.includes('get_network_status')) return true;
+        if (cmd.includes('get_unread_notification_count')) return 0;
+        if (cmd.includes('get_notification_history')) return [];
+        if (cmd.includes('get_shift')) return { id: 'test-shift', status: 'open' };
+        if (cmd.includes('plugin:os') || cmd.includes('os|')) return 'linux';
+        if (cmd.includes('plugin:log') || cmd.includes('log|')) return null;
+        if (cmd.includes('get_hub_status')) return { is_running: false };
+        if (cmd.includes('get_tables')) return [];
+        if (cmd.includes('get_local_ip')) return '127.0.0.1';
+        if (cmd.includes('get_system_printers')) return [];
+        if (cmd.includes('discover_network_printers')) return [];
+        if (cmd.includes('update_base_url')) return null;
+        if (cmd.includes('restore_member_session')) return null;
 
         return null;
       };
@@ -220,6 +218,24 @@ test.describe('Order Creation and Invoice Download Flow', () => {
             businessName: 'Test Store',
             taxRate: 5,
             currency: 'KSH',
+            sidebarItems: [],
+            themeConfig: {
+              mode: 'light',
+              primaryColor: 'oklch(0.42 0.145 265)',
+              accentColor: 'oklch(0.96 0.005 240)',
+              fontSize: 'medium',
+              compactMode: false,
+              zoomLevel: 100
+            },
+            notificationSettings: {
+              enabled: true,
+              soundEnabled: false,
+              showOnlineOrders: true,
+              showLowStock: true,
+              showSystemAlerts: true,
+              position: 'top-right',
+              autoCloseDelay: 5000
+            }
           },
         },
         version: 0

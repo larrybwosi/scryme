@@ -21,7 +21,8 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
   private rabbitChannel: amqp.Channel | null = null;
 
   constructor() {
-    const adapter = new PrismaPg({ connectionString: env.CUSTOMER_DB });
+    const dbUrl = env.CUSTOMER_DATABASE_URL || env.CUSTOMER_DB || "postgresql://customer_user:customer_pass@localhost:5432/customer_db?schema=public";
+    const adapter = new PrismaPg({ connectionString: dbUrl });
     this.prisma = new PrismaClient({ adapter });
   }
 
@@ -81,6 +82,8 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
   }
 
   private initBetterAuth() {
+    const isProd = env.NODE_ENV === "production";
+
     this.auth = betterAuth({
       database: prismaAdapter(this.prisma, {
         provider: "postgresql",
@@ -88,7 +91,42 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
       basePath: "/api/customer-auth",
       secret:
         env.CUSTOMER_BETTER_AUTH_SECRET ||
+        env.BETTER_AUTH_SECRET ||
         "default_customer_auth_secret_32_chars",
+      trustedOrigins: [
+        env.NEXT_PUBLIC_WEB_URL,
+        env.NEXT_PUBLIC_CRM_URL,
+        env.NEXT_PUBLIC_APP_URL,
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:4000",
+      ].filter(Boolean),
+      advanced: {
+        cookiePrefix: "customer-auth",
+        useSecureCookies: isProd,
+        crossSubDomainCookies: {
+          enabled: isProd,
+          domain: env.NEXT_PUBLIC_COOKIE_DOMAIN || undefined,
+        },
+        defaultCookieAttributes: {
+          httpOnly: true,
+          sameSite: isProd ? "lax" : "lax",
+          secure: isProd,
+        },
+      },
+      session: {
+        expiresIn: 30 * 24 * 60 * 60, // 30 days
+        updateAge: 24 * 60 * 60, // 24 hours
+        cookieCache: {
+          enabled: true,
+          maxAge: 5 * 60,
+        },
+      },
+      user: {
+        changeEmail: {
+          enabled: true,
+        },
+      },
       socialProviders: {
         google: {
           clientId: env.CUSTOMER_GOOGLE_CLIENT_ID || "google-client-id",
@@ -184,6 +222,7 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
                 email: user.email,
                 name: user.name,
                 image: user.image,
+                role: (user as any).role || "customer",
               });
             },
           },

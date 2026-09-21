@@ -42,7 +42,6 @@ export const metadata: Metadata = {
   description: "Analyze inventory valuation, turnover rate, slow-moving items, and shrinkage metrics.",
 };
 
-
 export default async function ReportsPage({
   searchParams,
 }: {
@@ -224,21 +223,21 @@ export default async function ReportsPage({
   }
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-6 md:p-8 bg-background text-foreground min-h-screen">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <PageHeader
           title="Stock Reports"
           description="Generate and export detailed inventory movement and valuation reports."
-          icon={<FileText size={24} className="text-blue-600" />}
+          icon={<FileText size={24} className="text-primary" />}
         />
         <div className="flex gap-2.5">
-          <Button variant="outline" className="gap-2 border-gray-200 shadow-sm h-10">
+          <Button variant="outline" className="gap-2 border-input shadow-sm h-10">
             <Download size={16} />
             <span>Export PDF</span>
           </Button>
           <Button
             variant="outline"
-            className="gap-2 text-green-700 hover:text-green-800 border-green-100 hover:bg-green-50 shadow-sm h-10"
+            className="gap-2 text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 shadow-sm h-10"
           >
             <FileSpreadsheet size={16} />
             <span>Export CSV</span>
@@ -249,39 +248,39 @@ export default async function ReportsPage({
       {/* Analytics Summary Widgets */}
       {reportType === "Stock Movement Report" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Inbound Qty</p>
-                <h3 className="text-2xl font-bold text-gray-900">+{totalInbound.toLocaleString()}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Inbound Qty</p>
+                <h3 className="text-2xl font-bold text-foreground">+{totalInbound.toLocaleString()}</h3>
               </div>
-              <div className="p-3 bg-green-50 rounded-full text-green-600">
+              <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 rounded-full">
                 <TrendingUp size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Outbound Qty</p>
-                <h3 className="text-2xl font-bold text-gray-900">-{totalOutbound.toLocaleString()}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Outbound Qty</p>
+                <h3 className="text-2xl font-bold text-foreground">-{totalOutbound.toLocaleString()}</h3>
               </div>
-              <div className="p-3 bg-red-50 rounded-full text-red-600">
+              <div className="p-3 bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400 rounded-full">
                 <TrendingDown size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Net Movement Value</p>
-                <h3 className={`text-2xl font-bold ${netMovementValue >= 0 ? "text-blue-600" : "text-amber-600"}`}>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Net Movement Value</p>
+                <h3 className={`text-2xl font-bold ${netMovementValue >= 0 ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400"}`}>
                   {netMovementValue >= 0 ? "+" : ""}${netMovementValue.toFixed(2)}
                 </h3>
               </div>
-              <div className={`p-3 rounded-full ${netMovementValue >= 0 ? "bg-blue-50 text-blue-600" : "bg-amber-50 text-amber-600"}`}>
+              <div className={`p-3 rounded-full ${netMovementValue >= 0 ? "bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400" : "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"}`}>
                 <DollarSign size={24} />
               </div>
             </CardContent>
@@ -291,49 +290,49 @@ export default async function ReportsPage({
 
       {reportType === "Inventory Valuation" && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Items On Hand</p>
-                <h3 className="text-2xl font-bold text-gray-900">{totalValuationItems.toLocaleString()}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Items On Hand</p>
+                <h3 className="text-2xl font-bold text-foreground">{totalValuationItems.toLocaleString()}</h3>
               </div>
-              <div className="p-3 bg-blue-50 rounded-full text-blue-600">
+              <div className="p-3 bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 rounded-full">
                 <Layers size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Cost Value</p>
-                <h3 className="text-2xl font-bold text-gray-900">${totalCostValue.toFixed(2)}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Cost Value</p>
+                <h3 className="text-2xl font-bold text-foreground">${totalCostValue.toFixed(2)}</h3>
               </div>
-              <div className="p-3 bg-green-50 rounded-full text-green-600">
+              <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 rounded-full">
                 <TrendingUp size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Retail Value</p>
-                <h3 className="text-2xl font-bold text-gray-900">${totalRetailValue.toFixed(2)}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Retail Value</p>
+                <h3 className="text-2xl font-bold text-foreground">${totalRetailValue.toFixed(2)}</h3>
               </div>
-              <div className="p-3 bg-purple-50 rounded-full text-purple-600">
+              <div className="p-3 bg-purple-50 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400 rounded-full">
                 <DollarSign size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Potential Profit</p>
-                <h3 className="text-2xl font-bold text-green-600">${potentialProfit.toFixed(2)}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Potential Profit</p>
+                <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">${potentialProfit.toFixed(2)}</h3>
               </div>
-              <div className="p-3 bg-emerald-50 rounded-full text-emerald-600">
+              <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 rounded-full">
                 <TrendingUp size={24} />
               </div>
             </CardContent>
@@ -343,39 +342,39 @@ export default async function ReportsPage({
 
       {reportType === "Slow Moving Inventory" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Slow/Dead Stock Items</p>
-                <h3 className="text-2xl font-bold text-gray-900">{totalSlowItemsCount}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Slow/Dead Stock Items</p>
+                <h3 className="text-2xl font-bold text-foreground">{totalSlowItemsCount}</h3>
               </div>
-              <div className="p-3 bg-amber-50 rounded-full text-amber-600">
+              <div className="p-3 bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 rounded-full">
                 <AlertTriangle size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Dead Stock Value</p>
-                <h3 className="text-2xl font-bold text-red-600">${deadStockValue.toFixed(2)}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dead Stock Value</p>
+                <h3 className="text-2xl font-bold text-red-600 dark:text-red-400">${deadStockValue.toFixed(2)}</h3>
               </div>
-              <div className="p-3 bg-red-50 rounded-full text-red-600">
+              <div className="p-3 bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400 rounded-full">
                 <TrendingDown size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Most Overstocked Item</p>
-                <h3 className="text-sm font-bold text-gray-900 truncate max-w-[200px]" title={mostOverstocked?.name}>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Most Overstocked Item</p>
+                <h3 className="text-sm font-bold text-foreground truncate max-w-[200px]" title={mostOverstocked?.name}>
                   {mostOverstocked ? `${mostOverstocked.name} (${mostOverstocked.currentStock})` : "N/A"}
                 </h3>
               </div>
-              <div className="p-3 bg-blue-50 rounded-full text-blue-600">
+              <div className="p-3 bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 rounded-full">
                 <Layers size={24} />
               </div>
             </CardContent>
@@ -385,37 +384,37 @@ export default async function ReportsPage({
 
       {reportType === "Expiry Analysis" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Expired Batches</p>
-                <h3 className="text-2xl font-bold text-red-600">{totalExpiredCount}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Expired Batches</p>
+                <h3 className="text-2xl font-bold text-red-600 dark:text-red-400">{totalExpiredCount}</h3>
               </div>
-              <div className="p-3 bg-red-50 rounded-full text-red-600">
+              <div className="p-3 bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400 rounded-full">
                 <AlertTriangle size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Expiring Soon (30d)</p>
-                <h3 className="text-2xl font-bold text-amber-600">{expiringSoonCount}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Expiring Soon (&le;30 days)</p>
+                <h3 className="text-2xl font-bold text-amber-600 dark:text-amber-400">{expiringSoonCount}</h3>
               </div>
-              <div className="p-3 bg-amber-50 rounded-full text-amber-600">
+              <div className="p-3 bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400 rounded-full">
                 <Calendar size={24} />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-gray-100">
+          <Card className="shadow-sm border-border bg-card">
             <CardContent className="p-6 flex items-center justify-between">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Safe Batches</p>
-                <h3 className="text-2xl font-bold text-green-600">{safeCount}</h3>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Safe Batches</p>
+                <h3 className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{safeCount}</h3>
               </div>
-              <div className="p-3 bg-green-50 rounded-full text-green-600">
+              <div className="p-3 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400 rounded-full">
                 <TrendingUp size={24} />
               </div>
             </CardContent>
@@ -423,15 +422,16 @@ export default async function ReportsPage({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-        {/* Report Controls */}
-        <Card className="lg:col-span-1 shadow-sm border-gray-100 h-fit bg-white">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-sm font-bold uppercase tracking-wider text-gray-500">
-              Report Parameters
+      {/* Main Layout Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Sidebar Filters */}
+        <Card className="lg:col-span-1 shadow-sm border-border bg-card h-fit">
+          <CardHeader>
+            <CardTitle className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              Filter Reports
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6 pt-0">
             <StockReportFilters
               locations={locations}
               initialLocationId={params.locationId}
@@ -442,142 +442,111 @@ export default async function ReportsPage({
           </CardContent>
         </Card>
 
-        {/* Report Preview */}
-        <Card className="lg:col-span-3 shadow-sm border-gray-100 bg-white">
-          <CardHeader className="border-b border-gray-100 py-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-lg font-bold text-gray-900">
-                  <FileText size={20} className="text-blue-600" />
-                  {reportType}
-                </CardTitle>
-                <p className="text-xs text-gray-400 mt-1 uppercase font-semibold tracking-wider">
-                  {format(startDate, "PP")} — {format(endDate, "PP")}
-                </p>
-              </div>
-              <div className="text-left sm:text-right">
-                <div className="text-sm font-bold text-gray-800">Fixoria Enterprise</div>
-                <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                  Internal Report
-                </div>
-              </div>
+        {/* Right Main Table Content */}
+        <Card className="lg:col-span-3 shadow-sm border-border bg-card">
+          <CardHeader className="flex flex-row items-center justify-between border-b pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg font-semibold">
+              <FileText size={20} className="text-muted-foreground" />
+              <span>{reportType}</span>
+            </CardTitle>
+            <div className="text-xs text-muted-foreground font-medium">
+              {format(startDate, "MMM dd, yyyy")} - {format(endDate, "MMM dd, yyyy")}
             </div>
           </CardHeader>
           <CardContent className="p-0">
             {reportType === "Stock Movement Report" && (
-              <>
-                <Table>
-                  <TableHeader className="bg-gray-50/50">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead className="font-semibold text-muted-foreground">Date & Time</TableHead>
+                    <TableHead className="font-semibold text-muted-foreground">Product</TableHead>
+                    <TableHead className="font-semibold text-muted-foreground">Type</TableHead>
+                    <TableHead className="text-right font-semibold text-muted-foreground">Qty</TableHead>
+                    <TableHead className="font-semibold text-muted-foreground">Location(s)</TableHead>
+                    <TableHead className="font-semibold text-muted-foreground">User</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {movements.length === 0 ? (
                     <TableRow>
-                      <TableHead className="w-[120px] font-semibold text-gray-600">Date</TableHead>
-                      <TableHead className="font-semibold text-gray-600">Product</TableHead>
-                      <TableHead className="font-semibold text-gray-600">Activity</TableHead>
-                      <TableHead className="font-semibold text-gray-600">Location</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Qty</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Value</TableHead>
+                      <TableCell
+                        colSpan={6}
+                        className="h-72 text-center text-muted-foreground font-medium"
+                      >
+                        No movement records found for the selected criteria.
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {movements.length === 0 ? (
-                      <TableRow>
+                  ) : (
+                    movements.map((m) => (
+                      <TableRow key={m.id} className="hover:bg-muted/50">
+                        <TableCell className="whitespace-nowrap">
+                          <div className="text-xs font-semibold text-foreground">
+                            {format(new Date(m.movementDate), "MMM dd, yyyy")}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-medium">
+                            {format(new Date(m.movementDate), "HH:mm:ss")}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-semibold text-xs text-foreground">
+                            {m.variant.product.name}
+                          </div>
+                          <div className="text-[10px] text-muted-foreground font-medium">
+                            SKU: {m.variant.sku}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className={`text-[10px] px-2 py-0.5 font-bold ${
+                              m.movementType === "SALE"
+                                ? "bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-none"
+                                : m.movementType === "PURCHASE_RECEIPT"
+                                ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-none"
+                                : m.movementType === "TRANSFER"
+                                ? "bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-none"
+                                : "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-none"
+                            }`}
+                          >
+                            {m.movementType}
+                          </Badge>
+                        </TableCell>
                         <TableCell
-                          colSpan={6}
-                          className="h-72 text-center text-gray-400 font-medium"
+                          className={`text-right text-xs font-bold ${
+                            m.quantity.toNumber() > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"
+                          }`}
                         >
-                          No data available for the selected period.
+                          {m.quantity.toNumber() > 0
+                            ? `+${m.quantity.toNumber()}`
+                            : m.quantity.toNumber()}
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground font-medium">
+                          {m.fromLocation?.name && m.toLocation?.name
+                            ? `${m.fromLocation.name} → ${m.toLocation.name}`
+                            : m.toLocation?.name || m.fromLocation?.name || "-"}
+                        </TableCell>
+                        <TableCell className="text-xs text-foreground font-medium">
+                          {m.member?.user?.name || "System"}
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      movements.map((m) => {
-                        const value =
-                          m.quantity.toNumber() * m.variant.buyingPrice.toNumber();
-                        const isPositive = m.quantity.toNumber() > 0;
-                        return (
-                          <TableRow key={m.id} className="hover:bg-gray-50/40">
-                            <TableCell className="text-xs text-gray-500 font-medium">
-                              {format(new Date(m.movementDate), "MMM dd, yyyy")}
-                            </TableCell>
-                            <TableCell>
-                              <div className="font-semibold text-xs text-gray-800">
-                                {m.variant.product.name}
-                              </div>
-                              <div className="text-[10px] text-gray-400 font-mono">
-                                {m.variant.sku}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant="secondary"
-                                className={`text-[10px] px-2 py-0.5 font-bold ${
-                                  isPositive
-                                    ? "bg-green-50 text-green-700 hover:bg-green-50 border-none"
-                                    : "bg-amber-50 text-amber-700 hover:bg-amber-50 border-none"
-                                }`}
-                              >
-                                {m.movementType}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-xs text-gray-600 font-medium">
-                              {m.toLocation?.name || m.fromLocation?.name || "N/A"}
-                            </TableCell>
-                            <TableCell
-                              className={`text-right font-bold text-xs ${
-                                isPositive ? "text-green-600" : "text-red-600"
-                              }`}
-                            >
-                              {isPositive ? "+" : ""}
-                              {m.quantity.toNumber()}
-                            </TableCell>
-                            <TableCell className="text-right text-xs font-semibold text-gray-800">
-                              ${Math.abs(value).toFixed(2)}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-                <div className="p-5 bg-gray-50/60 border-t border-gray-100 flex flex-wrap justify-end gap-8">
-                  <div className="text-right">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                      Total Inbound
-                    </div>
-                    <div className="text-sm font-bold text-green-600">
-                      +{totalInbound.toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                      Total Outbound
-                    </div>
-                    <div className="text-sm font-bold text-red-600">
-                      -{totalOutbound.toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="text-right border-l border-gray-200 pl-8">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                      Net Movement Value
-                    </div>
-                    <div className="text-sm font-bold text-gray-900">
-                      ${netMovementValue.toFixed(2)}
-                    </div>
-                  </div>
-                </div>
-              </>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             )}
 
             {reportType === "Inventory Valuation" && (
               <>
                 <Table>
-                  <TableHeader className="bg-gray-50/50">
+                  <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="font-semibold text-gray-600">Product</TableHead>
-                      <TableHead className="font-semibold text-gray-600">SKU</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">On Hand</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Cost Price</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Retail Price</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Total Cost Value</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Total Retail Value</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">Product</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">SKU</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">On Hand</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Cost Price</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Retail Price</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Total Cost</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Total Retail</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -585,42 +554,42 @@ export default async function ReportsPage({
                       <TableRow>
                         <TableCell
                           colSpan={7}
-                          className="h-72 text-center text-gray-400 font-medium"
+                          className="h-72 text-center text-muted-foreground font-medium"
                         >
-                          No valuation data available.
+                          No inventory items found.
                         </TableCell>
                       </TableRow>
                     ) : (
                       stockLevels.map((s, index) => {
-                        const itemCost = s.currentStock * s.buyingPrice;
-                        const itemRetail = s.currentStock * s.retailPrice;
+                        const totalCost = s.currentStock * s.buyingPrice;
+                        const totalRetail = s.currentStock * s.retailPrice;
                         return (
-                          <TableRow key={index} className="hover:bg-gray-50/40">
+                          <TableRow key={index} className="hover:bg-muted/50">
                             <TableCell>
-                              <div className="font-semibold text-xs text-gray-800">
+                              <div className="font-semibold text-xs text-foreground">
                                 {s.name}
                               </div>
                               {s.variantName && s.variantName !== "Default" && (
-                                <div className="text-[10px] text-gray-400 font-medium">
+                                <div className="text-[10px] text-muted-foreground font-medium">
                                   {s.variantName}
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell className="text-xs font-mono text-gray-500">{s.sku}</TableCell>
-                            <TableCell className="text-right text-xs font-bold text-gray-800">
+                            <TableCell className="text-xs font-mono text-muted-foreground">{s.sku}</TableCell>
+                            <TableCell className="text-right text-xs font-bold text-foreground">
                               {s.currentStock}
                             </TableCell>
-                            <TableCell className="text-right text-xs text-gray-600">
+                            <TableCell className="text-right text-xs text-muted-foreground">
                               ${s.buyingPrice.toFixed(2)}
                             </TableCell>
-                            <TableCell className="text-right text-xs text-gray-600">
+                            <TableCell className="text-right text-xs text-muted-foreground">
                               ${s.retailPrice.toFixed(2)}
                             </TableCell>
-                            <TableCell className="text-right text-xs font-semibold text-gray-900">
-                              ${itemCost.toFixed(2)}
+                            <TableCell className="text-right text-xs font-semibold text-foreground">
+                              ${totalCost.toFixed(2)}
                             </TableCell>
-                            <TableCell className="text-right text-xs font-semibold text-green-700">
-                              ${itemRetail.toFixed(2)}
+                            <TableCell className="text-right text-xs font-semibold text-foreground">
+                              ${totalRetail.toFixed(2)}
                             </TableCell>
                           </TableRow>
                         );
@@ -628,28 +597,28 @@ export default async function ReportsPage({
                     )}
                   </TableBody>
                 </Table>
-                <div className="p-5 bg-gray-50/60 border-t border-gray-100 flex flex-wrap justify-end gap-8">
+                <div className="p-5 bg-muted/40 border-t border-border flex flex-wrap justify-end gap-8">
                   <div className="text-right">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                      Total Cost Value
+                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                      Total Cost
                     </div>
-                    <div className="text-sm font-bold text-gray-900">
+                    <div className="text-sm font-bold text-foreground">
                       ${totalCostValue.toFixed(2)}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                      Total Retail Value
+                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                      Total Retail
                     </div>
-                    <div className="text-sm font-bold text-green-700">
+                    <div className="text-sm font-bold text-foreground">
                       ${totalRetailValue.toFixed(2)}
                     </div>
                   </div>
-                  <div className="text-right border-l border-gray-200 pl-8">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                      Potential Profit
+                  <div className="text-right">
+                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                      Margin Profit
                     </div>
-                    <div className="text-sm font-bold text-emerald-600">
+                    <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
                       ${potentialProfit.toFixed(2)}
                     </div>
                   </div>
@@ -660,15 +629,15 @@ export default async function ReportsPage({
             {reportType === "Slow Moving Inventory" && (
               <>
                 <Table>
-                  <TableHeader className="bg-gray-50/50">
+                  <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="font-semibold text-gray-600">Product</TableHead>
-                      <TableHead className="font-semibold text-gray-600">SKU</TableHead>
-                      <TableHead className="font-semibold text-gray-600">Status</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Stock Qty</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Sold (Date Range)</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Value On Hand</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Turnover Rate</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">Product</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">SKU</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Stock Qty</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Sold (Date Range)</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Value On Hand</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Turnover Rate</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -676,7 +645,7 @@ export default async function ReportsPage({
                       <TableRow>
                         <TableCell
                           colSpan={7}
-                          className="h-72 text-center text-gray-400 font-medium"
+                          className="h-72 text-center text-muted-foreground font-medium"
                         >
                           No slow-moving inventory detected.
                         </TableCell>
@@ -685,40 +654,40 @@ export default async function ReportsPage({
                       slowMovingFiltered.map((s, index) => {
                         const value = s.currentStock * s.buyingPrice;
                         return (
-                          <TableRow key={index} className="hover:bg-gray-50/40">
+                          <TableRow key={index} className="hover:bg-muted/50">
                             <TableCell>
-                              <div className="font-semibold text-xs text-gray-800">
+                              <div className="font-semibold text-xs text-foreground">
                                 {s.name}
                               </div>
                               {s.variantName && s.variantName !== "Default" && (
-                                <div className="text-[10px] text-gray-400 font-medium">
+                                <div className="text-[10px] text-muted-foreground font-medium">
                                   {s.variantName}
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell className="text-xs font-mono text-gray-500">{s.sku}</TableCell>
+                            <TableCell className="text-xs font-mono text-muted-foreground">{s.sku}</TableCell>
                             <TableCell>
                               <Badge
                                 variant="secondary"
                                 className={`text-[10px] px-2 py-0.5 font-bold ${
                                   s.status === "No Movement"
-                                    ? "bg-red-50 text-red-700 hover:bg-red-50 border-none"
-                                    : "bg-amber-50 text-amber-700 hover:bg-amber-50 border-none"
+                                    ? "bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-none"
+                                    : "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-none"
                                 }`}
                               >
                                 {s.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right text-xs font-bold text-gray-800">
+                            <TableCell className="text-right text-xs font-bold text-foreground">
                               {s.currentStock}
                             </TableCell>
-                            <TableCell className="text-right text-xs text-gray-600">
+                            <TableCell className="text-right text-xs text-muted-foreground">
                               {s.soldQty}
                             </TableCell>
-                            <TableCell className="text-right text-xs font-semibold text-gray-800">
+                            <TableCell className="text-right text-xs font-semibold text-foreground">
                               ${value.toFixed(2)}
                             </TableCell>
-                            <TableCell className="text-right text-xs font-semibold text-gray-900">
+                            <TableCell className="text-right text-xs font-semibold text-foreground">
                               {s.turnoverRate.toFixed(1)}%
                             </TableCell>
                           </TableRow>
@@ -727,20 +696,20 @@ export default async function ReportsPage({
                     )}
                   </TableBody>
                 </Table>
-                <div className="p-5 bg-gray-50/60 border-t border-gray-100 flex flex-wrap justify-end gap-8">
+                <div className="p-5 bg-muted/40 border-t border-border flex flex-wrap justify-end gap-8">
                   <div className="text-right">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
                       Slow Items
                     </div>
-                    <div className="text-sm font-bold text-amber-600">
+                    <div className="text-sm font-bold text-amber-600 dark:text-amber-400">
                       {totalSlowItemsCount}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
                       Dead Stock Value
                     </div>
-                    <div className="text-sm font-bold text-red-600">
+                    <div className="text-sm font-bold text-red-600 dark:text-red-400">
                       ${deadStockValue.toFixed(2)}
                     </div>
                   </div>
@@ -751,15 +720,15 @@ export default async function ReportsPage({
             {reportType === "Expiry Analysis" && (
               <>
                 <Table>
-                  <TableHeader className="bg-gray-50/50">
+                  <TableHeader className="bg-muted/50">
                     <TableRow>
-                      <TableHead className="font-semibold text-gray-600">Product</TableHead>
-                      <TableHead className="font-semibold text-gray-600">Batch Number</TableHead>
-                      <TableHead className="font-semibold text-gray-600">Location</TableHead>
-                      <TableHead className="font-semibold text-gray-600">Status</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Stock Qty</TableHead>
-                      <TableHead className="font-semibold text-gray-600">Expiry Date</TableHead>
-                      <TableHead className="text-right font-semibold text-gray-600">Days Left</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">Product</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">Batch Number</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">Location</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Stock Qty</TableHead>
+                      <TableHead className="font-semibold text-muted-foreground">Expiry Date</TableHead>
+                      <TableHead className="text-right font-semibold text-muted-foreground">Days Left</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -767,7 +736,7 @@ export default async function ReportsPage({
                       <TableRow>
                         <TableCell
                           colSpan={7}
-                          className="h-72 text-center text-gray-400 font-medium"
+                          className="h-72 text-center text-muted-foreground font-medium"
                         >
                           No expiry data found.
                         </TableCell>
@@ -775,46 +744,46 @@ export default async function ReportsPage({
                     ) : (
                       parsedExpiryBatches.map((b, index) => {
                         return (
-                          <TableRow key={index} className="hover:bg-gray-50/40">
+                          <TableRow key={index} className="hover:bg-muted/50">
                             <TableCell>
-                              <div className="font-semibold text-xs text-gray-800">
+                              <div className="font-semibold text-xs text-foreground">
                                 {b.productName}
                               </div>
                               {b.variantName && b.variantName !== "Default" && (
-                                <div className="text-[10px] text-gray-400 font-medium">
+                                <div className="text-[10px] text-muted-foreground font-medium">
                                   {b.variantName}
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell className="text-xs font-mono text-gray-500">{b.batchNumber || "-"}</TableCell>
-                            <TableCell className="text-xs text-gray-600 font-medium">{b.locationName}</TableCell>
+                            <TableCell className="text-xs font-mono text-muted-foreground">{b.batchNumber || "-"}</TableCell>
+                            <TableCell className="text-xs text-muted-foreground font-medium">{b.locationName}</TableCell>
                             <TableCell>
                               <Badge
                                 variant="secondary"
                                 className={`text-[10px] px-2 py-0.5 font-bold ${
                                   b.status === "Expired"
-                                    ? "bg-red-50 text-red-700 hover:bg-red-50 border-none"
+                                    ? "bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-none"
                                     : b.status === "Expiring Soon"
-                                    ? "bg-amber-50 text-amber-700 hover:bg-amber-50 border-none"
-                                    : "bg-green-50 text-green-700 hover:bg-green-50 border-none"
+                                    ? "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-none"
+                                    : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-none"
                                 }`}
                               >
                                 {b.status}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right text-xs font-bold text-gray-800">
+                            <TableCell className="text-right text-xs font-bold text-foreground">
                               {b.currentQuantity}
                             </TableCell>
-                            <TableCell className="text-xs text-gray-600 font-medium">
+                            <TableCell className="text-xs text-muted-foreground font-medium">
                               {b.expiry ? format(b.expiry, "PP") : "-"}
                             </TableCell>
                             <TableCell
                               className={`text-right font-bold text-xs ${
                                 b.status === "Expired"
-                                  ? "text-red-600"
+                                  ? "text-red-600 dark:text-red-400"
                                   : b.status === "Expiring Soon"
-                                  ? "text-amber-600"
-                                  : "text-green-600"
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-emerald-600 dark:text-emerald-400"
                               }`}
                             >
                               {b.status === "Expired" ? `Expired` : `${b.daysRemaining} days`}
@@ -825,20 +794,20 @@ export default async function ReportsPage({
                     )}
                   </TableBody>
                 </Table>
-                <div className="p-5 bg-gray-50/60 border-t border-gray-100 flex flex-wrap justify-end gap-8">
+                <div className="p-5 bg-muted/40 border-t border-border flex flex-wrap justify-end gap-8">
                   <div className="text-right">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
                       Expired Batches
                     </div>
-                    <div className="text-sm font-bold text-red-600">
+                    <div className="text-sm font-bold text-red-600 dark:text-red-400">
                       {totalExpiredCount}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                    <div className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
                       Expiring Soon
                     </div>
-                    <div className="text-sm font-bold text-amber-600">
+                    <div className="text-sm font-bold text-amber-600 dark:text-amber-400">
                       {expiringSoonCount}
                     </div>
                   </div>

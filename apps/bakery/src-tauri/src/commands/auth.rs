@@ -338,7 +338,7 @@ pub async fn switch_active_member(
 pub async fn validate_api_endpoint(api_url: String) -> BackendResult<bool> {
     let client = reqwest::Client::new();
     let sanitized = api_url.trim().trim_end_matches('/');
-    let clean_url = sanitized.replace("/api/v2", "").replace("/api/v3", "");
+    let clean_url = sanitized.replace("/api/v3", "");
 
     let response = client
         .get(format!("{}/api/v3/health", clean_url))
@@ -365,7 +365,7 @@ pub async fn provision_device_with_token(
     };
 
     let base_api_url = api_url_override.as_deref().unwrap_or(default_api_url);
-    let clean_url = base_api_url.trim().trim_end_matches('/').replace("/api/v2", "").replace("/api/v3", "");
+    let clean_url = base_api_url.trim().trim_end_matches('/').replace("/api/v3", "");
 
     let response = client
         .post(format!("{}/api/v3/global/pos/provision", clean_url))

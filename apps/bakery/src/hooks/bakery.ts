@@ -244,9 +244,6 @@ export const useBakeryData = () => {
 // Ingredients
 export {
   useRawMaterials as useListIngredients,
-  useCreateRawMaterial as useCreateIngredient,
-  useUpdateRawMaterial as useUpdateIngredient,
-  useDeleteRawMaterial as useDeleteIngredient,
 } from "@/lib/hooks/raw-materials";
 
 // Categories

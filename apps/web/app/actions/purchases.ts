@@ -111,19 +111,33 @@ export async function createPurchase(data: {
     0,
   );
 
-  // Generate purchase number if not provided
-  let purchaseNumber = data.purchaseNumber;
-  if (!purchaseNumber) {
-    const count = await db.purchase.count({
-      where: { organizationId: auth.organizationId },
-    });
-    purchaseNumber = `PO-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
-  }
+  // ⚡ Bolt Optimization: Parallelize independent read queries outside active transaction.
+  // Executing purchase count, supplier name lookup, and organization approval threshold concurrently
+  // via Promise.all collapses 3 sequential database roundtrips down to 1 flat concurrent roundtrip,
+  // while also reducing transaction duration and database row locking time.
+  const [count, supplier, org] = await Promise.all([
+    data.purchaseNumber
+      ? null
+      : db.purchase.count({
+          where: { organizationId: auth.organizationId },
+        }),
+    db.supplier.findUnique({
+      where: { id: data.supplierId },
+      select: { name: true },
+    }),
+    db.organization.findUnique({
+      where: { id: auth.organizationId },
+      select: { expenseApprovalThreshold: true, slug: true, scrymeConfiguration: true },
+    }),
+  ]);
 
-  const supplier = await db.supplier.findUnique({
-    where: { id: data.supplierId },
-    select: { name: true },
-  });
+  const purchaseNumber =
+    data.purchaseNumber ||
+    `PO-${new Date().getFullYear()}-${((count || 0) + 1).toString().padStart(4, "0")}`;
+
+  const threshold = org?.expenseApprovalThreshold
+    ? Number(org.expenseApprovalThreshold)
+    : 0;
 
   const createdPurchase = await db.$transaction(async tx => {
     const purchase = await tx.purchase.create({
@@ -146,16 +160,6 @@ export async function createPurchase(data: {
       },
     });
 
-    // Check for approval threshold
-    const org = await tx.organization.findUnique({
-      where: { id: auth.organizationId },
-      select: { expenseApprovalThreshold: true },
-    });
-
-    const threshold = org?.expenseApprovalThreshold
-      ? Number(org.expenseApprovalThreshold)
-      : 0;
-
     if (totalAmount > threshold) {
       await submitForApproval(
         {
@@ -177,13 +181,8 @@ export async function createPurchase(data: {
     return purchase;
   });
 
-  // Dispatch ScrymeChat alert if Scryme is configured
+  // Dispatch ScrymeChat alert if Scryme is configured (using pre-fetched org configuration)
   try {
-    const org = await db.organization.findUnique({
-      where: { id: auth.organizationId },
-      select: { slug: true, scrymeConfiguration: true },
-    });
-
     if (org?.scrymeConfiguration && org.slug) {
       const { ScrymeChatApiClient } = await import("@repo/chat");
       const scrymeClient = new ScrymeChatApiClient();

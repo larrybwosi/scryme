@@ -2,13 +2,14 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Supermarket POS Flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Forward console logs from the page
     page.on('console', msg => console.log('PAGE LOG:', msg.text()));
+    page.on('pageerror', err => console.error('PAGE ERROR EXCEPTION:', err));
 
     const currentTimestamp = Date.now();
 
     // 1. Mock Tauri APIs and Inject state
     await page.addInitScript(() => {
+      (window as any).process = (window as any).process || { env: {} };
       const transformCallback = (cb) => {
           const id = Math.floor(Math.random() * 1000000);
           (window as any)[`_tauri_cb_${id}`] = cb;
@@ -18,68 +19,84 @@ test.describe('Supermarket POS Flow', () => {
       const mockInvoke = async (cmd, args) => {
         console.log('Mocked invoke called:', cmd, JSON.stringify(args));
 
-        // Handle plugin calls
-        if (cmd.startsWith('plugin:')) {
-            if (cmd.includes('get_device_config')) return { location_id: 'test-loc', allow_negative_stock: false };
-            if (cmd.includes('app|version')) return '3.3.0';
-            if (cmd.includes('store|load')) return 1;
-            if (cmd.includes('store|get')) return null;
-            if (cmd.includes('updater|check')) return null;
-            if (cmd.includes('event|listen')) return 123;
-            if (cmd.includes('log|log')) return null;
+        if (cmd.includes('authenticated_api_request')) {
+          if (args?.path?.includes('pos/me') || args?.path?.includes('me')) {
+            return { success: true, isCheckedIn: true, memberId: 'test-mem', data: { isCheckedIn: true, memberId: 'test-mem' } };
+          }
+          return { success: true, data: {} };
         }
 
-        if (cmd === 'get_ably_auth_token_command') return {
-            data: {
-                tokenRequest: {
-                    token: 'mock-jwt-token'
-                },
-                metadata: {
-                    paymentChannel: 'mock-payment-channel'
-                }
-            }
-        };
-
-        if (cmd === 'get_device_config') return { location_id: 'test-loc', allow_negative_stock: false };
-        if (cmd === 'get_locations_command') return { locations: [{
-            id: 'test-loc',
-            name: 'Test Store',
-            locationType: 'RETAIL_SHOP',
-            isActive: true,
-            isDefault: true,
-            organizationId: 'test-org'
-          }] };
-        if (cmd === 'resolve_price_batch_command') return [100];
-        if (cmd === 'get_tables_command') return [];
-        if (cmd === 'get_local_ip_command') return '127.0.0.1';
-        if (cmd === 'start_nfc_listener') return null;
-        if (cmd === 'get_system_printers') return [];
-        if (cmd === 'discover_network_printers') return [];
-        if (cmd === 'get_printer_config') return null;
-        if (cmd === 'get_unread_notification_count') return 0;
-        if (cmd === 'get_notification_history') return [];
-        if (cmd === 'get_app_version') return '3.3.0';
-        if (cmd === 'check_kds_hub_status') return false;
-        if (cmd === 'get_hub_status') return { is_running: false };
-        if (cmd === 'search_products_command') {
-            return {
-                products: [
-                  {
-                    productId: 'p1',
-                    productName: 'Milk',
-                    category: 'Dairy',
-                    variants: [{ variantId: 'v1', variantName: 'Whole Milk', barcode: '123' }],
-                    sellableUnits: [{ unitId: 'u1', unitName: '1L', price: 100, isBaseUnit: true }],
-                    stock: 50
-                  }
-                ].filter(p =>
-                    !args.query || p.productName.toLowerCase().includes(args.query.toLowerCase())
-                ),
-                total_count: 1,
-                page: 1,
-                page_size: 50
-            };
+        if (cmd.includes('get_device_config')) {
+          return { location_id: 'test-loc', org_slug: 'test-org', allow_negative_stock: false };
         }
+
+        if (cmd.includes('get_locations')) {
+          return {
+            locations: [{
+              id: 'test-loc',
+              name: 'Test Store',
+              locationType: 'RETAIL_SHOP',
+              isActive: true,
+              isDefault: true,
+              organizationId: 'test-org'
+            }]
+          };
+        }
+
+        if (cmd.includes('search_products')) {
+          const query = args?.query || args?.search || '';
+          return {
+            products: [
+              {
+                productId: 'p1',
+                productName: 'Milk',
+                name: 'Milk',
+                category: 'Dairy',
+                variantId: 'v1',
+                variantName: 'Whole Milk',
+                stock: 50,
+                variants: [{ variantId: 'v1', variantName: 'Whole Milk', name: 'Whole Milk', barcode: '123', stock: 50 }],
+                sellableUnits: [{ unitId: 'u1', unitName: '1L', price: 100, isBaseUnit: true }]
+              }
+            ].filter(p => !query || p.productName.toLowerCase().includes(query.toLowerCase())),
+            totalCount: 1,
+            total_count: 1,
+            page: 1,
+            page_size: 50
+          };
+        }
+
+        if (cmd.includes('get_product_by_barcode')) {
+          return {
+            productId: 'p1',
+            productName: 'Milk',
+            name: 'Milk',
+            category: 'Dairy',
+            variants: [{ variantId: 'v1', variantName: 'Whole Milk', name: 'Whole Milk', barcode: '123', stock: 50 }],
+            sellableUnits: [{ unitId: 'u1', unitName: '1L', price: 100, isBaseUnit: true }]
+          };
+        }
+
+        if (cmd.includes('get_ably_auth_token')) return { data: { tokenRequest: { token: 'mock-jwt-token' }, metadata: { paymentChannel: 'mock-payment-channel' } } };
+        if (cmd.includes('resolve_price_batch')) return [100];
+        if (cmd.includes('get_tables')) return [];
+        if (cmd.includes('get_local_ip')) return '127.0.0.1';
+        if (cmd.includes('get_system_printers')) return [];
+        if (cmd.includes('discover_network_printers')) return [];
+        if (cmd.includes('get_printer_config')) return null;
+        if (cmd.includes('get_unread_notification_count')) return 0;
+        if (cmd.includes('get_notification_history')) return [];
+        if (cmd.includes('app_version') || cmd.includes('app|version')) return '3.3.0';
+        if (cmd.includes('get_shift')) return { id: 'test-shift', status: 'open' };
+        if (cmd.includes('check_kds_hub_status')) return false;
+        if (cmd.includes('get_hub_status')) return { is_running: false };
+        if (cmd.includes('update_base_url')) return null;
+        if (cmd.includes('restore_member_session')) return null;
+        if (cmd.includes('store|load') || cmd.includes('store|get')) return null;
+        if (cmd.includes('plugin:os') || cmd.includes('os|')) return 'linux';
+        if (cmd.includes('plugin:log') || cmd.includes('log|')) return null;
+        if (cmd.includes('event|listen') || cmd.includes('updater|check')) return null;
+
         return null;
       };
 
@@ -297,15 +314,25 @@ test.describe('Supermarket POS Flow', () => {
       localStorage.setItem('pos-auth-storage-v3', JSON.stringify(authState));
       localStorage.setItem('scryme-pos-storage-v1', JSON.stringify(posState));
 
-      // Inject some CSS to hide potential blocking overlays that aren't critical for the test
-      const style = document.createElement('style');
-      style.innerHTML = `
-        #splash-root { display: none !important; opacity: 0 !important; }
-        .sonner-toaster, [data-sonner-toaster] { display: none !important; }
-        #connection-status-banner { display: none !important; }
-        .ud-root { display: none !important; }
-      `;
-      document.head.appendChild(style);
+      const appendStyle = () => {
+        const style = document.createElement('style');
+        style.innerHTML = `
+          #splash-root { display: none !important; opacity: 0 !important; }
+          .sonner-toaster, [data-sonner-toaster] { display: none !important; }
+          #connection-status-banner { display: none !important; }
+          .ud-root { display: none !important; }
+        `;
+        if (document.head) {
+          if (document.head) { document.head.appendChild(style); } else if (document.documentElement) { document.documentElement.appendChild(style); } else { document.addEventListener("DOMContentLoaded", () => document.head.appendChild(style)); }
+        } else if (document.documentElement) {
+          document.documentElement.appendChild(style);
+        }
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', appendStyle);
+      } else {
+        appendStyle();
+      }
       localStorage.setItem('DEVICE_ID', 'test-device');
       localStorage.setItem('DEVICE_ROLE', 'MAIN_HUB');
     }, { now: currentTimestamp });
@@ -314,7 +341,6 @@ test.describe('Supermarket POS Flow', () => {
     await page.goto('/');
 
     // Wait for splash screen to disappear and app to load
-    // Check for splash root and wait for it to be removed or hidden
     await page.waitForFunction(() => {
         const splash = document.getElementById('splash-root');
         return !splash || splash.style.opacity === '0' || getComputedStyle(splash).opacity === '0';
@@ -353,13 +379,11 @@ test.describe('Supermarket POS Flow', () => {
     await productItem.click();
 
     // Click Hold (the text might vary depending on the view, so use a more robust locator)
-    // In POS.tsx it's an icon or text inside a button
     const holdButton = page.getByRole('button', { name: /Hold/i });
     await expect(holdButton).toBeVisible();
     await holdButton.click();
 
-    // Verify cart is cleared. Cart header usually shows item count.
-    // In AppLayout it might be different, but let's check for 0 items text
+    // Verify cart is cleared
     await expect(page.getByText(/0 Items/i).or(page.getByText(/empty/i))).toBeVisible();
   });
 });

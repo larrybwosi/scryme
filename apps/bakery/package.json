@@ -1,7 +1,7 @@
 {
   "name": "bakery",
   "private": true,
-  "version": "10.1.19",
+  "version": "10.1.20",
   "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {
@@ -19,7 +19,6 @@
     "@hookform/resolvers": "^5.2.2",
     "@internationalized/date": "^3.12.1",
     "@repo/db": "workspace:*",
-    "@scryme/sdk": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "^5.100.7",
     "@tauri-apps/api": "^2.10.1",

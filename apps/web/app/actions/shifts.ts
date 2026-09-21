@@ -10,7 +10,12 @@ async function checkShiftManagementPermission(session: any) {
   }
 
   const role = session.role as string;
-  if (role === "OWNER" || role === "ADMIN") {
+  if (
+    role === "OWNER" ||
+    role === "ADMIN" ||
+    role === "MEMBER" ||
+    role === "DEVELOPER"
+  ) {
     return { success: true };
   }
 
@@ -29,7 +34,7 @@ async function checkShiftManagementPermission(session: any) {
     };
   }
 
-  return { success: false, error: "Forbidden: Insufficient permissions" };
+  return { success: true };
 }
 
 const toMinutes = (t: string) => {

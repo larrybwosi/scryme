@@ -83,13 +83,13 @@ export function StockReportFilters({
   return (
     <form onSubmit={handleApplyFilters} className="space-y-5">
       <div>
-        <label className="text-xs font-bold text-gray-500 uppercase mb-1.5 block">
+        <label className="text-xs font-bold text-muted-foreground uppercase mb-1.5 block">
           Report Type
         </label>
         <select
           value={reportType}
           onChange={(e) => setReportType(e.target.value)}
-          className="w-full p-2.5 border border-gray-200 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
+          className="w-full p-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none transition-all shadow-sm"
         >
           <option>Stock Movement Report</option>
           <option>Inventory Valuation</option>
@@ -99,13 +99,13 @@ export function StockReportFilters({
       </div>
 
       <div>
-        <label className="text-xs font-bold text-gray-500 uppercase mb-1.5 block">
+        <label className="text-xs font-bold text-muted-foreground uppercase mb-1.5 block">
           Location
         </label>
         <select
           value={locationId}
           onChange={(e) => setLocationId(e.target.value)}
-          className="w-full p-2.5 border border-gray-200 rounded-lg bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all shadow-sm"
+          className="w-full p-2.5 border border-input rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-ring focus:border-ring outline-none transition-all shadow-sm"
         >
           <option value="">All Locations</option>
           {locations.map((l) => (
@@ -117,13 +117,13 @@ export function StockReportFilters({
       </div>
 
       <div>
-        <label className="text-xs font-bold text-gray-500 uppercase mb-1.5 block">
+        <label className="text-xs font-bold text-muted-foreground uppercase mb-1.5 block">
           Date Range
         </label>
         <DateRangePicker
           date={dateRange}
           onDateChange={setDateRange}
-          className="w-full bg-white"
+          className="w-full bg-background text-foreground"
         />
       </div>
 
@@ -132,11 +132,11 @@ export function StockReportFilters({
           type="button"
           variant="outline"
           onClick={handleResetFilters}
-          className="flex-1 gap-2 h-10 text-gray-600 border-gray-200"
+          className="flex-1 gap-2 h-10 text-muted-foreground border-input hover:bg-accent"
         >
           <RotateCcw size={15} /> Reset
         </Button>
-        <Button type="submit" className="flex-1 gap-2 h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium">
+        <Button type="submit" className="flex-1 gap-2 h-10 font-medium">
           <Filter size={15} /> Apply
         </Button>
       </div>
