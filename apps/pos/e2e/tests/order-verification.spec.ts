@@ -21,6 +21,7 @@ test.describe('Order Creation and Invoice Download Flow', () => {
 
     // 1. Mock Tauri APIs and Inject state
     await page.addInitScript(() => {
+      (window as any).process = (window as any).process || { env: {} };
       const transformCallback = (cb) => {
           const id = Math.floor(Math.random() * 1000000);
           (window as any)[`_tauri_cb_${id}`] = cb;
@@ -128,6 +129,9 @@ test.describe('Order Creation and Invoice Download Flow', () => {
         if (cmd.includes('get_network_status')) return true;
         if (cmd.includes('get_unread_notification_count')) return 0;
         if (cmd.includes('get_notification_history')) return [];
+        if (cmd.includes('get_shift')) return { id: 'test-shift', status: 'open' };
+        if (cmd.includes('plugin:os') || cmd.includes('os|')) return 'linux';
+        if (cmd.includes('plugin:log') || cmd.includes('log|')) return null;
         if (cmd.includes('get_hub_status')) return { is_running: false };
         if (cmd.includes('get_tables')) return [];
         if (cmd.includes('get_local_ip')) return '127.0.0.1';
@@ -214,6 +218,24 @@ test.describe('Order Creation and Invoice Download Flow', () => {
             businessName: 'Test Store',
             taxRate: 5,
             currency: 'KSH',
+            sidebarItems: [],
+            themeConfig: {
+              mode: 'light',
+              primaryColor: 'oklch(0.42 0.145 265)',
+              accentColor: 'oklch(0.96 0.005 240)',
+              fontSize: 'medium',
+              compactMode: false,
+              zoomLevel: 100
+            },
+            notificationSettings: {
+              enabled: true,
+              soundEnabled: false,
+              showOnlineOrders: true,
+              showLowStock: true,
+              showSystemAlerts: true,
+              position: 'top-right',
+              autoCloseDelay: 5000
+            }
           },
         },
         version: 0
