@@ -30,7 +30,7 @@ pub async fn start_sync_worker(pool: SqlitePool, default_api_base_url: String) {
             }
         };
 
-        let api_base_url = api_base_url.trim().trim_end_matches('/').replace("/api/v2", "").replace("/api/v3", "").to_string();
+        let api_base_url = api_base_url.trim().trim_end_matches('/').replace("/api/v3", "").to_string();
 
         let api_key = match get_device_info(&pool).await {
             Ok(Some((key, _, _))) => key,

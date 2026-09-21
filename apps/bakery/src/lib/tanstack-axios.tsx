@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ReactNode } from 'react';
 import type { InventoryLocation } from '@repo/db';
-import { getOrgSlug } from '@/config/api';
 
 export interface ProductSupplier {
   id: string;
@@ -53,14 +52,9 @@ export interface InvoiceResponse {
 
 class ApiClient {
   private async request<T = any>(config: { method: string; path: string; data?: any }): Promise<T> {
-    const orgSlug = getOrgSlug();
-    const fullPath = config.path.startsWith('/api/')
-      ? config.path
-      : `/api/v3/${orgSlug}${config.path.startsWith('/') ? '' : '/'}${config.path}`;
-
     const resData = await tauriInvoke<T>('authenticated_api_request', {
       method: config.method,
-      path: fullPath,
+      path: config.path,
       body: config.data,
     });
 
@@ -79,7 +73,7 @@ class ApiClient {
   // Locations Service
   locations = {
     list: async (_organizationId: string) =>
-      this.request({ method: 'GET', path: '/pos/locations' }),
+      tauriInvoke('get_locations_command'),
     create: async (_organizationId: string, data: Partial<InventoryLocation>): Promise<ApiResponse<InventoryLocation>> =>
       this.request({ method: 'POST', path: '/pos/locations', data }),
     get: async (_organizationId: string, locationId: string): Promise<ApiResponse<InventoryLocation>> =>

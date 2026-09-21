@@ -2,7 +2,6 @@ fn main() {
     println!("cargo:rerun-if-changed=../../../packages/sdk/openapi.json");
     let pnpm_cmd = if cfg!(windows) { "pnpm.cmd" } else { "pnpm" };
     let status = std::process::Command::new(pnpm_cmd)
-        .args(["--filter", "@scryme/sdk", "generate:rust"])
         .current_dir("../../..")
         .status();
 
