@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ShieldAlert, ShieldCheck, UserX, UserCheck, Search, MessageSquare } from "lucide-react"
+import { ShieldAlert, ShieldCheck, UserX, UserCheck, Search, MessageSquare, KeyRound } from "lucide-react"
 import { Badge } from "@repo/ui/components/ui/badge"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { BanUserDialog } from "./ban-user-dialog"
 import { UnbanUserDialog } from "./unban-user-dialog"
 import { ManageScrymeAccessDialog } from "./manage-scryme-access-dialog"
+import { ResetPasswordDialog } from "./reset-password-dialog"
 
 export interface UserRow {
   id: string
@@ -30,6 +31,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
   const [banTarget, setBanTarget] = useState<UserRow | null>(null)
   const [unbanTarget, setUnbanTarget] = useState<UserRow | null>(null)
   const [scrymeAccessTarget, setScrymeAccessTarget] = useState<UserRow | null>(null)
+  const [resetPasswordTarget, setResetPasswordTarget] = useState<UserRow | null>(null)
 
   const filteredUsers = users.filter((u) => {
     const q = search.toLowerCase()
@@ -124,6 +126,15 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="gap-1 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-500/10"
+                          onClick={() => setResetPasswordTarget(user)}
+                        >
+                          <KeyRound className="size-3.5" aria-hidden="true" />
+                          Reset Password
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           className="gap-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-500/10"
                           onClick={() => setScrymeAccessTarget(user)}
                         >
@@ -161,6 +172,11 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         </Table>
       </div>
 
+      <ResetPasswordDialog
+        user={resetPasswordTarget}
+        open={!!resetPasswordTarget}
+        onOpenChange={(open) => !open && setResetPasswordTarget(null)}
+      />
       <BanUserDialog
         user={banTarget}
         open={!!banTarget}
