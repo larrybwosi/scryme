@@ -8,7 +8,7 @@ import { useOrganization } from '@/lib/providers/organization-context';
 import { bakery } from '@/lib/sdk';
 
 export default function SettingsPage() {
-  const { currentOrganization } = useOrganization();
+  useOrganization();
   const [formData, setFormData] = useState({
     apiUrl: 'https://api.scryme.tech',
     apiKey: '',

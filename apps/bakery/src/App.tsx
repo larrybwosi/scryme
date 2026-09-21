@@ -10,7 +10,7 @@ import SettingsPage from './pages/SettingsPage'
 import SetupPage from './pages/SetupPage'
 import LoginPage from './pages/LoginPage'
 import DashboardLayout from './layouts/DashboardLayout'
-import BakeryAuthGuard from './components/bakery/BakeryAuthGuard'
+import { BakeryAuthGuard } from './components/bakery/BakeryAuthGuard'
 
 export default function App() {
   return (
