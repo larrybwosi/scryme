@@ -47,18 +47,25 @@ export function StockCharts({
               <AreaChart data={movementData}>
                 <defs>
                   <linearGradient id="colorIn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorOut" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.1} />
+                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
                     <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
+                <XAxis dataKey="name" stroke="currentColor" className="text-xs text-muted-foreground" />
+                <YAxis stroke="currentColor" className="text-xs text-muted-foreground" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--card-foreground))",
+                    borderRadius: "8px",
+                  }}
+                />
                 <Legend />
                 <Area
                   type="monotone"
@@ -106,7 +113,14 @@ export function StockCharts({
                     />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "hsl(var(--card))",
+                    borderColor: "hsl(var(--border))",
+                    color: "hsl(var(--card-foreground))",
+                    borderRadius: "8px",
+                  }}
+                />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>

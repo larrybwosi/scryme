@@ -64,7 +64,7 @@ export function ProductVariantSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "w-full justify-between bg-white",
+            "w-full justify-between bg-background text-foreground border-input",
             error && "border-red-500",
             className,
           )}>
@@ -112,16 +112,16 @@ export function ProductVariantSelect({
                     )}
                   />
                   <div className="flex flex-col flex-1">
-                    <div className="flex justify-between items-center w-full">
-                      <span className="font-medium">
+                    <div className="flex justify-between items-center w-full gap-2">
+                      <span className="font-medium text-foreground">
                         {formatLabel(variant)}
                       </span>
                       <span
                         className={cn(
-                          "text-[10px] px-1.5 py-0.5 rounded-full font-semibold",
+                          "text-[10px] px-1.5 py-0.5 rounded-full font-semibold shrink-0",
                           (variant.stock ?? 0) > 0
-                            ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                            : "bg-red-50 text-red-600 border border-red-100",
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800"
+                            : "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/60 dark:text-red-300 dark:border-red-800",
                         )}>
                         {variant.stock ?? 0} available
                       </span>
