@@ -1,17 +1,5 @@
-import { client } from '@/lib/sdk';
+import { client } from '../sdk';
 
-export async function fetchRawMaterials() {
+export const useRawMaterials = () => {
   return client.get('/ingredients');
-}
-
-export async function createRawMaterial(data: any) {
-  return client.post('/ingredients', data);
-}
-
-export async function updateRawMaterial(id: string, data: any) {
-  return client.patch(`/ingredients/${id}`, data);
-}
-
-export async function deleteRawMaterial(id: string) {
-  return client.delete(`/ingredients/${id}`);
-}
+};

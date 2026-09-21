@@ -1,11 +1,12 @@
-/**
- * Sanitizes the API URL to ensure trailing slashes and legacy version paths are stripped
- */
-export const sanitizeApiUrl = (url: string): string => {
-  if (!url) return url;
+export function sanitizeApiUrl(url: string | null | undefined): string {
+  if (!url) {
+    return 'https://api.scryme.tech';
+  }
 
   const trimmed = url.trim();
-  if (!trimmed) return trimmed;
+  if (!trimmed) {
+    return 'https://api.scryme.tech';
+  }
 
-  return trimmed.replace(/\/api\/(v2|v3)\/?$/, '').replace(/\/+$/, '');
-};
+  return trimmed.replace(/\/api\/v3\/?$/, '').replace(/\/+$/, '');
+}
