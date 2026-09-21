@@ -39,6 +39,7 @@ import {
   useBakeryCategories,
 } from '@/hooks/bakery';
 import { z } from 'zod';
+import { toast } from 'sonner';
 import { useDeleteConfirmation } from '@/lib/providers/delete-modal';
 
 // Validation schema for bakery category
@@ -236,10 +237,12 @@ export default function CategoryManager() {
   const handleCreateCategory = async (data: BakeryCategoryFormData) => {
     try {
       await createCategoryMutation.mutateAsync(data);
+      toast.success('Category created successfully');
       resetCreateForm();
       setIsCreateDialogOpen(false);
-    } catch (error) {
-      console.error('Failed to create category:', error);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Failed to create category';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to create category');
     }
   };
 
@@ -251,10 +254,11 @@ export default function CategoryManager() {
         id: editingCategory.id,
         data,
       });
-
+      toast.success('Category updated successfully');
       setEditingCategory(null);
-    } catch (error) {
-      console.error('Failed to update category:', error);
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Failed to update category';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to update category');
     }
   };
 
@@ -269,8 +273,10 @@ export default function CategoryManager() {
     }
     try {
       await deleteCategoryMutation.mutateAsync(categoryId);
-    } catch (error) {
-      console.error('Failed to delete category:', error);
+      toast.success('Category deleted successfully');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Failed to delete category';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to delete category');
     }
   };
 

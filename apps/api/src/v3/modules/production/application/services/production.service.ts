@@ -5,11 +5,12 @@ import {
   BadRequestException,
   Logger,
   NotFoundException,
+  ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { type V3ApiContext } from "@repo/shared/api/v3";
-import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v3";
+import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v2";
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
@@ -585,6 +586,20 @@ export class ProductionService {
       ingredients,
     } = data;
 
+    if (!systemUnitId && !orgUnitId) {
+      throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
+    }
+
+    if (!ingredients || ingredients.length === 0) {
+      throw new BadRequestException("At least one ingredient is required.");
+    }
+
+    for (const ing of ingredients) {
+      if (!ing.systemUnitId && !ing.orgUnitId) {
+        throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
+      }
+    }
+
     return this.prisma.client.recipe.create({
       data: {
         name,
@@ -605,23 +620,44 @@ export class ProductionService {
         notes,
         tags,
         organizationId,
-        ingredients: ingredients
-          ? {
-              create: ingredients.map((ing: any) => ({
-                ingredientVariantId: ing.ingredientVariantId,
-                quantity: ing.quantity,
-                systemUnitId: ing.systemUnitId,
-                orgUnitId: ing.orgUnitId,
-                preparationNotes: ing.preparationNotes,
-              })),
-            }
-          : undefined,
+        ingredients: {
+          create: ingredients.map((ing: any) => ({
+            ingredientVariantId: ing.ingredientVariantId,
+            quantity: ing.quantity,
+            systemUnitId: ing.systemUnitId,
+            orgUnitId: ing.orgUnitId,
+            preparationNotes: ing.preparationNotes,
+          })),
+        },
       },
     });
   }
 
   async updateRecipe(organizationId: string, id: string, data: UpdateRecipeDto) {
     const { ingredients, ...rest } = data;
+
+    if (rest.yieldQuantity !== undefined) {
+      const existing = await this.prisma.client.recipe.findFirst({
+        where: { id, organizationId },
+      });
+      if (!existing) throw new NotFoundException("Recipe not found");
+      const sysUnit = rest.systemUnitId !== undefined ? rest.systemUnitId : existing.systemUnitId;
+      const orgUnit = rest.orgUnitId !== undefined ? rest.orgUnitId : existing.orgUnitId;
+      if (!sysUnit && !orgUnit) {
+        throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
+      }
+    }
+
+    if (ingredients !== undefined) {
+      if (!ingredients || ingredients.length === 0) {
+        throw new BadRequestException("Ingredients list cannot be empty.");
+      }
+      for (const ing of ingredients) {
+        if (!ing.systemUnitId && !ing.orgUnitId) {
+          throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
+        }
+      }
+    }
 
     return this.prisma.client.recipe.update({
       where: { id, organizationId },
@@ -1170,9 +1206,20 @@ export class ProductionService {
   async createCategory(organizationId: string, data: CreateProductionCategoryDto) {
     const { name, description } = data;
 
+    const existing = await this.prisma.client.bakeryCategory.findFirst({
+      where: {
+        organizationId,
+        name: { equals: name.trim(), mode: "insensitive" },
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException(`A category with the name "${name.trim()}" already exists.`);
+    }
+
     return this.prisma.client.bakeryCategory.create({
       data: {
-        name,
+        name: name.trim(),
         description,
         organizationId,
       },
@@ -1180,9 +1227,26 @@ export class ProductionService {
   }
 
   async updateCategory(organizationId: string, id: string, data: UpdateProductionCategoryDto) {
+    if (data.name) {
+      const existing = await this.prisma.client.bakeryCategory.findFirst({
+        where: {
+          organizationId,
+          name: { equals: data.name.trim(), mode: "insensitive" },
+          id: { not: id },
+        },
+      });
+
+      if (existing) {
+        throw new ConflictException(`A category with the name "${data.name.trim()}" already exists.`);
+      }
+    }
+
     return this.prisma.client.bakeryCategory.update({
       where: { id, organizationId },
-      data,
+      data: {
+        ...data,
+        name: data.name ? data.name.trim() : undefined,
+      },
     });
   }
 
@@ -1374,7 +1438,7 @@ export class ProductionService {
       headers: req.headers as HeadersInit,
     });
 
-    return this.authCoreService.getAuthSessionFromHeaders(request.headers);
+    return this.authCoreService.verifyToken(request.headers.get("authorization")?.replace("Bearer ", "") || "");
   }
 
   async processSSO(session: any, organizationId: string, locationId?: string) {
