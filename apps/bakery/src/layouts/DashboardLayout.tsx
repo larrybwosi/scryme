@@ -1,160 +1,166 @@
 import React from 'react';
-import { Outlet, NavLink, useLocation } from 'react-router';
+import { Outlet, useNavigate, useLocation } from 'react-router';
 import {
-  BarChart3,
+  LayoutDashboard,
+  Layers,
   BookOpen,
-  File,
-  Clock,
-  Package,
-  PieChart,
+  FileCode2,
   Users,
-  Settings,
-  Menu,
-  ChevronLeft,
-  ChevronRight,
-  Zap,
-  User,
   Truck,
-  WifiOff,
-  Database
+  Tags,
+  Settings,
+  Sparkles,
+  LogOut,
+  User,
+  MapPin,
+  Clock,
+  Briefcase
 } from 'lucide-react';
-import { UserSwitcher } from "@/components/UserSwitcher";
-import { isOfflineMode } from '@/lib/sdk';
-import { useAuth } from '@/lib/providers/auth-context';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarProvider,
-  SidebarTrigger,
-  SidebarInset,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarGroupContent,
-} from '@repo/ui/components/ui/sidebar';
+import { Button } from '@repo/ui/components/ui/button';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { useBakeryAuth, isStaffMode } from '@/lib/providers/auth-context';
+import { UserSwitcher } from '@/components/UserSwitcher';
 
-const navItems = [
-  { id: 'overview', label: 'Overview', icon: BarChart3, path: '/' },
-  { id: 'recipes', label: 'Master Recipes', icon: BookOpen, path: '/recipes' },
-  { id: 'templates', label: 'Production Templates', icon: File, path: '/templates' },
-  { id: 'batches', label: 'Batch Execution', icon: Clock, path: '/batches' },
-  { id: 'ingredients', label: 'Inventory Management', icon: Package, path: '/ingredients' },
-  { id: 'categories', label: 'Classifications', icon: PieChart, path: '/categories' },
-  { id: 'bakers', label: 'Operator Matrix', icon: Users, path: '/bakers' },
-  { id: 'deliveries', label: 'Delivery Tracking', icon: Truck, path: '/deliveries' },
-  { id: 'settings', label: 'System Configuration', icon: Settings, path: '/settings' },
+const NAV_ITEMS = [
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/' },
+  { id: 'batches', label: 'Batches', icon: Layers, path: '/batches' },
+  { id: 'recipes', label: 'Recipes', icon: BookOpen, path: '/recipes' },
+  { id: 'templates', label: 'Templates', icon: FileCode2, path: '/templates' },
+  { id: 'bakers', label: 'Staff & Shift Trading', icon: Users, path: '/bakers' },
+  { id: 'deliveries', label: 'Deliveries', icon: Truck, path: '/deliveries' },
+  { id: 'categories', label: 'Categories', icon: Tags, path: '/categories' },
+  { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
 ];
 
-export function DashboardLayout() {
+export default function DashboardLayout() {
+  const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { currentMember, clearMemberSession } = useBakeryAuth();
 
-  const activeLabel = navItems.find(item =>
-    item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
-  )?.label || 'Dashboard';
+  const handleLogout = () => {
+    clearMemberSession();
+    navigate('/login');
+  };
 
   return (
-    <SidebarProvider defaultOpen={true} forceDefaultOpen={true}>
-        <div className="flex min-h-screen w-full bg-background font-sans">
-          <Sidebar collapsible="none" className="border-r border-sidebar-border shadow-[1px_0_0_0_rgba(0,0,0,0.02)]">
-            <SidebarHeader className="h-16 flex items-center px-6 border-b border-sidebar-border/50 bg-sidebar/50 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary p-2 rounded-md">
-                   <Zap className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <div className="flex flex-col group-data-[collapsible=icon]:hidden overflow-hidden transition-all duration-300">
-                  <span className="font-bold text-sm tracking-tight truncate">BAKERY ERP</span>
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-semibold">Production</span>
-                </div>
-              </div>
-            </SidebarHeader>
-            <UserSwitcher />
+    <div className="flex h-screen bg-slate-900 text-slate-100 font-sans overflow-hidden">
+      {/* Sidebar */}
+      <aside className="w-64 bg-slate-950/80 backdrop-blur-md border-r border-slate-800/80 flex flex-col justify-between shrink-0 shadow-2xl relative z-20">
+        <div>
+          {/* Header */}
+          <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-800/80">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-400 flex items-center justify-center text-slate-950 shadow-lg shadow-orange-500/20 ring-1 ring-white/20">
+              <Sparkles className="h-5 w-5 fill-slate-950" />
+            </div>
+            <div>
+              <span className="font-extrabold text-lg tracking-wider bg-gradient-to-r from-amber-200 via-amber-400 to-orange-400 bg-clip-text text-transparent block">
+                SCRYME
+              </span>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 -mt-1 block">
+                BAKERY OS
+              </span>
+            </div>
+          </div>
 
-            <SidebarContent>
-              <SidebarGroup>
-                <SidebarGroupLabel className="px-4 py-2 group-data-[collapsible=icon]:hidden">Main Navigation</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {navItems.map((item) => (
-                      <SidebarMenuItem key={item.id}>
-                        <SidebarMenuButton
-                          asChild
-                          isActive={item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)}
-                          tooltip={item.label}
-                          className="px-4"
-                        >
-                          <NavLink to={item.path}>
-                            <item.icon className="h-4 w-4" />
-                            <span>{item.label}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </SidebarContent>
-
-            <SidebarFooter className="p-4 border-t border-border/50">
-               <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <User className="h-4 w-4 text-muted-foreground" />
+          {/* Active Shift / User Indicator */}
+          {currentMember && (
+            <div className="mx-3 mt-4 p-3 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <div className="h-7 w-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                    <User className="h-3.5 w-3.5" />
                   </div>
-                  <div className="flex flex-col group-data-[collapsible=icon]:hidden overflow-hidden">
-                    <span className="text-xs font-medium truncate">{user?.name || 'System Admin'}</span>
-                    <span className="text-[10px] text-muted-foreground truncate">{user?.email || 'admin@bakery.com'}</span>
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-bold text-slate-200 truncate">
+                      {currentMember.firstName} {currentMember.lastName}
+                    </p>
+                    <p className="text-[10px] text-amber-400/90 font-medium truncate capitalize flex items-center gap-1">
+                      <Briefcase className="h-2.5 w-2.5" />
+                      {currentMember.role}
+                    </p>
                   </div>
-               </div>
-            </SidebarFooter>
-          </Sidebar>
-
-            <SidebarInset className="flex flex-col flex-1 min-w-0 bg-background/30">
-            <header className="h-16 flex items-center justify-between px-8 border-b border-border/40 bg-background/80 backdrop-blur-md sticky top-0 z-30">
-              <div className="flex items-center gap-6">
-                <SidebarTrigger className="-ml-2 hover:bg-accent/50 transition-colors sm:hidden" />
-                <div className="h-4 w-px bg-border/40 hidden sm:block" />
-                <div className="flex items-center gap-2">
-                  <h1 className="text-sm font-semibold tracking-tight text-foreground/90">
-                    Bakery
-                  </h1>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
-                  <h2 className="text-sm font-medium text-muted-foreground">
-                    {activeLabel}
-                  </h2>
                 </div>
+                <UserSwitcher className="shrink-0" />
               </div>
+            </div>
+          )}
 
-              <div className="flex items-center gap-3">
-                 {isOfflineMode() && (
-                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-amber-600 text-[10px] font-black uppercase tracking-widest shadow-sm">
-                     <Database className="h-3 w-3" />
-                     Local Mode
-                   </div>
-                 )}
-                 {!window.navigator.onLine && !isOfflineMode() && (
-                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-destructive/10 border border-destructive/20 rounded-full text-destructive text-[10px] font-black uppercase tracking-widest shadow-sm">
-                     <WifiOff className="h-3 w-3" />
-                     Offline
-                   </div>
-                 )}
-                 <div className="flex items-center gap-1 px-3 py-1.5 bg-muted/40 rounded-full border border-border/50 text-[11px] font-semibold text-muted-foreground">
-                   <Clock className="h-3.5 w-3.5 text-primary/70" />
-                   {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                 </div>
-              </div>
-            </header>
+          {/* Navigation Links */}
+          <nav className="p-3 space-y-1.5 mt-2">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
 
-            <main className="flex-1 p-8 overflow-auto animate-in fade-in slide-in-from-bottom-1 duration-700">
-              <div className="max-w-[1600px] mx-auto space-y-8">
-                <Outlet />
-              </div>
-            </main>
-          </SidebarInset>
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => navigate(item.path)}
+                  className={cn(
+                    'w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 group relative',
+                    isActive
+                      ? 'bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-transparent text-amber-300 font-semibold border border-amber-500/30 shadow-lg shadow-amber-500/5'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                  )}
+                >
+                  <Icon className={cn(
+                    'h-4 w-4 transition-transform duration-200 group-hover:scale-110',
+                    isActive ? 'text-amber-400' : 'text-slate-400 group-hover:text-slate-200'
+                  )} />
+                  <span className="truncate">{item.label}</span>
+                  {isActive && (
+                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-gradient-to-b from-amber-400 to-orange-500 rounded-r-full shadow-sm shadow-amber-400/50" />
+                  )}
+                </button>
+              );
+            })}
+          </nav>
         </div>
-      </SidebarProvider>
+
+        {/* Footer / User Profile & Logout */}
+        <div className="p-3 border-t border-slate-800/80 bg-slate-950/50">
+          <div className="flex items-center justify-between p-2">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-xs font-semibold text-slate-400">System Ready</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="h-8 px-2.5 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              title="Logout / Switch User"
+            >
+              <LogOut className="h-4 w-4 mr-1.5" />
+              <span className="text-xs">Exit</span>
+            </Button>
+          </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-900 relative">
+        {/* Top Header / Status bar */}
+        <header className="h-16 border-b border-slate-800/80 bg-slate-950/40 backdrop-blur-md px-8 flex items-center justify-between shrink-0 z-10">
+          <div className="flex items-center gap-3">
+            <h1 className="text-lg font-bold text-slate-100 capitalize">
+              {NAV_ITEMS.find((i) => i.path === location.pathname || (i.path !== '/' && location.pathname.startsWith(i.path)))?.label || 'Bakery Workstation'}
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-xs text-slate-300">
+              <Clock className="h-3.5 w-3.5 text-amber-400" />
+              <span>Shift Active</span>
+            </div>
+          </div>
+        </header>
+
+        {/* Dynamic Route Content */}
+        <div className="flex-1 overflow-auto p-8 relative">
+          <Outlet />
+        </div>
+      </main>
+    </div>
   );
 }

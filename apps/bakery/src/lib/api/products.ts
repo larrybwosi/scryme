@@ -1,9 +1,32 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ProductResponseDto as Product, ProductVariantResponseDto as ProductVariant } from '@scryme/sdk';
-type ProductType = string;
-import sdk from '@/lib/sdk';
+import sdk, { client } from '@/lib/sdk';
 
-// Define the shape of your paginated response if needed for variants
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  sku?: string;
+  barcode?: string;
+  categoryId?: string;
+  isActive?: boolean;
+  [key: string]: any;
+}
+
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  name: string;
+  sku?: string;
+  barcode?: string;
+  price?: number;
+  costPrice?: number;
+  stockQuantity?: number;
+  isActive?: boolean;
+  [key: string]: any;
+}
+
+type ProductType = string;
+
 interface PaginatedResponse<T> {
   data: T[];
   totalCount: number;
@@ -25,7 +48,7 @@ interface ExtendedProduct extends Product {
 const products = {
   list: async (locationId?: string): Promise<ExtendedProduct[]> => {
     const res = await sdk.catalog.getProducts({ locationId });
-    return res.data;
+    return res.data || res;
   },
   create: (data: Partial<Product>): Promise<Product> =>
     sdk.catalog.createProduct(data),
@@ -37,33 +60,32 @@ const products = {
     sdk.catalog.deleteProduct(productId),
 
   variants: {
-    // Search method for the complex hook
     search: (params: URLSearchParams): Promise<PaginatedResponse<ProductVariant>> =>
       sdk.catalog.getVariants(Object.fromEntries(params.entries())),
 
     list: (productId: string): Promise<ProductVariant[]> =>
-      sdk.client.get(`/catalog/products/${productId}/variants`),
+      client.get(`/catalog/products/${productId}/variants`),
     create: (
       productId: string,
       data: Partial<ProductVariant>
     ): Promise<ProductVariant> =>
-      sdk.client.post(`/catalog/products/${productId}/variants`, data),
+      client.post(`/catalog/products/${productId}/variants`, data),
     get: (productId: string, variantId: string): Promise<ProductVariant> =>
-      sdk.client.get(`/catalog/products/${productId}/variants/${variantId}`),
+      client.get(`/catalog/products/${productId}/variants/${variantId}`),
     restock: (
       productId: string,
       variantId: string,
       data: unknown
     ): Promise<ProductVariant> =>
-      sdk.client.post(`/catalog/products/${productId}/variants/${variantId}/restock`, data),
+      client.post(`/catalog/products/${productId}/variants/${variantId}/restock`, data),
     update: (
       productId: string,
       variantId: string,
       data: Partial<ProductVariant>
     ): Promise<ProductVariant> =>
-      sdk.client.patch(`/catalog/products/${productId}/variants/${variantId}`, data),
+      client.patch(`/catalog/products/${productId}/variants/${variantId}`, data),
     delete: (productId: string, variantId: string): Promise<void> =>
-      sdk.client.delete(`/catalog/products/${productId}/variants/${variantId}`),
+      client.delete(`/catalog/products/${productId}/variants/${variantId}`),
   },
 };
 
@@ -98,7 +120,6 @@ interface UseProductVariantsOptions {
 }
 
 export const useProductVariants = (options: UseProductVariantsOptions = {}) => {
-
   const {
     page = 1,
     limit = 20,
@@ -110,7 +131,6 @@ export const useProductVariants = (options: UseProductVariantsOptions = {}) => {
     isActive,
     includeLocation = false,
   } = options;
-
 
   const queryKey = [
     'product-variants-search',
@@ -211,8 +231,6 @@ export const useGetProduct = (productId?: string) => {
     refetch
   };
 };
-
-// --- Product Variants Hooks ---
 
 export const useListProductVariants = (productId: string) => {
   const { data, refetch, error, isLoading } = useQuery<ProductVariant[], Error>({

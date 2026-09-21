@@ -1,4 +1,3 @@
-import { ScrymeClientSDK } from '@scryme/sdk/client';
 import { invoke } from '@tauri-apps/api/core';
 import { sanitizeApiUrl } from '@/utils/url';
 import { tauriInvoke } from './tauri-bridge';
@@ -14,25 +13,6 @@ export const isTauri = () => {
 export const isOfflineMode = () => {
   return typeof window !== 'undefined' && (localStorage.getItem('bakery_local_mode') === 'true' || !window.navigator.onLine);
 };
-
-const getInitialApiUrl = () => {
-  const customUrl = typeof window !== 'undefined' ? localStorage.getItem('bakery_api_url') : null;
-  const envUrl = import.meta.env.VITE_API_URL;
-  return sanitizeApiUrl(customUrl || envUrl || 'https://api.scryme.tech');
-};
-
-const getInitialOrgSlug = () => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('bakery_org_slug') || 'default-org';
-  }
-  return 'default-org';
-};
-
-export const scrymeSDK = new ScrymeClientSDK({
-  clientId: 'bakery-app',
-  orgSlug: getInitialOrgSlug(),
-  baseURL: getInitialApiUrl(),
-});
 
 let memberTokenState: string | null = null;
 let apiKeyState: string | null = null;
@@ -134,11 +114,16 @@ export const client = {
   },
 
   setBaseURL: (url: string) => {
-    scrymeSDK.axiosInstance.defaults.baseURL = url;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('bakery_api_url', sanitizeApiUrl(url));
+    }
   },
 
   getBaseURL: () => {
-    return scrymeSDK.axiosInstance.defaults.baseURL || '';
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('bakery_api_url') || 'https://api.scryme.tech';
+    }
+    return 'https://api.scryme.tech';
   },
 };
 
@@ -184,9 +169,6 @@ export const bakery = {
   deleteCategory: (id: string) => client.delete(`/categories/${id}`),
 
   getIngredients: () => client.get('/ingredients'),
-  createIngredient: (data: any) => client.post('/ingredients', data),
-  updateIngredient: (id: string, data: any) => client.patch(`/ingredients/${id}`, data),
-  deleteIngredient: (id: string) => client.delete(`/ingredients/${id}`),
 
   getAuthStatus: () => client.get('/auth/status'),
   sso: () => client.post('/auth/sso'),
@@ -195,7 +177,6 @@ export const bakery = {
 };
 
 const catalog = {
-  ...scrymeSDK.catalog,
   getProducts: (params?: any) => client.get('/catalog/products', { params }),
   createProduct: (data: any) => client.post('/catalog/products', data),
   getProduct: (productId: string) => client.get(`/catalog/products/${productId}`),
@@ -210,24 +191,20 @@ const catalog = {
 };
 
 const pos = {
-  ...scrymeSDK.pos,
   listLocations: () => client.get(API_ROUTES.INVENTORY.LOCATIONS()),
 };
 
 const inventory = {
-  ...scrymeSDK.inventory,
   list: () => client.get('/inventory'),
 };
 
 const auth = {
-  ...scrymeSDK.auth,
   terminalLogin: (cardId: string, pin: string, locationId?: string) => {
     return client.post(API_ROUTES.POS.LOGIN(), { cardId, pin, locationId });
   },
 };
 
 const sdk = {
-  ...scrymeSDK,
   client,
   bakery,
   catalog,
@@ -259,9 +236,6 @@ if (typeof window !== 'undefined') {
       if (settings?.apiEndpointUrl) {
         const sanitizedUrl = sanitizeApiUrl(settings.apiEndpointUrl);
         localStorage.setItem('bakery_api_url', sanitizedUrl);
-        if (client.getBaseURL() !== sanitizedUrl) {
-          client.setBaseURL(sanitizedUrl);
-        }
         tauriInvoke('update_bakery_api_url', { apiUrl: sanitizedUrl }).catch(console.error);
       }
     })
