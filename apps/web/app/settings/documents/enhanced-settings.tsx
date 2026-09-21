@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   DOCUMENT_REGISTRY,
   getTemplatesByType,
@@ -33,6 +33,7 @@ import {
   Building2,
   GitBranch,
   FileOutput,
+  AlertTriangle,
 } from "lucide-react";
 import { updateDefaultDocumentTemplate } from "../../actions/organization";
 import { toast } from "sonner";
@@ -48,6 +49,10 @@ interface EnhancedDocumentSettingsProps {
   invoiceConfig?: any;
   receiptConfig?: any;
   waybillConfig?: any;
+  systemDocumentSettings?: {
+    enabledCategories: string[];
+    enabledTemplates: string[];
+  };
 }
 
 type SidebarPanel =
@@ -60,7 +65,7 @@ type SidebarPanel =
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const DOC_TYPES = [
+const ALL_DOC_TYPES = [
   {
     id: "INVOICE" as DocumentType,
     label: "Invoices",
@@ -126,9 +131,9 @@ const STOCKING_DOCS = [
 
 function versionBadgeClass(version: string) {
   const major = version.split(".")[0];
-  if (major === "v3") return "bg-violet-50 text-violet-600 border-violet-200";
-  if (major === "v2") return "bg-blue-50 text-blue-600 border-blue-200";
-  return "bg-zinc-100 text-zinc-500 border-zinc-200";
+  if (major === "v3") return "bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20";
+  if (major === "v2") return "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20";
+  return "bg-muted text-muted-foreground border-border";
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -138,8 +143,24 @@ export function EnhancedDocumentSettings({
   invoiceConfig,
   receiptConfig,
   waybillConfig,
+  systemDocumentSettings,
 }: EnhancedDocumentSettingsProps) {
-  const [selectedType, setSelectedType] = useState<DocumentType>("INVOICE");
+  // Filter visible categories based on super admin system settings
+  const visibleDocTypes = ALL_DOC_TYPES.filter((dt) => {
+    if (!systemDocumentSettings) return true;
+    return systemDocumentSettings.enabledCategories.includes(dt.id);
+  });
+
+  const [selectedType, setSelectedType] = useState<DocumentType>(
+    visibleDocTypes[0]?.id || "INVOICE"
+  );
+
+  useEffect(() => {
+    if (visibleDocTypes.length > 0 && !visibleDocTypes.some((dt) => dt.id === selectedType)) {
+      setSelectedType(visibleDocTypes[0].id);
+    }
+  }, [visibleDocTypes, selectedType]);
+
   const [activePanel, setActivePanel] = useState<SidebarPanel>("templates");
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
@@ -150,7 +171,7 @@ export function EnhancedDocumentSettings({
   // ── Helpers ─────────────────────────────────────────────────────────────
 
   const getDefaultTemplateId = (type: DocumentType) => {
-    const docType = DOC_TYPES.find(d => d.id === type);
+    const docType = ALL_DOC_TYPES.find((d) => d.id === type);
     if (!docType) return "";
     return organization.settings?.[docType.settingsKey] || docType.fallback;
   };
@@ -160,7 +181,7 @@ export function EnhancedDocumentSettings({
     try {
       await updateDefaultDocumentTemplate(selectedType, templateId);
       toast.success("Default template updated");
-      const docType = DOC_TYPES.find(d => d.id === selectedType);
+      const docType = ALL_DOC_TYPES.find((d) => d.id === selectedType);
       if (docType) {
         organization.settings = {
           ...organization.settings,
@@ -245,7 +266,7 @@ export function EnhancedDocumentSettings({
 
   const handleDownloadStocking = (
     endpoint: string,
-    level: "branch" | "org",
+    level: "branch" | "org"
   ) => {
     setDownloadingLevel(level);
     window.open(endpoint, "_blank");
@@ -263,7 +284,18 @@ export function EnhancedDocumentSettings({
     "waybills-v3",
   ].includes(activePanel);
 
-  const templates = isTemplatePanel ? getTemplatesByType(selectedType) : [];
+  // Filter templates by system settings enablement
+  const allTemplatesForType = isTemplatePanel
+    ? getTemplatesByType(selectedType)
+    : [];
+
+  const templates = allTemplatesForType.filter((tmpl) => {
+    if (!systemDocumentSettings) return true;
+    return systemDocumentSettings.enabledTemplates.includes(
+      `${selectedType}:${tmpl.id}`
+    );
+  });
+
   const activeTemplateId = isTemplatePanel
     ? getDefaultTemplateId(selectedType)
     : "";
@@ -275,15 +307,15 @@ export function EnhancedDocumentSettings({
       acc[major].push(template);
       return acc;
     },
-    {} as Record<string, typeof templates>,
+    {} as Record<string, typeof templates>
   );
 
   const sortedVersions = Object.keys(groupedTemplates).sort((a, b) =>
-    b.localeCompare(a, undefined, { numeric: true }),
+    b.localeCompare(a, undefined, { numeric: true })
   );
 
-  const selectedDocType = DOC_TYPES.find(d => d.id === selectedType);
-  const activeStockingDoc = STOCKING_DOCS.find(d => d.id === activePanel);
+  const selectedDocType = ALL_DOC_TYPES.find((d) => d.id === selectedType);
+  const activeStockingDoc = STOCKING_DOCS.find((d) => d.id === activePanel);
 
   // ── Sidebar item component ───────────────────────────────────────────────
 
@@ -310,10 +342,10 @@ export function EnhancedDocumentSettings({
     }[accentColor];
 
     const iconBg = {
-      emerald: isActive ? "bg-emerald-50 text-emerald-600" : "",
-      violet: isActive ? "bg-violet-50 text-violet-600" : "",
-      blue: isActive ? "bg-blue-50 text-blue-600" : "",
-      amber: isActive ? "bg-amber-50 text-amber-600" : "",
+      emerald: isActive ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "",
+      violet: isActive ? "bg-violet-500/10 text-violet-600 dark:text-violet-400" : "",
+      blue: isActive ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "",
+      amber: isActive ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "",
     }[accentColor];
 
     return (
@@ -322,14 +354,15 @@ export function EnhancedDocumentSettings({
         className={cn(
           "group relative w-full flex items-center gap-3 pl-3.5 pr-3 py-2.5 rounded-lg text-left transition-all duration-150",
           isActive
-            ? "bg-white shadow-sm ring-1 ring-zinc-200 text-zinc-900"
-            : "text-zinc-500 hover:bg-white/70 hover:text-zinc-700",
-        )}>
+            ? "bg-background shadow-xs ring-1 ring-border text-foreground font-semibold"
+            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+        )}
+      >
         {isActive && (
           <span
             className={cn(
-              "absolute left-0 top-1/2 -translate-y-1/2 h-4 w-0.75 rounded-full",
-              accent,
+              "absolute left-0 top-1/2 -translate-y-1/2 h-4 w-1 rounded-full",
+              accent
             )}
           />
         )}
@@ -338,20 +371,22 @@ export function EnhancedDocumentSettings({
             "w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors",
             isActive
               ? iconBg
-              : "bg-zinc-100 text-zinc-400 group-hover:text-zinc-500",
-          )}>
+              : "bg-muted text-muted-foreground group-hover:text-foreground"
+          )}
+        >
           <Icon size={14} strokeWidth={2} />
         </div>
         <div className="min-w-0">
           <p
             className={cn(
               "text-sm font-medium leading-none",
-              isActive ? "text-zinc-900" : "text-zinc-600",
-            )}>
+              isActive ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
             {label}
           </p>
           {sublabel && (
-            <p className="text-[11px] text-zinc-400 mt-0.5 truncate">
+            <p className="text-[11px] text-muted-foreground/80 mt-0.5 truncate">
               {sublabel}
             </p>
           )}
@@ -363,46 +398,52 @@ export function EnhancedDocumentSettings({
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex h-full min-h-175 bg-white border border-zinc-200/70 rounded-2xl shadow-sm overflow-hidden">
+    <div className="flex h-full min-h-[600px] bg-card text-card-foreground border border-border rounded-2xl shadow-xs overflow-hidden">
       {/* ── Left Sidebar ────────────────────────────────────────────────── */}
-      <aside className="w-64 shrink-0 border-r border-zinc-100 bg-zinc-50/50 flex flex-col overflow-y-auto">
+      <aside className="w-64 shrink-0 border-r border-border bg-muted/20 flex flex-col overflow-y-auto">
         {/* Customer-facing documents */}
         <div className="px-4 pt-5 pb-3">
-          <p className="text-[10px] font-semibold tracking-[0.12em] text-zinc-400 uppercase">
+          <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
             Customer Documents
           </p>
         </div>
 
         <nav className="px-2 space-y-0.5">
-          {DOC_TYPES.map(type => {
-            const isActive =
-              (activePanel === "templates" || activePanel === "config") &&
-              selectedType === type.id;
-            return (
-              <SidebarItem
-                key={type.id}
-                isActive={isActive}
-                onClick={() => {
-                  setSelectedType(type.id);
-                  setActivePanel("templates");
-                }}
-                icon={type.icon}
-                label={type.label}
-                sublabel={type.sublabel}
-                accentColor="emerald"
-              />
-            );
-          })}
+          {visibleDocTypes.length === 0 ? (
+            <p className="px-3 py-2 text-xs text-muted-foreground italic">
+              No document categories enabled
+            </p>
+          ) : (
+            visibleDocTypes.map((type) => {
+              const isActive =
+                (activePanel === "templates" || activePanel === "config") &&
+                selectedType === type.id;
+              return (
+                <SidebarItem
+                  key={type.id}
+                  isActive={isActive}
+                  onClick={() => {
+                    setSelectedType(type.id);
+                    setActivePanel("templates");
+                  }}
+                  icon={type.icon}
+                  label={type.label}
+                  sublabel={type.sublabel}
+                  accentColor="emerald"
+                />
+              );
+            })
+          )}
         </nav>
 
         <div className="px-4 pt-5 pb-3">
-          <p className="text-[10px] font-semibold tracking-[0.12em] text-zinc-400 uppercase">
+          <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
             Stocking &amp; Operations
           </p>
         </div>
 
         <nav className="px-2 space-y-0.5">
-          {STOCKING_DOCS.map(doc => (
+          {STOCKING_DOCS.map((doc) => (
             <SidebarItem
               key={doc.id}
               isActive={activePanel === doc.id}
@@ -416,7 +457,7 @@ export function EnhancedDocumentSettings({
         </nav>
 
         <div className="px-4 pt-5 pb-3">
-          <p className="text-[10px] font-semibold tracking-[0.12em] text-zinc-400 uppercase">
+          <p className="text-[10px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
             Workspace
           </p>
         </div>
@@ -434,10 +475,9 @@ export function EnhancedDocumentSettings({
 
         <div className="flex-1" />
 
-        <div className="px-4 py-4 border-t border-zinc-100 mt-4">
-          <p className="text-[11px] text-zinc-400 leading-relaxed">
-            V3 templates are the next generation of enterprise documents with
-            professional design and richer data.
+        <div className="px-4 py-4 border-t border-border mt-4">
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            System document templates are managed and approved system-wide by system administrators.
           </p>
         </div>
       </aside>
@@ -445,16 +485,16 @@ export function EnhancedDocumentSettings({
       {/* ── Main Content ────────────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 shrink-0">
+        <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card shrink-0">
           <div>
-            <h2 className="text-[15px] font-semibold text-zinc-900 tracking-tight">
+            <h2 className="text-[15px] font-semibold text-foreground tracking-tight">
               {isStockingPanel && activeStockingDoc
                 ? activeStockingDoc.label
                 : activePanel === "config"
                   ? `${selectedDocType?.label ?? ""} — Configuration`
                   : `${selectedDocType?.label ?? ""} — Templates`}
             </h2>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-muted-foreground mt-0.5">
               {isStockingPanel && activeStockingDoc
                 ? "Operational reporting · V3 enterprise templates"
                 : activePanel === "config"
@@ -465,13 +505,14 @@ export function EnhancedDocumentSettings({
 
           <div className="flex items-center gap-2">
             {isStockingPanel ? (
-              <Badge className="text-[10px] font-mono bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-50 rounded-md px-2 py-1">
+              <Badge className="text-[10px] font-mono bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 rounded-md px-2 py-1">
                 STOCKING
               </Badge>
             ) : (
               <Badge
                 variant="secondary"
-                className="text-[10px] font-mono font-medium bg-zinc-100 text-zinc-500 border-0 tracking-wide rounded-md px-2 py-1">
+                className="text-[10px] font-mono font-medium bg-muted text-muted-foreground border-0 tracking-wide rounded-md px-2 py-1"
+              >
                 {selectedType}
               </Badge>
             )}
@@ -479,41 +520,56 @@ export function EnhancedDocumentSettings({
         </header>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 bg-zinc-50/30">
+        <div className="flex-1 overflow-y-auto px-6 py-6 bg-muted/10">
+          {/* Empty state if category disabled */}
+          {visibleDocTypes.length === 0 && (
+            <div className="flex flex-col items-center justify-center text-center py-20 px-4">
+              <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3">
+                <AlertTriangle size={24} />
+              </div>
+              <h3 className="text-base font-semibold text-foreground">
+                No Document Categories Enabled
+              </h3>
+              <p className="text-xs text-muted-foreground max-w-md mt-1 leading-relaxed">
+                Document categories are currently disabled system-wide.
+                A system administrator can approve and enable document templates in the Platform Administration panel.
+              </p>
+            </div>
+          )}
+
           {/* ── Template Gallery ── */}
-          {activePanel === "templates" && (
+          {visibleDocTypes.length > 0 && activePanel === "templates" && (
             <div className="space-y-8">
               {templates.length === 0 && (
-                <div className="flex flex-col items-center justify-center text-center py-20">
-                  <div className="w-10 h-10 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 mb-3">
+                <div className="flex flex-col items-center justify-center text-center py-20 border border-dashed border-border rounded-xl bg-card">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground mb-3">
                     <LayoutGrid size={16} />
                   </div>
-                  <p className="text-sm font-medium text-zinc-700">
-                    No templates available
+                  <p className="text-sm font-medium text-foreground">
+                    No approved templates available
                   </p>
-                  <p className="text-xs text-zinc-400 mt-1">
-                    Templates for this document type haven&apos;t been added
-                    yet.
+                  <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                    Templates for this document type are currently disabled system-wide by your super admin.
                   </p>
                 </div>
               )}
 
-              {sortedVersions.map(version => (
+              {sortedVersions.map((version) => (
                 <div key={version}>
                   <div className="flex items-center gap-3 mb-4">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                       Version {version}
                     </span>
                     {version === "v3" && (
-                      <Badge className="text-[9px] font-bold bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-50 rounded px-1.5 py-0.5">
+                      <Badge className="text-[9px] font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 rounded px-1.5 py-0.5">
                         Latest
                       </Badge>
                     )}
-                    <div className="h-px bg-zinc-200/70 flex-1" />
+                    <div className="h-px bg-border flex-1" />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
-                    {groupedTemplates[version].map(template => {
+                    {groupedTemplates[version].map((template) => {
                       const isDefault = activeTemplateId === template.id;
                       const isThisUpdating = isUpdating === template.id;
 
@@ -523,12 +579,13 @@ export function EnhancedDocumentSettings({
                           className={cn(
                             "relative flex flex-col p-4 rounded-xl border transition-all duration-150",
                             isDefault
-                              ? "bg-emerald-50/40 border-emerald-200 ring-1 ring-emerald-100"
-                              : "bg-white border-zinc-200 hover:border-zinc-300 hover:shadow-md hover:-translate-y-0.5",
-                          )}>
+                              ? "bg-emerald-500/10 border-emerald-500/30 ring-1 ring-emerald-500/20"
+                              : "bg-card border-border hover:border-border/80 hover:shadow-xs hover:-translate-y-0.5"
+                          )}
+                        >
                           {/* Top row */}
                           <div className="flex items-start justify-between gap-2 mb-1">
-                            <p className="text-sm font-semibold text-zinc-900 leading-tight pr-1">
+                            <p className="text-sm font-semibold text-foreground leading-tight pr-1">
                               {template.name}
                             </p>
                             {isDefault && (
@@ -543,12 +600,13 @@ export function EnhancedDocumentSettings({
                             variant="outline"
                             className={cn(
                               "w-fit mb-3 text-[10px] font-mono font-medium rounded-md border",
-                              versionBadgeClass(template.version),
-                            )}>
+                              versionBadgeClass(template.version)
+                            )}
+                          >
                             {template.version}
                           </Badge>
 
-                          <p className="text-xs text-zinc-500 leading-relaxed flex-1 mb-4">
+                          <p className="text-xs text-muted-foreground leading-relaxed flex-1 mb-4">
                             {template.description}
                           </p>
 
@@ -556,23 +614,25 @@ export function EnhancedDocumentSettings({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-8 text-xs flex-1 border-zinc-200 text-zinc-600 hover:bg-zinc-50 rounded-lg"
-                              onClick={() => setPreviewTemplate(template)}>
+                              className="h-8 text-xs flex-1 border-border text-foreground hover:bg-muted rounded-lg"
+                              onClick={() => setPreviewTemplate(template)}
+                            >
                               <Eye size={12} className="mr-1.5" />
                               Preview
                             </Button>
 
                             {isDefault ? (
-                              <div className="h-8 px-3 flex items-center gap-1.5 text-xs font-medium text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg">
+                              <div className="h-8 px-3 flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                 Active
                               </div>
                             ) : (
                               <Button
                                 size="sm"
-                                className="h-8 text-xs flex-1 bg-zinc-900 hover:bg-zinc-800 text-white border-0 rounded-lg"
+                                className="h-8 text-xs flex-1 bg-primary text-primary-foreground hover:bg-primary/90 border-0 rounded-lg"
                                 onClick={() => handleUpdateDefault(template.id)}
-                                disabled={!!isUpdating}>
+                                disabled={!!isUpdating}
+                              >
                                 {isThisUpdating ? (
                                   <Loader2 size={12} className="animate-spin" />
                                 ) : (
@@ -591,20 +651,21 @@ export function EnhancedDocumentSettings({
           )}
 
           {/* ── Configuration ── */}
-          {activePanel === "config" && (
+          {visibleDocTypes.length > 0 && activePanel === "config" && (
             <div className="max-w-3xl">
               {/* Doc type tabs within config */}
               <div className="flex items-center gap-2 mb-6 flex-wrap">
-                {DOC_TYPES.map(dt => (
+                {visibleDocTypes.map((dt) => (
                   <button
                     key={dt.id}
                     onClick={() => setSelectedType(dt.id)}
                     className={cn(
                       "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
                       selectedType === dt.id
-                        ? "bg-zinc-900 text-white border-zinc-900"
-                        : "bg-white border-zinc-200 text-zinc-600 hover:border-zinc-300",
-                    )}>
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-border/80"
+                    )}
+                  >
                     <dt.icon size={12} />
                     {dt.label}
                   </button>
@@ -634,67 +695,67 @@ export function EnhancedDocumentSettings({
           {isStockingPanel && activeStockingDoc && (
             <div className="max-w-3xl space-y-6">
               {/* Description card */}
-              <div className="bg-white border border-zinc-200 rounded-xl p-5">
+              <div className="bg-card border border-border rounded-xl p-5">
                 <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center text-violet-600 shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-violet-500/10 flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
                     <activeStockingDoc.icon size={16} strokeWidth={2} />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-zinc-900 mb-1">
+                    <h3 className="text-sm font-semibold text-foreground mb-1">
                       {activeStockingDoc.label}
                     </h3>
-                    <p className="text-xs text-zinc-500 leading-relaxed">
+                    <p className="text-xs text-muted-foreground leading-relaxed">
                       {activeStockingDoc.description}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <Separator className="bg-zinc-100" />
+              <Separator className="bg-border" />
 
               {/* Template info */}
               <div>
-                <p className="text-xs font-semibold text-zinc-700 mb-3 uppercase tracking-wide">
+                <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
                   Template Details
                 </p>
-                <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden">
-                  <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between">
+                <div className="bg-card border border-border rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <FileOutput size={14} className="text-violet-500" />
-                      <span className="text-sm font-medium text-zinc-800">
+                      <span className="text-sm font-medium text-foreground">
                         V3 Enterprise Template
                       </span>
                     </div>
-                    <Badge className="text-[9px] font-bold bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-50 rounded px-1.5">
+                    <Badge className="text-[9px] font-bold bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20 rounded px-1.5">
                       v3.0.0
                     </Badge>
                   </div>
                   <div className="px-4 py-3 grid grid-cols-2 gap-3">
                     <div>
-                      <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wide mb-1">
+                      <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide mb-1">
                         Format
                       </p>
-                      <p className="text-xs text-zinc-700">A4 Landscape PDF</p>
+                      <p className="text-xs text-foreground">A4 Landscape PDF</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wide mb-1">
+                      <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide mb-1">
                         Features
                       </p>
-                      <p className="text-xs text-zinc-700">
+                      <p className="text-xs text-foreground">
                         KPI strip · Color badges · Priority rows
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wide mb-1">
+                      <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide mb-1">
                         Data Source
                       </p>
-                      <p className="text-xs text-zinc-700">Live database</p>
+                      <p className="text-xs text-foreground">Live database</p>
                     </div>
                     <div>
-                      <p className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wide mb-1">
+                      <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide mb-1">
                         Report Scope
                       </p>
-                      <p className="text-xs text-zinc-700">
+                      <p className="text-xs text-foreground">
                         Branch or Organization-wide
                       </p>
                     </div>
@@ -704,26 +765,26 @@ export function EnhancedDocumentSettings({
 
               {/* Generate section */}
               <div>
-                <p className="text-xs font-semibold text-zinc-700 mb-3 uppercase tracking-wide">
+                <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
                   Generate Report
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {/* Branch level */}
-                  <div className="bg-white border border-zinc-200 rounded-xl p-4 flex flex-col gap-3">
+                  <div className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-md bg-blue-50 flex items-center justify-center text-blue-600">
+                      <div className="w-7 h-7 rounded-md bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
                         <GitBranch size={14} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-zinc-900">
+                        <p className="text-sm font-semibold text-foreground">
                           Branch Report
                         </p>
-                        <p className="text-[11px] text-zinc-400">
+                        <p className="text-[11px] text-muted-foreground">
                           Filtered to a specific location
                         </p>
                       </div>
                     </div>
-                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
                       Generates the report scoped to a single branch or
                       inventory location. Useful for branch managers reviewing
                       their own requests.
@@ -731,14 +792,15 @@ export function EnhancedDocumentSettings({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="w-full h-8 text-xs border-blue-200 text-blue-700 hover:bg-blue-50 gap-1.5"
+                      className="w-full h-8 text-xs border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 gap-1.5"
                       onClick={() =>
                         handleDownloadStocking(
                           activeStockingDoc.endpoints.branch,
-                          "branch",
+                          "branch"
                         )
                       }
-                      disabled={downloadingLevel !== null}>
+                      disabled={downloadingLevel !== null}
+                    >
                       {downloadingLevel === "branch" ? (
                         <Loader2 size={12} className="animate-spin" />
                       ) : (
@@ -749,21 +811,21 @@ export function EnhancedDocumentSettings({
                   </div>
 
                   {/* Organization level */}
-                  <div className="bg-white border border-violet-200 ring-1 ring-violet-100 rounded-xl p-4 flex flex-col gap-3">
+                  <div className="bg-card border border-violet-500/30 ring-1 ring-violet-500/20 rounded-xl p-4 flex flex-col gap-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-md bg-violet-50 flex items-center justify-center text-violet-600">
+                      <div className="w-7 h-7 rounded-md bg-violet-500/10 flex items-center justify-center text-violet-600 dark:text-violet-400">
                         <Building2 size={14} />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-zinc-900">
+                        <p className="text-sm font-semibold text-foreground">
                           Organization Report
                         </p>
-                        <p className="text-[11px] text-zinc-400">
+                        <p className="text-[11px] text-muted-foreground">
                           All branches combined
                         </p>
                       </div>
                     </div>
-                    <p className="text-[11px] text-zinc-500 leading-relaxed">
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
                       Generates the full organization-wide report across all
                       branches and inventory locations. For senior management
                       and procurement teams.
@@ -774,10 +836,11 @@ export function EnhancedDocumentSettings({
                       onClick={() =>
                         handleDownloadStocking(
                           activeStockingDoc.endpoints.org,
-                          "org",
+                          "org"
                         )
                       }
-                      disabled={downloadingLevel !== null}>
+                      disabled={downloadingLevel !== null}
+                    >
                       {downloadingLevel === "org" ? (
                         <Loader2 size={12} className="animate-spin" />
                       ) : (
@@ -796,47 +859,51 @@ export function EnhancedDocumentSettings({
       {/* ── Preview Sheet ────────────────────────────────────────────────── */}
       <Sheet
         open={!!previewTemplate}
-        onOpenChange={open => !open && setPreviewTemplate(null)}>
+        onOpenChange={(open) => !open && setPreviewTemplate(null)}
+      >
         <SheetContent
           side="right"
-          className="w-full sm:w-[50vw] sm:max-w-none p-0 flex flex-col gap-0 border-zinc-800 bg-zinc-950 text-zinc-100">
+          className="w-full sm:w-[50vw] sm:max-w-none p-0 flex flex-col gap-0 border-border bg-card text-card-foreground"
+        >
           {/* Preview header */}
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800 shrink-0">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border shrink-0 bg-card">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400 shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground shrink-0">
                 <FileText size={15} />
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-zinc-100 leading-none truncate">
+                <p className="text-sm font-semibold text-foreground leading-none truncate">
                   {previewTemplate?.name}
                 </p>
-                <p className="text-[11px] text-zinc-500 mt-0.5 font-mono">
-                  {selectedType} · {previewTemplate?.version}
+                <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+                  {selectedType} &bull; {previewTemplate?.version}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-3 shrink-0">
-              <Badge className="text-[10px] font-mono bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-800 rounded-md">
+              <Badge variant="secondary" className="text-[10px] font-mono">
                 Preview mode
               </Badge>
               <button
                 onClick={() => setPreviewTemplate(null)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors">
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
                 <X size={15} />
               </button>
             </div>
           </div>
 
           {/* PDF viewer */}
-          <div className="flex-1 overflow-hidden p-4">
-            <div className="w-full h-full rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900">
+          <div className="flex-1 overflow-hidden p-4 bg-muted/20">
+            <div className="w-full h-full rounded-lg overflow-hidden border border-border bg-background">
               {previewTemplate && (
                 <PDFViewer
                   width="100%"
                   height="100%"
                   className="border-none"
-                  showToolbar={true}>
+                  showToolbar={true}
+                >
                   <previewTemplate.component
                     data={getMockDataForType(selectedType, previewTemplate.id)}
                     qrCode="https://via.placeholder.com/150"
@@ -848,15 +915,15 @@ export function EnhancedDocumentSettings({
 
           {/* Preview footer */}
           {previewTemplate && (
-            <div className="px-5 py-3.5 border-t border-zinc-800 shrink-0 flex items-center justify-between gap-3">
+            <div className="px-5 py-3.5 border-t border-border shrink-0 flex items-center justify-between gap-3 bg-card">
               {activeTemplateId === previewTemplate.id ? (
-                <p className="text-xs text-zinc-500 flex items-center gap-1.5">
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                   <CheckCircle2 size={13} className="text-emerald-500" />
                   This is the current default for{" "}
                   {selectedDocType?.label.toLowerCase()}.
                 </p>
               ) : (
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Not the current default for{" "}
                   {selectedDocType?.label.toLowerCase()}.
                 </p>
@@ -870,7 +937,8 @@ export function EnhancedDocumentSettings({
                     handleUpdateDefault(previewTemplate.id);
                     setPreviewTemplate(null);
                   }}
-                  disabled={!!isUpdating}>
+                  disabled={!!isUpdating}
+                >
                   {isUpdating ? (
                     <Loader2 size={12} className="animate-spin" />
                   ) : (

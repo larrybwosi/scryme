@@ -57,7 +57,7 @@ export default async function DocumentsSettingsPage() {
   }
 
   // Use select to get only the fields we need
-  const [organization, invoiceConfig, receiptConfig, waybillConfig] = await Promise.all([
+  const [organization, invoiceConfig, receiptConfig, waybillConfig, systemSettingsList] = await Promise.all([
     db.organization.findUnique({
       where: { id: auth.organizationId },
       select: {
@@ -116,7 +116,17 @@ export default async function DocumentsSettingsPage() {
     db.waybillConfig.findUnique({
       where: { organizationId: auth.organizationId },
     }),
+    db.systemDocumentSetting.findMany(),
   ]);
+
+  const systemDocumentSettings = {
+    enabledCategories: systemSettingsList
+      .filter((s) => !s.templateId && s.isEnabled)
+      .map((s) => s.documentType),
+    enabledTemplates: systemSettingsList
+      .filter((s) => Boolean(s.templateId) && s.isEnabled)
+      .map((s) => `${s.documentType}:${s.templateId}`),
+  };
 
   if (!organization) {
     redirect("/dashboard");
@@ -148,6 +158,7 @@ export default async function DocumentsSettingsPage() {
             invoiceConfig={invoiceConfig}
             receiptConfig={receiptConfig}
             waybillConfig={waybillConfig}
+            systemDocumentSettings={systemDocumentSettings}
           />
         </div>
       </div>

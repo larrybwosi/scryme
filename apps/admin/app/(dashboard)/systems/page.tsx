@@ -7,18 +7,22 @@ import {
   getPosReleaseSettings,
   listPosReleaseBinaries,
 } from "@/app/actions/pos-releases";
+import { listSystemDocumentSettings } from "@/app/actions/document-templates";
 import { WorkflowEnginePanel } from "@/components/systems/workflow-engine-panel";
 import { CustomerEnginePanel } from "@/components/systems/customer-engine-panel";
 import { PosReleasesPanel } from "@/components/systems/pos-releases-panel";
+import { DocumentTemplatesPanel } from "@/components/systems/document-templates-panel";
 
 export default async function SystemsPage() {
-  const [workflowMetrics, customerMetrics, posSettings, posBinaries] =
+  const [workflowMetrics, customerMetrics, posSettings, posBinaries, documentSettings] =
     await Promise.all([
       getWorkflowEngineMetrics(),
       getCustomerEngineMetrics(),
       getPosReleaseSettings(),
       listPosReleaseBinaries(),
+      listSystemDocumentSettings(),
     ]);
+  const activeCategories = documentSettings.categories.filter((c) => c.isEnabled).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,6 +47,9 @@ export default async function SystemsPage() {
           <TabsTrigger value="pos-releases">
             POS App Releases ({posBinaries.length} Stored)
           </TabsTrigger>
+          <TabsTrigger value="document-templates">
+            Document Templates ({activeCategories} / {documentSettings.categories.length} Active)
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="workflows" className="mt-6">
@@ -55,6 +62,10 @@ export default async function SystemsPage() {
 
         <TabsContent value="pos-releases" className="mt-6">
           <PosReleasesPanel settings={posSettings} binaries={posBinaries} />
+        </TabsContent>
+
+        <TabsContent value="document-templates" className="mt-6">
+          <DocumentTemplatesPanel initialData={documentSettings} />
         </TabsContent>
       </Tabs>
     </div>
