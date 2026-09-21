@@ -169,8 +169,9 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         toast.success('Recipe created successfully');
       }
       onOpenChange(false);
-    } catch (error) {
-      toast.error('Failed to save recipe');
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || error?.message || 'Failed to save recipe';
+      toast.error(typeof msg === 'string' ? msg : 'Failed to save recipe');
     }
   };
 
@@ -494,7 +495,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                       <SelectValue placeholder="Select material" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {ingredients?.map(ing => (
+                                      {ingredients?.map((ing: any) => (
                                         <SelectItem key={ing.id} value={ing.id}>
                                           {ing.name}
                                         </SelectItem>
@@ -552,6 +553,9 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                     </div>
                   </div>
 
+                  {errors.ingredients && typeof errors.ingredients.message === 'string' && (
+                    <p className="text-xs text-red-500 mt-2">{errors.ingredients.message}</p>
+                  )}
                   <Button
                     type="button"
                     variant="outline"

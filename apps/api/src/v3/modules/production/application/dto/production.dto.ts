@@ -7,6 +7,7 @@ import {
   IsBoolean,
   IsArray,
   IsEnum,
+  ArrayMinSize,
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
@@ -123,12 +124,12 @@ export class CreateRecipeDto {
   @IsString({ each: true })
   tags?: string[];
 
-  @ApiPropertyOptional({ description: "List of recipe ingredients", type: [CreateRecipeIngredientDto] })
-  @IsOptional()
+  @ApiProperty({ description: "List of recipe ingredients", type: [CreateRecipeIngredientDto] })
   @IsArray()
+  @ArrayMinSize(1, { message: "At least one ingredient is required" })
   @ValidateNested({ each: true })
   @Type(() => CreateRecipeIngredientDto)
-  ingredients?: CreateRecipeIngredientDto[];
+  ingredients!: CreateRecipeIngredientDto[];
 }
 
 export class UpdateRecipeDto {
@@ -221,6 +222,7 @@ export class UpdateRecipeDto {
   @ApiPropertyOptional({ description: "List of recipe ingredients", type: [CreateRecipeIngredientDto] })
   @IsOptional()
   @IsArray()
+  @ArrayMinSize(1, { message: "Ingredients list cannot be empty" })
   @ValidateNested({ each: true })
   @Type(() => CreateRecipeIngredientDto)
   ingredients?: CreateRecipeIngredientDto[];
