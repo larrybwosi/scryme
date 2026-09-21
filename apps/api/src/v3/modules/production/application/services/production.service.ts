@@ -10,7 +10,7 @@ import {
 import { PrismaService } from "@/prisma/prisma.service";
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { type V3ApiContext } from "@repo/shared/api/v3";
-import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v3";
+import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v2";
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";
@@ -1438,7 +1438,7 @@ export class ProductionService {
       headers: req.headers as HeadersInit,
     });
 
-    return this.authCoreService.getAuthSessionFromHeaders(request.headers);
+    return this.authCoreService.verifyToken(request.headers.get("authorization")?.replace("Bearer ", "") || "");
   }
 
   async processSSO(session: any, organizationId: string, locationId?: string) {
