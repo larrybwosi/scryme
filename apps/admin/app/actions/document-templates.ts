@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "./auth";
 import { DOCUMENT_REGISTRY, DocumentType } from "@repo/documents";
 
-export const DOCUMENT_CATEGORIES: {
+const DOCUMENT_CATEGORIES: {
   id: DocumentType;
   label: string;
   description: string;
