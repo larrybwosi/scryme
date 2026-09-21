@@ -1,10 +1,9 @@
-import axios, { AxiosInstance } from 'axios';
-import { isTauri } from './sdk';
 import { tauriInvoke } from './tauri-bridge';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ReactNode } from 'react';
 import type { InventoryLocation } from '@repo/db';
+import { getOrgSlug } from '@/config/api';
 
 export interface ProductSupplier {
   id: string;
@@ -52,173 +51,68 @@ export interface InvoiceResponse {
   url: string;
 }
 
-export interface LoyaltyProgram {
-  id: string;
-  name: string;
-  description?: string;
-  pointsPerDollar: number;
-  redemptionRate: number;
-  isActive: boolean;
-  organizationId: string;
-  tiers: LoyaltyTier[];
-}
-
-export interface LoyaltyTier {
-  id: string;
-  name: string;
-  minPoints: number;
-  pointMultiplier: number;
-  benefits: string[];
-  programId: string;
-}
-
-export interface PointsConfig {
-  id: string;
-  actionType: string;
-  points: number;
-  description?: string;
-  isActive: boolean;
-  organizationId: string;
-}
-
-export interface CreateLoyaltyProgramInput {
-  organizationId: string;
-  name: string;
-  description?: string;
-  pointsPerDollar: number;
-  redemptionRate: number;
-  isActive: boolean;
-  tiers: Omit<LoyaltyTier, 'id' | 'programId'>[];
-}
-
-export interface UpdateLoyaltyProgramInput {
-  programId: string;
-  name?: string;
-  description?: string;
-  pointsPerDollar?: number;
-  redemptionRate?: number;
-  isActive?: boolean;
-  tiersToCreate?: Omit<LoyaltyTier, 'id' | 'programId'>[];
-  tiersToUpdate?: Partial<LoyaltyTier> & { id: string };
-  tierIdsToDelete?: string[];
-}
-
-export interface SetPointsConfigInput {
-  organizationId: string;
-  configs: Omit<PointsConfig, 'id' | 'organizationId'>[];
-}
-
-// Axios client constructor
 class ApiClient {
-  private axiosInstance: AxiosInstance;
+  private async request<T = any>(config: { method: string; path: string; data?: any }): Promise<T> {
+    const orgSlug = getOrgSlug();
+    const fullPath = config.path.startsWith('/api/')
+      ? config.path
+      : `/api/v3/${orgSlug}${config.path.startsWith('/') ? '' : '/'}${config.path}`;
 
-  constructor(baseURL: string) {
-    this.axiosInstance = axios.create({
-      baseURL,
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const resData = await tauriInvoke<T>('authenticated_api_request', {
+      method: config.method,
+      path: fullPath,
+      body: config.data,
     });
 
-    // Request interceptor for auth token
-    this.axiosInstance.interceptors.request.use(
-      async config => {
-        return config;
-      },
-      error => Promise.reject(error)
-    );
-
-    // Response interceptor for error handling
-    this.axiosInstance.interceptors.response.use(
-      response => {
-        if (response.data.meta?.message && response.data.meta.success) {
-          toast.success(response.data.meta.message);
-        }
-        return response;
-      },
-      error => {
-        const message = error.response?.data?.error || error.response?.data?.message || 'An unexpected error occurred';
-        console.log(message);
-        // toast.error(message);
-        return Promise.reject(error);
-      }
-    );
-  }
-
-  private async request<T = any>(config: { method: string; path: string; data?: any }): Promise<T> {
-    let resData: any;
-    if (isTauri()) {
-       resData = await tauriInvoke<T>('authenticated_api_request', {
-         method: config.method,
-         path: config.path,
-         body: config.data
-       });
-    } else {
-      const { method, path, data } = config;
-      const axiosMethod = method.toLowerCase() as 'get' | 'post' | 'put' | 'patch' | 'delete';
-
-      if (axiosMethod === 'get' || axiosMethod === 'delete') {
-        resData = await this.axiosInstance[axiosMethod](path).then(res => res.data);
-      } else {
-        resData = await this.axiosInstance[axiosMethod](path, data).then(res => res.data);
-      }
-    }
-
-    if (resData && typeof resData === 'object' && resData.success !== undefined && 'data' in resData) {
-      if (resData.meta || resData.metadata) {
+    if (resData && typeof resData === 'object' && 'success' in resData && 'data' in resData) {
+      if ((resData as any).meta || (resData as any).metadata) {
         return {
-          data: resData.data,
-          metadata: resData.meta || resData.metadata,
+          data: (resData as any).data,
+          metadata: (resData as any).meta || (resData as any).metadata,
         } as any;
       }
-      return resData.data;
+      return (resData as any).data;
     }
     return resData;
   }
 
   // Locations Service
   locations = {
-    list: async (organizationId: string) =>
-      this.request({ method: 'GET', path: `/${organizationId}/locations` }),
-    create: async (organizationId: string, data: Partial<InventoryLocation>): Promise<ApiResponse<InventoryLocation>> =>
-      this.request({ method: 'POST', path: `/${organizationId}/locations`, data }),
-    get: async (organizationId: string, locationId: string): Promise<ApiResponse<InventoryLocation>> =>
-      this.request({ method: 'GET', path: `/${organizationId}/locations/${locationId}` }),
+    list: async (_organizationId: string) =>
+      this.request({ method: 'GET', path: '/pos/locations' }),
+    create: async (_organizationId: string, data: Partial<InventoryLocation>): Promise<ApiResponse<InventoryLocation>> =>
+      this.request({ method: 'POST', path: '/pos/locations', data }),
+    get: async (_organizationId: string, locationId: string): Promise<ApiResponse<InventoryLocation>> =>
+      this.request({ method: 'GET', path: `/pos/locations/${locationId}` }),
     update: async (
-      organizationId: string,
+      _organizationId: string,
       locationId: string,
       data: Partial<InventoryLocation>
     ): Promise<ApiResponse<InventoryLocation>> =>
-      this.request({ method: 'PATCH', path: `/${organizationId}/locations/${locationId}`, data }),
-    delete: async (organizationId: string, locationId: string): Promise<ApiResponse<void>> =>
-      this.request({ method: 'DELETE', path: `/${organizationId}/locations/${locationId}` }),
+      this.request({ method: 'PATCH', path: `/pos/locations/${locationId}`, data }),
+    delete: async (_organizationId: string, locationId: string): Promise<ApiResponse<void>> =>
+      this.request({ method: 'DELETE', path: `/pos/locations/${locationId}` }),
   };
 }
 
-// Singleton instance
-export const apiClient = new ApiClient(
-  import.meta.env.VITE_API_URL || 'https://api.scryme.tech'
-);
+export const apiClient = new ApiClient();
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: (failureCount, error: any) => {
-        // Don't retry on 403 errors (unauthorized/forbidden)
         if (error?.response?.status === 403) {
           return false;
         }
-        // Retry once for other errors
         return failureCount < 1;
       },
       refetchOnWindowFocus: false,
-      gcTime: 1000 * 60 * 60 * 12, // 12 hours
-      staleTime: 1000 * 60 * 30, // 30 minutes
+      gcTime: 1000 * 60 * 60 * 12,
+      staleTime: 1000 * 60 * 30,
     },
     mutations: {
       onSuccess: (data: any) => {
-        if (data.meta?.message && data.meta.success) {
+        if (data?.meta?.message && data?.meta?.success) {
           toast.success(data.meta.message);
         }
       },
@@ -226,7 +120,6 @@ const queryClient = new QueryClient({
         let errorMessage = 'An unexpected error occurred';
         let errorStatus: number | undefined;
 
-        // Handle different error formats
         if (typeof error === 'string') {
           errorMessage = error;
         } else if (error instanceof Error && error.message) {
@@ -235,12 +128,9 @@ const queryClient = new QueryClient({
           const err = error as any;
           errorStatus = err.response?.status;
 
-          // Handle 403 errors specifically
           if (errorStatus === 403) {
             errorMessage = 'Access denied. You do not have permission to perform this action.';
-          }
-          // Handle other error formats
-          else if (err.response?.data?.error) {
+          } else if (err.response?.data?.error) {
             if (typeof err.response.data.error === 'string') {
               errorMessage = err.response.data.error;
             } else if (typeof err.response.data.error === 'object' && err.response.data.error?.message) {
@@ -253,28 +143,12 @@ const queryClient = new QueryClient({
           }
         }
 
-        // Log detailed error information for debugging
-        console.log('Mutation error:', {
-          error,
-          status: errorStatus,
-          extractedMessage: errorMessage,
-        });
-
-        // Custom toast for 403 errors
         if (errorStatus === 403) {
           toast.error('Permission Required', {
             description: errorMessage,
             duration: 5000,
-            action: {
-              label: 'Request Access',
-              onClick: () => {
-                // Add your access request logic here
-                console.log('Request access clicked');
-              },
-            },
           });
         } else {
-          // Default error toast for other errors
           toast.error(errorMessage, {
             description:
               errorMessage !== 'An unexpected error occurred' ? undefined : 'Please try again or contact support.',

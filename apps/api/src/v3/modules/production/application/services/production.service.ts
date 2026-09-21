@@ -7,7 +7,7 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { AuthService } from "../../../auth/auth.service";
+import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { type V3ApiContext } from "@repo/shared/api/v3";
 import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v3";
 import { FastifyRequest } from "fastify";
@@ -42,7 +42,7 @@ export class ProductionService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly authService: AuthService,
+    private readonly authCoreService: V3AuthCoreService,
   ) {}
 
   async getAttendanceStatus(ctx: V3ApiContext) {
@@ -1374,7 +1374,7 @@ export class ProductionService {
       headers: req.headers as HeadersInit,
     });
 
-    return this.authService.auth.api.getSession({ headers: request.headers });
+    return this.authCoreService.getAuthSessionFromHeaders(request.headers);
   }
 
   async processSSO(session: any, organizationId: string, locationId?: string) {
