@@ -20,6 +20,8 @@ model User {
   invitations          Invitation[]
   sessions             Session[]
   passkeys             Passkey[]
+  twoFactorEnabled     Boolean?           @default(false)
+  twoFactor            TwoFactor[]
   activeOrganizationId String?
   displayUsername      String?
   scrymeUserId         String?
@@ -262,4 +264,16 @@ model Passkey {
   @@index([userId])
   @@index([credentialID])
   @@map("passkey")
+}
+
+
+model TwoFactor {
+  id          String   @id
+  secret      String
+  backupCodes String
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("two_factor")
 }

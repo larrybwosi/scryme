@@ -1,5 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import { passkeyClient } from "@better-auth/passkey/client";
+import { twoFactorClient } from "better-auth/client/plugins";
 
 function getValidAuthUrl(
   urls: (string | undefined)[],
@@ -28,7 +29,16 @@ export const authClient: any = createAuthClient({
     [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_WEB_URL],
     defaultAppUrl,
   ),
-  plugins: [passkeyClient()],
+  plugins: [
+    passkeyClient(),
+    twoFactorClient({
+      onTwoFactorRedirect() {
+        if (typeof window !== "undefined") {
+          window.location.href = "/two-factor";
+        }
+      },
+    }),
+  ],
 });
 
 export const signIn: typeof authClient.signIn = authClient.signIn;
@@ -39,3 +49,4 @@ export const forgetPassword: typeof authClient.forgetPassword =
 export const resetPassword: typeof authClient.resetPassword =
   authClient.resetPassword;
 export const requestPasswordReset = authClient.forgetPassword;
+export const twoFactor: typeof authClient.twoFactor = authClient.twoFactor;

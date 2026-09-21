@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import type { User, Session } from "better-auth";
 import { authOptions } from "./index";
-import { admin, customSession, jwt, bearer } from "better-auth/plugins";
+import { admin, customSession, jwt, bearer, twoFactor } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { nextCookies } from "better-auth/next-js";
@@ -9,6 +9,9 @@ import { UserRole, MemberRole } from "@repo/db";
 import { db } from "@repo/db";
 import { getRedisClient } from "@repo/shared/redis";
 import { env } from "@repo/env";
+import {
+  sendTwoFactorOTPEmail,
+} from "@repo/shared/services/email";
 
 // Extended User interface matching custom schema attributes
 export interface ExtendedUser extends User {
@@ -18,6 +21,7 @@ export interface ExtendedUser extends User {
   username?: string;
   activeOrganizationId?: string | null;
   memberId?: string;
+  twoFactorEnabled?: boolean;
 }
 
 // Extended Session interface including activeOrganizationId
@@ -197,6 +201,22 @@ export const auth = betterAuth({
     jwt(),
     bearer(),
     passkey(),
+    twoFactor({
+      issuer: "Scryme",
+      otpOptions: {
+        async sendOTP({ user, otp }) {
+          try {
+            await sendTwoFactorOTPEmail({
+              email: user.email,
+              otp,
+              user: { name: user.name },
+            });
+          } catch (error) {
+            console.error("Error sending 2FA OTP email:", error);
+          }
+        },
+      },
+    }),
     admin({
       defaultRole: UserRole.MEMBER,
     }),
