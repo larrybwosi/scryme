@@ -51,6 +51,10 @@ const serverSchema = z.object({
   DATABASE_POOL_SIZE: z.string().optional(),
   PORT: z.coerce.number().default(3001),
   CUSTOMER_DB: z.string().optional(),
+  CUSTOMER_DATABASE_URL: z.string().optional(),
+  CUSTOMER_DB_MAX_CONNECTIONS: z.coerce.number().optional(),
+  CUSTOMER_DB_IDLE_TIMEOUT: z.coerce.number().optional(),
+  CUSTOMER_DB_CONNECTION_LIMIT: z.coerce.number().optional(),
 
   // Auth
   BETTER_AUTH_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
@@ -282,6 +286,10 @@ function getRawEnv() {
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: process.env.DATABASE_URL,
     CUSTOMER_DB: process.env.CUSTOMER_DB,
+    CUSTOMER_DATABASE_URL: process.env.CUSTOMER_DATABASE_URL,
+    CUSTOMER_DB_MAX_CONNECTIONS: process.env.CUSTOMER_DB_MAX_CONNECTIONS,
+    CUSTOMER_DB_IDLE_TIMEOUT: process.env.CUSTOMER_DB_IDLE_TIMEOUT,
+    CUSTOMER_DB_CONNECTION_LIMIT: process.env.CUSTOMER_DB_CONNECTION_LIMIT,
     DATABASE_POOL_SIZE: process.env.DATABASE_POOL_SIZE,
     PORT: process.env.PORT,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,

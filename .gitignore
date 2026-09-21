@@ -60,5 +60,8 @@ apps/android/build/
 local.properties
 
 # customer-auth sqlite & generated-client
-apps/api/src/customer-auth/prisma/generated-client
+# Prisma generated clients & databases
+**/prisma/generated-client
+**/generated-client
+node_modules/@prisma/client
 apps/api/src/customer-auth/prisma/*.db
