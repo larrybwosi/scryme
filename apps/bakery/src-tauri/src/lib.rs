@@ -128,7 +128,7 @@ pub fn run() {
             });
             let tray_builder = TrayIconBuilder::new().icon(icon);
 
-            let _tray = tray_builder
+            if let Err(e) = tray_builder
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => {
                         app.exit(0);
@@ -155,7 +155,10 @@ pub fn run() {
                         }
                     }
                 })
-                .build(app)?;
+                .build(app)
+            {
+                log::error!("Failed to build tray icon: {}", e);
+            }
 
             Ok(())
         })
