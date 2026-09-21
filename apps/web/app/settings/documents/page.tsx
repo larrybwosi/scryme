@@ -3,6 +3,7 @@ import React, { Suspense } from "react";
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { redirect } from "next/navigation";
+import { DOCUMENT_REGISTRY } from "@repo/documents";
 import { EnhancedDocumentSettings } from "./enhanced-settings";
 import { Separator } from "@repo/ui/components/ui/separator";
 
@@ -119,13 +120,26 @@ export default async function DocumentsSettingsPage() {
     db.systemDocumentSetting.findMany(),
   ]);
 
+  const disabledCategories = new Set(
+    systemSettingsList
+      .filter((s) => !s.templateId && !s.isEnabled)
+      .map((s) => s.documentType)
+  );
+  const disabledTemplates = new Set(
+    systemSettingsList
+      .filter((s) => Boolean(s.templateId) && !s.isEnabled)
+      .map((s) => `${s.documentType}:${s.templateId}`)
+  );
+
+  const ALL_DOCUMENT_TYPES = ["INVOICE", "RECEIPT", "WAYBILL", "DELIVERY_NOTE"];
+
   const systemDocumentSettings = {
-    enabledCategories: systemSettingsList
-      .filter((s) => !s.templateId && s.isEnabled)
-      .map((s) => s.documentType),
-    enabledTemplates: systemSettingsList
-      .filter((s) => Boolean(s.templateId) && s.isEnabled)
-      .map((s) => `${s.documentType}:${s.templateId}`),
+    enabledCategories: ALL_DOCUMENT_TYPES.filter(
+      (type) => !disabledCategories.has(type)
+    ),
+    enabledTemplates: DOCUMENT_REGISTRY.filter(
+      (t) => !disabledTemplates.has(`${t.type}:${t.id}`)
+    ).map((t) => `${t.type}:${t.id}`),
   };
 
   if (!organization) {
