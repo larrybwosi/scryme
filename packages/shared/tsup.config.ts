@@ -75,6 +75,7 @@ export default defineConfig([
       "crm/server": "src/crm/server.ts",
       "services/notification/index": "src/services/notification/index.ts",
       "services/notification/system": "src/services/notification/system.ts",
+      "services/email/index": "src/services/email/index.ts",
     },
   },
   {
