@@ -39,7 +39,7 @@ interface RealtimeState {
   error: string | null;
   activeChannels: Map<string, SubscribedChannelInfo>;
   listeners: Map<string, Set<EventCallback>>;
-  initialize: () => void;
+  initialize: (force?: boolean) => void;
   publish: (channel: string, event: string, data: any) => Promise<void>;
   subscribe: (channel: string, event: string, callback: EventCallback, options?: { rewind?: number }) => () => void;
 }
@@ -55,14 +55,17 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
   activeChannels: new Map<string, SubscribedChannelInfo>(),
   listeners: new Map<string, Set<EventCallback>>(),
 
-  initialize: () => {
+  initialize: (force = false) => {
     const { socketClient, connectionState } = get();
 
-    if (socketClient && !['closed', 'failed', 'idle'].includes(connectionState)) {
+    if (!force && socketClient && !['closed', 'failed', 'idle'].includes(connectionState)) {
       return;
     }
 
-    if (socketClient) socketClient.disconnect();
+    if (socketClient) {
+      socketClient.removeAllListeners();
+      socketClient.disconnect();
+    }
 
     set({ status: 'loading', error: null, socketClient: null, authRetryCount: 0, connectionState: 'connecting' });
 
@@ -131,9 +134,12 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
       });
 
       const fetchToken = async () => {
+          let tokenToUse: string | null = null;
+          const currentAuth = useAuthStore.getState();
+          const orgSlug = currentAuth.deviceConfig?.orgSlug;
+
           try {
               const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
-              let tokenToUse: string | null = null;
               try {
                 const parsed = RealtimeConfigSchema.parse(response);
                 if (parsed.data?.metadata?.paymentChannel) {
@@ -148,21 +154,41 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
                   tokenToUse = respAny?.data?.tokenRequest?.token || respAny?.token || respAny?.accessToken || null;
                 }
               }
-
-              const finalToken = tokenToUse || 'socket-io-realtime';
-
-              socket.auth = { token: finalToken };
-              if (socket.io?.opts) {
-                socket.io.opts.extraHeaders = {
-                  ...socket.io.opts.extraHeaders,
-                  Authorization: `Bearer ${finalToken}`,
-                };
-              }
-              socket.connect();
           } catch (error) {
-              socket.auth = { token: 'socket-io-realtime' };
-              socket.connect();
+              // Tauri invoke failed or non-Tauri browser environment
+              if (configuredApiUrl) {
+                try {
+                  const cleanApiUrl = configuredApiUrl.replace(/\/+$/, '');
+                  const url = orgSlug
+                    ? `${cleanApiUrl}/api/v3/${orgSlug}/pos/ably-auth`
+                    : `${cleanApiUrl}/api/v3/pos/ably-auth`;
+                  const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                  });
+                  if (res.ok) {
+                    const json = await res.json();
+                    const tokenCandidate = json?.data?.tokenRequest?.token || json?.token;
+                    if (tokenCandidate && tokenCandidate !== 'socket-io-realtime') {
+                      tokenToUse = tokenCandidate;
+                    }
+                  }
+                } catch (fetchErr) {
+                  console.warn('[Realtime] Web fetch token error:', fetchErr);
+                }
+              }
           }
+
+          const finalToken = tokenToUse || 'socket-io-realtime';
+
+          socket.auth = { token: finalToken };
+          if (socket.io?.opts) {
+            socket.io.opts.extraHeaders = {
+              ...socket.io.opts.extraHeaders,
+              Authorization: `Bearer ${finalToken}`,
+            };
+          }
+          socket.connect();
       };
 
       fetchToken();

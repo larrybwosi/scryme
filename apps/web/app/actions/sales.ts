@@ -777,8 +777,8 @@ export async function createOrderAction(data: {
   items: any[];
   notes?: string;
   termsAndConditions?: string;
-  discountAmount?: number;
-  shippingFee?: number;
+  discountAmount?: number | null;
+  shippingFee?: number | null;
   deliveryPartnerId?: string;
   shippingAddressId?: string;
 }) {

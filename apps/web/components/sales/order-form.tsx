@@ -87,7 +87,7 @@ const orderSchema = z.object({
   expectedDeliveryDate: z.string().optional(),
   notes: z.string().optional(),
   termsAndConditions: z.string().optional(),
-  shippingFee: z.number().nonnegative().default(0),
+  shippingFee: z.number().nonnegative().optional().nullable().default(0),
   deliveryPartnerId: z.string().optional(),
   shippingAddressId: z.string().optional(),
   attachments: z.array(z.any()).optional(),

@@ -33,14 +33,19 @@ export class V3RealtimeGateway
 
   async handleConnection(client: Socket) {
     try {
-      const token =
+      const rawToken =
         client.handshake.auth?.token ||
-        client.handshake.headers?.authorization?.split(" ")[1];
-      if (!token) {
+        client.handshake.auth?.authorization ||
+        client.handshake.headers?.authorization ||
+        (client.handshake.query?.token as string);
+
+      if (!rawToken) {
         (client as any).v3Context = null;
         console.log(`V3 Client connected (unauthenticated): ${client.id}`);
         return;
       }
+
+      const token = rawToken.startsWith("Bearer ") ? rawToken.slice(7) : rawToken;
 
       let payload = null;
       try {
