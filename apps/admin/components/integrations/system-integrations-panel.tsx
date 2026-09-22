@@ -49,6 +49,10 @@ export function SystemIntegrationsPanel({
   const [adminChannelSlug, setAdminChannelSlug] = useState(settings.adminChannelSlug ?? "system-alerts")
   const [adminWorkspaceStatus, setAdminWorkspaceStatus] = useState(settings.adminWorkspaceStatus ?? "Not Configured")
 
+  // Sentry Webhook & Exception Tracking
+  const [sentryWebhookSecret, setSentryWebhookSecret] = useState(settings.sentryWebhookSecret ?? "")
+  const [sentryEnabled, setSentryEnabled] = useState(settings.sentryEnabled ?? true)
+
   // Error Alerts in Scryme Chat & Sentry
   const [errorAlertsEnabled, setErrorAlertsEnabled] = useState(settings.errorAlertsEnabled ?? true)
   const [errorAlertsMinStatus, setErrorAlertsMinStatus] = useState(settings.errorAlertsMinStatus ?? 500)
@@ -75,6 +79,8 @@ export function SystemIntegrationsPanel({
     setAdminWorkspaceStatus(settings.adminWorkspaceStatus ?? "Not Configured")
     setErrorAlertsEnabled(settings.errorAlertsEnabled ?? true)
     setErrorAlertsMinStatus(settings.errorAlertsMinStatus ?? 500)
+    setSentryWebhookSecret(settings.sentryWebhookSecret ?? "")
+    setSentryEnabled(settings.sentryEnabled ?? true)
   }, [settings])
 
   const loadAdminWorkspaceDetails = async () => {
@@ -174,6 +180,8 @@ export function SystemIntegrationsPanel({
       adminChannelSlug,
       errorAlertsEnabled,
       errorAlertsMinStatus,
+      sentryWebhookSecret,
+      sentryEnabled,
     })
   }
 
@@ -620,6 +628,59 @@ export function SystemIntegrationsPanel({
                 </select>
               </div>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sentry Integration & Webhook Receiver Card */}
+      <Card className="border-border bg-card">
+        <CardHeader className="flex flex-row items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-lg bg-red-500/10 text-red-600">
+              <ShieldAlert className="size-5" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-semibold text-foreground">Sentry Integration & Webhooks</CardTitle>
+              <CardDescription>
+                Configure Sentry webhook receiver to receive issue creation/alert events and dispatch real-time error notifications to Scryme Chat admins.
+              </CardDescription>
+            </div>
+          </div>
+          <Badge
+            variant={sentryEnabled ? "secondary" : "outline"}
+            className={sentryEnabled ? "bg-emerald-500/10 text-emerald-600" : ""}
+          >
+            {sentryEnabled ? "Active" : "Disabled"}
+          </Badge>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2 sm:col-span-2">
+              <Label htmlFor="sentry-webhook-secret">Sentry Webhook Secret / Client Secret</Label>
+              <Input
+                id="sentry-webhook-secret"
+                type="password"
+                value={sentryWebhookSecret}
+                onChange={(e) => setSentryWebhookSecret(e.target.value)}
+                placeholder="Optional HMAC signature verification secret from Sentry Webhook configuration"
+              />
+              <p className="text-xs text-muted-foreground">
+                Endpoint for Sentry Webhooks: <code className="font-mono text-primary">/v3/webhooks/sentry</code> (API Server)
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="sentry-enabled"
+              checked={sentryEnabled}
+              onChange={(e) => setSentryEnabled(e.target.checked)}
+              className="size-4 rounded border-input bg-background text-primary focus:ring-ring"
+            />
+            <Label htmlFor="sentry-enabled" className="cursor-pointer font-medium">
+              Enable Sentry Webhook Ingestion & Scryme Chat Error Notifications
+            </Label>
           </div>
         </CardContent>
       </Card>

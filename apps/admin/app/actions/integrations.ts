@@ -21,7 +21,15 @@ const DEFAULT_INTEGRATIONS = [
     authType: AuthType.API_KEY,
     isActive: true,
   },
-];
+  {
+    name: "Sentry",
+    slug: "sentry",
+    description: "Application error tracking, exception performance monitoring, and webhook event processing.",
+    category: IntegrationCategory.MONITORING,
+    authType: AuthType.WEBHOOK_SECRET,
+    isActive: true,
+  },
+]
 
 export async function listIntegrationDefinitions() {
   await requireSuperAdmin();
@@ -172,6 +180,8 @@ export type SystemIntegrationSettings = {
 
   errorAlertsEnabled?: boolean;
   errorAlertsMinStatus?: number;
+  sentryWebhookSecret?: string;
+  sentryEnabled?: boolean;
 };
 
 export async function getSystemIntegrationSettings(): Promise<SystemIntegrationSettings> {
@@ -191,6 +201,8 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
     "system:admin:chat:status",
     "system:error:alerts:enabled",
     "system:error:alerts:minStatus",
+    "system:integration:sentry:webhookSecret",
+    "system:integration:sentry:enabled",
   ];
 
   const settings = await db.globalSetting.findMany({
@@ -247,6 +259,15 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       settingsMap.has("system:error:alerts:minStatus")
         ? parseInt(settingsMap.get("system:error:alerts:minStatus")!, 10)
         : Number(process.env.ERROR_ALERTS_MIN_STATUS || 500),
+
+    sentryWebhookSecret:
+      settingsMap.get("system:integration:sentry:webhookSecret") ||
+      process.env.SENTRY_WEBHOOK_SECRET ||
+      "",
+    sentryEnabled:
+      settingsMap.has("system:integration:sentry:enabled")
+        ? settingsMap.get("system:integration:sentry:enabled") === "true"
+        : process.env.SENTRY_INTEGRATION_ENABLED !== "false",
   };
 }
 
@@ -276,6 +297,14 @@ export async function updateSystemIntegrationSettings(
     [
       "system:error:alerts:minStatus",
       input.errorAlertsMinStatus !== undefined ? String(input.errorAlertsMinStatus) : undefined,
+    ],
+    [
+      "system:integration:sentry:webhookSecret",
+      input.sentryWebhookSecret,
+    ],
+    [
+      "system:integration:sentry:enabled",
+      input.sentryEnabled !== undefined ? String(input.sentryEnabled) : undefined,
     ],
   ];
 
