@@ -93,79 +93,79 @@ pub fn run() {
         ])
         .setup(|app| {
             let handle = app.handle();
-            let db_pool = match tauri::async_runtime::block_on(db::init(handle)) {
-                Ok(pool) => pool,
+            match tauri::async_runtime::block_on(db::init(handle)) {
+                Ok(db_pool) => {
+                    app.manage(db_pool.clone());
+                    app.manage(commands::BakeryAuthState::new());
+
+                    // Start sync worker
+                    let base_api_url = if cfg!(debug_assertions) {
+                        "http://localhost:3002"
+                    } else {
+                        option_env!("VITE_API_URL").unwrap_or("https://api.scryme.tech")
+                    };
+                    let api_url = base_api_url.trim().trim_end_matches("/").replace("/api/v3", "").to_string();
+                    tauri::async_runtime::spawn(sync::start_sync_worker(db_pool, api_url));
+                }
                 Err(e) => {
-                    log::error!("Failed to initialize database: {}", e);
-                    // Instead of panicking, we might want to show a dialog or exit gracefully
-                    // For now, let's at least not use unwrap()
-                    app.handle().exit(1);
-                    return Ok(());
+                    log::error!("Failed to initialize database pool: {}", e);
+                    app.manage(commands::BakeryAuthState::new());
                 }
             };
 
-            app.manage(db_pool.clone());
-            app.manage(commands::BakeryAuthState::new());
+            // Ensure main window is visible if present
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
 
-            // Start sync worker
-            let base_api_url = if cfg!(debug_assertions) {
-                "http://localhost:3002"
+            // Set up tray icon safely without panics
+            if let Some(default_icon) = app.default_window_icon() {
+                let tray_builder = TrayIconBuilder::new().icon(default_icon.clone());
+
+                if let Err(e) = tray_builder
+                    .on_menu_event(|app, event| match event.id.as_ref() {
+                        "quit" => {
+                            app.exit(0);
+                        }
+                        "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        _ => {}
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        if let TrayIconEvent::Click {
+                            button: MouseButton::Left,
+                            button_state: MouseButtonState::Up,
+                            ..
+                        } = event
+                        {
+                            let app = tray.app_handle();
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                    })
+                    .build(app)
+                {
+                    log::error!("Failed to build tray icon: {}", e);
+                }
             } else {
-                option_env!("VITE_API_URL").unwrap_or("https://api.scryme.tech")
-            };
-            let api_url = base_api_url.trim().trim_end_matches('/').replace("/api/v3", "").to_string();
-            tauri::async_runtime::spawn(sync::start_sync_worker(db_pool, api_url));
-
-            // Set up tray icon
-            let icon = app.default_window_icon().cloned().unwrap_or_else(|| {
-                match tauri::image::Image::from_bytes(include_bytes!("../icons/128x128.png")) {
-                    Ok(img) => img,
-                    Err(e) => {
-                        log::error!("Failed to load default icon: {}", e);
-                        tauri::image::Image::new(&[], 0, 0)
-                    }
-                }
-            });
-            let tray_builder = TrayIconBuilder::new().icon(icon);
-
-            if let Err(e) = tray_builder
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => {
-                        app.exit(0);
-                    }
-                    "show" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                    _ => {}
-                })
-                .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click {
-                        button: MouseButton::Left,
-                        button_state: MouseButtonState::Up,
-                        ..
-                    } = event
-                    {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            let _ = window.show();
-                            let _ = window.set_focus();
-                        }
-                    }
-                })
-                .build(app)
-            {
-                log::error!("Failed to build tray icon: {}", e);
+                log::warn!("Default window icon missing, skipping tray icon initialization");
             }
 
             Ok(())
         })
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let _ = window.hide();
-                api.prevent_close();
+                if window.label() == "main" {
+                    let _ = window.hide();
+                    api.prevent_close();
+                }
             }
         })
         .run(tauri::generate_context!())
