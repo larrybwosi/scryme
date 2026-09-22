@@ -144,10 +144,10 @@ export function AddProductToCatalogModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl rounded-2xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+      <DialogContent className="max-w-2xl rounded-xl border border-border bg-card max-h-[90vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-xl font-bold">Add Product to Catalog</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl font-semibold text-foreground">Add Product to Catalog</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Select a product and variants from your inventory to add to this supplier&apos;s
             catalog.
           </DialogDescription>
@@ -161,7 +161,7 @@ export function AddProductToCatalogModal({
                 name="productId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                       Select Product
                     </FormLabel>
                     <FormControl>
@@ -170,7 +170,7 @@ export function AddProductToCatalogModal({
                         value={field.value}
                         onValueChange={onProductChange}
                         placeholder={isLoadingProducts ? "Loading products..." : "Select a product"}
-                        className="h-11 rounded-xl"
+                        className="h-10 rounded-lg bg-background border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -185,23 +185,23 @@ export function AddProductToCatalogModal({
               ) : fields.length > 0 ? (
                 <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    <h4 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                       Product Variants
                     </h4>
-                    <Badge variant="outline" className="rounded-md">
+                    <Badge variant="outline" className="rounded-md border-border text-foreground">
                       {fields.length} Variant{fields.length !== 1 ? "s" : ""} Found
                     </Badge>
                   </div>
 
-                  <ScrollArea className="flex-1 border rounded-xl bg-gray-50/30">
+                  <ScrollArea className="flex-1 border border-border rounded-lg bg-muted/30">
                     <div className="p-4 space-y-4">
                       {fields.map((field, index) => (
                         <div
                           key={field.id}
-                          className={`p-4 rounded-xl border bg-white transition-all ${
+                          className={`p-4 rounded-lg border bg-card transition-all ${
                             form.watch(`variants.${index}.selected`)
-                              ? "border-primary/20 shadow-sm"
-                              : "opacity-60 border-transparent grayscale-[0.5]"
+                              ? "border-primary/40 shadow-sm"
+                              : "opacity-60 border-border grayscale-[0.5]"
                           }`}
                         >
                           <div className="flex items-start gap-4">
@@ -222,12 +222,12 @@ export function AddProductToCatalogModal({
                             <div className="flex-1 space-y-4">
                               <div className="flex justify-between items-start">
                                 <div>
-                                  <p className="font-bold text-sm">{field.name}</p>
+                                  <p className="font-semibold text-sm text-foreground">{field.name}</p>
                                   <p className="text-xs text-muted-foreground font-mono">{field.sku}</p>
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-tight">Retail Price</p>
-                                  <p className="font-bold text-sm text-green-600">
+                                  <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-tight">Retail Price</p>
+                                  <p className="font-semibold text-sm text-emerald-600 dark:text-emerald-400">
                                     KES {field.retailPrice.toLocaleString()}
                                   </p>
                                 </div>
@@ -239,14 +239,14 @@ export function AddProductToCatalogModal({
                                   name={`variants.${index}.costPrice`}
                                   render={({ field: inputField }) => (
                                     <FormItem>
-                                      <FormLabel className="text-[10px] font-bold uppercase text-muted-foreground">Buying Cost</FormLabel>
+                                      <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Buying Cost</FormLabel>
                                       <FormControl>
                                         <Input
                                           {...inputField}
                                           type="number"
                                           step="0.01"
                                           disabled={!form.watch(`variants.${index}.selected`)}
-                                          className="h-9 text-sm rounded-lg"
+                                          className="h-9 text-sm rounded-md bg-background border-border text-foreground"
                                           placeholder="0.00"
                                         />
                                       </FormControl>
@@ -259,12 +259,12 @@ export function AddProductToCatalogModal({
                                   name={`variants.${index}.supplierSku`}
                                   render={({ field: inputField }) => (
                                     <FormItem>
-                                      <FormLabel className="text-[10px] font-bold uppercase text-muted-foreground">Supplier SKU</FormLabel>
+                                      <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Supplier SKU</FormLabel>
                                       <FormControl>
                                         <Input
                                           {...inputField}
                                           disabled={!form.watch(`variants.${index}.selected`)}
-                                          className="h-9 text-sm rounded-lg"
+                                          className="h-9 text-sm rounded-md bg-background border-border text-foreground"
                                           placeholder="Optional"
                                         />
                                       </FormControl>
@@ -283,18 +283,18 @@ export function AddProductToCatalogModal({
               ) : null}
             </div>
 
-            <DialogFooter className="p-6 pt-0 mt-auto bg-white border-t">
+            <DialogFooter className="p-6 pt-0 mt-auto bg-card border-t border-border">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => onOpenChange(false)}
-                className="rounded-xl h-11 px-6">
+                className="rounded-lg h-10 px-5 text-foreground">
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting || fields.length === 0}
-                className="rounded-xl h-11 px-8 font-bold shadow-sm">
+                className="rounded-lg h-10 px-6 font-semibold shadow-sm">
                 {isSubmitting && (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 )}

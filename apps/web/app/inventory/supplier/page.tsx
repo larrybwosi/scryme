@@ -21,7 +21,6 @@ export const metadata: Metadata = {
   description: "Manage supplier relations, contact information, purchase orders, and lead times.",
 };
 
-
 interface SupplierPageProps {
   searchParams: Promise<{
     tab?: string;
@@ -49,15 +48,15 @@ async function SupplierList({
 
   if (suppliers.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed rounded-3xl bg-muted/30">
+      <div className="flex flex-col items-center justify-center py-24 border-2 border-dashed border-border rounded-xl bg-card">
         <div className="bg-muted p-4 rounded-full mb-4">
           <Filter className="h-8 w-8 text-muted-foreground opacity-50" />
         </div>
-        <h3 className="text-xl font-bold">No suppliers found</h3>
+        <h3 className="text-xl font-bold text-foreground">No suppliers found</h3>
         <p className="text-muted-foreground mt-1 text-center max-w-xs">
           Try adjusting your filters or adding a new supplier to get started.
         </p>
-        <Button className="mt-6 rounded-full px-8">Add New Supplier</Button>
+        <RegisterSupplierModal />
       </div>
     );
   }
@@ -78,7 +77,7 @@ async function SupplierList({
 function SupplierSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="h-[400px] rounded-xl border bg-card animate-pulse" />
+      <div className="h-[400px] rounded-xl border border-border bg-card animate-pulse" />
     </div>
   );
 }
@@ -100,13 +99,13 @@ export default async function SupplierListPage({
             icon={<Truck className="w-6 h-6" />}
           />
           <div className="flex items-center gap-3">
-            <div className="flex items-center bg-muted/50 rounded-lg p-1 border">
+            <div className="flex items-center bg-muted/50 rounded-lg p-1 border border-border">
               <Link
                 href={`/inventory/supplier?view=table&tab=${currentTab}${resolvedSearchParams.q ? `&q=${resolvedSearchParams.q}` : ""}`}>
                 <Button
                   variant={currentView === "table" ? "secondary" : "ghost"}
                   size="sm"
-                  className="h-8 w-8 p-0">
+                  className="h-8 w-8 p-0 rounded-md">
                   <List size={16} />
                 </Button>
               </Link>
@@ -115,7 +114,7 @@ export default async function SupplierListPage({
                 <Button
                   variant={currentView === "grid" ? "secondary" : "ghost"}
                   size="sm"
-                  className="h-8 w-8 p-0">
+                  className="h-8 w-8 p-0 rounded-md">
                   <LayoutGrid size={16} />
                 </Button>
               </Link>
@@ -125,25 +124,25 @@ export default async function SupplierListPage({
         </div>
 
         <Tabs defaultValue={currentTab} className="w-full space-y-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-1">
-            <TabsList className="flex items-center gap-1 border-b pb-px bg-transparent h-auto p-0">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-1">
+            <TabsList className="flex items-center gap-1 border-b border-border pb-px bg-transparent h-auto p-0">
               <TabsTrigger
                 value="all"
-                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none">
+                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-primary text-muted-foreground hover:text-foreground data-[state=active]:bg-transparent rounded-none">
                 All Suppliers
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853] data-[state=active]:block hidden" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary data-[state=active]:block hidden" />
               </TabsTrigger>
               <TabsTrigger
                 value="featured"
-                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none">
+                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-primary text-muted-foreground hover:text-foreground data-[state=active]:bg-transparent rounded-none">
                 Featured
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853] data-[state=active]:block hidden" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary data-[state=active]:block hidden" />
               </TabsTrigger>
               <TabsTrigger
                 value="favorites"
-                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-[#34A853] text-gray-500 hover:text-gray-700 data-[state=active]:bg-transparent rounded-none">
+                className="px-4 py-2 text-sm font-medium transition-colors relative data-[state=active]:text-primary text-muted-foreground hover:text-foreground data-[state=active]:bg-transparent rounded-none">
                 Favorites
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853] data-[state=active]:block hidden" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary data-[state=active]:block hidden" />
               </TabsTrigger>
             </TabsList>
 
@@ -152,13 +151,13 @@ export default async function SupplierListPage({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
                   placeholder="Search by name, code or category..."
-                  className="pl-9 h-9 bg-muted/50 border-none rounded-lg"
+                  className="pl-9 h-9 bg-background border-border text-foreground rounded-lg"
                 />
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 gap-2 rounded-lg">
+                className="h-9 gap-2 rounded-lg border-border">
                 <Filter size={16} />
                 Filter
               </Button>

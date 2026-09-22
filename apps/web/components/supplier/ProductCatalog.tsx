@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Search, ShoppingCart, Plus, Trash2, Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { Search, ShoppingCart, Plus, Trash2 } from "lucide-react";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -60,7 +60,6 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
     } catch (error) {
       toast.error("Failed to remove product");
     } finally {
-      setIsDeleting(true);
       setIsDeleting(false);
     }
   };
@@ -72,7 +71,7 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
             placeholder="Search catalog..."
-            className="pl-9 h-11 rounded-xl bg-white border-gray-200"
+            className="pl-9 h-10 rounded-lg bg-background border-border text-foreground placeholder:text-muted-foreground"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -80,11 +79,11 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className="rounded-xl h-11 px-6 border-gray-200">
+            className="rounded-lg h-10 px-5 border-border text-foreground">
             Categories
           </Button>
           <Button
-            className="gap-2 rounded-xl h-11 px-6"
+            className="gap-2 rounded-lg h-10 px-5"
             onClick={() => setIsAddModalOpen(true)}>
             <Plus size={18} />
             Add to Catalog
@@ -92,18 +91,18 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
         </div>
       </div>
 
-      <div className="border rounded-2xl overflow-hidden bg-white shadow-sm">
+      <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50/50 hover:bg-gray-50/50 border-b">
+            <TableRow className="bg-muted/50 hover:bg-muted/50 border-b border-border">
               <TableHead className="w-12">
                 <Checkbox />
               </TableHead>
-              <TableHead className="font-bold py-4">Product Name</TableHead>
-              <TableHead className="font-bold">Category</TableHead>
-              <TableHead className="font-bold">Supplier SKU</TableHead>
-              <TableHead className="font-bold">Unit Cost</TableHead>
-              <TableHead className="text-right font-bold pr-6">
+              <TableHead className="font-semibold py-3 text-foreground">Product Name</TableHead>
+              <TableHead className="font-semibold text-foreground">Category</TableHead>
+              <TableHead className="font-semibold text-foreground">Supplier SKU</TableHead>
+              <TableHead className="font-semibold text-foreground">Unit Cost</TableHead>
+              <TableHead className="text-right font-semibold pr-6 text-foreground">
                 Actions
               </TableHead>
             </TableRow>
@@ -116,7 +115,7 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
                   className="h-40 text-center text-muted-foreground">
                   <div className="flex flex-col items-center justify-center gap-2">
                     <div className="p-3 bg-muted rounded-full">
-                      <ShoppingCart size={24} className="opacity-20" />
+                      <ShoppingCart size={24} className="opacity-40" />
                     </div>
                     <p>No products found in catalog</p>
                   </div>
@@ -126,12 +125,12 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
               filteredProducts.map(item => (
                 <TableRow
                   key={item.id}
-                  className="hover:bg-gray-50/30 border-b last:border-0 transition-colors">
+                  className="hover:bg-muted/50 border-b border-border last:border-0 transition-colors">
                   <TableCell>
                     <Checkbox />
                   </TableCell>
-                  <TableCell className="py-4">
-                    <div className="font-bold text-[#1D1D1F]">
+                  <TableCell className="py-3.5">
+                    <div className="font-semibold text-foreground">
                       {item.product.name}
                     </div>
                     <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
@@ -141,14 +140,16 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
                   <TableCell>
                     <Badge
                       variant="secondary"
-                      className="font-bold text-[10px] uppercase bg-blue-50 text-blue-700 border-none">
+                      className="font-semibold text-[10px] uppercase bg-primary/10 text-primary border-none">
                       {item.product.category.name}
                     </Badge>
                   </TableCell>
-                  <TableCell className="font-mono text-xs font-bold text-muted-foreground bg-muted/30 w-fit px-2 py-1 rounded">
-                    {item.supplierSku || item.variant?.sku || item.product.sku}
+                  <TableCell>
+                    <span className="font-mono text-xs font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-md inline-block">
+                      {item.supplierSku || item.variant?.sku || item.product.sku}
+                    </span>
                   </TableCell>
-                  <TableCell className="font-bold text-[#1D1D1F]">
+                  <TableCell className="font-semibold text-foreground">
                     KES {Number(item.costPrice).toLocaleString()}
                   </TableCell>
                   <TableCell className="text-right pr-6">
@@ -156,16 +157,16 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-9 px-3 rounded-lg gap-2 text-primary hover:text-primary hover:bg-primary/5 font-bold">
-                        <ShoppingCart size={16} />
+                        className="h-8 px-3 rounded-md gap-1.5 text-primary hover:text-primary hover:bg-primary/10 font-medium">
+                        <ShoppingCart size={15} />
                         Order
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-9 w-9 p-0 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50"
+                        className="h-8 w-8 p-0 rounded-md text-destructive hover:text-destructive hover:bg-destructive/10"
                         onClick={() => setProductToDelete(item)}>
-                        <Trash2 size={16} />
+                        <Trash2 size={15} />
                       </Button>
                     </div>
                   </TableCell>
@@ -185,24 +186,24 @@ export function ProductCatalog({ products, supplierId }: ProductCatalogProps) {
       <AlertDialog
         open={!!productToDelete}
         onOpenChange={open => !open && setProductToDelete(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-xl border border-border bg-card">
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove from Catalog?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-foreground">Remove from Catalog?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               This will remove <strong>{productToDelete?.product.name}</strong>{" "}
               from this supplier&apos;s catalog. This action does not delete the
               product itself.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting} className="rounded-lg">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={e => {
                 e.preventDefault();
                 handleRemove();
               }}
               disabled={isDeleting}
-              className="bg-red-600 hover:bg-red-700">
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg">
               {isDeleting ? "Removing..." : "Remove Product"}
             </AlertDialogAction>
           </AlertDialogFooter>
