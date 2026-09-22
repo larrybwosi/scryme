@@ -33,7 +33,7 @@ export function Sidebar({ userEmail }: { userEmail?: string | null }) {
   const pathname = usePathname()
 
   return (
-    <aside className="flex h-screen w-60 flex-col border-r border-border bg-card">
+    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-card">
       <div className="flex items-center gap-2 border-b border-border px-5 py-5">
         <div className="flex size-8 items-center justify-center rounded-md bg-primary/15">
           <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
