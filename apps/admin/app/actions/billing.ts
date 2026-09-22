@@ -344,7 +344,10 @@ export async function initiateAdminMpesaPayment(input: {
   const { MpesaClient } = await import("@repo/shared/mpesa");
   const client = new MpesaClient(creds);
 
-  const callbackUrl = `${process.env.MPESA_CALLBACK_BASE_URL || "http://localhost:4000"}/api/v2/payments/mpesa/webhooks/stkpush/${input.organizationId}/admin-${reference}`;
+  const isDev = process.env.NODE_ENV === "development";
+  const defaultCallbackBase = isDev ? "http://localhost:4000" : "https://api.scryme.tech";
+  const callbackBase = process.env.MPESA_CALLBACK_BASE_URL || defaultCallbackBase;
+  const callbackUrl = `${callbackBase}/api/v2/payments/mpesa/webhooks/stkpush/${input.organizationId}/admin-${reference}`;
 
   const stkRes = await client.initiateSTKPush({
     phoneNumber: input.phoneNumber,
