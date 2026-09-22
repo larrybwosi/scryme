@@ -95,7 +95,16 @@ export async function deletePosReleaseBinary(id: string) {
 export async function triggerGithubReleaseSync(tagOrVersion?: string) {
   await requireSuperAdmin();
 
-  const apiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+  const isDev = process.env.NODE_ENV === "development";
+  const defaultApiUrl = isDev ? "http://localhost:3000" : "https://api.scryme.tech";
+  const rawApiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl =
+    rawApiUrl &&
+    typeof rawApiUrl === "string" &&
+    !rawApiUrl.includes("PLACEHOLDER") &&
+    (rawApiUrl.startsWith("http://") || rawApiUrl.startsWith("https://"))
+      ? rawApiUrl
+      : defaultApiUrl;
 
   const url = `${apiUrl}/public/sync-release${tagOrVersion ? `?tag=${tagOrVersion}` : ""}`;
   const response = await fetch(url, {
