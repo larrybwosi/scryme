@@ -85,11 +85,15 @@ export async function syncUserScrymeChatAccess(input: {
     const scrymeClient = new ScrymeChatApiClient();
 
     if (input.action === "grant") {
-      await scrymeClient.addWorkspaceMember(
-        targetWorkspaceSlug,
-        user.email,
-        input.role || "member",
-      );
+      await scrymeClient.importWorkspaceMembers(targetWorkspaceSlug, [
+        {
+          email: user.email,
+          name: user.name || undefined,
+          avatar: user.image || undefined,
+          role: input.role || "member",
+          externalId: user.id,
+        },
+      ]);
     } else {
       await scrymeClient.removeWorkspaceMember(targetWorkspaceSlug, user.id);
     }

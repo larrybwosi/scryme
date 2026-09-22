@@ -438,7 +438,9 @@ export async function addAdminChatWorkspaceMember(input: {
     const { ScrymeChatApiClient } = await import("@repo/chat");
     const scrymeClient = new ScrymeChatApiClient();
 
-    await scrymeClient.addWorkspaceMember(workspaceSlug, input.email, input.role || "admin");
+    await scrymeClient.importWorkspaceMembers(workspaceSlug, [
+      { email: input.email, role: input.role || "admin" },
+    ]);
 
     revalidatePath("/integrations");
     return { success: true };
@@ -586,33 +588,32 @@ export async function provisionAdminChatWorkspace(input: {
     const { ScrymeChatApiClient } = await import("@repo/chat");
     const scrymeClient = new ScrymeChatApiClient();
 
-    const workspace = await scrymeClient.createWorkspace(
-      workspaceName,
-      workspaceSlug,
-      ownerEmail,
+    // Fetch super admin users to include as initial workspace members
+    const superAdmins = await db.user.findMany({
+      where: { role: "SUPER_ADMIN" },
+      select: { email: true, name: true, image: true },
+    });
+
+    const initialMembers = superAdmins
+      .filter((u) => u.email)
+      .map((u) => ({
+        email: u.email!,
+        name: u.name || undefined,
+        avatar: u.image || undefined,
+        role: "admin" as const,
+      }));
+
+    const defaultChannels = Array.from(
+      new Set([channelSlug, "system-alerts", "approvals", "general"])
     );
 
-    const defaultChannels = [
-      { name: "System Alerts", slug: channelSlug },
-      { name: "Approval Notifications", slug: "approvals" },
-      { name: "General System Chat", slug: "general" },
-    ];
-
-    for (const ch of defaultChannels) {
-      try {
-        await scrymeClient.createChannel(
-          workspace.slug,
-          ch.name,
-          ch.slug,
-          "public",
-        );
-      } catch (chErr: any) {
-        console.error(
-          `Channel ${ch.slug} provision warning:`,
-          chErr.message,
-        );
-      }
-    }
+    const workspace = await scrymeClient.createWorkspace(workspaceName, workspaceSlug, {
+      ownerEmail,
+      ownerName: sessionUser.user?.name || undefined,
+      ownerAvatar: sessionUser.user?.image || undefined,
+      channels: defaultChannels,
+      initialMembers,
+    });
 
     await updateSystemIntegrationSettings({
       adminWorkspaceSlug: workspace.slug,

@@ -64,6 +64,32 @@ export interface ScrymeChatChannel {
   name?: string;
 }
 
+export interface ProvisionWorkspaceOptions {
+  ownerEmail?: string;
+  ownerName?: string;
+  ownerAvatar?: string;
+  industry?: string;
+  description?: string;
+  channels?: string[];
+  initialMembers?: {
+    email: string;
+    name?: string;
+    avatar?: string;
+    role?: "admin" | "member";
+    externalId?: string;
+  }[];
+}
+
+export interface ImportMemberOptions {
+  members: {
+    email: string;
+    name?: string;
+    avatar?: string;
+    role?: "admin" | "member";
+    externalId?: string;
+  }[];
+}
+
 export class ScrymeChatApiClient {
   private channelCache = new Map<string, Map<string, string>>();
 
@@ -118,35 +144,62 @@ export class ScrymeChatApiClient {
   }
 
   /**
-   * Create a new workspace in Scryme Chat using V3 API.
+   * Provision a workspace in Scryme Chat using V3 M2M API.
    */
   async createWorkspace(
     name: string,
     slug: string,
-    ownerEmail?: string,
-    initialMembers?: { email: string; role?: "admin" | "member" }[],
+    ownerEmailOrOptions?: string | ProvisionWorkspaceOptions,
+    initialMembers?: { email: string; name?: string; role?: "admin" | "member" }[],
   ): Promise<ScrymeChatWorkspace> {
-    const data = await chat.m2m.workspace.provision({
+    const options: ProvisionWorkspaceOptions =
+      typeof ownerEmailOrOptions === "object"
+        ? ownerEmailOrOptions
+        : {
+            ownerEmail: ownerEmailOrOptions || "admin@scryme.tech",
+            initialMembers,
+          };
+
+    const data: any = await (chat.m2m as any).workspace.provision({
       name,
       slug,
-      ownerEmail: ownerEmail || "admin@scryme.tech",
-      ...(initialMembers ? { initialMembers } : {}),
+      ownerEmail: options.ownerEmail || "admin@scryme.tech",
+      ownerName: options.ownerName,
+      ownerAvatar: options.ownerAvatar,
+      industry: options.industry,
+      description: options.description,
+      channels: options.channels,
+      initialMembers: options.initialMembers,
     });
-    console.log(data);
-    const workspace = data?.data?.workspace || data?.data?.workspace;
+
+    const workspace = data?.data?.workspace || data?.workspace || data;
     return {
-      id: workspace.id,
-      name: workspace.name,
-      slug: workspace.slug,
+      id: workspace.id || workspace.slug || slug,
+      name: workspace.name || name,
+      slug: workspace.slug || slug,
     };
+  }
+
+  /**
+   * Bulk import members into a workspace using V3 M2M API.
+   */
+  async importWorkspaceMembers(
+    workspaceSlug: string,
+    membersOrOptions: ImportMemberOptions | ImportMemberOptions["members"],
+  ): Promise<any> {
+    const payload: ImportMemberOptions = Array.isArray(membersOrOptions)
+      ? { members: membersOrOptions }
+      : membersOrOptions;
+
+    return (chat.m2m as any).member.import(workspaceSlug, payload);
   }
 
   /**
    * Get workspace details using V3 API.
    */
   async getWorkspace(slug: string): Promise<ScrymeChatWorkspace> {
-    const res = await chat.workspace.get(slug);
-    const workspace = res?.data?.workspace || res?.data?.workspace;
+    const res: any = await chat.workspace.get(slug);
+    const workspace = res?.data?.workspace || res?.workspace || res;
     return {
       id: workspace.id,
       name: workspace.name,
