@@ -180,7 +180,13 @@ export type SystemIntegrationSettings = {
 
   errorAlertsEnabled?: boolean;
   errorAlertsMinStatus?: number;
+  sentryDsn?: string;
+  sentryOrg?: string;
+  sentryProject?: string;
+  sentryAuthToken?: string;
   sentryWebhookSecret?: string;
+  sentryEnvironment?: string;
+  sentryTracesSampleRate?: string;
   sentryEnabled?: boolean;
 };
 
@@ -201,7 +207,13 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
     "system:admin:chat:status",
     "system:error:alerts:enabled",
     "system:error:alerts:minStatus",
+    "system:integration:sentry:dsn",
+    "system:integration:sentry:org",
+    "system:integration:sentry:project",
+    "system:integration:sentry:authToken",
     "system:integration:sentry:webhookSecret",
+    "system:integration:sentry:environment",
+    "system:integration:sentry:tracesSampleRate",
     "system:integration:sentry:enabled",
   ];
 
@@ -260,10 +272,36 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
         ? parseInt(settingsMap.get("system:error:alerts:minStatus")!, 10)
         : Number(process.env.ERROR_ALERTS_MIN_STATUS || 500),
 
+    sentryDsn:
+      settingsMap.get("system:integration:sentry:dsn") ||
+      process.env.SENTRY_DSN ||
+      process.env.NEXT_PUBLIC_SENTRY_DSN ||
+      "",
+    sentryOrg:
+      settingsMap.get("system:integration:sentry:org") ||
+      process.env.SENTRY_ORG ||
+      "",
+    sentryProject:
+      settingsMap.get("system:integration:sentry:project") ||
+      process.env.SENTRY_PROJECT ||
+      "",
+    sentryAuthToken:
+      settingsMap.get("system:integration:sentry:authToken") ||
+      process.env.SENTRY_AUTH_TOKEN ||
+      "",
     sentryWebhookSecret:
       settingsMap.get("system:integration:sentry:webhookSecret") ||
       process.env.SENTRY_WEBHOOK_SECRET ||
       "",
+    sentryEnvironment:
+      settingsMap.get("system:integration:sentry:environment") ||
+      process.env.SENTRY_ENVIRONMENT ||
+      process.env.NODE_ENV ||
+      "production",
+    sentryTracesSampleRate:
+      settingsMap.get("system:integration:sentry:tracesSampleRate") ||
+      process.env.SENTRY_TRACES_SAMPLE_RATE ||
+      "1.0",
     sentryEnabled:
       settingsMap.has("system:integration:sentry:enabled")
         ? settingsMap.get("system:integration:sentry:enabled") === "true"
@@ -299,8 +337,32 @@ export async function updateSystemIntegrationSettings(
       input.errorAlertsMinStatus !== undefined ? String(input.errorAlertsMinStatus) : undefined,
     ],
     [
+      "system:integration:sentry:dsn",
+      input.sentryDsn,
+    ],
+    [
+      "system:integration:sentry:org",
+      input.sentryOrg,
+    ],
+    [
+      "system:integration:sentry:project",
+      input.sentryProject,
+    ],
+    [
+      "system:integration:sentry:authToken",
+      input.sentryAuthToken,
+    ],
+    [
       "system:integration:sentry:webhookSecret",
       input.sentryWebhookSecret,
+    ],
+    [
+      "system:integration:sentry:environment",
+      input.sentryEnvironment,
+    ],
+    [
+      "system:integration:sentry:tracesSampleRate",
+      input.sentryTracesSampleRate,
     ],
     [
       "system:integration:sentry:enabled",
@@ -677,6 +739,51 @@ export async function provisionAdminChatWorkspace(input: {
     return {
       success: true,
       message: `Admin workspace "${workspaceName}" (${workspaceSlug}) saved and configured. (${error.message || "Scryme Chat API fallback"})`,
+    };
+  }
+}
+
+
+export async function testSentryWebhookConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  if (!settings.sentryEnabled) {
+    return {
+      success: false,
+      message: "Sentry integration is currently disabled in system settings.",
+    };
+  }
+
+  const workspaceSlug = settings.adminWorkspaceSlug || "system-admins";
+  const channelSlug = settings.adminChannelSlug || "system-alerts";
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    const timestamp = new Date().toLocaleString();
+    const testMessage = `🚨 **Sentry Test Exception Alert** [error]
+**Issue:** Sentry Webhook Integration Test (Admin Console Triggered)
+**Project:** ${settings.sentryProject || "Admin Portal / API Server"}
+**Environment:** ${settings.sentryEnvironment || "production"}
+**Timestamp:** ${timestamp}
+**Details:** Simulated test event payload successfully ingested and dispatched via Sentry webhook configuration.
+
+[View Test Issue in Sentry](https://sentry.io)`;
+
+    await scrymeClient.sendMessage(workspaceSlug, channelSlug, {
+      content: testMessage,
+    });
+
+    return {
+      success: true,
+      message: `Successfully verified Sentry webhook alert integration! Test message dispatched to #${channelSlug} in "${workspaceSlug}".`,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Sentry Webhook Test Failed: ${error.message || "Unable to dispatch notification to Scryme Chat"}`,
     };
   }
 }
