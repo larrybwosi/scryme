@@ -49,7 +49,7 @@ export const CreateOrderInputSchema = z.object({
     .default(OrderTransactionStatus.PENDING_CONFIRMATION),
   notes: z.string().nullish().transform(val => val ?? undefined),
   termsAndConditions: z.string().nullish().transform(val => val ?? undefined),
-  shippingFee: z.number().nonnegative().default(0),
+  shippingFee: z.number().nonnegative().optional().nullable().default(0),
   discountAmount: z.number().nonnegative().default(0),
   deliveryPartnerId: z.string().nullish().transform(val => val ?? undefined),
   attachments: z

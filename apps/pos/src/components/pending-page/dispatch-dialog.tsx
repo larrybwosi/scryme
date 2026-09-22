@@ -25,7 +25,7 @@ import { cn } from '@/lib/utils';
 const formSchema = z.object({
   driverId: z.string().optional(),
   estimatedTime: z.date().optional(),
-  deliveryFee: z.coerce.number().min(0).default(0),
+  deliveryFee: z.coerce.number().min(0).optional().nullable().default(0),
 });
 
 interface DriverOption {

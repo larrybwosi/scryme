@@ -30,14 +30,14 @@ export default function RealtimeInitializer() {
   useEffect(() => {
     const isDisabled = localStorage.getItem('realtime-disabled') === 'true';
     if (isAuthInitialized && isConfigured && currentMember && !isDisabled) {
-      initialize();
+      initialize(true);
     } else if (!isConfigured || !currentMember) {
       const state = useRealtimeStore.getState();
       if (state.socketClient?.connected) {
         state.socketClient.disconnect();
       }
     }
-  }, [initialize, isAuthInitialized, isConfigured, currentMember]);
+  }, [initialize, isAuthInitialized, isConfigured, currentMember?.id]);
 
   // ── Presence management ────────────────────────────────────────────────────
   useEffect(() => {

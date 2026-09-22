@@ -49,7 +49,7 @@ export const CreateOrderSchema = z.object({
   fulfillment: OrderFulfillmentSchema.optional().nullable(),
   status: z.nativeEnum(TransactionStatus).default(TransactionStatus.PENDING_CONFIRMATION),
   notes: z.string().optional().nullable(),
-  shippingFee: z.number().nonnegative().default(0),
+  shippingFee: z.number().nonnegative().optional().nullable().default(0),
   discountAmount: z.number().nonnegative().default(0),
   taxIds: z.array(z.string()).optional().nullable(),
 }).refine(data => (data.customerId && data.customerId.trim().length > 0) || (data.businessAccountId && data.businessAccountId.trim().length > 0), {
