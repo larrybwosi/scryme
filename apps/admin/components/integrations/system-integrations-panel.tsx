@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, MessageSquare, ShieldAlert, Save, Sparkles, Bot, Hash, Lock, Users, Plus, Trash2, UserPlus, RefreshCw } from "lucide-react"
+import { Loader2, MessageSquare, ShieldAlert, Save, Sparkles, Bot, Hash, Lock, Users, Plus, Trash2, UserPlus, RefreshCw, Copy, Check, ExternalLink, Activity, Send } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
@@ -18,6 +18,7 @@ import {
   removeAdminChatWorkspaceMember,
   testHermesConnection,
   testScrymeChatConnection,
+  testSentryWebhookConnection,
   type SystemIntegrationSettings,
 } from "@/app/actions/integrations"
 
@@ -49,9 +50,19 @@ export function SystemIntegrationsPanel({
   const [adminChannelSlug, setAdminChannelSlug] = useState(settings.adminChannelSlug ?? "system-alerts")
   const [adminWorkspaceStatus, setAdminWorkspaceStatus] = useState(settings.adminWorkspaceStatus ?? "Not Configured")
 
-  // Sentry Webhook & Exception Tracking
+  // Sentry SDK & Webhook Configuration
+  const [sentryDsn, setSentryDsn] = useState(settings.sentryDsn ?? "")
+  const [sentryOrg, setSentryOrg] = useState(settings.sentryOrg ?? "")
+  const [sentryProject, setSentryProject] = useState(settings.sentryProject ?? "")
+  const [sentryAuthToken, setSentryAuthToken] = useState(settings.sentryAuthToken ?? "")
   const [sentryWebhookSecret, setSentryWebhookSecret] = useState(settings.sentryWebhookSecret ?? "")
+  const [sentryEnvironment, setSentryEnvironment] = useState(settings.sentryEnvironment ?? "production")
+  const [sentryTracesSampleRate, setSentryTracesSampleRate] = useState(settings.sentryTracesSampleRate ?? "1.0")
   const [sentryEnabled, setSentryEnabled] = useState(settings.sentryEnabled ?? true)
+
+  const [copiedUrl, setCopiedUrl] = useState(false)
+  const [copiedSecret, setCopiedSecret] = useState(false)
+  const [isTestingSentry, setIsTestingSentry] = useState(false)
 
   // Error Alerts in Scryme Chat & Sentry
   const [errorAlertsEnabled, setErrorAlertsEnabled] = useState(settings.errorAlertsEnabled ?? true)
@@ -79,7 +90,13 @@ export function SystemIntegrationsPanel({
     setAdminWorkspaceStatus(settings.adminWorkspaceStatus ?? "Not Configured")
     setErrorAlertsEnabled(settings.errorAlertsEnabled ?? true)
     setErrorAlertsMinStatus(settings.errorAlertsMinStatus ?? 500)
+    setSentryDsn(settings.sentryDsn ?? "")
+    setSentryOrg(settings.sentryOrg ?? "")
+    setSentryProject(settings.sentryProject ?? "")
+    setSentryAuthToken(settings.sentryAuthToken ?? "")
     setSentryWebhookSecret(settings.sentryWebhookSecret ?? "")
+    setSentryEnvironment(settings.sentryEnvironment ?? "production")
+    setSentryTracesSampleRate(settings.sentryTracesSampleRate ?? "1.0")
     setSentryEnabled(settings.sentryEnabled ?? true)
   }, [settings])
 
@@ -180,9 +197,31 @@ export function SystemIntegrationsPanel({
       adminChannelSlug,
       errorAlertsEnabled,
       errorAlertsMinStatus,
+      sentryDsn,
+      sentryOrg,
+      sentryProject,
+      sentryAuthToken,
       sentryWebhookSecret,
+      sentryEnvironment,
+      sentryTracesSampleRate,
       sentryEnabled,
     })
+  }
+
+  async function handleTestSentry() {
+    setIsTestingSentry(true)
+    try {
+      const res = await testSentryWebhookConnection()
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test Sentry webhook connection")
+    } finally {
+      setIsTestingSentry(false)
+    }
   }
 
   async function handleTestChat() {
@@ -642,35 +681,200 @@ export function SystemIntegrationsPanel({
             <div>
               <CardTitle className="text-base font-semibold text-foreground">Sentry Integration & Webhooks</CardTitle>
               <CardDescription>
-                Configure Sentry webhook receiver to receive issue creation/alert events and dispatch real-time error notifications to Scryme Chat admins.
+                Configure Sentry crash reporting SDK settings and Sentry Webhook ingestion to dispatch real-time error notifications to Scryme Chat admins.
               </CardDescription>
             </div>
           </div>
-          <Badge
-            variant={sentryEnabled ? "secondary" : "outline"}
-            className={sentryEnabled ? "bg-emerald-500/10 text-emerald-600" : ""}
-          >
-            {sentryEnabled ? "Active" : "Disabled"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={sentryEnabled ? "secondary" : "outline"}
+              className={sentryEnabled ? "bg-emerald-500/10 text-emerald-600" : ""}
+            >
+              {sentryEnabled ? "Active" : "Disabled"}
+            </Badge>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleTestSentry}
+              disabled={isTestingSentry || !sentryEnabled}
+              className="gap-2"
+            >
+              {isTestingSentry ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+              Test Webhook
+            </Button>
+          </div>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
+        <CardContent className="flex flex-col gap-6">
+          {/* Main SDK Configuration Settings */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2 sm:col-span-2">
+              <Label htmlFor="sentry-dsn">Sentry DSN (Data Source Name)</Label>
+              <Input
+                id="sentry-dsn"
+                type="text"
+                value={sentryDsn}
+                onChange={(e) => setSentryDsn(e.target.value)}
+                placeholder="https://key@o0.ingest.sentry.io/0 (or NEXT_PUBLIC_SENTRY_DSN)"
+              />
+              <p className="text-xs text-muted-foreground">
+                Used by client apps and NestJS API server for error tracking and performance profiling.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="sentry-org">Sentry Organization Slug</Label>
+              <Input
+                id="sentry-org"
+                type="text"
+                value={sentryOrg}
+                onChange={(e) => setSentryOrg(e.target.value)}
+                placeholder="e.g. scryme-tech"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="sentry-project">Sentry Project Slug</Label>
+              <Input
+                id="sentry-project"
+                type="text"
+                value={sentryProject}
+                onChange={(e) => setSentryProject(e.target.value)}
+                placeholder="e.g. scryme-api / scryme-admin"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="sentry-auth-token">Sentry Auth / Internal Integration Token</Label>
+              <Input
+                id="sentry-auth-token"
+                type="password"
+                value={sentryAuthToken}
+                onChange={(e) => setSentryAuthToken(e.target.value)}
+                placeholder="sntrys_..."
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
               <Label htmlFor="sentry-webhook-secret">Sentry Webhook Secret / Client Secret</Label>
               <Input
                 id="sentry-webhook-secret"
                 type="password"
                 value={sentryWebhookSecret}
                 onChange={(e) => setSentryWebhookSecret(e.target.value)}
-                placeholder="Optional HMAC signature verification secret from Sentry Webhook configuration"
+                placeholder="Secret key for HMAC signature verification"
               />
-              <p className="text-xs text-muted-foreground">
-                Endpoint for Sentry Webhooks: <code className="font-mono text-primary">/v3/webhooks/sentry</code> (API Server)
-              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="sentry-environment">Environment Tag</Label>
+              <Input
+                id="sentry-environment"
+                type="text"
+                value={sentryEnvironment}
+                onChange={(e) => setSentryEnvironment(e.target.value)}
+                placeholder="production, staging, development"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="sentry-traces-sample-rate">Traces Sample Rate (0.0 to 1.0)</Label>
+              <Input
+                id="sentry-traces-sample-rate"
+                type="text"
+                value={sentryTracesSampleRate}
+                onChange={(e) => setSentryTracesSampleRate(e.target.value)}
+                placeholder="1.0"
+              />
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-2">
+          {/* Webhook Dashboard Integration Instructions */}
+          <div className="rounded-lg border border-border bg-muted/40 p-4 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 font-semibold text-sm text-foreground">
+                <Activity className="size-4 text-primary" />
+                Sentry Dashboard Webhook Configuration Guide
+              </div>
+              <a
+                href="https://sentry.io/settings/"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                Open Sentry Dashboard <ExternalLink className="size-3" />
+              </a>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              Follow these steps in your Sentry organization dashboard to automatically dispatch real-time exception alerts to Scryme Chat:
+            </p>
+
+            <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
+              <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-background p-3">
+                <span className="font-semibold text-foreground">1. Target Webhook Endpoint URL</span>
+                <div className="flex items-center justify-between rounded bg-muted px-2 py-1 font-mono text-[11px] text-primary">
+                  <span className="truncate">/v3/webhooks/sentry</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 shrink-0"
+                    onClick={() => {
+                      const fullUrl = `${window.location.origin.replace("admin.", "api.")}/v3/webhooks/sentry`
+                      navigator.clipboard.writeText(fullUrl)
+                      setCopiedUrl(true)
+                      toast.success("Webhook URL copied to clipboard")
+                      setTimeout(() => setCopiedUrl(false), 2000)
+                    }}
+                  >
+                    {copiedUrl ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                  </Button>
+                </div>
+                <span className="text-[11px] text-muted-foreground">
+                  Enter this URL under <strong>Developer Settings &gt; Internal Integrations &gt; Webhook URL</strong>.
+                </span>
+              </div>
+
+              <div className="flex flex-col gap-1.5 rounded-md border border-border/60 bg-background p-3">
+                <span className="font-semibold text-foreground">2. Client Secret / Signature Verification</span>
+                <div className="flex items-center justify-between rounded bg-muted px-2 py-1 font-mono text-[11px] text-primary">
+                  <span className="truncate">{sentryWebhookSecret ? "••••••••••••" : "Not Set"}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 shrink-0"
+                    disabled={!sentryWebhookSecret}
+                    onClick={() => {
+                      if (sentryWebhookSecret) {
+                        navigator.clipboard.writeText(sentryWebhookSecret)
+                        setCopiedSecret(true)
+                        toast.success("Client Secret copied to clipboard")
+                        setTimeout(() => setCopiedSecret(false), 2000)
+                      }
+                    }}
+                  >
+                    {copiedSecret ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                  </Button>
+                </div>
+                <span className="text-[11px] text-muted-foreground">
+                  Paste the <strong>Client Secret</strong> generated by Sentry into the secret field above for HMAC verification.
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2 rounded-md border border-border/60 bg-background p-3 text-xs">
+              <span className="font-semibold text-foreground">3. Recommended Webhook Events & Permissions</span>
+              <ul className="list-disc list-inside space-y-1 text-muted-foreground">
+                <li>Set <strong>Issue Permissions</strong> to <i>Read &amp; Write</i> or <i>Admin</i>.</li>
+                <li>Check <strong>Webhook Events</strong>: Enable <code>issue</code> (created, resolved, assigned) and <code>error</code> alert events.</li>
+                <li>Under <strong>Alerts &gt; Create Alert Rule</strong>, select <i>Send a notification via Integration</i> and target your internal integration.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 pt-1">
             <input
               type="checkbox"
               id="sentry-enabled"
@@ -679,7 +883,7 @@ export function SystemIntegrationsPanel({
               className="size-4 rounded border-input bg-background text-primary focus:ring-ring"
             />
             <Label htmlFor="sentry-enabled" className="cursor-pointer font-medium">
-              Enable Sentry Webhook Ingestion & Scryme Chat Error Notifications
+              Enable Sentry Integration &amp; Webhook Event Ingestion
             </Label>
           </div>
         </CardContent>
