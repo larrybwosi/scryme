@@ -9,7 +9,10 @@ pub async fn init(app: &AppHandle) -> BackendResult<SqlitePool> {
         .app_data_dir()
         .map_err(|e| BackendError::Config(format!("failed to get app data dir: {}", e)))?;
 
-    std::fs::create_dir_all(&app_dir).map_err(BackendError::Io)?;
+    if let Err(e) = std::fs::create_dir_all(&app_dir) {
+        log::error!("Failed to create app data dir {:?}: {}", app_dir, e);
+        return Err(BackendError::Io(e));
+    }
 
     let db_path = app_dir.join("bakery.db");
 
@@ -22,35 +25,37 @@ pub async fn init(app: &AppHandle) -> BackendResult<SqlitePool> {
     let pool = SqlitePool::connect_with(options).await?;
 
     // Ensure WAL and foreign keys are active (belt-and-suspenders for existing connections)
-    sqlx::query("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;")
+    let _ = sqlx::query("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;")
         .execute(&pool)
-        .await?;
+        .await;
 
-    // Seed system units
-    let units_count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM system_units")
+    // Seed system units if system_units table exists
+    let units_count: Result<(i64,), _> = sqlx::query_as("SELECT COUNT(*) FROM system_units")
         .fetch_one(&pool)
-        .await?;
+        .await;
 
-    if units_count.0 == 0 {
-        let units = [
-            ("mass-kg", "Kilogram", "kg", "MASS", "UNIVERSAL", 1),
-            ("mass-g", "Gram", "g", "MASS", "UNIVERSAL", 0),
-            ("vol-l", "Liter", "L", "VOLUME", "UNIVERSAL", 1),
-            ("vol-ml", "Milliliter", "mL", "VOLUME", "UNIVERSAL", 0),
-            ("count-pcs", "Piece", "pc", "COUNT", "UNIVERSAL", 1),
-        ];
+    if let Ok(count) = units_count {
+        if count.0 == 0 {
+            let units = [
+                ("mass-kg", "Kilogram", "kg", "MASS", "UNIVERSAL", 1),
+                ("mass-g", "Gram", "g", "MASS", "UNIVERSAL", 0),
+                ("vol-l", "Liter", "L", "VOLUME", "UNIVERSAL", 1),
+                ("vol-ml", "Milliliter", "mL", "VOLUME", "UNIVERSAL", 0),
+                ("count-pcs", "Piece", "pc", "COUNT", "UNIVERSAL", 1),
+            ];
 
-        for (id, name, symbol, unit_type, category, is_base) in units {
-            sqlx::query(
-                "INSERT INTO system_units (id, name, symbol, \"type\", category, is_base_unit) VALUES (?, ?, ?, ?, ?, ?)"
-            )
-            .bind(id)
-            .bind(name)
-            .bind(symbol)
-            .bind(unit_type)
-            .bind(category)
-            .bind(is_base)
-            .execute(&pool).await?;
+            for (id, name, symbol, unit_type, category, is_base) in units {
+                let _ = sqlx::query(
+                    "INSERT INTO system_units (id, name, symbol, \"type\", category, is_base_unit) VALUES (?, ?, ?, ?, ?, ?)"
+                )
+                .bind(id)
+                .bind(name)
+                .bind(symbol)
+                .bind(unit_type)
+                .bind(category)
+                .bind(is_base)
+                .execute(&pool).await;
+            }
         }
     }
 
