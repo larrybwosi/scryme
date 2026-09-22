@@ -1,6 +1,7 @@
 // --- INTEGRATION MODELS ---
 
 enum IntegrationCategory {
+  MONITORING
   E_COMMERCE
   ACCOUNTING
   MARKETING
@@ -11,6 +12,7 @@ enum IntegrationCategory {
 }
 
 enum AuthType {
+  WEBHOOK_SECRET
   API_KEY
   OAUTH2
   OTHER
