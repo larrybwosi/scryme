@@ -109,10 +109,10 @@ export function EditSupplierModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-card">
         <DialogHeader>
-          <DialogTitle>Edit Supplier Profile</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-foreground">Edit Supplier Profile</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
             Update the information for {supplier.name}.
           </DialogDescription>
         </DialogHeader>
@@ -125,9 +125,9 @@ export function EditSupplierModal({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplier Name</FormLabel>
+                    <FormLabel className="text-foreground">Supplier Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -138,9 +138,9 @@ export function EditSupplierModal({
                 name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplier Code</FormLabel>
+                    <FormLabel className="text-foreground">Supplier Code</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,16 +154,16 @@ export function EditSupplierModal({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Type</FormLabel>
+                    <FormLabel className="text-foreground">Type</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background border-border text-foreground rounded-lg">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="rounded-lg">
                         <SelectItem value="manufacturer">
                           Manufacturer
                         </SelectItem>
@@ -183,16 +183,16 @@ export function EditSupplierModal({
                 name="riskLevel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Risk Level</FormLabel>
+                    <FormLabel className="text-foreground">Risk Level</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="bg-background border-border text-foreground rounded-lg">
                           <SelectValue placeholder="Select risk level" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
+                      <SelectContent className="rounded-lg">
                         <SelectItem value="low">Low Risk</SelectItem>
                         <SelectItem value="medium">Medium Risk</SelectItem>
                         <SelectItem value="high">High Risk</SelectItem>
@@ -204,15 +204,15 @@ export function EditSupplierModal({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 border-t pt-4">
+            <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
               <FormField
                 control={form.control}
                 name="primaryContact"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Primary Contact Name</FormLabel>
+                    <FormLabel className="text-foreground">Primary Contact Name</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,9 +223,9 @@ export function EditSupplierModal({
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address</FormLabel>
+                    <FormLabel className="text-foreground">Email Address</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} type="email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -236,9 +236,9 @@ export function EditSupplierModal({
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number</FormLabel>
+                    <FormLabel className="text-foreground">Phone Number</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -249,9 +249,9 @@ export function EditSupplierModal({
                 name="website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website (optional)</FormLabel>
+                    <FormLabel className="text-foreground">Website (optional)</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="example.com" />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} placeholder="example.com" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -259,15 +259,15 @@ export function EditSupplierModal({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4 border-t pt-4">
+            <div className="grid grid-cols-2 gap-4 border-t border-border pt-4">
               <FormField
                 control={form.control}
                 name="taxId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tax ID / PIN</FormLabel>
+                    <FormLabel className="text-foreground">Tax ID / PIN</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -278,9 +278,9 @@ export function EditSupplierModal({
                 name="registrationNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Reg. Number</FormLabel>
+                    <FormLabel className="text-foreground">Reg. Number</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -288,15 +288,15 @@ export function EditSupplierModal({
               />
             </div>
 
-            <div className="space-y-4 border-t pt-4">
-              <FormLabel>Address Information</FormLabel>
+            <div className="space-y-4 border-t border-border pt-4">
+              <FormLabel className="text-foreground font-semibold">Address Information</FormLabel>
               <FormField
                 control={form.control}
                 name="street"
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Input {...field} placeholder="Street Address" />
+                      <Input className="bg-background border-border text-foreground rounded-lg" {...field} placeholder="Street Address" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -309,7 +309,7 @@ export function EditSupplierModal({
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input {...field} placeholder="City" />
+                        <Input className="bg-background border-border text-foreground rounded-lg" {...field} placeholder="City" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -321,7 +321,7 @@ export function EditSupplierModal({
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input {...field} placeholder="State / Province" />
+                        <Input className="bg-background border-border text-foreground rounded-lg" {...field} placeholder="State / Province" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -335,7 +335,7 @@ export function EditSupplierModal({
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input {...field} placeholder="ZIP / Postal Code" />
+                        <Input className="bg-background border-border text-foreground rounded-lg" {...field} placeholder="ZIP / Postal Code" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -347,7 +347,7 @@ export function EditSupplierModal({
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Input {...field} placeholder="Country" />
+                        <Input className="bg-background border-border text-foreground rounded-lg" {...field} placeholder="Country" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -360,10 +360,11 @@ export function EditSupplierModal({
               <Button
                 type="button"
                 variant="outline"
+                className="rounded-lg border-border"
                 onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" className="rounded-lg" disabled={isSubmitting}>
                 {isSubmitting ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>

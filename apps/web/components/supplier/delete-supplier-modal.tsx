@@ -49,24 +49,24 @@ export function DeleteSupplierModal({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="rounded-xl border border-border bg-card">
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogTitle className="text-foreground">Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription className="text-muted-foreground">
             This action cannot be undone. This will permanently delete{" "}
             <strong>{supplierName}</strong> and all associated data from our
             servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting} className="rounded-lg">Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={e => {
               e.preventDefault();
               handleDelete();
             }}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700 text-white">
+            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-lg">
             {isDeleting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

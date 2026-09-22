@@ -92,17 +92,17 @@ export function RegisterSupplierModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="rounded-xl h-10 px-6 gap-2 shadow-sm transition-all">
+        <Button className="rounded-lg h-10 px-5 gap-2 shadow-sm transition-all">
           <Plus size={18} />
-          <span className="font-bold">Register Supplier</span>
+          <span className="font-semibold">Register Supplier</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] rounded-2xl">
+      <DialogContent className="sm:max-w-[500px] rounded-xl border border-border bg-card">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold text-foreground">
+          <DialogTitle className="text-xl font-semibold text-foreground">
             Register Supplier
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-muted-foreground">
             Add a new supplier to your organization network.
           </DialogDescription>
         </DialogHeader>
@@ -114,7 +114,7 @@ export function RegisterSupplierModal() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                       Supplier Name
                     </FormLabel>
                     <FormControl>
@@ -131,7 +131,7 @@ export function RegisterSupplierModal() {
                             );
                           }
                         }}
-                        className="h-11 rounded-xl bg-muted/50"
+                        className="h-10 rounded-lg bg-background border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -143,7 +143,7 @@ export function RegisterSupplierModal() {
                 name="code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                       Supplier Code
                     </FormLabel>
                     <FormControl>
@@ -154,7 +154,7 @@ export function RegisterSupplierModal() {
                           field.onChange(e);
                           setIsCodeCustomized(true);
                         }}
-                        className="h-11 rounded-xl bg-muted/50 font-mono"
+                        className="h-10 rounded-lg bg-background border-border text-foreground font-mono"
                       />
                     </FormControl>
                     <FormMessage />
@@ -169,14 +169,14 @@ export function RegisterSupplierModal() {
                 name="contactName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                       Contact Person
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="John Doe"
                         {...field}
-                        className="h-11 rounded-xl bg-muted/50"
+                        className="h-10 rounded-lg bg-background border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -188,18 +188,18 @@ export function RegisterSupplierModal() {
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                       Supplier Type
                     </FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-11 rounded-xl bg-muted/50">
+                        <SelectTrigger className="h-10 rounded-lg bg-background border-border text-foreground">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-xl">
+                      <SelectContent className="rounded-lg">
                         <SelectItem value="manufacturer">
                           Manufacturer
                         </SelectItem>
@@ -222,14 +222,14 @@ export function RegisterSupplierModal() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                       Email
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="john@acme.com"
                         {...field}
-                        className="h-11 rounded-xl bg-muted/50"
+                        className="h-10 rounded-lg bg-background border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -241,14 +241,14 @@ export function RegisterSupplierModal() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                    <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                       Phone
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="+254..."
                         {...field}
-                        className="h-11 rounded-xl bg-muted/50"
+                        className="h-10 rounded-lg bg-background border-border text-foreground"
                       />
                     </FormControl>
                     <FormMessage />
@@ -261,14 +261,14 @@ export function RegisterSupplierModal() {
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+                  <FormLabel className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                     Office Address
                   </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="123 Industrial Area, Nairobi"
                       {...field}
-                      className="h-11 rounded-xl bg-muted/50"
+                      className="h-10 rounded-lg bg-background border-border text-foreground"
                     />
                   </FormControl>
                   <FormMessage />
@@ -280,13 +280,13 @@ export function RegisterSupplierModal() {
                 type="button"
                 variant="ghost"
                 onClick={() => setOpen(false)}
-                className="rounded-xl h-11 px-6">
+                className="rounded-lg h-10 px-5">
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="rounded-xl h-11 px-10 font-bold">
+                className="rounded-lg h-10 px-8 font-semibold">
                 {isSubmitting ? "Registering..." : "Register Supplier"}
               </Button>
             </DialogFooter>

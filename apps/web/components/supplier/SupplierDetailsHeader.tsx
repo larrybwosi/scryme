@@ -7,7 +7,6 @@ import {
   Phone,
   Mail,
   Edit,
-  Share2,
   Trash2,
   Building2,
 } from "lucide-react";
@@ -41,41 +40,35 @@ export function SupplierDetailsHeader({
     await toggleFavoriteSupplier(supplier.id);
   };
 
-  const initials = supplier.name
-    .split(" ")
-    .map((n: string) => n[0])
-    .join("")
-    .toUpperCase();
-
   return (
-    <div className="bg-background border-b px-6 py-10 shadow-sm">
+    <div className="bg-card border-b border-border px-6 py-8 shadow-sm">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
-          <div className="flex gap-8 items-center">
-            <Avatar className="h-28 w-28 rounded-2xl border-4 border-white shadow-xl bg-muted">
+          <div className="flex gap-6 items-center">
+            <Avatar className="h-24 w-24 rounded-xl border border-border shadow-sm bg-muted">
               <AvatarImage
                 src={supplier.logo || undefined}
                 className="object-cover"
               />
-              <AvatarFallback className="bg-primary/5 text-primary text-3xl font-bold rounded-2xl">
-                <Building2 className="h-12 w-12" />
+              <AvatarFallback className="bg-primary/10 text-primary text-2xl font-bold rounded-xl">
+                <Building2 className="h-10 w-10" />
               </AvatarFallback>
             </Avatar>
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-4xl font-bold tracking-tight text-[#1D1D1F]">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
                   {supplier.name}
                 </h1>
                 <Badge
                   variant="secondary"
-                  className="uppercase font-bold px-3 py-1 bg-primary/10 text-primary border-none">
+                  className="uppercase font-semibold px-2.5 py-0.5 bg-primary/10 text-primary border-none">
                   {supplier.type.replace("_", " ")}
                 </Badge>
               </div>
-              <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
+              <div className="flex flex-wrap gap-5 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1.5">
-                  <Star size={18} className="text-yellow-500 fill-yellow-500" />
-                  <span className="font-bold text-foreground text-base">
+                  <Star size={16} className="text-amber-500 fill-amber-500" />
+                  <span className="font-semibold text-foreground text-sm">
                     {supplier.avgRating}
                   </span>
                   <span className="text-muted-foreground">
@@ -84,7 +77,7 @@ export function SupplierDetailsHeader({
                 </div>
                 {supplier.city && (
                   <div className="flex items-center gap-1.5">
-                    <MapPin size={18} className="text-muted-foreground" />
+                    <MapPin size={16} className="text-muted-foreground" />
                     <span className="font-medium">
                       {supplier.city}, {supplier.country}
                     </span>
@@ -94,37 +87,37 @@ export function SupplierDetailsHeader({
                   <Badge
                     variant="outline"
                     className={cn(
-                      "text-[10px] py-0.5 px-2 font-bold tracking-wider",
+                      "text-[10px] py-0.5 px-2 font-semibold tracking-wider",
                       supplier.riskLevel === "low"
-                        ? "text-green-600 border-green-200 bg-green-50"
+                        ? "text-emerald-700 dark:text-emerald-400 border-emerald-500/20 bg-emerald-500/10"
                         : supplier.riskLevel === "medium"
-                          ? "text-amber-600 border-amber-200 bg-amber-50"
-                          : "text-red-600 border-red-200 bg-red-50",
+                          ? "text-amber-700 dark:text-amber-400 border-amber-500/20 bg-amber-500/10"
+                          : "text-rose-700 dark:text-rose-400 border-rose-500/20 bg-rose-500/10",
                     )}>
                     {supplier.riskLevel.toUpperCase()} RISK
                   </Badge>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-6 pt-2">
+              <div className="flex flex-wrap gap-5 pt-1">
                 {supplier.website && (
                   <a
                     href={`https://${supplier.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-                    <Globe size={16} />
+                    <Globe size={15} />
                     {supplier.website}
                   </a>
                 )}
                 {supplier.phone && (
-                  <div className="flex items-center gap-1.5 text-sm">
-                    <Phone size={16} className="text-muted-foreground" />
-                    <span className="font-medium">{supplier.phone}</span>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <Phone size={15} />
+                    <span className="font-medium text-foreground">{supplier.phone}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Mail size={16} className="text-muted-foreground" />
-                  <span className="font-medium">{supplier.email}</span>
+                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <Mail size={15} />
+                  <span className="font-medium text-foreground">{supplier.email}</span>
                 </div>
               </div>
             </div>
@@ -134,25 +127,25 @@ export function SupplierDetailsHeader({
               variant="outline"
               onClick={handleToggleFavorite}
               className={cn(
-                "flex-1 md:flex-none gap-2 rounded-xl h-11 px-5",
+                "flex-1 md:flex-none gap-2 rounded-lg h-10 px-4 border-border",
                 isFavorite &&
-                  "text-yellow-500 border-yellow-500 bg-yellow-50 hover:bg-yellow-100 hover:text-yellow-600",
+                  "text-amber-500 border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20",
               )}>
-              <Star size={18} className={cn(isFavorite && "fill-current")} />
+              <Star size={16} className={cn(isFavorite && "fill-current")} />
               {isFavorite ? "Favorite" : "Favorite"}
             </Button>
             <Button
               variant="outline"
-              className="flex-1 md:flex-none gap-2 rounded-xl h-11 px-5"
+              className="flex-1 md:flex-none gap-2 rounded-lg h-10 px-4 border-border"
               onClick={() => setIsEditModalOpen(true)}>
-              <Edit size={18} />
+              <Edit size={16} />
               Edit Profile
             </Button>
             <Button
               variant="destructive"
-              className="flex-1 md:flex-none gap-2 rounded-xl h-11 px-5"
+              className="flex-1 md:flex-none gap-2 rounded-lg h-10 px-4"
               onClick={() => setIsDeleteModalOpen(true)}>
-              <Trash2 size={18} />
+              <Trash2 size={16} />
               Delete
             </Button>
           </div>

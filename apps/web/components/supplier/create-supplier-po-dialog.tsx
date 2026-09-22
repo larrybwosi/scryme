@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -60,7 +60,7 @@ export function CreateSupplierPODialog({
   const [isPending, startTransition] = useTransition();
 
   // Combine products supplied by this supplier with all inventory products so user can select any variant
-  const availableVariants = (() => {
+  const availableVariants = useMemo(() => {
     const variantMap = new Map<string, { id: string; name: string; unitCost: number }>();
 
     supplierProducts.forEach((sp: any) => {
@@ -69,30 +69,32 @@ export function CreateSupplierPODialog({
         const pName = sp.product?.name || "Product";
         const vName = sp.variant?.name;
         const displayName = vName && vName !== "Default" ? `${pName} (${vName})` : pName;
+        const cost = Number(sp.costPrice ?? sp.variant?.buyingPrice ?? sp.variant?.costPrice ?? 0);
         variantMap.set(vId, {
           id: vId,
           name: displayName,
-          unitCost: Number(sp.costPrice || sp.variant?.unitPrice || 0),
+          unitCost: cost,
         });
       }
     });
 
     allProducts.forEach((p: any) => {
-      const vId = p.variantId || p.id;
+      const vId = p.variantId;
       if (vId && !variantMap.has(vId)) {
         const pName = p.name || "Product";
         const vName = p.variantName;
         const displayName = vName && vName !== "Default" ? `${pName} (${vName})` : pName;
+        const cost = Number(p.buyingPrice ?? p.costPrice ?? p.unitPrice ?? 0);
         variantMap.set(vId, {
           id: vId,
           name: displayName,
-          unitCost: Number(p.costPrice || p.unitPrice || 0),
+          unitCost: cost,
         });
       }
     });
 
     return Array.from(variantMap.values());
-  })();
+  }, [supplierProducts, allProducts]);
 
   // Calculate default due date (30 days from now)
   const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -113,6 +115,25 @@ export function CreateSupplierPODialog({
       ],
     },
   });
+
+  useEffect(() => {
+    if (open && availableVariants.length > 0) {
+      const currentItems = form.getValues("items");
+      if (!currentItems || currentItems.length === 0 || !currentItems[0]?.variantId) {
+        form.reset({
+          supplierId,
+          dueDate: defaultDueDate,
+          items: [
+            {
+              variantId: availableVariants[0].id,
+              quantity: 1,
+              unitCost: availableVariants[0].unitCost || 0.01,
+            },
+          ],
+        });
+      }
+    }
+  }, [open, availableVariants, supplierId, defaultDueDate]);
 
   const handlePaymentTermsChange = (days: string) => {
     if (!days) return;
@@ -135,7 +156,11 @@ export function CreateSupplierPODialog({
         await createPurchase({
           supplierId: values.supplierId,
           dueDate: values.dueDate ? new Date(values.dueDate) : undefined,
-          items: values.items,
+          items: values.items.map(item => ({
+            variantId: item.variantId,
+            quantity: Number(item.quantity),
+            unitCost: Number(item.unitCost),
+          })),
         });
         toast.success(`Purchase order created for ${supplierName}`);
         setOpen(false);
@@ -160,15 +185,17 @@ export function CreateSupplierPODialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children || (
-          <Button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-sm font-medium border border-primary bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+          <Button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium border border-primary bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
             <ShoppingBag className="w-4 h-4" />
             New Order
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto rounded-xl border border-border bg-card">
         <DialogHeader>
-          <DialogTitle>New Purchase Order — {supplierName}</DialogTitle>
+          <DialogTitle className="text-foreground">
+            New Purchase Order — {supplierName}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 pt-2">
           {/* Repayment Due Time / Due Date Configuration */}
@@ -178,10 +205,10 @@ export function CreateSupplierPODialog({
                 Payment Terms Preset
               </label>
               <Select onValueChange={handlePaymentTermsChange}>
-                <SelectTrigger className="bg-background">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Select terms..." />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-lg">
                   <SelectItem value="0">Due Immediately (Net 0)</SelectItem>
                   <SelectItem value="7">7 Days (Net 7)</SelectItem>
                   <SelectItem value="15">15 Days (Net 15)</SelectItem>
@@ -198,7 +225,7 @@ export function CreateSupplierPODialog({
               </label>
               <Input
                 type="date"
-                className="bg-background"
+                className="bg-background border-border text-foreground rounded-lg"
                 {...form.register("dueDate")}
               />
               {form.formState.errors.dueDate && (
@@ -218,11 +245,12 @@ export function CreateSupplierPODialog({
                 type="button"
                 variant="outline"
                 size="sm"
+                className="rounded-lg border-border"
                 onClick={() =>
                   append({
                     variantId: availableVariants[0]?.id || "",
                     quantity: 1,
-                    unitCost: availableVariants[0]?.unitCost || 0,
+                    unitCost: availableVariants[0]?.unitCost || 0.01,
                   })
                 }>
                 <Plus className="w-4 h-4 mr-1.5" />
@@ -231,14 +259,14 @@ export function CreateSupplierPODialog({
             </div>
 
             {availableVariants.length === 0 ? (
-              <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm">
                 No product variants available. Please ensure products are configured in the supplier catalog or inventory.
               </div>
             ) : (
               fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-12 gap-3 items-end border p-3 rounded-lg relative bg-card">
+                  className="grid grid-cols-12 gap-3 items-end border border-border p-3 rounded-lg relative bg-card">
                   <div className="col-span-6">
                     <label className="text-xs font-medium text-muted-foreground mb-1 block">
                       Product Variant
@@ -253,15 +281,15 @@ export function CreateSupplierPODialog({
                         if (variant) {
                           form.setValue(
                             `items.${index}.unitCost`,
-                            variant.unitCost,
+                            variant.unitCost || 0.01,
                             { shouldValidate: true },
                           );
                         }
                       }}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-background border-border text-foreground rounded-lg">
                         <SelectValue placeholder="Select product" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="rounded-lg">
                         {availableVariants.map(variant => (
                           <SelectItem key={variant.id} value={variant.id}>
                             {variant.name}
@@ -283,6 +311,7 @@ export function CreateSupplierPODialog({
                     <Input
                       type="number"
                       min={1}
+                      className="bg-background border-border text-foreground rounded-lg"
                       {...form.register(`items.${index}.quantity`, {
                         valueAsNumber: true,
                       })}
@@ -302,6 +331,7 @@ export function CreateSupplierPODialog({
                       type="number"
                       step="0.01"
                       min={0.01}
+                      className="bg-background border-border text-foreground rounded-lg"
                       {...form.register(`items.${index}.unitCost`, {
                         valueAsNumber: true,
                       })}
@@ -318,7 +348,7 @@ export function CreateSupplierPODialog({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="text-red-500 hover:text-red-700 h-9 w-9 p-0"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 h-9 w-9 p-0 rounded-md"
                       onClick={() => remove(index)}
                       disabled={fields.length === 1}>
                       <Trash2 className="w-4 h-4" />
@@ -338,11 +368,13 @@ export function CreateSupplierPODialog({
             <Button
               type="button"
               variant="outline"
+              className="rounded-lg border-border"
               onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button
               type="submit"
+              className="rounded-lg"
               disabled={isPending || availableVariants.length === 0}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Create Purchase Order

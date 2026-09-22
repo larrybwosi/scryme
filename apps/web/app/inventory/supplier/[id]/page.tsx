@@ -56,7 +56,7 @@ export default async function SupplierDetailsPage({
   const resolvedParams = await params;
   const [supplier, inventoryProducts] = await Promise.all([
     getSupplierById(resolvedParams.id),
-    getInventoryProducts({ supplierId: resolvedParams.id }).catch(() => []),
+    getInventoryProducts({}).catch(() => []),
   ]);
 
   if (!supplier) {

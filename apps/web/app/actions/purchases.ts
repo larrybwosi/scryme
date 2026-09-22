@@ -147,7 +147,7 @@ export async function createPurchase(data: {
         supplierId: data.supplierId,
         purchaseNumber,
         totalAmount: totalAmount,
-        dueDate: data.dueDate,
+        dueDate: data.dueDate ? (isNaN(new Date(data.dueDate).getTime()) ? undefined : new Date(data.dueDate)) : undefined,
         status: "DRAFT",
         items: {
           create: data.items.map(item => ({
