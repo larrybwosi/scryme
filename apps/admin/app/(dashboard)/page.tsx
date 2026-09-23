@@ -2,10 +2,16 @@ import Link from "next/link"
 import { Building2, Users, UserCheck, ShieldOff, CreditCard, ArrowRight } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
 import { Badge } from "@repo/ui/components/ui/badge"
-import { getSystemStats } from "@/app/actions/dashboard"
+import { getSystemStats, getDashboardAnalytics } from "@/app/actions/dashboard"
+import { getSystemIntegrationSettings } from "@/app/actions/integrations"
+import { DashboardCharts } from "@/components/dashboard/dashboard-charts"
 
 export default async function OverviewPage() {
-  const stats = await getSystemStats()
+  const [stats, analytics, integrations] = await Promise.all([
+    getSystemStats(),
+    getDashboardAnalytics(),
+    getSystemIntegrationSettings(),
+  ])
 
   const cards = [
     { label: "Organizations", value: stats.totalOrganizations, icon: Building2 },
@@ -41,6 +47,15 @@ export default async function OverviewPage() {
         })}
       </div>
 
+      {/* Interactive Analytics Charts, Sources & Activity */}
+      <DashboardCharts
+        growthTrend={analytics.growthTrend}
+        acquisitionSources={analytics.acquisitionSources}
+        subscriptionTiers={analytics.subscriptionTiers}
+        recentAuditLogs={analytics.recentAuditLogs}
+        integrations={integrations}
+      />
+
       <Card className="border-border bg-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base font-semibold text-foreground">Recently created organizations</CardTitle>
@@ -63,7 +78,12 @@ export default async function OverviewPage() {
                 className="flex items-center justify-between py-3 text-sm transition-colors hover:bg-secondary/40"
               >
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-medium text-foreground">{org.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-foreground">{org.name}</span>
+                    <Badge variant="outline" className="text-[10px]">
+                      {org.acquisitionSource || "Direct / Organic"}
+                    </Badge>
+                  </div>
                   <span className="text-xs text-muted-foreground">{org._count.members} members</span>
                 </div>
                 {org.isSuspended ? (

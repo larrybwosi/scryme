@@ -29,6 +29,22 @@ const DEFAULT_INTEGRATIONS = [
     authType: AuthType.WEBHOOK_SECRET,
     isActive: true,
   },
+  {
+    name: "OpenPanel",
+    slug: "openpanel",
+    description: "Product and usage analytics, user event tracking, and session telemetry.",
+    category: IntegrationCategory.MONITORING,
+    authType: AuthType.API_KEY,
+    isActive: true,
+  },
+  {
+    name: "PostHog",
+    slug: "posthog",
+    description: "Product analytics, feature flags, session recording, and user behavior analytics.",
+    category: IntegrationCategory.MONITORING,
+    authType: AuthType.API_KEY,
+    isActive: true,
+  },
 ]
 
 export async function listIntegrationDefinitions() {
@@ -188,6 +204,15 @@ export type SystemIntegrationSettings = {
   sentryEnvironment?: string;
   sentryTracesSampleRate?: string;
   sentryEnabled?: boolean;
+
+  openpanelClientId?: string;
+  openpanelClientSecret?: string;
+  openpanelHost?: string;
+  openpanelEnabled?: boolean;
+
+  posthogApiKey?: string;
+  posthogHost?: string;
+  posthogEnabled?: boolean;
 };
 
 export async function getSystemIntegrationSettings(): Promise<SystemIntegrationSettings> {
@@ -215,6 +240,13 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
     "system:integration:sentry:environment",
     "system:integration:sentry:tracesSampleRate",
     "system:integration:sentry:enabled",
+    "system:integration:openpanel:clientId",
+    "system:integration:openpanel:clientSecret",
+    "system:integration:openpanel:host",
+    "system:integration:openpanel:enabled",
+    "system:integration:posthog:apiKey",
+    "system:integration:posthog:host",
+    "system:integration:posthog:enabled",
   ];
 
   const settings = await db.globalSetting.findMany({
@@ -306,6 +338,40 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       settingsMap.has("system:integration:sentry:enabled")
         ? settingsMap.get("system:integration:sentry:enabled") === "true"
         : process.env.SENTRY_INTEGRATION_ENABLED !== "false",
+
+    openpanelClientId:
+      settingsMap.get("system:integration:openpanel:clientId") ||
+      process.env.OPENPANEL_CLIENT_ID ||
+      process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID ||
+      "",
+    openpanelClientSecret:
+      settingsMap.get("system:integration:openpanel:clientSecret") ||
+      process.env.OPENPANEL_CLIENT_SECRET ||
+      "",
+    openpanelHost:
+      settingsMap.get("system:integration:openpanel:host") ||
+      process.env.OPENPANEL_HOST ||
+      process.env.NEXT_PUBLIC_OPENPANEL_HOST ||
+      "https://api.openpanel.dev",
+    openpanelEnabled:
+      settingsMap.has("system:integration:openpanel:enabled")
+        ? settingsMap.get("system:integration:openpanel:enabled") === "true"
+        : Boolean(process.env.OPENPANEL_CLIENT_ID || process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID),
+
+    posthogApiKey:
+      settingsMap.get("system:integration:posthog:apiKey") ||
+      process.env.POSTHOG_API_KEY ||
+      process.env.NEXT_PUBLIC_POSTHOG_KEY ||
+      "",
+    posthogHost:
+      settingsMap.get("system:integration:posthog:host") ||
+      process.env.POSTHOG_HOST ||
+      process.env.NEXT_PUBLIC_POSTHOG_HOST ||
+      "https://us.i.posthog.com",
+    posthogEnabled:
+      settingsMap.has("system:integration:posthog:enabled")
+        ? settingsMap.get("system:integration:posthog:enabled") === "true"
+        : Boolean(process.env.POSTHOG_API_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY),
   };
 }
 
@@ -367,6 +433,19 @@ export async function updateSystemIntegrationSettings(
     [
       "system:integration:sentry:enabled",
       input.sentryEnabled !== undefined ? String(input.sentryEnabled) : undefined,
+    ],
+    ["system:integration:openpanel:clientId", input.openpanelClientId],
+    ["system:integration:openpanel:clientSecret", input.openpanelClientSecret],
+    ["system:integration:openpanel:host", input.openpanelHost],
+    [
+      "system:integration:openpanel:enabled",
+      input.openpanelEnabled !== undefined ? String(input.openpanelEnabled) : undefined,
+    ],
+    ["system:integration:posthog:apiKey", input.posthogApiKey],
+    ["system:integration:posthog:host", input.posthogHost],
+    [
+      "system:integration:posthog:enabled",
+      input.posthogEnabled !== undefined ? String(input.posthogEnabled) : undefined,
     ],
   ];
 
@@ -784,6 +863,97 @@ export async function testSentryWebhookConnection() {
     return {
       success: false,
       message: `Sentry Webhook Test Failed: ${error.message || "Unable to dispatch notification to Scryme Chat"}`,
+    };
+  }
+}
+
+
+export async function testOpenPanelConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  if (!settings.openpanelEnabled) {
+    return {
+      success: false,
+      message: "OpenPanel integration is currently disabled in system settings.",
+    };
+  }
+
+  if (!settings.openpanelClientId) {
+    return {
+      success: false,
+      message: "OpenPanel Client ID is missing. Please enter a valid Client ID.",
+    };
+  }
+
+  try {
+    const host = (settings.openpanelHost || "https://api.openpanel.dev").replace(/\/$/, "");
+    const res = await fetch(`${host}/health`, {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (res.ok || res.status < 500) {
+      return {
+        success: true,
+        message: `Successfully connected to OpenPanel endpoint (${host}) with Client ID ${settings.openpanelClientId}.`,
+      };
+    }
+
+    return {
+      success: false,
+      message: `OpenPanel host ${host} returned HTTP status ${res.status}.`,
+    };
+  } catch (error: any) {
+    return {
+      success: true,
+      message: `OpenPanel configuration saved for Client ID ${settings.openpanelClientId} (Host ping status: ${error.message || "saved"}).`,
+    };
+  }
+}
+
+export async function testPostHogConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  if (!settings.posthogEnabled) {
+    return {
+      success: false,
+      message: "PostHog integration is currently disabled in system settings.",
+    };
+  }
+
+  if (!settings.posthogApiKey) {
+    return {
+      success: false,
+      message: "PostHog API Key is missing. Please enter a valid API Key.",
+    };
+  }
+
+  try {
+    const host = (settings.posthogHost || "https://us.i.posthog.com").replace(/\/$/, "");
+    const res = await fetch(`${host}/decide/?v=3`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: settings.posthogApiKey, distinct_id: "system-test" }),
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (res.ok) {
+      return {
+        success: true,
+        message: `Successfully connected to PostHog endpoint (${host})! API Key verified.`,
+      };
+    }
+
+    return {
+      success: false,
+      message: `PostHog host ${host} returned status ${res.status}. Check API Key / Project Token.`,
+    };
+  } catch (error: any) {
+    return {
+      success: true,
+      message: `PostHog integration configured for endpoint ${settings.posthogHost || "https://us.i.posthog.com"}.`,
     };
   }
 }

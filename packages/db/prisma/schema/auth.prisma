@@ -15,6 +15,7 @@ model User {
   banReason            String?
   banExpires           DateTime?
   username             String?
+  acquisitionSource    String?
   accounts             Account[]
   members              Member[]
   invitations          Invitation[]
