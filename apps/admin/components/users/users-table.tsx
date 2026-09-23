@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ShieldAlert, ShieldCheck, UserX, UserCheck, Search, MessageSquare, KeyRound } from "lucide-react"
+import { ShieldAlert, ShieldCheck, UserX, UserCheck, Search, MessageSquare, KeyRound, Share2 } from "lucide-react"
 import { Badge } from "@repo/ui/components/ui/badge"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
@@ -20,6 +20,7 @@ export interface UserRow {
   banned: boolean | null
   banReason: string | null
   banExpires: Date | null
+  acquisitionSource?: string | null
   createdAt: Date
   _count: {
     members: number
@@ -35,10 +36,12 @@ export function UsersTable({ users }: { users: UserRow[] }) {
 
   const filteredUsers = users.filter((u) => {
     const q = search.toLowerCase()
+    const source = u.acquisitionSource || "Direct / Organic"
     return (
       (u.name && u.name.toLowerCase().includes(q)) ||
       u.email.toLowerCase().includes(q) ||
-      (u.role && u.role.toLowerCase().includes(q))
+      (u.role && u.role.toLowerCase().includes(q)) ||
+      source.toLowerCase().includes(q)
     )
   })
 
@@ -48,7 +51,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" aria-hidden="true" />
           <Input
-            placeholder="Filter users by name or email..."
+            placeholder="Filter users by name, email, or acquisition source..."
             className="pl-9"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -63,6 +66,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
               <TableHead>User</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Acquisition Source</TableHead>
               <TableHead>Organizations</TableHead>
               <TableHead>Joined</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -71,7 +75,7 @@ export function UsersTable({ users }: { users: UserRow[] }) {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
                   No users found matching filter.
                 </TableCell>
               </TableRow>
@@ -114,6 +118,11 @@ export function UsersTable({ users }: { users: UserRow[] }) {
                           Inactive
                         </Badge>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {user.acquisitionSource || "Direct / Organic"}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {user._count.members} org{user._count.members === 1 ? "" : "s"}

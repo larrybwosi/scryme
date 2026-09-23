@@ -15,6 +15,7 @@ model Organization {
   email              String?
   phone              String?
   address            String?
+  acquisitionSource  String?
 
   // Platform admin controls
   isSuspended      Boolean   @default(false)

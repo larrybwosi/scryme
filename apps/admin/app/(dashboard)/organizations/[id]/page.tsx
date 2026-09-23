@@ -8,12 +8,14 @@ import {
   getEffectiveQuota,
   getOrganizationStorageUsage,
 } from "@/app/actions/organizations"
+import { getOrganizationActivityLogs, getOrganizationUsage } from "@/app/actions/dashboard"
 import { getOrganizationSubscription, listTiers } from "@/app/actions/billing"
 import { SuspensionControl } from "@/components/organizations/suspension-control"
 import { QuotaEditor } from "@/components/organizations/quota-editor"
 import { StorageControl } from "@/components/organizations/storage-control"
 import { SubscriptionEditor } from "@/components/organizations/subscription-editor"
 import { MembersTable } from "@/components/organizations/members-table"
+import { OrganizationActivityPanel } from "@/components/organizations/organization-activity-panel"
 
 export default async function OrganizationDetailPage({
   params,
@@ -25,12 +27,14 @@ export default async function OrganizationDetailPage({
   const org = await getOrganizationDetails(id).catch(() => null)
   if (!org) notFound()
 
-  const [members, quota, subscription, tiers, storage] = await Promise.all([
+  const [members, quota, subscription, tiers, storage, usage, activityLogs] = await Promise.all([
     getOrganizationMembers(id),
     getEffectiveQuota(id),
     getOrganizationSubscription(id),
     listTiers(),
     getOrganizationStorageUsage(id),
+    getOrganizationUsage(id),
+    getOrganizationActivityLogs(id, 15),
   ])
 
   return (
@@ -67,6 +71,12 @@ export default async function OrganizationDetailPage({
           />
         </div>
       </div>
+
+      <OrganizationActivityPanel
+        usage={usage}
+        activityLogs={activityLogs}
+        acquisitionSource={org.acquisitionSource}
+      />
 
       <StorageControl organizationId={org.id} storage={storage} />
 

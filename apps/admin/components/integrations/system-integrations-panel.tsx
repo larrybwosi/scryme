@@ -19,6 +19,8 @@ import {
   testHermesConnection,
   testScrymeChatConnection,
   testSentryWebhookConnection,
+  testOpenPanelConnection,
+  testPostHogConnection,
   type SystemIntegrationSettings,
 } from "@/app/actions/integrations"
 
@@ -64,6 +66,19 @@ export function SystemIntegrationsPanel({
   const [copiedSecret, setCopiedSecret] = useState(false)
   const [isTestingSentry, setIsTestingSentry] = useState(false)
 
+  // OpenPanel Settings
+  const [openpanelClientId, setOpenpanelClientId] = useState(settings.openpanelClientId ?? "")
+  const [openpanelClientSecret, setOpenpanelClientSecret] = useState(settings.openpanelClientSecret ?? "")
+  const [openpanelHost, setOpenpanelHost] = useState(settings.openpanelHost ?? "https://api.openpanel.dev")
+  const [openpanelEnabled, setOpenpanelEnabled] = useState(settings.openpanelEnabled ?? false)
+  const [isTestingOpenPanel, setIsTestingOpenPanel] = useState(false)
+
+  // PostHog Settings
+  const [posthogApiKey, setPosthogApiKey] = useState(settings.posthogApiKey ?? "")
+  const [posthogHost, setPosthogHost] = useState(settings.posthogHost ?? "https://us.i.posthog.com")
+  const [posthogEnabled, setPosthogEnabled] = useState(settings.posthogEnabled ?? false)
+  const [isTestingPostHog, setIsTestingPostHog] = useState(false)
+
   // Error Alerts in Scryme Chat & Sentry
   const [errorAlertsEnabled, setErrorAlertsEnabled] = useState(settings.errorAlertsEnabled ?? true)
   const [errorAlertsMinStatus, setErrorAlertsMinStatus] = useState(settings.errorAlertsMinStatus ?? 500)
@@ -98,6 +113,13 @@ export function SystemIntegrationsPanel({
     setSentryEnvironment(settings.sentryEnvironment ?? "production")
     setSentryTracesSampleRate(settings.sentryTracesSampleRate ?? "1.0")
     setSentryEnabled(settings.sentryEnabled ?? true)
+    setOpenpanelClientId(settings.openpanelClientId ?? "")
+    setOpenpanelClientSecret(settings.openpanelClientSecret ?? "")
+    setOpenpanelHost(settings.openpanelHost ?? "https://api.openpanel.dev")
+    setOpenpanelEnabled(settings.openpanelEnabled ?? false)
+    setPosthogApiKey(settings.posthogApiKey ?? "")
+    setPosthogHost(settings.posthogHost ?? "https://us.i.posthog.com")
+    setPosthogEnabled(settings.posthogEnabled ?? false)
   }, [settings])
 
   const loadAdminWorkspaceDetails = async () => {
@@ -205,6 +227,13 @@ export function SystemIntegrationsPanel({
       sentryEnvironment,
       sentryTracesSampleRate,
       sentryEnabled,
+      openpanelClientId,
+      openpanelClientSecret,
+      openpanelHost,
+      openpanelEnabled,
+      posthogApiKey,
+      posthogHost,
+      posthogEnabled,
     })
   }
 
@@ -221,6 +250,38 @@ export function SystemIntegrationsPanel({
       toast.error(error instanceof Error ? error.message : "Failed to test Sentry webhook connection")
     } finally {
       setIsTestingSentry(false)
+    }
+  }
+
+  async function handleTestOpenPanel() {
+    setIsTestingOpenPanel(true)
+    try {
+      const res = await testOpenPanelConnection()
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test OpenPanel connection")
+    } finally {
+      setIsTestingOpenPanel(false)
+    }
+  }
+
+  async function handleTestPostHog() {
+    setIsTestingPostHog(true)
+    try {
+      const res = await testPostHogConnection()
+      if (res.success) {
+        toast.success(res.message)
+      } else {
+        toast.error(res.message)
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to test PostHog connection")
+    } finally {
+      setIsTestingPostHog(false)
     }
   }
 
@@ -884,6 +945,151 @@ export function SystemIntegrationsPanel({
             />
             <Label htmlFor="sentry-enabled" className="cursor-pointer font-medium">
               Enable Sentry Integration &amp; Webhook Event Ingestion
+            </Label>
+          </div>
+        </CardContent>
+      </Card>
+
+
+      {/* OpenPanel Analytics Integration Card */}
+      <Card className="border-border bg-card">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="flex flex-col gap-1">
+            <CardTitle className="text-base font-semibold text-foreground">OpenPanel Product Analytics</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">
+              Configure OpenPanel analytics tracking for client applications, user events, and session telemetry.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={openpanelEnabled ? "secondary" : "outline"}
+              className={openpanelEnabled ? "bg-emerald-500/10 text-emerald-600" : ""}
+            >
+              {openpanelEnabled ? "Active" : "Disabled"}
+            </Badge>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleTestOpenPanel}
+              disabled={isTestingOpenPanel || !openpanelEnabled}
+              className="gap-2"
+            >
+              {isTestingOpenPanel ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+              Test Connection
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="openpanel-client-id">OpenPanel Client ID</Label>
+              <Input
+                id="openpanel-client-id"
+                type="text"
+                value={openpanelClientId}
+                onChange={(e) => setOpenpanelClientId(e.target.value)}
+                placeholder="op_client_..."
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="openpanel-client-secret">OpenPanel Client Secret</Label>
+              <Input
+                id="openpanel-client-secret"
+                type="password"
+                value={openpanelClientSecret}
+                onChange={(e) => setOpenpanelClientSecret(e.target.value)}
+                placeholder="op_secret_..."
+              />
+            </div>
+            <div className="flex flex-col gap-2 sm:col-span-2">
+              <Label htmlFor="openpanel-host">OpenPanel API Host URL</Label>
+              <Input
+                id="openpanel-host"
+                type="text"
+                value={openpanelHost}
+                onChange={(e) => setOpenpanelHost(e.target.value)}
+                placeholder="https://api.openpanel.dev"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="checkbox"
+              id="openpanel-enabled"
+              checked={openpanelEnabled}
+              onChange={(e) => setOpenpanelEnabled(e.target.checked)}
+              className="size-4 rounded border-input bg-background text-primary focus:ring-ring"
+            />
+            <Label htmlFor="openpanel-enabled" className="cursor-pointer font-medium">
+              Enable OpenPanel Analytics Event Collection
+            </Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* PostHog Product Analytics Integration Card */}
+      <Card className="border-border bg-card">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <div className="flex flex-col gap-1">
+            <CardTitle className="text-base font-semibold text-foreground">PostHog Analytics & Feature Flags</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground">
+              Configure PostHog product analytics, feature flags, and session recording for web and desktop applications.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={posthogEnabled ? "secondary" : "outline"}
+              className={posthogEnabled ? "bg-emerald-500/10 text-emerald-600" : ""}
+            >
+              {posthogEnabled ? "Active" : "Disabled"}
+            </Badge>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleTestPostHog}
+              disabled={isTestingPostHog || !posthogEnabled}
+              className="gap-2"
+            >
+              {isTestingPostHog ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+              Test Connection
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="posthog-api-key">PostHog API Key / Project Token</Label>
+              <Input
+                id="posthog-api-key"
+                type="text"
+                value={posthogApiKey}
+                onChange={(e) => setPosthogApiKey(e.target.value)}
+                placeholder="phc_..."
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="posthog-host">PostHog API Host URL</Label>
+              <Input
+                id="posthog-host"
+                type="text"
+                value={posthogHost}
+                onChange={(e) => setPosthogHost(e.target.value)}
+                placeholder="https://us.i.posthog.com or https://eu.i.posthog.com"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <input
+              type="checkbox"
+              id="posthog-enabled"
+              checked={posthogEnabled}
+              onChange={(e) => setPosthogEnabled(e.target.checked)}
+              className="size-4 rounded border-input bg-background text-primary focus:ring-ring"
+            />
+            <Label htmlFor="posthog-enabled" className="cursor-pointer font-medium">
+              Enable PostHog Product Analytics &amp; Feature Flags
             </Label>
           </div>
         </CardContent>

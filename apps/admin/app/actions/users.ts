@@ -18,6 +18,7 @@ export async function listUsers() {
       banned: true,
       banReason: true,
       banExpires: true,
+      acquisitionSource: true,
       createdAt: true,
       updatedAt: true,
       _count: {

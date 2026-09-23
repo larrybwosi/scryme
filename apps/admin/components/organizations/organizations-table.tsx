@@ -19,6 +19,7 @@ interface OrganizationRow {
   name: string
   slug: string
   isSuspended: boolean
+  acquisitionSource?: string | null
   createdAt: Date
   _count: { members: number; products: number }
 }
@@ -30,7 +31,10 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
     const q = query.trim().toLowerCase()
     if (!q) return organizations
     return organizations.filter(
-      (org) => org.name.toLowerCase().includes(q) || org.slug.toLowerCase().includes(q),
+      (org) =>
+        org.name.toLowerCase().includes(q) ||
+        org.slug.toLowerCase().includes(q) ||
+        (org.acquisitionSource || "Direct / Organic").toLowerCase().includes(q),
     )
   }, [organizations, query])
 
@@ -41,7 +45,7 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search organizations..."
+          placeholder="Search organizations or acquisition source..."
           className="pl-9"
           aria-label="Search organizations"
         />
@@ -52,6 +56,7 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Acquisition Source</TableHead>
               <TableHead>Members</TableHead>
               <TableHead>Products</TableHead>
               <TableHead>Status</TableHead>
@@ -62,7 +67,7 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
                   No organizations found.
                 </TableCell>
               </TableRow>
@@ -74,6 +79,11 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
                       <span className="font-medium text-foreground group-hover:underline">{org.name}</span>
                       <span className="text-xs text-muted-foreground">{org.slug}</span>
                     </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="text-xs">
+                      {org.acquisitionSource || "Direct / Organic"}
+                    </Badge>
                   </TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">{org._count.members}</TableCell>
                   <TableCell className="tabular-nums text-muted-foreground">{org._count.products}</TableCell>
