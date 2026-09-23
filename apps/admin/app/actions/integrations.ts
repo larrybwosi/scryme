@@ -22,6 +22,14 @@ const DEFAULT_INTEGRATIONS = [
     isActive: true,
   },
   {
+    name: "Resend Email",
+    slug: "resend",
+    description: "Transactional and marketing email delivery service with domain authentication and event webhooks.",
+    category: IntegrationCategory.COMMUNICATION,
+    authType: AuthType.API_KEY,
+    isActive: true,
+  },
+  {
     name: "Sentry",
     slug: "sentry",
     description: "Application error tracking, exception performance monitoring, and webhook event processing.",
@@ -45,7 +53,7 @@ const DEFAULT_INTEGRATIONS = [
     authType: AuthType.API_KEY,
     isActive: true,
   },
-]
+];
 
 export async function listIntegrationDefinitions() {
   await requireSuperAdmin();
@@ -66,6 +74,47 @@ export async function listIntegrationDefinitions() {
   }
 
   return definitions.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function getIntegrationBySlug(slug: string) {
+  await requireSuperAdmin();
+
+  let definition = await db.integrationDefinition.findUnique({
+    where: { slug },
+  });
+
+  if (!definition) {
+    const defaultDef = DEFAULT_INTEGRATIONS.find((d) => d.slug === slug);
+    if (defaultDef) {
+      definition = await db.integrationDefinition.create({
+        data: defaultDef,
+      });
+    } else {
+      throw new Error(`Integration with slug "${slug}" not found`);
+    }
+  }
+
+  const [activeConnections, systemSettings] = await Promise.all([
+    db.organizationIntegration.findMany({
+      where: {
+        integrationDefinitionId: definition.id,
+        isActive: true,
+      },
+      include: {
+        organization: {
+          select: { id: true, name: true, slug: true },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+    }),
+    getSystemIntegrationSettings(),
+  ]);
+
+  return {
+    definition,
+    activeConnections,
+    systemSettings,
+  };
 }
 
 export async function createIntegrationDefinition(input: {
@@ -144,6 +193,9 @@ export async function updateIntegrationDefinition(
   });
 
   revalidatePath("/integrations");
+  if (input.slug) {
+    revalidatePath(`/integrations/${input.slug}`);
+  }
   return updated;
 }
 
@@ -189,6 +241,15 @@ export type SystemIntegrationSettings = {
   hermesModel?: string;
   hermesEnabled?: boolean;
 
+  resendApiKey?: string;
+  resendFromEmail?: string;
+  resendDomain?: string;
+  resendRegion?: string;
+  resendOpenTracking?: boolean;
+  resendClickTracking?: boolean;
+  resendTrackingSubdomain?: string;
+  resendEnabled?: boolean;
+
   adminWorkspaceSlug?: string;
   adminWorkspaceName?: string;
   adminChannelSlug?: string;
@@ -226,6 +287,14 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
     "system:integration:hermes:baseUrl",
     "system:integration:hermes:model",
     "system:integration:hermes:enabled",
+    "system:integration:resend:apiKey",
+    "system:integration:resend:fromEmail",
+    "system:integration:resend:domain",
+    "system:integration:resend:region",
+    "system:integration:resend:openTracking",
+    "system:integration:resend:clickTracking",
+    "system:integration:resend:trackingSubdomain",
+    "system:integration:resend:enabled",
     "system:admin:chat:workspaceSlug",
     "system:admin:chat:workspaceName",
     "system:admin:chat:channelSlug",
@@ -285,6 +354,36 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       settingsMap.has("system:integration:hermes:enabled")
         ? settingsMap.get("system:integration:hermes:enabled") === "true"
         : process.env.HERMES_ENABLED === "true",
+
+    resendApiKey:
+      settingsMap.get("system:integration:resend:apiKey") ||
+      process.env.RESEND_API_KEY ||
+      "",
+    resendFromEmail:
+      settingsMap.get("system:integration:resend:fromEmail") ||
+      process.env.EMAIL_FROM ||
+      "Scryme <no-reply@scryme.tech>",
+    resendDomain:
+      settingsMap.get("system:integration:resend:domain") ||
+      "scryme.tech",
+    resendRegion:
+      settingsMap.get("system:integration:resend:region") ||
+      "us-east-1",
+    resendOpenTracking:
+      settingsMap.has("system:integration:resend:openTracking")
+        ? settingsMap.get("system:integration:resend:openTracking") === "true"
+        : true,
+    resendClickTracking:
+      settingsMap.has("system:integration:resend:clickTracking")
+        ? settingsMap.get("system:integration:resend:clickTracking") === "true"
+        : true,
+    resendTrackingSubdomain:
+      settingsMap.get("system:integration:resend:trackingSubdomain") ||
+      "links",
+    resendEnabled:
+      settingsMap.has("system:integration:resend:enabled")
+        ? settingsMap.get("system:integration:resend:enabled") === "true"
+        : Boolean(process.env.RESEND_API_KEY),
 
     adminWorkspaceSlug:
       settingsMap.get("system:admin:chat:workspaceSlug") || "system-admins",
@@ -391,6 +490,23 @@ export async function updateSystemIntegrationSettings(
       "system:integration:hermes:enabled",
       input.hermesEnabled !== undefined ? String(input.hermesEnabled) : undefined,
     ],
+    ["system:integration:resend:apiKey", input.resendApiKey],
+    ["system:integration:resend:fromEmail", input.resendFromEmail],
+    ["system:integration:resend:domain", input.resendDomain],
+    ["system:integration:resend:region", input.resendRegion],
+    [
+      "system:integration:resend:openTracking",
+      input.resendOpenTracking !== undefined ? String(input.resendOpenTracking) : undefined,
+    ],
+    [
+      "system:integration:resend:clickTracking",
+      input.resendClickTracking !== undefined ? String(input.resendClickTracking) : undefined,
+    ],
+    ["system:integration:resend:trackingSubdomain", input.resendTrackingSubdomain],
+    [
+      "system:integration:resend:enabled",
+      input.resendEnabled !== undefined ? String(input.resendEnabled) : undefined,
+    ],
     ["system:admin:chat:workspaceSlug", input.adminWorkspaceSlug],
     ["system:admin:chat:workspaceName", input.adminWorkspaceName],
     ["system:admin:chat:channelSlug", input.adminChannelSlug],
@@ -402,34 +518,13 @@ export async function updateSystemIntegrationSettings(
       "system:error:alerts:minStatus",
       input.errorAlertsMinStatus !== undefined ? String(input.errorAlertsMinStatus) : undefined,
     ],
-    [
-      "system:integration:sentry:dsn",
-      input.sentryDsn,
-    ],
-    [
-      "system:integration:sentry:org",
-      input.sentryOrg,
-    ],
-    [
-      "system:integration:sentry:project",
-      input.sentryProject,
-    ],
-    [
-      "system:integration:sentry:authToken",
-      input.sentryAuthToken,
-    ],
-    [
-      "system:integration:sentry:webhookSecret",
-      input.sentryWebhookSecret,
-    ],
-    [
-      "system:integration:sentry:environment",
-      input.sentryEnvironment,
-    ],
-    [
-      "system:integration:sentry:tracesSampleRate",
-      input.sentryTracesSampleRate,
-    ],
+    ["system:integration:sentry:dsn", input.sentryDsn],
+    ["system:integration:sentry:org", input.sentryOrg],
+    ["system:integration:sentry:project", input.sentryProject],
+    ["system:integration:sentry:authToken", input.sentryAuthToken],
+    ["system:integration:sentry:webhookSecret", input.sentryWebhookSecret],
+    ["system:integration:sentry:environment", input.sentryEnvironment],
+    ["system:integration:sentry:tracesSampleRate", input.sentryTracesSampleRate],
     [
       "system:integration:sentry:enabled",
       input.sentryEnabled !== undefined ? String(input.sentryEnabled) : undefined,
@@ -461,6 +556,62 @@ export async function updateSystemIntegrationSettings(
 
   revalidatePath("/integrations");
   return { success: true };
+}
+
+export async function testResendConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  if (!settings.resendEnabled) {
+    return {
+      success: false,
+      message: "Resend integration is currently disabled in system settings.",
+    };
+  }
+
+  if (!settings.resendApiKey) {
+    return {
+      success: false,
+      message: "Resend API Key is missing. Please enter a valid API Key.",
+    };
+  }
+
+  try {
+    const res = await fetch("https://api.resend.com/domains", {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${settings.resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal: AbortSignal.timeout(5000),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const domainCount = data?.data?.length ?? 0;
+      return {
+        success: true,
+        message: `Successfully connected to Resend API! Found ${domainCount} configured domain(s).`,
+      };
+    }
+
+    if (res.status === 401) {
+      return {
+        success: false,
+        message: "Resend API key authentication failed. Please check your API key.",
+      };
+    }
+
+    return {
+      success: false,
+      message: `Resend API returned status ${res.status}.`,
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: `Failed to connect to Resend API: ${error.message || "Endpoint unreachable"}`,
+    };
+  }
 }
 
 export async function testHermesConnection() {
@@ -718,6 +869,14 @@ export async function testOrganizationIntegrationConnection(id: string) {
     testResult = await testScrymeChatConnection();
   } else if (slug === "hermes-agent") {
     testResult = await testHermesConnection();
+  } else if (slug === "resend") {
+    testResult = await testResendConnection();
+  } else if (slug === "sentry") {
+    testResult = await testSentryWebhookConnection();
+  } else if (slug === "openpanel") {
+    testResult = await testOpenPanelConnection();
+  } else if (slug === "posthog") {
+    testResult = await testPostHogConnection();
   } else {
     testResult = {
       success: true,
@@ -736,6 +895,29 @@ export async function testOrganizationIntegrationConnection(id: string) {
 
   revalidatePath("/integrations");
   return testResult;
+}
+
+export async function testIntegrationConnectionBySlug(slug: string) {
+  await requireSuperAdmin();
+
+  if (slug === "scryme-chat") {
+    return testScrymeChatConnection();
+  } else if (slug === "hermes-agent") {
+    return testHermesConnection();
+  } else if (slug === "resend") {
+    return testResendConnection();
+  } else if (slug === "sentry") {
+    return testSentryWebhookConnection();
+  } else if (slug === "openpanel") {
+    return testOpenPanelConnection();
+  } else if (slug === "posthog") {
+    return testPostHogConnection();
+  }
+
+  return {
+    success: true,
+    message: `Connection test completed for integration "${slug}".`,
+  };
 }
 
 export async function provisionAdminChatWorkspace(input: {
@@ -822,7 +1004,6 @@ export async function provisionAdminChatWorkspace(input: {
   }
 }
 
-
 export async function testSentryWebhookConnection() {
   await requireSuperAdmin();
 
@@ -866,7 +1047,6 @@ export async function testSentryWebhookConnection() {
     };
   }
 }
-
 
 export async function testOpenPanelConnection() {
   await requireSuperAdmin();
