@@ -9,3 +9,7 @@
 ## 2026-09-21 - Relational ID Validation in Location Server Actions
 **Learning:** In server actions creating or updating nested hierarchy structures (locations, zones, units), validating only the target record's tenant ownership is insufficient. Relational input fields (`parentLocationId`, `managerId`, `locationId`, `zoneId`) can be exploited in BOLA/IDOR attacks to cross-associate resources with foreign organizations.
 **Action:** Explicitly validate all input foreign key IDs using `findFirst` scoped by `organizationId` before executing database mutations.
+
+## 2026-09-23 - Address Update Scoping in Customer Address Management
+**Learning:** In models lacking a composite unique index on `[id, customerId]` (such as `Address`), using Prisma's `update({ where: { id } })` ignores non-unique fields in `where` clauses, creating potential BOLA/IDOR vulnerability risks where addresses could be updated across customer boundaries if an ID was manipulated.
+**Action:** Use `updateMany({ where: { id: addressId, customerId }, data })` followed by `findFirstOrThrow({ where: { id: addressId, customerId } })` to strictly enforce tenant/owner database-level isolation.

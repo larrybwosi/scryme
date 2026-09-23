@@ -49,9 +49,14 @@ export class ManageAddressesUseCase {
     });
 
     if (existingAddress) {
-      return this.prisma.client.address.update({
-        where: { id: existingAddress.id },
+      // 🛡️ Sentinel: BOLA/IDOR Security Hardening - Address model lacks a composite unique constraint
+      // on [id, customerId]. Using updateMany with explicit customerId filter prevents cross-customer address modification.
+      await this.prisma.client.address.updateMany({
+        where: { id: existingAddress.id, customerId },
         data: addressData,
+      });
+      return this.prisma.client.address.findFirstOrThrow({
+        where: { id: existingAddress.id, customerId },
       });
     } else {
       return this.prisma.client.address.create({
