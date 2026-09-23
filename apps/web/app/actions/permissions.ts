@@ -52,6 +52,38 @@ export async function requestPermissionsAction(data: {
 **Requested Resource**: ${data.requestedPage || "General Pages"}
 **Reason / Explanation**: "${data.reason || "No explanation provided"}"`;
 
+  // Interactive actions so admins can approve or reject the permission request directly
+  const actions: ScrymeChatAction[] = [
+    {
+      id: `approve_perm:ADMIN:${auth.memberId}`,
+      label: "Approve (Grant Admin)",
+      type: "button",
+      style: "primary",
+      value: "ADMIN",
+    },
+    {
+      id: `approve_perm:MANAGER:${auth.memberId}`,
+      label: "Approve (Grant Manager)",
+      type: "button",
+      style: "secondary",
+      value: "MANAGER",
+    },
+    {
+      id: `decline_perm:${auth.memberId}`,
+      label: "Decline",
+      type: "button",
+      style: "danger",
+      value: "DECLINED",
+    },
+    {
+      id: `grant_${auth.memberId}`,
+      label: "Review Member Settings",
+      type: "button",
+      style: "primary",
+      value: `/staff/${auth.memberId}`,
+    },
+  ];
+
   // Send Scryme Chat message
   if (config && config.workspaceSlug) {
     const clientId = process.env.SCRYME_CHAT_CLIENT_ID;
@@ -69,6 +101,7 @@ export async function requestPermissionsAction(data: {
           content,
           senderId: auth.memberId,
           eventType: "PERMISSION_REQUEST",
+          metadata: { actions } as any,
         },
       });
 
@@ -92,37 +125,6 @@ export async function requestPermissionsAction(data: {
       } catch (err) {
         // Ignore conflicts if channel already exists
       }
-
-      const actions: ScrymeChatAction[] = [
-        {
-          id: `approve_perm:ADMIN:${auth.memberId}`,
-          label: "Approve (Grant Admin)",
-          type: "button",
-          style: "primary",
-          value: "ADMIN",
-        },
-        {
-          id: `approve_perm:MANAGER:${auth.memberId}`,
-          label: "Approve (Grant Manager)",
-          type: "button",
-          style: "secondary",
-          value: "MANAGER",
-        },
-        {
-          id: `decline_perm:${auth.memberId}`,
-          label: "Decline",
-          type: "button",
-          style: "danger",
-          value: "DECLINED",
-        },
-        {
-          id: `grant_${auth.memberId}`,
-          label: "Review Member Settings",
-          type: "button",
-          style: "primary",
-          value: `/staff/${auth.memberId}`,
-        },
-      ];
 
       const response = await scrymeClient.sendMessage(
         config.workspaceSlug,
@@ -153,6 +155,7 @@ export async function requestPermissionsAction(data: {
           content,
           senderId: auth.memberId,
           eventType: "PERMISSION_REQUEST",
+          metadata: { actions } as any,
         },
       });
 
