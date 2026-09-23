@@ -51,8 +51,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // leaking sensitive data (secrets, PII) in server logs or OpenObserve.
     const redactedException = redactSensitiveData(exception);
 
-    // Only log to console.error if status is 5xx (Internal Server Error or above)
-    if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
+    // Log to console.error for 400s (Bad Request and above) as well as 500s
+    if (status >= HttpStatus.BAD_REQUEST) {
       console.error("Unhandled Exception:", redactedException);
     }
 
