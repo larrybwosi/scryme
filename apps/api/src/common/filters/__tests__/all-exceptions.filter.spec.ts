@@ -57,13 +57,13 @@ describe("AllExceptionsFilter", () => {
     return { host, responseMock };
   }
 
-  it("should not log NotFoundException (404) on console.error", () => {
+  it("should log NotFoundException (404) on console.error", () => {
     const { host, responseMock } = createMockArgumentsHost();
     const exception = new NotFoundException("Cannot GET /wp-includes");
 
     filter.catch(exception, host);
 
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalled();
     expect(responseMock.status).toHaveBeenCalledWith(404);
     expect(responseMock.send).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -76,13 +76,13 @@ describe("AllExceptionsFilter", () => {
     );
   });
 
-  it("should not log BadRequestException (400) on console.error", () => {
+  it("should log BadRequestException (400) on console.error", () => {
     const { host, responseMock } = createMockArgumentsHost();
     const exception = new BadRequestException("Validation failed");
 
     filter.catch(exception, host);
 
-    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalled();
     expect(responseMock.status).toHaveBeenCalledWith(400);
     expect(notifySystemAdminsOfError).toHaveBeenCalledWith(
       expect.objectContaining({
