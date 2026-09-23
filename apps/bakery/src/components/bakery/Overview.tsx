@@ -121,7 +121,7 @@ export default function Overview({
 }: {
   setActiveTab: (tab: string) => void;
 }) {
-  const { data, isLoading, error } = useBakeryData();
+  const { data, isLoading, error, refetch } = useBakeryData();
   const formatCurrency = useFormattedCurrency();
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [walkthroughStep, setWalkthroughStep] = useState(0);
@@ -164,7 +164,7 @@ export default function Overview({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => window.location.reload()}
+          onClick={() => refetch()}
           className="text-xs font-medium mt-1"
         >
           Retry

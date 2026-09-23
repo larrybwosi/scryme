@@ -685,9 +685,15 @@ pub async fn login_cloud_command(
 
     let restored_session = restored_val.and_then(|r| r.as_bool()).unwrap_or(false);
 
+    let org_slug_val = {
+        let config_guard = state.device_config.lock().map_err(|_| BackendError::Internal("Lock error".to_string()))?;
+        config_guard.as_ref().map(|c| c.org_slug.clone()).unwrap_or_default()
+    };
+
     let data = serde_json::json!({
         "token": token,
         "member": member,
+        "orgSlug": org_slug_val,
         "restoredSession": restored_session,
     });
 

@@ -36,6 +36,14 @@ const formatApiPath = (url: string): string => {
   if (url.startsWith('/api/')) return url;
 
   const orgSlug = getOrgSlug();
+  if (
+    url.startsWith('/pos/') ||
+    url.startsWith('/catalog/') ||
+    url.startsWith('/inventory/') ||
+    url.startsWith('/devices/')
+  ) {
+    return `/api/v3/${orgSlug}${url}`;
+  }
   return `/api/v3/${orgSlug}/production${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
@@ -173,7 +181,7 @@ export const bakery = {
   getAuthStatus: () => client.get('/auth/status'),
   sso: () => client.post('/auth/sso'),
   logout: () => client.post('/auth/logout'),
-  getMe: () => client.get('/devices/me'),
+  getMe: () => client.get(API_ROUTES.DEVICES.ME()),
 };
 
 const catalog = {
@@ -244,6 +252,9 @@ if (typeof window !== 'undefined') {
   if (!isOfflineMode()) {
     invoke<any>('get_device_config')
       .then((config) => {
+        if (config?.orgSlug) {
+          localStorage.setItem('bakery_org_slug', config.orgSlug);
+        }
         if (config?.deviceKey) {
           setApiKey(config.deviceKey);
         } else {

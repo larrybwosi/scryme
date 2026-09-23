@@ -1,8 +1,8 @@
 import { getApiEndpoint } from '@/lib/api-config';
 
 export const getOrgSlug = (): string => {
-  if (typeof window === 'undefined') return 'default-org';
-  return localStorage.getItem('bakery_org_slug') || 'default-org';
+  if (typeof window === 'undefined') return ':orgSlug';
+  return localStorage.getItem('bakery_org_slug') || ':orgSlug';
 };
 
 export const API_ROUTES = {
