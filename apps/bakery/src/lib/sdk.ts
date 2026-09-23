@@ -35,16 +35,26 @@ const formatApiPath = (url: string): string => {
   if (!url || url.startsWith('http://') || url.startsWith('https://')) return url;
   if (url.startsWith('/api/')) return url;
 
+  let normalizedUrl = url;
+  if (normalizedUrl === '/bakery/partners') {
+    normalizedUrl = '/deliveries/partners';
+  } else if (normalizedUrl.startsWith('/bakery/deliveries/')) {
+    normalizedUrl = normalizedUrl.replace('/bakery/deliveries/', '/deliveries/');
+  }
+
   const orgSlug = getOrgSlug();
   if (
-    url.startsWith('/pos/') ||
-    url.startsWith('/catalog/') ||
-    url.startsWith('/inventory/') ||
-    url.startsWith('/devices/')
+    normalizedUrl.startsWith('/pos/') ||
+    normalizedUrl.startsWith('/catalog/') ||
+    normalizedUrl.startsWith('/inventory/') ||
+    normalizedUrl.startsWith('/devices/') ||
+    normalizedUrl.startsWith('/members/') ||
+    normalizedUrl.startsWith('/units/') ||
+    normalizedUrl.startsWith('/deliveries/')
   ) {
-    return `/api/v3/${orgSlug}${url}`;
+    return `/api/v3/${orgSlug}${normalizedUrl.startsWith('/') ? '' : '/'}${normalizedUrl}`;
   }
-  return `/api/v3/${orgSlug}/production${url.startsWith('/') ? '' : '/'}${url}`;
+  return `/api/v3/${orgSlug}/production${normalizedUrl.startsWith('/') ? '' : '/'}${normalizedUrl}`;
 };
 
 const unwrapResponse = (data: any) => {
