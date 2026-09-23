@@ -288,9 +288,23 @@ export async function createTransaction(data: {
     throw new Error("Either customerId or businessAccountId must be provided");
   }
 
-  const count = await db.transaction.count({
-    where: { organizationId: auth.organizationId },
-  });
+  // Bolt Optimization: Extract unique variant IDs to batch fetch product variants alongside count and settings
+  const variantIds = Array.from(new Set(data.items.map(item => item.variantId)));
+
+  // Bolt Optimization: Parallelize independent database queries (count, orgSettings, productVariants)
+  const [count, orgSettings, variants] = await Promise.all([
+    db.transaction.count({
+      where: { organizationId: auth.organizationId },
+    }),
+    db.organizationSettings.findUnique({
+      where: { organizationId: auth.organizationId },
+    }),
+    db.productVariant.findMany({
+      where: { id: { in: variantIds } },
+      include: { product: true },
+    }),
+  ]);
+
   const number = `TRX-${new Date().getFullYear()}-${(count + 1).toString().padStart(5, "0")}`;
 
   const subtotal = data.items.reduce(
@@ -306,10 +320,12 @@ export async function createTransaction(data: {
     new Decimal(0),
   );
   const finalTotal = subtotal.plus(taxTotal).minus(discountTotal);
-  const orgSettings = await db.organizationSettings.findUnique({
-    where: { organizationId: auth.organizationId },
-  });
 
+  // Index pre-fetched product variants for O(1) snapshot resolution
+  const variantMap = new Map(variants.map(v => [v.id, v]));
+
+  // Bolt Optimization: Snapshot product and variant metadata directly in the create payload,
+  // reducing database roundtrips from O(1 + 2N) sequential queries down to a single concurrent batch + insert (O(1)).
   const transaction = await db.transaction.create({
     data: {
       organizationId: auth.organizationId,
@@ -329,45 +345,30 @@ export async function createTransaction(data: {
       paymentStatus: "UNPAID",
       notes: data.notes,
       items: {
-        create: data.items.map(item => ({
-          variantId: item.variantId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          listPrice: item.unitPrice,
-          unitCost: item.unitCost,
-          taxAmount: item.taxAmount || 0,
-          discountAmount: item.discountAmount || 0,
-          subtotal: new Decimal(item.unitPrice).mul(item.quantity),
-          lineTotal: new Decimal(item.unitPrice)
-            .mul(item.quantity)
-            .plus(item.taxAmount || 0)
-            .minus(item.discountAmount || 0),
-          productName: "", // These should be fetched or snapshotted properly
-          variantName: "",
-          sku: "",
-          notes: item.notes,
-        })),
+        create: data.items.map(item => {
+          const variant = variantMap.get(item.variantId);
+          return {
+            variantId: item.variantId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            listPrice: item.unitPrice,
+            unitCost: item.unitCost,
+            taxAmount: item.taxAmount || 0,
+            discountAmount: item.discountAmount || 0,
+            subtotal: new Decimal(item.unitPrice).mul(item.quantity),
+            lineTotal: new Decimal(item.unitPrice)
+              .mul(item.quantity)
+              .plus(item.taxAmount || 0)
+              .minus(item.discountAmount || 0),
+            productName: variant?.product.name || "",
+            variantName: variant?.name || "Default",
+            sku: variant?.sku || "",
+            notes: item.notes,
+          };
+        }),
       },
     },
   });
-
-  // Snapshot item details (simplified for now, ideally done in the create or a service)
-  for (const item of data.items) {
-    const variant = await db.productVariant.findUnique({
-      where: { id: item.variantId },
-      include: { product: true },
-    });
-    if (variant) {
-      await db.transactionItem.updateMany({
-        where: { transactionId: transaction.id, variantId: item.variantId },
-        data: {
-          productName: variant.product.name,
-          variantName: variant.name || "Default",
-          sku: variant.sku,
-        },
-      });
-    }
-  }
 
   revalidatePath("/sales/transactions");
   return transaction;
