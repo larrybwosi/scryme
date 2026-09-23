@@ -1,6 +1,6 @@
 [package]
 name = "scryme-sdk"
-version = "10.1.27"
+version = "10.1.28"
 authors = ["OpenAPI Generator team and contributors"]
 description = "The Scryme V3 API documentation - Scalable & Enterprise Ready"
 # Override this license by providing a License Object in the OpenAPI.
