@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Pencil, Trash2, Plug, Loader2, Play } from "lucide-react"
+import Link from "next/link"
+import Image from "next/image"
+import { Plus, Pencil, Trash2, Plug, Loader2, Play, Settings } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
@@ -22,14 +24,12 @@ import {
 } from "@repo/ui/components/ui/alert-dialog"
 import {
   deleteIntegrationDefinition,
-  testScrymeChatConnection,
-  testHermesConnection,
+  testIntegrationConnectionBySlug,
 } from "@/app/actions/integrations"
 import {
   IntegrationDefinitionDialog,
   type IntegrationDefinitionRow,
 } from "./integration-definition-dialog"
-import Image from "next/image"
 
 export function IntegrationsList({
   integrations,
@@ -57,18 +57,10 @@ export function IntegrationsList({
     },
   })
 
-  async function handleTestDefinition(slug: string, name: string) {
+  async function handleTestDefinition(slug: string) {
     setTestingSlug(slug)
     try {
-      let res: { success: boolean; message: string }
-      if (slug === "scryme-chat") {
-        res = await testScrymeChatConnection()
-      } else if (slug === "hermes-agent") {
-        res = await testHermesConnection()
-      } else {
-        res = { success: true, message: `Tested connection definition for ${name}.` }
-      }
-
+      const res = await testIntegrationConnectionBySlug(slug)
       if (res.success) {
         toast.success(res.message)
       } else {
@@ -114,8 +106,8 @@ export function IntegrationsList({
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {integrations.map((item) => (
-            <Card key={item.id} className="flex flex-col border-border bg-card">
-              <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <Card key={item.id} className="flex flex-col border-border bg-card transition-all hover:border-primary/40">
+              <CardHeader className="flex flex-row items-start justify-between gap-3 pb-3">
                 <div className="flex items-center gap-3">
                   {item.logoUrl ? (
                     <Image src={item.logoUrl} alt={item.name} width={24} height={24} className="size-9 rounded border object-contain p-1" />
@@ -125,7 +117,9 @@ export function IntegrationsList({
                     </div>
                   )}
                   <div>
-                    <CardTitle className="text-base font-semibold text-foreground">{item.name}</CardTitle>
+                    <Link href={`/integrations/${item.slug}`} className="hover:underline">
+                      <CardTitle className="text-base font-semibold text-foreground">{item.name}</CardTitle>
+                    </Link>
                     <span className="font-mono text-xs text-muted-foreground">{item.slug}</span>
                   </div>
                 </div>
@@ -149,36 +143,49 @@ export function IntegrationsList({
                   </Badge>
                 </div>
                 {item.description ? (
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                 ) : null}
-                <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                <div className="mt-auto flex items-center justify-between gap-2 pt-3 border-t border-border/60">
                   <Button
-                    variant="outline"
+                    variant="default"
                     size="sm"
                     className="gap-1.5 text-xs"
-                    disabled={testingSlug === item.slug}
-                    onClick={() => handleTestDefinition(item.slug, item.name)}
+                    asChild
                   >
-                    {testingSlug === item.slug ? (
-                      <Loader2 className="size-3 animate-spin" aria-hidden="true" />
-                    ) : (
-                      <Play className="size-3 text-emerald-500" aria-hidden="true" />
-                    )}
-                    Test
+                    <Link href={`/integrations/${item.slug}`}>
+                      <Settings className="size-3.5" />
+                      Configure
+                    </Link>
                   </Button>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="sm" className="gap-1.5 text-xs" onClick={() => setEditingItem(item)}>
+
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 text-xs"
+                      disabled={testingSlug === item.slug}
+                      onClick={() => handleTestDefinition(item.slug)}
+                    >
+                      {testingSlug === item.slug ? (
+                        <Loader2 className="size-3 animate-spin" aria-hidden="true" />
+                      ) : (
+                        <Play className="size-3 text-emerald-500" aria-hidden="true" />
+                      )}
+                      Test
+                    </Button>
+                    <Button variant="ghost" size="icon" className="size-8" onClick={() => setEditingItem(item)} title="Edit Definition">
                       <Pencil className="size-3.5" aria-hidden="true" />
-                      Edit
+                      <span className="sr-only">Edit</span>
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
-                      className="gap-1.5 text-xs text-destructive hover:text-destructive"
+                      size="icon"
+                      className="size-8 text-destructive hover:text-destructive"
                       onClick={() => setDeleteTarget(item)}
+                      title="Delete Definition"
                     >
                       <Trash2 className="size-3.5" aria-hidden="true" />
-                      Delete
+                      <span className="sr-only">Delete</span>
                     </Button>
                   </div>
                 </div>
