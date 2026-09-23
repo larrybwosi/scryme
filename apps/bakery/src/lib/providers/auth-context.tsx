@@ -35,7 +35,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       if (isTauri()) {
-        const provisionedKey = await tauriInvoke<string | null>('get_provisioned_api_key').catch(() => null);
+        const deviceConfig = await tauriInvoke<any>('get_device_config').catch(() => null);
+        if (deviceConfig?.orgSlug) {
+          localStorage.setItem('bakery_org_slug', deviceConfig.orgSlug);
+        }
+        const provisionedKey = deviceConfig?.deviceKey || await tauriInvoke<string | null>('get_provisioned_api_key').catch(() => null);
         if (provisionedKey) {
           setHasDeviceKey(true);
           sdk.setApiKey(provisionedKey);
@@ -127,6 +131,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('bakery_member_token', token);
       }
 
+      const orgSlug = response.orgSlug || response.data?.orgSlug || response.organization?.slug || response.data?.organization?.slug;
+      if (orgSlug) {
+        localStorage.setItem('bakery_org_slug', orgSlug);
+      } else if (isTauri()) {
+        const deviceConfig = await tauriInvoke<any>('get_device_config').catch(() => null);
+        if (deviceConfig?.orgSlug) {
+          localStorage.setItem('bakery_org_slug', deviceConfig.orgSlug);
+        }
+      }
+
       const member = response.member || response.data?.member;
       if (!member) {
         throw new Error('Member profile missing from response');
@@ -174,6 +188,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.token) {
         sdk.setMemberToken(response.token);
         localStorage.setItem('bakery_member_token', response.token);
+      }
+
+      const orgSlug = response.orgSlug || response.data?.orgSlug || response.organization?.slug || response.data?.organization?.slug;
+      if (orgSlug) {
+        localStorage.setItem('bakery_org_slug', orgSlug);
+      } else if (isTauri()) {
+        const deviceConfig = await tauriInvoke<any>('get_device_config').catch(() => null);
+        if (deviceConfig?.orgSlug) {
+          localStorage.setItem('bakery_org_slug', deviceConfig.orgSlug);
+        }
       }
 
       const userObj = {

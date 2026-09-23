@@ -89,7 +89,12 @@ export default function SetupPage() {
         localStorage.setItem("bakery_api_url", finalUrl);
       }
 
-      const newKey = await tauriInvoke<string>("get_provisioned_api_key");
+      const deviceConfig = await tauriInvoke<any>("get_device_config").catch(() => null);
+      if (deviceConfig?.orgSlug) {
+        localStorage.setItem("bakery_org_slug", deviceConfig.orgSlug);
+      }
+
+      const newKey = deviceConfig?.deviceKey || (await tauriInvoke<string>("get_provisioned_api_key"));
       if (newKey) {
         sdk.setApiKey(newKey);
       }

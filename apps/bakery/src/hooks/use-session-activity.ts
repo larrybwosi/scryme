@@ -1,3 +1,4 @@
+import { API_ROUTES } from "@/config/api";
 import { useEffect, useMemo } from 'react';
 import { tauriInvoke } from '@/lib/tauri-bridge';
 import { isTauri, isOfflineMode } from '@/lib/sdk';
@@ -14,10 +15,9 @@ export const useSessionActivityListener = () => {
 
     const checkSession = async () => {
       try {
-        const orgSlug = localStorage.getItem('bakery_org_slug') || 'default-org';
         const response = await tauriInvoke<any>('authenticated_api_request', {
           method: 'GET',
-          path: `/v3/${orgSlug}/pos/me`,
+          path: API_ROUTES.DEVICES.ME(),
         });
 
         const isCheckedIn = response?.isCheckedIn ?? response?.data?.isCheckedIn ?? true;
