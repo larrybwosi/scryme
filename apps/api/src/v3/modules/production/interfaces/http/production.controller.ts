@@ -594,7 +594,7 @@ export class ProductionController {
   async authStatus(@v3Context() ctx: V3ApiContext) {
     const hasDeviceKey =
       !!ctx.organizationId &&
-      (ctx.authType === "device" || ctx.authType === "hybrid");
+      (ctx.authType === "v3_client" || ctx.authType === "v3_hybrid" || ctx.authType === "device" || ctx.authType === "hybrid");
     const hasMemberToken = !!ctx.memberId;
 
     return {
