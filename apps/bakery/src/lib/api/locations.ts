@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import sdk, { isTauri, isOfflineMode } from "@/lib/sdk";
 
 export const useListLocations = () => {
@@ -16,39 +16,36 @@ export const useListLocations = () => {
 };
 
 export const useCreateLocation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: any) => sdk.client.post("/inventory/locations", data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations"] });
+  return {
+    mutate: () => {
+      console.warn("Location creation is not supported in Bakery client. Use Web App settings.");
     },
-  });
+    mutateAsync: async () => {
+      throw new Error("Location creation is not supported in Bakery client. Use Web App settings.");
+    },
+  };
 };
 
-export const useUpdateLocation = (locationId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (data: any) =>
-      sdk.client.patch(`/inventory/locations/${locationId}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations"] });
-      queryClient.invalidateQueries({ queryKey: ["location", locationId] });
+export const useUpdateLocation = (_locationId: string) => {
+  return {
+    mutate: () => {
+      console.warn("Location updates are not supported in Bakery client. Use Web App settings.");
     },
-  });
+    mutateAsync: async () => {
+      throw new Error("Location updates are not supported in Bakery client. Use Web App settings.");
+    },
+  };
 };
 
 export const useDeleteLocation = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (locationId: string) =>
-      sdk.client.delete(`/inventory/locations/${locationId}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations"] });
+  return {
+    mutate: () => {
+      console.warn("Location deletion is not supported in Bakery client. Use Web App settings.");
     },
-  });
+    mutateAsync: async () => {
+      throw new Error("Location deletion is not supported in Bakery client. Use Web App settings.");
+    },
+  };
 };
 
 export const useGetLocation = (
@@ -59,9 +56,14 @@ export const useGetLocation = (
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["location", locationId],
-    queryFn: () => sdk.client.get(`/inventory/locations/${locationId}`),
+    queryFn: async () => {
+      const res = await sdk.pos.listLocations();
+      const locations = res?.locations || res?.data || [];
+      const match = locations.find((l: any) => l.id === locationId);
+      return match || null;
+    },
     enabled: enabled && !!locationId,
   });
 
-  return { data: (data as any)?.data || [], isLoading, refetch, error };
+  return { data: data || null, isLoading, refetch, error };
 };

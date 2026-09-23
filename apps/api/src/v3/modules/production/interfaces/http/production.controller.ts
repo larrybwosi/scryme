@@ -493,6 +493,16 @@ export class ProductionController {
     return this.productionService.getQualityIncidents(ctx.organizationId);
   }
 
+  @Get("quality-incidents/:id")
+  @Permissions("production:batch:read")
+  @ApiOperation({ summary: "Get quality incident details by ID" })
+  async getQualityIncident(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.productionService.getQualityIncident(ctx.organizationId, id);
+  }
+
   @Post("quality-incidents")
   @Permissions("production:batch:write")
   @ApiOperation({ summary: "Create quality incident" })
@@ -520,6 +530,16 @@ export class ProductionController {
       id,
       body,
     );
+  }
+
+  @Delete("quality-incidents/:id")
+  @Permissions("production:batch:write")
+  @ApiOperation({ summary: "Delete quality incident" })
+  async deleteQualityIncident(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.productionService.deleteQualityIncident(ctx.organizationId, id);
   }
 
   // Production Auth & Device Compatibility

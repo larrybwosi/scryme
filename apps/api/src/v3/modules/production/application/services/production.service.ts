@@ -1357,6 +1357,25 @@ export class ProductionService {
     });
   }
 
+  async getQualityIncident(organizationId: string, id: string) {
+    const incident = await this.prisma.client.qualityIncident.findFirst({
+      where: { id, organizationId },
+      include: {
+        reportedBy: {
+          select: {
+            id: true,
+            user: { select: { id: true, name: true, email: true, image: true } },
+          },
+        },
+        batch: { select: { id: true, batchNumber: true } },
+        stockBatch: { select: { id: true, batchNumber: true } },
+      },
+    });
+
+    if (!incident) throw new NotFoundException("Quality incident not found");
+    return incident;
+  }
+
   async getQualityIncidents(organizationId: string) {
     return this.prisma.client.qualityIncident.findMany({
       where: { organizationId },
@@ -1410,6 +1429,18 @@ export class ProductionService {
         severity: data.severity as any,
         status: data.status,
       },
+    });
+  }
+
+  async deleteQualityIncident(organizationId: string, id: string) {
+    const incident = await this.prisma.client.qualityIncident.findFirst({
+      where: { id, organizationId },
+    });
+
+    if (!incident) throw new NotFoundException("Quality incident not found");
+
+    return this.prisma.client.qualityIncident.delete({
+      where: { id },
     });
   }
 
