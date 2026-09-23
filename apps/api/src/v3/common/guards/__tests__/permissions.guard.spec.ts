@@ -161,6 +161,76 @@ describe("PermissionsGuard", () => {
     expect(result).toBe(true);
   });
 
+  it("should allow ADMIN role bypass and fetch/cache permissions from Prisma", async () => {
+    const context = createMockHttpContext({
+      requiredPermissions: ["any:permission"],
+      v3Context: { organizationId: "org1", memberId: "member2" },
+      user: { id: "user2" },
+      organization: { id: "org1" },
+    });
+
+    mockRedis.get.mockResolvedValue(null);
+    mockPrisma.client.member.findFirst.mockResolvedValue({
+      id: "member2",
+      role: "ADMIN",
+      organizationId: "org1",
+      isActive: true,
+      customRoles: [],
+      roleGroups: [],
+    });
+
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+    expect(mockRedis.setex).toHaveBeenCalledWith(
+      "permissions:org1:member2",
+      3600,
+      ["*"],
+    );
+  });
+
+  it("should allow active member with no custom roles access to endpoints without required permissions", async () => {
+    const context = createMockHttpContext({
+      requiredPermissions: undefined,
+      user: { id: "user3" },
+      organization: { id: "org1" },
+    });
+
+    mockRedis.get.mockResolvedValue(null);
+    mockPrisma.client.member.findFirst.mockResolvedValue({
+      id: "member3",
+      role: "MEMBER",
+      organizationId: "org1",
+      isActive: true,
+      customRoles: [],
+      roleGroups: [],
+    });
+
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
+
+  it("should throw Insufficient permissions if active member lacks required permission", async () => {
+    const context = createMockHttpContext({
+      requiredPermissions: ["workflow:manage"],
+      user: { id: "user3" },
+      organization: { id: "org1" },
+    });
+
+    mockRedis.get.mockResolvedValue(null);
+    mockPrisma.client.member.findFirst.mockResolvedValue({
+      id: "member3",
+      role: "MEMBER",
+      organizationId: "org1",
+      isActive: true,
+      customRoles: [],
+      roleGroups: [],
+    });
+
+    await expect(guard.canActivate(context)).rejects.toThrow(
+      new ForbiddenException("Insufficient permissions"),
+    );
+  });
+
   it("should authorize v3_customer tokens using default customer permissions", async () => {
     const context = createMockHttpContext({
       requiredPermissions: ["catalog:product:read", "services:read"],

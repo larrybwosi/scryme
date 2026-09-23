@@ -52,7 +52,7 @@ export class PermissionsGuard implements CanActivate {
         v3Context?.memberId,
       );
 
-      if (memberPermissions.length === 0) {
+      if (memberPermissions === null) {
         throw new ForbiddenException(
           "Access denied: You are not an active member of this organization",
         );
@@ -116,7 +116,7 @@ export class PermissionsGuard implements CanActivate {
     organizationId: string,
     userId?: string,
     memberId?: string,
-  ): Promise<string[]> {
+  ): Promise<string[] | null> {
     const cacheKey = `permissions:${organizationId}:${memberId || userId}`;
     const cached = await this.redis.get<string[]>(cacheKey);
 
@@ -126,7 +126,12 @@ export class PermissionsGuard implements CanActivate {
 
     const member = await this.prisma.client.member.findFirst({
       where: memberId
-        ? { id: memberId, organizationId, deletedAt: null }
+        ? {
+            id: memberId,
+            organizationId,
+            ...(userId ? { userId } : {}),
+            deletedAt: null,
+          }
         : {
             organizationId,
             userId: userId!,
@@ -147,22 +152,15 @@ export class PermissionsGuard implements CanActivate {
       },
     });
 
-    if (!member || !member.isActive) return [];
+    if (!member || !member.isActive) return null;
 
-    if (member.role === "OWNER") {
+    if (member.role === "OWNER" || member.role === "ADMIN") {
       const allPermissions = ["*"];
       await this.redis.setex(cacheKey, 3600, allPermissions);
       return allPermissions;
     }
 
     let permissions: string[] = [];
-
-    if (
-      member.role === "ADMIN" &&
-      member.organization.settings?.adminsCanManageStaff
-    ) {
-      permissions.push("members:*");
-    }
 
     // Add permissions from custom roles
     member.customRoles.forEach((role) => {
