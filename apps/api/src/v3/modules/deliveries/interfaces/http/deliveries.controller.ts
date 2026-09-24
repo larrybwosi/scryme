@@ -24,6 +24,8 @@ import {
   AdjustWalletDto,
   DispatchDeliveryDto,
   ReconcileDeliveryDto,
+  AssignDriverPartnerDto,
+  UpdateDeliveryStatusDto,
 } from "../../dto/deliveries.dto";
 
 @ApiTags("V3 Deliveries")
@@ -86,7 +88,7 @@ export class DeliveriesController {
 
   @Post("dispatch")
   @Permissions("orders:write")
-  @ApiOperation({ summary: "Dispatch delivery" })
+  @ApiOperation({ summary: "Dispatch delivery order to driver and/or delivery partner" })
   async dispatchDelivery(
     @v3Context() ctx: V3ApiContext,
     @Body() body: DispatchDeliveryDto,
@@ -94,9 +96,31 @@ export class DeliveriesController {
     return this.deliveriesService.dispatchDelivery(ctx, body);
   }
 
+  @Patch(":id/assign")
+  @Permissions("orders:write")
+  @ApiOperation({ summary: "Assign or re-assign internal driver or 3PL delivery partner to a delivery" })
+  async assignDriverOrPartner(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") fulfillmentId: string,
+    @Body() body: AssignDriverPartnerDto,
+  ) {
+    return this.deliveriesService.assignDriverOrPartner(ctx, fulfillmentId, body);
+  }
+
+  @Patch(":id/status")
+  @Permissions("orders:write")
+  @ApiOperation({ summary: "Update delivery state (PENDING, ASSIGNED, PICKED_UP, IN_TRANSIT, DELIVERED, FAILED, CANCELLED, RETURNED)" })
+  async updateDeliveryStatus(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") fulfillmentId: string,
+    @Body() body: UpdateDeliveryStatusDto,
+  ) {
+    return this.deliveriesService.updateDeliveryStatus(ctx, fulfillmentId, body);
+  }
+
   @Post("reconcile")
   @Permissions("orders:write")
-  @ApiOperation({ summary: "Reconcile delivery" })
+  @ApiOperation({ summary: "Reconcile completed or failed delivery with proof of delivery (POD)" })
   async reconcileDelivery(
     @v3Context() ctx: V3ApiContext,
     @Body() body: ReconcileDeliveryDto,
@@ -106,7 +130,7 @@ export class DeliveriesController {
 
   @Get("active")
   @Permissions("orders:read")
-  @ApiOperation({ summary: "Get active deliveries" })
+  @ApiOperation({ summary: "Get all active in-progress deliveries" })
   async getActiveDeliveries(@v3Context() ctx: V3ApiContext) {
     return this.deliveriesService.getActiveDeliveries(ctx.organizationId);
   }
