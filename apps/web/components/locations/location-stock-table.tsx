@@ -103,7 +103,7 @@ const StockTableRow = React.memo(function StockTableRow({
       )}>
       <TableCell className="py-3.5">
         <div className="flex flex-col gap-0.5">
-          <span className="font-medium text-[13.5px] text-[#1D1D1F] leading-snug">
+          <span className="font-medium text-[13.5px] text-foreground leading-snug">
             {item.name}
             {item.variantName !== "Default" && (
               <span className="text-gray-400 font-normal">
@@ -141,8 +141,8 @@ const StockTableRow = React.memo(function StockTableRow({
             className={cn(
               "h-8 w-24 text-right font-medium tabular-nums transition-all",
               isChanged
-                ? "border-blue-400 bg-white ring-1 ring-blue-400/40 shadow-sm"
-                : "border-gray-200",
+                ? "border-blue-400 bg-card ring-1 ring-blue-400/40 shadow-sm"
+                : "border-border",
             )}
             value={displayValue}
             onChange={e => onStockChange(item.variantId, e.target.value)}
@@ -326,7 +326,7 @@ export function LocationStockTable({
             placeholder="Search products or SKU..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-9 h-9 bg-white border-gray-200 shadow-sm focus-visible:ring-2 focus-visible:ring-gray-900/10"
+            className="pl-9 h-9 bg-card border-border shadow-sm focus-visible:ring-2 focus-visible:ring-gray-900/10"
           />
           {isPending && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -347,7 +347,7 @@ export function LocationStockTable({
               size="sm"
               onClick={handleReset}
               disabled={isSubmitting}
-              className="border-gray-200">
+              className="border-border">
               <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
               Reset
             </Button>
@@ -374,7 +374,7 @@ export function LocationStockTable({
             <Button
               variant="outline"
               size="sm"
-              className="border-gray-200 h-9 rounded-sm"
+              className="border-border h-9 rounded-sm"
             >
               <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5 text-emerald-600" />
               Import Stock
@@ -383,10 +383,10 @@ export function LocationStockTable({
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04),0_1px_12px_rgba(0,0,0,0.02)] overflow-hidden">
+      <div className="rounded-xl border border-border/80 bg-card shadow-[0_1px_2px_rgba(0,0,0,0.04),0_1px_12px_rgba(0,0,0,0.02)] overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50/60 hover:bg-gray-50/60 border-b border-gray-200/80">
+            <TableRow className="bg-gray-50/60 hover:bg-gray-50/60 border-b border-border/80">
               <TableHead
                 className="group cursor-pointer select-none h-10 text-[11px] font-semibold uppercase tracking-wide text-gray-500"
                 onClick={() => handleSort("product.name")}>
@@ -441,7 +441,7 @@ export function LocationStockTable({
               size="sm"
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1 || isPending}
-              className="border-gray-200">
+              className="border-border">
               <ChevronLeft className="h-4 w-4 mr-1" />
               Previous
             </Button>
@@ -453,7 +453,7 @@ export function LocationStockTable({
               size="sm"
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages || isPending}
-              className="border-gray-200">
+              className="border-border">
               Next
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>

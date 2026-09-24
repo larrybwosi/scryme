@@ -594,3 +594,22 @@ export async function getZoneWithUnits(zoneId: string): Promise<any> {
     },
   });
 }
+
+export async function toggleLocationStatus(id: string): Promise<any> {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const existing = await db.inventoryLocation.findFirst({
+    where: { id, organizationId: context.organizationId },
+  });
+  if (!existing) throw new Error("Location not found or unauthorized");
+
+  const updated = await db.inventoryLocation.update({
+    where: { id, organizationId: context.organizationId },
+    data: { isActive: !existing.isActive },
+  });
+
+  revalidatePath("/locations");
+  revalidatePath(`/locations/${id}`);
+  return updated;
+}

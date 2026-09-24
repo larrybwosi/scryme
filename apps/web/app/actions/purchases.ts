@@ -45,6 +45,8 @@ export async function getPurchases(params: {
     "OWNER",
     "ADMIN",
     "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
     "REPORTER",
   ], true);
 
@@ -104,7 +106,13 @@ export async function createPurchase(data: {
   purchaseNumber?: string;
   dueDate?: Date;
 }): Promise<any> {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth, member } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+  ]);
 
   const totalAmount = data.items.reduce(
     (acc, item) => acc + item.quantity * item.unitCost,
@@ -160,7 +168,10 @@ export async function createPurchase(data: {
       },
     });
 
-    if (totalAmount > threshold) {
+    const requiresApproval =
+      !["OWNER", "ADMIN"].includes(member.role) || (threshold > 0 && totalAmount > threshold);
+
+    if (requiresApproval) {
       await submitForApproval(
         {
           relatedId: purchase.id,
@@ -232,7 +243,13 @@ export async function receivePurchaseStockWithBatches(data: {
     notes?: string;
   }[];
 }) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth, member } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+  ]);
 
   const purchase = await db.purchase.findUnique({
     where: { id: data.purchaseId, organizationId: auth.organizationId },
@@ -409,6 +426,8 @@ export async function getPendingPurchasesForReception() {
     "OWNER",
     "ADMIN",
     "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
     "REPORTER",
   ], true);
 
@@ -489,6 +508,8 @@ export async function getBatchTraceabilityList(search?: string) {
     "OWNER",
     "ADMIN",
     "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
     "REPORTER",
   ], true);
 
@@ -544,7 +565,13 @@ export async function recordSupplierInvoice(data: {
   issueDate: Date;
   dueDate: Date;
 }) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth, member } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+  ]);
 
   const purchase = await db.purchase.findUnique({
     where: { id: data.purchaseId },
@@ -580,7 +607,13 @@ export async function updatePurchaseStatus(
   id: string,
   status: any,
 ): Promise<any> {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth, member } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+  ]);
 
   const purchase = await db.purchase.update({
     where: { id, organizationId: auth.organizationId },
@@ -597,7 +630,13 @@ export async function createPurchasePayment(data: {
   paymentMethod: any;
   reference?: string;
 }): Promise<any> {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+  const { auth, member } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+  ]);
 
   const payment = await db.purchasePayment.create({
     data: {

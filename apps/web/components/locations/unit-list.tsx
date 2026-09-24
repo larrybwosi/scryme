@@ -72,14 +72,14 @@ export function UnitList({ locationId, zones, units }: UnitListProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {units.length === 0 ? (
-          <div className="col-span-2 p-8 border rounded-xl bg-white text-center text-muted-foreground">
+          <div className="col-span-2 p-8 border rounded-xl bg-card text-center text-muted-foreground">
             No standalone storage units.
           </div>
         ) : (
           units.map((unit: any) => (
             <div
               key={unit.id}
-              className="p-4 rounded-xl border bg-white flex items-center justify-between group">
+              className="p-4 rounded-xl border bg-card flex items-center justify-between group">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-gray-50 border flex items-center justify-center text-gray-400">
                   <Box size={18} />

@@ -38,12 +38,12 @@ export function PurchaseTable({ purchases }: { purchases: any[] }) {
       case "CANCELLED":
         return "bg-red-50 text-red-700 border-red-200";
       default:
-        return "bg-gray-50 text-gray-700 border-gray-200";
+        return "bg-gray-50 text-gray-700 border-border";
     }
   };
 
   return (
-    <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
+    <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse text-sm">
           <thead>

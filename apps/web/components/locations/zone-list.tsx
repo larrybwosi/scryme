@@ -69,14 +69,14 @@ export function ZoneList({ locationId, zones }: ZoneListProps) {
 
       <div className="space-y-3">
         {zones.length === 0 ? (
-          <div className="p-8 border rounded-xl bg-white text-center text-muted-foreground">
+          <div className="p-8 border rounded-xl bg-card text-center text-muted-foreground">
             No storage zones defined.
           </div>
         ) : (
           zones.map((zone: any) => (
             <div
               key={zone.id}
-              className="p-4 rounded-xl border bg-white flex items-center justify-between">
+              className="p-4 rounded-xl border bg-card flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600">
                   <Layers size={20} />
