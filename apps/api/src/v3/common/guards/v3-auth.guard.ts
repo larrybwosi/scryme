@@ -30,10 +30,6 @@ export class V3AuthGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    if (isPublic) {
-      return true;
-    }
-
     const request = context.switchToHttp().getRequest();
     const authHeader =
       request.headers.authorization ||
@@ -48,6 +44,9 @@ export class V3AuthGuard implements CanActivate {
     }
 
     if (!token && !apiKeyHeader) {
+      if (isPublic) {
+        return true;
+      }
       throw new UnauthorizedException(
         "Missing or invalid authorization header / API key",
       );
@@ -141,6 +140,9 @@ export class V3AuthGuard implements CanActivate {
     }
 
     if (!payload) {
+      if (isPublic) {
+        return true;
+      }
       throw new UnauthorizedException("Invalid token or session expired");
     }
 
@@ -149,6 +151,9 @@ export class V3AuthGuard implements CanActivate {
       payload.type !== "v3_hybrid" &&
       payload.type !== "v3_customer"
     ) {
+      if (isPublic) {
+        return true;
+      }
       throw new UnauthorizedException("Invalid token type");
     }
 
@@ -159,10 +164,16 @@ export class V3AuthGuard implements CanActivate {
     }
 
     if (!organization) {
+      if (isPublic) {
+        return true;
+      }
       throw new UnauthorizedException("Organization not found");
     }
 
     if (orgSlugFromUrl && orgSlugFromUrl !== organization.slug) {
+      if (isPublic) {
+        return true;
+      }
       throw new UnauthorizedException("Organization slug mismatch");
     }
 

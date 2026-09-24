@@ -59,8 +59,7 @@ export class ProductionController {
     private readonly productionReportService: ProductionReportService,
   ) {}
 
-  @Get()
-  @Get("overview")
+  @Get(["", "overview"])
   @Permissions("production:batch:read")
   @ApiOperation({ summary: "Get general production overview and metrics" })
   async getOverview(@v3Context() ctx: V3ApiContext) {
@@ -390,9 +389,19 @@ export class ProductionController {
   }
 
   @Put("categories/:id")
+  @Permissions("production:recipe:write")
+  @ApiOperation({ summary: "Update category (PUT)" })
+  async updateCategoryPut(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() body: UpdateProductionCategoryDto,
+  ) {
+    return this.productionService.updateCategory(ctx.organizationId, id, body);
+  }
+
   @Patch("categories/:id")
   @Permissions("production:recipe:write")
-  @ApiOperation({ summary: "Update category" })
+  @ApiOperation({ summary: "Update category (PATCH)" })
   async updateCategory(
     @v3Context() ctx: V3ApiContext,
     @Param("id") id: string,
@@ -420,9 +429,18 @@ export class ProductionController {
   }
 
   @Put("settings")
+  @Permissions("production:settings:write")
+  @ApiOperation({ summary: "Update production settings (PUT)" })
+  async updateSettingsPut(
+    @v3Context() ctx: V3ApiContext,
+    @Body() body: UpdateProductionSettingsDto,
+  ) {
+    return this.productionService.updateSettings(ctx.organizationId, body);
+  }
+
   @Patch("settings")
   @Permissions("production:settings:write")
-  @ApiOperation({ summary: "Update production settings" })
+  @ApiOperation({ summary: "Update production settings (PATCH)" })
   async updateSettings(
     @v3Context() ctx: V3ApiContext,
     @Body() body: UpdateProductionSettingsDto,
@@ -439,18 +457,14 @@ export class ProductionController {
     return { status: "success", message: "Test report triggered" };
   }
 
-  @Get("bakers")
-  @Get("staff")
-  @Get("operators")
-  @Permissions("production:settings:read")
+  @Get(["bakers", "staff", "operators"])
+  @Permissions("production:batch:read")
   @ApiOperation({ summary: "List production staff/bakers/operators" })
   async getBakers(@v3Context() ctx: V3ApiContext) {
     return this.productionService.getBakers(ctx.organizationId);
   }
 
-  @Post("bakers")
-  @Post("staff")
-  @Post("operators")
+  @Post(["bakers", "staff", "operators"])
   @Permissions("production:settings:write")
   @ApiOperation({ summary: "Add production staff/baker/operator" })
   async addBaker(
@@ -460,9 +474,7 @@ export class ProductionController {
     return this.productionService.addBaker(ctx.organizationId, body);
   }
 
-  @Patch("bakers/:id")
-  @Patch("staff/:id")
-  @Patch("operators/:id")
+  @Patch(["bakers/:id", "staff/:id", "operators/:id"])
   @Permissions("production:settings:write")
   @ApiOperation({ summary: "Update production staff/baker/operator" })
   async updateBaker(
@@ -473,9 +485,7 @@ export class ProductionController {
     return this.productionService.updateBaker(ctx.organizationId, id, body);
   }
 
-  @Delete("bakers/:id")
-  @Delete("staff/:id")
-  @Delete("operators/:id")
+  @Delete(["bakers/:id", "staff/:id", "operators/:id"])
   @Permissions("production:settings:write")
   @ApiOperation({ summary: "Remove production staff/baker/operator" })
   async removeBaker(
@@ -591,11 +601,11 @@ export class ProductionController {
   @AllowPublic()
   @Get("auth/status")
   @ApiOperation({ summary: "Check production authentication status" })
-  async authStatus(@v3Context() ctx: V3ApiContext) {
+  async authStatus(@v3Context() ctx?: V3ApiContext) {
     const hasDeviceKey =
-      !!ctx.organizationId &&
-      (ctx.authType === "v3_client" || ctx.authType === "v3_hybrid" || ctx.authType === "device" || ctx.authType === "hybrid");
-    const hasMemberToken = !!ctx.memberId;
+      !!ctx?.organizationId &&
+      (ctx?.authType === "v3_client" || ctx?.authType === "v3_hybrid" || ctx?.authType === "device" || ctx?.authType === "hybrid");
+    const hasMemberToken = !!ctx?.memberId;
 
     return {
       hasDeviceKey,

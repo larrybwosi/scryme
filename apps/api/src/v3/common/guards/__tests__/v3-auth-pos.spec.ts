@@ -191,3 +191,87 @@ describe("V3AuthGuard POS Authentication & Authorization", () => {
     expect(v3AuthService.verifyToken).toHaveBeenCalledWith("jwt_member_token_456");
   });
 });
+
+describe("V3AuthGuard Public Endpoints", () => {
+  let guard: V3AuthGuard;
+  let reflector: Reflector;
+  let v3AuthService: V3AuthCoreService;
+  let prisma: PrismaService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        V3AuthGuard,
+        Reflector,
+        {
+          provide: PrismaService,
+          useValue: {
+            client: {
+              organization: {
+                findUnique: vi.fn(),
+              },
+            },
+          },
+        },
+        {
+          provide: V3AuthCoreService,
+          useValue: {
+            verifyToken: vi.fn(),
+            validateClient: vi.fn(),
+          },
+        },
+      ],
+    }).compile();
+
+    guard = module.get<V3AuthGuard>(V3AuthGuard);
+    reflector = module.get<Reflector>(Reflector);
+    v3AuthService = module.get<V3AuthCoreService>(V3AuthCoreService);
+    prisma = module.get<PrismaService>(PrismaService);
+
+    (guard as any).v3AuthService = v3AuthService;
+  });
+
+  const createMockContext = (headers: Record<string, string>): ExecutionContext => {
+    const request = { headers, params: {} };
+    return {
+      switchToHttp: () => ({ getRequest: () => request }),
+      getHandler: () => ({}),
+      getClass: () => ({}),
+    } as any;
+  };
+
+  it("should return true on public endpoint when unauthenticated", async () => {
+    vi.spyOn(reflector, "getAllAndOverride").mockReturnValue(true);
+
+    const context = createMockContext({});
+    const canActivate = await guard.canActivate(context);
+
+    expect(canActivate).toBe(true);
+    const req = context.switchToHttp().getRequest() as any;
+    expect(req.v3Context).toBeUndefined();
+  });
+
+  it("should populate v3Context on public endpoint when valid token is provided", async () => {
+    vi.spyOn(reflector, "getAllAndOverride").mockReturnValue(true);
+
+    const mockOrg = { id: "org-1", slug: "test-org" };
+    const mockPayload = {
+      type: "v3_hybrid",
+      clientId: "pos_123",
+      organizationId: "org-1",
+      memberId: "member-1",
+      scopes: ["*"],
+    };
+
+    vi.mocked(v3AuthService.verifyToken).mockResolvedValue(mockPayload as any);
+    vi.mocked(prisma.client.organization.findUnique as any).mockResolvedValue(mockOrg);
+
+    const context = createMockContext({ authorization: "Bearer valid_jwt_token" });
+    const canActivate = await guard.canActivate(context);
+
+    expect(canActivate).toBe(true);
+    const req = context.switchToHttp().getRequest() as any;
+    expect(req.v3Context).toBeDefined();
+    expect(req.v3Context.organizationId).toBe("org-1");
+  });
+});
