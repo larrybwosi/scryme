@@ -132,17 +132,28 @@ export async function provisionScryme() {
       }
     }
 
+    const defaultChannelMappings = {
+      po_alerts: "alerts",
+      stock_alerts: "alerts",
+      sales_alerts: "general",
+      crm_alerts: "general",
+      staff_alerts: "announcements",
+      system_alerts: "announcements",
+    };
+
     await prisma.scrymeConfiguration.upsert({
       where: { organizationId: org.id },
       update: {
         workspaceId: scrymeWorkspace.id,
         workspaceSlug: scrymeWorkspace.slug,
+        channelMappings: defaultChannelMappings,
         isActive: true,
       },
       create: {
         organizationId: org.id,
         workspaceId: scrymeWorkspace.id,
         workspaceSlug: scrymeWorkspace.slug,
+        channelMappings: defaultChannelMappings,
         isActive: true,
       },
     });
@@ -172,6 +183,36 @@ export async function provisionScryme() {
       error.message || "Failed to provision Scryme Chat workspace",
     );
   }
+}
+
+export async function updateScrymeChannelMappings(mappings: Record<string, string>) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const existingConfig = await prisma.scrymeConfiguration.findUnique({
+    where: { organizationId: context.organizationId },
+  });
+
+  if (!existingConfig) {
+    throw new Error("Scryme configuration does not exist for this organization");
+  }
+
+  const updatedChannelMappings = {
+    ...((existingConfig.channelMappings as Record<string, string>) || {}),
+    ...mappings,
+  };
+
+  await prisma.scrymeConfiguration.update({
+    where: { organizationId: context.organizationId },
+    data: {
+      channelMappings: updatedChannelMappings,
+    },
+  });
+
+  revalidatePath("/integrations");
+  return { success: true, channelMappings: updatedChannelMappings };
 }
 
 export async function updateHulyConfig(data: {
@@ -211,10 +252,25 @@ export async function getScrymeWorkspaceDetails() {
     return {
       configured: false,
       workspaceSlug: null,
+      channelMappings: {},
       channels: [],
       members: [],
     };
   }
+
+  const defaultMappings = {
+    po_alerts: "alerts",
+    stock_alerts: "alerts",
+    sales_alerts: "general",
+    crm_alerts: "general",
+    staff_alerts: "announcements",
+    system_alerts: "announcements",
+  };
+
+  const channelMappings = {
+    ...defaultMappings,
+    ...((config.channelMappings as Record<string, string>) || {}),
+  };
 
   try {
     const { ScrymeChatApiClient } = await import("@repo/chat");
@@ -239,6 +295,7 @@ export async function getScrymeWorkspaceDetails() {
     return {
       configured: true,
       workspaceSlug: config.workspaceSlug,
+      channelMappings,
       channels,
       members,
     };
@@ -251,6 +308,7 @@ export async function getScrymeWorkspaceDetails() {
     return {
       configured: true,
       workspaceSlug: config.workspaceSlug,
+      channelMappings,
       channels: [
         { id: "ch_announcements", slug: "announcements", name: "Announcements", type: "public" },
         { id: "ch_alerts", slug: "alerts", name: "Alerts", type: "public" },

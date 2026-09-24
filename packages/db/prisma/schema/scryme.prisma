@@ -6,6 +6,8 @@ model ScrymeConfiguration {
   workspaceId   String?  @unique
   workspaceSlug String?  @unique
 
+  channelMappings Json?  // Map operation keys (e.g. po_alerts, stock_alerts) to channel slugs/IDs
+
   isActive Boolean @default(true)
 
   lastSyncAt DateTime? // For enterprise sync throttling
