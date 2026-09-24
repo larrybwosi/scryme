@@ -40,6 +40,10 @@ describe("DepartmentUseCase", () => {
         planeConfiguration: {
           findUnique: vi.fn(),
         },
+        departmentMember: {
+          upsert: vi.fn(),
+          delete: vi.fn(),
+        },
         auditLog: {
           create: vi.fn(),
         },
@@ -137,6 +141,47 @@ describe("DepartmentUseCase", () => {
       await expect(
         useCase.updateDepartment(mockOrgId, "nonexistent", { name: "Test" }, mockActorId),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe("addMemberToDepartment", () => {
+    it("should add member to department successfully with parallel integration lookups", async () => {
+      const deptId = "dept_123";
+      const dto = {
+        memberId: "member_456",
+        role: "MEMBER" as any,
+        canApproveExpenses: true,
+        canManageBudget: false,
+      };
+
+      prismaMock.client.department.findFirst.mockResolvedValueOnce({ id: deptId, organizationId: mockOrgId });
+      prismaMock.client.member.findFirst.mockResolvedValueOnce({ id: dto.memberId, organizationId: mockOrgId });
+
+      const mockMembership = { id: "dm_123", departmentId: deptId, memberId: dto.memberId, role: dto.role };
+      prismaMock.client.departmentMember.upsert.mockResolvedValueOnce(mockMembership);
+
+      prismaMock.client.department.findUnique.mockResolvedValueOnce({
+        id: deptId,
+        name: "Engineering",
+        scrymeChannelId: "channel_1",
+        organization: { slug: "test-org", scrymeConfiguration: null, planeConfiguration: null },
+      });
+      prismaMock.client.member.findUnique.mockResolvedValueOnce({
+        id: dto.memberId,
+        user: { email: "user@example.com", scrymeUserId: "s_1" },
+      });
+
+      const result = await useCase.addMemberToDepartment(mockOrgId, deptId, dto, mockActorId);
+
+      expect(result).toEqual(mockMembership);
+      expect(prismaMock.client.department.findUnique).toHaveBeenCalledWith({
+        where: { id: deptId },
+        include: { organization: { include: { scrymeConfiguration: true, planeConfiguration: true } } },
+      });
+      expect(prismaMock.client.member.findUnique).toHaveBeenCalledWith({
+        where: { id: dto.memberId },
+        include: { user: { select: { email: true, scrymeUserId: true } } },
+      });
     });
   });
 });

@@ -12,7 +12,8 @@ describe("UpdateCustomerUseCase", () => {
       client: {
         customer: {
           findFirst: vi.fn(),
-          update: vi.fn(),
+          updateMany: vi.fn(),
+          findFirstOrThrow: vi.fn(),
         },
       },
     } as any;
@@ -20,7 +21,7 @@ describe("UpdateCustomerUseCase", () => {
     useCase = new UpdateCustomerUseCase(prisma);
   });
 
-  it("should update a customer successfully", async () => {
+  it("should update a customer successfully using updateMany for multi-tenant isolation", async () => {
     const orgId = "org-123";
     const custId = "cust-123";
     const dto = { name: "John Updated" };
@@ -29,7 +30,10 @@ describe("UpdateCustomerUseCase", () => {
       id: custId,
       organizationId: orgId,
     } as any);
-    vi.mocked(prisma.client.customer.update).mockResolvedValue({
+    vi.mocked(prisma.client.customer.updateMany).mockResolvedValue({
+      count: 1,
+    } as any);
+    vi.mocked(prisma.client.customer.findFirstOrThrow).mockResolvedValue({
       id: custId,
       name: "John Updated",
       email: "john@example.com",
@@ -41,9 +45,12 @@ describe("UpdateCustomerUseCase", () => {
     const result = await useCase.execute(orgId, custId, dto);
 
     expect(result.name).toBe("John Updated");
-    expect(prisma.client.customer.update).toHaveBeenCalledWith({
-      where: { id: custId },
+    expect(prisma.client.customer.updateMany).toHaveBeenCalledWith({
+      where: { id: custId, organizationId: orgId },
       data: expect.objectContaining({ name: "John Updated" }),
+    });
+    expect(prisma.client.customer.findFirstOrThrow).toHaveBeenCalledWith({
+      where: { id: custId, organizationId: orgId },
       select: expect.any(Object),
     });
   });
@@ -62,7 +69,10 @@ describe("UpdateCustomerUseCase", () => {
       id: custId,
       organizationId: orgId,
     } as any);
-    vi.mocked(prisma.client.customer.update).mockResolvedValue({
+    vi.mocked(prisma.client.customer.updateMany).mockResolvedValue({
+      count: 1,
+    } as any);
+    vi.mocked(prisma.client.customer.findFirstOrThrow).mockResolvedValue({
       id: custId,
       name: "John Updated",
       email: "john@example.com",
@@ -83,15 +93,24 @@ describe("UpdateCustomerUseCase", () => {
     expect(result.dateOfBirth).toBe("1991-12-12");
     expect(result.taxId).toBe("TAX-777");
 
-    expect(prisma.client.customer.update).toHaveBeenCalledWith({
-      where: { id: custId },
+    expect(prisma.client.customer.updateMany).toHaveBeenCalledWith({
+      where: { id: custId, organizationId: orgId },
       data: expect.objectContaining({
         company: "Acme Corp Ltd",
         customerType: "VIP",
         dateOfBirth: "1991-12-12",
         taxId: "TAX-777",
       }),
-      select: expect.any(Object),
     });
+  });
+
+  it("should throw NotFoundException if customer does not exist or belongs to another organization", async () => {
+    const orgId = "org-123";
+    const custId = "cust-foreign";
+    const dto = { name: "Attacker Update" };
+
+    vi.mocked(prisma.client.customer.findFirst).mockResolvedValue(null);
+
+    await expect(useCase.execute(orgId, custId, dto)).rejects.toThrow("not found");
   });
 });

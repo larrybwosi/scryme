@@ -374,14 +374,18 @@ export class DepartmentUseCase {
 
     // Automatic Sync to Integrations
     try {
-      const fullDept = await this.prisma.client.department.findUnique({
-        where: { id: departmentId },
-        include: { organization: { include: { scrymeConfiguration: true, planeConfiguration: true } } }
-      });
-      const fullMember = await this.prisma.client.member.findUnique({
-        where: { id: dto.memberId },
-        include: { user: { select: { email: true, scrymeUserId: true } } }
-      });
+      // ⚡ Bolt Optimization: Execute independent department and member integration lookup queries
+      // in parallel using Promise.all, reducing DB roundtrips from O(2T) to O(1T) concurrent execution.
+      const [fullDept, fullMember] = await Promise.all([
+        this.prisma.client.department.findUnique({
+          where: { id: departmentId },
+          include: { organization: { include: { scrymeConfiguration: true, planeConfiguration: true } } },
+        }),
+        this.prisma.client.member.findUnique({
+          where: { id: dto.memberId },
+          include: { user: { select: { email: true, scrymeUserId: true } } },
+        }),
+      ]);
 
       if (fullDept && fullMember?.user?.email) {
         const { scrymeConfiguration, planeConfiguration, slug } = fullDept.organization;

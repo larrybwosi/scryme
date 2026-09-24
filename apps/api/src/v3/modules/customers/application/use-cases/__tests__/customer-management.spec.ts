@@ -21,6 +21,8 @@ describe("Customer Management Use Cases", () => {
           findFirst: vi.fn(),
           create: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn(),
+          findFirstOrThrow: vi.fn(),
         },
       },
     } as any;
@@ -106,6 +108,29 @@ describe("Customer Management Use Cases", () => {
 
       expect(result.id).toBe("addr-2");
       expect(prisma.client.address.create).toHaveBeenCalled();
+    });
+
+    it("should update an existing address enforcing customerId scoping", async () => {
+      const useCase = new ManageAddressesUseCase(prisma);
+      vi.mocked(prisma.client.customer.findFirst).mockResolvedValue({ id: "cust-1" } as any);
+      vi.mocked(prisma.client.address.findFirst).mockResolvedValue({ id: "addr-1", customerId: "cust-1" } as any);
+      vi.mocked(prisma.client.address.updateMany).mockResolvedValue({ count: 1 } as any);
+      vi.mocked(prisma.client.address.findFirstOrThrow).mockResolvedValue({ id: "addr-1", street1: "Updated St", customerId: "cust-1" } as any);
+
+      const result = await useCase.addAddress("org-1", "cust-1", {
+        street1: "Updated St",
+        city: "Nairobi",
+        country: "Kenya",
+      });
+
+      expect(result.id).toBe("addr-1");
+      expect(prisma.client.address.updateMany).toHaveBeenCalledWith({
+        where: { id: "addr-1", customerId: "cust-1" },
+        data: expect.objectContaining({ street1: "Updated St" }),
+      });
+      expect(prisma.client.address.findFirstOrThrow).toHaveBeenCalledWith({
+        where: { id: "addr-1", customerId: "cust-1" },
+      });
     });
   });
 });

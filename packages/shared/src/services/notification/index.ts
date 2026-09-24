@@ -350,4 +350,4 @@ export class NotificationEngine {
 export const notificationEngine = new NotificationEngine();
 export { isSafeUrl } from "./security";
 export { sendSystemNotification, notifySystemAdminsOfError } from "./system";
-export { sendEmail } from "./lib/services/mailer";
+export { sendEmail as sendMailerEmail } from "./lib/services/mailer";
