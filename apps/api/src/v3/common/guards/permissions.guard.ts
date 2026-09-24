@@ -132,7 +132,6 @@ export class PermissionsGuard implements CanActivate {
         ? {
             id: memberId,
             organizationId,
-            ...(userId ? { userId } : {}),
             deletedAt: null,
           }
         : {
