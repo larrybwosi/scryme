@@ -441,7 +441,7 @@ export class DeliveriesService {
               partnerId: partner.id,
               amount: earnedFee,
               balanceAfter: newBalance,
-              transactionType: WalletTxType.EARNING,
+              transactionType: WalletTxType.BENEFIT_ACCRUAL,
               notes: `Commission for completed fulfillment ${fulfillmentId} (Order ${fulfillment.transaction.number})`,
             },
           });

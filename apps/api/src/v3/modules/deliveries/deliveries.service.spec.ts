@@ -189,7 +189,7 @@ describe("DeliveriesService", () => {
           partnerId: "partner-1",
           amount: 10,
           balanceAfter: 60,
-          transactionType: WalletTxType.EARNING,
+          transactionType: WalletTxType.BENEFIT_ACCRUAL,
         }),
       });
 
