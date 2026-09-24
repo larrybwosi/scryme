@@ -136,7 +136,7 @@ const StatCard = ({ value, label }: { value: string; label: string }) => (
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginLocal, sso, isLoading } = useAuth();
+  const { login, loginLocal, sso, isLoading, hasDeviceKey } = useAuth();
 
   const [cardId, setCardId] = useState("");
   const [pin, setPin] = useState("");
@@ -146,6 +146,12 @@ export default function LoginPage() {
   const [localEmail, setLocalEmail] = useState("");
   const [localPassword, setLocalPassword] = useState("");
   const [isLocalMode, setIsLocalMode] = useState(isOfflineMode());
+
+  React.useEffect(() => {
+    if (!isLoading && !hasDeviceKey && !isLocalMode) {
+      navigate("/setup", { replace: true });
+    }
+  }, [isLoading, hasDeviceKey, isLocalMode, navigate]);
 
   const from = (location.state as any)?.from?.pathname || "/";
 

@@ -6,13 +6,23 @@ import {
   ForbiddenException,
 } from "@nestjs/common";
 import { GqlExecutionContext } from "@nestjs/graphql";
+import { Reflector } from "@nestjs/core";
 import { PrismaService } from "@/prisma/prisma.service";
+import { ALLOW_PUBLIC_KEY } from "../decorators/auth.decorator";
 
 @Injectable()
 export class MultiTenancyGuard implements CanActivate {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private reflector: Reflector,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(
+      ALLOW_PUBLIC_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
     const isGql = context.getType() === ("graphql" as any);
     let orgSlug: string;
     let request: any;
@@ -33,8 +43,9 @@ export class MultiTenancyGuard implements CanActivate {
       orgSlug = request.headers["x-org-slug"] as string;
     }
 
-    if (!orgSlug) {
-      return true; // Handle non-tenant routes if any
+    // Handle non-tenant routes or unreplaced parameter templates (e.g., ":orgSlug")
+    if (!orgSlug || orgSlug.startsWith(":")) {
+      return true;
     }
 
     const organization = await this.prisma.client.organization.findUnique({
@@ -43,6 +54,9 @@ export class MultiTenancyGuard implements CanActivate {
     });
 
     if (!organization) {
+      if (isPublic) {
+        return true;
+      }
       throw new NotFoundException(
         `Organization with slug "${orgSlug}" not found`,
       );
@@ -74,6 +88,9 @@ export class MultiTenancyGuard implements CanActivate {
       });
 
       if (!member || !member.isActive) {
+        if (isPublic) {
+          return true;
+        }
         throw new ForbiddenException(
           "Access denied: You are not an active member of this organization",
         );
