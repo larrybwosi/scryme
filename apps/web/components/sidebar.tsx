@@ -463,7 +463,7 @@ export function Sidebar() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
-            {organizations?.map((org) => {
+            {organizations?.map((org: { id: string; name: string; slug?: string }) => {
               const isCurrent = org.id === activeOrg?.id;
               return (
                 <button
