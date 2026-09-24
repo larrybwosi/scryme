@@ -217,8 +217,20 @@ const inventory = {
 };
 
 const auth = {
-  terminalLogin: (cardId: string, pin: string, locationId?: string) => {
-    return client.post(API_ROUTES.POS.LOGIN(), { cardId, pin, locationId });
+  terminalLogin: async (cardId: string, pin: string, locationId?: string) => {
+    const res = await tauriInvoke<any>('login_cloud_command', {
+      cardId,
+      pin,
+      locationId: locationId || null,
+    });
+    if (res?.token && res?.member) {
+      setMemberToken(res.token);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('bakery_member_id', res.member.id);
+        localStorage.setItem('bakery_user', JSON.stringify(res.member));
+      }
+    }
+    return res;
   },
 };
 

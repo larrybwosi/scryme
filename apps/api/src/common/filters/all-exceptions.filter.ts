@@ -47,16 +47,18 @@ export class AllExceptionsFilter implements ExceptionFilter {
           : "Internal server error";
     }
 
+    const request = ctx.getRequest<any>();
+    const reqMethod = request?.method || "UNKNOWN";
+    const reqUrl = request?.originalUrl || request?.url || "unknown";
+
     // @security Redact the entire exception object before logging to prevent
     // leaking sensitive data (secrets, PII) in server logs or OpenObserve.
     const redactedException = redactSensitiveData(exception);
 
     // Log to console.error for 400s (Bad Request and above) as well as 500s
     if (status >= HttpStatus.BAD_REQUEST) {
-      console.error("Unhandled Exception:", redactedException);
+      console.error(`Unhandled Exception [${reqMethod} ${reqUrl}]:`, redactedException);
     }
-
-    const request = ctx.getRequest<any>();
     const ip =
       (request?.headers?.["x-forwarded-for"] as string) ||
       request?.ip ||

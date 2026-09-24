@@ -57,14 +57,20 @@ export class MultiTenancyGuard implements CanActivate {
     const isClientCredentials = v3Context?.authType === "v3_client";
     const isCustomer = v3Context?.authType === "v3_customer";
 
-    // Enforce strict membership verification for non-superadmin member users
-    if (user && !isSuperAdmin && !isClientCredentials && !isCustomer) {
+    // Enforce strict membership verification for non-superadmin member users or terminal member sessions
+    if (!isSuperAdmin && !isClientCredentials && !isCustomer && (user || v3Context?.memberId)) {
       const member = await this.prisma.client.member.findFirst({
-        where: {
-          organizationId: organization.id,
-          userId: user.id,
-          deletedAt: null,
-        },
+        where: v3Context?.memberId
+          ? {
+              id: v3Context.memberId,
+              organizationId: organization.id,
+              deletedAt: null,
+            }
+          : {
+              organizationId: organization.id,
+              userId: user.id,
+              deletedAt: null,
+            },
       });
 
       if (!member || !member.isActive) {
