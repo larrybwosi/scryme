@@ -1,11 +1,13 @@
 import { MultiTenancyGuard } from "../multi-tenancy.guard";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ExecutionContext, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 describe("MultiTenancyGuard - Cross Tenant Isolation", () => {
   let guard: MultiTenancyGuard;
   let prisma: PrismaService;
+  let reflector: Reflector;
 
   const mockPrisma = {
     client: {
@@ -18,9 +20,14 @@ describe("MultiTenancyGuard - Cross Tenant Isolation", () => {
     },
   };
 
+  const mockReflector = {
+    getAllAndOverride: vi.fn(),
+  };
+
   beforeEach(() => {
     prisma = mockPrisma as any;
-    guard = new MultiTenancyGuard(prisma);
+    reflector = mockReflector as any;
+    guard = new MultiTenancyGuard(prisma, reflector);
     vi.clearAllMocks();
   });
 
@@ -54,7 +61,23 @@ describe("MultiTenancyGuard - Cross Tenant Isolation", () => {
     expect(result).toBe(true);
   });
 
-  it("should throw NotFoundException if requested organization slug does not exist", async () => {
+  it("should pass through if organization slug is a route parameter template like :orgSlug", async () => {
+    const context = createMockHttpContext({ orgSlug: ":orgSlug" });
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
+
+  it("should pass through on public routes even if org slug is not found", async () => {
+    mockReflector.getAllAndOverride.mockReturnValue(true); // @AllowPublic()
+    mockPrisma.client.organization.findUnique.mockResolvedValue(null);
+
+    const context = createMockHttpContext({ orgSlug: "unknown-org" });
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
+
+  it("should throw NotFoundException if requested organization slug does not exist on non-public route", async () => {
+    mockReflector.getAllAndOverride.mockReturnValue(false);
     mockPrisma.client.organization.findUnique.mockResolvedValue(null);
 
     const context = createMockHttpContext({ orgSlug: "non-existent-org" });

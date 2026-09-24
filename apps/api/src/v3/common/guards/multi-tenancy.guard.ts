@@ -14,11 +14,11 @@ import { ALLOW_PUBLIC_KEY } from "../decorators/auth.decorator";
 export class MultiTenancyGuard implements CanActivate {
   constructor(
     private prisma: PrismaService,
-    private reflector: Reflector,
+    private reflector?: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(
+    const isPublic = this.reflector?.getAllAndOverride<boolean>(
       ALLOW_PUBLIC_KEY,
       [context.getHandler(), context.getClass()],
     );
