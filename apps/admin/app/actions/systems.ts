@@ -233,19 +233,28 @@ export async function addTagToSystemCustomers(tag: string, organizationId?: stri
     select: { id: true, tags: true },
   });
 
-  let updatedCount = 0;
-  for (const customer of customers) {
-    if (!customer.tags.includes(cleanTag)) {
-      await db.customer.update({
-        where: { id: customer.id },
-        data: { tags: [...customer.tags, cleanTag] },
-      });
-      updatedCount++;
-    }
+  // ⚡ Bolt: Performance Optimization (Chunked Concurrency for Customer Tag Additions)
+  // Filters customers needing updates and executes `db.customer.update` in parallel chunks
+  // of 10 to balance high execution throughput while protecting Prisma connection pool limits.
+  const customersToUpdate = customers.filter(
+    (customer) => !customer.tags.includes(cleanTag),
+  );
+
+  const CHUNK_SIZE = 10;
+  for (let i = 0; i < customersToUpdate.length; i += CHUNK_SIZE) {
+    const chunk = customersToUpdate.slice(i, i + CHUNK_SIZE);
+    await Promise.all(
+      chunk.map((customer) =>
+        db.customer.update({
+          where: { id: customer.id },
+          data: { tags: [...customer.tags, cleanTag] },
+        }),
+      ),
+    );
   }
 
   revalidatePath("/systems");
-  return { success: true, count: updatedCount, tag: cleanTag };
+  return { success: true, count: customersToUpdate.length, tag: cleanTag };
 }
 
 export async function removeTagFromSystemCustomers(tag: string) {
@@ -256,17 +265,24 @@ export async function removeTagFromSystemCustomers(tag: string) {
     select: { id: true, tags: true },
   });
 
-  let updatedCount = 0;
-  for (const customer of customers) {
-    await db.customer.update({
-      where: { id: customer.id },
-      data: { tags: customer.tags.filter((t) => t !== tag) },
-    });
-    updatedCount++;
+  // ⚡ Bolt: Performance Optimization (Chunked Concurrency for Customer Tag Removals)
+  // Executes `db.customer.update` in parallel chunks of 10 to reduce execution latency
+  // while guarding against Prisma connection pool exhaustion.
+  const CHUNK_SIZE = 10;
+  for (let i = 0; i < customers.length; i += CHUNK_SIZE) {
+    const chunk = customers.slice(i, i + CHUNK_SIZE);
+    await Promise.all(
+      chunk.map((customer) =>
+        db.customer.update({
+          where: { id: customer.id },
+          data: { tags: customer.tags.filter((t) => t !== tag) },
+        }),
+      ),
+    );
   }
 
   revalidatePath("/systems");
-  return { success: true, count: updatedCount, tag };
+  return { success: true, count: customers.length, tag };
 }
 
 export async function bulkUpdateCustomersStatus(isActive: boolean, organizationId?: string) {
