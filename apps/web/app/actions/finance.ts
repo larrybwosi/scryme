@@ -57,6 +57,7 @@ export async function getExpenses(params: {
     member: Member & { user: User };
     supplier: Supplier | null;
     location: any | null;
+    utilityAccount: any | null;
   })[]
 > {
   const { auth } = await checkPermission([
@@ -107,6 +108,7 @@ export async function getExpenses(params: {
       },
       supplier: true,
       location: true,
+      utilityAccount: true,
     },
     orderBy: {
       expenseDate: "desc",
@@ -491,7 +493,12 @@ export async function getFinanceOverview() {
   currentMonthStart.setDate(1);
   currentMonthStart.setHours(0, 0, 0, 0);
 
-  const [totalExpenses, pendingApprovals, monthlySpend] = await Promise.all([
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+  sixMonthsAgo.setDate(1);
+  sixMonthsAgo.setHours(0, 0, 0, 0);
+
+  const [totalExpenses, pendingApprovals, monthlySpend, recentExpenses] = await Promise.all([
     db.expense.aggregate({
       where: { organizationId: auth.organizationId, status: "PAID" },
       _sum: { amount: true },
@@ -507,11 +514,72 @@ export async function getFinanceOverview() {
       },
       _sum: { amount: true },
     }),
+    db.expense.findMany({
+      where: {
+        organizationId: auth.organizationId,
+        expenseDate: { gte: sixMonthsAgo },
+      },
+      include: {
+        category: true,
+        utilityAccount: true,
+      },
+      orderBy: {
+        expenseDate: "asc",
+      },
+    }),
   ]);
+
+  // Aggregate monthly trends for the past 6 months
+  const monthMap = new Map<string, { month: string; total: number; utilities: number; general: number }>();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const key = d.toLocaleString("default", { month: "short" });
+    monthMap.set(key, { month: key, total: 0, utilities: 0, general: 0 });
+  }
+
+  const categoryMap = new Map<string, number>();
+  let utilityTotal = 0;
+  let generalTotal = 0;
+
+  for (const exp of recentExpenses) {
+    const amt = Number(exp.amount?.toString() || 0);
+    const mKey = new Date(exp.expenseDate).toLocaleString("default", { month: "short" });
+    if (monthMap.has(mKey)) {
+      const curr = monthMap.get(mKey)!;
+      curr.total += amt;
+      if (exp.utilityAccountId) {
+        curr.utilities += amt;
+      } else {
+        curr.general += amt;
+      }
+    }
+
+    if (exp.utilityAccountId) {
+      utilityTotal += amt;
+    } else {
+      generalTotal += amt;
+    }
+
+    const catName = exp.category?.name || "Uncategorized";
+    categoryMap.set(catName, (categoryMap.get(catName) || 0) + amt);
+  }
+
+  const monthlyTrends = Array.from(monthMap.values());
+  const categoryBreakdown = Array.from(categoryMap.entries()).map(([name, amount]) => ({
+    name,
+    amount,
+  }));
 
   return {
     totalExpenses: Number(totalExpenses._sum.amount?.toString() || 0),
     pendingApprovals: pendingApprovals || 0,
     monthlySpend: Number(monthlySpend._sum.amount?.toString() || 0),
+    monthlyTrends,
+    categoryBreakdown,
+    utilityVsGeneral: {
+      utilities: utilityTotal,
+      general: generalTotal,
+    },
   };
 }

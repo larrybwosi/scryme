@@ -40,6 +40,7 @@ const expenseSchema = z.object({
   description: z.string().min(2, "Description is required"),
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
   categoryId: z.string().min(1, "Category is required"),
+  utilityAccountId: z.string().optional(),
   expenseDate: z.string(),
   paymentMethod: z.nativeEnum(PaymentMethod),
   notes: z.string().optional(),
@@ -53,10 +54,11 @@ type ExpenseFormValues = z.infer<typeof expenseSchema>;
 
 interface ExpenseDialogProps {
   categories: any[];
+  utilityAccounts?: any[];
   children: React.ReactNode;
 }
 
-export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
+export function ExpenseDialog({ categories, utilityAccounts = [], children }: ExpenseDialogProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -73,6 +75,7 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
       categoryId: "",
       expenseDate: new Date().toISOString().split("T")[0],
       paymentMethod: PaymentMethod.CASH,
+      utilityAccountId: "none",
       notes: "",
       isRecurring: false,
       frequency: RecurrenceFrequency.MONTHLY,
@@ -87,6 +90,7 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
       try {
         await createExpense({
           ...values,
+          utilityAccountId: values.utilityAccountId && values.utilityAccountId !== "none" ? values.utilityAccountId : undefined,
           expenseDate: new Date(values.expenseDate),
           startDate: values.startDate ? new Date(values.startDate) : undefined,
           endDate: values.endDate ? new Date(values.endDate) : undefined,
@@ -157,6 +161,43 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
                 )}
               />
             </div>
+                        <FormField
+              control={form.control}
+              name="utilityAccountId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Utility Account (Optional)</FormLabel>
+                  <Select
+                    onValueChange={(val) => {
+                      field.onChange(val);
+                      if (val && val !== "none") {
+                        const utilCategory = categories.find((c) =>
+                          c.name.toLowerCase().includes("util")
+                        );
+                        if (utilCategory) {
+                          form.setValue("categoryId", utilCategory.id);
+                        }
+                      }
+                    }}
+                    value={field.value || "none"}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select utility account" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">None / General Expense</SelectItem>
+                      {utilityAccounts.map((account) => (
+                        <SelectItem key={account.id} value={account.id}>
+                          {account.name} ({account.accountNumber})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="categoryId"
@@ -165,7 +206,7 @@ export function ExpenseDialog({ categories, children }: ExpenseDialogProps) {
                   <FormLabel>Category</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}>
+                    value={field.value}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select category" />

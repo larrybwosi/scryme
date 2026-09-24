@@ -10,7 +10,7 @@ import {
 } from "@repo/ui/components/ui/table";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { format } from "date-fns";
-import { MoreHorizontal, Repeat } from "lucide-react";
+import { MoreHorizontal, Repeat, Zap } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,6 +50,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
             <TableHead>Number</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Utility Account</TableHead>
             <TableHead>Location</TableHead>
             <TableHead>Amount</TableHead>
             <TableHead>Status</TableHead>
@@ -59,7 +60,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
         <TableBody>
           {expenses.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                 No expenses found
               </TableCell>
             </TableRow>
@@ -80,6 +81,16 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                 <TableCell>{expense.description}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{expense.category.name}</Badge>
+                </TableCell>
+                <TableCell>
+                  {expense.utilityAccount ? (
+                    <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 w-fit">
+                      <Zap className="w-3 h-3 text-amber-500" />
+                      {expense.utilityAccount.name}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   {expense.location?.name || (

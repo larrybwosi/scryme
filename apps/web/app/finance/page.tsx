@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
 import { FinanceStats } from "../../components/finance/finance-stats";
+import { FinanceOverviewCharts } from "../../components/finance/overview-charts";
 import { getFinanceOverview } from "../actions/finance";
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
@@ -147,6 +148,11 @@ export default async function FinanceDashboard() {
 
       <FinanceStats
         stats={stats}
+        currency={organization?.settings?.defaultCurrency || "USD"}
+      />
+
+      <FinanceOverviewCharts
+        data={stats}
         currency={organization?.settings?.defaultCurrency || "USD"}
       />
 
