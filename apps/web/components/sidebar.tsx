@@ -5,22 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient, useSession } from "@/lib/auth-client";
 import { SetupGuideTour } from "@/components/onboarding/setup-guide-tour";
+import { UserSettingsDialog } from "@/components/user-settings-dialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@repo/ui/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -29,37 +19,21 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   ChevronLeft,
-  ChevronRight,
   LayoutDashboard,
   ShoppingCart,
   Users,
   MapPin,
-  Megaphone,
   FileBarChart,
   Settings,
-  Bell,
-  HelpCircle,
-  LogOut,
   ChevronDown,
   Boxes,
   Package,
   TrendingUp,
   Zap,
-  User,
-  Cpu,
-  Moon,
-  Sun,
-  Activity,
-  HardDrive,
-  Clipboard,
-  Check,
   Settings2,
-  Sliders,
-  RotateCcw,
 } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
 
@@ -183,17 +157,13 @@ export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const [showOrgDialog, setShowOrgDialog] = useState(false);
+  const [showUserSettingsDialog, setShowUserSettingsDialog] = useState(false);
   const [showManualTour, setShowManualTour] = useState(false);
   const pathname = usePathname();
-  const router = Router();
+  const router = useRouter();
   const { data: session } = useSession();
   const { data: organizations } = authClient.useListOrganizations();
   const { data: activeOrg } = authClient.useActiveOrganization();
-
-  // Helper for router
-  function Router() {
-    return useRouter();
-  }
 
   const activeOrgName = activeOrg?.name || "Select Organization";
 
@@ -246,6 +216,15 @@ export function Sidebar() {
       <SetupGuideTour
         forceOpen={showManualTour}
         onClose={() => setShowManualTour(false)}
+      />
+
+      <UserSettingsDialog
+        open={showUserSettingsDialog}
+        onOpenChange={setShowUserSettingsDialog}
+        user={session?.user}
+        activeOrgName={activeOrgName}
+        onSignOut={handleSignOut}
+        onLaunchTour={() => setShowManualTour(true)}
       />
 
       <aside
@@ -401,55 +380,42 @@ export function Sidebar() {
           ))}
         </div>
 
-        {/* Footer Actions */}
-        <div className="p-3 border-t border-sidebar-border space-y-1">
-          {/* Re-open Setup Guide Button */}
-          <button
-            data-tour="help"
-            onClick={() => setShowManualTour(true)}
-            className={cn(
-              "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/40 transition-colors",
-              isCollapsed && "justify-center"
-            )}
-            title="Setup Guide"
-          >
-            <RotateCcw size={18} className="shrink-0" />
-            {!isCollapsed && <span>Setup Guide</span>}
-          </button>
-
-          {/* User Profile / Logout */}
-          <div className="pt-1 flex items-center justify-between">
-            {!isCollapsed ? (
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-200 shrink-0">
-                  {session?.user?.name?.charAt(0) || "U"}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium truncate leading-tight">
-                    {session?.user?.name || "User"}
-                  </p>
-                  <p className="text-[10px] text-sidebar-foreground/60 truncate">
-                    {session?.user?.email}
-                  </p>
-                </div>
-                <button
-                  onClick={handleSignOut}
-                  className="p-1.5 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/60 hover:text-destructive transition-colors shrink-0"
-                  title="Sign Out"
-                >
-                  <LogOut size={16} />
-                </button>
+        {/* Footer User Profile Card */}
+        <div className="p-3 border-t border-sidebar-border">
+          {!isCollapsed ? (
+            <button
+              onClick={() => setShowUserSettingsDialog(true)}
+              className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors text-left group"
+              title="User Info & Preferences"
+            >
+              <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-200 shrink-0 group-hover:ring-2 group-hover:ring-indigo-500 transition-all">
+                {session?.user?.name?.charAt(0) || "U"}
               </div>
-            ) : (
-              <button
-                onClick={handleSignOut}
-                className="p-2 rounded-md hover:bg-sidebar-accent text-sidebar-foreground/60 hover:text-destructive transition-colors mx-auto"
-                title="Sign Out"
-              >
-                <LogOut size={18} />
-              </button>
-            )}
-          </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium truncate leading-tight">
+                  {session?.user?.name || "User"}
+                </p>
+                <p className="text-[10px] text-sidebar-foreground/60 truncate">
+                  {session?.user?.email}
+                </p>
+              </div>
+              <Settings2 className="h-4 w-4 text-sidebar-foreground/60 group-hover:text-sidebar-foreground transition-colors shrink-0" />
+            </button>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowUserSettingsDialog(true)}
+                  className="h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-200 mx-auto hover:ring-2 hover:ring-indigo-500 transition-all"
+                >
+                  {session?.user?.name?.charAt(0) || "U"}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                User Info & Preferences
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </aside>
 
