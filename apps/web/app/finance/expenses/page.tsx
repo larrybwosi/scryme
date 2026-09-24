@@ -6,6 +6,7 @@ import {
   getExpenses,
   getExpenseCategories,
   getInventoryLocations,
+  getUtilityAccounts,
 } from "../../actions/finance";
 import { ExpenseTable } from "../../../components/finance/expense-table";
 import { ExpenseDialog } from "../../../components/finance/expense-dialog";
@@ -28,7 +29,7 @@ export default async function ExpensesPage(props: {
   }>;
 }) {
   const searchParams = await props.searchParams;
-  const [expenses, categories, locations] = await Promise.all([
+  const [expenses, categories, locations, utilityAccounts] = await Promise.all([
     getExpenses({
       search: searchParams.q,
       status: searchParams.status,
@@ -39,6 +40,7 @@ export default async function ExpensesPage(props: {
     }),
     getExpenseCategories(),
     getInventoryLocations(),
+    getUtilityAccounts(),
   ]);
 
   return (
@@ -47,7 +49,7 @@ export default async function ExpensesPage(props: {
         title="Expenses"
         subtitle="Manage and track company spending"
         icon={<Receipt className="w-7 h-7" />}>
-        <ExpenseDialog categories={categories}>
+        <ExpenseDialog categories={categories} utilityAccounts={utilityAccounts}>
           <Button className="bg-[#34A853] hover:bg-[#2d9147]">
             <Plus className="w-4 h-4 mr-2" />
             Add Expense
