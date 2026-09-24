@@ -374,6 +374,215 @@ function initialGraph(workflow?: Workflow) {
   const saved = workflow?.settings?.studio;
   if (saved?.nodes?.length) return saved;
 
+  const key = (workflow?.path || workflow?.key || "").replace(/^f\/dealio\//, "");
+
+  // Built-in Template: Customer Onboarding
+  if (key === "customer_onboarding") {
+    const nodes: StudioNode[] = [
+      {
+        id: "trigger-1",
+        type: "studio",
+        position: { x: 80, y: 160 },
+        data: {
+          ...palette[0],
+          label: "Customer Registered",
+          subtitle: "System Event",
+          description: "Triggers automatically when a new customer registers on the site or app.",
+          config: { eventType: "customer.created", source: "system" },
+        },
+      },
+      {
+        id: "delay-1",
+        type: "studio",
+        position: { x: 390, y: 160 },
+        data: {
+          ...palette[7],
+          label: "Onboarding Delay",
+          subtitle: "Timing Control",
+          description: "Wait designated period before dispatching welcome notification.",
+          config: { duration: workflow?.settings?.delayDuration || "15m", pauseType: "duration" },
+        },
+      },
+      {
+        id: "action-email",
+        type: "studio",
+        position: { x: 700, y: 160 },
+        data: {
+          ...palette[2],
+          label: "Send Welcome Email",
+          subtitle: "Communication",
+          description: "Dispatch customized onboarding email to the new customer.",
+          config: { recipient: "{{customer.email}}", subject: "Welcome to Scryme!", template: "welcome_v1" },
+        },
+      },
+      {
+        id: "action-crm",
+        type: "studio",
+        position: { x: 1010, y: 160 },
+        data: {
+          ...palette[8],
+          label: "Provision Lead Profile",
+          subtitle: "Workspace Data",
+          description: "Create or assign new contact in CRM folder bucket.",
+          config: { entity: "Customer", action: "update", folder: workflow?.settings?.crmFolder || "New Leads" },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      { id: "e1", source: "trigger-1", target: "delay-1", animated: true, style: { strokeWidth: 2, stroke: "#06b6d4" } },
+      { id: "e2", source: "delay-1", target: "action-email", animated: true, style: { strokeWidth: 2, stroke: "#3b82f6" } },
+      { id: "e3", source: "action-email", target: "action-crm", animated: true, style: { strokeWidth: 2, stroke: "#8b5cf6" } },
+    ];
+    return { nodes, edges };
+  }
+
+  // Built-in Template: Low Stock Alert Workflow
+  if (key === "inventory_alert") {
+    const nodes: StudioNode[] = [
+      {
+        id: "trigger-stock",
+        type: "studio",
+        position: { x: 80, y: 160 },
+        data: {
+          ...palette[0],
+          label: "Inventory Level Changed",
+          subtitle: "Stock Monitor",
+          description: "Fires whenever stock movement or sales deduction occurs.",
+          config: { eventType: "inventory.stock_updated", source: "inventory" },
+        },
+      },
+      {
+        id: "branch-threshold",
+        type: "studio",
+        position: { x: 390, y: 160 },
+        data: {
+          ...palette[5],
+          label: "Check Low Stock Threshold",
+          subtitle: "Logic & Routing",
+          description: "Evaluates if stock quantity is below configured threshold.",
+          conditions: {
+            matchMode: "ALL",
+            rules: [
+              { id: "r1", field: "payload.quantity", operator: "less_than", value: String(workflow?.settings?.threshold || 10) },
+            ],
+          },
+        },
+      },
+      {
+        id: "action-alert",
+        type: "studio",
+        position: { x: 720, y: 100 },
+        data: {
+          ...palette[2],
+          label: "Dispatch Low Stock Email",
+          subtitle: "Alert Notification",
+          description: "Sends alert to procurement team with reorder details.",
+          config: { recipient: workflow?.settings?.notificationEmail || "procurement@example.com", subject: "CRITICAL: Low Stock Warning", template: "low_stock_v1" },
+        },
+      },
+      {
+        id: "action-chat",
+        type: "studio",
+        position: { x: 720, y: 250 },
+        data: {
+          ...palette[3],
+          label: "Scryme Chat Alert",
+          subtitle: "Internal Chat",
+          description: "Posts instant alert message in inventory channel.",
+          config: { channel: "inventory-alerts", message: "Low stock alert: {{payload.productName}} is down to {{payload.quantity}} units." },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      { id: "e1", source: "trigger-stock", target: "branch-threshold", animated: true, style: { strokeWidth: 2, stroke: "#06b6d4" } },
+      { id: "e2", source: "branch-threshold", sourceHandle: "true", target: "action-alert", animated: true, style: { strokeWidth: 2, stroke: "#10b981" } },
+      { id: "e3", source: "branch-threshold", sourceHandle: "true", target: "action-chat", animated: true, style: { strokeWidth: 2, stroke: "#10b981" } },
+    ];
+    return { nodes, edges };
+  }
+
+  // Built-in Template: Daily Sales Report
+  if (key === "daily_sales_report") {
+    const nodes: StudioNode[] = [
+      {
+        id: "trigger-cron",
+        type: "studio",
+        position: { x: 80, y: 160 },
+        data: {
+          ...palette[1],
+          label: "Daily Dispatch Cron",
+          subtitle: "Time Schedule",
+          description: `Runs daily at ${workflow?.settings?.reportTime || "18:00"}.`,
+          config: { cron: "0 18 * * *", timezone: "UTC" },
+        },
+      },
+      {
+        id: "action-summary",
+        type: "studio",
+        position: { x: 390, y: 160 },
+        data: {
+          ...palette[4],
+          label: "Compute Sales Summary",
+          subtitle: "Analytics Calculation",
+          description: "Gathers total transaction revenue, payment methods, and unit counts.",
+          config: { method: "POST", url: "/api/analytics/sales/daily-summary", headers: "Content-Type: application/json" },
+        },
+      },
+      {
+        id: "action-report-email",
+        type: "studio",
+        position: { x: 700, y: 160 },
+        data: {
+          ...palette[2],
+          label: "Email Sales Report",
+          subtitle: "Distribution",
+          description: "Sends compiled daily sales report to executive recipients.",
+          config: { recipient: workflow?.settings?.recipients || "admin@example.com", subject: "Daily Sales & Revenue Report", template: "sales_report_v1" },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      { id: "e1", source: "trigger-cron", target: "action-summary", animated: true, style: { strokeWidth: 2, stroke: "#06b6d4" } },
+      { id: "e2", source: "action-summary", target: "action-report-email", animated: true, style: { strokeWidth: 2, stroke: "#8b5cf6" } },
+    ];
+    return { nodes, edges };
+  }
+
+  // Built-in Template: Weekly Stock Movement Report
+  if (key === "stock_movement_report") {
+    const nodes: StudioNode[] = [
+      {
+        id: "trigger-weekly-cron",
+        type: "studio",
+        position: { x: 80, y: 160 },
+        data: {
+          ...palette[1],
+          label: "Weekly Schedule Cron",
+          subtitle: "Time Schedule",
+          description: "Triggers weekly stock movement report compilation.",
+          config: { cron: `0 ${workflow?.settings?.dispatchTime?.split(":")[0] || "09"} * * ${workflow?.settings?.scheduleDay || "0"}`, timezone: "UTC" },
+        },
+      },
+      {
+        id: "action-chat-report",
+        type: "studio",
+        position: { x: 390, y: 160 },
+        data: {
+          ...palette[3],
+          label: "Publish to Scryme Chat",
+          subtitle: "Notification",
+          description: "Posts weekly stock movement breakdown to selected members in Scryme Chat.",
+          config: { channel: "stock-movement-reports", message: "Weekly Stock Movement Report: Total IN: {{summary.totalIn}}, Total OUT: {{summary.totalOut}}" },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      { id: "e1", source: "trigger-weekly-cron", target: "action-chat-report", animated: true, style: { strokeWidth: 2, stroke: "#06b6d4" } },
+    ];
+    return { nodes, edges };
+  }
+
+  // Dynamic Graph for custom/other workflows
   const nodes: StudioNode[] = [
     {
       id: "trigger",
