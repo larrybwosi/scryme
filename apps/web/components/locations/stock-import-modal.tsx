@@ -572,13 +572,13 @@ export function StockImportModal({
         {/* STEP 1: UPLOAD */}
         {step === "UPLOAD" && (
           <div className="space-y-6 pt-2">
-            <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl bg-slate-50/50 border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors cursor-pointer"
+            <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-xl bg-muted/40/50 border-border hover:bg-muted/40 hover:border-slate-300 transition-colors cursor-pointer"
                  onClick={() => fileInputRef.current?.click()}>
-              <Upload className="w-12 h-12 mb-4 text-slate-400" />
-              <h3 className="mb-2 text-[15px] font-semibold text-slate-800">
+              <Upload className="w-12 h-12 mb-4 text-muted-foreground/70" />
+              <h3 className="mb-2 text-[15px] font-semibold text-foreground">
                 Upload your stock Excel or CSV sheet
               </h3>
-              <p className="mb-4 text-xs text-slate-500">
+              <p className="mb-4 text-xs text-muted-foreground">
                 Supports .xlsx, .xls, .csv files up to 10MB
               </p>
               <Button size="sm" className="bg-slate-900 hover:bg-slate-800 text-white rounded-sm">
@@ -594,12 +594,12 @@ export function StockImportModal({
               />
             </div>
 
-            <div className="p-5 bg-slate-50 border border-slate-150 rounded-lg">
-              <h4 className="flex items-center gap-2 mb-2 text-sm font-semibold text-slate-800">
+            <div className="p-5 bg-muted/40 border border-slate-150 rounded-lg">
+              <h4 className="flex items-center gap-2 mb-2 text-sm font-semibold text-foreground">
                 <Download className="w-4 h-4 text-emerald-600" />
                 Want a pre-formatted template?
               </h4>
-              <p className="mb-4 text-xs text-slate-600 leading-relaxed">
+              <p className="mb-4 text-xs text-muted-foreground leading-relaxed">
                 Download a starter spreadsheet containing the key headers (Product Name, Variant Name, SKU, Barcode, and New Total Stock) to make import pairing absolutely seamless.
               </p>
               <div className="flex flex-wrap gap-2.5">
@@ -607,7 +607,7 @@ export function StockImportModal({
                   variant="outline"
                   size="sm"
                   onClick={() => downloadTemplate("csv")}
-                  className="bg-white border-slate-250 hover:bg-slate-100 text-xs rounded-sm text-slate-700"
+                  className="bg-card border-slate-250 hover:bg-muted text-xs rounded-sm text-foreground/90"
                 >
                   Download CSV Template
                 </Button>
@@ -615,7 +615,7 @@ export function StockImportModal({
                   variant="outline"
                   size="sm"
                   onClick={() => downloadTemplate("xlsx")}
-                  className="bg-white border-slate-250 hover:bg-slate-100 text-xs rounded-sm text-slate-700"
+                  className="bg-card border-slate-250 hover:bg-muted text-xs rounded-sm text-foreground/90"
                 >
                   Download Excel Template
                 </Button>
@@ -630,13 +630,13 @@ export function StockImportModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="border-b pb-2">
-                  <h4 className="font-semibold text-sm text-slate-900">Map Columns to System Properties</h4>
-                  <p className="text-xs text-slate-500 mt-1">Specify which headers from your file match system fields.</p>
+                  <h4 className="font-semibold text-sm text-foreground">Map Columns to System Properties</h4>
+                  <p className="text-xs text-muted-foreground mt-1">Specify which headers from your file match system fields.</p>
                 </div>
                 <div className="space-y-4">
                   {FIELDS.map((field) => (
                     <div key={field.key} className="space-y-1.5">
-                      <Label className="flex items-center gap-1 text-xs font-semibold text-slate-700">
+                      <Label className="flex items-center gap-1 text-xs font-semibold text-foreground/90">
                         {field.label}
                         {field.required && <span className="text-red-500">*</span>}
                       </Label>
@@ -646,7 +646,7 @@ export function StockImportModal({
                           setMappings((prev) => ({ ...prev, [field.key]: val === "none" ? "" : val }))
                         }
                       >
-                        <SelectTrigger className="h-9 rounded-sm border-slate-200">
+                        <SelectTrigger className="h-9 rounded-sm border-border">
                           <SelectValue placeholder={`Select spreadsheet column for ${field.label}`} />
                         </SelectTrigger>
                         <SelectContent>
@@ -663,27 +663,27 @@ export function StockImportModal({
                 </div>
               </div>
 
-              <div className="p-4 border rounded-lg bg-slate-50/50">
-                <h4 className="mb-3 font-semibold text-xs text-slate-800 uppercase tracking-wider">
+              <div className="p-4 border rounded-lg bg-muted/40/50">
+                <h4 className="mb-3 font-semibold text-xs text-foreground uppercase tracking-wider">
                   Spreadsheet Row Preview (First 3 items)
                 </h4>
                 <div className="space-y-3">
                   {rawData.slice(0, 3).map((row, i) => (
                     <div
                       key={i}
-                      className="p-3 bg-white border border-slate-150 rounded shadow-sm text-xs space-y-1.5"
+                      className="p-3 bg-card border border-slate-150 rounded shadow-sm text-xs space-y-1.5"
                     >
-                      <div className="font-semibold text-[11px] text-slate-400 pb-1 border-b border-dashed">
+                      <div className="font-semibold text-[11px] text-muted-foreground/70 pb-1 border-b border-dashed">
                         Row #{i + 1}
                       </div>
                       {Object.entries(mappings).map(
                         ([key, header]) =>
                           header && (
                             <div key={key} className="flex justify-between items-center py-0.5">
-                              <span className="text-slate-400 text-[11px]">
+                              <span className="text-muted-foreground/70 text-[11px]">
                                 {FIELDS.find((f) => f.key === key)?.label}:
                               </span>
-                              <span className="font-medium text-slate-800 font-mono text-[11.5px]">
+                              <span className="font-medium text-foreground font-mono text-[11.5px]">
                                 {row[header]}
                               </span>
                             </div>
@@ -726,74 +726,74 @@ export function StockImportModal({
             </div>
 
             {/* Stats Dashboard */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-3.5 border rounded-lg">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-muted/40 p-3.5 border rounded-lg">
               <div className="text-center py-1">
-                <div className="text-lg font-bold text-slate-900">{stats.total}</div>
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 mt-0.5">Total Rows</div>
+                <div className="text-lg font-bold text-foreground">{stats.total}</div>
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70 mt-0.5">Total Rows</div>
               </div>
               <div className="text-center py-1 border-l">
                 <div className="text-lg font-bold text-emerald-600">{stats.autoMatchedHigh}</div>
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 mt-0.5">Auto-Matched</div>
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70 mt-0.5">Auto-Matched</div>
               </div>
               <div className="text-center py-1 border-l">
                 <div className="text-lg font-bold text-amber-500">{stats.needsReview}</div>
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 mt-0.5">Needs Review</div>
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70 mt-0.5">Needs Review</div>
               </div>
               <div className="text-center py-1 border-l">
-                <div className="text-lg font-bold text-slate-500">{stats.skipped}</div>
-                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-400 mt-0.5">Skipped</div>
+                <div className="text-lg font-bold text-muted-foreground">{stats.skipped}</div>
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/70 mt-0.5">Skipped</div>
               </div>
             </div>
 
             {/* Filters and Search */}
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-              <div className="flex bg-slate-100 p-0.5 rounded-md w-full sm:w-auto">
+              <div className="flex bg-muted p-0.5 rounded-md w-full sm:w-auto">
                 <button
                   onClick={() => setActiveTab("all")}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === "all" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === "all" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   All ({rowMatches.filter(m => !m.isSkipped).length})
                 </button>
                 <button
                   onClick={() => setActiveTab("needs-review")}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === "needs-review" ? "bg-white text-amber-600 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === "needs-review" ? "bg-card text-amber-600 shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Needs Review ({rowMatches.filter(m => !m.isSkipped && (m.matchScore < 0.9 || !m.matchedVariantId)).length})
                 </button>
                 <button
                   onClick={() => setActiveTab("matched")}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === "matched" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === "matched" ? "bg-card text-emerald-600 shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Auto-Matched ({rowMatches.filter(m => !m.isSkipped && m.matchScore >= 0.9).length})
                 </button>
                 <button
                   onClick={() => setActiveTab("skipped")}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === "skipped" ? "bg-white text-slate-600 shadow-sm" : "text-slate-500 hover:text-slate-900"}`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${activeTab === "skipped" ? "bg-card text-muted-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Skipped ({rowMatches.filter(m => m.isSkipped).length})
                 </button>
               </div>
 
               <div className="relative w-full sm:w-64">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/70" />
                 <Input
                   placeholder="Search file rows..."
                   value={matchingSearch}
                   onChange={(e) => setMatchingSearch(e.target.value)}
-                  className="pl-8 h-8 text-xs border-slate-200 focus-visible:ring-emerald-500 rounded-sm"
+                  className="pl-8 h-8 text-xs border-border focus-visible:ring-emerald-500 rounded-sm"
                 />
               </div>
             </div>
 
             {/* Match rows list */}
-            <div className="border rounded-lg overflow-hidden bg-white max-h-[350px] overflow-y-auto">
+            <div className="border rounded-lg overflow-hidden bg-card max-h-[350px] overflow-y-auto">
               {paginatedMatches.length === 0 ? (
-                <div className="p-8 text-center text-slate-400 text-xs">
+                <div className="p-8 text-center text-muted-foreground/70 text-xs">
                   No items match the selected filter.
                 </div>
               ) : (
                 <Table>
-                  <TableHeader className="bg-slate-50">
+                  <TableHeader className="bg-muted/40">
                     <TableRow>
                       <TableHead className="w-[80px] text-xs">Action</TableHead>
                       <TableHead className="text-xs">File Product Variant / SKU</TableHead>
@@ -810,7 +810,7 @@ export function StockImportModal({
                       return (
                         <TableRow
                           key={match.index}
-                          className={`hover:bg-slate-50/50 transition-colors ${isSkipped ? "opacity-50 bg-slate-50/30" : ""}`}
+                          className={`hover:bg-muted/40/50 transition-colors ${isSkipped ? "opacity-50 bg-muted/40/30" : ""}`}
                         >
                           <TableCell>
                             <Button
@@ -819,7 +819,7 @@ export function StockImportModal({
                               onClick={() => toggleSkipRow(match.index)}
                               className={`h-6 text-[10px] font-semibold tracking-wide uppercase px-2 rounded-sm ${
                                 isSkipped
-                                  ? "border-slate-300 text-slate-600 hover:bg-slate-100"
+                                  ? "border-slate-300 text-muted-foreground hover:bg-muted"
                                   : "border-red-200 text-red-600 hover:bg-red-50"
                               }`}
                             >
@@ -828,15 +828,15 @@ export function StockImportModal({
                           </TableCell>
                           <TableCell>
                             <div className="space-y-0.5">
-                              <div className="font-semibold text-slate-800 text-[13px]">
+                              <div className="font-semibold text-foreground text-[13px]">
                                 {match.rawProductName}
                                 {match.rawVariantName && (
-                                  <span className="text-slate-400 font-normal"> &bull; {match.rawVariantName}</span>
+                                  <span className="text-muted-foreground/70 font-normal"> &bull; {match.rawVariantName}</span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                                {match.rawSku && <span className="font-mono bg-slate-100 px-1 py-0.5 rounded">SKU: {match.rawSku}</span>}
-                                {match.rawBarcode && <span className="font-mono bg-slate-100 px-1 py-0.5 rounded">Barcode: {match.rawBarcode}</span>}
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground/70">
+                                {match.rawSku && <span className="font-mono bg-muted px-1 py-0.5 rounded">SKU: {match.rawSku}</span>}
+                                {match.rawBarcode && <span className="font-mono bg-muted px-1 py-0.5 rounded">Barcode: {match.rawBarcode}</span>}
                               </div>
                             </div>
                           </TableCell>
@@ -846,10 +846,10 @@ export function StockImportModal({
                                 {hasMatch ? (
                                   <div className="space-y-0.5">
                                     <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="font-semibold text-slate-800 text-[13px]">
+                                      <span className="font-semibold text-foreground text-[13px]">
                                         {match.matchedVariant?.name}
                                         {match.matchedVariant?.variantName && match.matchedVariant?.variantName !== "Default" && (
-                                          <span className="text-slate-400 font-normal"> &bull; {match.matchedVariant?.variantName}</span>
+                                          <span className="text-muted-foreground/70 font-normal"> &bull; {match.matchedVariant?.variantName}</span>
                                         )}
                                       </span>
                                       <Badge
@@ -863,7 +863,7 @@ export function StockImportModal({
                                         {Math.round(match.matchScore * 100)}% Match
                                       </Badge>
                                     </div>
-                                    <div className="text-[10px] text-slate-400 font-mono">
+                                    <div className="text-[10px] text-muted-foreground/70 font-mono">
                                       System SKU: {match.matchedVariant?.sku}
                                     </div>
                                   </div>
@@ -881,18 +881,18 @@ export function StockImportModal({
                                   <Button
                                     variant="ghost"
                                     size="xs"
-                                    className="h-7 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 px-2 rounded-sm"
+                                    className="h-7 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted border border-border px-2 rounded-sm"
                                   >
                                     Change Match
                                   </Button>
                                 </SystemVariantSelector>
                               </div>
                             ) : (
-                              <span className="text-slate-400 italic text-xs">Skipped</span>
+                              <span className="text-muted-foreground/70 italic text-xs">Skipped</span>
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            <span className="font-mono font-bold text-slate-800 text-[13px]">
+                            <span className="font-mono font-bold text-foreground text-[13px]">
                               {match.rawStock}
                             </span>
                           </TableCell>
@@ -907,8 +907,8 @@ export function StockImportModal({
             {/* Matching Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-1">
-                <div className="text-xs text-slate-400">
-                  Showing matches <span className="font-medium text-slate-600">{Math.min(filteredMatches.length, (matchingPage - 1) * itemsPerPage + 1)}-{Math.min(filteredMatches.length, matchingPage * itemsPerPage)}</span> of <span className="font-medium text-slate-600">{filteredMatches.length}</span> rows
+                <div className="text-xs text-muted-foreground/70">
+                  Showing matches <span className="font-medium text-muted-foreground">{Math.min(filteredMatches.length, (matchingPage - 1) * itemsPerPage + 1)}-{Math.min(filteredMatches.length, matchingPage * itemsPerPage)}</span> of <span className="font-medium text-muted-foreground">{filteredMatches.length}</span> rows
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Button
@@ -916,11 +916,11 @@ export function StockImportModal({
                     size="xs"
                     onClick={() => setMatchingPage(prev => Math.max(1, prev - 1))}
                     disabled={matchingPage === 1}
-                    className="border-slate-200 rounded-sm"
+                    className="border-border rounded-sm"
                   >
                     <ChevronLeft className="w-3.5 h-3.5 mr-0.5" /> Prev
                   </Button>
-                  <span className="text-[11px] font-medium text-slate-500 px-1">
+                  <span className="text-[11px] font-medium text-muted-foreground px-1">
                     Page {matchingPage} of {totalPages}
                   </span>
                   <Button
@@ -928,7 +928,7 @@ export function StockImportModal({
                     size="xs"
                     onClick={() => setMatchingPage(prev => Math.min(totalPages, prev + 1))}
                     disabled={matchingPage === totalPages}
-                    className="border-slate-200 rounded-sm"
+                    className="border-border rounded-sm"
                   >
                     Next <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                   </Button>
@@ -955,9 +955,9 @@ export function StockImportModal({
         {/* STEP 4: PREVIEW */}
         {step === "PREVIEW" && (
           <div className="space-y-6 pt-2">
-            <div className="p-4 border rounded-xl bg-slate-50/50">
-              <h4 className="font-semibold text-slate-900 text-sm mb-3">Final Import Verification</h4>
-              <p className="text-xs text-slate-600 leading-normal">
+            <div className="p-4 border rounded-xl bg-muted/40/50">
+              <h4 className="font-semibold text-foreground text-sm mb-3">Final Import Verification</h4>
+              <p className="text-xs text-muted-foreground leading-normal">
                 Please verify the summary below before executing the absolute stock updates. These updates will perform database corrections, log stock adjustments and inventory count audit history.
               </p>
             </div>
@@ -969,11 +969,11 @@ export function StockImportModal({
                 </div>
                 <div className="text-[11px] text-emerald-600 font-semibold tracking-wide uppercase mt-1">Variants to Update</div>
               </div>
-              <div className="p-4 bg-slate-100 rounded-lg border border-slate-200 text-center">
-                <div className="text-3xl font-extrabold text-slate-700">
+              <div className="p-4 bg-muted rounded-lg border border-border text-center">
+                <div className="text-3xl font-extrabold text-foreground/90">
                   {rowMatches.filter((m) => m.isSkipped).length}
                 </div>
-                <div className="text-[11px] text-slate-600 font-semibold tracking-wide uppercase mt-1">Rows Skipped</div>
+                <div className="text-[11px] text-muted-foreground font-semibold tracking-wide uppercase mt-1">Rows Skipped</div>
               </div>
               <div className="p-4 bg-amber-50 rounded-lg border border-amber-100 text-center">
                 <div className="text-3xl font-extrabold text-amber-700">
@@ -984,9 +984,9 @@ export function StockImportModal({
             </div>
 
             {/* List first 15 of planned updates */}
-            <div className="border rounded-lg overflow-hidden bg-white max-h-[250px] overflow-y-auto">
+            <div className="border rounded-lg overflow-hidden bg-card max-h-[250px] overflow-y-auto">
               <Table>
-                <TableHeader className="bg-slate-50">
+                <TableHeader className="bg-muted/40">
                   <TableRow>
                     <TableHead className="text-xs">Product Variant</TableHead>
                     <TableHead className="text-xs">Current Stock</TableHead>
@@ -1002,15 +1002,15 @@ export function StockImportModal({
                       const delta = m.rawStock - (m.matchedVariant?.currentStock || 0);
                       return (
                         <TableRow key={i}>
-                          <TableCell className="font-semibold text-slate-800">
+                          <TableCell className="font-semibold text-foreground">
                             {m.matchedVariant?.name}
                             {m.matchedVariant?.variantName && m.matchedVariant?.variantName !== "Default" && (
-                              <span className="text-slate-400 font-normal"> &bull; {m.matchedVariant?.variantName}</span>
+                              <span className="text-muted-foreground/70 font-normal"> &bull; {m.matchedVariant?.variantName}</span>
                             )}
                           </TableCell>
                           <TableCell className="font-mono">{m.matchedVariant?.currentStock ?? 0}</TableCell>
                           <TableCell className="font-mono text-emerald-700 font-bold">{m.rawStock}</TableCell>
-                          <TableCell className={`text-right font-mono font-semibold ${delta > 0 ? "text-emerald-600" : delta < 0 ? "text-red-500" : "text-slate-500"}`}>
+                          <TableCell className={`text-right font-mono font-semibold ${delta > 0 ? "text-emerald-600" : delta < 0 ? "text-red-500" : "text-muted-foreground"}`}>
                             {delta > 0 ? `+${delta}` : delta === 0 ? "0" : delta}
                           </TableCell>
                         </TableRow>
@@ -1019,7 +1019,7 @@ export function StockImportModal({
                 </TableBody>
               </Table>
               {rowMatches.filter((m) => !m.isSkipped && m.matchedVariantId).length > 15 && (
-                <div className="text-center p-2.5 text-xs text-slate-400 border-t bg-slate-50">
+                <div className="text-center p-2.5 text-xs text-muted-foreground/70 border-t bg-muted/40">
                   And {rowMatches.filter((m) => !m.isSkipped && m.matchedVariantId).length - 15} more updates...
                 </div>
               )}
@@ -1058,8 +1058,8 @@ export function StockImportModal({
               <Check className="w-8 h-8" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-slate-900">Stock Update Complete</h3>
-              <p className="text-sm text-slate-500 mt-1 max-w-sm mx-auto leading-relaxed">
+              <h3 className="text-lg font-bold text-foreground">Stock Update Complete</h3>
+              <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto leading-relaxed">
                 Successfully updated <strong>{results.success}</strong> product variants with the new absolute stock counts at <strong>{locationName}</strong>.
               </p>
             </div>
@@ -1112,34 +1112,34 @@ function SystemVariantSelector({
       <PopoverContent className="w-[320px] p-2" align="end">
         <div className="space-y-2">
           <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground/70" />
             <Input
               placeholder="Search product, SKU..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-xs border-slate-200 focus-visible:ring-emerald-500"
+              className="pl-8 h-8 text-xs border-border focus-visible:ring-emerald-500"
             />
           </div>
           <div className="max-h-[220px] overflow-y-auto divide-y text-xs">
             {filtered.length === 0 ? (
-              <p className="p-3 text-center text-slate-400 italic">No variants found</p>
+              <p className="p-3 text-center text-muted-foreground/70 italic">No variants found</p>
             ) : (
               filtered.map((v) => (
                 <button
                   key={v.id}
-                  className="w-full text-left px-2.5 py-1.5 hover:bg-slate-50 transition-colors flex flex-col gap-0.5 rounded"
+                  className="w-full text-left px-2.5 py-1.5 hover:bg-muted/40 transition-colors flex flex-col gap-0.5 rounded"
                   onClick={() => {
                     onSelect(v);
                     setOpen(false);
                   }}
                 >
-                  <span className="font-semibold text-slate-800 text-[12px]">
+                  <span className="font-semibold text-foreground text-[12px]">
                     {v.name}
                     {v.variantName && v.variantName !== "Default" && (
-                      <span className="text-slate-400 font-normal"> &bull; {v.variantName}</span>
+                      <span className="text-muted-foreground/70 font-normal"> &bull; {v.variantName}</span>
                     )}
                   </span>
-                  <span className="font-mono text-[10px] text-slate-400">SKU: {v.sku}</span>
+                  <span className="font-mono text-[10px] text-muted-foreground/70">SKU: {v.sku}</span>
                 </button>
               ))
             )}

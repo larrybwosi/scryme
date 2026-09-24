@@ -126,58 +126,58 @@ export default async function LocationDetailPage({
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-slate-200 bg-card">
+      <div className="border-b border-border bg-card">
         <div className="px-8 pt-4">
           <nav
             aria-label="Breadcrumb"
-            className="flex items-center gap-1.5 text-[12px] font-medium text-slate-500 mb-4">
+            className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground mb-4">
             <Link
               href="/locations"
-              className="flex items-center gap-1 hover:text-slate-900 transition-colors">
+              className="flex items-center gap-1 hover:text-foreground transition-colors">
               <ArrowLeft size={12} strokeWidth={2.25} />
               <span className="uppercase tracking-wide">Locations</span>
             </Link>
             {location.parentLocation && (
               <>
-                <ChevronRight size={12} className="text-slate-300" />
+                <ChevronRight size={12} className="text-muted-foreground/50" />
                 <Link
                   href={`/locations/${location.parentLocation.id}`}
-                  className="uppercase tracking-wide hover:text-slate-900 transition-colors">
+                  className="uppercase tracking-wide hover:text-foreground transition-colors">
                   {location.parentLocation.name}
                 </Link>
               </>
             )}
-            <ChevronRight size={12} className="text-slate-300" />
-            <span className="uppercase tracking-wide text-slate-900">
+            <ChevronRight size={12} className="text-muted-foreground/50" />
+            <span className="uppercase tracking-wide text-foreground">
               {location.name}
             </span>
           </nav>
 
-          <div className="flex items-start justify-between pb-5 border-b border-slate-100">
+          <div className="flex items-start justify-between pb-5 border-b border-border/50">
             <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-sm bg-slate-900 flex items-center justify-center text-white shrink-0 mt-0.5">
+              <div className="w-10 h-10 rounded-sm bg-primary flex items-center justify-center text-white shrink-0 mt-0.5">
                 <MapPin size={17} strokeWidth={2} />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-[19px] font-semibold text-slate-900 tracking-tight leading-none">
+                  <h1 className="text-[19px] font-semibold text-foreground tracking-tight leading-none">
                     {location.name}
                   </h1>
                   <Badge
                     variant="outline"
-                    className="rounded-sm capitalize font-semibold text-[10px] tracking-wide px-1.5 py-0 border-slate-300 text-slate-600">
+                    className="rounded-sm capitalize font-semibold text-[10px] tracking-wide px-1.5 py-0 border-border text-muted-foreground">
                     {location.locationType.toLowerCase().replace("_", " ")}
                   </Badge>
                   {location.isDefault && (
-                    <Badge className="rounded-sm bg-slate-900 text-white border-0 text-[10px] font-semibold tracking-wide px-1.5 py-0 hover:bg-slate-900">
+                    <Badge className="rounded-sm bg-primary text-white border-0 text-[10px] font-semibold tracking-wide px-1.5 py-0 hover:bg-primary">
                       Default
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 mt-2 text-[12px] text-slate-500">
+                <div className="flex items-center gap-1.5 mt-2 text-[12px] text-muted-foreground">
                   {location.code ? (
-                    <button className="flex items-center gap-1.5 hover:text-slate-900 transition-colors group">
-                      <span className="font-mono bg-slate-100 border border-slate-200 rounded-sm px-1.5 py-0.5 text-[11px] text-slate-700">
+                    <button className="flex items-center gap-1.5 hover:text-foreground transition-colors group">
+                      <span className="font-mono bg-muted border border-slate-200 rounded-sm px-1.5 py-0.5 text-[11px] text-foreground/90">
                         {location.code}
                       </span>
                       <Copy
@@ -186,7 +186,7 @@ export default async function LocationDetailPage({
                       />
                     </button>
                   ) : (
-                    <span className="italic text-slate-400">
+                    <span className="italic text-muted-foreground/70">
                       No location code assigned
                     </span>
                   )}
@@ -202,7 +202,7 @@ export default async function LocationDetailPage({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="rounded-sm gap-1.5 border-slate-300 text-slate-700">
+                  className="rounded-sm gap-1.5 border-border text-foreground/90">
                   <Plus size={13} />
                   Sub-location
                 </Button>
@@ -214,7 +214,7 @@ export default async function LocationDetailPage({
                 isEdit>
                 <Button
                   size="sm"
-                  className="rounded-sm gap-1.5 bg-slate-900 hover:bg-slate-800">
+                  className="rounded-sm gap-1.5 bg-primary hover:bg-primary/90">
                   <Settings size={13} />
                   Configure
                 </Button>
@@ -228,12 +228,12 @@ export default async function LocationDetailPage({
               <div
                 key={s.label}
                 className={`py-3 px-0.5 ${
-                  i !== 0 ? "border-l border-slate-100 pl-4" : ""
+                  i !== 0 ? "border-l border-border/50 pl-4" : ""
                 }`}>
-                <div className="text-[20px] font-semibold text-slate-900 leading-none tabular-nums">
+                <div className="text-[20px] font-semibold text-foreground leading-none tabular-nums">
                   {s.value}
                 </div>
-                <div className="text-[10px] uppercase font-semibold tracking-wide text-slate-400 mt-1.5">
+                <div className="text-[10px] uppercase font-semibold tracking-wide text-muted-foreground/70 mt-1.5">
                   {s.label}
                 </div>
               </div>
@@ -260,12 +260,12 @@ export default async function LocationDetailPage({
                 </span>
               </div>
             ) : (
-              <div className="px-4 py-5 bg-slate-50 border-b border-slate-200 flex flex-col items-center text-center gap-1.5">
-                <Building2 size={16} className="text-slate-400" />
-                <p className="text-[11px] font-semibold text-slate-700">
+              <div className="px-4 py-5 bg-muted/50 border-b border-slate-200 flex flex-col items-center text-center gap-1.5">
+                <Building2 size={16} className="text-muted-foreground/70" />
+                <p className="text-[11px] font-semibold text-foreground/90">
                   No showcase image
                 </p>
-                <p className="text-[11px] text-slate-500 leading-normal max-w-52.5">
+                <p className="text-[11px] text-muted-foreground leading-normal max-w-52.5">
                   Add an image to represent this branch on the public homepage.
                 </p>
               </div>
@@ -286,37 +286,37 @@ export default async function LocationDetailPage({
               />
             </div>
 
-            <div className="px-4 py-3 border-t border-slate-100 space-y-1.5">
-              <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">
+            <div className="px-4 py-3 border-t border-border/50 space-y-1.5">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70 font-semibold">
                 Description
               </span>
-              <p className="text-[13px] text-slate-700 leading-relaxed">
+              <p className="text-[13px] text-foreground/90 leading-relaxed">
                 {location.description || (
-                  <span className="italic text-slate-400">
+                  <span className="italic text-muted-foreground/70">
                     No description provided.
                   </span>
                 )}
               </p>
             </div>
 
-            <div className="px-4 py-3 border-t border-slate-100 space-y-1.5">
-              <span className="text-[10px] uppercase tracking-wide text-slate-400 font-semibold">
+            <div className="px-4 py-3 border-t border-border/50 space-y-1.5">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70 font-semibold">
                 Address
               </span>
               {location.address ? (
-                <div className="text-[13px] text-slate-700 leading-relaxed">
+                <div className="text-[13px] text-foreground/90 leading-relaxed">
                   <p>{(location.address as any).street}</p>
                   <p>
                     {(location.address as any).city},{" "}
                     {(location.address as any).state}{" "}
                     {(location.address as any).zipCode}
                   </p>
-                  <p className="text-slate-500">
+                  <p className="text-muted-foreground">
                     {(location.address as any).country}
                   </p>
                 </div>
               ) : (
-                <p className="text-[13px] italic text-slate-400">
+                <p className="text-[13px] italic text-muted-foreground/70">
                   No address added
                 </p>
               )}
@@ -340,7 +340,7 @@ export default async function LocationDetailPage({
               <Link href={getTabUrl("hierarchy")} className="shrink-0">
                 <TabsTrigger
                   value="hierarchy"
-                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-slate-500 data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-slate-700 transition-colors">
+                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-foreground/90 transition-colors">
                   <Layers size={14} />
                   Hierarchy
                   <CountBadge n={childCount + zoneCount} />
@@ -349,7 +349,7 @@ export default async function LocationDetailPage({
               <Link href={getTabUrl("stock")} className="shrink-0">
                 <TabsTrigger
                   value="stock"
-                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-slate-500 data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-slate-700 transition-colors">
+                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-foreground/90 transition-colors">
                   <Database size={14} />
                   Stock
                   <CountBadge n={stockTotal} />
@@ -358,7 +358,7 @@ export default async function LocationDetailPage({
               <Link href={getTabUrl("storage")} className="shrink-0">
                 <TabsTrigger
                   value="storage"
-                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-slate-500 data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-slate-700 transition-colors">
+                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-foreground/90 transition-colors">
                   <Box size={14} />
                   Storage
                   <CountBadge n={unitCount} />
@@ -367,7 +367,7 @@ export default async function LocationDetailPage({
               <Link href={getTabUrl("management")} className="shrink-0">
                 <TabsTrigger
                   value="management"
-                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-slate-500 data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-slate-700 transition-colors">
+                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-foreground/90 transition-colors">
                   <Settings size={14} />
                   Enterprise
                 </TabsTrigger>
@@ -385,7 +385,7 @@ export default async function LocationDetailPage({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="rounded-sm gap-1.5 h-7 text-[12px] font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                      className="rounded-sm gap-1.5 h-7 text-[12px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted">
                       <Plus size={13} />
                       Add
                     </Button>
@@ -402,23 +402,23 @@ export default async function LocationDetailPage({
                   <div className="border border-slate-200 divide-y divide-slate-200 bg-card">
                     {location.childLocations.map((child: any) => (
                       <Link key={child.id} href={`/locations/${child.id}`}>
-                        <div className="px-4 py-3 hover:bg-slate-50 transition-colors flex items-center justify-between group">
+                        <div className="px-4 py-3 hover:bg-muted/50 transition-colors flex items-center justify-between group">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-7 h-7 rounded-sm bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-slate-900 group-hover:border-slate-300 transition-colors shrink-0">
+                            <div className="w-7 h-7 rounded-sm bg-muted border border-slate-200 flex items-center justify-center text-muted-foreground/70 group-hover:text-foreground group-hover:border-border transition-colors shrink-0">
                               <MapPin size={13} />
                             </div>
                             <div className="min-w-0">
-                              <div className="font-medium text-[13px] text-slate-900 truncate">
+                              <div className="font-medium text-[13px] text-foreground truncate">
                                 {child.name}
                               </div>
-                              <div className="text-[10px] uppercase font-semibold text-slate-400 tracking-wide">
+                              <div className="text-[10px] uppercase font-semibold text-muted-foreground/70 tracking-wide">
                                 {child.locationType}
                               </div>
                             </div>
                           </div>
                           <ChevronRight
                             size={14}
-                            className="text-slate-300 group-hover:text-slate-600 shrink-0"
+                            className="text-muted-foreground/50 group-hover:text-muted-foreground shrink-0"
                           />
                         </div>
                       </Link>
@@ -431,13 +431,13 @@ export default async function LocationDetailPage({
             </TabsContent>
 
             <TabsContent value="stock" className="mt-6">
-              <div className="border border-slate-200 bg-card">
+              <div className="border border-border bg-card">
                 <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-                  <span className="text-[13px] font-semibold text-slate-900 flex items-center gap-2">
-                    <Database size={14} className="text-slate-500" />
+                  <span className="text-[13px] font-semibold text-foreground flex items-center gap-2">
+                    <Database size={14} className="text-muted-foreground" />
                     Inventory
                   </span>
-                  <span className="text-[11px] text-slate-400 font-medium tabular-nums">
+                  <span className="text-[11px] text-muted-foreground/70 font-medium tabular-nums">
                     {stockTotal} SKU{stockTotal === 1 ? "" : "s"}
                   </span>
                 </div>
@@ -476,9 +476,9 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border border-slate-200 bg-card">
-      <div className="px-4 py-2.5 border-b border-slate-200 bg-slate-50/60">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+    <div className="border border-border bg-card">
+      <div className="px-4 py-2.5 border-b border-slate-200 bg-muted/50/60">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
         </span>
       </div>
@@ -489,7 +489,7 @@ function Panel({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
       {children}
     </h3>
   );
@@ -508,13 +508,13 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-center justify-between px-4 py-2.5">
-      <span className="flex items-center gap-2 text-[12px] text-slate-500">
+      <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
         {icon}
         {label}
       </span>
       <span
         className={`text-[13px] font-medium text-right ${
-          muted ? "text-slate-400 italic font-normal" : "text-slate-900"
+          muted ? "text-muted-foreground/70 italic font-normal" : "text-foreground"
         }`}>
         {value}
       </span>
@@ -525,7 +525,7 @@ function DetailRow({
 function CountBadge({ n }: { n: number }) {
   if (!n) return null;
   return (
-    <span className="ml-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-sm bg-slate-100 text-slate-600 leading-none tabular-nums">
+    <span className="ml-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-sm bg-muted text-muted-foreground leading-none tabular-nums">
       {n}
     </span>
   );
@@ -541,10 +541,10 @@ function EmptyState({
   description: string;
 }) {
   return (
-    <div className="p-8 border border-dashed border-slate-300 bg-card text-center flex flex-col items-center gap-2">
-      <div className="text-slate-300">{icon}</div>
-      <p className="text-[13px] font-semibold text-slate-900">{title}</p>
-      <p className="text-[13px] text-slate-500 max-w-sm">{description}</p>
+    <div className="p-8 border border-dashed border-border bg-card text-center flex flex-col items-center gap-2">
+      <div className="text-muted-foreground/50">{icon}</div>
+      <p className="text-[13px] font-semibold text-foreground">{title}</p>
+      <p className="text-[13px] text-muted-foreground max-w-sm">{description}</p>
     </div>
   );
 }

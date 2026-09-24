@@ -24,7 +24,7 @@ export default async function LocationsPage() {
     <div className="flex flex-col gap-6 p-8 bg-background min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-[#1D1D1F]">Locations</h1>
+          <h1 className="text-2xl font-bold text-foreground">Locations</h1>
           <p className="text-sm text-muted-foreground">
             Manage your branches, warehouses, and storage points.
           </p>
@@ -41,7 +41,7 @@ export default async function LocationsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
         <div className="bg-card p-4 rounded-xl border shadow-sm">
-          <div className="flex items-center gap-3 text-blue-600 mb-2">
+          <div className="flex items-center gap-3 text-primary mb-2">
             <MapPin size={18} />
             <span className="text-sm font-semibold uppercase tracking-wider">
               Total Locations
@@ -50,7 +50,7 @@ export default async function LocationsPage() {
           <div className="text-2xl font-bold">{locations.length}</div>
         </div>
         <div className="bg-card p-4 rounded-xl border shadow-sm">
-          <div className="flex items-center gap-3 text-green-600 mb-2">
+          <div className="flex items-center gap-3 text-emerald-500 mb-2">
             <MapPin size={18} />
             <span className="text-sm font-semibold uppercase tracking-wider">
               Active Branches
@@ -61,7 +61,7 @@ export default async function LocationsPage() {
           </div>
         </div>
         <div className="bg-card p-4 rounded-xl border shadow-sm">
-          <div className="flex items-center gap-3 text-orange-600 mb-2">
+          <div className="flex items-center gap-3 text-amber-500 mb-2">
             <MapPin size={18} />
             <span className="text-sm font-semibold uppercase tracking-wider">
               Warehouses

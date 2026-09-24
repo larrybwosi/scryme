@@ -34,6 +34,8 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import { LocationSheet } from "./location-sheet";
+import { toggleLocationStatus } from "../../app/actions/locations";
+import { Power } from "lucide-react";
 import { DeleteLocationDialog } from "./delete-location-dialog";
 
 interface LocationTableProps {
@@ -45,7 +47,7 @@ export function LocationTable({ data, members }: LocationTableProps) {
   const [deletingLocation, setDeletingLocation] = React.useState<any>(null);
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-md border bg-card text-card-foreground shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
@@ -73,7 +75,7 @@ export function LocationTable({ data, members }: LocationTableProps) {
                 <TableCell>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-[#1D1D1F]">
+                      <span className="font-medium text-foreground">
                         {location.name}
                       </span>
                       {location.isDefault && (
@@ -84,9 +86,16 @@ export function LocationTable({ data, members }: LocationTableProps) {
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {location.code || "No code"}
-                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-xs text-muted-foreground">
+                        {location.code || "No code"}
+                      </span>
+                      {!location.isActive && (
+                        <Badge variant="outline" className="text-[10px] py-0 px-1 border-destructive text-destructive">
+                          Inactive
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
@@ -162,6 +171,18 @@ export function LocationTable({ data, members }: LocationTableProps) {
                             Edit Details
                           </DropdownMenuItem>
                         </LocationSheet>
+                        <DropdownMenuItem
+                          onClick={async () => {
+                            try {
+                              await toggleLocationStatus(location.id);
+                              toast.success(`Location ${location.isActive ? "deactivated" : "activated"}`);
+                            } catch (err: any) {
+                              toast.error(err.message || "Failed to toggle status");
+                            }
+                          }}>
+                          <Power className="mr-2 h-4 w-4" />
+                          {location.isActive ? "Deactivate" : "Activate"}
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           className="text-red-600 focus:text-red-600"
