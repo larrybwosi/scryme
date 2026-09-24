@@ -24,7 +24,7 @@ const apiUrl = getValidApiUrl(process.env.NEXT_PUBLIC_API_URL, defaultApiUrl);
 const nextConfig: NextConfig = {
   output: "standalone",
   skipTrailingSlashRedirect: true,
-  transpilePackages: ["@repo/auth", "@repo/db", "@repo/shared", "@repo/env"],
+  transpilePackages: ["@repo/db", "@repo/shared", "@repo/env"],
   experimental: {
     webpackMemoryOptimizations: true,
   },
@@ -58,16 +58,40 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+    const webUrl =
+      process.env.NEXT_PUBLIC_WEB_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (isDev ? "http://localhost:3000" : "https://app.scryme.tech");
+
     return [
       {
-        source: "/signup",
-        destination: "/sign-up",
+        source: "/login",
+        destination: `${webUrl}/login`,
         permanent: false,
       },
       {
-        source: "/contact",
-        destination: "/sign-up",
+        source: "/signup",
+        destination: `${webUrl}/sign-up`,
+        permanent: false,
+      },
+      {
+        source: "/sign-up",
+        destination: `${webUrl}/sign-up`,
+        permanent: false,
+      },
+      {
+        source: "/developer",
+        destination: "/",
+        permanent: false,
+      },
+      {
+        source: "/developer/:path*",
+        destination: "/",
+        permanent: false,
+      },
+      {
+        source: "/demo",
+        destination: "/try",
         permanent: false,
       },
     ];

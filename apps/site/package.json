@@ -15,7 +15,6 @@
   "dependencies": {
     "@openpanel/nextjs": "^1.5.1",
     "@portabletext/react": "^6.2.0",
-    "@repo/auth": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/shared": "workspace:*",
@@ -24,7 +23,6 @@
     "@sanity/vision": "^5.31.1",
     "@sentry/nextjs": "^10.65.0",
     "@tailwindcss/postcss": "^4.1.18",
-    "better-auth": "^1.7.2",
     "clsx": "^2.1.1",
     "framer-motion": "^11.18.2",
     "lucide-react": "^0.511.0",

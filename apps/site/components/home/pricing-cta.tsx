@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { ArrowRight, CheckCircle } from "lucide-react";
+import { useOpenPanel } from "@openpanel/nextjs";
 import { captureCtaClicked } from "@/lib/posthog-tracking";
 import { colors, fonts } from "@/lib/scryme-tokens";
 
-const webUrl = process.env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
+const webUrl =
+  process.env.NEXT_PUBLIC_WEB_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  "https://app.scryme.tech";
 
 const highlights = [
   "No credit card required to start",
@@ -40,6 +44,7 @@ export function PricingCTA({
   primaryCta,
   secondaryCta,
 }: PricingCTAProps = {}) {
+  const op = useOpenPanel();
   const displayTitle = title || (
     <>
       The ledger grows <br className="hidden lg:block" />
@@ -49,15 +54,37 @@ export function PricingCTA({
   const displayDescription =
     description ||
     "Start your 30-day free trial. No complex setup — your first store is live in minutes. Upgrade, downgrade, or cancel at any time.";
-  const displayPrimaryCta = primaryCta || { label: "View pricing", href: "/pricing" };
-  const displaySecondaryCta = secondaryCta || { label: "Talk to sales", href: "/contact" };
+  const displayPrimaryCta = primaryCta || { label: "Try Scryme Free", href: "/try" };
+  const displaySecondaryCta = secondaryCta || { label: "Create Account", href: `${webUrl}/sign-up` };
+
+  const handleCtaClick = (
+    label: string,
+    href: string,
+    type: "primary" | "secondary"
+  ) => {
+    captureCtaClicked("homepage_cta_clicked", {
+      location: "closing_statement",
+      cta_label: label,
+      destination: href,
+      cta_type: type,
+    });
+    try {
+      op.track("cta_clicked", {
+        location: "closing_statement",
+        cta_label: label,
+        destination: href,
+        cta_type: type,
+      });
+    } catch (e) {
+      // Ignore tracking errors
+    }
+  };
 
   return (
     <section
       className="py-28 relative overflow-hidden"
       style={{ background: colors.paper }}
     >
-      {/* faint ledger rule texture, ink-on-paper */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-[0.06]"
@@ -113,18 +140,13 @@ export function PricingCTA({
                 fontFamily: fonts.body,
               }}
               onClick={() =>
-                captureCtaClicked("homepage_cta_clicked", {
-                  location: "closing_statement",
-                  cta_label: displayPrimaryCta.label,
-                  destination: displayPrimaryCta.href,
-                  cta_type: "primary",
-                })
+                handleCtaClick(displayPrimaryCta.label, displayPrimaryCta.href, "primary")
               }
             >
               {displayPrimaryCta.label} <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link
-              href={`${webUrl}/sign-up`}
+            <a
+              href={displaySecondaryCta.href}
               className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-colors"
               style={{
                 border: "1px solid var(--pricing-cta-border-dim)",
@@ -132,16 +154,15 @@ export function PricingCTA({
                 fontFamily: fonts.body,
               }}
               onClick={() =>
-                captureCtaClicked("homepage_cta_clicked", {
-                  location: "closing_statement",
-                  cta_label: displaySecondaryCta.label,
-                  destination: `${webUrl}/sign-up`,
-                  cta_type: "secondary",
-                })
+                handleCtaClick(
+                  displaySecondaryCta.label,
+                  displaySecondaryCta.href,
+                  "secondary"
+                )
               }
             >
               {displaySecondaryCta.label}
-            </Link>
+            </a>
           </div>
         </div>
 

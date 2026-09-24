@@ -8,7 +8,7 @@ export const linkType = defineType({
   type: 'object',
   fields: [
     defineField({name: 'label', title: 'Label', type: 'string', validation: requiredText}),
-    defineField({name: 'href', title: 'Destination', type: 'string', description: 'Use a site path such as /demo or a full https:// URL.', validation: (Rule) => Rule.required().custom((value) => !value || value.startsWith('/') || value.startsWith('https://') ? true : 'Use a relative path or secure URL')}),
+    defineField({name: 'href', title: 'Destination', type: 'string', description: 'Use a site path such as /try or a full https:// URL.', validation: (Rule) => Rule.required().custom((value) => !value || value.startsWith('/') || value.startsWith('https://') ? true : 'Use a relative path or secure URL')}),
     defineField({name: 'style', title: 'Style', type: 'string', initialValue: 'primary', options: {list: [{title: 'Primary', value: 'primary'}, {title: 'Secondary', value: 'secondary'}, {title: 'Text', value: 'text'}], layout: 'radio'}}),
   ],
   preview: {select: {title: 'label', subtitle: 'href'}},
@@ -69,7 +69,7 @@ export const faqSectionType = defineType({
 export const ctaSectionType = defineType({
   name: 'ctaSection', title: 'Demo call to action', type: 'object',
   fields: [visibility, eyebrow, heading, body, defineField({name: 'primaryCta', title: 'Primary action', type: 'link'}), defineField({name: 'secondaryCta', title: 'Secondary action', type: 'link'})],
-  preview: {select: {title: 'heading'}, prepare: ({title}) => ({title: title || 'Book a demo', subtitle: 'Conversion section'})},
+  preview: {select: {title: 'heading'}, prepare: ({title}) => ({title: title || 'Try Scryme', subtitle: 'Conversion section'})},
 })
 
 export const pageBuilderType = defineType({

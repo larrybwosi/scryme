@@ -5,7 +5,6 @@ import { modules } from "@/lib/scryme-tokens";
 const company = [{ name: "About", href: "/about" }, { name: "Careers", href: "/careers" }, { name: "Journal", href: "/blog" }, { name: "Contact", href: "/contact" }];
 const resources = [
   { name: "POS App Downloads", href: "/download" },
-  { name: "Developer Portal", href: "/developer" },
   { name: "Documentation", href: "/docs" },
   { name: "API reference", href: "/api" },
   { name: "Integrations", href: "/integrations" },

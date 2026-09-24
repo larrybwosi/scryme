@@ -71,7 +71,7 @@ export function BlogNavbar() {
           <ThemeToggle />
 
           <Link
-            href="/demo"
+            href="/try"
             className="hidden sm:inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-[1.02]"
             style={{
               background: colors.brass,
@@ -80,7 +80,7 @@ export function BlogNavbar() {
               boxShadow: "0 4px 12px rgba(200,154,75,0.2)",
             }}
           >
-            <span>Book Demo</span>
+            <span>Try Scryme</span>
             <ArrowUpRight size={13} />
           </Link>
         </div>
