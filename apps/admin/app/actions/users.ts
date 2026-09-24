@@ -165,7 +165,7 @@ export async function resetUserPassword(
     try {
       const { auth } = await import("@repo/auth/server");
       const { headers } = await import("next/headers");
-      await (auth.api as any).forgetPassword({
+      await auth.api.requestPasswordReset({
         headers: await headers(),
         body: {
           email: user.email,
