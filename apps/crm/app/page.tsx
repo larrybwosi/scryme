@@ -1,8 +1,8 @@
-import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
+import { Metadata } from "next";
+import { CrmClientRedirect } from "./_components/crm-client-redirect";
 
 export const metadata: Metadata = {
-  title: "CRM | Client Relationship Management",
+  title: "Scryme CRM — Enterprise Client Relationship Management",
   description:
     "Enterprise CRM & Client Relationship Management platform by Scryme. Track leads, manage customer contacts, automate sales pipelines, run marketing campaigns, and analyze deals seamlessly.",
   keywords: [
@@ -48,5 +48,5 @@ export const metadata: Metadata = {
 };
 
 export default function Home() {
-  redirect('/dashboard');
+  return <CrmClientRedirect />;
 }

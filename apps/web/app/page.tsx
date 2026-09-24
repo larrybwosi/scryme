@@ -1,37 +1,84 @@
 import { Metadata } from "next";
-import { getServerAuth } from "@repo/auth/server";
-import { redirect } from "next/navigation";
+import { WebClientRedirect } from "./_components/web-client-redirect";
 
 export const metadata: Metadata = {
-  title: "Welcome to Scryme — Enterprise Management",
-  description: "All-in-one cloud platform for multi-branch inventory, supplier management, POS operations, and enterprise resource planning.",
+  title: "Welcome to Scryme — Enterprise Resource Planning & Management",
+  description:
+    "All-in-one cloud platform for multi-branch inventory, supplier management, POS operations, financial accounting, and enterprise administration.",
+  keywords: [
+    "Scryme",
+    "ERP",
+    "Enterprise Resource Planning",
+    "Inventory Management",
+    "POS Operations",
+    "Financial Accounting",
+    "Supplier Management",
+    "Multi-Branch Cloud ERP",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Scryme — Enterprise Resource Planning & Management",
+    description:
+      "All-in-one cloud platform for multi-branch inventory, supplier management, POS operations, financial accounting, and enterprise administration.",
+    url: process.env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech",
+    siteName: "Scryme ERP",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Scryme ERP Platform",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Scryme — Enterprise Resource Planning & Management",
+    description:
+      "All-in-one cloud platform for multi-branch inventory, supplier management, POS operations, financial accounting, and enterprise administration.",
+    creator: "@scryme",
+    images: ["/og-image.png"],
+  },
 };
 
-export default async function LandingPage() {
-  const auth = await getServerAuth();
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "Scryme ERP",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All",
+      "url": process.env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech",
+      "description":
+        "All-in-one cloud platform for multi-branch inventory, supplier management, POS operations, financial accounting, and enterprise administration.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Scryme",
+        "url": "https://scryme.tech",
+      },
+    },
+    {
+      "@type": "Organization",
+      "name": "Scryme",
+      "url": "https://scryme.tech",
+      "logo": `${process.env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"}/favicon.ico`,
+    },
+  ],
+};
 
-  if (auth) {
-    redirect("/dashboard");
-  }
-
+export default function LandingPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center">
-      <h1 className="text-4xl font-bold mb-4">Welcome to Scryme</h1>
-      <p className="text-xl text-muted-foreground mb-8">
-        Your all-in-one platform for inventory and supplier management.
-      </p>
-      <div className="flex gap-4">
-        <a
-          href="/login"
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-full font-bold hover:bg-primary/90">
-          Login
-        </a>
-        <a
-          href="/sign-up"
-          className="px-6 py-3 border rounded-full font-bold hover:bg-muted">
-          Sign Up
-        </a>
-      </div>
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <WebClientRedirect />
+    </>
   );
 }
