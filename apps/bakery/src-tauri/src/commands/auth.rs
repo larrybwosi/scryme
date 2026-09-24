@@ -762,8 +762,8 @@ pub async fn authenticated_api_request(
     let status = res.status();
     if !status.is_success() {
         let err_body = res.text().await.unwrap_or_default();
-        eprintln!("[API Request Failed] {} {} -> Status {}: {}", method, full_url, status, err_body);
-        return Err(BackendError::Internal(format!("API Error {} [{} {}]: {}", status, method, full_url, err_body)));
+        eprintln!("[API Request Failed] {} {} -> Status {}: {}", method, path, status, err_body);
+        return Err(BackendError::Internal(format!("API Error {} [{} {}]: {}", status, method, path, err_body)));
     }
 
     let json_res: serde_json::Value = res.json().await.map_err(BackendError::Network)?;
