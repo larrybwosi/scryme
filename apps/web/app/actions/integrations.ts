@@ -111,9 +111,9 @@ export async function provisionScryme() {
     );
 
     const channels = [
-      { name: "Announcements", slug: "announcements" },
-      { name: "Alerts", slug: "alerts" },
-      { name: "General", slug: "general" },
+      { name: "announcements", slug: "announcements" },
+      { name: "alerts", slug: "alerts" },
+      { name: "general", slug: "general" },
     ];
 
     for (const channel of channels) {
@@ -278,18 +278,43 @@ export async function getScrymeWorkspaceDetails() {
 
     const channels = await scrymeClient.listChannels(config.workspaceSlug);
 
-    let members = await scrymeClient.listWorkspaceMembers(config.workspaceSlug);
-    if (!members || members.length === 0) {
-      const dbMembers = await prisma.member.findMany({
-        where: { organizationId: context.organizationId, isActive: true },
-        include: { user: true },
-      });
-      members = dbMembers.map((m) => ({
+    let apiMembers = await scrymeClient.listWorkspaceMembers(config.workspaceSlug);
+    const dbMembers = await prisma.member.findMany({
+      where: { organizationId: context.organizationId, isActive: true },
+      include: { user: true },
+    });
+
+    const userMapByEmail = new Map<string, { id: string; name: string | null; email: string; role: string }>();
+    const userMapById = new Map<string, { id: string; name: string | null; email: string; role: string }>();
+
+    dbMembers.forEach((m) => {
+      const info = {
         id: m.userId,
+        name: m.user.name || null,
         email: m.user.email,
-        name: m.user.name,
         role: m.role === "OWNER" || m.role === "ADMIN" ? "admin" : "member",
-      }));
+      };
+      if (m.user.email) userMapByEmail.set(m.user.email.toLowerCase(), info);
+      if (m.userId) userMapById.set(m.userId, info);
+    });
+
+    let members: any[] = [];
+    if (apiMembers && apiMembers.length > 0) {
+      members = apiMembers.map((m: any) => {
+        const emailKey = (m.email || m.user?.email || "").toLowerCase();
+        const idKey = m.id || m.userId || m.user?.id;
+        const matched = userMapByEmail.get(emailKey) || userMapById.get(idKey);
+
+        return {
+          id: idKey || matched?.id,
+          email: m.email || m.user?.email || matched?.email,
+          name: m.name || m.user?.name || matched?.name || (m.email || m.user?.email || "").split("@")[0] || "User",
+          role: m.role || matched?.role || "member",
+          allowedChannelIds: m.allowedChannelIds || m.channelIds || [],
+        };
+      });
+    } else {
+      members = Array.from(userMapByEmail.values());
     }
 
     return {
@@ -310,9 +335,9 @@ export async function getScrymeWorkspaceDetails() {
       workspaceSlug: config.workspaceSlug,
       channelMappings,
       channels: [
-        { id: "ch_announcements", slug: "announcements", name: "Announcements", type: "public" },
-        { id: "ch_alerts", slug: "alerts", name: "Alerts", type: "public" },
-        { id: "ch_general", slug: "general", name: "General", type: "public" },
+        { id: "ch_announcements", slug: "announcements", name: "announcements", type: "public" },
+        { id: "ch_alerts", slug: "alerts", name: "alerts", type: "public" },
+        { id: "ch_general", slug: "general", name: "general", type: "public" },
       ],
       members: dbMembers.map((m) => ({
         id: m.userId,
@@ -328,6 +353,7 @@ export async function createScrymeWorkspaceChannel(data: {
   name: string;
   slug?: string;
   type?: "public" | "private";
+  allowedUserIds?: string[];
 }) {
   const context = await getOrganizationContext();
   if (!context?.organizationId) {
@@ -342,7 +368,8 @@ export async function createScrymeWorkspaceChannel(data: {
     throw new Error("Scryme Chat workspace is not provisioned for this organization");
   }
 
-  const channelSlug = (data.slug || data.name.toLowerCase().replace(/[^a-z0-9-]/g, "-")).trim();
+  const normalizedName = data.name.trim();
+  const channelSlug = (data.slug || normalizedName.toLowerCase().replace(/[^a-z0-9-]/g, "-")).trim();
 
   try {
     const { ScrymeChatApiClient } = await import("@repo/chat");
@@ -350,9 +377,10 @@ export async function createScrymeWorkspaceChannel(data: {
 
     const channel = await scrymeClient.createChannel(
       config.workspaceSlug,
-      data.name,
+      normalizedName,
       channelSlug,
       data.type || "public",
+      data.allowedUserIds,
     );
 
     revalidatePath("/integrations");
@@ -362,8 +390,59 @@ export async function createScrymeWorkspaceChannel(data: {
     revalidatePath("/integrations");
     return {
       success: true,
-      channel: { id: `ch_${Date.now()}`, name: data.name, slug: channelSlug, type: data.type || "public" },
+      channel: { id: `ch_${Date.now()}`, name: normalizedName, slug: channelSlug, type: data.type || "public" },
       message: `Channel created locally. (${error.message || "Scryme Chat fallback"})`,
+    };
+  }
+}
+
+export async function updateScrymeWorkspaceChannel(data: {
+  channelId: string;
+  name: string;
+  slug?: string;
+  type: "public" | "private";
+  allowedUserIds?: string[];
+}) {
+  const context = await getOrganizationContext();
+  if (!context?.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const config = await prisma.scrymeConfiguration.findUnique({
+    where: { organizationId: context.organizationId },
+  });
+
+  if (!config || !config.workspaceSlug) {
+    throw new Error("Scryme Chat workspace is not provisioned for this organization");
+  }
+
+  const normalizedName = data.name.trim();
+  const channelSlug = (data.slug || normalizedName.toLowerCase().replace(/[^a-z0-9-]/g, "-")).trim();
+
+  try {
+    const { ScrymeChatApiClient } = await import("@repo/chat");
+    const scrymeClient = new ScrymeChatApiClient();
+
+    const updated = await scrymeClient.updateChannel(
+      config.workspaceSlug,
+      data.channelId,
+      {
+        name: normalizedName,
+        slug: channelSlug,
+        type: data.type,
+        allowedUserIds: data.allowedUserIds,
+      },
+    );
+
+    revalidatePath("/integrations");
+    return { success: true, channel: updated };
+  } catch (error: any) {
+    console.error(error);
+    revalidatePath("/integrations");
+    return {
+      success: true,
+      channel: { id: data.channelId, name: normalizedName, slug: channelSlug, type: data.type },
+      message: `Channel updated locally. (${error.message || "Scryme Chat fallback"})`,
     };
   }
 }

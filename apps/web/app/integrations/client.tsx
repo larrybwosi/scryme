@@ -56,6 +56,7 @@ import {
   provisionScryme,
   getScrymeWorkspaceDetails,
   createScrymeWorkspaceChannel,
+  updateScrymeWorkspaceChannel,
   addScrymeWorkspaceMember,
   removeScrymeWorkspaceMember,
   updateScrymeChannelMappings,
@@ -69,6 +70,20 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
+
+const ScrymeIntegrationIcon = () => {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return <Boxes className="w-8 h-8 text-purple-600 dark:text-purple-400" />;
+  }
+
+  return (
+    <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center shrink-0">
+      <span className="text-white font-black text-sm tracking-tight">S</span>
+    </div>
+  );
+};
 
 const queryClient = new QueryClient();
 
@@ -88,7 +103,7 @@ const INTEGRATIONS = [
     id: "scryme",
     title: "Scryme Chat",
     description: "Enterprise workspace chat, channel mappings, and operational alerts.",
-    icon: <Boxes className="w-8 h-8 text-purple-600 dark:text-purple-400" />,
+    icon: <ScrymeIntegrationIcon />,
     category: "Communication",
     isExternal: true,
   },
@@ -171,6 +186,13 @@ function IntegrationsPageContent() {
   const [newChannelType, setNewChannelType] = useState<"public" | "private">("public");
   const [isCreatingChannel, setIsCreatingChannel] = useState(false);
 
+  // Channel Editing State
+  const [editingChannelId, setEditingChannelId] = useState<string | null>(null);
+  const [editChannelName, setEditChannelName] = useState("");
+  const [editChannelType, setEditChannelType] = useState<"public" | "private">("public");
+  const [editAllowedUserIds, setEditAllowedUserIds] = useState<string[]>([]);
+  const [isUpdatingChannel, setIsUpdatingChannel] = useState(false);
+
   const [newMemberEmail, setNewMemberEmail] = useState("");
   const [newMemberRole, setNewMemberRole] = useState<"admin" | "member">("member");
   const [isAddingMember, setIsAddingMember] = useState(false);
@@ -241,6 +263,7 @@ function IntegrationsPageContent() {
   // Create Channel
   const createChannelMutation = useMutation({
     mutationFn: createScrymeWorkspaceChannel,
+  updateScrymeWorkspaceChannel,
     onSuccess: (res, variables) => {
       if (res.message) toast.info(res.message);
       else toast.success(`Channel #${variables.name} created!`);
@@ -249,6 +272,20 @@ function IntegrationsPageContent() {
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to create channel");
+    },
+  });
+
+  // Update Channel Mutation
+  const updateChannelMutation = useMutation({
+    mutationFn: updateScrymeWorkspaceChannel,
+    onSuccess: (res, variables) => {
+      if (res.message) toast.info(res.message);
+      else toast.success(`Channel #${variables.name} updated!`);
+      setEditingChannelId(null);
+      queryClient.invalidateQueries({ queryKey: ["scryme", "workspace", "details"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to update channel");
     },
   });
 
@@ -348,7 +385,7 @@ function IntegrationsPageContent() {
                   <h4 className="font-bold text-sm">One-Click Automatic Provisioning</h4>
                 </div>
                 <p className="text-purple-700 dark:text-purple-400/80 text-xs leading-relaxed">
-                  Let Scryme automatically spin up a dedicated Chat workspace and configure default channels (Announcements, Alerts, General) for your organization.
+                  Let Scryme automatically spin up a dedicated Chat workspace and configure default channels (announcements, alerts, general) for your organization.
                 </p>
                 <Button
                   type="button"
@@ -365,9 +402,9 @@ function IntegrationsPageContent() {
         }
 
         const channelsList = scrymeDetails?.channels || [
-          { id: "ch_announcements", slug: "announcements", name: "Announcements", type: "public" },
-          { id: "ch_alerts", slug: "alerts", name: "Alerts", type: "public" },
-          { id: "ch_general", slug: "general", name: "General", type: "public" },
+          { id: "ch_announcements", slug: "announcements", name: "announcements", type: "public" },
+          { id: "ch_alerts", slug: "alerts", name: "alerts", type: "public" },
+          { id: "ch_general", slug: "general", name: "general", type: "public" },
         ];
 
         return (
@@ -530,27 +567,139 @@ function IntegrationsPageContent() {
                   </Button>
                 </form>
 
-                <div className="max-h-60 overflow-y-auto flex flex-col gap-1.5 border border-border rounded-lg p-2 bg-muted/20">
+                <div className="max-h-96 overflow-y-auto flex flex-col gap-2 border border-border rounded-lg p-2 bg-muted/20">
                   {channelsList.length ? (
-                    channelsList.map((ch: any) => (
-                      <div
-                        key={ch.id || ch.slug}
-                        className="flex items-center justify-between p-2.5 rounded-md bg-card border border-border text-xs">
-                        <div className="flex items-center gap-2">
-                          {ch.type === "private" ? (
-                            <Lock className="w-3.5 h-3.5 text-amber-500" />
-                          ) : (
-                            <Hash className="w-3.5 h-3.5 text-primary" />
+                    channelsList.map((ch: any) => {
+                      const isEditing = editingChannelId === (ch.id || ch.slug);
+                      const memberList = scrymeDetails?.members || [];
+
+                      return (
+                        <div
+                          key={ch.id || ch.slug}
+                          className="flex flex-col gap-2 p-2.5 rounded-md bg-card border border-border text-xs">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {ch.type === "private" ? (
+                                <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              ) : (
+                                <Hash className="w-3.5 h-3.5 text-primary shrink-0" />
+                              )}
+                              <span className="font-semibold text-foreground">
+                                #{ch.name || ch.slug}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                                {ch.type || "public"}
+                              </Badge>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-[10px]"
+                                onClick={() => {
+                                  if (isEditing) {
+                                    setEditingChannelId(null);
+                                  } else {
+                                    setEditingChannelId(ch.id || ch.slug);
+                                    setEditChannelName(ch.name || ch.slug);
+                                    setEditChannelType(ch.type || "public");
+                                    setEditAllowedUserIds(ch.allowedUserIds || ch.allowedUsers || []);
+                                  }
+                                }}>
+                                {isEditing ? "Cancel" : "Edit"}
+                              </Button>
+                            </div>
+                          </div>
+
+                          {isEditing && (
+                            <div className="flex flex-col gap-3 pt-2 border-t border-border mt-1">
+                              <div className="flex gap-2">
+                                <div className="flex-1 flex flex-col gap-1">
+                                  <Label className="text-[10px]">Channel Name</Label>
+                                  <Input
+                                    value={editChannelName}
+                                    onChange={(e) => setEditChannelName(e.target.value)}
+                                    className="h-7 text-xs"
+                                  />
+                                </div>
+                                <div className="w-28 flex flex-col gap-1">
+                                  <Label className="text-[10px]">Visibility</Label>
+                                  <select
+                                    value={editChannelType}
+                                    onChange={(e) => setEditChannelType(e.target.value as any)}
+                                    className="h-7 rounded-md border border-input bg-background px-2 text-xs">
+                                    <option value="public">Public</option>
+                                    <option value="private">Private</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {editChannelType === "private" && (
+                                <div className="flex flex-col gap-1.5">
+                                  <Label className="text-[10px] text-muted-foreground">
+                                    Private Channel Viewers / Members
+                                  </Label>
+                                  <div className="max-h-36 overflow-y-auto flex flex-col gap-1 border border-border rounded-md p-1.5 bg-muted/40">
+                                    {memberList.length ? (
+                                      memberList.map((m: any) => {
+                                        const userId = m.id || m.userId;
+                                        const isChecked = editAllowedUserIds.includes(userId);
+
+                                        return (
+                                          <label
+                                            key={userId || m.email}
+                                            className="flex items-center justify-between p-1 rounded hover:bg-muted cursor-pointer text-[11px]">
+                                            <span className="truncate pr-2 font-medium">
+                                              {m.name || m.email}
+                                            </span>
+                                            <input
+                                              type="checkbox"
+                                              checked={isChecked}
+                                              onChange={(e) => {
+                                                if (e.target.checked) {
+                                                  setEditAllowedUserIds([...editAllowedUserIds, userId]);
+                                                } else {
+                                                  setEditAllowedUserIds(editAllowedUserIds.filter((id) => id !== userId));
+                                                }
+                                              }}
+                                              className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                                            />
+                                          </label>
+                                        );
+                                      })
+                                    ) : (
+                                      <div className="text-center py-2 text-[10px] text-muted-foreground">
+                                        No members available to assign.
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-7 text-xs font-semibold self-end"
+                                disabled={isUpdatingChannel || updateChannelMutation.isPending}
+                                onClick={async () => {
+                                  if (!editChannelName.trim()) return;
+                                  setIsUpdatingChannel(true);
+                                  await updateChannelMutation.mutateAsync({
+                                    channelId: ch.id || ch.slug,
+                                    name: editChannelName.trim(),
+                                    type: editChannelType,
+                                    allowedUserIds: editAllowedUserIds,
+                                  });
+                                  setIsUpdatingChannel(false);
+                                }}>
+                                Save Channel
+                              </Button>
+                            </div>
                           )}
-                          <span className="font-semibold text-foreground">
-                            #{ch.name || ch.slug}
-                          </span>
                         </div>
-                        <Badge variant="outline" className="text-[10px] uppercase font-mono">
-                          {ch.type || "public"}
-                        </Badge>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <div className="text-center py-4 text-xs text-muted-foreground">
                       No channels found.
