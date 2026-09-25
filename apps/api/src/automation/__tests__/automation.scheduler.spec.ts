@@ -41,9 +41,8 @@ describe("AutomationScheduler", () => {
 
       await scheduler.handleLowStockCronCheck();
 
-      expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith({
-        organizationId: "org_1",
-        scriptPath: "lowstock_alert",
+      expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith("org_1", {
+        key: "lowstock_alert",
         inputs: {
           productId: "var_10",
           productName: "Flour 1kg",
@@ -65,9 +64,8 @@ describe("AutomationScheduler", () => {
 
       await scheduler.handleDailySalesReportCron();
 
-      expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith({
-        organizationId: "org_1",
-        scriptPath: "daily_sales_report",
+      expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith("org_1", {
+        key: "daily_sales_report",
         inputs: {
           totalSales: 15,
           totalRevenue: 4500,

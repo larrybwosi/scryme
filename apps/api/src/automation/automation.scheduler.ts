@@ -39,9 +39,8 @@ export class AutomationScheduler {
         });
 
         for (const variant of lowStockVariants) {
-          await this.automationService.triggerWorkflow({
-            organizationId: def.organizationId,
-            scriptPath: def.key,
+          await this.automationService.triggerWorkflow(def.organizationId, {
+            key: def.key,
             inputs: {
               productId: variant.id,
               productName: variant.name || "Product Variant",
@@ -92,9 +91,8 @@ export class AutomationScheduler {
 
         const totalRevenue = salesSum._sum?.totalAmount || 0;
 
-        await this.automationService.triggerWorkflow({
-          organizationId: def.organizationId,
-          scriptPath: def.key,
+        await this.automationService.triggerWorkflow(def.organizationId, {
+          key: def.key,
           inputs: {
             totalSales: salesCount,
             totalRevenue,
