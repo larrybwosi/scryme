@@ -71,12 +71,16 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
 
     const configuredApiUrl = useAuthStore.getState().apiUrl || getApiEndpoint();
     const productionFallback = 'https://api.scryme.tech';
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || configuredApiUrl || (import.meta.env.DEV ? 'http://localhost:3002' : productionFallback);
+    const rawSocketUrl = import.meta.env.VITE_SOCKET_URL || import.meta.env.NEXT_PUBLIC_SOCKET_URL || configuredApiUrl || (import.meta.env.DEV ? 'http://localhost:3002' : productionFallback);
+
+    // Strip trailing slashes and any trailing /api or /v3 paths from socket base URL to ensure clean namespace attach
+    const cleanSocketBaseUrl = rawSocketUrl
+      .replace(/\/+$/, '')
+      .replace(/\/(api|v3)+$/g, '');
 
     const initSocket = async () => {
       const { io } = await import('socket.io-client');
-      const cleanUrl = socketUrl.replace(/\/+$/, '');
-      const socket = io(`${cleanUrl}/v3`, {
+      const socket = io(`${cleanSocketBaseUrl}/v3`, {
         transports: ['websocket', 'polling'],
         autoConnect: false,
         reconnection: true,
@@ -137,6 +141,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
           let tokenToUse: string | null = null;
           const currentAuth = useAuthStore.getState();
           const orgSlug = currentAuth.deviceConfig?.orgSlug;
+          const memberToken = currentAuth.memberToken || currentAuth.sessionToken;
 
           try {
               const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
@@ -162,12 +167,20 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
                   const url = orgSlug
                     ? `${cleanApiUrl}/api/v3/${orgSlug}/pos/ably-auth`
                     : `${cleanApiUrl}/api/v3/pos/ably-auth`;
+                  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                  if (memberToken) {
+                    headers['x-member-token'] = memberToken;
+                    headers['Authorization'] = `Bearer ${memberToken}`;
+                  }
                   const res = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                   });
                   if (res.ok) {
                     const json = await res.json();
+                    if (json?.data?.metadata?.paymentChannel) {
+                      set({ paymentChannel: json.data.metadata.paymentChannel });
+                    }
                     const tokenCandidate = json?.data?.tokenRequest?.token || json?.token;
                     if (tokenCandidate && tokenCandidate !== 'socket-io-realtime') {
                       tokenToUse = tokenCandidate;
@@ -179,7 +192,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
               }
           }
 
-          const finalToken = tokenToUse || 'socket-io-realtime';
+          const finalToken = tokenToUse || memberToken || 'socket-io-realtime';
 
           socket.auth = { token: finalToken };
           if (socket.io?.opts) {

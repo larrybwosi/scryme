@@ -162,7 +162,7 @@ export class V3RealtimeGateway
 
     if (channel.startsWith("inventory:")) {
       const orgId = channel.split(":")[1];
-      return orgId === context.organizationId;
+      return orgId === context.organizationId || orgId === context.orgSlug;
     }
 
     // Deny access to unknown channel patterns by default (Fail Securely)
