@@ -97,6 +97,13 @@ export async function getInvoiceDownloadUrl(
       apiUrl = rawApiUrl;
     }
 
+    if (
+      process.env.NODE_ENV === "production" &&
+      (apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1"))
+    ) {
+      apiUrl = "https://api.scryme.tech";
+    }
+
     try {
       const parsed = new URL(apiUrl);
       if (
