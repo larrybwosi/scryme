@@ -446,3 +446,46 @@ data class ExpenseCategorySummaryDto(
     @SerializedName("id") val id: String,
     @SerializedName("name") val name: String
 )
+
+// --- Staff Task Models ---
+
+data class StaffTaskDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("organizationId") val organizationId: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("assignedMemberId") val assignedMemberId: String? = null,
+    @SerializedName("assignedMember") val assignedMember: ShiftMemberDto? = null,
+    @SerializedName("shiftId") val shiftId: String? = null,
+    @SerializedName("locationId") val locationId: String? = null,
+    @SerializedName("status") val status: String = "PENDING", // PENDING, IN_PROGRESS, COMPLETED, CANCELLED
+    @SerializedName("priority") val priority: String = "MEDIUM", // LOW, MEDIUM, HIGH, URGENT
+    @SerializedName("dueDate") val dueDate: String? = null,
+    @SerializedName("completedAt") val completedAt: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null,
+    @SerializedName("updatedAt") val updatedAt: String? = null
+)
+
+data class CreateTaskRequestDto(
+    @SerializedName("title") val title: String,
+    @SerializedName("description") val description: String? = null,
+    @SerializedName("assignedMemberId") val assignedMemberId: String? = null,
+    @SerializedName("shiftId") val shiftId: String? = null,
+    @SerializedName("locationId") val locationId: String? = null,
+    @SerializedName("priority") val priority: String = "MEDIUM",
+    @SerializedName("dueDate") val dueDate: String? = null,
+    @SerializedName("notifyViaScrymeChat") val notifyViaScrymeChat: Boolean = true
+)
+
+data class UpdateTaskStatusRequestDto(
+    @SerializedName("status") val status: String,
+    @SerializedName("notes") val notes: String? = null
+)
+
+data class TaskNotificationPayloadDto(
+    @SerializedName("taskId") val taskId: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("priority") val priority: String,
+    @SerializedName("promptInstructions") val promptInstructions: String = "Please confirm task status or reply with completion notes.",
+    @SerializedName("actions") val actions: List<String> = listOf("MARK_IN_PROGRESS", "MARK_COMPLETED")
+)

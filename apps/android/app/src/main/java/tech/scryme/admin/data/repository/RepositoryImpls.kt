@@ -553,3 +553,66 @@ private fun getFriendlyNetworkErrorMessage(e: Throwable): String {
         else -> msg.ifBlank { "An unexpected error occurred. Please try again." }
     }
 }
+
+class TasksRepositoryImpl(
+    private val api: TasksApiService,
+    private val sessionManager: SessionManager
+) : TasksRepository {
+
+    override suspend fun getTasks(
+        assignedMemberId: String?,
+        status: String?,
+        priority: String?
+    ): Result<List<StaffTaskDto>> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.getTasks(slug, assignedMemberId, status, priority)
+        }
+    }
+
+    override suspend fun createTask(
+        title: String,
+        description: String?,
+        assignedMemberId: String?,
+        shiftId: String?,
+        locationId: String?,
+        priority: String,
+        dueDate: String?,
+        notifyViaScrymeChat: Boolean
+    ): Result<StaffTaskDto> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.createTask(
+                slug,
+                CreateTaskRequestDto(
+                    title = title,
+                    description = description,
+                    assignedMemberId = assignedMemberId,
+                    shiftId = shiftId,
+                    locationId = locationId,
+                    priority = priority,
+                    dueDate = dueDate,
+                    notifyViaScrymeChat = notifyViaScrymeChat
+                )
+            )
+        }
+    }
+
+    override suspend fun updateTaskStatus(
+        taskId: String,
+        status: String,
+        notes: String?
+    ): Result<StaffTaskDto> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.updateTaskStatus(slug, taskId, UpdateTaskStatusRequestDto(status, notes))
+        }
+    }
+
+    override suspend fun sendTaskNotification(taskId: String): Result<Unit> {
+        val slug = sessionManager.activeOrgSlug.value ?: return Result.failure(Exception("No active organization selected"))
+        return safeApiCallEnvelope {
+            api.sendTaskNotification(slug, taskId)
+        }
+    }
+}

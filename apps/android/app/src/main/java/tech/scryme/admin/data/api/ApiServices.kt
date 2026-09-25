@@ -214,3 +214,32 @@ interface ShiftsApiService {
         @Body dto: CreateBreakRequestDto
     ): Response<ApiEnvelope<StaffBreakDto>>
 }
+
+interface TasksApiService {
+    @GET("/api/android/{orgSlug}/tasks")
+    suspend fun getTasks(
+        @Path("orgSlug") orgSlug: String,
+        @Query("assignedMemberId") assignedMemberId: String? = null,
+        @Query("status") status: String? = null,
+        @Query("priority") priority: String? = null
+    ): Response<ApiEnvelope<List<StaffTaskDto>>>
+
+    @POST("/api/android/{orgSlug}/tasks")
+    suspend fun createTask(
+        @Path("orgSlug") orgSlug: String,
+        @Body dto: CreateTaskRequestDto
+    ): Response<ApiEnvelope<StaffTaskDto>>
+
+    @PATCH("/api/android/{orgSlug}/tasks/{taskId}/status")
+    suspend fun updateTaskStatus(
+        @Path("orgSlug") orgSlug: String,
+        @Path("taskId") taskId: String,
+        @Body dto: UpdateTaskStatusRequestDto
+    ): Response<ApiEnvelope<StaffTaskDto>>
+
+    @POST("/api/android/{orgSlug}/tasks/{taskId}/notify")
+    suspend fun sendTaskNotification(
+        @Path("orgSlug") orgSlug: String,
+        @Path("taskId") taskId: String
+    ): Response<ApiEnvelope<Unit>>
+}
