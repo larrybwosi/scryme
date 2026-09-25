@@ -11,13 +11,21 @@ describe("InvoiceUseCase", () => {
 
   const mockPrisma = {
     client: {
+      $transaction: vi.fn((cb) => cb(mockPrisma.client)),
       invoice: {
         create: vi.fn(),
         findMany: vi.fn(),
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
         findUnique: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
         delete: vi.fn(),
+        deleteMany: vi.fn(),
+      },
+      invoiceItem: {
+        deleteMany: vi.fn(),
+        createMany: vi.fn(),
       },
       invoiceConfig: { findUnique: vi.fn() },
       invoiceTemplate: { findMany: vi.fn(), create: vi.fn() },
@@ -141,7 +149,8 @@ describe("InvoiceUseCase", () => {
         transaction: { id: "order-1", finalTotal: 116, totalPaid: 116 },
       };
       mockPrisma.client.invoice.findFirst.mockResolvedValue(mockInvoice);
-      mockPrisma.client.invoice.update.mockResolvedValue({
+      mockPrisma.client.invoice.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.client.invoice.findFirstOrThrow.mockResolvedValue({
         ...mockInvoice,
         status: "PAID",
         amountPaid: 116,
@@ -149,13 +158,101 @@ describe("InvoiceUseCase", () => {
 
       const result = await useCase.getInvoiceById(orgId, invId);
 
-      expect(mockPrisma.client.invoice.update).toHaveBeenCalledWith(
+      expect(mockPrisma.client.invoice.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: invId },
+          where: { id: invId, organizationId: orgId },
           data: expect.objectContaining({
             status: "PAID",
             amountPaid: 116,
           }),
+        }),
+      );
+    });
+  });
+
+  describe("Tenant Isolation / BOLA Protection", () => {
+    it("should use updateMany with organizationId when updating an invoice", async () => {
+      const orgId = "org-1";
+      const invId = "inv-1";
+      const mockInvoice = {
+        id: invId,
+        organizationId: orgId,
+        status: "DRAFT",
+        items: [],
+      };
+      mockPrisma.client.invoice.findFirst.mockResolvedValue(mockInvoice);
+      mockPrisma.client.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      const dto = {
+        customer: "Acme Corp",
+        postingDate: new Date(),
+        items: [
+          {
+            itemCode: "ITEM-1",
+            itemName: "Widget",
+            quantity: 2,
+            rate: 50,
+            amount: 100,
+          },
+        ],
+      };
+
+      await useCase.updateInvoice(orgId, invId, dto as any);
+
+      expect(mockPrisma.client.invoice.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: invId, organizationId: orgId },
+        }),
+      );
+    });
+
+    it("should throw NotFoundException if updateMany returns 0 count during updateInvoice", async () => {
+      const orgId = "org-1";
+      const invId = "inv-1";
+      const mockInvoice = { id: invId, organizationId: orgId, status: "DRAFT" };
+      mockPrisma.client.invoice.findFirst.mockResolvedValue(mockInvoice);
+      mockPrisma.client.invoice.updateMany.mockResolvedValue({ count: 0 });
+
+      const dto = {
+        customer: "Acme Corp",
+        postingDate: new Date(),
+        items: [],
+      };
+
+      await expect(useCase.updateInvoice(orgId, invId, dto as any)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it("should use deleteMany with organizationId when deleting an invoice", async () => {
+      const orgId = "org-1";
+      const invId = "inv-1";
+      const mockInvoice = { id: invId, organizationId: orgId, status: "DRAFT" };
+      mockPrisma.client.invoice.findFirst.mockResolvedValue(mockInvoice);
+      mockPrisma.client.invoice.deleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await useCase.deleteInvoice(orgId, invId);
+
+      expect(mockPrisma.client.invoice.deleteMany).toHaveBeenCalledWith({
+        where: { id: invId, organizationId: orgId },
+      });
+      expect(result).toEqual(mockInvoice);
+    });
+
+    it("should use updateMany with organizationId when finalizing an invoice", async () => {
+      const orgId = "org-1";
+      const invId = "inv-1";
+      const mockInvoice = { id: invId, organizationId: orgId, status: "DRAFT" };
+      mockPrisma.client.organization.findUnique.mockResolvedValue({ settings: {} });
+      mockPrisma.client.invoice.findFirst.mockResolvedValue(mockInvoice);
+      mockPrisma.client.invoice.updateMany.mockResolvedValue({ count: 1 });
+
+      await useCase.finalizeInvoice(orgId, invId);
+
+      expect(mockPrisma.client.invoice.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: invId, organizationId: orgId },
+          data: { status: "UNPAID" },
         }),
       );
     });
