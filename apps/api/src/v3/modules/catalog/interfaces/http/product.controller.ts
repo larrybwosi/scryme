@@ -1,3 +1,4 @@
+import { ProductVariantQueryDto } from "../../application/dto/product.dto";
 import {
   Controller,
   Get,
@@ -63,6 +64,161 @@ export class ProductController {
     private readonly prisma: PrismaService,
     private readonly serviceManagement: ServiceManagementService,
   ) {}
+
+
+  @Get("variants")
+  @Permissions("catalog:product:read")
+  @ApiOperation({
+    summary: "Get paginated product variants",
+    description: "Retrieves a paginated list of product variants with optional filtering by type, category, search, active status, and location stock details.",
+    operationId: "Catalog_GetProductVariants",
+  })
+  @ApiResponse({ status: 200, description: "Successfully retrieved product variants" })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
+  async getVariants(
+    @Req() req: any,
+    @Query() query: ProductVariantQueryDto,
+  ) {
+    const organizationId = req.organization.id;
+    return this.getVariantsHelper(organizationId, query);
+  }
+
+  private async getVariantsHelper(organizationId: string, query: ProductVariantQueryDto) {
+    const pageNum = Number(query.page) || 1;
+    const limitNum = Number(query.limit) || 20;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = {
+      product: {
+        organizationId,
+      },
+    };
+
+    if (query.isActive !== undefined) {
+      where.isActive = query.isActive;
+      where.product.isActive = query.isActive;
+    }
+
+    if (query.productType) {
+      where.product.type = query.productType;
+    }
+
+    if (query.categoryId) {
+      where.product.categoryId = query.categoryId;
+    }
+
+    if (query.search) {
+      const term = query.search.trim();
+      where.OR = [
+        { name: { contains: term, mode: "insensitive" } },
+        { sku: { contains: term, mode: "insensitive" } },
+        { barcode: { contains: term, mode: "insensitive" } },
+        { product: { name: { contains: term, mode: "insensitive" } } },
+        { product: { sku: { contains: term, mode: "insensitive" } } },
+      ];
+    }
+
+    const validSortFields = [
+      "createdAt",
+      "updatedAt",
+      "name",
+      "sku",
+      "retailPrice",
+      "wholesalePrice",
+      "buyingPrice",
+    ];
+    const sortField = validSortFields.includes(query.sortBy || "")
+      ? query.sortBy!
+      : "createdAt";
+    const sortDirection = query.sortOrder || "desc";
+    const orderBy = { [sortField]: sortDirection };
+
+    const [variants, totalCount] = await Promise.all([
+      this.prisma.client.productVariant.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy,
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              type: true,
+              categoryId: true,
+              isActive: true,
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+              defaultLocation: {
+                select: {
+                  id: true,
+                  name: true,
+                  address: true,
+                },
+              },
+            },
+          },
+          variantStocks: (query.includeLocation || query.locationId) ? {
+            where: query.locationId ? { locationId: query.locationId } : undefined,
+            include: {
+              location: {
+                select: {
+                  id: true,
+                  name: true,
+                  address: true,
+                },
+              },
+            },
+          } : false,
+        },
+      }),
+      this.prisma.client.productVariant.count({ where }),
+    ]);
+
+    const mappedData = variants.map((v) => {
+      const location = v.variantStocks?.[0]?.location || v.product.defaultLocation || null;
+      const stockQuantity = v.variantStocks?.reduce((acc, curr) => acc + (curr.quantity || 0), 0) ?? 0;
+
+      return {
+        id: v.id,
+        productId: v.productId,
+        name: v.name,
+        sku: v.sku,
+        barcode: v.barcode,
+        productType: v.product.type,
+        retailPrice: v.retailPrice ? Number(v.retailPrice) : null,
+        wholesalePrice: v.wholesalePrice ? Number(v.wholesalePrice) : null,
+        buyingPrice: v.buyingPrice ? Number(v.buyingPrice) : null,
+        costPrice: v.buyingPrice ? Number(v.buyingPrice) : null,
+        stockQuantity,
+        isActive: v.isActive,
+        createdAt: v.createdAt,
+        updatedAt: v.updatedAt,
+        category: v.product.category ? {
+          id: v.product.category.id,
+          name: v.product.category.name,
+        } : null,
+        location: location ? {
+          id: location.id,
+          name: location.name,
+          address: location.address,
+        } : null,
+      };
+    });
+
+    return {
+      data: mappedData,
+      totalCount,
+      currentPage: pageNum,
+      totalPages: Math.ceil(totalCount / limitNum) || 1,
+      limit: limitNum,
+    };
+  }
 
   @Get("products")
   @Permissions("catalog:product:read")

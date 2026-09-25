@@ -1,3 +1,4 @@
+import { ProductVariantQueryDto } from "../../../catalog/application/dto/product.dto";
 import {
   Controller,
   Get,
@@ -550,6 +551,17 @@ export class ProductionController {
     @Param("id") id: string,
   ) {
     return this.productionService.deleteQualityIncident(ctx.organizationId, id);
+  }
+
+
+  @Get("variants")
+  @Permissions("production:batch:read")
+  @ApiOperation({ summary: "Get paginated product variants" })
+  async getVariants(
+    @v3Context() ctx: V3ApiContext,
+    @Query() query: ProductVariantQueryDto,
+  ) {
+    return this.productionService.getVariants(ctx.organizationId, query);
   }
 
   // Production Auth & Device Compatibility

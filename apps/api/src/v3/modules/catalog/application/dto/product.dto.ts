@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { IsString, IsNotEmpty, IsNumber, IsOptional, ValidateNested, IsArray, IsObject, IsEnum, IsUrl, MaxLength } from "class-validator";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 
 export class ImageItemDto {
   @ApiProperty({ example: "img_cover_9921", description: "Unique image ID for reordering and DOM reconciliation keys" })
@@ -351,4 +351,59 @@ export class UpdateProductReviewDto {
   @IsString()
   @IsOptional()
   customerId?: string;
+}
+
+
+export class ProductVariantQueryDto {
+  @ApiPropertyOptional({ example: 1, default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  page?: number = 1;
+
+  @ApiPropertyOptional({ example: 20, default: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  limit?: number = 20;
+
+  @ApiPropertyOptional({ example: "createdAt", default: "createdAt" })
+  @IsOptional()
+  @IsString()
+  sortBy?: string = "createdAt";
+
+  @ApiPropertyOptional({ example: "desc", enum: ["asc", "desc"], default: "desc" })
+  @IsOptional()
+  @IsEnum(["asc", "desc"])
+  sortOrder?: "asc" | "desc" = "desc";
+
+  @ApiPropertyOptional({ example: "Sourdough", description: "Search by variant or product name, SKU, or barcode" })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({ example: "cat_123", description: "Filter by product category ID" })
+  @IsOptional()
+  @IsString()
+  categoryId?: string;
+
+  @ApiPropertyOptional({ example: "loc_123", description: "Filter or load stock for specific location ID" })
+  @IsOptional()
+  @IsString()
+  locationId?: string;
+
+  @ApiPropertyOptional({ example: "FINISHED_GOOD", description: "Filter by parent product type" })
+  @IsOptional()
+  @IsString()
+  productType?: string;
+
+  @ApiPropertyOptional({ example: true, description: "Filter by active status" })
+  @IsOptional()
+  @Transform(({ value }) => value === "true" || value === true)
+  isActive?: boolean;
+
+  @ApiPropertyOptional({ example: true, description: "Include location details in response" })
+  @IsOptional()
+  @Transform(({ value }) => value === "true" || value === true)
+  includeLocation?: boolean;
 }

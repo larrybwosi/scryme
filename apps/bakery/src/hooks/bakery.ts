@@ -255,9 +255,10 @@ export const useBakeryCategories = () => {
         return tauriInvoke<BakeryCategory[]>("get_categories");
       }
       const data = await sdk.bakery.getCategories();
-      return (Array.isArray(data)
-        ? data
-        : data?.data || []) as unknown as BakeryCategory[];
+      if (Array.isArray(data)) return data as unknown as BakeryCategory[];
+      if (Array.isArray(data?.data)) return data.data as unknown as BakeryCategory[];
+      if (Array.isArray(data?.categories)) return data.categories as unknown as BakeryCategory[];
+      return [] as unknown as BakeryCategory[];
     },
   });
 };
