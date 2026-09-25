@@ -74,3 +74,10 @@ interface ShiftsRepository {
     suspend fun createShift(memberId: String, dayOfWeek: Int, startTime: String, endTime: String): Result<StaffShiftDto>
     suspend fun addBreak(shiftId: String, startTime: String, endTime: String, description: String? = null): Result<StaffBreakDto>
 }
+
+interface TasksRepository {
+    suspend fun getTasks(assignedMemberId: String? = null, status: String? = null, priority: String? = null): Result<List<StaffTaskDto>>
+    suspend fun createTask(title: String, description: String? = null, assignedMemberId: String? = null, shiftId: String? = null, locationId: String? = null, priority: String = "MEDIUM", dueDate: String? = null, notifyViaScrymeChat: Boolean = true): Result<StaffTaskDto>
+    suspend fun updateTaskStatus(taskId: String, status: String, notes: String? = null): Result<StaffTaskDto>
+    suspend fun sendTaskNotification(taskId: String): Result<Unit>
+}

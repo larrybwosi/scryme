@@ -25,6 +25,12 @@ import tech.scryme.admin.data.api.AnalyticsApiService
 import tech.scryme.admin.data.api.AnnouncementApiService
 import tech.scryme.admin.data.api.ExpenseApiService
 import tech.scryme.admin.data.api.DeviceApiService
+import tech.scryme.admin.data.api.ShiftsApiService
+import tech.scryme.admin.data.api.TasksApiService
+import tech.scryme.admin.data.repository.ShiftsRepositoryImpl
+import tech.scryme.admin.data.repository.TasksRepositoryImpl
+import tech.scryme.admin.presentation.viewmodel.ShiftsViewModel
+import tech.scryme.admin.presentation.viewmodel.TasksViewModel
 import tech.scryme.admin.data.repository.PresenceRepositoryImpl
 import tech.scryme.admin.data.repository.ApprovalsRepositoryImpl
 import tech.scryme.admin.data.repository.AnalyticsRepositoryImpl
@@ -50,6 +56,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var announcementViewModel: AnnouncementViewModel
     private lateinit var expenseViewModel: ExpenseViewModel
     private lateinit var deviceAuthViewModel: DeviceAuthViewModel
+    private lateinit var shiftsViewModel: ShiftsViewModel
+    private lateinit var tasksViewModel: TasksViewModel
     private lateinit var sessionManager: SessionManagerImpl
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,6 +106,14 @@ class MainActivity : ComponentActivity() {
         val deviceRepository = DeviceRepositoryImpl(deviceApiService)
         deviceAuthViewModel = DeviceAuthViewModel(deviceRepository)
 
+        val shiftsApiService = retrofit.create(ShiftsApiService::class.java)
+        val shiftsRepository = ShiftsRepositoryImpl(shiftsApiService, sessionManager)
+        shiftsViewModel = ShiftsViewModel(shiftsRepository, announcementRepository)
+
+        val tasksApiService = retrofit.create(TasksApiService::class.java)
+        val tasksRepository = TasksRepositoryImpl(tasksApiService, sessionManager)
+        tasksViewModel = TasksViewModel(tasksRepository, announcementRepository)
+
         setContent {
             val themePreference by sessionManager.themePreference.collectAsState()
             ScrymeTheme(themeName = themePreference) {
@@ -112,6 +128,8 @@ class MainActivity : ComponentActivity() {
                         analyticsViewModel = analyticsViewModel,
                         announcementViewModel = announcementViewModel,
                         expenseViewModel = expenseViewModel,
+                        shiftsViewModel = shiftsViewModel,
+                        tasksViewModel = tasksViewModel,
                         deviceAuthViewModel = deviceAuthViewModel,
                         sessionManager = sessionManager
                     )
@@ -129,6 +147,8 @@ fun AppNavigation(
     analyticsViewModel: AnalyticsViewModel,
     announcementViewModel: AnnouncementViewModel,
     expenseViewModel: ExpenseViewModel,
+    shiftsViewModel: ShiftsViewModel,
+    tasksViewModel: TasksViewModel,
     deviceAuthViewModel: DeviceAuthViewModel,
     sessionManager: SessionManagerImpl
 ) {
@@ -167,6 +187,8 @@ fun AppNavigation(
             analyticsViewModel = analyticsViewModel,
             announcementViewModel = announcementViewModel,
             expenseViewModel = expenseViewModel,
+            shiftsViewModel = shiftsViewModel,
+            tasksViewModel = tasksViewModel,
             deviceAuthViewModel = deviceAuthViewModel,
             sessionManager = sessionManager,
             onSignOut = { authViewModel.logout() }

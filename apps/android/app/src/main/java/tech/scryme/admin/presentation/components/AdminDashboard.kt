@@ -27,6 +27,7 @@ fun AdminDashboard(
     announcementViewModel: AnnouncementViewModel,
     expenseViewModel: ExpenseViewModel,
     shiftsViewModel: ShiftsViewModel? = null,
+    tasksViewModel: TasksViewModel? = null,
     deviceAuthViewModel: DeviceAuthViewModel? = null,
     sessionManager: SessionManagerImpl,
     onSignOut: () -> Unit
@@ -182,9 +183,10 @@ fun AdminDashboard(
                         onClick = {
                             selectedTab = 7
                             shiftsViewModel?.loadShifts()
+                            tasksViewModel?.loadTasks()
                         },
-                        icon = { Icon(Icons.Default.Schedule, contentDescription = "Shifts") },
-                        label = { Text("Shifts") }
+                        icon = { Icon(Icons.Default.Schedule, contentDescription = "Schedules & Tasks") },
+                        label = { Text("Schedules & Tasks") }
                     )
                 }
             }
@@ -252,14 +254,21 @@ fun AdminDashboard(
                         onSignOut = onSignOut
                     )
                     7 -> {
-                        if (shiftsViewModel != null) {
+                        if (shiftsViewModel != null && tasksViewModel != null) {
+                            SchedulesAndTasksView(
+                                shiftsViewModel = shiftsViewModel,
+                                tasksViewModel = tasksViewModel,
+                                presenceViewModel = presenceViewModel,
+                                branches = branches
+                            )
+                        } else if (shiftsViewModel != null) {
                             ShiftsView(
                                 shiftsViewModel = shiftsViewModel,
                                 presenceViewModel = presenceViewModel
                             )
                         } else {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Shifts module unavailable")
+                                Text("Schedules & Tasks module unavailable")
                             }
                         }
                     }
