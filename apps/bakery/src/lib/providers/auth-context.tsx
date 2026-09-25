@@ -20,6 +20,7 @@ interface AuthContextType {
   loginLocal: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   sso: () => Promise<void>;
+  checkAuth: () => Promise<void>;
   isAuthenticated: boolean;
   hasDeviceKey: boolean;
 }
@@ -49,16 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentOrgSlug = deviceConfig?.orgSlug || localStorage.getItem('bakery_org_slug');
         if (currentOrgSlug && currentOrgSlug !== ':orgSlug' && (provisionedKey || deviceConfig?.deviceKey)) {
           isProvisioned = true;
-          setHasDeviceKey(true);
         } else {
           isProvisioned = false;
-          setHasDeviceKey(false);
         }
       } else {
         const currentOrgSlug = localStorage.getItem('bakery_org_slug');
-        isProvisioned = !!currentOrgSlug && currentOrgSlug !== ':orgSlug';
-        setHasDeviceKey(isProvisioned);
+        const apiKey = localStorage.getItem('bakery_api_key');
+        isProvisioned = !!currentOrgSlug && currentOrgSlug !== ':orgSlug' && !!apiKey;
       }
+
+      setHasDeviceKey(isProvisioned);
 
       if (!isProvisioned) {
         setUser(null);
@@ -78,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const status = await sdk.bakery.getAuthStatus().catch(() => ({ hasDeviceKey: isProvisioned, hasMemberToken: false }));
-        setHasDeviceKey(status.hasDeviceKey);
+        setHasDeviceKey(status.hasDeviceKey || isProvisioned);
 
         if (status.hasMemberToken || (isTauri() && localStorage.getItem('bakery_user'))) {
           // Sync token to Rust if in Tauri
@@ -267,6 +268,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loginLocal,
     logout,
     sso,
+    checkAuth,
     isAuthenticated: !!user,
     hasDeviceKey,
   };

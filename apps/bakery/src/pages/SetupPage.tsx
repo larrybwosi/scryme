@@ -19,7 +19,6 @@ import {
   Cpu,
   Loader2,
   ArrowRight,
-  Save,
   AlertCircle,
   ShieldCheck,
   Activity,
@@ -28,11 +27,13 @@ import {
 import { toast } from "sonner";
 import { tauriInvoke } from "@/lib/tauri-bridge";
 import sdk, { isTauri } from "@/lib/sdk";
+import { useAuth } from "@/lib/providers/auth-context";
 import { sanitizeApiUrl } from "@/utils/url";
 import { resetBakeryDevice } from "@/utils/reset";
 
 export default function SetupPage() {
   const navigate = useNavigate();
+  const { checkAuth } = useAuth();
   const [setupToken, setSetupToken] = useState("");
   const [isProvisioning, setIsProvisioning] = useState(false);
   const [provisionError, setProvisionError] = useState<string | null>(null);
@@ -45,7 +46,6 @@ export default function SetupPage() {
   const [apiUrl, setApiUrl] = useState(
     import.meta.env.VITE_API_URL || "https://api.scryme.tech",
   );
-  const [isValidatingApi, setIsValidatingApi] = useState(false);
 
   const handleDetectHardware = async () => {
     setIsDetectingHardware(true);
@@ -76,12 +76,40 @@ export default function SetupPage() {
     try {
       const sanitizedApiUrl = showApiUrl ? sanitizeApiUrl(apiUrl) : null;
 
-      await tauriInvoke("provision_device_with_token", {
-        setupToken,
-        macAddress: hardwareInfo?.macAddress || null,
-        serialNumber: hardwareInfo?.serialNumber || null,
-        apiUrlOverride: sanitizedApiUrl,
-      });
+      if (isTauri()) {
+        await tauriInvoke("provision_device_with_token", {
+          setupToken,
+          macAddress: hardwareInfo?.macAddress || null,
+          serialNumber: hardwareInfo?.serialNumber || null,
+          apiUrlOverride: sanitizedApiUrl,
+        });
+      } else {
+        // Web mode fallback provisioning
+        const cleanUrl = sanitizedApiUrl || sanitizeApiUrl(apiUrl);
+        const res = await fetch(`${cleanUrl}/api/v3/global/pos/provision`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            setupToken,
+            token: setupToken,
+            macAddress: hardwareInfo?.macAddress || null,
+            serialNumber: hardwareInfo?.serialNumber || null,
+          }),
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`Provisioning failed (${res.status}): ${errText}`);
+        }
+
+        const data = await res.json();
+        const target = data.data || data;
+        const apiKey = target.apiKey || target.clientId;
+        const orgSlug = target.organization?.slug || target.organization?.orgSlug;
+
+        if (apiKey) sdk.setApiKey(apiKey);
+        if (orgSlug) localStorage.setItem("bakery_org_slug", orgSlug);
+      }
 
       if (showApiUrl && apiUrl) {
         const finalUrl = sanitizedApiUrl || sanitizeApiUrl(apiUrl);
@@ -89,15 +117,19 @@ export default function SetupPage() {
         localStorage.setItem("bakery_api_url", finalUrl);
       }
 
-      const deviceConfig = await tauriInvoke<any>("get_device_config").catch(() => null);
-      if (deviceConfig?.orgSlug) {
-        localStorage.setItem("bakery_org_slug", deviceConfig.orgSlug);
+      if (isTauri()) {
+        const deviceConfig = await tauriInvoke<any>("get_device_config").catch(() => null);
+        if (deviceConfig?.orgSlug) {
+          localStorage.setItem("bakery_org_slug", deviceConfig.orgSlug);
+        }
+
+        const newKey = deviceConfig?.deviceKey || (await tauriInvoke<string>("get_provisioned_api_key").catch(() => null));
+        if (newKey) {
+          sdk.setApiKey(newKey);
+        }
       }
 
-      const newKey = deviceConfig?.deviceKey || (await tauriInvoke<string>("get_provisioned_api_key"));
-      if (newKey) {
-        sdk.setApiKey(newKey);
-      }
+      await checkAuth();
 
       toast.success("Terminal provisioned successfully");
       navigate("/login");
@@ -152,15 +184,13 @@ export default function SetupPage() {
                   >
                     Setup Token
                   </Label>
-                  {isTauri() && (
-                    <button
-                      type="button"
-                      onClick={() => setShowApiUrl(!showApiUrl)}
-                      className="text-[10px] text-primary/60 hover:text-primary transition-colors font-semibold uppercase tracking-wider"
-                    >
-                      {showApiUrl ? "Hide Endpoint" : "Custom Endpoint"}
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setShowApiUrl(!showApiUrl)}
+                    className="text-[10px] text-primary/60 hover:text-primary transition-colors font-semibold uppercase tracking-wider"
+                  >
+                    {showApiUrl ? "Hide Endpoint" : "Custom Endpoint"}
+                  </button>
                 </div>
                 <div className="relative">
                   <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-500" />
