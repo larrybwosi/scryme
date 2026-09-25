@@ -1,3 +1,4 @@
+import { AgentModule } from "./modules/agent/agent.module";
 import { B2BModule } from "./modules/b2b/b2b.module";
 import { Module } from "@nestjs/common";
 import { CatalogModule } from "./modules/catalog/catalog.module";
@@ -27,6 +28,7 @@ import { ProductionModule } from "./modules/production/production.module";
 import { DeliveriesModule } from "./modules/deliveries/deliveries.module";
 
 export const V3_SUB_MODULES = [
+  AgentModule,
   V3CommonModule,
   V3AuthModule,
   AdminModule,

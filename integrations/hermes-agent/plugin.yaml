@@ -1,0 +1,14 @@
+name: scryme-hermes-agent
+version: 1.0.0
+description: Hermes Agent integration plugin for Scryme system administrative tasks, automated reporting, ScrymeChat actions, and human-in-the-loop approvals.
+provides_tools:
+  - get_sales_summary
+  - get_stock_alerts
+  - get_audit_summary
+  - send_scryme_chat_message
+  - request_human_approval
+provides_hooks:
+  - post_tool_call
+requires_env:
+  - SCRYME_API_URL
+  - SCRYME_V3_API_KEY

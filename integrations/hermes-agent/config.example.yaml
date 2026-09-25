@@ -1,0 +1,27 @@
+# Hermes Agent Configuration for Scryme System Integration
+model:
+  default: anthropic/claude-3-5-sonnet-20241022
+
+approvals:
+  mode: smart
+  timeout: 300
+  unattended_mode: deny
+
+platforms:
+  webhook:
+    enabled: true
+    extra:
+      port: 8644
+      secret: "${HERMES_WEBHOOK_SECRET:-scryme-hermes-secret}"
+      routes:
+        scryme-command:
+          events:
+            - scryme_message
+            - cron_trigger
+          prompt: |
+            Event received from Scryme system: {__raw__}
+            Process the request, perform necessary reporting or administrative actions using available tools, and send the response back to ScrymeChat.
+          skills:
+            - admin-reporting
+            - scryme-messaging
+            - hitl-approvals
