@@ -10,11 +10,15 @@ interface BakeryAuthGuardProps {
 }
 
 export function BakeryAuthGuard({ children }: BakeryAuthGuardProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, hasDeviceKey, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
     return <SessionSkeleton />;
+  }
+
+  if (!hasDeviceKey) {
+    return <Navigate to="/setup" replace />;
   }
 
   if (!isAuthenticated) {

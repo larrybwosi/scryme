@@ -637,6 +637,11 @@ pub async fn login_cloud_command(
         .map_err(BackendError::Network)?;
 
     if !status.is_success() {
+        if let Ok(json) = serde_json::from_str::<serde_json::Value>(&text) {
+            if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
+                return Err(BackendError::Auth(msg.to_string()));
+            }
+        }
         return Err(BackendError::Auth(format!("Login failed: {} - {}", status, text)));
     }
 

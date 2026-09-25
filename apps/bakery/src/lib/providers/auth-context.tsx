@@ -34,6 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkAuth = async () => {
     setIsLoading(true);
     try {
+      let isProvisioned = false;
+
       if (isTauri()) {
         const deviceConfig = await tauriInvoke<any>('get_device_config').catch(() => null);
         if (deviceConfig?.orgSlug) {
@@ -41,9 +43,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const provisionedKey = deviceConfig?.deviceKey || await tauriInvoke<string | null>('get_provisioned_api_key').catch(() => null);
         if (provisionedKey) {
-          setHasDeviceKey(true);
           sdk.setApiKey(provisionedKey);
         }
+
+        const currentOrgSlug = deviceConfig?.orgSlug || localStorage.getItem('bakery_org_slug');
+        if (currentOrgSlug && currentOrgSlug !== ':orgSlug' && (provisionedKey || deviceConfig?.deviceKey)) {
+          isProvisioned = true;
+          setHasDeviceKey(true);
+        } else {
+          isProvisioned = false;
+          setHasDeviceKey(false);
+        }
+      } else {
+        const currentOrgSlug = localStorage.getItem('bakery_org_slug');
+        isProvisioned = !!currentOrgSlug && currentOrgSlug !== ':orgSlug';
+        setHasDeviceKey(isProvisioned);
+      }
+
+      if (!isProvisioned) {
+        setUser(null);
+        setIsLoading(false);
+        return;
       }
 
       if (isOfflineMode()) {
@@ -57,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           sdk.setMemberToken(memberToken);
         }
 
-        const status = await sdk.bakery.getAuthStatus();
+        const status = await sdk.bakery.getAuthStatus().catch(() => ({ hasDeviceKey: isProvisioned, hasMemberToken: false }));
         setHasDeviceKey(status.hasDeviceKey);
 
         if (status.hasMemberToken || (isTauri() && localStorage.getItem('bakery_user'))) {
