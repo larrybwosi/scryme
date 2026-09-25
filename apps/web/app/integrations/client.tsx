@@ -263,7 +263,6 @@ function IntegrationsPageContent() {
   // Create Channel
   const createChannelMutation = useMutation({
     mutationFn: createScrymeWorkspaceChannel,
-  updateScrymeWorkspaceChannel,
     onSuccess: (res, variables) => {
       if (res.message) toast.info(res.message);
       else toast.success(`Channel #${variables.name} created!`);
