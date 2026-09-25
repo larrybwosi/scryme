@@ -78,7 +78,7 @@ describe("ProductController.getVariants (V3)", () => {
         },
         variantStocks: [
           {
-            quantity: 50,
+            currentStock: 50,
             location: {
               id: "loc_1",
               name: "Main Bakery",

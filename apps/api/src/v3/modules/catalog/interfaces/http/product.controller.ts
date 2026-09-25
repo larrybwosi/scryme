@@ -163,9 +163,11 @@ export class ProductController {
               },
             },
           },
-          variantStocks: (query.includeLocation || query.locationId) ? {
+          variantStocks: {
             where: query.locationId ? { locationId: query.locationId } : undefined,
-            include: {
+            select: {
+              currentStock: true,
+              availableStock: true,
               location: {
                 select: {
                   id: true,
@@ -174,7 +176,7 @@ export class ProductController {
                 },
               },
             },
-          } : false,
+          },
         },
       }),
       this.prisma.client.productVariant.count({ where }),
@@ -182,7 +184,7 @@ export class ProductController {
 
     const mappedData = variants.map((v) => {
       const location = v.variantStocks?.[0]?.location || v.product.defaultLocation || null;
-      const stockQuantity = v.variantStocks?.reduce((acc, curr) => acc + (curr.quantity || 0), 0) ?? 0;
+      const stockQuantity = v.variantStocks?.reduce((acc, curr) => acc + (Number(curr.currentStock) || 0), 0) ?? 0;
 
       return {
         id: v.id,
