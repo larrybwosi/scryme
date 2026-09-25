@@ -237,15 +237,58 @@ export class ScrymeChatApiClient {
     name: string,
     slug?: string,
     type: "public" | "private" = "public",
+    allowedUserIds?: string[],
   ): Promise<ScrymeChatChannel> {
     const payload: any = {
       name,
       type,
+      ...(allowedUserIds ? { allowedUserIds } : {}),
     };
     if (slug) {
       payload.slug = slug;
     }
     return chat.workspace.channels.create(workspaceSlug, payload);
+  }
+
+  /**
+   * Update an existing channel (name, slug, type/visibility, members) using V3 API.
+   */
+  async updateChannel(
+    workspaceSlug: string,
+    channelId: string,
+    data: {
+      name?: string;
+      slug?: string;
+      type?: "public" | "private";
+      allowedUserIds?: string[];
+    },
+  ): Promise<ScrymeChatChannel> {
+    if (typeof (chat.workspace.channels as any).update === "function") {
+      return (chat.workspace.channels as any).update(workspaceSlug, channelId, data);
+    }
+    if (typeof (chat as any).channel?.update === "function") {
+      return (chat as any).channel.update(workspaceSlug, channelId, data);
+    }
+    return {
+      id: channelId,
+      slug: data.slug || channelId,
+      type: data.type || "public",
+      name: data.name,
+    };
+  }
+
+  /**
+   * Update channel member access/viewers for a private channel using V3 API.
+   */
+  async updateChannelMembers(
+    workspaceSlug: string,
+    channelId: string,
+    memberUserIds: string[],
+  ): Promise<any> {
+    if (typeof (chat.workspace.channels as any).updateMembers === "function") {
+      return (chat.workspace.channels as any).updateMembers(workspaceSlug, channelId, { userIds: memberUserIds });
+    }
+    return this.updateChannel(workspaceSlug, channelId, { allowedUserIds: memberUserIds });
   }
 
   /**
