@@ -1,7 +1,7 @@
-import { Controller, Post, Body, Param, UseGuards, Req } from "@nestjs/common";
+import { Controller, Post, Body, Param, UseGuards } from "@nestjs/common";
 import { AgentService } from "../agent.service";
 import { SendAgentMessageDto, RequestAgentApprovalDto, HandleAgentApprovalCallbackDto } from "../dto/agent.dto";
-import { V3AuthGuard, PermissionsGuard, Permissions, V3Context } from "../../../common/auth";
+import { V3AuthGuard, PermissionsGuard, Permissions, v3Context } from "../../../common/auth";
 
 @Controller("v3/:orgSlug/agent")
 @UseGuards(V3AuthGuard, PermissionsGuard)
