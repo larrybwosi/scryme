@@ -217,3 +217,45 @@ export async function sendTwoFactorOTPEmail(params: {
     text: `Hi ${name},\n\nYour Scryme 2FA verification code is: ${otp}\n\nThis code will expire in 10 minutes.\n\n- The Scryme Team`,
   });
 }
+
+/**
+ * Send organization invitation email to user
+ */
+export async function sendOrganizationInvitationEmail(params: {
+  email: string;
+  url: string;
+  inviterName?: string | null;
+  organizationName: string;
+  role: string;
+}): Promise<{ success: boolean; id?: string; error?: string }> {
+  const { email, url, inviterName, organizationName, role } = params;
+  const inviter = inviterName || "A team member";
+
+  const bodyContent = `
+    <h2 style="font-size: 20px; font-weight: 600; margin-top: 0; margin-bottom: 16px; color: #0f172a;">You've been invited to join ${organizationName}</h2>
+    <p style="font-size: 15px; line-height: 1.6; color: #334155; margin-bottom: 24px;">
+      ${inviter} has invited you to join <strong>${organizationName}</strong> as a <strong>${role.toLowerCase()}</strong> on Scryme.
+    </p>
+    <div style="text-align: center; margin-bottom: 28px;">
+      <a href="${url}" target="_blank" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-weight: 600; font-size: 15px; text-decoration: none; padding: 12px 28px; border-radius: 8px; box-shadow: 0 2px 4px rgba(15, 23, 42, 0.2);">
+        Accept Invitation & Join
+      </a>
+    </div>
+    <p style="font-size: 14px; line-height: 1.5; color: #64748b; margin-bottom: 12px;">
+      If the button above doesn't work, copy and paste this link into your web browser:
+    </p>
+    <p style="font-size: 13px; word-break: break-all; color: #2563eb; background-color: #f1f5f9; padding: 10px 14px; border-radius: 6px; margin-bottom: 24px;">
+      ${url}
+    </p>
+    <p style="font-size: 13px; color: #94a3b8; margin: 0;">
+      This invitation link will expire in 7 days.
+    </p>
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: `You've been invited to join ${organizationName} on Scryme`,
+    html: renderEmailLayout(`Invitation to join ${organizationName}`, bodyContent),
+    text: `${inviter} has invited you to join ${organizationName} as a ${role}.\n\nAccept your invitation using the following link:\n${url}\n\nThis link will expire in 7 days.\n\n- The Scryme Team`,
+  });
+}

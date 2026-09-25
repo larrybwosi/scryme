@@ -11,7 +11,7 @@ export async function getPendingInvitations() {
 
   const invitations = await db.invitation.findMany({
     where: {
-      email: auth.user.email,
+      email: { equals: auth.user.email, mode: "insensitive" },
       status: "PENDING",
     },
     include: {
@@ -49,7 +49,7 @@ export async function acceptInvitationByToken(token: string) {
     return { success: false, error: "Invalid or expired invitation" };
   }
 
-  if (auth.user.email !== invitation.email) {
+  if (auth.user.email.toLowerCase() !== invitation.email.toLowerCase()) {
     return {
       success: false,
       error: `This invitation was sent to ${invitation.email}, but you are logged in as ${auth.user.email}. Please switch accounts.`,
@@ -150,7 +150,7 @@ export async function createOrgInvitation(data: {
   }
 
   // Permission check
-  const memberRole = session.role as MemberRole;
+  const memberRole = (session.orgRole || session.role) as MemberRole;
   const isOwner = memberRole === "OWNER";
   const isAdmin = memberRole === "ADMIN";
 
@@ -210,8 +210,21 @@ export async function createOrgInvitation(data: {
       },
     });
 
+    const org = await db.organization.findUnique({
+      where: { id: session.organizationId },
+      select: { name: true },
+    });
+
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      process.env.BETTER_AUTH_URL ||
+      "https://app.scryme.tech";
+    const inviteUrl = `${appUrl}/invite/${token}`;
+
+    let invitationResult;
+
     if (existingInvitation) {
-      const updated = await db.invitation.update({
+      invitationResult = await db.invitation.update({
         where: { id: existingInvitation.id },
         data: {
           role: data.role,
@@ -220,23 +233,36 @@ export async function createOrgInvitation(data: {
           inviterId: session.user.id,
         },
       });
-      revalidatePath("/staff");
-      return { success: true, data: updated };
+    } else {
+      invitationResult = await db.invitation.create({
+        data: {
+          organizationId: session.organizationId,
+          email: data.email,
+          role: data.role,
+          token,
+          expiresAt,
+          inviterId: session.user.id,
+        },
+      });
     }
 
-    const invitation = await db.invitation.create({
-      data: {
-        organizationId: session.organizationId,
+    try {
+      const { sendOrganizationInvitationEmail } = await import(
+        "@repo/shared/services/email"
+      );
+      await sendOrganizationInvitationEmail({
         email: data.email,
+        url: inviteUrl,
+        inviterName: session.user.name || session.user.email,
+        organizationName: org?.name || "the workspace",
         role: data.role,
-        token,
-        expiresAt,
-        inviterId: session.user.id,
-      },
-    });
+      });
+    } catch (emailErr) {
+      console.error("Failed to send invitation email:", emailErr);
+    }
 
     revalidatePath("/staff");
-    return { success: true, data: invitation };
+    return { success: true, data: invitationResult, inviteLink: inviteUrl };
   } catch (error: any) {
     console.error("Error creating invitation:", error);
     return { success: false, error: error.message || "Failed to create invitation" };
@@ -250,7 +276,7 @@ export async function revokeOrgInvitation(invitationId: string) {
   }
 
   // Permission check
-  const memberRole = session.role as MemberRole;
+  const memberRole = (session.orgRole || session.role) as MemberRole;
   const isOwner = memberRole === "OWNER";
   const isAdmin = memberRole === "ADMIN";
 

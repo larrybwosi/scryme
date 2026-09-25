@@ -13,7 +13,7 @@ async function checkStaffManagementPermission(session: any) {
     return { success: false, error: "Unauthorized" };
   }
 
-  const memberRole = session.role as MemberRole;
+  const memberRole = (session.orgRole || session.role) as MemberRole;
   const isOwner = memberRole === "OWNER";
   const isAdmin = memberRole === "ADMIN";
 
