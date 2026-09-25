@@ -65,6 +65,7 @@ function LoginPageContent({
   const [nuqsCallbackUrl] = useQueryState("callbackUrl");
   const [nuqsRedirect] = useQueryState("redirect");
   const [nuqsReturnTo] = useQueryState("returnTo");
+  const [nuqsEmail] = useQueryState("email");
 
   const callbackUrl = nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo;
 
@@ -77,10 +78,17 @@ function LoginPageContent({
   const {
     register: registerLogin,
     handleSubmit: handleSubmitLogin,
+    setValue: setLoginValue,
     formState: { errors: loginErrors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  useEffect(() => {
+    if (nuqsEmail) {
+      setLoginValue("email", nuqsEmail);
+    }
+  }, [nuqsEmail, setLoginValue]);
 
   const {
     register: registerForgot,

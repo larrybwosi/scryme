@@ -176,6 +176,7 @@ export function SignupPage() {
   const [nuqsCallbackUrl] = useQueryState("callbackUrl");
   const [nuqsRedirect] = useQueryState("redirect");
   const [nuqsReturnTo] = useQueryState("returnTo");
+  const [nuqsEmail] = useQueryState("email");
 
   const callbackURL =
     nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo || undefined;
@@ -190,12 +191,19 @@ export function SignupPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     watch,
     formState: { errors },
   } = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
     mode: "onChange",
   });
+
+  useEffect(() => {
+    if (nuqsEmail) {
+      setValue("email", nuqsEmail);
+    }
+  }, [nuqsEmail, setValue]);
 
   const watchedPassword = watch("password", "");
   const strength = getPasswordStrength(watchedPassword ?? "");

@@ -132,7 +132,7 @@ export function InvitationCard({
         {/* Flow execution buttons */}
         {isAuthenticated ? (
           <div className="w-full space-y-4">
-            {currentUserEmail === invitation.email ? (
+            {currentUserEmail?.toLowerCase() === invitation.email.toLowerCase() ? (
               <div className="text-xs text-emerald-600 bg-emerald-50 border border-emerald-100 rounded-lg py-2.5 px-3 flex items-center justify-center gap-2">
                 <CheckCircle className="w-4 h-4 shrink-0" />
                 <span>
@@ -152,7 +152,7 @@ export function InvitationCard({
             )}
             <Button
               className="w-full h-11 bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
-              disabled={loading || currentUserEmail !== invitation.email}
+              disabled={loading || currentUserEmail?.toLowerCase() !== invitation.email.toLowerCase()}
               onClick={handleAccept}
             >
               {loading ? (
@@ -177,7 +177,7 @@ export function InvitationCard({
               asChild
               className="w-full h-11 bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm"
             >
-              <Link href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
+              <Link href={`/login?callbackUrl=${encodeURIComponent(callbackUrl)}&email=${encodeURIComponent(invitation.email)}`}>
                 <LogIn className="w-4 h-4" />
                 <span>Log In with Existing Account</span>
               </Link>
@@ -187,7 +187,7 @@ export function InvitationCard({
               variant="outline"
               className="w-full h-11 border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-sm"
             >
-              <Link href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
+              <Link href={`/sign-up?callbackUrl=${encodeURIComponent(callbackUrl)}&email=${encodeURIComponent(invitation.email)}`}>
                 <UserPlus className="w-4 h-4 text-emerald-600" />
                 <span>Create a New Account</span>
               </Link>

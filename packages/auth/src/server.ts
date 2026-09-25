@@ -22,6 +22,7 @@ export async function getServerAuth(
   organizationId: string | null | undefined;
   memberId: string | undefined;
   role: string | undefined;
+  orgRole: string | undefined;
   systemRole: string | undefined;
   runWithTenant: <T>(fn: () => Promise<T> | T) => Promise<T> | T;
 } | null>;
@@ -34,6 +35,7 @@ export async function getServerAuth(
   organizationId: string;
   memberId: string;
   role: string | undefined;
+  orgRole: string | undefined;
   systemRole: string | undefined;
   runWithTenant: <T>(fn: () => Promise<T> | T) => Promise<T> | T;
 } | null>;
@@ -105,7 +107,8 @@ export async function getServerAuth(
     session: session.session,
     organizationId: organizationId as any,
     memberId: memberId as any,
-    role,
+    role: orgRole || role,
+    orgRole,
     systemRole,
     runWithTenant: <T>(fn: () => Promise<T> | T) =>
       runWithTenant(
