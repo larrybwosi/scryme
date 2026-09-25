@@ -228,11 +228,13 @@ export default function CategoryManager() {
     },
   });
 
-  const filteredCategories = categories?.filter(
-    category =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (category.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredCategories = Array.isArray(categories)
+    ? categories.filter(
+        category =>
+          (category?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (category?.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    : [];
 
   const handleCreateCategory = async (data: BakeryCategoryFormData) => {
     try {
@@ -281,15 +283,26 @@ export default function CategoryManager() {
   };
 
   const getCategoryStats = (categoryId: string) => {
-    const category = categories?.find(c => c.id === categoryId);
+    const category = categories?.find(c => c?.id === categoryId);
+    if (!category) return { recipes: 0, templates: 0, batches: 0 };
 
-    if (category?.recipes !== undefined && category?.templates !== undefined && category?.batches !== undefined) {
-      return {
-        recipes: category.recipes.length,
-        templates: category.templates.length,
-        batches: category.batches.length,
-      };
-    }
+    const recipesCount = typeof category.recipesCount === "number"
+      ? category.recipesCount
+      : (category as any)?._count?.recipes ?? (Array.isArray(category.recipes) ? category.recipes.length : (typeof category.recipes === "number" ? category.recipes : 0));
+
+    const templatesCount = typeof category.templatesCount === "number"
+      ? category.templatesCount
+      : (category as any)?._count?.templates ?? (Array.isArray(category.templates) ? category.templates.length : (typeof category.templates === "number" ? category.templates : 0));
+
+    const batchesCount = typeof category.batchesCount === "number"
+      ? category.batchesCount
+      : (category as any)?._count?.batches ?? (Array.isArray(category.batches) ? category.batches.length : (typeof category.batches === "number" ? category.batches : 0));
+
+    return {
+      recipes: recipesCount,
+      templates: templatesCount,
+      batches: batchesCount,
+    };
   };
 
   const isCreating = createCategoryMutation.isPending;
@@ -515,7 +528,7 @@ export default function CategoryManager() {
                 {/* Footer */}
                 <div className="flex justify-between items-center text-xs pt-1">
                   <span className="text-muted-foreground">
-                    Created: {new Date(category.createdAt || "").toLocaleDateString()}
+                    Created: {category?.createdAt && !isNaN(new Date(category.createdAt).getTime()) ? new Date(category.createdAt).toLocaleDateString() : "N/A"}
                   </span>
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-green-200 text-green-700 bg-green-50/50 dark:bg-green-900/20 dark:border-green-800 dark:text-green-400">
                     Active

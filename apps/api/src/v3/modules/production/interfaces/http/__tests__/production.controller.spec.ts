@@ -28,6 +28,7 @@ describe("ProductionController (V3)", () => {
             removeBaker: vi.fn(),
             updateCategory: vi.fn(),
             updateSettings: vi.fn(),
+            getVariants: vi.fn(),
           },
         },
         {
@@ -154,4 +155,19 @@ describe("ProductionController (V3)", () => {
       expect(resPut).toEqual({ id: "set_1", autoStartBatch: true });
     });
   });
+
+  describe("variants endpoint", () => {
+    it("should call productionService.getVariants with organizationId and query", async () => {
+      const mockResult = { data: [], totalCount: 0, currentPage: 1, totalPages: 1, limit: 20 };
+      vi.mocked(productionService.getVariants).mockResolvedValue(mockResult as any);
+
+      const mockCtx = { organizationId: "org_123" } as any;
+      const mockQuery = { page: 1, limit: 20, productType: "FINISHED_GOOD" } as any;
+      const result = await controller.getVariants(mockCtx, mockQuery);
+
+      expect(productionService.getVariants).toHaveBeenCalledWith("org_123", mockQuery);
+      expect(result).toEqual(mockResult);
+    });
+  });
+
 });
