@@ -55,7 +55,7 @@ interface MembershipClaim {
   role: MemberRole | undefined;
 }
 
-export const auth = betterAuth({
+export const auth: any = betterAuth({
   ...authOptions,
   databaseHooks: {
     user: {
