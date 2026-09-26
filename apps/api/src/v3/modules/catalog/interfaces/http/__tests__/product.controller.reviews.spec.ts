@@ -11,11 +11,14 @@ describe("ProductController Reviews", () => {
       client: {
         product: {
           findFirst: vi.fn(),
+          updateMany: vi.fn(),
+          findFirstOrThrow: vi.fn(),
         },
         productReview: {
           create: vi.fn(),
           findFirst: vi.fn(),
-          update: vi.fn(),
+          updateMany: vi.fn(),
+          findFirstOrThrow: vi.fn(),
           delete: vi.fn(),
         },
       },
@@ -97,6 +100,64 @@ describe("ProductController Reviews", () => {
     });
   });
 
+  describe("updateProduct", () => {
+    it("should throw NotFoundException if product does not exist during pre-check", async () => {
+      const req = { organization: { id: "org-1" } };
+      mockPrisma.client.product.findFirst.mockResolvedValue(null);
+
+      await expect(
+        controller.updateProduct(req, "prod-1", { name: "New Name" })
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("should update product using updateMany and return updated record via findFirstOrThrow", async () => {
+      const req = { organization: { id: "org-1" } };
+      mockPrisma.client.product.findFirst.mockResolvedValue({ id: "prod-1" });
+      mockPrisma.client.product.updateMany.mockResolvedValue({ count: 1 });
+      const mockUpdated = {
+        id: "prod-1",
+        name: "New Name",
+        description: "Desc",
+        sku: "SKU123",
+        imageUrls: [],
+        category: { id: "cat-1", name: "Electronics" },
+        categoryId: "cat-1",
+        slug: "new-name",
+        variants: [{ retailPrice: 100 }],
+        customFields: null,
+      };
+      mockPrisma.client.product.findFirstOrThrow.mockResolvedValue(mockUpdated);
+
+      const result = await controller.updateProduct(req, "prod-1", { name: "New Name" });
+
+      expect(mockPrisma.client.product.updateMany).toHaveBeenCalledWith({
+        where: { id: "prod-1", organizationId: "org-1" },
+        data: {
+          name: "New Name",
+          description: undefined,
+          sku: undefined,
+          customFields: undefined,
+        },
+      });
+      expect(mockPrisma.client.product.findFirstOrThrow).toHaveBeenCalledWith({
+        where: { id: "prod-1", organizationId: "org-1" },
+        include: {
+          category: true,
+          variants: {
+            select: {
+              id: true,
+              name: true,
+              sku: true,
+              retailPrice: true,
+            },
+          },
+        },
+      });
+      expect(result.name).toBe("New Name");
+      expect(result.retailPrice).toBe(100);
+    });
+  });
+
   describe("updateReview", () => {
     it("should throw ForbiddenException if review belongs to a different customer", async () => {
       const req = {
@@ -112,7 +173,7 @@ describe("ProductController Reviews", () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it("should successfully update review", async () => {
+    it("should successfully update review using updateMany and findFirstOrThrow", async () => {
       const req = {
         organization: { id: "org-1" },
         v3Context: { customerId: "cust-1" },
@@ -120,13 +181,17 @@ describe("ProductController Reviews", () => {
 
       const mockReview = { id: "review-1", organizationId: "org-1", customerId: "cust-1" };
       mockPrisma.client.productReview.findFirst.mockResolvedValue(mockReview);
-      mockPrisma.client.productReview.update.mockResolvedValue({ id: "review-1", rating: 4 });
+      mockPrisma.client.productReview.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.client.productReview.findFirstOrThrow.mockResolvedValue({ id: "review-1", rating: 4 });
 
       const result = await controller.updateReview(req, "review-1", { rating: 4 });
 
-      expect(mockPrisma.client.productReview.update).toHaveBeenCalledWith({
-        where: { id: "review-1" },
+      expect(mockPrisma.client.productReview.updateMany).toHaveBeenCalledWith({
+        where: { id: "review-1", organizationId: "org-1", customerId: "cust-1" },
         data: { rating: 4, comment: undefined },
+      });
+      expect(mockPrisma.client.productReview.findFirstOrThrow).toHaveBeenCalledWith({
+        where: { id: "review-1", organizationId: "org-1" },
         include: {
           customer: {
             select: {

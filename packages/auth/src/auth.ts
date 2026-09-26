@@ -55,7 +55,7 @@ interface MembershipClaim {
   role: MemberRole | undefined;
 }
 
-export const auth = betterAuth({
+export const auth: any = betterAuth({
   ...authOptions,
   databaseHooks: {
     user: {
@@ -110,9 +110,11 @@ export const auth = betterAuth({
     "https://app.scryme.tech",
     "https://crm.scryme.tech",
     "https://admin.scryme.tech",
+    "https://auth.scryme.tech",
     "http://localhost:3000",
     "http://localhost:3001",
     "http://localhost:3007",
+    "http://localhost:4444",
   ],
   rateLimit: {
     enabled: env.NODE_ENV !== "test",
@@ -354,8 +356,8 @@ export const auth = betterAuth({
       },
     ),
     oauthProvider({
-      loginPage: "/login",
-      consentPage: "/oauth/authorize",
+      loginPage: `${env.NEXT_PUBLIC_AUTH_URL || (env.NODE_ENV === "production" ? "https://auth.scryme.tech" : "http://localhost:4444")}/sign-in`,
+      consentPage: `${env.NEXT_PUBLIC_AUTH_URL || (env.NODE_ENV === "production" ? "https://auth.scryme.tech" : "http://localhost:4444")}/consent`,
       scopes: ["openid", "profile", "email", "org_info", "membership"],
       allowDynamicClientRegistration: true,
       silenceWarnings: {

@@ -242,13 +242,17 @@ export class InvoiceUseCase {
       }
 
       if (invoice.amountPaid !== totalPaid || invoice.status !== status) {
-        return await this.prisma.client.invoice.update({
-          where: { id: invoiceId },
+        // 🛡️ Sentinel: Tenant Isolation / BOLA Protection - Enforce database-level multi-tenant scoping
+        await this.prisma.client.invoice.updateMany({
+          where: { id: invoiceId, organizationId },
           data: {
             amountPaid: totalPaid,
             balanceDue: balanceDue,
             status: status,
           },
+        });
+        return await this.prisma.client.invoice.findFirstOrThrow({
+          where: { id: invoiceId, organizationId },
           select: invoiceSelect,
         });
       }
@@ -267,55 +271,56 @@ export class InvoiceUseCase {
     if (invoice.status === "PAID")
       throw new BadRequestException("Cannot update a paid invoice");
 
-    const { netTotal, totalTaxes, grandTotal } = this.calculateTotals(items);
+    const { netTotal, totalTaxes, grandTotal } = this.calculateTotals(items || []);
 
-    return await this.prisma.client.invoice.update({
-      where: { id: invoiceId },
-      data: {
-        ...invoiceData,
-        netTotal,
-        totalTaxes,
-        grandTotal,
-        items: {
-          deleteMany: {},
-          create: items,
+    // 🛡️ Sentinel: Tenant Isolation / BOLA Protection & Atomic Transaction Execution
+    // Enforce database-level organizationId scoping on update mutations within an atomic transaction.
+    await this.prisma.client.$transaction(async (tx) => {
+      const updateResult = await tx.invoice.updateMany({
+        where: { id: invoiceId, organizationId },
+        data: {
+          ...invoiceData,
+          netTotal,
+          totalTaxes,
+          grandTotal,
         },
-      },
-      // ⚡ Bolt Optimization: Use targeted select for scalar fields and items
-      // to reduce database payload size and serialization overhead.
-      select: {
-        id: true,
-        customerId: true,
-        customerName: true,
-        postingDate: true,
-        dueDate: true,
-        netTotal: true,
-        totalTaxes: true,
-        grandTotal: true,
-        amountPaid: true,
-        balanceDue: true,
-        status: true,
-        kraPin: true,
-        kraCompliant: true,
-        etrMode: true,
-        organizationId: true,
-        transactionId: true,
-        templateId: true,
-        templateVersion: true,
-        createdAt: true,
-        updatedAt: true,
-        items: true,
-      },
+      });
+
+      if (updateResult.count === 0) {
+        throw new NotFoundException("Invoice not found or unauthorized");
+      }
+
+      if (items !== undefined) {
+        await tx.invoiceItem.deleteMany({
+          where: { invoiceId },
+        });
+        if (items.length > 0) {
+          await tx.invoiceItem.createMany({
+            data: items.map((item) => ({ ...item, invoiceId })),
+          });
+        }
+      }
     });
+
+    return await this.getInvoiceById(organizationId, invoiceId);
   }
 
   async deleteInvoice(organizationId: string, invoiceId: string) {
     const invoice = await this.getInvoiceById(organizationId, invoiceId);
     if (invoice.status === "PAID")
       throw new BadRequestException("Cannot delete a paid invoice");
-    return await this.prisma.client.invoice.delete({
-      where: { id: invoiceId },
+
+    // 🛡️ Sentinel: Tenant Isolation / BOLA Protection
+    // Enforce database-level organizationId scoping on delete mutations
+    const deleteResult = await this.prisma.client.invoice.deleteMany({
+      where: { id: invoiceId, organizationId },
     });
+
+    if (deleteResult.count === 0) {
+      throw new NotFoundException("Invoice not found or unauthorized");
+    }
+
+    return invoice;
   }
 
   async finalizeInvoice(organizationId: string, invoiceId: string) {
@@ -325,10 +330,21 @@ export class InvoiceUseCase {
       invoice,
     );
 
-    const updatedInvoice = await this.prisma.client.invoice.update({
-      where: { id: invoiceId },
+    // 🛡️ Sentinel: Tenant Isolation / BOLA Protection
+    // Enforce database-level organizationId scoping on update mutations
+    const updateResult = await this.prisma.client.invoice.updateMany({
+      where: { id: invoiceId, organizationId },
       data: { status: "UNPAID" },
     });
+
+    if (updateResult.count === 0) {
+      throw new NotFoundException("Invoice not found or unauthorized");
+    }
+
+    const updatedInvoice = await this.getInvoiceById(
+      organizationId,
+      invoiceId,
+    );
 
     return { ...updatedInvoice, complianceData };
   }
@@ -372,8 +388,9 @@ export class InvoiceUseCase {
           })),
         });
 
-        await this.prisma.client.invoice.update({
-          where: { id: invoice.id },
+        // 🛡️ Sentinel: Tenant Isolation / BOLA Protection - Enforce database-level scoping
+        await this.prisma.client.invoice.updateMany({
+          where: { id: invoice.id, organizationId },
           data: { kraCompliant: true },
         });
 

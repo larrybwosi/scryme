@@ -54,8 +54,8 @@ describe("Customer Enterprise Server Actions", () => {
         id: "cust_1",
         organizationId: "org_test_123",
         transactions: [
-          { id: "tx_1", grandTotal: 5000, createdAt: new Date() },
-          { id: "tx_2", grandTotal: 6000, createdAt: new Date() },
+          { id: "tx_1", finalTotal: 5000, createdAt: new Date() },
+          { id: "tx_2", finalTotal: 6000, createdAt: new Date() },
         ],
         crmRecord: {
           activities: [{ createdAt: new Date() }],
@@ -77,7 +77,7 @@ describe("Customer Enterprise Server Actions", () => {
       (db.customer.findFirst as any).mockResolvedValue({
         id: "cust_2",
         organizationId: "org_test_123",
-        transactions: [{ id: "tx_old", grandTotal: 100, createdAt: pastDate }],
+        transactions: [{ id: "tx_old", finalTotal: 100, createdAt: pastDate }],
         crmRecord: { activities: [] },
       });
 
