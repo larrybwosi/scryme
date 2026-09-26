@@ -65,7 +65,7 @@ export async function getServerAuth(
   const role = user.role;
   const systemRole = (user as any).systemRole || user.role;
   const isSuperAdmin = systemRole === "SUPER_ADMIN";
-  const orgRole = (user as any).orgRole || (isSuperAdmin ? "OWNER" : role);
+  const orgRole = (user as any).orgRole || (role && role !== "SUPER_ADMIN" ? role : undefined) || (isSuperAdmin ? "OWNER" : role);
 
   if (options.targetOrganizationId && options.targetOrganizationId !== organizationId) {
     organizationId = options.targetOrganizationId;

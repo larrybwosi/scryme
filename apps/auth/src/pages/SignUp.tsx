@@ -31,14 +31,7 @@ export function SignUpPage() {
         toast.error("Sign up failed");
       } else {
         toast.success("Account created successfully!");
-        if (searchParams.toString()) {
-          const targetUrl = callbackUrl.includes("?")
-            ? `${callbackUrl}&${searchParams.toString()}`
-            : `${callbackUrl}?${searchParams.toString()}`;
-          window.location.href = targetUrl;
-        } else {
-          window.location.href = callbackUrl;
-        }
+        window.location.href = callbackUrl;
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
