@@ -29,14 +29,7 @@ export function SignInPage() {
         toast.error("Sign in failed");
       } else {
         toast.success("Signed in successfully!");
-        if (searchParams.toString()) {
-          const targetUrl = callbackUrl.includes("?")
-            ? `${callbackUrl}&${searchParams.toString()}`
-            : `${callbackUrl}?${searchParams.toString()}`;
-          window.location.href = targetUrl;
-        } else {
-          window.location.href = callbackUrl;
-        }
+        window.location.href = callbackUrl;
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
-import { consentOAuth2 } from "@/lib/auth-client";
+import { authClient, consentOAuth2 } from "@/lib/auth-client";
 import { Shield, Check, X, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -9,9 +9,18 @@ export function ConsentPage() {
   const [loading, setLoading] = useState(false);
   const [clientInfo, setClientInfo] = useState<{ clientName?: string; logo?: string } | null>(null);
 
+  const { data: session, isPending } = authClient.useSession();
+
   const clientId = searchParams.get("client_id");
   const scopeStr = searchParams.get("scope") || "";
   const scopes = scopeStr.split(" ").filter(Boolean);
+
+  useEffect(() => {
+    if (!isPending && !session && clientId) {
+      const currentUrl = window.location.pathname + window.location.search;
+      window.location.href = `/sign-in?callbackUrl=${encodeURIComponent(currentUrl)}`;
+    }
+  }, [session, isPending, clientId]);
 
   useEffect(() => {
     if (clientId) {
@@ -26,8 +35,14 @@ export function ConsentPage() {
     try {
       const res = await consentOAuth2(accept);
 
-      if (res?.data && (res.data as any).redirect) {
-        window.location.href = (res.data as any).url;
+      const redirectUrl =
+        res?.data?.url ||
+        (typeof res?.data?.redirect === "string" ? res.data.redirect : null) ||
+        (res?.data as any)?.url ||
+        (res?.data as any)?.redirectUrl;
+
+      if (redirectUrl) {
+        window.location.href = redirectUrl;
       } else if (res?.error) {
         toast.error(res.error.message || "Failed to process consent choice");
       }
