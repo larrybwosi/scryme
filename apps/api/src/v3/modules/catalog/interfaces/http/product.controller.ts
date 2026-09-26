@@ -394,13 +394,30 @@ export class ProductController {
       throw new NotFoundException("Product not found");
     }
 
-    const updated = (await this.prisma.client.product.update({
-      where: { id },
+    // SECURITY (Sentinel): Product lacks a composite unique constraint on [id, organizationId].
+    // Prisma's `update` ignores non-unique fields in `where` clauses, so we use `updateMany`
+    // with `organizationId` filter to strictly enforce multi-tenant isolation at the DB level during mutation.
+    const updateCount = await this.prisma.client.product.updateMany({
+      where: {
+        id,
+        organizationId,
+      },
       data: {
         name: body.name,
         description: body.description,
         sku: body.sku,
         customFields: body.customFields !== undefined ? (body.customFields as any) : undefined,
+      },
+    });
+
+    if (updateCount.count === 0) {
+      throw new NotFoundException("Product not found");
+    }
+
+    const updated = (await this.prisma.client.product.findFirstOrThrow({
+      where: {
+        id,
+        organizationId,
       },
       include: {
         category: true,
@@ -723,11 +740,28 @@ export class ProductController {
       throw new ForbiddenException("Not authorized to update this review");
     }
 
-    return this.prisma.client.productReview.update({
-      where: { id: reviewId },
+    // SECURITY (Sentinel): ProductReview lacks a composite unique constraint on [id, organizationId].
+    // Use `updateMany` scoped by organizationId and customerId to enforce tenant and ownership isolation at the DB level.
+    const updateCount = await this.prisma.client.productReview.updateMany({
+      where: {
+        id: reviewId,
+        organizationId,
+        customerId,
+      },
       data: {
         rating: body.rating !== undefined ? Number(body.rating) : undefined,
         comment: body.comment,
+      },
+    });
+
+    if (updateCount.count === 0) {
+      throw new NotFoundException("Review not found or not authorized");
+    }
+
+    return this.prisma.client.productReview.findFirstOrThrow({
+      where: {
+        id: reviewId,
+        organizationId,
       },
       include: {
         customer: {
