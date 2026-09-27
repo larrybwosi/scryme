@@ -17,3 +17,7 @@
 ## 2026-09-24 - Customer Update Tenant Isolation
 **Learning:** In `UpdateCustomerUseCase`, updating records using Prisma's `update({ where: { id: customerId } })` relies solely on `findFirst` pre-checks. Because `Customer` lacks a composite unique constraint on `[id, organizationId]`, Prisma's `update` operation target only matches `id`, leaving potential window for BOLA/IDOR if `findFirst` checks are bypassed or raced against.
 **Action:** Use `customer.updateMany({ where: { id: customerId, organizationId }, data })` followed by `customer.findFirstOrThrow({ where: { id: customerId, organizationId } })` to enforce database-level tenant isolation directly on update mutations.
+
+## 2026-09-27 - Department Mutation Tenant Isolation
+**Learning:** In `DepartmentUseCase`, `department.update` and `department.delete` rely solely on primary key `id` in `where` clauses because `Department` lacks a composite unique index on `[id, organizationId]`. If pre-checks are bypassed or raced against, single-ID targeting creates potential BOLA/IDOR risks.
+**Action:** Use `department.updateMany({ where: { id, organizationId }, data })` followed by `findFirstOrThrow` (and `department.deleteMany({ where: { id, organizationId } })`) to enforce database-level multi-tenant isolation during mutations.
