@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useSearchParams, Link } from "react-router";
-import { authClient, signInWithPasskey } from "@/lib/auth-client";
+import { authClient, signInWithPasskey, DEFAULT_WEB_URL } from "@/lib/auth-client";
 import { KeyRound, Mail, Lock, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,7 +11,7 @@ export function SignInPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect_uri") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect_uri") || DEFAULT_WEB_URL;
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
