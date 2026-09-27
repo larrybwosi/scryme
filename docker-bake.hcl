@@ -148,4 +148,8 @@ target "auth" {
     "ghcr.io/${REPO_LOWER}/auth:latest",
     "ghcr.io/${REPO_LOWER}/auth:${VERSION}"
   ]
+  args = {
+    NEXT_PUBLIC_API_URL = NEXT_PUBLIC_API_URL
+    BETTER_AUTH_SECRET = BETTER_AUTH_SECRET
+  }
 }

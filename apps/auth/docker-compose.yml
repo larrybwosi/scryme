@@ -1,0 +1,29 @@
+services:
+  auth:
+    image: ghcr.io/larrybwosi/scryme/auth:${SCRYME_VERSION:-latest}
+    container_name: scryme-auth
+    restart: always
+    ports:
+      - "${AUTH_PORT:-4444}:4444"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:' + (process.env.PORT || 4444) + '/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
+        ]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    environment:
+      - PORT=${AUTH_PORT:-4444}
+      - NODE_ENV=production
+      - VITE_PUBLIC_API_URL=${VITE_PUBLIC_API_URL:-https://api.scryme.tech}
+      - VITE_API_URL=${VITE_API_URL:-https://api.scryme.tech}
+      - VITE_PUBLIC_WEB_URL=${VITE_PUBLIC_WEB_URL:-https://app.scryme.tech}
