@@ -34,38 +34,46 @@ export async function createCompany(data: BusinessAccountFormValues) {
       },
     });
 
-    if (contacts && contacts.length > 0) {
-      for (const contact of contacts) {
-        await db.companyContact.create({
-          data: {
-            name: contact.name,
-            email: contact.email === "" ? null : contact.email || null,
-            phone: contact.phone === "" ? null : contact.phone || null,
-            organizationId,
-            businessAccountId: company.id,
-          },
-        });
-      }
-    }
-
-    if (addresses && addresses.length > 0) {
-      for (const addr of addresses) {
-        await db.address.create({
-          data: {
-            businessAccountId: company.id,
-            label: addr.label || null,
-            street1: addr.street1,
-            street2: addr.street2 || null,
-            city: addr.city,
-            state: addr.state || null,
-            postalCode: addr.postalCode || null,
-            country: addr.country,
-            isDefault: addr.isDefault,
-            type: addr.type,
-          },
-        });
-      }
-    }
+    // ⚡ Bolt Optimization: Parallelize creation of company contacts and addresses.
+    // Executing contact and address creations concurrently via Promise.all collapses
+    // sequential database roundtrips from O(N_contacts + N_addresses) down to O(1) concurrent execution.
+    await Promise.all([
+      contacts && contacts.length > 0
+        ? Promise.all(
+            contacts.map((contact) =>
+              db.companyContact.create({
+                data: {
+                  name: contact.name,
+                  email: contact.email === "" ? null : contact.email || null,
+                  phone: contact.phone === "" ? null : contact.phone || null,
+                  organizationId,
+                  businessAccountId: company.id,
+                },
+              }),
+            ),
+          )
+        : Promise.resolve(),
+      addresses && addresses.length > 0
+        ? Promise.all(
+            addresses.map((addr) =>
+              db.address.create({
+                data: {
+                  businessAccountId: company.id,
+                  label: addr.label || null,
+                  street1: addr.street1,
+                  street2: addr.street2 || null,
+                  city: addr.city,
+                  state: addr.state || null,
+                  postalCode: addr.postalCode || null,
+                  country: addr.country,
+                  isDefault: addr.isDefault,
+                  type: addr.type,
+                },
+              }),
+            ),
+          )
+        : Promise.resolve(),
+    ]);
 
     // Proactively initialize CRM Record for business account / company
     let objectDef = await db.crmObjectDefinition.findUnique({
@@ -167,27 +175,31 @@ export async function updateCompany(
         });
       }
 
-      // Contacts to update or create
-      for (const contact of contacts) {
-        const cleanContact = {
-          name: contact.name,
-          email: contact.email === "" ? null : contact.email || null,
-          phone: contact.phone === "" ? null : contact.phone || null,
-          organizationId,
-          businessAccountId: id,
-        };
+      // ⚡ Bolt Optimization: Parallelize updating and creating contacts.
+      // Executing updates and creations concurrently via Promise.all collapses
+      // database roundtrips from O(N_contacts) down to O(1) concurrent execution.
+      await Promise.all(
+        contacts.map((contact) => {
+          const cleanContact = {
+            name: contact.name,
+            email: contact.email === "" ? null : contact.email || null,
+            phone: contact.phone === "" ? null : contact.phone || null,
+            organizationId,
+            businessAccountId: id,
+          };
 
-        if (contact.contactId) {
-          await db.companyContact.update({
-            where: { id: contact.contactId },
-            data: cleanContact,
-          });
-        } else {
-          await db.companyContact.create({
-            data: cleanContact,
-          });
-        }
-      }
+          if (contact.contactId) {
+            return db.companyContact.update({
+              where: { id: contact.contactId },
+              data: cleanContact,
+            });
+          } else {
+            return db.companyContact.create({
+              data: cleanContact,
+            });
+          }
+        }),
+      );
     }
 
     if (addresses) {
@@ -214,32 +226,36 @@ export async function updateCompany(
         });
       }
 
-      // Addresses to update or create
-      for (const addr of addresses) {
-        const cleanAddr = {
-          label: addr.label || null,
-          street1: addr.street1,
-          street2: addr.street2 || null,
-          city: addr.city,
-          state: addr.state || null,
-          postalCode: addr.postalCode || null,
-          country: addr.country,
-          isDefault: addr.isDefault,
-          type: addr.type,
-          businessAccountId: id,
-        };
+      // ⚡ Bolt Optimization: Parallelize updating and creating addresses.
+      // Executing updates and creations concurrently via Promise.all collapses
+      // database roundtrips from O(N_addresses) down to O(1) concurrent execution.
+      await Promise.all(
+        addresses.map((addr) => {
+          const cleanAddr = {
+            label: addr.label || null,
+            street1: addr.street1,
+            street2: addr.street2 || null,
+            city: addr.city,
+            state: addr.state || null,
+            postalCode: addr.postalCode || null,
+            country: addr.country,
+            isDefault: addr.isDefault,
+            type: addr.type,
+            businessAccountId: id,
+          };
 
-        if (addr.id) {
-          await db.address.update({
-            where: { id: addr.id },
-            data: cleanAddr,
-          });
-        } else {
-          await db.address.create({
-            data: cleanAddr,
-          });
-        }
-      }
+          if (addr.id) {
+            return db.address.update({
+              where: { id: addr.id },
+              data: cleanAddr,
+            });
+          } else {
+            return db.address.create({
+              data: cleanAddr,
+            });
+          }
+        }),
+      );
     }
 
     revalidatePath("/companies");
