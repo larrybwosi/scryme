@@ -1,3 +1,4 @@
+import { taskApi } from "./api";
 import { useSyncExternalStore } from 'react';
 import { Task, TimeEntry, Project, Client, Tag, TaskStatus } from './types';
 
@@ -305,6 +306,33 @@ function notify() {
 }
 
 export const taskStore = {
+  async syncWithApi() {
+    try {
+      const res = await taskApi.getTasks();
+      if (res && Array.isArray(res.items) && res.items.length > 0) {
+        const apiTasks = res.items.map((item: any) => ({
+          id: item.id,
+          name: item.title,
+          client: item.project?.name || "General",
+          project: item.project?.name || "Workspace",
+          status: item.status === "DONE" ? "Done" : item.status === "IN_PROGRESS" ? "InProgress" : item.status === "IN_REVIEW" ? "Review" : "ToDo",
+          tags: item.labels ? item.labels.map((l: any) => l.label?.name).filter(Boolean) : ["Development"],
+          estimation: item.dueDate ? new Date(item.dueDate).toLocaleDateString() : "Today",
+          dateGroup: "Today",
+          assignees: item.assignees ? item.assignees.map((a: any) => ({
+            name: a.member?.user?.name || "Team Member",
+            avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
+          })) : [],
+          createdAt: item.createdAt || new Date().toISOString(),
+        }));
+        currentState = { ...currentState, tasks: apiTasks };
+        notify();
+      }
+    } catch (err) {
+      console.warn("API sync skipped or unavailable, using stored tasks:", err);
+    }
+  },
+
   subscribe(listener: () => void) {
     listeners.add(listener);
     return () => listeners.delete(listener);

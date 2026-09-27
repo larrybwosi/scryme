@@ -1,14 +1,21 @@
 import { createAuthClient } from "better-auth/react";
 
-const getAuthBaseUrl = (): string => {
+function getValidAuthUrl(): string {
   if (typeof window !== "undefined") {
-    return window.location.origin;
+    const viteAuthUrl = (import.meta as any).env?.VITE_AUTH_URL || (import.meta as any).env?.VITE_APP_URL;
+    if (viteAuthUrl && typeof viteAuthUrl === "string" && !viteAuthUrl.includes("PLACEHOLDER")) {
+      return viteAuthUrl;
+    }
   }
-  return "http://localhost:5002";
-};
+  const isDev = typeof process !== "undefined" && process.env?.NODE_ENV === "development";
+  return isDev ? "http://localhost:3000" : "https://app.scryme.tech";
+}
 
 export const authClient: any = createAuthClient({
-  baseURL: getAuthBaseUrl(),
+  baseURL: getValidAuthUrl(),
+  fetchOptions: {
+    credentials: "include",
+  },
 });
 
 export const signIn: typeof authClient.signIn = authClient.signIn;
