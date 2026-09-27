@@ -43,6 +43,10 @@ const formatApiPath = (url: string): string => {
   }
 
   const orgSlug = getOrgSlug();
+  if (normalizedUrl === '/catalog/variants' || normalizedUrl.startsWith('/catalog/variants?')) {
+    return `/api/v3/${orgSlug}/production${normalizedUrl}`;
+  }
+
   if (
     normalizedUrl.startsWith('/pos/') ||
     normalizedUrl.startsWith('/catalog/') ||

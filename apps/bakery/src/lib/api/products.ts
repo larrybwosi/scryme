@@ -167,12 +167,18 @@ export const useProductVariants = (options: UseProductVariantsOptions = {}) => {
     staleTime: 1000 * 60 * 5,
   });
 
+  const variantsData = Array.isArray(data)
+    ? data
+    : Array.isArray(data?.data)
+    ? data.data
+    : [];
+
   return {
-    data: Array.isArray(data) ? data : (data?.data || []),
-    totalCount: Array.isArray(data) ? data.length : (data?.totalCount || 0),
-    currentPage: Array.isArray(data) ? 1 : (data?.currentPage || page),
-    totalPages: Array.isArray(data) ? 1 : (data?.totalPages || 0),
-    limit: Array.isArray(data) ? data.length : (data?.limit || limit),
+    data: variantsData,
+    totalCount: Array.isArray(data) ? data.length : (data?.totalCount ?? variantsData.length),
+    currentPage: Array.isArray(data) ? 1 : (data?.currentPage ?? page),
+    totalPages: Array.isArray(data) ? 1 : (data?.totalPages ?? 1),
+    limit: Array.isArray(data) ? data.length : (data?.limit ?? limit),
     isLoading,
     isFetching,
     isError: !!error,
