@@ -113,12 +113,17 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
 
   // Filter out excluded variants
   const filteredVariants = useMemo(() => {
-    if (!productVariants) return [];
+    const variantsList = Array.isArray(productVariants)
+      ? productVariants
+      : Array.isArray(productVariants?.data)
+      ? productVariants.data
+      : [];
+
     return allExcludedIds.length > 0
-      ? productVariants.filter(
-          (variant: any) => !allExcludedIds.includes(variant.id),
+      ? variantsList.filter(
+          (variant: any) => variant && !allExcludedIds.includes(variant.id),
         )
-      : productVariants;
+      : variantsList;
   }, [productVariants, allExcludedIds]);
 
   // Find the currently selected variant object for display
