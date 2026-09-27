@@ -3,6 +3,9 @@ import { twoFactorClient } from "better-auth/plugins";
 import { passkeyClient } from "@better-auth/passkey/client";
 import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 
+export const DEFAULT_WEB_URL =
+  import.meta.env.VITE_PUBLIC_WEB_URL || "http://localhost:3000";
+
 const getValidApiUrl = (): string => {
   const envUrl = import.meta.env.VITE_PUBLIC_API_URL;
   if (
@@ -18,6 +21,9 @@ const getValidApiUrl = (): string => {
 
 export const authClient = createAuthClient({
   baseURL: getValidApiUrl(),
+  fetchOptions: {
+    credentials: "include",
+  },
   plugins: [
     passkeyClient(),
     twoFactorClient(),

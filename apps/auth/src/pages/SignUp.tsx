@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSearchParams, Link } from "react-router";
-import { authClient } from "@/lib/auth-client";
-import { User, Mail, Lock, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { authClient, DEFAULT_WEB_URL } from "@/lib/auth-client";
+import { Mail, Lock, User, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export function SignUpPage() {
@@ -12,7 +12,7 @@ export function SignUpPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect_uri") || "/";
+  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect_uri") || DEFAULT_WEB_URL;
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
