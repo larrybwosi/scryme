@@ -6,6 +6,18 @@ interface AuthGuardProps {
   children: React.ReactNode;
 }
 
+function getAuthUrl(): string {
+  if (typeof window !== "undefined") {
+    const viteAuthUrl = (import.meta as any).env?.VITE_AUTH_URL || (import.meta as any).env?.VITE_PUBLIC_AUTH_URL;
+    if (viteAuthUrl && typeof viteAuthUrl === "string" && viteAuthUrl.trim() !== "" && !viteAuthUrl.includes("PLACEHOLDER")) {
+      return viteAuthUrl.trim();
+    }
+    const isDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    return isDev ? "http://localhost:4444" : "https://auth.scryme.tech";
+  }
+  return "https://auth.scryme.tech";
+}
+
 export default function AuthGuard({ children }: AuthGuardProps) {
   const { data: sessionData, isPending, error } = useSession();
 
@@ -13,9 +25,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
     if (!isPending && (!sessionData || !sessionData.session || error)) {
       if (typeof window !== "undefined") {
         const currentUrl = window.location.href;
-        const isDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-        const authBase = isDev ? "http://localhost:3000" : "https://app.scryme.tech";
-        const loginUrl = `${authBase}/login?callbackUrl=${encodeURIComponent(currentUrl)}`;
+        const authBase = getAuthUrl();
+        const loginUrl = `${authBase}/sign-in?callbackUrl=${encodeURIComponent(currentUrl)}`;
         window.location.href = loginUrl;
       }
     }

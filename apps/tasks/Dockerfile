@@ -52,6 +52,7 @@ COPY --from=pruner /app/out/full/ .
 
 # Build-time environment variables for Vite
 ENV VITE_API_URL=APP_VITE_API_URL_PLACEHOLDER
+ENV VITE_AUTH_URL=APP_VITE_AUTH_URL_PLACEHOLDER
 
 # Generate Prisma Client / SDK TypeScript types
 RUN pnpm turbo run generate
