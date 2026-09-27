@@ -1,0 +1,215 @@
+model Project {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name        String
+  key         String
+  description String?             @db.Text
+  status      ProjectStatus       @default(ACTIVE)
+  priority    ProjectTaskPriority @default(MEDIUM)
+  startDate   DateTime?
+  endDate     DateTime?
+
+  ownerId String?
+  owner   Member? @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  departmentId String?
+
+  members ProjectMember[]
+  tasks   Task[]
+  labels  TaskLabel[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+  @@index([status])
+  @@map("project")
+}
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+  ON_HOLD
+  COMPLETED
+}
+
+enum ProjectTaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ProjectTaskStatus {
+  BACKLOG
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELED
+}
+
+enum ProjectMemberRole {
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+model ProjectMember {
+  id        String            @id @default(cuid())
+  projectId String
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  memberId  String
+  member    Member            @relation("ProjectMemberRef", fields: [memberId], references: [id], onDelete: Cascade)
+  role      ProjectMemberRole @default(MEMBER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, memberId])
+  @@index([memberId])
+  @@index([projectId])
+  @@map("project_member")
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  taskNumber  Int
+  taskKey     String // e.g. "PRJ-101"
+  title       String
+  description String?             @db.Text
+  status      ProjectTaskStatus   @default(TODO)
+  priority    ProjectTaskPriority @default(MEDIUM)
+
+  startDate      DateTime?
+  dueDate        DateTime?
+  estimatedHours Decimal?  @db.Decimal(10, 2)
+  actualHours    Decimal?  @db.Decimal(10, 2)
+
+  parentTaskId String?
+  parentTask   Task?   @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  subtasks     Task[]  @relation("TaskSubtasks")
+
+  createdById String?
+  createdBy   Member? @relation("TaskCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  assignees    TaskAssignee[]
+  dependencies TaskDependency[]  @relation("TaskDependencies")
+  dependents   TaskDependency[]  @relation("TaskDependents")
+  comments     TaskComment[]
+  activityLogs TaskActivityLog[]
+  labels       TaskLabelOnTask[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, taskNumber])
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([status])
+  @@index([parentTaskId])
+  @@map("task")
+}
+
+model TaskAssignee {
+  id         String   @id @default(cuid())
+  taskId     String
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  memberId   String
+  member     Member   @relation("TaskAssigneeMember", fields: [memberId], references: [id], onDelete: Cascade)
+  assignedAt DateTime @default(now())
+
+  @@unique([taskId, memberId])
+  @@index([memberId])
+  @@index([taskId])
+  @@map("task_assignee")
+}
+
+enum DependencyType {
+  BLOCKS
+  BLOCKED_BY
+}
+
+model TaskDependency {
+  id              String         @id @default(cuid())
+  taskId          String
+  task            Task           @relation("TaskDependencies", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOnTaskId String
+  dependsOnTask   Task           @relation("TaskDependents", fields: [dependsOnTaskId], references: [id], onDelete: Cascade)
+  type            DependencyType @default(BLOCKS)
+
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, dependsOnTaskId])
+  @@index([taskId])
+  @@index([dependsOnTaskId])
+  @@map("task_dependency")
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    Member   @relation("TaskCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([taskId])
+  @@index([authorId])
+  @@map("task_comment")
+}
+
+model TaskActivityLog {
+  id        String   @id @default(cuid())
+  taskId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     Member?  @relation("TaskActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([actorId])
+  @@map("task_activity_log")
+}
+
+model TaskLabel {
+  id             String            @id @default(cuid())
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId      String?
+  project        Project?          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name           String
+  color          String            @default("#6B7280")
+  createdAt      DateTime          @default(now())
+  tasks          TaskLabelOnTask[]
+
+  @@unique([organizationId, projectId, name])
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("task_label")
+}
+
+model TaskLabelOnTask {
+  taskId  String
+  task    Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  labelId String
+  label   TaskLabel @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@index([taskId])
+  @@index([labelId])
+  @@map("task_label_on_task")
+}
