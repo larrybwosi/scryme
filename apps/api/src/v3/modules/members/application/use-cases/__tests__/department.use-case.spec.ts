@@ -19,10 +19,13 @@ describe("DepartmentUseCase", () => {
           count: vi.fn(),
           findMany: vi.fn(),
           findFirst: vi.fn(),
+          findFirstOrThrow: vi.fn(),
           findUnique: vi.fn(),
           create: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn(),
           delete: vi.fn(),
+          deleteMany: vi.fn(),
         },
         member: {
           findFirst: vi.fn(),
@@ -117,7 +120,7 @@ describe("DepartmentUseCase", () => {
   });
 
   describe("updateDepartment", () => {
-    it("should update department successfully after parallel IDOR validation", async () => {
+    it("should update department using updateMany scoped by organizationId for database-level multi-tenant isolation", async () => {
       const deptId = "dept_123";
       const dto = {
         name: "Engineering Updated",
@@ -126,12 +129,23 @@ describe("DepartmentUseCase", () => {
 
       prismaMock.client.department.findFirst.mockResolvedValueOnce({ id: deptId, organizationId: mockOrgId });
       prismaMock.client.member.findFirst.mockResolvedValueOnce({ id: dto.headId, organizationId: mockOrgId });
+      prismaMock.client.department.updateMany.mockResolvedValueOnce({ count: 1 });
 
       const mockUpdatedDept = { id: deptId, name: dto.name, organizationId: mockOrgId };
-      prismaMock.client.department.update.mockResolvedValueOnce(mockUpdatedDept);
+      prismaMock.client.department.findFirstOrThrow.mockResolvedValueOnce(mockUpdatedDept);
 
       const result = await useCase.updateDepartment(mockOrgId, deptId, dto, mockActorId);
 
+      expect(prismaMock.client.department.updateMany).toHaveBeenCalledWith({
+        where: { id: deptId, organizationId: mockOrgId },
+        data: expect.objectContaining({
+          name: dto.name,
+          headId: dto.headId,
+        }),
+      });
+      expect(prismaMock.client.department.findFirstOrThrow).toHaveBeenCalledWith({
+        where: { id: deptId, organizationId: mockOrgId },
+      });
       expect(result).toEqual(mockUpdatedDept);
     });
 
@@ -140,6 +154,31 @@ describe("DepartmentUseCase", () => {
 
       await expect(
         useCase.updateDepartment(mockOrgId, "nonexistent", { name: "Test" }, mockActorId),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe("deleteDepartment", () => {
+    it("should delete department using deleteMany scoped by organizationId for database-level multi-tenant isolation", async () => {
+      const deptId = "dept_123";
+
+      const mockExistingDept = { id: deptId, name: "Engineering", organizationId: mockOrgId };
+      prismaMock.client.department.findFirst.mockResolvedValueOnce(mockExistingDept);
+      prismaMock.client.department.deleteMany.mockResolvedValueOnce({ count: 1 });
+
+      const result = await useCase.deleteDepartment(mockOrgId, deptId, mockActorId);
+
+      expect(prismaMock.client.department.deleteMany).toHaveBeenCalledWith({
+        where: { id: deptId, organizationId: mockOrgId },
+      });
+      expect(result).toEqual(mockExistingDept);
+    });
+
+    it("should throw NotFoundException if target department to delete is missing", async () => {
+      prismaMock.client.department.findFirst.mockResolvedValueOnce(null);
+
+      await expect(
+        useCase.deleteDepartment(mockOrgId, "nonexistent", mockActorId),
       ).rejects.toThrow(NotFoundException);
     });
   });
