@@ -278,8 +278,14 @@ export class DepartmentUseCase {
       throw new BadRequestException("Cost center not found");
     }
 
-    const department = await this.prisma.client.department.update({
-      where: { id: currentDepartment.id },
+    // SECURITY (Sentinel): Department lacks a composite unique constraint on [id, organizationId].
+    // Prisma's `update` ignores non-unique fields in `where` clauses at runtime.
+    // Use `updateMany` scoped by organizationId followed by `findFirstOrThrow` to strictly enforce multi-tenant DB-level isolation.
+    const updateCount = await this.prisma.client.department.updateMany({
+      where: {
+        id: currentDepartment.id,
+        organizationId,
+      },
       data: {
         name: dto.name,
         description: dto.description,
@@ -290,6 +296,14 @@ export class DepartmentUseCase {
         costCenterId: dto.costCenterId,
         settings: dto.settings,
       },
+    });
+
+    if (updateCount.count === 0) {
+      throw new NotFoundException("Department not found");
+    }
+
+    const department = await this.prisma.client.department.findFirstOrThrow({
+      where: { id: currentDepartment.id, organizationId },
     });
 
     await this.prisma.client.auditLog.create({
@@ -307,16 +321,25 @@ export class DepartmentUseCase {
   }
 
   async deleteDepartment(organizationId: string, id: string, actorId: string) {
-    // SECURITY (Sentinel): Find-then-delete pattern for multi-tenant isolation.
+    // SECURITY (Sentinel): Find-then-delete pattern with database-level tenant isolation.
     const currentDepartment = await this.prisma.client.department.findFirst({
       where: { id, organizationId },
     });
 
     if (!currentDepartment) throw new NotFoundException("Department not found");
 
-    const department = await this.prisma.client.department.delete({
-      where: { id: currentDepartment.id },
+    // SECURITY (Sentinel): Department lacks a composite unique constraint on [id, organizationId].
+    // Use `deleteMany` scoped by organizationId to enforce multi-tenant DB-level isolation.
+    const deleteCount = await this.prisma.client.department.deleteMany({
+      where: {
+        id: currentDepartment.id,
+        organizationId,
+      },
     });
+
+    if (deleteCount.count === 0) {
+      throw new NotFoundException("Department not found");
+    }
 
     await this.prisma.client.auditLog.create({
       data: {
@@ -324,12 +347,12 @@ export class DepartmentUseCase {
         memberId: actorId,
         action: AuditLogAction.DELETE,
         entityType: AuditEntityType.ORGANIZATION,
-        entityId: department.id,
-        description: `Deleted department: ${department.name}`,
+        entityId: currentDepartment.id,
+        description: `Deleted department: ${currentDepartment.name}`,
       },
     });
 
-    return department;
+    return currentDepartment;
   }
 
   async addMemberToDepartment(

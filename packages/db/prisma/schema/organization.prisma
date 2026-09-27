@@ -234,6 +234,9 @@ model Organization {
   crmActivities              CrmActivity[]               @relation("OrgCrmActivities")
   crmNotes                   CrmNote[]                   @relation("OrgCrmNotes")
   crmFollowUps               CrmFollowUp[]               @relation("OrgCrmFollowUps")
+  projects                   Project[]
+  tasks                      Task[]
+  taskLabels                 TaskLabel[]
 
   @@index([slug])
   @@map("organization")
@@ -432,6 +435,12 @@ model Member {
   qualityCheckedTransfers StockTransfer[]   @relation("TransferQualityChecker")
   approvedAdjustments     StockAdjustment[] @relation("AdjustmentApprover")
   assemblies              Assembly[]
+  ownedProjects           Project[]             @relation("ProjectOwner")
+  projectMemberships      ProjectMember[]       @relation("ProjectMemberRef")
+  createdTasks            Task[]                @relation("TaskCreator")
+  taskAssignees           TaskAssignee[]        @relation("TaskAssigneeMember")
+  taskComments            TaskComment[]         @relation("TaskCommentAuthor")
+  taskActivityLogs        TaskActivityLog[]     @relation("TaskActivityActor")
 
   @@unique([organizationId, userId])
   @@unique([organizationId, cardId])

@@ -1,3 +1,4 @@
+import { TasksModule } from "./modules/tasks/tasks.module";
 import { AgentModule } from "./modules/agent/agent.module";
 import { B2BModule } from "./modules/b2b/b2b.module";
 import { Module } from "@nestjs/common";
@@ -55,6 +56,7 @@ export const V3_SUB_MODULES = [
   AnalyticsModule,
   ProductionModule,
   DeliveriesModule,
+  TasksModule,
 ];
 
 @Module({
