@@ -1,5 +1,5 @@
 group "default" {
-  targets = ["api", "crm", "web", "site", "docs", "admin", "prisma-studio"]
+  targets = ["api", "crm", "web", "site", "docs", "admin", "prisma-studio", "tasks"]
 }
 
 variable "REPO_LOWER" {
@@ -129,5 +129,18 @@ target "site" {
     BETTER_AUTH_SECRET = BETTER_AUTH_SECRET
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID = NEXT_PUBLIC_OPENPANEL_CLIENT_ID
     NEXT_PUBLIC_OPENPANEL_HOST = NEXT_PUBLIC_OPENPANEL_HOST
+  }
+}
+
+
+target "tasks" {
+  context = "."
+  dockerfile = "apps/tasks/Dockerfile"
+  tags = [
+    "ghcr.io/${REPO_LOWER}/tasks:latest",
+    "ghcr.io/${REPO_LOWER}/tasks:${VERSION}"
+  ]
+  args = {
+    NEXT_PUBLIC_API_URL = NEXT_PUBLIC_API_URL
   }
 }
