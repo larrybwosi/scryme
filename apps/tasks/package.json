@@ -1,0 +1,35 @@
+{
+  "name": "tasks",
+  "private": true,
+  "version": "10.1.32",
+  "packageManager": "pnpm@10.34.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "type-check": "pnpm exec tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/auth": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "better-auth": "^1.6.23",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.454.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-router": "^7.13.1",
+    "tailwind-merge": "^3.5.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^24.10.12",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "tailwindcss": "^4.3.0",
+    "typescript": "5.7.3",
+    "vite": "^8.0.10"
+  }
+}
