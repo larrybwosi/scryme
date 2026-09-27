@@ -51,8 +51,8 @@ import { ServiceManagementService } from "../../../services/application/services
 
 @ApiTags("V3 Catalog")
 @ApiBearerAuth()
-@Controller(":orgSlug/catalog")
-@ApiParam({ name: "orgSlug", type: "string", description: "The unique organization slug" })
+@Controller([":orgSlug/catalog", "catalog"])
+@ApiParam({ name: "orgSlug", type: "string", description: "The unique organization slug", required: false })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class ProductController {
@@ -79,7 +79,10 @@ export class ProductController {
     @Req() req: any,
     @Query() query: ProductVariantQueryDto,
   ) {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
     return this.getVariantsHelper(organizationId, query);
   }
 
@@ -243,8 +246,12 @@ export class ProductController {
     @Req() req: any,
     @Query() paginationQuery: PaginationQueryDto,
   ) {
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
     const products = await this.getProductsUseCase.execute(
-      req.organization.id,
+      organizationId,
       paginationQuery,
     );
 
@@ -316,7 +323,10 @@ export class ProductController {
     @Req() req: any,
     @Param("idOrSlug") idOrSlug: string,
   ) {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
 
     const product = await this.prisma.client.product.findFirst({
       where: {
@@ -429,7 +439,10 @@ export class ProductController {
     @Req() req: any,
     @Query() paginationQuery: PaginationQueryDto,
   ) {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
 
     // Use ServiceManagementService to load paginated and optimized services cleanly (Architectural Consistency)
     const paginatedItems = await this.serviceManagement.getServicesPaginated(
@@ -495,9 +508,13 @@ export class ProductController {
     description: "Unauthorized",
   })
   async createProduct(@Req() req: any, @Body() body: CreateProductDto) {
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
     const product = await this.createProductUseCase.execute({
       ...body,
-      organizationId: req.organization.id,
+      organizationId,
     });
 
     return {
@@ -539,7 +556,10 @@ export class ProductController {
     @Param("id") id: string,
     @Body() body: UpdateProductDto,
   ) {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
 
     const exists = await this.prisma.client.product.findFirst({
       where: {
@@ -634,7 +654,10 @@ export class ProductController {
     @Param("variantId") variantId: string,
     @Body() body: UpdateSupplierProductDto,
   ) {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
 
     const result = await this.prisma.client.$transaction(async tx => {
       // SECURITY (Sentinel): Validate ownership before update to prevent IDOR.
@@ -709,7 +732,10 @@ export class ProductController {
     @Query() pagination: PaginationQueryDto,
   ) {
     const { limit = 20, offset = 0 } = pagination;
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
 
     /**
      * OPTIMIZATION (Bolt ⚡): Replaced deep 'include' with targeted 'select'.
@@ -804,10 +830,14 @@ export class ProductController {
     @Param("id") id: string,
     @Body() body: ReviewPriceChangeDto,
   ) {
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
     return this.reviewPriceChangeUseCase.execute({
-      organizationId: req.organization.id,
+      organizationId,
       requestId: id,
-      memberId: req.user.memberId,
+      memberId: req.user?.memberId || req.v3Context?.memberId,
       status: body.status,
       rejectionReason: body.rejectionReason,
     });
@@ -827,7 +857,10 @@ export class ProductController {
     @Param("productId") productId: string,
     @Body() body: CreateProductReviewDto,
   ) {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
     const customerId = body.customerId || req.v3Context?.customerId;
 
     if (!customerId) {
@@ -877,7 +910,10 @@ export class ProductController {
     @Param("reviewId") reviewId: string,
     @Body() body: UpdateProductReviewDto,
   ) {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
     const customerId = body.customerId || req.v3Context?.customerId;
 
     if (!customerId) {
@@ -947,7 +983,10 @@ export class ProductController {
     @Param("reviewId") reviewId: string,
     @Query("customerId") queryCustomerId?: string,
   ) {
-    const organizationId = req.organization.id;
+    const organizationId = req.organization?.id || req.v3Context?.organizationId;
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID could not be determined");
+    }
     const customerId = queryCustomerId || req.v3Context?.customerId;
 
     if (!customerId) {
