@@ -1,7 +1,7 @@
 {
   "name": "bakery",
   "private": true,
-  "version": "10.1.35",
+  "version": "10.1.36",
   "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {
