@@ -38,7 +38,7 @@ const server = http.createServer((req, res) => {
   }
 
   // 2. Serve static files with SPA routing fallback
-  let safePath = path.normalize(pathname).replace(/^(\.\.[\/\\])+/, '');
+  let safePath = path.normalize(pathname).replace(/^(\.\.[/\\])+/, '');
   let filePath = path.join(DIST_DIR, safePath);
 
   fs.stat(filePath, (err, stats) => {
