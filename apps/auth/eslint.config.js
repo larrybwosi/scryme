@@ -6,6 +6,8 @@ export default [
   js.configs.recommended,
   {
     ignores: ["dist", "node_modules"],
+  },
+  {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {
       parser: tsParser,
@@ -23,6 +25,22 @@ export default [
     rules: {
       "no-unused-vars": "off",
       "no-undef": "off",
+    },
+  },
+  {
+    files: ["*.js"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: {
+        process: "readonly",
+        console: "readonly",
+        URL: "readonly",
+        Buffer: "readonly",
+        global: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+      },
     },
   },
 ];

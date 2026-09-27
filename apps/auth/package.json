@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 4444",
+    "auth:build": "vite build",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
