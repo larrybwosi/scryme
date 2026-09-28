@@ -44,7 +44,8 @@ const formatApiPath = (url: string): string => {
 
   const orgSlug = getOrgSlug();
   if (normalizedUrl === '/catalog/variants' || normalizedUrl.startsWith('/catalog/variants?')) {
-    return `/api/v3/${orgSlug}/production${normalizedUrl}`;
+    const subPath = normalizedUrl.replace('/catalog', '');
+    return `/api/v3/${orgSlug}/production${subPath}`;
   }
 
   if (
@@ -59,6 +60,22 @@ const formatApiPath = (url: string): string => {
     return `/api/v3/${orgSlug}${normalizedUrl.startsWith('/') ? '' : '/'}${normalizedUrl}`;
   }
   return `/api/v3/${orgSlug}/production${normalizedUrl.startsWith('/') ? '' : '/'}${normalizedUrl}`;
+};
+
+
+const handleApiError = (error: any) => {
+  const errStr = String(error?.message || error || '');
+  if (
+    errStr.includes('401') ||
+    errStr.includes('Unauthorized') ||
+    errStr.includes('Invalid token') ||
+    errStr.includes('session expired')
+  ) {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('bakery-unauthorized'));
+    }
+  }
+  throw error;
 };
 
 const unwrapResponse = (data: any) => {
@@ -89,50 +106,70 @@ export const client = {
         path += (path.includes('?') ? '&' : '?') + qs;
       }
     }
-    const resData = await tauriInvoke<T>('authenticated_api_request', {
-      method: 'GET',
-      path,
-    });
-    return unwrapResponse(resData);
+    try {
+      const resData = await tauriInvoke<T>('authenticated_api_request', {
+        method: 'GET',
+        path,
+      });
+      return unwrapResponse(resData);
+    } catch (error) {
+      handleApiError(error);
+    }
   },
 
   post: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
     const formattedUrl = formatApiPath(url);
-    const resData = await tauriInvoke<T>('authenticated_api_request', {
-      method: 'POST',
-      path: formattedUrl,
-      body: data,
-    });
-    return unwrapResponse(resData);
+    try {
+      const resData = await tauriInvoke<T>('authenticated_api_request', {
+        method: 'POST',
+        path: formattedUrl,
+        body: data,
+      });
+      return unwrapResponse(resData);
+    } catch (error) {
+      handleApiError(error);
+    }
   },
 
   put: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
     const formattedUrl = formatApiPath(url);
-    const resData = await tauriInvoke<T>('authenticated_api_request', {
-      method: 'PUT',
-      path: formattedUrl,
-      body: data,
-    });
-    return unwrapResponse(resData);
+    try {
+      const resData = await tauriInvoke<T>('authenticated_api_request', {
+        method: 'PUT',
+        path: formattedUrl,
+        body: data,
+      });
+      return unwrapResponse(resData);
+    } catch (error) {
+      handleApiError(error);
+    }
   },
 
   patch: async <T = any>(url: string, data?: any, config?: any): Promise<any> => {
     const formattedUrl = formatApiPath(url);
-    const resData = await tauriInvoke<T>('authenticated_api_request', {
-      method: 'PATCH',
-      path: formattedUrl,
-      body: data,
-    });
-    return unwrapResponse(resData);
+    try {
+      const resData = await tauriInvoke<T>('authenticated_api_request', {
+        method: 'PATCH',
+        path: formattedUrl,
+        body: data,
+      });
+      return unwrapResponse(resData);
+    } catch (error) {
+      handleApiError(error);
+    }
   },
 
   delete: async <T = any>(url: string, config?: any): Promise<any> => {
     const formattedUrl = formatApiPath(url);
-    const resData = await tauriInvoke<T>('authenticated_api_request', {
-      method: 'DELETE',
-      path: formattedUrl,
-    });
-    return unwrapResponse(resData);
+    try {
+      const resData = await tauriInvoke<T>('authenticated_api_request', {
+        method: 'DELETE',
+        path: formattedUrl,
+      });
+      return unwrapResponse(resData);
+    } catch (error) {
+      handleApiError(error);
+    }
   },
 
   setBaseURL: (url: string) => {

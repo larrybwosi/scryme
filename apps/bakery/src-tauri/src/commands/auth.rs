@@ -725,7 +725,7 @@ pub async fn logout_cloud_command(
     };
 
     // Best effort notify server
-    if let Ok(request) = state.build_request(reqwest::Method::POST, "/bakery/auth/logout") {
+    if let Ok(request) = state.build_request(reqwest::Method::POST, "api/v3/:orgSlug/production/auth/logout") {
         let _ = request.send().await;
     }
 

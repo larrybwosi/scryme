@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import { useSearchParams, Link } from "react-router";
 import { authClient, DEFAULT_WEB_URL } from "@/lib/auth-client";
-import { Mail, Lock, User, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  XCircle,
+  Loader2,
+  ArrowRight,
+} from "lucide-react";
 import { toast } from "sonner";
 
 export function SignUpPage() {
@@ -9,10 +15,14 @@ export function SignUpPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("redirect_uri") || DEFAULT_WEB_URL;
+  const callbackUrl =
+    searchParams.get("callbackUrl") ||
+    searchParams.get("redirect_uri") ||
+    DEFAULT_WEB_URL;
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +36,7 @@ export function SignUpPage() {
         name,
       });
 
-      if (res.error) {
+      if (res?.error) {
         setError(res.error.message || "Failed to create account. Please try again.");
         toast.error("Sign up failed");
       } else {
@@ -41,92 +51,115 @@ export function SignUpPage() {
   };
 
   return (
-    <div className="w-full max-w-md p-8 bg-card border border-border/60 rounded-2xl shadow-xl backdrop-blur-sm">
-      <div className="flex flex-col items-center text-center mb-8">
-        <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-          <ShieldCheck className="h-6 w-6" />
+    <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+      {/* Brand logo */}
+      <div className="flex items-center gap-2.5 mb-8">
+        <div className="w-9 h-9 rounded-xl bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
+          S
         </div>
-        <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Get started with Scryme unified authentication
+        <span className="text-[#0F1B2E] font-bold text-xl tracking-tight">
+          Scryme
+        </span>
+      </div>
+
+      <div className="mb-6">
+        <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
+          Create your account
+        </h1>
+        <p className="text-[#5B6B7C] text-sm mt-1.5">
+          Get started with Scryme unified authentication.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-start gap-3 text-destructive text-sm">
-          <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+        <div className="mb-6 p-3.5 rounded-md bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium">
+          <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       <form onSubmit={handleSignUp} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
             Full Name
           </label>
-          <div className="relative">
-            <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              required
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="John Doe"
-              className="w-full pl-10 pr-4 py-2.5 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
-            />
-          </div>
+          <input
+            type="text"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="John Doe"
+            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+          />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
-            Email Address
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
+            Work Email
           </label>
-          <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
-              className="w-full pl-10 pr-4 py-2.5 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
-            />
-          </div>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@company.com"
+            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+          />
         </div>
 
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D]">
             Password
           </label>
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               minLength={8}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full pl-10 pr-4 py-2.5 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              placeholder="Minimum 8 characters"
+              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9AA6B2] hover:text-[#5B6B7C] transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
           </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2.5 px-4 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 disabled:opacity-50"
         >
-          {loading ? "Creating account..." : "Create Account"}
-          <ArrowRight className="h-4 w-4" />
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Creating account…
+            </>
+          ) : (
+            <>
+              Create account
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+            </>
+          )}
         </button>
       </form>
 
-      <p className="mt-8 text-center text-sm text-muted-foreground">
+      <p className="mt-8 text-center text-sm text-[#5B6B7C]">
         Already have an account?{" "}
         <Link
           to={`/sign-in${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
-          className="text-primary font-semibold hover:underline"
+          className="text-[#8A6A3E] font-semibold hover:text-[#0F1B2E] transition-colors"
         >
           Sign in
         </Link>
