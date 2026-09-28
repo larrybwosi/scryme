@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "node .output/server/index.mjs",
+    "start": "node server.js",
     "preview": "vite preview",
     "type-check": "pnpm exec tsc --noEmit"
   },
@@ -15,7 +15,6 @@
     "@repo/auth": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-router": "^1.114.1",
-    "@tanstack/react-start": "^1.114.1",
     "better-auth": "^1.6.23",
     "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",
@@ -26,6 +25,7 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/router-plugin": "^1.114.1",
     "@types/node": "^24.10.12",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

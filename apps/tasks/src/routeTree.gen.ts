@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as DashboardRouteImport } from './routes/dashboard'
-import { Route as HealthRouteImport } from './routes/health'
 import { Route as TasksRouteImport } from './routes/tasks'
 import { Route as TimeTrackerRouteImport } from './routes/time-tracker'
 
@@ -31,11 +30,6 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HealthRoute = HealthRouteImport.update({
-  id: '/health',
-  path: '/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TasksRoute = TasksRouteImport.update({
   id: '/tasks',
   path: '/tasks',
@@ -51,7 +45,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/dashboard': typeof DashboardRoute
-  '/health': typeof HealthRoute
   '/tasks': typeof TasksRoute
   '/time-tracker': typeof TimeTrackerRoute
 }
@@ -59,7 +52,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/dashboard': typeof DashboardRoute
-  '/health': typeof HealthRoute
   '/tasks': typeof TasksRoute
   '/time-tracker': typeof TimeTrackerRoute
 }
@@ -68,30 +60,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/dashboard': typeof DashboardRoute
-  '/health': typeof HealthRoute
   '/tasks': typeof TasksRoute
   '/time-tracker': typeof TimeTrackerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$' | '/dashboard' | '/health' | '/tasks' | '/time-tracker'
+  fullPaths: '/' | '/$' | '/dashboard' | '/tasks' | '/time-tracker'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$' | '/dashboard' | '/health' | '/tasks' | '/time-tracker'
-  id:
-    | '__root__'
-    | '/'
-    | '/$'
-    | '/dashboard'
-    | '/health'
-    | '/tasks'
-    | '/time-tracker'
+  to: '/' | '/$' | '/dashboard' | '/tasks' | '/time-tracker'
+  id: '__root__' | '/' | '/$' | '/dashboard' | '/tasks' | '/time-tracker'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
   DashboardRoute: typeof DashboardRoute
-  HealthRoute: typeof HealthRoute
   TasksRoute: typeof TasksRoute
   TimeTrackerRoute: typeof TimeTrackerRoute
 }
@@ -119,13 +102,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/tasks': {
       id: '/tasks'
       path: '/tasks'
@@ -147,19 +123,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
   DashboardRoute: DashboardRoute,
-  HealthRoute: HealthRoute,
   TasksRoute: TasksRoute,
   TimeTrackerRoute: TimeTrackerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

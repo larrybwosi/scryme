@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite';
-import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import { TanStackRouterVite } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -10,11 +10,9 @@ const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [
-    tanstackStart({
-      srcDirectory: 'src',
-      router: {
-        routesDirectory: 'routes',
-      },
+    TanStackRouterVite({
+      routesDirectory: './src/routes',
+      generatedRouteTree: './src/routeTree.gen.ts',
     }),
     tailwindcss(),
     react(),
