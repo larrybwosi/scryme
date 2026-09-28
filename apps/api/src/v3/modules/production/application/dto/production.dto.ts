@@ -124,6 +124,11 @@ export class CreateRecipeDto {
   @IsString({ each: true })
   tags?: string[];
 
+  @ApiPropertyOptional({ description: "Whether the recipe is archived" })
+  @IsOptional()
+  @IsBoolean()
+  isArchived?: boolean;
+
   @ApiProperty({ description: "List of recipe ingredients", type: [CreateRecipeIngredientDto] })
   @IsArray()
   @ArrayMinSize(1, { message: "At least one ingredient is required" })
@@ -218,6 +223,11 @@ export class UpdateRecipeDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @ApiPropertyOptional({ description: "Whether the recipe is archived" })
+  @IsOptional()
+  @IsBoolean()
+  isArchived?: boolean;
 
   @ApiPropertyOptional({ description: "List of recipe ingredients", type: [CreateRecipeIngredientDto] })
   @IsOptional()
