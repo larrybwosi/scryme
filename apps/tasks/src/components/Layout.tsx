@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router';
+import { Link, useLocation } from '@tanstack/react-router';
 import {
   LayoutDashboard,
   CheckSquare,
@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { taskStore } from '../lib/store';
 
-export default function Layout() {
+export default function Layout({ children }: { children?: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
@@ -42,6 +42,8 @@ export default function Layout() {
     { name: 'Invoices', path: '/invoices', icon: FileText },
     { name: 'Expenses', path: '/expenses', icon: CreditCard },
   ];
+
+  const pathname = location.pathname;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col md:flex-row antialiased font-sans">
@@ -118,10 +120,10 @@ export default function Layout() {
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname.startsWith(item.path) || (item.path === '/tasks' && location.pathname === '/');
+            const isActive = pathname.startsWith(item.path) || (item.path === '/tasks' && pathname === '/');
 
             return (
-              <NavLink
+              <Link
                 key={item.name}
                 to={item.path}
                 onClick={() => setMobileOpen(false)}
@@ -145,7 +147,7 @@ export default function Layout() {
                     {item.count}
                   </span>
                 )}
-              </NavLink>
+              </Link>
             );
           })}
         </nav>
@@ -180,7 +182,7 @@ export default function Layout() {
             <span className="text-slate-400">Project Management</span>
             <span>/</span>
             <span className="text-slate-900 dark:text-white font-semibold capitalize">
-              {location.pathname.replace('/', '').replace('-', ' ') || 'Tasks'}
+              {pathname.replace('/', '').replace('-', ' ') || 'Tasks'}
             </span>
           </div>
 
@@ -199,9 +201,9 @@ export default function Layout() {
           </div>
         </header>
 
-        {/* Page Outlet */}
+        {/* Page Content */}
         <main className="flex-1 p-6 overflow-y-auto">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>
