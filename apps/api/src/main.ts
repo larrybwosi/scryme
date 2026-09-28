@@ -111,6 +111,7 @@ async function bootstrap() {
   app.setGlobalPrefix("api", {
     exclude: [
       { path: "auth/*", method: RequestMethod.ALL },
+      { path: "api/auth/*", method: RequestMethod.ALL },
       { path: "s/:shortCode", method: RequestMethod.GET },
       { path: ".well-known/openid-configuration", method: RequestMethod.GET },
       { path: ".well-known/oauth-authorization-server", method: RequestMethod.GET },
