@@ -58,11 +58,27 @@ class ApiClient {
       ? config.path
       : `/api/v3/${orgSlug}${config.path.startsWith('/') ? '' : '/'}${config.path}`;
 
-    const resData = await tauriInvoke<T>('authenticated_api_request', {
-      method: config.method,
-      path: fullPath,
-      body: config.data,
-    });
+    let resData: any;
+    try {
+      resData = await tauriInvoke<T>('authenticated_api_request', {
+        method: config.method,
+        path: fullPath,
+        body: config.data,
+      });
+    } catch (error) {
+      const errStr = String((error as any)?.message || error || '');
+      if (
+        errStr.includes('401') ||
+        errStr.includes('Unauthorized') ||
+        errStr.includes('Invalid token') ||
+        errStr.includes('session expired')
+      ) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('bakery-unauthorized'));
+        }
+      }
+      throw error;
+    }
 
     if (resData && typeof resData === 'object' && 'success' in resData && 'data' in resData) {
       if ((resData as any).meta || (resData as any).metadata) {
