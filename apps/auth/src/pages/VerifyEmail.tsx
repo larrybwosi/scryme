@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
 
 export function VerifyEmailPage() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const [loading, setLoading] = useState(true);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const token = searchParams.get("token");
+  const token = searchParams?.token;
 
   useEffect(() => {
     if (!token) {

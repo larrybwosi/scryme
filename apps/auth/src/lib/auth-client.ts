@@ -7,7 +7,10 @@ import { ssoClient } from "@better-auth/sso/client";
 export const DEFAULT_WEB_URL =
   import.meta.env.VITE_PUBLIC_WEB_URL || "http://localhost:3000";
 
-const getValidApiUrl = (): string => {
+const getValidBaseUrl = (): string => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
   const envUrl = import.meta.env.VITE_PUBLIC_API_URL;
   if (
     typeof envUrl === "string" &&
@@ -17,11 +20,11 @@ const getValidApiUrl = (): string => {
   ) {
     return envUrl.trim();
   }
-  return "http://localhost:3002";
+  return "http://localhost:4444";
 };
 
 export const authClient = createAuthClient({
-  baseURL: getValidApiUrl(),
+  baseURL: getValidBaseUrl(),
   fetchOptions: {
     credentials: "include",
   },

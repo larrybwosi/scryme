@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, Link } from "react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { authClient, signInWithPasskey, signInWithSSO, DEFAULT_WEB_URL } from "@/lib/auth-client";
 import {
   Building2,
@@ -14,7 +14,7 @@ import {
 import { toast } from "sonner";
 
 export function SignInPage() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [domain, setDomain] = useState("");
@@ -25,8 +25,8 @@ export function SignInPage() {
   const [error, setError] = useState<string | null>(null);
 
   const callbackUrl =
-    searchParams.get("callbackUrl") ||
-    searchParams.get("redirect_uri") ||
+    searchParams?.callbackUrl ||
+    searchParams?.redirect_uri ||
     DEFAULT_WEB_URL;
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export function SignInPage() {
           return;
         }
       } catch (err) {
-        // No active session or network error; proceed with sign in form
+        // No active session; proceed
       } finally {
         if (isMounted) setCheckingSession(false);
       }
@@ -139,7 +139,6 @@ export function SignInPage() {
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-      {/* Brand logo */}
       <div className="flex items-center gap-2.5 mb-8">
         <div className="w-9 h-9 rounded-xl bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
           S
@@ -158,7 +157,6 @@ export function SignInPage() {
         </p>
       </div>
 
-      {/* Mode toggle */}
       <div className="grid grid-cols-2 p-1 bg-[#E7E2D9]/50 rounded-lg mb-6 border border-[#E7E2D9]">
         <button
           type="button"
@@ -200,7 +198,6 @@ export function SignInPage() {
 
       {loginMode === "standard" ? (
         <>
-          {/* Quick passkey button */}
           <button
             type="button"
             onClick={handlePasskeySignIn}
@@ -211,7 +208,6 @@ export function SignInPage() {
             Sign in with Passkey
           </button>
 
-          {/* Social login buttons */}
           <div className="grid grid-cols-2 gap-3 mb-4">
             <button
               type="button"
@@ -258,7 +254,8 @@ export function SignInPage() {
                   Password
                 </label>
                 <Link
-                  to={`/forgot-password${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+                  to="/forgot-password"
+                  search={searchParams}
                   className="text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors"
                 >
                   Forgot password?
@@ -352,7 +349,8 @@ export function SignInPage() {
       <p className="mt-8 text-center text-sm text-[#5B6B7C]">
         Don't have an account?{" "}
         <Link
-          to={`/sign-up${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+          to="/sign-up"
+          search={searchParams}
           className="text-[#8A6A3E] font-semibold hover:text-[#0F1B2E] transition-colors"
         >
           Sign up

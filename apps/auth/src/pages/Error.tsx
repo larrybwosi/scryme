@@ -1,12 +1,12 @@
 import React from "react";
-import { useSearchParams, Link } from "react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { AlertCircle, ArrowLeft } from "lucide-react";
 
 export function ErrorPage() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const error =
-    searchParams.get("error") ||
-    searchParams.get("error_description") ||
+    searchParams?.error ||
+    searchParams?.error_description ||
     "An unknown authentication error occurred.";
 
   return (

@@ -1,18 +1,18 @@
 import React, { useState } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 import { Eye, EyeOff, XCircle, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function ResetPasswordPage() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const token = searchParams.get("token");
+  const token = searchParams?.token;
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +35,7 @@ export function ResetPasswordPage() {
         toast.error("Password reset failed");
       } else {
         toast.success("Password reset successfully!");
-        navigate("/sign-in");
+        navigate({ to: "/sign-in" });
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
