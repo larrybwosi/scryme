@@ -5,7 +5,7 @@
 **Next-Generation Multi-Tenant Retail, Bakery Production, Point of Sale & Supply Chain OS**
 
 <p align="center">
-  <img src="apps/bakery/public/logo.jpeg" alt="Scryme Logo" width="160" style="border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);" />
+  <img src="apps/pos/public/logo.jpg" alt="Scryme Logo" width="160" style="border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);" />
 </p>
 
 [![CI Build](https://img.shields.io/github/actions/workflow/status/larrybwosi/scryme/release.yml?style=for-the-badge&logo=github&label=Release%20Pipeline&color=059669)](https://github.com/larrybwosi/scryme/actions)
