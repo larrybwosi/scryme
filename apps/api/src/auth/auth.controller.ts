@@ -6,7 +6,7 @@ import { db } from "@repo/db";
 
 @SkipThrottle()
 @AllowPublic()
-@Controller("auth")
+@Controller(["auth", "api/auth"])
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

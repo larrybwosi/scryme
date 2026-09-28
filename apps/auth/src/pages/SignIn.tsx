@@ -19,7 +19,7 @@ export function SignInPage() {
   const [password, setPassword] = useState("");
   const [domain, setDomain] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loginMode, setLoginMode] = useState<"standard" | "sso">("standard");
+  const [showSsoForm, setShowSsoForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -157,38 +157,6 @@ export function SignInPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 p-1 bg-[#E7E2D9]/50 rounded-lg mb-6 border border-[#E7E2D9]">
-        <button
-          type="button"
-          onClick={() => {
-            setLoginMode("standard");
-            setError(null);
-          }}
-          className={`py-2 text-xs font-semibold rounded-md transition-all ${
-            loginMode === "standard"
-              ? "bg-white text-[#0F1B2E] shadow-sm"
-              : "text-[#5B6B7C] hover:text-[#0F1B2E]"
-          }`}
-        >
-          Standard Login
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setLoginMode("sso");
-            setError(null);
-          }}
-          className={`py-2 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1.5 ${
-            loginMode === "sso"
-              ? "bg-white text-[#0F1B2E] shadow-sm"
-              : "text-[#5B6B7C] hover:text-[#0F1B2E]"
-          }`}
-        >
-          <Building2 className="w-3.5 h-3.5 text-[#A9824C]" />
-          Enterprise SSO
-        </button>
-      </div>
-
       {error && (
         <div className="mb-6 p-3.5 rounded-md bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium">
           <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
@@ -196,120 +164,142 @@ export function SignInPage() {
         </div>
       )}
 
-      {loginMode === "standard" ? (
-        <>
-          <button
-            type="button"
-            onClick={handlePasskeySignIn}
-            disabled={loading}
-            className="w-full h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] text-xs font-semibold rounded-md transition-all duration-150 flex items-center justify-center gap-2 mb-4"
-          >
-            <KeyRound className="h-3.5 w-3.5 text-[#A9824C]" />
-            Sign in with Passkey
-          </button>
+      <button
+        type="button"
+        onClick={handlePasskeySignIn}
+        disabled={loading}
+        className="w-full h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] text-xs font-semibold rounded-md transition-all duration-150 flex items-center justify-center gap-2 mb-4"
+      >
+        <KeyRound className="h-3.5 w-3.5 text-[#A9824C]" />
+        Sign in with Passkey
+      </button>
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => handleSocialSignIn("github")}
+          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+        >
+          GitHub
+        </button>
+        <button
+          type="button"
+          onClick={() => handleSocialSignIn("google")}
+          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+        >
+          Google
+        </button>
+      </div>
+
+      <div className="relative my-5 flex items-center gap-3">
+        <div className="flex-1 h-px bg-[#E7E2D9]" />
+        <span className="text-[11px] font-mono text-[#9AA6B2] uppercase tracking-wider">
+          or continue with email
+        </span>
+        <div className="flex-1 h-px bg-[#E7E2D9]" />
+      </div>
+
+      <form onSubmit={handleSignIn} className="space-y-4">
+        <div>
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
+            Work Email
+          </label>
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="name@company.com"
+            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D]">
+              Password
+            </label>
+            <Link
+              to="/forgot-password"
+              search={searchParams}
+              className="text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+            />
             <button
               type="button"
-              onClick={() => handleSocialSignIn("github")}
-              className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-2"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9AA6B2] hover:text-[#5B6B7C] transition-colors"
+              tabIndex={-1}
             >
-              GitHub
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSocialSignIn("google")}
-              className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-2"
-            >
-              Google
-            </button>
-          </div>
-
-          <div className="relative my-5 flex items-center gap-3">
-            <div className="flex-1 h-px bg-[#E7E2D9]" />
-            <span className="text-[11px] font-mono text-[#9AA6B2] uppercase tracking-wider">
-              or continue with email
-            </span>
-            <div className="flex-1 h-px bg-[#E7E2D9]" />
-          </div>
-
-          <form onSubmit={handleSignIn} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
-                Work Email
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
-                className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D]">
-                  Password
-                </label>
-                <Link
-                  to="/forgot-password"
-                  search={searchParams}
-                  className="text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9AA6B2] hover:text-[#5B6B7C] transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4" />
-                  ) : (
-                    <Eye className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 disabled:opacity-50"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Signing in…
-                </>
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
               ) : (
-                <>
-                  Sign in
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                </>
+                <Eye className="h-4 w-4" />
               )}
             </button>
-          </form>
-        </>
-      ) : (
-        <form onSubmit={handleSsoSignIn} className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
-              Organization Domain or SSO Slug
-            </label>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 disabled:opacity-50"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Signing in…
+            </>
+          ) : (
+            <>
+              Sign in
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+            </>
+          )}
+        </button>
+      </form>
+
+      <div className="mt-5 pt-4 border-t border-[#E7E2D9]">
+        {!showSsoForm ? (
+          <button
+            type="button"
+            onClick={() => {
+              setShowSsoForm(true);
+              setError(null);
+            }}
+            className="w-full text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors flex items-center justify-center gap-1.5 py-1"
+          >
+            <Building2 className="w-3.5 h-3.5 text-[#A9824C]" />
+            Sign in with Enterprise SSO
+          </button>
+        ) : (
+          <form onSubmit={handleSsoSignIn} className="space-y-3 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D]">
+                Organization Domain or SSO Slug
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSsoForm(false);
+                  setError(null);
+                }}
+                className="text-[11px] text-[#5B6B7C] hover:text-[#0F1B2E] font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
             <div className="relative">
               <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9AA6B2]" />
               <input
@@ -321,32 +311,31 @@ export function SignInPage() {
                 className="w-full h-10 pl-10 pr-3.5 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
               />
             </div>
-            <p className="text-[11px] text-[#5B6B7C] mt-1.5">
-              You will be redirected to your company’s identity provider (Okta, SAML 2.0, Azure AD, or OIDC).
+            <p className="text-[11px] text-[#5B6B7C]">
+              Redirects to your company’s identity provider (Okta, SAML 2.0, Azure AD, or OIDC).
             </p>
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-10 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-md transition-all shadow-sm flex items-center justify-center gap-2 group disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Redirecting…
+                </>
+              ) : (
+                <>
+                  Continue with SSO
+                  <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+        )}
+      </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 disabled:opacity-50"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Redirecting to SSO…
-              </>
-            ) : (
-              <>
-                Continue with SSO
-                <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-              </>
-            )}
-          </button>
-        </form>
-      )}
-
-      <p className="mt-8 text-center text-sm text-[#5B6B7C]">
+      <p className="mt-6 text-center text-sm text-[#5B6B7C]">
         Don't have an account?{" "}
         <Link
           to="/sign-up"
