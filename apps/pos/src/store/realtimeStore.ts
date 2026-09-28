@@ -199,6 +199,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
             socket.io.opts.extraHeaders = {
               ...socket.io.opts.extraHeaders,
               Authorization: `Bearer ${finalToken}`,
+              "x-member-token": memberToken || finalToken,
             };
           }
           socket.connect();

@@ -9,6 +9,7 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { V3AuthService } from "../../modules/auth/infrastructure/services/v3-auth.service";
+import { V3AuthCoreService } from "../../modules/auth-core/infrastructure/services/v3-auth-core.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RealtimeRedisService } from "../../../v2/realtime/realtime-redis.service";
 import { auth } from "@repo/auth/nest";
@@ -48,9 +49,15 @@ export class V3RealtimeGateway
       const token = rawToken.startsWith("Bearer ") ? rawToken.slice(7) : rawToken;
 
       let payload = null;
+      // 1. Try HS256 V3 client/hybrid JWT token
       try {
         payload = await this.v3AuthService.verifyToken(token);
       } catch (err) {
+        // Token was not a standard HS256 JWT
+      }
+
+      // 2. Try better-auth session verification fallback
+      if (!payload) {
         try {
           const session = await auth.api.getSession({
             headers: new Headers({
@@ -60,10 +67,12 @@ export class V3RealtimeGateway
           });
           if (session) {
             const orgId = (session.user as any).activeOrganizationId || (session.session as any).activeOrganizationId;
-            const org = await this.prisma.client.organization.findUnique({
-              where: { id: orgId },
-              select: { slug: true },
-            });
+            const org = orgId
+              ? await this.prisma.client.organization.findUnique({
+                  where: { id: orgId },
+                  select: { slug: true },
+                })
+              : null;
             payload = {
               userId: session.user.id,
               memberId: (session.user as any).memberId,
@@ -73,7 +82,38 @@ export class V3RealtimeGateway
             };
           }
         } catch (e: any) {
-          console.error("V3 WS better-auth fallback error:", e.message);
+          // Session verification failed
+        }
+      }
+
+      // 3. Try POS Device X-API-KEY / Client ID lookup fallback
+      if (!payload && token) {
+        const apiKeyStr = token;
+        const clientId = apiKeyStr.includes(".") ? apiKeyStr.split(".")[0] : apiKeyStr;
+        const clientSecret = apiKeyStr.includes(".") ? apiKeyStr.split(".").slice(1).join(".") : undefined;
+        try {
+          const clientObj = await this.prisma.client.v3ApiClient.findUnique({
+            where: { clientId },
+            include: { organization: true },
+          });
+          if (clientObj && clientObj.isActive) {
+            const registry = await this.prisma.client.deviceRegistry.findFirst({
+              where: {
+                OR: [{ v3ApiClientId: clientObj.id }, { apiKeyId: clientObj.id }],
+              },
+            });
+            payload = {
+              sub: clientObj.id,
+              clientId: clientObj.clientId,
+              organizationId: clientObj.organizationId,
+              orgSlug: clientObj.organization.slug,
+              locationId: registry?.locationId,
+              deviceId: registry?.id,
+              type: "v3_client",
+            };
+          }
+        } catch (e: any) {
+          // API key lookup failed
         }
       }
 
