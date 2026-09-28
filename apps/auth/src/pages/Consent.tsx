@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useSearch } from "@tanstack/react-router";
 import { authClient, consentOAuth2 } from "@/lib/auth-client";
 import { Shield, Check, X, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function ConsentPage() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const [loading, setLoading] = useState(false);
   const [clientInfo, setClientInfo] = useState<{ clientName?: string } | null>(null);
 
   const { data: session, isPending } = authClient.useSession();
 
-  const clientId = searchParams.get("client_id");
-  const scopeStr = searchParams.get("scope") || "";
+  const clientId = searchParams?.client_id;
+  const scopeStr = searchParams?.scope || "";
   const scopes = scopeStr.split(" ").filter(Boolean);
 
   useEffect(() => {

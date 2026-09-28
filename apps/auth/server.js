@@ -9,6 +9,19 @@ const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 4444;
 const DIST_DIR = path.join(__dirname, 'dist');
 
+const getTargetApiUrl = () => {
+  const envUrl = process.env.VITE_PUBLIC_API_URL || process.env.VITE_API_URL;
+  if (
+    typeof envUrl === 'string' &&
+    envUrl.trim() !== '' &&
+    !envUrl.includes('PLACEHOLDER') &&
+    (envUrl.startsWith('http://') || envUrl.startsWith('https://'))
+  ) {
+    return envUrl.trim().replace(/\/+$/, '');
+  }
+  return 'http://localhost:3002';
+};
+
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -26,7 +39,7 @@ const MIME_TYPES = {
   '.eot': 'application/vnd.ms-fontobject',
 };
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsedUrl.pathname;
 
@@ -37,7 +50,62 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 2. Serve static files with SPA routing fallback
+  // 2. Proxy /api/auth/* to NestJS auth endpoints with Set-Cookie preservation
+  if (pathname.startsWith('/api/auth')) {
+    const targetApi = getTargetApiUrl();
+    const targetUrl = new URL(`${targetApi}${pathname}${parsedUrl.search}`);
+
+    const forwardHeaders = { ...req.headers };
+    delete forwardHeaders.host;
+
+    try {
+      const chunks = [];
+      for await (const chunk of req) {
+        chunks.push(chunk);
+      }
+      const bodyBuffer = Buffer.concat(chunks);
+
+      const fetchOptions = {
+        method: req.method,
+        headers: forwardHeaders,
+        redirect: 'manual',
+      };
+
+      if (!['GET', 'HEAD'].includes(req.method)) {
+        fetchOptions.body = bodyBuffer;
+      }
+
+      const upstreamResponse = await fetch(targetUrl.toString(), fetchOptions);
+
+      const responseHeaders = {};
+      upstreamResponse.headers.forEach((value, key) => {
+        if (key.toLowerCase() === 'set-cookie') {
+          if (!responseHeaders['set-cookie']) {
+            responseHeaders['set-cookie'] = [];
+          }
+          if (Array.isArray(responseHeaders['set-cookie'])) {
+            responseHeaders['set-cookie'].push(value);
+          } else {
+            responseHeaders['set-cookie'] = [responseHeaders['set-cookie'], value];
+          }
+        } else {
+          responseHeaders[key] = value;
+        }
+      });
+
+      res.writeHead(upstreamResponse.status, responseHeaders);
+      const resArrayBuffer = await upstreamResponse.arrayBuffer();
+      res.end(Buffer.from(resArrayBuffer));
+      return;
+    } catch (err) {
+      console.error('Error proxying auth request:', err);
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: { message: 'Auth gateway proxy error: ' + err.message } }));
+      return;
+    }
+  }
+
+  // 3. Serve static assets & client route fallback
   let safePath = path.normalize(pathname).replace(/^(\.\.[/\\])+/, '');
   let filePath = path.join(DIST_DIR, safePath);
 
@@ -45,7 +113,6 @@ const server = http.createServer((req, res) => {
     if (!err && stats.isFile()) {
       serveFile(filePath, res);
     } else {
-      // Fallback to index.html for SPA routing
       serveFile(path.join(DIST_DIR, 'index.html'), res);
     }
   });
@@ -68,6 +135,6 @@ function serveFile(filePath, res) {
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Auth production static server running on http://0.0.0.0:${PORT}`);
+  console.log(`Auth server running on http://0.0.0.0:${PORT}`);
   console.log(`Serving static files from: ${DIST_DIR}`);
 });

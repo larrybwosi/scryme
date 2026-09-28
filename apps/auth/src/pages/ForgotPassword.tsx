@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useSearchParams, Link } from "react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { requestPasswordReset } from "@/lib/auth-client";
 import { ArrowLeft, XCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function ForgotPasswordPage() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -40,7 +40,8 @@ export function ForgotPasswordPage() {
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
       <Link
-        to={`/sign-in${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+        to="/sign-in"
+        search={searchParams}
         className="inline-flex items-center gap-2 text-xs font-semibold text-[#5B6B7C] hover:text-[#0F1B2E] mb-6 transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in

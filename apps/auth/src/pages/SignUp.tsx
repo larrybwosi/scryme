@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useSearchParams, Link } from "react-router";
+import { Link, useSearch } from "@tanstack/react-router";
 import { authClient, DEFAULT_WEB_URL } from "@/lib/auth-client";
 import {
   Eye,
@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 
 export function SignUpPage() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearch({ strict: false }) as Record<string, string | undefined>;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,8 +20,8 @@ export function SignUpPage() {
   const [error, setError] = useState<string | null>(null);
 
   const callbackUrl =
-    searchParams.get("callbackUrl") ||
-    searchParams.get("redirect_uri") ||
+    searchParams?.callbackUrl ||
+    searchParams?.redirect_uri ||
     DEFAULT_WEB_URL;
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -52,7 +52,6 @@ export function SignUpPage() {
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-      {/* Brand logo */}
       <div className="flex items-center gap-2.5 mb-8">
         <div className="w-9 h-9 rounded-xl bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
           S
@@ -158,7 +157,8 @@ export function SignUpPage() {
       <p className="mt-8 text-center text-sm text-[#5B6B7C]">
         Already have an account?{" "}
         <Link
-          to={`/sign-in${searchParams.toString() ? `?${searchParams.toString()}` : ""}`}
+          to="/sign-in"
+          search={searchParams}
           className="text-[#8A6A3E] font-semibold hover:text-[#0F1B2E] transition-colors"
         >
           Sign in

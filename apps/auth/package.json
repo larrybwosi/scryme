@@ -19,6 +19,10 @@
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
     "@simplewebauthn/browser": "^13.3.0",
+    "@tanstack/react-cross-context": "^1.99.0",
+    "@tanstack/react-router": "^1.170.40",
+    "@tanstack/react-start": "^1.168.59",
+    "@tanstack/start": "^1.120.20",
     "axios": "latest",
     "better-auth": "^1.6.23",
     "class-variance-authority": "^0.7.1",
@@ -39,6 +43,8 @@
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.3.0",
     "@tailwindcss/vite": "^4.3.0",
+    "@tanstack/router-plugin": "^1.168.41",
+    "@tanstack/start-plugin": "^1.111.2",
     "@types/node": "^25.6.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -47,6 +53,7 @@
     "postcss": "^8.5.0",
     "tailwindcss": "^4.3.0",
     "typescript": "5.7.3",
+    "vinxi": "^0.5.11",
     "vite": "^8.0.10"
   }
 }
