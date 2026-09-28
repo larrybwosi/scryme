@@ -1,6 +1,5 @@
-import { Controller, All, Req, Res } from "@nestjs/common";
+import { Controller, All, Get, Req, Res } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
-import { FastifyRequest, FastifyReply } from "fastify";
 import { AuthService } from "./auth.service";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 import { db } from "@repo/db";
@@ -10,6 +9,28 @@ import { db } from "@repo/db";
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Get("get-session")
+  async getSession(@Req() req: any, @Res() res: any) {
+    const headers = new Headers();
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (value) {
+        if (Array.isArray(value)) {
+          value.forEach((v) => headers.append(key, v));
+        } else {
+          headers.set(key, value as string);
+        }
+      }
+    }
+
+    const session = await this.authService.auth.api.getSession({
+      headers,
+    });
+    if (!session) {
+      return res.status(401).send({ error: "Unauthorized" });
+    }
+    return res.send(session);
+  }
 
   @All("*")
   async handleAuth(@Req() req: any, @Res() res: any) {
@@ -90,7 +111,7 @@ export class AuthController {
             if (!token && json.session.id) {
               const sess = await db.session.findUnique({
                 where: { id: json.session.id },
-                select: { token: true }
+                select: { token: true },
               });
               if (sess) {
                 token = sess.token;
