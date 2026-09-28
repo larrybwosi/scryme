@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router";
 import { authClient } from "@/lib/auth-client";
-import { CheckCircle2, AlertCircle, Loader2, ShieldCheck } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
 
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams();
@@ -21,7 +21,7 @@ export function VerifyEmailPage() {
     const verify = async () => {
       try {
         const res = await authClient.verifyEmail({ query: { token } });
-        if (res.error) {
+        if (res?.error) {
           setError(res.error.message || "Email verification failed.");
         } else {
           setVerified(true);
@@ -37,38 +37,47 @@ export function VerifyEmailPage() {
   }, [token]);
 
   return (
-    <div className="w-full max-w-md p-8 bg-card border border-border/60 rounded-2xl shadow-xl text-center">
-      <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
-        <ShieldCheck className="h-6 w-6" />
-      </div>
-
+    <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 text-center py-4">
       {loading ? (
         <div className="py-8 space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-sm text-muted-foreground">Verifying your email address...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-[#0F1B2E]" />
+          <p className="text-sm font-medium text-[#5B6B7C]">
+            Verifying your email address…
+          </p>
         </div>
       ) : verified ? (
         <div className="space-y-4">
-          <CheckCircle2 className="h-12 w-12 text-emerald-500 mx-auto" />
-          <h1 className="text-2xl font-bold">Email Verified!</h1>
-          <p className="text-sm text-muted-foreground">
-            Your email address has been successfully verified. You can now sign in to your account.
+          <div className="w-12 h-12 rounded-full bg-[#4FA871]/10 text-[#4FA871] flex items-center justify-center mx-auto">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+          <h1 className="font-serif text-2xl font-medium text-[#0F1B2E]">
+            Email verified
+          </h1>
+          <p className="text-xs text-[#5B6B7C] max-w-xs mx-auto">
+            Your email address has been verified successfully. You can now sign in to your workspace.
           </p>
           <Link
             to="/sign-in"
-            className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 transition-all mt-4"
+            className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-md hover:bg-[#16283F] transition-all gap-2 mt-2"
           >
             Continue to Sign In
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       ) : (
         <div className="space-y-4">
-          <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-          <h1 className="text-2xl font-bold">Verification Failed</h1>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <div className="w-12 h-12 rounded-full bg-[#B3352A]/10 text-[#B3352A] flex items-center justify-center mx-auto">
+            <XCircle className="h-6 w-6" />
+          </div>
+          <h1 className="font-serif text-2xl font-medium text-[#0F1B2E]">
+            Verification failed
+          </h1>
+          <p className="text-xs text-[#5B6B7C] max-w-xs mx-auto">
+            {error || "The verification link is invalid or has expired."}
+          </p>
           <Link
             to="/sign-in"
-            className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-secondary text-secondary-foreground font-semibold rounded-xl text-sm hover:bg-secondary/80 transition-all mt-4"
+            className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-md hover:bg-[#16283F] transition-all"
           >
             Return to Sign In
           </Link>

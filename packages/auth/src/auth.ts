@@ -4,6 +4,7 @@ import { authOptions } from "./index";
 import { admin, customSession, jwt, bearer, twoFactor } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import { oauthProvider } from "@better-auth/oauth-provider";
+import { sso } from "@better-auth/sso";
 import { nextCookies } from "better-auth/next-js";
 import { UserRole, MemberRole } from "@repo/db";
 import { db } from "@repo/db";
@@ -202,6 +203,7 @@ export const auth: any = betterAuth({
     },
   } as any,
   plugins: [
+    sso(),
     jwt(),
     bearer(),
     passkey(),

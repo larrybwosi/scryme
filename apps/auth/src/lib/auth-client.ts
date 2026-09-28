@@ -2,6 +2,7 @@ import { createAuthClient } from "better-auth/react";
 import { twoFactorClient } from "better-auth/plugins";
 import { passkeyClient } from "@better-auth/passkey/client";
 import { oauthProviderClient } from "@better-auth/oauth-provider/client";
+import { ssoClient } from "@better-auth/sso/client";
 
 export const DEFAULT_WEB_URL =
   import.meta.env.VITE_PUBLIC_WEB_URL || "http://localhost:3000";
@@ -28,6 +29,7 @@ export const authClient = createAuthClient({
     passkeyClient(),
     twoFactorClient(),
     oauthProviderClient(),
+    ssoClient(),
   ],
 }) as any;
 
@@ -41,4 +43,11 @@ export const consentOAuth2 = (accept: boolean) => {
 
 export const signInWithPasskey = () => {
   return authClient.signIn.passkey();
+};
+
+export const signInWithSSO = (domain: string, callbackURL?: string) => {
+  return authClient.signIn.sso({
+    domain,
+    callbackURL: callbackURL || DEFAULT_WEB_URL,
+  });
 };
