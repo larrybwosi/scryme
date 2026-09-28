@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router";
 import { authClient } from "@/lib/auth-client";
-import { Lock, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, XCircle, ArrowLeft, Loader2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [newPassword, setNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +30,7 @@ export function ResetPasswordPage() {
         token,
       });
 
-      if (res.error) {
+      if (res?.error) {
         setError(res.error.message || "Failed to reset password. Token may have expired.");
         toast.error("Password reset failed");
       } else {
@@ -45,67 +46,92 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="w-full max-w-md p-8 bg-card border border-border/60 rounded-2xl shadow-xl text-center">
-        <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-        <h1 className="text-xl font-bold mb-2">Invalid Reset Link</h1>
-        <p className="text-sm text-muted-foreground mb-6">
-          This password reset link is invalid or incomplete.
+      <div className="w-full animate-in fade-in duration-300 text-center py-6">
+        <AlertCircle className="h-10 w-10 text-[#B3352A] mx-auto mb-3" />
+        <h1 className="font-serif text-xl font-medium text-[#0F1B2E] mb-2">
+          Invalid Reset Link
+        </h1>
+        <p className="text-xs text-[#5B6B7C] max-w-xs mx-auto mb-6">
+          The password reset link is invalid or expired. Please request a new link.
         </p>
         <Link
           to="/forgot-password"
-          className="inline-flex items-center justify-center w-full py-2.5 px-4 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 transition-all"
+          className="inline-flex items-center justify-center h-10 px-4 bg-[#0F1B2E] text-white text-xs font-semibold rounded-md hover:bg-[#16283F] transition-all"
         >
-          Request new reset link
+          Request new link
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-md p-8 bg-card border border-border/60 rounded-2xl shadow-xl backdrop-blur-sm">
-      <div className="flex flex-col items-center text-center mb-8">
-        <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-          <ShieldCheck className="h-6 w-6" />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight">Set new password</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Enter your new password below
+    <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <Link
+        to="/sign-in"
+        className="inline-flex items-center gap-2 text-xs font-semibold text-[#5B6B7C] hover:text-[#0F1B2E] mb-6 transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in
+      </Link>
+
+      <div className="mb-6">
+        <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
+          Set new password
+        </h1>
+        <p className="text-[#5B6B7C] text-sm mt-1.5">
+          Enter your new password below.
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-start gap-3 text-destructive text-sm">
-          <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+        <div className="mb-6 p-3.5 rounded-md bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium">
+          <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       <form onSubmit={handleResetPassword} className="space-y-4">
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D]">
             New Password
           </label>
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               minLength={8}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full pl-10 pr-4 py-2.5 bg-background border border-input rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-all"
+              placeholder="Minimum 8 characters"
+              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-md text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9AA6B2] hover:text-[#5B6B7C] transition-colors"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </button>
           </div>
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2.5 px-4 bg-primary text-primary-foreground font-semibold rounded-xl text-sm hover:opacity-90 active:scale-[0.99] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-md transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer"
         >
-          {loading ? "Updating password..." : "Update Password"}
-          <ArrowRight className="h-4 w-4" />
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Resetting password…
+            </>
+          ) : (
+            "Reset Password"
+          )}
         </button>
       </form>
     </div>
