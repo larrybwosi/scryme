@@ -6,7 +6,7 @@ import { Recipe } from '@/types/bakery';
 import { Clock, Thermometer, Scale, ChefHat, Info, Flame } from 'lucide-react';
 // import Image from 'next/image';
 import Markdown from 'markdown-to-jsx';
-import { useFormattedCurrency } from '@/lib/utils';
+import { useFormattedCurrency, formatVariantName } from '@/lib/utils';
 import { useRecipe } from '@/hooks/bakery';
 import sanityLoader from '@/lib/sanity-loader';
 
@@ -68,10 +68,8 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
                   <SheetDescription className="flex items-center gap-1.5 text-sm">
                     <span className="text-muted-foreground">Produces</span>
                     <span className="font-medium text-foreground">
-                      {(recipeData.producesVariant as any).product?.name}
+                      {formatVariantName((recipeData.producesVariant as any).product?.name, recipeData.producesVariant.name)}
                     </span>
-                    <span className="text-muted-foreground/50">·</span>
-                    <span className="text-muted-foreground">{recipeData.producesVariant.name}</span>
                   </SheetDescription>
                 )}
               </div>
@@ -171,10 +169,7 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
                           <tr key={item.id} className="group hover:bg-muted/30 transition-colors">
                             <td className="px-4 py-3.5">
                               <div className="font-medium text-foreground">
-                                {item.ingredientVariant?.product?.name}
-                              </div>
-                              <div className="text-[10px] text-muted-foreground mt-0.5">
-                                {item.ingredientVariant?.name}
+                                {formatVariantName(item.ingredientVariant?.product?.name, item.ingredientVariant?.name)}
                               </div>
                               {item.preparationNotes && (
                                 <div className="text-[10px] text-amber-600 mt-1 italic">

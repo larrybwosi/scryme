@@ -308,3 +308,32 @@ export function combineDateTime(dateInput: Date | string, timeInput: Date | stri
 
   return date;
 }
+/**
+ * Formats a product name and variant name into a user-friendly display string.
+ * - If variant name is "Default" (case-insensitive) or empty, returns product name (or variant name if product name is empty).
+ * - If variant name is not "Default", returns "Product Name - Variant Name".
+ */
+export function formatVariantName(productName?: string | null, variantName?: string | null): string {
+  const pName = productName?.trim() || '';
+  const vName = variantName?.trim() || '';
+
+  const isDefault = !vName || vName.toLowerCase() === 'default';
+
+  if (isDefault) {
+    return pName || vName || '';
+  }
+
+  if (!pName) {
+    return vName;
+  }
+
+  return `${pName} - ${vName}`;
+}
+
+/**
+ * Helper to extract product name and variant name from a variant object and format them.
+ */
+export function getVariantDisplayName(variant?: { name?: string | null; product?: { name?: string | null } } | null): string {
+  if (!variant) return '';
+  return formatVariantName(variant.product?.name, variant.name);
+}
