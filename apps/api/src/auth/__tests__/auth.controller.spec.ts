@@ -120,4 +120,45 @@ describe("AuthController", () => {
       expect(resSend).toHaveBeenCalledWith({ success: true, user: { id: "user-456" } });
     });
   });
+
+    it("should handle SSO authentication requests from auth app", async () => {
+      const mockSsoResponse = {
+        url: "https://idp.example.com/sso/authorize",
+        redirect: true,
+      };
+      const mockBetterAuthResponse = {
+        status: 200,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: vi.fn().mockResolvedValue(mockSsoResponse),
+        text: vi.fn().mockResolvedValue(JSON.stringify(mockSsoResponse)),
+        body: true,
+      };
+
+      mockAuthHandler.mockResolvedValue(mockBetterAuthResponse);
+
+      const req = {
+        method: "POST",
+        protocol: "http",
+        hostname: "localhost",
+        raw: { url: "/auth/sso/authorize" },
+        headers: { "content-type": "application/json", origin: "http://localhost:4444" },
+        body: { domain: "acme.com", callbackURL: "http://localhost:3000" },
+      };
+
+      const resHeader = vi.fn();
+      const resStatus = vi.fn();
+      const resSend = vi.fn();
+      const res = {
+        header: resHeader,
+        status: resStatus,
+        send: resSend,
+      };
+
+      await controller.handleAuth(req, res);
+
+      expect(mockAuthHandler).toHaveBeenCalled();
+      expect(resStatus).toHaveBeenCalledWith(200);
+      expect(resSend).toHaveBeenCalledWith(mockSsoResponse);
+    });
+  });
 });
