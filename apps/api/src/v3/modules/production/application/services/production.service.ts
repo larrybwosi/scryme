@@ -584,6 +584,7 @@ export class ProductionService {
       instructions,
       notes,
       tags,
+      isArchived,
       ingredients,
     } = data;
 
@@ -631,11 +632,30 @@ export class ProductionService {
           })),
         },
       },
+      include: {
+        category: true,
+        systemUnit: true,
+        orgUnit: true,
+        producesVariant: {
+          include: {
+            product: true,
+          },
+        },
+        ingredients: {
+          include: {
+            ingredientVariant: {
+              include: { product: true },
+            },
+            systemUnit: true,
+            orgUnit: true,
+          },
+        },
+      },
     });
   }
 
   async updateRecipe(organizationId: string, id: string, data: UpdateRecipeDto) {
-    const { ingredients, ...rest } = data;
+    const { ingredients, isArchived, ...rest } = data;
 
     if (rest.yieldQuantity !== undefined) {
       const existing = await this.prisma.client.recipe.findFirst({
@@ -677,6 +697,25 @@ export class ProductionService {
               })),
             }
           : undefined,
+      },
+      include: {
+        category: true,
+        systemUnit: true,
+        orgUnit: true,
+        producesVariant: {
+          include: {
+            product: true,
+          },
+        },
+        ingredients: {
+          include: {
+            ingredientVariant: {
+              include: { product: true },
+            },
+            systemUnit: true,
+            orgUnit: true,
+          },
+        },
       },
     });
   }
