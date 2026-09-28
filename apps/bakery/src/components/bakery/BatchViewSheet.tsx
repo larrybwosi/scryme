@@ -5,7 +5,7 @@ import { Separator } from '@repo/ui/components/ui/separator';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@repo/ui/components/ui/sheet';
-import { useFormattedCurrency } from '@/lib/utils';
+import { useFormattedCurrency, formatVariantName } from '@/lib/utils';
 import { User, Clock, Calendar, DollarSign, Package, ShoppingCart, Store, Utensils, ClipboardList } from 'lucide-react';
 import { getStatusColor } from '@/components/bakery/BatchCard';
 import { ReactNode } from 'react';
@@ -131,7 +131,7 @@ export function BatchView({ batchId, trigger, open, onOpenChange }: BatchViewPro
                         <div key={consumption.id} className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm">
                           <div className="flex justify-between items-start mb-2">
                             <div>
-                              <p className="font-semibold text-sm">{consumption.stockBatch?.variant?.product?.name} {consumption.stockBatch?.variant?.name}</p>
+                              <p className="font-semibold text-sm">{formatVariantName(consumption.stockBatch?.variant?.product?.name, consumption.stockBatch?.variant?.name)}</p>
                               <p className="text-xs text-muted-foreground">Batch: {consumption.stockBatch?.batchNumber || 'N/A'}</p>
                             </div>
                             <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-200">

@@ -26,7 +26,7 @@ import {
   AlertCircle,
   FileText,
 } from 'lucide-react';
-import { cn, useFormattedCurrency } from '@/lib/utils';
+import { cn, useFormattedCurrency, formatVariantName } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isValid } from 'date-fns';
 import { Recipe } from '@/types/bakery';
@@ -199,7 +199,7 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
 
       return {
         variantId: ingredientId,
-        variantName: ing.ingredientVariant?.name || ing.name || 'Unknown',
+        variantName: formatVariantName(ing.ingredientVariant?.product?.name, ing.ingredientVariant?.name || ing.name),
         productName: ing.ingredientVariant?.product?.name || ing.name || 'Unknown Product',
         required: recipeRequired, // Display in recipe units (200)
         available, // Display in base units (80)
@@ -436,7 +436,7 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
                               </div>
                             </td>
                             <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                              {variant?.product?.name || '—'}
+                              {formatVariantName(variant?.product?.name, variant?.name) || '—'}
                             </td>
                             <td className="px-4 py-3 text-right tabular-nums text-slate-600 dark:text-slate-300">
                               {recipe.yieldQuantity} {typeof recipe.yieldUnit === 'object' ? recipe.yieldUnit?.symbol : recipe.yieldUnit}
@@ -546,8 +546,7 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
                         {batchCalculation.materials.map(mat => (
                           <tr key={mat.variantId} className={cn(!mat.sufficient && 'bg-red-50/50 dark:bg-red-900/10')}>
                             <td className="px-4 py-3">
-                              <p className="font-medium text-slate-900 dark:text-slate-100">{mat.productName}</p>
-                              <p className="text-xs text-slate-500 mt-0.5">{mat.variantName}</p>
+                              <p className="font-medium text-slate-900 dark:text-slate-100">{mat.variantName}</p>
                             </td>
                             <td className="px-4 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100 font-medium">
                               {mat.required.toLocaleString(undefined, {
@@ -720,7 +719,7 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
                         <div className="flex justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
                           <dt className="text-slate-500">Target Product</dt>
                           <dd className="font-medium text-slate-900 dark:text-slate-100 text-right">
-                            {selectedRecipe?.producesVariant?.product?.name || '—'}
+                            {formatVariantName(selectedRecipe?.producesVariant?.product?.name, selectedRecipe?.producesVariant?.name) || '—'}
                             <div className="text-xs text-slate-400 font-normal">
                               {selectedRecipe?.producesVariant?.sku}
                             </div>

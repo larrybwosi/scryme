@@ -44,7 +44,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/
 import { Avatar, AvatarFallback } from '@repo/ui/components/ui/avatar';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@repo/ui/components/ui/command';
 
-import { cn } from '@/lib/utils';
+import { cn, formatVariantName } from '@/lib/utils';
 import { BatchStatus, Recipe } from '@/types/bakery';
 import { BatchInput, batchSchema } from '@/validations/bakery';
 import {
@@ -356,7 +356,7 @@ function SourceSelector({
                     </div>
                     <div className="min-w-0">
                       <span className="font-medium text-foreground block truncate">
-                        Output Variant: {selectedRecipe.producesVariant.name || selectedRecipe.producesVariant.product?.name || 'Standard'}
+                        Output Variant: {formatVariantName(selectedRecipe.producesVariant.product?.name, selectedRecipe.producesVariant.name) || 'Standard'}
                       </span>
                       {selectedRecipe.producesVariant.sku && (
                         <span className="font-mono text-[11px] text-muted-foreground">

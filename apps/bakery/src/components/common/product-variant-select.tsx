@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { FC, useMemo, useState, useEffect } from "react";
 
-import { cn } from "@/lib/utils";
+import { cn, formatVariantName } from "@/lib/utils";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Command,
@@ -45,6 +45,9 @@ interface ProductVariant {
   id: string;
   name: string;
   sku: string;
+  product?: {
+    name: string;
+  };
   productType?: ProductType | string;
   retailPrice?: number | null;
   wholesalePrice?: number | null;
@@ -207,7 +210,7 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
       <div className="flex flex-col w-full">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
-            <span className="font-medium text-foreground">{variant.name}</span>
+            <span className="font-medium text-foreground">{formatVariantName(variant.product?.name, variant.name)}</span>
             <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
               {variant.sku}
             </span>
@@ -240,7 +243,7 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
             <div className="flex flex-col items-start text-left">
               <span className="flex items-center gap-2 font-medium">
                 <Package className="h-4 w-4 shrink-0 text-muted-foreground" />
-                {selectedVariant.name}
+                {formatVariantName(selectedVariant.product?.name, selectedVariant.name)}
               </span>
               <span className="text-xs text-muted-foreground ml-6">
                 SKU: {selectedVariant.sku}

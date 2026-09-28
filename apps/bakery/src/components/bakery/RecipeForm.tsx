@@ -27,7 +27,7 @@ import { TagInput } from '@repo/ui/components/ui/tag-input';
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/ui/alert';
 import { toast } from 'sonner';
 import { useFormattedCurrency } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import { cn, formatVariantName } from '@/lib/utils';
 
 interface CreateEditRecipeDialogProps {
   open: boolean;
@@ -497,7 +497,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                     <SelectContent>
                                       {ingredients?.map((ing: any) => (
                                         <SelectItem key={ing.id} value={ing.id}>
-                                          {ing.name}
+                                          {formatVariantName(ing.product?.name || ing.productName, ing.name || ing.variantName)}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
