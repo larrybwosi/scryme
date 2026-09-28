@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   Play
 } from 'lucide-react';
-import { Link } from 'react-router';
+import { Link } from '@tanstack/react-router';
 
 export default function DashboardPage() {
   const { tasks, timeEntries } = useTaskStore();

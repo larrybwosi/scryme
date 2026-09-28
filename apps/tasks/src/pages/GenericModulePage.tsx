@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'react-router';
+import { useLocation } from '@tanstack/react-router';
 import { Sparkles } from 'lucide-react';
 
 export default function GenericModulePage() {
