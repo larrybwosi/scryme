@@ -119,7 +119,6 @@ describe("AuthController", () => {
       expect(resStatus).toHaveBeenCalledWith(200);
       expect(resSend).toHaveBeenCalledWith({ success: true, user: { id: "user-456" } });
     });
-  });
 
     it("should handle SSO authentication requests from auth app", async () => {
       const mockSsoResponse = {
