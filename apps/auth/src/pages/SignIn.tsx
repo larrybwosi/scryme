@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router";
 import { authClient, signInWithPasskey, signInWithSSO, DEFAULT_WEB_URL } from "@/lib/auth-client";
 import {
@@ -21,12 +21,34 @@ export function SignInPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loginMode, setLoginMode] = useState<"standard" | "sso">("standard");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const callbackUrl =
     searchParams.get("callbackUrl") ||
     searchParams.get("redirect_uri") ||
     DEFAULT_WEB_URL;
+
+  useEffect(() => {
+    let isMounted = true;
+    async function checkExistingSession() {
+      try {
+        const sessionRes = await authClient.getSession();
+        if (sessionRes?.data?.session || sessionRes?.session) {
+          window.location.href = callbackUrl;
+          return;
+        }
+      } catch (err) {
+        // No active session or network error; proceed with sign in form
+      } finally {
+        if (isMounted) setCheckingSession(false);
+      }
+    }
+    checkExistingSession();
+    return () => {
+      isMounted = false;
+    };
+  }, [callbackUrl]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +127,15 @@ export function SignInPage() {
       setLoading(false);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center py-16 gap-3">
+        <Loader2 className="h-8 w-8 text-[#A9824C] animate-spin" />
+        <p className="text-sm text-[#5B6B7C] font-medium">Checking active session…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
