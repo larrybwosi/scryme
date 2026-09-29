@@ -5,6 +5,18 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { authClient, useSession } from '../lib/auth-client';
 import { getCurrentMember } from '../app/actions/auth';
+import { getActiveOrganization } from '../app/actions/organization';
+import { UserSettingsDialog } from '@repo/ui/components/user-settings-dialog';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@repo/ui/components/ui/avatar';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@repo/ui/components/ui/tooltip';
 import {
   LayoutDashboard,
   Users,
@@ -20,13 +32,13 @@ import {
   HelpCircle,
   LogOut,
   ChevronDown,
-  ChevronRight,
   Zap,
   UserPlus,
   Search,
   Layers,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings2,
 } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 
@@ -214,12 +226,17 @@ function CollapsibleGroup({
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [member, setMember] = useState<any>(null);
+  const [activeOrg, setActiveOrg] = useState<any>(null);
+  const [showUserSettingsDialog, setShowUserSettingsDialog] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
 
   useEffect(() => {
-    getCurrentMember().then(setMember);
+    getCurrentMember().then(setMember).catch(console.error);
+    getActiveOrganization().then((org) => {
+      if (org) setActiveOrg(org);
+    }).catch(console.error);
   }, []);
 
   const handleLogout = async () => {
@@ -235,6 +252,8 @@ export function Sidebar() {
   const displayName = member?.user?.name || session?.user?.name || 'User';
   const displayEmail = member?.user?.email || session?.user?.email || '';
   const displayRole = member?.jobTitle || (member?.role === 'OWNER' ? 'Owner' : 'Member');
+  const userImage = member?.user?.image || session?.user?.image;
+  const activeOrgName = activeOrg?.name || 'Scryme';
 
   const userInitials = displayName
     ? displayName
@@ -245,147 +264,188 @@ export function Sidebar() {
         .substring(0, 2)
     : 'U';
 
+  const userForDialog = {
+    id: session?.user?.id || member?.user?.id,
+    name: displayName,
+    email: displayEmail,
+    image: userImage,
+    role: displayRole,
+  };
+
   return (
-    <aside
-      className={cn(
-        'flex flex-col h-screen border-r border-sidebar-border bg-sidebar transition-[width] duration-250 ease-in-out relative shrink-0 select-none',
-        isCollapsed ? 'w-[56px]' : 'w-[228px]'
-      )}
-    >
-      {/* Brand Header */}
-      <div
+    <>
+      <UserSettingsDialog
+        open={showUserSettingsDialog}
+        onOpenChange={setShowUserSettingsDialog}
+        user={userForDialog}
+        activeOrgName={activeOrgName}
+        onSignOut={handleLogout}
+      />
+
+      <aside
         className={cn(
-          'flex items-center h-[52px] border-b border-sidebar-border px-3 shrink-0',
-          isCollapsed ? 'justify-center' : 'gap-2.5'
+          'flex flex-col h-screen border-r border-sidebar-border bg-sidebar transition-[width] duration-250 ease-in-out relative shrink-0 select-none',
+          isCollapsed ? 'w-[56px]' : 'w-[228px]'
         )}
       >
-        <div className="w-7 h-7 bg-primary rounded-[6px] flex items-center justify-center shrink-0 shadow-sm">
-          <Zap size={14} className="text-primary-foreground" fill="currentColor" />
+        {/* Brand Header */}
+        <div
+          className={cn(
+            'flex items-center h-[52px] border-b border-sidebar-border px-3 shrink-0',
+            isCollapsed ? 'justify-center' : 'gap-2.5'
+          )}
+        >
+          <div className="w-7 h-7 bg-primary rounded-[6px] flex items-center justify-center shrink-0 shadow-sm">
+            <Zap size={14} className="text-primary-foreground" fill="currentColor" />
+          </div>
+          {!isCollapsed && (
+            <div className="flex items-center gap-1.5 overflow-hidden">
+              <span className="font-bold text-[14px] text-sidebar-foreground tracking-tight truncate">
+                {activeOrgName}
+              </span>
+              <span className="text-[9px] font-bold text-primary bg-primary/15 px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0">
+                CRM
+              </span>
+            </div>
+          )}
+          {!isCollapsed && (
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="ml-auto p-1 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
+              aria-label="Collapse sidebar"
+              title="Collapse sidebar"
+            >
+              <PanelLeftClose size={14} />
+            </button>
+          )}
         </div>
+
+        {/* Expand button when collapsed */}
+        {isCollapsed && (
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="flex items-center justify-center h-9 mx-2 mt-2 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
+            aria-label="Expand sidebar"
+            title="Expand sidebar"
+          >
+            <PanelLeftOpen size={14} />
+          </button>
+        )}
+
+        {/* Search shortcut */}
         {!isCollapsed && (
-          <div className="flex items-center gap-1.5 overflow-hidden">
-            <span className="font-bold text-[14px] text-sidebar-foreground tracking-tight truncate">
-              Scryme
-            </span>
-            <span className="text-[9px] font-bold text-primary bg-primary/15 px-1.5 py-0.5 rounded uppercase tracking-wide shrink-0">
-              CRM
-            </span>
+          <div className="px-3 py-2 shrink-0">
+            <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/8 border border-sidebar-border/50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1">
+              <Search size={12} className="text-sidebar-foreground/35 shrink-0" />
+              <span className="text-[11.5px] text-sidebar-foreground/35 flex-1">Search...</span>
+              <kbd className="text-[9px] text-sidebar-foreground/25 bg-white/5 px-1 py-0.5 rounded border border-sidebar-border/30 leading-none">
+                ⌘K
+              </kbd>
+            </button>
           </div>
         )}
-        {!isCollapsed && (
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className="ml-auto p-1 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
-            aria-label="Collapse sidebar"
-            title="Collapse sidebar"
-          >
-            <PanelLeftClose size={14} />
-          </button>
-        )}
-      </div>
 
-      {/* Expand button when collapsed */}
-      {isCollapsed && (
-        <button
-          onClick={() => setIsCollapsed(false)}
-          className="flex items-center justify-center h-9 mx-2 mt-2 rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground/70 hover:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
-          aria-label="Expand sidebar"
-          title="Expand sidebar"
+        {/* Navigation */}
+        <nav
+          className="flex-1 overflow-y-auto custom-scrollbar py-2 px-3 space-y-0"
+          aria-label="Main navigation"
         >
-          <PanelLeftOpen size={14} />
-        </button>
-      )}
+          {navGroups.map((group) => (
+            <CollapsibleGroup
+              key={group.title}
+              group={group}
+              isCollapsed={isCollapsed}
+              pathname={pathname}
+            />
+          ))}
+        </nav>
 
-      {/* Search shortcut */}
-      {!isCollapsed && (
-        <div className="px-3 py-2 shrink-0">
-          <button className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-white/5 hover:bg-white/8 border border-sidebar-border/50 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1">
-            <Search size={12} className="text-sidebar-foreground/35 shrink-0" />
-            <span className="text-[11.5px] text-sidebar-foreground/35 flex-1">Search...</span>
-            <kbd className="text-[9px] text-sidebar-foreground/25 bg-white/5 px-1 py-0.5 rounded border border-sidebar-border/30 leading-none">
-              ⌘K
-            </kbd>
-          </button>
-        </div>
-      )}
-
-      {/* Navigation */}
-      <nav
-        className="flex-1 overflow-y-auto custom-scrollbar py-2 px-3 space-y-0"
-        aria-label="Main navigation"
-      >
-        {navGroups.map((group) => (
-          <CollapsibleGroup
-            key={group.title}
-            group={group}
-            isCollapsed={isCollapsed}
-            pathname={pathname}
-          />
-        ))}
-      </nav>
-
-      {/* Bottom Utilities */}
-      <div className="border-t border-sidebar-border px-3 py-2 space-y-px shrink-0">
-        {[
-          { icon: Bell, label: 'Notifications', dot: true },
-          { icon: Settings, label: 'Settings' },
-          { icon: HelpCircle, label: 'Help & Support' },
-        ].map(({ icon: Icon, label, dot }) => (
-          <button
-            key={label}
-            title={isCollapsed ? label : undefined}
-            aria-label={label}
-            className={cn(
-              'w-full flex items-center gap-2.5 px-3 py-[7px] rounded-md text-[13px] text-sidebar-foreground/55 hover:text-sidebar-foreground/80 hover:bg-white/5 transition-all',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1',
-              isCollapsed && 'justify-center'
-            )}
-          >
-            <div className="relative shrink-0">
-              <Icon size={15} />
-              {dot && (
-                <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-destructive rounded-full" />
-              )}
-            </div>
-            {!isCollapsed && <span className="leading-none">{label}</span>}
-          </button>
-        ))}
-      </div>
-
-      {/* User Profile */}
-      <div
-        className={cn(
-          'border-t border-sidebar-border p-3 flex items-center gap-2.5 shrink-0',
-          isCollapsed && 'justify-center p-2.5'
-        )}
-      >
-        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-[11px] shrink-0 ring-2 ring-primary/20">
-          {userInitials}
-        </div>
-        {!isCollapsed && (
-          <>
-            <div className="flex-1 min-w-0">
-              <div className="text-[12px] font-semibold text-sidebar-foreground/85 truncate leading-none">
-                {displayName}
-              </div>
-              <div className="text-[10px] text-sidebar-foreground/40 mt-1 leading-none truncate">
-                {displayEmail}
-              </div>
-              <div className="text-[10px] text-primary/70 mt-0.5 leading-none truncate font-medium">
-                {displayRole}
-              </div>
-            </div>
+        {/* Bottom Utilities */}
+        <div className="border-t border-sidebar-border px-3 py-2 space-y-px shrink-0">
+          {[
+            { icon: Bell, label: 'Notifications', dot: true },
+            { icon: Settings, label: 'Settings' },
+            { icon: HelpCircle, label: 'Help & Support' },
+          ].map(({ icon: Icon, label, dot }) => (
             <button
-              onClick={handleLogout}
-              className="p-1 rounded-md hover:bg-white/8 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1"
-              aria-label="Log out"
-              title="Log out"
+              key={label}
+              title={isCollapsed ? label : undefined}
+              aria-label={label}
+              className={cn(
+                'w-full flex items-center gap-2.5 px-3 py-[7px] rounded-md text-[13px] text-sidebar-foreground/55 hover:text-sidebar-foreground/80 hover:bg-white/5 transition-all',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1',
+                isCollapsed && 'justify-center'
+              )}
             >
-              <LogOut size={13} className="text-sidebar-foreground/40" />
+              <div className="relative shrink-0">
+                <Icon size={15} />
+                {dot && (
+                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-destructive rounded-full" />
+                )}
+              </div>
+              {!isCollapsed && <span className="leading-none">{label}</span>}
             </button>
-          </>
-        )}
-      </div>
-    </aside>
+          ))}
+        </div>
+
+        {/* User Profile Footer Card */}
+        <div
+          className={cn(
+            'border-t border-sidebar-border p-3 flex items-center gap-2.5 shrink-0',
+            isCollapsed && 'justify-center p-2.5'
+          )}
+        >
+          {!isCollapsed ? (
+            <button
+              onClick={() => setShowUserSettingsDialog(true)}
+              className="w-full flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-white/5 transition-colors text-left group"
+              title="User Info & Preferences"
+            >
+              <Avatar className="w-7 h-7 border border-sidebar-border shrink-0 ring-2 ring-primary/20 group-hover:ring-primary transition-all">
+                {userImage ? (
+                  <AvatarImage src={userImage} alt={displayName} />
+                ) : null}
+                <AvatarFallback className="bg-primary/20 text-primary font-bold text-[11px]">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] font-semibold text-sidebar-foreground/85 truncate leading-none">
+                  {displayName}
+                </div>
+                <div className="text-[10px] text-sidebar-foreground/40 mt-1 leading-none truncate">
+                  {displayEmail}
+                </div>
+                <div className="text-[10px] text-primary/70 mt-0.5 leading-none truncate font-medium">
+                  {displayRole}
+                </div>
+              </div>
+              <Settings2 className="h-3.5 w-3.5 text-sidebar-foreground/40 group-hover:text-sidebar-foreground transition-colors shrink-0" />
+            </button>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => setShowUserSettingsDialog(true)}
+                  className="rounded-full mx-auto hover:ring-2 hover:ring-primary transition-all focus:outline-none"
+                >
+                  <Avatar className="w-7 h-7 border border-sidebar-border ring-2 ring-primary/20">
+                    {userImage ? (
+                      <AvatarImage src={userImage} alt={displayName} />
+                    ) : null}
+                    <AvatarFallback className="bg-primary/20 text-primary font-bold text-[11px]">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">
+                User Info & Preferences
+              </TooltipContent>
+            </Tooltip>
+          )}
+        </div>
+      </aside>
+    </>
   );
 }
