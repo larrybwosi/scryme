@@ -274,7 +274,13 @@ export class PosController {
             };
           }
         } catch {
-          // Token verification failed, fallback to default
+          // Fallback to returning cleanToken if present
+          return {
+            data: {
+              tokenRequest: { token: cleanToken },
+              metadata: { paymentChannel: "public" },
+            },
+          };
         }
       }
     }
