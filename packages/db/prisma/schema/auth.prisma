@@ -21,6 +21,7 @@ model User {
   invitations          Invitation[]
   sessions             Session[]
   passkeys             Passkey[]
+  ssoProviders         SsoProvider[]
   twoFactorEnabled     Boolean?           @default(false)
   twoFactor            TwoFactor[]
   activeOrganizationId String?
@@ -277,4 +278,18 @@ model TwoFactor {
 
   @@index([userId])
   @@map("two_factor")
+}
+
+model SsoProvider {
+  id             String  @id @default(cuid())
+  issuer         String
+  oidcConfig     String?
+  samlConfig     String?
+  userId         String
+  user           User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerId     String  @unique
+  organizationId String?
+  domain         String
+
+  @@map("ssoProvider")
 }
