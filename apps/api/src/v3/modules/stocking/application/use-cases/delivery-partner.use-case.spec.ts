@@ -141,25 +141,24 @@ describe("DeliveryPartnerUseCase", () => {
   });
 
   describe("adjustWallet", () => {
-    it("should adjust wallet balance and log transaction for valid organization", async () => {
+    it("should adjust wallet balance and log transaction using updateMany scoped to organizationId", async () => {
       mockPrisma.client.deliveryPartner.findFirst.mockResolvedValue(
         mockPartner,
       );
-      mockPrisma.client.deliveryPartner.update.mockResolvedValue({
-        ...mockPartner,
-        walletBalance: 150,
+      mockPrisma.client.deliveryPartner.updateMany.mockResolvedValue({
+        count: 1,
       });
       mockPrisma.client.partnerWalletLog.create.mockResolvedValue({
         id: "log-1",
       });
 
-      const result = await useCase.adjustWallet(mockOrgId, mockPartnerId, {
+      await useCase.adjustWallet(mockOrgId, mockPartnerId, {
         amount: 50,
         notes: "Deposit",
       });
 
-      expect(mockPrisma.client.deliveryPartner.update).toHaveBeenCalledWith({
-        where: { id: mockPartnerId },
+      expect(mockPrisma.client.deliveryPartner.updateMany).toHaveBeenCalledWith({
+        where: { id: mockPartnerId, organizationId: mockOrgId },
         data: { walletBalance: 150 },
       });
       expect(mockPrisma.client.partnerWalletLog.create).toHaveBeenCalledWith({
