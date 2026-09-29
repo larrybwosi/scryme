@@ -1244,7 +1244,7 @@ export async function updateVariant(
   data: {
     name?: string;
     sku?: string;
-    barcode?: string;
+    barcode?: string | null;
     buyingPrice?: number;
     retailPrice?: number;
     attributes?: any;
@@ -1267,42 +1267,47 @@ export async function updateVariant(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  const updateData: any = {};
+
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.sku !== undefined) updateData.sku = data.sku;
+  if (data.barcode !== undefined) {
+    updateData.barcode =
+      data.barcode && typeof data.barcode === "string" && data.barcode.trim() !== ""
+        ? data.barcode.trim()
+        : null;
+  }
+  if (data.buyingPrice !== undefined)
+    updateData.buyingPrice = new Decimal(data.buyingPrice);
+  if (data.retailPrice !== undefined)
+    updateData.retailPrice = new Decimal(data.retailPrice);
+  if (data.attributes !== undefined) updateData.attributes = data.attributes;
+  if (data.isActive !== undefined) updateData.isActive = data.isActive;
+  if (data.reorderPoint !== undefined) updateData.reorderPoint = data.reorderPoint;
+  if (data.reorderQty !== undefined) updateData.reorderQty = data.reorderQty;
+  if (data.pointsOnPurchase !== undefined)
+    updateData.pointsOnPurchase = data.pointsOnPurchase;
+  if (data.loyaltyPointsOverride !== undefined)
+    updateData.loyaltyPointsOverride = data.loyaltyPointsOverride;
+  if (data.defaultShelfLifeDays !== undefined)
+    updateData.defaultShelfLifeDays = data.defaultShelfLifeDays;
+  if (data.requiresExpiryTracking !== undefined)
+    updateData.requiresExpiryTracking = data.requiresExpiryTracking;
+  if (data.expiryWarningDays !== undefined)
+    updateData.expiryWarningDays = data.expiryWarningDays;
+  if (data.requiresSerialNumber !== undefined)
+    updateData.requiresSerialNumber = data.requiresSerialNumber;
+  if (data.tags !== undefined) updateData.tags = data.tags;
+  if (data.wholesalePrice !== undefined)
+    updateData.wholesalePrice = new Decimal(data.wholesalePrice);
+  if (data.promotionalPrice !== undefined)
+    updateData.promotionalPrice = new Decimal(data.promotionalPrice);
+  if (data.isPopular !== undefined) updateData.isPopular = data.isPopular;
+  if (data.isNew !== undefined) updateData.isNew = data.isNew;
+
   const variant = await db.productVariant.update({
     where: { id },
-    data: {
-      name: data.name,
-      sku: data.sku,
-      barcode: data.barcode,
-      buyingPrice:
-        data.buyingPrice !== undefined
-          ? new Decimal(data.buyingPrice)
-          : undefined,
-      retailPrice:
-        data.retailPrice !== undefined
-          ? new Decimal(data.retailPrice)
-          : undefined,
-      attributes: data.attributes,
-      isActive: data.isActive,
-      reorderPoint: data.reorderPoint,
-      reorderQty: data.reorderQty,
-      pointsOnPurchase: data.pointsOnPurchase,
-      loyaltyPointsOverride: data.loyaltyPointsOverride,
-      defaultShelfLifeDays: data.defaultShelfLifeDays,
-      requiresExpiryTracking: data.requiresExpiryTracking,
-      expiryWarningDays: data.expiryWarningDays,
-      requiresSerialNumber: data.requiresSerialNumber,
-      tags: data.tags,
-      wholesalePrice:
-        data.wholesalePrice !== undefined
-          ? new Decimal(data.wholesalePrice)
-          : undefined,
-      promotionalPrice:
-        data.promotionalPrice !== undefined
-          ? new Decimal(data.promotionalPrice)
-          : undefined,
-      isPopular: data.isPopular,
-      isNew: data.isNew,
-    },
+    data: updateData,
   });
 
   revalidatePath(`/inventory/products/${variant.productId}`);

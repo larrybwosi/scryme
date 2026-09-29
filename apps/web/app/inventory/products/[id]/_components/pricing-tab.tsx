@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { DollarSign, Tag, Plus } from "lucide-react";
+import { DollarSign, Tag, Plus, TrendingUp, Percent } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
@@ -19,22 +19,38 @@ interface PricingTabProps {
 }
 
 export function PricingTab({ product, setProduct }: PricingTabProps) {
+  const retailPrice = Number(product.variants?.[0]?.retailPrice || 0);
+  const buyingPrice = Number(product.variants?.[0]?.buyingPrice || 0);
+  const marginPercentage =
+    retailPrice > 0 ? ((1 - buyingPrice / retailPrice) * 100).toFixed(1) : "0.0";
+
   return (
     <div className="space-y-6 mt-0">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-lg">Retail Price</CardTitle>
-            <CardDescription>Default selling price.</CardDescription>
+          <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-sm font-semibold text-muted-foreground">
+                Retail Price
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Default selling price
+              </CardDescription>
+            </div>
+            <div className="p-2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <DollarSign className="w-4 h-4" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-1">
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                className="pl-9 text-2xl font-bold h-14"
-                value={Number(product.variants?.[0]?.retailPrice || 0)}
+                type="number"
+                step="0.01"
+                className="pl-8 text-lg font-bold h-10"
+                value={retailPrice}
                 onChange={e => {
-                  const updatedVariants = [...product.variants];
+                  const updatedVariants = [...(product.variants || [])];
                   updatedVariants[0] = {
                     ...updatedVariants[0],
                     retailPrice: Number(e.target.value),
@@ -45,21 +61,31 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
             </div>
           </CardContent>
         </Card>
+
         <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-lg">Cost Price</CardTitle>
-            <CardDescription>
-              Base manufacturing/buying cost.
-            </CardDescription>
+          <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-sm font-semibold text-muted-foreground">
+                Cost Price
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Base buying/manufacturing cost
+              </CardDescription>
+            </div>
+            <div className="p-2 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <DollarSign className="w-4 h-4" />
+            </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-1">
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                className="pl-9 text-2xl font-bold h-14"
-                value={Number(product.variants?.[0]?.buyingPrice || 0)}
+                type="number"
+                step="0.01"
+                className="pl-8 text-lg font-bold h-10"
+                value={buyingPrice}
                 onChange={e => {
-                  const updatedVariants = [...product.variants];
+                  const updatedVariants = [...(product.variants || [])];
                   updatedVariants[0] = {
                     ...updatedVariants[0],
                     buyingPrice: Number(e.target.value),
@@ -70,23 +96,28 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
             </div>
           </CardContent>
         </Card>
+
         <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-lg">Margin</CardTitle>
-            <CardDescription>
-              Estimated profit percentage.
-            </CardDescription>
+          <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle className="text-sm font-semibold text-muted-foreground">
+                Margin
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Estimated profit percentage
+              </CardDescription>
+            </div>
+            <div className="p-2 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <TrendingUp className="w-4 h-4" />
+            </div>
           </CardHeader>
-          <CardContent className="h-14 flex items-center">
-            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400">
-              {(
-                (1 -
-                  Number(product.variants?.[0]?.buyingPrice || 0) /
-                    Number(product.variants?.[0]?.retailPrice || 1)) *
-                100
-              ).toFixed(1)}
-              %
-            </span>
+          <CardContent className="p-4 pt-1">
+            <div className="h-10 flex items-center justify-between px-3 bg-muted/50 rounded-md border border-border">
+              <span className="text-lg font-extrabold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                {marginPercentage}%
+              </span>
+              <Percent className="w-4 h-4 text-muted-foreground" />
+            </div>
           </CardContent>
         </Card>
       </div>

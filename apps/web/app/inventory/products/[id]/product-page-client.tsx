@@ -614,7 +614,6 @@ export function ProductPageClient({
               <TabsList className="bg-transparent border-none p-0 h-auto flex flex-nowrap shrink-0">
                 {[
                   { value: "overview", label: "Overview", icon: Package },
-                  { value: "cms", label: "CMS Studio", icon: Sparkles },
                   { value: "variants", label: "Variants", icon: Layers },
                   {
                     value: "pricing",
@@ -669,33 +668,6 @@ export function ProductPageClient({
                       })
                     }
                   />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* CMS STUDIO TAB */}
-            <TabsContent value="cms" className="space-y-6 mt-0">
-              <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-500" />
-                    <span>Enterprise Hybrid CMS Studio</span>
-                  </CardTitle>
-                  <CardDescription>
-                    To configure stunning multi-channel layouts, run AI
-                    copywriting engines, optimize visual assets, and inspect
-                    rich metadata indexings, please proceed to the unified
-                    Enterprise Studio.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-2 pb-6">
-                  <Button
-                    asChild
-                    className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-2">
-                    <Link href={`/inventory/cms/${product.id}?type=product`}>
-                      Open Hybrid CMS Studio
-                    </Link>
-                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>
@@ -786,6 +758,14 @@ export function ProductPageClient({
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                     Quick Actions
                   </h4>
+                  <Button
+                    asChild
+                    className="w-full justify-start gap-2 h-11"
+                    variant="outline">
+                    <Link href={`/inventory/cms/${product.id}?type=product`}>
+                      <Sparkles className="w-4 h-4 text-amber-500" /> Enterprise CMS Studio
+                    </Link>
+                  </Button>
                   <Button
                     className="w-full justify-start gap-2 h-11"
                     variant="outline">
@@ -1239,34 +1219,84 @@ export function ProductPageClient({
               onClick={async () => {
                 try {
                   if (editingVariant) {
-                    await updateVariant(editingVariant.id, {
-                      ...variantForm,
-                      buyingPrice: Number(variantForm.buyingPrice),
-                      retailPrice: Number(variantForm.retailPrice),
-                      reorderPoint: Number(variantForm.reorderPoint || 0),
-                      reorderQty: Number(variantForm.reorderQty || 0),
-                      pointsOnPurchase: Number(variantForm.pointsOnPurchase),
-                      loyaltyPointsOverride: Number(
-                        variantForm.loyaltyPointsOverride,
-                      ),
-                      defaultShelfLifeDays: Number(
-                        variantForm.defaultShelfLifeDays,
-                      ),
-                      expiryWarningDays: Number(variantForm.expiryWarningDays),
-                      wholesalePrice: Number(variantForm.wholesalePrice),
-                      promotionalPrice: Number(variantForm.promotionalPrice),
-                      isPopular: variantForm.isPopular,
-                      isNew: variantForm.isNew,
-                    });
-                    toast.success("Variant updated");
-                    setProduct({
-                      ...product,
-                      variants: product.variants.map((v: any) =>
-                        v.id === editingVariant.id
-                          ? { ...v, ...variantForm }
-                          : v,
-                      ),
-                    });
+                    const updatePayload: any = {};
+
+                    if (variantForm.name !== editingVariant.name) {
+                      updatePayload.name = variantForm.name;
+                    }
+                    if (variantForm.sku !== editingVariant.sku) {
+                      updatePayload.sku = variantForm.sku;
+                    }
+
+                    const currentBarcode = variantForm.barcode?.trim() || "";
+                    const origBarcode = editingVariant.barcode?.trim() || "";
+                    if (currentBarcode !== origBarcode) {
+                      updatePayload.barcode = currentBarcode === "" ? null : currentBarcode;
+                    }
+
+                    if (Number(variantForm.buyingPrice) !== Number(editingVariant.buyingPrice || 0)) {
+                      updatePayload.buyingPrice = Number(variantForm.buyingPrice);
+                    }
+                    if (Number(variantForm.retailPrice) !== Number(editingVariant.retailPrice || 0)) {
+                      updatePayload.retailPrice = Number(variantForm.retailPrice);
+                    }
+                    if (Number(variantForm.reorderPoint || 0) !== Number(editingVariant.reorderPoint || 0)) {
+                      updatePayload.reorderPoint = Number(variantForm.reorderPoint || 0);
+                    }
+                    if (Number(variantForm.reorderQty || 0) !== Number(editingVariant.reorderQty || 0)) {
+                      updatePayload.reorderQty = Number(variantForm.reorderQty || 0);
+                    }
+                    if (Number(variantForm.pointsOnPurchase || 0) !== Number(editingVariant.pointsOnPurchase || 0)) {
+                      updatePayload.pointsOnPurchase = Number(variantForm.pointsOnPurchase || 0);
+                    }
+                    if (Number(variantForm.loyaltyPointsOverride || 0) !== Number(editingVariant.loyaltyPointsOverride || 0)) {
+                      updatePayload.loyaltyPointsOverride = Number(variantForm.loyaltyPointsOverride || 0);
+                    }
+                    if (Number(variantForm.defaultShelfLifeDays || 0) !== Number(editingVariant.defaultShelfLifeDays || 0)) {
+                      updatePayload.defaultShelfLifeDays = Number(variantForm.defaultShelfLifeDays || 0);
+                    }
+                    if (Number(variantForm.expiryWarningDays || 0) !== Number(editingVariant.expiryWarningDays || 0)) {
+                      updatePayload.expiryWarningDays = Number(variantForm.expiryWarningDays || 0);
+                    }
+                    if (Number(variantForm.wholesalePrice || 0) !== Number(editingVariant.wholesalePrice || 0)) {
+                      updatePayload.wholesalePrice = Number(variantForm.wholesalePrice || 0);
+                    }
+                    if (Number(variantForm.promotionalPrice || 0) !== Number(editingVariant.promotionalPrice || 0)) {
+                      updatePayload.promotionalPrice = Number(variantForm.promotionalPrice || 0);
+                    }
+                    if (Boolean(variantForm.requiresExpiryTracking) !== Boolean(editingVariant.requiresExpiryTracking)) {
+                      updatePayload.requiresExpiryTracking = variantForm.requiresExpiryTracking;
+                    }
+                    if (Boolean(variantForm.requiresSerialNumber) !== Boolean(editingVariant.requiresSerialNumber)) {
+                      updatePayload.requiresSerialNumber = variantForm.requiresSerialNumber;
+                    }
+                    if (Boolean(variantForm.isActive) !== Boolean(editingVariant.isActive)) {
+                      updatePayload.isActive = variantForm.isActive;
+                    }
+                    if (Boolean(variantForm.isPopular) !== Boolean(editingVariant.isPopular)) {
+                      updatePayload.isPopular = variantForm.isPopular;
+                    }
+                    if (Boolean(variantForm.isNew) !== Boolean(editingVariant.isNew)) {
+                      updatePayload.isNew = variantForm.isNew;
+                    }
+                    if (JSON.stringify(variantForm.attributes || {}) !== JSON.stringify(editingVariant.attributes || {})) {
+                      updatePayload.attributes = variantForm.attributes;
+                    }
+
+                    if (Object.keys(updatePayload).length > 0) {
+                      const updatedVariantRes = await updateVariant(editingVariant.id, updatePayload);
+                      toast.success("Variant updated");
+                      setProduct({
+                        ...product,
+                        variants: product.variants.map((v: any) =>
+                          v.id === editingVariant.id
+                            ? { ...v, ...variantForm, ...updatedVariantRes }
+                            : v,
+                        ),
+                      });
+                    } else {
+                      toast.info("No changes to save");
+                    }
                   } else {
                     const newVariant = await createVariant({
                       productId: product.id,
