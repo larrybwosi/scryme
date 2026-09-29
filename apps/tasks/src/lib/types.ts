@@ -132,7 +132,6 @@ export interface Client {
   phone?: string;
   avatar?: string;
   activeProjectsCount?: number;
-  totalInvoiced?: number;
   status: 'ACTIVE' | 'INACTIVE' | 'PROSPECT';
 }
 
@@ -168,28 +167,4 @@ export interface TimeOffRequest {
   daysCount: number;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   reason?: string;
-}
-
-export interface Invoice {
-  id: string;
-  invoiceNumber: string;
-  clientName: string;
-  projectName?: string;
-  amount: number;
-  issueDate: string;
-  dueDate: string;
-  status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED';
-  itemsCount: number;
-}
-
-export interface Expense {
-  id: string;
-  expenseNumber: string;
-  category: string;
-  description: string;
-  amount: number;
-  projectName?: string;
-  submittedBy: string;
-  date: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
 }

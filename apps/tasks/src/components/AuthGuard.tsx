@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { useSession } from "../lib/auth-client";
+import { taskStore } from "../lib/store";
 import { Sparkles, Loader2 } from "lucide-react";
 
 interface AuthGuardProps {
@@ -29,6 +30,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         const loginUrl = `${authBase}/sign-in?callbackUrl=${encodeURIComponent(currentUrl)}`;
         window.location.href = loginUrl;
       }
+    } else if (sessionData && sessionData.session) {
+      taskStore.syncWithApi();
     }
   }, [isPending, sessionData, error]);
 

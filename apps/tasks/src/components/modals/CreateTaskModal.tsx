@@ -13,17 +13,14 @@ import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import {
-  X,
-  Plus,
-  Calendar,
-  User,
-  Folder,
-  Tag,
-  Clock,
-  Briefcase,
-  AlertCircle,
   FileText,
-  CheckCircle2
+  Folder,
+  Briefcase,
+  CheckCircle2,
+  AlertCircle,
+  Tag,
+  Calendar,
+  Clock
 } from 'lucide-react';
 
 interface CreateTaskModalProps {
@@ -36,24 +33,24 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
 
   const [name, setName] = useState('');
   const [projectId, setProjectId] = useState(projects[0]?.id || '');
-  const [client, setClient] = useState(clients[0]?.name || 'Snazzy Studio');
+  const [client, setClient] = useState(clients[0]?.name || 'Enterprise Workspace');
   const [status, setStatus] = useState<TaskStatus>('ToDo');
   const [priority, setPriority] = useState<PriorityLevel>('MEDIUM');
-  const [selectedTag, setSelectedTag] = useState(availableTags[0]?.name || 'Design');
+  const [selectedTag, setSelectedTag] = useState(availableTags[0]?.name || 'Development');
   const [estimatedHours, setEstimatedHours] = useState('8');
   const [dateGroup, setDateGroup] = useState<'Today' | 'Tomorrow' | 'Feb 16, 2024'>('Today');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     const selectedProj = projects.find((p) => p.id === projectId);
     const projectName = selectedProj ? selectedProj.name : 'Workspace Project';
 
-    taskStore.addTask({
+    await taskStore.addTask({
       name: name.trim(),
-      client,
-      projectId,
+      client: client || (selectedProj ? selectedProj.client : 'Workspace Client'),
+      projectId: projectId || undefined,
       project: projectName,
       status,
       priority,
@@ -62,13 +59,15 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
       estimatedHours: parseFloat(estimatedHours) || 8,
       actualHours: 0,
       dateGroup,
-      assignees: [
-        {
-          id: teamMembers[0]?.id || 'm-1',
-          name: teamMembers[0]?.name || 'Sarah Jenkins',
-          avatar: teamMembers[0]?.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100'
-        }
-      ],
+      assignees: teamMembers[0]
+        ? [
+            {
+              id: teamMembers[0].id,
+              name: teamMembers[0].name,
+              avatar: teamMembers[0].avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+            },
+          ]
+        : [],
       subtasks: [],
       comments: [],
       activityLogs: []
@@ -92,7 +91,6 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
-          {/* Section 1: Task Title */}
           <div className="space-y-1.5">
             <Label className="text-xs font-semibold flex items-center gap-1.5">
               <span>Task Name</span>
@@ -103,27 +101,37 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Design Enterprise User Onboarding Flow"
+              placeholder="e.g. Implement API route for task status"
               className="text-xs"
             />
           </div>
 
-          {/* Section 2: Project & Client Context */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold flex items-center gap-1.5">
                 <Folder className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Project Assignment</span>
               </Label>
-              <select
-                value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
-                className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
-              >
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+              {projects.length > 0 ? (
+                <select
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Select Project...</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  type="text"
+                  placeholder="Project Name"
+                  value={projectId}
+                  onChange={(e) => setProjectId(e.target.value)}
+                  className="text-xs"
+                />
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -131,19 +139,28 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
                 <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>Client Entity</span>
               </Label>
-              <select
-                value={client}
-                onChange={(e) => setClient(e.target.value)}
-                className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
-              >
-                {clients.map((c) => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
-                ))}
-              </select>
+              {clients.length > 0 ? (
+                <select
+                  value={client}
+                  onChange={(e) => setClient(e.target.value)}
+                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  type="text"
+                  placeholder="Client Name"
+                  value={client}
+                  onChange={(e) => setClient(e.target.value)}
+                  className="text-xs"
+                />
+              )}
             </div>
           </div>
 
-          {/* Section 3: Execution Settings */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold flex items-center gap-1.5">
@@ -190,6 +207,10 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
                 onChange={(e) => setSelectedTag(e.target.value)}
                 className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
               >
+                <option value="Development">Development</option>
+                <option value="Design">Design</option>
+                <option value="Frontend">Frontend</option>
+                <option value="Back-end">Back-end</option>
                 {availableTags.map((t) => (
                   <option key={t.id} value={t.name}>{t.name}</option>
                 ))}
@@ -197,7 +218,6 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
             </div>
           </div>
 
-          {/* Section 4: Schedule & Estimation */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold flex items-center gap-1.5">

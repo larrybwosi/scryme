@@ -9,29 +9,14 @@ import {
   Calendar as CalendarIcon,
   Plus,
   Search,
-  Filter,
-  ArrowUpDown,
-  ChevronDown,
-  Trash2,
-  UserCheck,
-  Globe,
-  SlidersHorizontal,
   CheckCircle2,
   AlertCircle,
   Clock3,
   ListTodo,
   CheckSquare,
-  Sparkles,
   Layers,
-  ChevronRight,
-  MoreHorizontal,
-  Folder,
-  User
+  Clock
 } from 'lucide-react';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
-import { Badge } from '@repo/ui/components/ui/badge';
-import { Card } from '@repo/ui/components/ui/card';
 
 export default function TasksPage() {
   const { tasks, myTasksOnly } = useTaskStore();
@@ -55,7 +40,7 @@ export default function TasksPage() {
     const matchesTag = filterTag === 'All' || t.tags.includes(filterTag);
     const matchesStatus = filterStatus === 'All' || t.status === filterStatus;
     const matchesPriority = filterPriority === 'All' || t.priority === filterPriority;
-    const matchesMyTasks = !myTasksOnly || t.assignees.some((a) => a.name === 'Sarah Jenkins');
+    const matchesMyTasks = !myTasksOnly;
     return matchesSearch && matchesTag && matchesStatus && matchesPriority && matchesMyTasks;
   });
 
@@ -157,23 +142,20 @@ export default function TasksPage() {
     }
   };
 
-  const handleInlineTaskCreate = (group: 'Today' | 'Tomorrow' | 'Feb 16, 2024') => {
+  const handleInlineTaskCreate = async (group: 'Today' | 'Tomorrow' | 'Feb 16, 2024') => {
     if (!newTaskName.trim()) return;
-    taskStore.addTask({
+    await taskStore.addTask({
       name: newTaskName.trim(),
-      client: 'Snazzy Studio',
-      projectId: 'proj-1',
-      project: 'Mobile App Redesign',
+      client: 'Workspace Client',
+      project: 'Workspace Project',
       status: 'ToDo',
       priority: 'MEDIUM',
-      tags: ['Design'],
+      tags: ['Development'],
       estimation: `${group}, 5:00 PM`,
       estimatedHours: 8,
       actualHours: 0,
       dateGroup: group,
-      assignees: [
-        { id: 'm-1', name: 'Sarah Jenkins', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' }
-      ],
+      assignees: [],
       subtasks: [],
       comments: [],
       activityLogs: []
@@ -369,7 +351,6 @@ export default function TasksPage() {
         <div className="space-y-6">
           {dateGroups.map((group) => {
             const groupTasks = filteredTasks.filter((t) => t.dateGroup === group || (!t.dateGroup && group === 'Today'));
-            const completedCount = groupTasks.filter((t) => t.status === 'Completed').length;
 
             return (
               <div
@@ -500,13 +481,13 @@ export default function TasksPage() {
                                 type="text"
                                 value={newTaskName}
                                 onChange={(e) => setNewTaskName(e.target.value)}
-                                onKeyDown={(e) => e.key === 'Enter' && handleCreateTask(group)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleInlineTaskCreate(group)}
                                 placeholder="Enter task title and press Enter..."
                                 autoFocus
                                 className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500/30"
                               />
                               <button
-                                onClick={() => handleCreateTask(group)}
+                                onClick={() => handleInlineTaskCreate(group)}
                                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
                               >
                                 Save Task
@@ -535,7 +516,7 @@ export default function TasksPage() {
                     <span>Add task to {group}</span>
                   </button>
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>
@@ -545,32 +526,25 @@ export default function TasksPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {(['ToDo', 'InProgress', 'Review', 'Completed', 'Stopped'] as TaskStatus[]).map((status) => {
             const columnTasks = filteredTasks.filter((t) => t.status === status);
-            const statusTitles: Record<TaskStatus, string> = {
-              ToDo: 'To Do',
-              InProgress: 'In Progress',
-              Review: 'In Review',
-              Completed: 'Completed',
-              Stopped: 'Stopped'
-            };
 
             return (
               <div
-                key={colStatus}
+                key={status}
                 className="bg-slate-100/70 dark:bg-slate-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 space-y-3"
               >
                 <div className="flex items-center justify-between px-1 pb-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
-                      {colStatus === 'ToDo' ? 'To Do' : colStatus === 'InProgress' ? 'In Progress' : colStatus}
+                      {status === 'ToDo' ? 'To Do' : status === 'InProgress' ? 'In Progress' : status}
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
-                      {colTasks.length}
+                      {columnTasks.length}
                     </span>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  {colTasks.map((task) => (
+                  {columnTasks.map((task) => (
                     <div
                       key={task.id}
                       onClick={() => setSelectedTaskForModal(task)}
@@ -602,7 +576,7 @@ export default function TasksPage() {
                           ))}
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -614,8 +588,8 @@ export default function TasksPage() {
       {activeTab === 'calendar' && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm text-slate-900 dark:text-white">February 2024 - Sprint Calendar</h3>
-            <span className="text-xs text-slate-500 font-medium">11 Scheduled Tasks</span>
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Workspace Task Calendar</h3>
+            <span className="text-xs text-slate-500 font-medium">{filteredTasks.length} Tasks Scheduled</span>
           </div>
           <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2">
             <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
@@ -656,28 +630,32 @@ export default function TasksPage() {
           </div>
 
           <div className="space-y-3">
-            {filteredTasks.map((t) => {
-              const widthPct = Math.min(100, Math.max(25, ((t.estimatedHours || 8) / 16) * 100));
-              return (
-                <div key={t.id} className="p-3 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-4">
-                  <div className="w-48 shrink-0 min-w-0">
-                    <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{t.name}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{t.project}</div>
-                  </div>
-                  <div className="flex-1 bg-slate-200 dark:bg-slate-800 h-6 rounded-lg overflow-hidden relative">
-                    <div
-                      className={`h-full rounded-lg text-[10px] font-bold text-white px-2 flex items-center justify-between transition-all ${
-                        t.status === 'Completed' ? 'bg-emerald-500' : t.status === 'InProgress' ? 'bg-indigo-600' : 'bg-amber-500'
-                      }`}
-                      style={{ width: `${widthPct}%` }}
-                    >
-                      <span>{t.status}</span>
-                      <span>{t.estimatedHours || 8}h</span>
+            {filteredTasks.length === 0 ? (
+              <p className="text-xs text-slate-400 py-6 text-center">No tasks available for timeline schedule.</p>
+            ) : (
+              filteredTasks.map((t) => {
+                const widthPct = Math.min(100, Math.max(25, ((t.estimatedHours || 8) / 16) * 100));
+                return (
+                  <div key={t.id} className="p-3 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-4">
+                    <div className="w-48 shrink-0 min-w-0">
+                      <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{t.name}</div>
+                      <div className="text-[10px] text-slate-400 truncate">{t.project}</div>
+                    </div>
+                    <div className="flex-1 bg-slate-200 dark:bg-slate-800 h-6 rounded-lg overflow-hidden relative">
+                      <div
+                        className={`h-full rounded-lg text-[10px] font-bold text-white px-2 flex items-center justify-between transition-all ${
+                          t.status === 'Completed' ? 'bg-emerald-500' : t.status === 'InProgress' ? 'bg-indigo-600' : 'bg-amber-500'
+                        }`}
+                        style={{ width: `${widthPct}%` }}
+                      >
+                        <span>{t.status}</span>
+                        <span>{t.estimatedHours || 8}h</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       )}
