@@ -320,7 +320,42 @@ export async function createProduct(data: {
       });
     }
 
+    // Capture Member/User info for audit log
+    const member = context.memberId
+      ? await tx.member.findUnique({
+          where: { id: context.memberId },
+          include: { user: true },
+        })
+      : null;
+
+    const actorName = getMemberFullName(member) || context.user?.name || "System User";
+    const actorEmail = member?.user?.email || context.user?.email || "";
+
+    const updatedSnapshot = await getProductFullSnapshot(id, context.organizationId);
+
+    await tx.auditLog.create({
+      data: {
+        organizationId: context.organizationId,
+        memberId: context.memberId || null,
+        actorName,
+        actorEmail,
+        action: "UPDATE",
+        entityType: "PRODUCT",
+        entityId: id,
+        description: `Updated product "${data.name || previousSnapshot?.name || id}" details`,
+        details: {
+          updatedAt: new Date().toISOString(),
+          previousState: previousSnapshot,
+          afterState: updatedSnapshot,
+          snapshot: updatedSnapshot,
+        },
+        status: "SUCCESS",
+        severity: "INFO",
+      },
+    });
+
     revalidatePath("/inventory");
+    revalidatePath(`/inventory/products/${id}`);
     return product;
   });
 }
@@ -1862,5 +1897,281 @@ export async function fixMissingUnits(): Promise<{
   return {
     processed: variants.length,
     updated: updatedCount,
+  };
+}
+
+
+// --- Activity & Revert Helper Functions ---
+
+function getMemberFullName(member: any): string | null {
+  if (!member) return null;
+  if (member.user?.name) return member.user.name;
+  if (member.firstName || member.lastName) {
+    return [member.firstName, member.lastName].filter(Boolean).join(" ");
+  }
+  return null;
+}
+
+export async function getProductFullSnapshot(productId: string, organizationId: string) {
+  const product = await db.product.findFirst({
+    where: { id: productId, organizationId },
+    include: {
+      category: true,
+      variants: {
+        include: {
+          stockingUnit: true,
+          stockingOrgUnit: true,
+          sellingUnits: {
+            include: {
+              systemUnit: true,
+              orgUnit: true,
+            },
+          },
+        },
+      },
+      suppliers: {
+        include: {
+          supplier: true,
+        },
+      },
+    },
+  });
+
+  if (!product) return null;
+
+  return {
+    id: product.id,
+    name: product.name,
+    sku: product.sku,
+    slug: product.slug,
+    description: product.description,
+    detailedDescription: product.detailedDescription,
+    categoryId: product.categoryId,
+    brand: product.brand,
+    rating: product.rating,
+    isNew: product.isNew,
+    isFeatured: product.isFeatured,
+    isActive: product.isActive,
+    lowStockThreshold: product.lowStockThreshold,
+    pointsOnPurchase: product.pointsOnPurchase,
+    loyaltyPointsOverride: product.loyaltyPointsOverride,
+    type: product.type,
+    imageUrls: product.imageUrls,
+    tags: product.tags,
+    customFields: product.customFields,
+    variants: product.variants.map((v) => ({
+      id: v.id,
+      name: v.name,
+      sku: v.sku,
+      barcode: v.barcode,
+      buyingPrice: v.buyingPrice ? v.buyingPrice.toString() : null,
+      retailPrice: v.retailPrice ? v.retailPrice.toString() : null,
+      wholesalerPrice: v.wholesalerPrice ? v.wholesalerPrice.toString() : null,
+      specialPrice: v.specialPrice ? v.specialPrice.toString() : null,
+      isActive: v.isActive,
+      stockingUnitId: v.stockingUnitId,
+      stockingOrgUnitId: v.stockingOrgUnitId,
+      sellingUnits: v.sellingUnits.map((su) => ({
+        id: su.id,
+        systemUnitId: su.systemUnitId,
+        orgUnitId: su.orgUnitId,
+        retailPrice: su.retailPrice ? su.retailPrice.toString() : null,
+        conversionMultiplier: su.conversionMultiplier ? su.conversionMultiplier.toString() : "1",
+        isActive: su.isActive,
+      })),
+    })),
+    suppliers: product.suppliers.map((s) => ({
+      supplierId: s.supplierId,
+      supplierSku: s.supplierSku,
+      costPrice: s.costPrice ? s.costPrice.toString() : null,
+      isPreferred: s.isPreferred,
+    })),
+  };
+}
+
+export async function getProductActivityLogs(productId: string): Promise<any[]> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const isOwnerOrAdmin =
+    context.role === "OWNER" ||
+    context.role === "ADMIN" ||
+    context.orgRole === "OWNER" ||
+    context.orgRole === "ADMIN";
+
+  if (!isOwnerOrAdmin) {
+    throw new Error("Forbidden: Only Owners and Admins can view activity logs.");
+  }
+
+  const logs = await db.auditLog.findMany({
+    where: {
+      organizationId: context.organizationId,
+      entityType: "PRODUCT",
+      entityId: productId,
+    },
+    include: {
+      member: {
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      performedAt: "desc",
+    },
+  });
+
+  return logs.map((log) => ({
+    id: log.id,
+    action: log.action,
+    description: log.description,
+    details: log.details,
+    status: log.status,
+    severity: log.severity,
+    performedAt: log.performedAt,
+    actorName: getMemberFullName(log.member) || log.actorName || "System User",
+    actorEmail: log.member?.user?.email || log.actorEmail || "",
+    actorImage: log.member?.user?.image || null,
+  }));
+}
+
+export async function revertProductState(productId: string, auditLogId: string): Promise<{ success: boolean; message: string }> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const isOwnerOrAdmin =
+    context.role === "OWNER" ||
+    context.role === "ADMIN" ||
+    context.orgRole === "OWNER" ||
+    context.orgRole === "ADMIN";
+
+  if (!isOwnerOrAdmin) {
+    throw new Error("Forbidden: Only Owners and Admins can revert product states.");
+  }
+
+  const targetLog = await db.auditLog.findFirst({
+    where: {
+      id: auditLogId,
+      organizationId: context.organizationId,
+      entityType: "PRODUCT",
+      entityId: productId,
+    },
+  });
+
+  if (!targetLog || !targetLog.details) {
+    throw new Error("Target activity record or state snapshot not found.");
+  }
+
+  const details = targetLog.details as any;
+  const targetState = details.snapshot || details.previousState || details.afterState;
+
+  if (!targetState) {
+    throw new Error("No restoreable state snapshot found in this activity record.");
+  }
+
+  const currentSnapshot = await getProductFullSnapshot(productId, context.organizationId);
+
+  await db.$transaction(async (tx) => {
+    // 1. Restore product attributes
+    await tx.product.update({
+      where: { id: productId, organizationId: context.organizationId },
+      data: {
+        name: targetState.name,
+        sku: targetState.sku,
+        slug: targetState.slug,
+        description: targetState.description,
+        detailedDescription: targetState.detailedDescription,
+        categoryId: targetState.categoryId,
+        brand: targetState.brand,
+        rating: targetState.rating,
+        isNew: targetState.isNew,
+        isFeatured: targetState.isFeatured,
+        isActive: targetState.isActive,
+        lowStockThreshold: targetState.lowStockThreshold,
+        pointsOnPurchase: targetState.pointsOnPurchase,
+        loyaltyPointsOverride: targetState.loyaltyPointsOverride,
+        type: targetState.type,
+        imageUrls: targetState.imageUrls || [],
+        tags: targetState.tags || [],
+        customFields: targetState.customFields !== undefined ? targetState.customFields : undefined,
+      },
+    });
+
+    // 2. Restore primary variant if exists
+    if (targetState.variants && targetState.variants.length > 0) {
+      for (const targetVar of targetState.variants) {
+        const existingVar = await tx.productVariant.findFirst({
+          where: { productId, id: targetVar.id },
+        });
+
+        if (existingVar) {
+          await tx.productVariant.update({
+            where: { id: existingVar.id },
+            data: {
+              name: targetVar.name,
+              sku: targetVar.sku,
+              barcode: targetVar.barcode,
+              buyingPrice: targetVar.buyingPrice ? new Decimal(targetVar.buyingPrice) : null,
+              retailPrice: targetVar.retailPrice ? new Decimal(targetVar.retailPrice) : null,
+              wholesalerPrice: targetVar.wholesalerPrice ? new Decimal(targetVar.wholesalerPrice) : null,
+              specialPrice: targetVar.specialPrice ? new Decimal(targetVar.specialPrice) : null,
+              isActive: targetVar.isActive !== undefined ? targetVar.isActive : true,
+              stockingUnitId: targetVar.stockingUnitId,
+              stockingOrgUnitId: targetVar.stockingOrgUnitId,
+            },
+          });
+        }
+      }
+    }
+
+    // 3. Obtain member/user info for audit log snapshot
+    const member = context.memberId
+      ? await tx.member.findUnique({
+          where: { id: context.memberId },
+          include: { user: true },
+        })
+      : null;
+
+    const actorName = getMemberFullName(member) || context.user?.name || "System User";
+    const actorEmail = member?.user?.email || context.user?.email || "";
+
+    const newSnapshot = await getProductFullSnapshot(productId, context.organizationId);
+
+    // 4. Create AuditLog entry for the revert action
+    await tx.auditLog.create({
+      data: {
+        organizationId: context.organizationId,
+        memberId: context.memberId || null,
+        actorName,
+        actorEmail,
+        action: "RESTORE",
+        entityType: "PRODUCT",
+        entityId: productId,
+        description: `Reverted product state to snapshot from ${new Date(targetLog.performedAt).toLocaleString()}`,
+        details: {
+          revertedFromLogId: auditLogId,
+          revertedAt: new Date().toISOString(),
+          previousState: currentSnapshot,
+          afterState: newSnapshot,
+          snapshot: newSnapshot,
+        },
+        status: "SUCCESS",
+        severity: "MEDIUM",
+      },
+    });
+  });
+
+  revalidatePath(`/inventory/products/${productId}`);
+  revalidatePath("/inventory");
+
+  return {
+    success: true,
+    message: "Product state successfully reverted.",
   };
 }
