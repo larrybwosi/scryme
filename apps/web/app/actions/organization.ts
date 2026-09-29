@@ -2,13 +2,85 @@
 
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+
+/**
+ * Retrieves the active organization for the authenticated user, cached via unstable_cache.
+ */
+export async function getActiveOrganization(): Promise<any> {
+  const auth = await getServerAuth({ allowNoOrg: true });
+  if (!auth || !auth.user) return null;
+
+  const userId = auth.user.id;
+  const orgId = auth.organizationId;
+
+  if (!orgId) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { activeOrganizationId: true },
+    });
+
+    if (!user?.activeOrganizationId) {
+      const firstMember = await db.member.findFirst({
+        where: { userId },
+        select: { organizationId: true },
+      });
+
+      if (!firstMember) return null;
+
+      const getCachedOrg = unstable_cache(
+        async (targetOrgId: string) => {
+          return db.organization.findUnique({
+            where: { id: targetOrgId },
+            include: { settings: true },
+          });
+        },
+        [`active-org-${firstMember.organizationId}`],
+        {
+          tags: [`active-org:${userId}`, `org:${firstMember.organizationId}`],
+          revalidate: 3600,
+        }
+      );
+
+      return getCachedOrg(firstMember.organizationId);
+    }
+
+    const getCachedOrg = unstable_cache(
+      async (targetOrgId: string) => {
+        return db.organization.findUnique({
+          where: { id: targetOrgId },
+          include: { settings: true },
+        });
+      },
+      [`active-org-${user.activeOrganizationId}`],
+      {
+        tags: [`active-org:${userId}`, `org:${user.activeOrganizationId}`],
+        revalidate: 3600,
+      }
+    );
+
+    return getCachedOrg(user.activeOrganizationId);
+  }
+
+  const getCachedOrg = unstable_cache(
+    async (targetOrgId: string) => {
+      return db.organization.findUnique({
+        where: { id: targetOrgId },
+        include: { settings: true },
+      });
+    },
+    [`active-org-${orgId}`],
+    {
+      tags: [`active-org:${userId}`, `org:${orgId}`],
+      revalidate: 3600,
+    }
+  );
+
+  return getCachedOrg(orgId);
+}
 
 /**
  * Creates a new organization for the authenticated user.
- *
- * NOTE: Returning 'any' to avoid portability issues with generated Prisma types in this monorepo structure.
- * The underlying return value is a 'Organization' object.
  */
 export async function createOrganization(data: {
   name: string;
@@ -76,6 +148,7 @@ export async function createOrganization(data: {
     console.error("Failed to clear session cache:", e);
   }
 
+  revalidateTag(`active-org:${auth.user.id}`, "max");
   revalidatePath("/");
   return organization;
 }
@@ -125,6 +198,8 @@ export async function updateOrganizationSettings(data: {
     return { ...org, settings };
   });
 
+  revalidateTag(`active-org:${auth.user.id}`, "max");
+  revalidateTag(`org:${auth.organizationId}`, "max");
   revalidatePath("/settings");
   revalidatePath("/dashboard");
   return result;

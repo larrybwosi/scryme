@@ -1,28 +1,29 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/ui/dialog";
+} from "./ui/dialog";
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@repo/ui/components/ui/tabs";
+} from "./ui/tabs";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@repo/ui/components/ui/avatar";
-import { Button } from "@repo/ui/components/ui/button";
-import { Badge } from "@repo/ui/components/ui/badge";
-import { Switch } from "@repo/ui/components/ui/switch";
-import { Label } from "@repo/ui/components/ui/label";
+} from "./ui/avatar";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+import { Switch } from "./ui/switch";
+import { Label } from "./ui/label";
 import {
   User,
   Settings2,
@@ -36,9 +37,13 @@ import {
   Bell,
   Sparkles,
   Volume2,
+  Sun,
+  Moon,
+  Laptop,
 } from "lucide-react";
+import { cn } from "../lib/utils";
 
-interface UserSettingsDialogProps {
+export interface UserSettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   user?: {
@@ -64,6 +69,12 @@ export function UserSettingsDialog({
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [desktopAlerts, setDesktopAlerts] = useState(true);
   const [soundEffects, setSoundEffects] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const userInitials =
     user?.name
@@ -197,13 +208,62 @@ export function UserSettingsDialog({
             </TabsContent>
 
             {/* Preferences Tab */}
-            <TabsContent value="preferences" className="mt-0 space-y-4">
-              <div className="space-y-4">
+            <TabsContent value="preferences" className="mt-0 space-y-5">
+              {/* Theme Toggle Section */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Appearance Mode
+                </h4>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTheme("light")}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-2 p-3 rounded-lg border transition-all text-xs font-medium",
+                      mounted && theme === "light"
+                        ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-600"
+                        : "border-border hover:bg-muted/50 text-muted-foreground"
+                    )}
+                  >
+                    <Sun className="h-4 w-4" />
+                    Light
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme("dark")}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-2 p-3 rounded-lg border transition-all text-xs font-medium",
+                      mounted && theme === "dark"
+                        ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-600"
+                        : "border-border hover:bg-muted/50 text-muted-foreground"
+                    )}
+                  >
+                    <Moon className="h-4 w-4" />
+                    Dark
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTheme("system")}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-2 p-3 rounded-lg border transition-all text-xs font-medium",
+                      mounted && theme === "system"
+                        ? "border-indigo-600 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-600"
+                        : "border-border hover:bg-muted/50 text-muted-foreground"
+                    )}
+                  >
+                    <Laptop className="h-4 w-4" />
+                    System
+                  </button>
+                </div>
+              </div>
+
+              {/* Notification Settings */}
+              <div className="space-y-3">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Notification Settings
                 </h4>
 
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
                     <div className="space-y-0.5">
                       <Label htmlFor="email-notifs" className="text-xs font-medium cursor-pointer flex items-center gap-2">
@@ -277,16 +337,18 @@ export function UserSettingsDialog({
                   The tour guides you through organization settings, inventory management, branch locations, sales POS, and staff permissions.
                 </p>
 
-                <Button
-                  onClick={() => {
-                    onOpenChange(false);
-                    if (onLaunchTour) onLaunchTour();
-                  }}
-                  className="w-full bg-indigo-600 hover:bg-indigo-500 text-white gap-2 font-medium text-xs"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Launch Setup Guide Tour
-                </Button>
+                {onLaunchTour && (
+                  <Button
+                    onClick={() => {
+                      onOpenChange(false);
+                      onLaunchTour();
+                    }}
+                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white gap-2 font-medium text-xs"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Launch Setup Guide Tour
+                  </Button>
+                )}
               </div>
             </TabsContent>
           </div>
