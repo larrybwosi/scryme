@@ -56,7 +56,6 @@ Scryme is structured as a high-efficiency monorepo managed via [Turborepo](https
 * 🛍️ **[Scryme Customer Portal](./apps/portal)**: B2B/B2C Next.js self-service customer portal for account tracking, order history, and digital invoices.
 * 🌐 **[Scryme Storefront & Site](./apps/site)**: Enterprise web landing page, download directory for native POS binaries, and headlessly-managed CMS catalog.
 * ⚙️ **[Scryme Admin Web](./apps/admin)**: Master administrative console for multi-tenant provisioning, subscription billing, system health diagnostics, and binary release sync.
-* 📱 **[Scryme Admin Android](./apps/android)**: Native Kotlin + Jetpack Compose mobile dashboard for real-time sales telemetry, attendance monitoring, and petty cash oversight.
 * 🤖 **[Scryme MCP Server](./apps/mcp)**: Model Context Protocol server exposing catalog, inventory, and CRM commands securely to LLMs (Claude Desktop, Cursor).
 * 📚 **[Scryme API Docs](./apps/docs)**: Light Vite-based OpenAPI 3.0 interactive documentation portal.
 
@@ -82,7 +81,6 @@ Scryme is structured as a high-efficiency monorepo managed via [Turborepo](https
 | **Back-Office & Portals** | [Next.js 15](https://nextjs.org/) & [React 19](https://react.dev/) | SSR/SSG server actions with React Server Components |
 | **Native Terminals** | [Tauri v2](https://tauri.app/) (Rust + React) | Cross-platform, lightweight, memory-efficient native apps |
 | **Backend Engine** | [NestJS](https://nestjs.com/) | Enterprise modular Node.js REST API framework |
-| **Mobile Application** | [Kotlin](https://kotlinlang.org/) & Jetpack Compose | Native Android management client |
 | **Databases** | [PostgreSQL](https://www.postgresql.org/) & [SQLite](https://sqlite.org/) | Primary cloud relational storage and local desktop SQLite state |
 | **ORM & Seeding** | [Prisma ORM](https://prisma.io/) | Type-safe query building and schema migrations |
 | **Caching & Messaging** | [Redis](https://redis.io/) & [RabbitMQ](https://www.rabbitmq.com/) | Real-time rate-limiting, job queueing, and pub/sub messaging |
@@ -107,7 +105,6 @@ Explore our dedicated deployment and security guides:
 * **Node.js** (v22+) & **pnpm** (`v9+` or `v10+`)
 * **Docker** & **Docker Compose**
 * **Rust Toolchain** (v1.77+ for building POS & Bakery desktop binaries)
-* **Android Studio** & **JDK 21** (for building Android app)
 
 ### Development Workflow
 

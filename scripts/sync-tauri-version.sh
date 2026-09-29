@@ -55,14 +55,3 @@ for FILE in $CONFIG_FILES; do
 done
 
 echo "Successfully synced version to $(echo $CONFIG_FILES | wc -w) files."
-
-if [ -f "apps/android/app/build.gradle.kts" ]; then
-  echo "Updating apps/android/app/build.gradle.kts to version $VERSION"
-  node -e '
-    const fs = require("fs");
-    const v = process.argv[1];
-    let gradle = fs.readFileSync("apps/android/app/build.gradle.kts", "utf8");
-    gradle = gradle.replace(/versionName\s*=\s*"[^"]+"/, `versionName = "${v}"`);
-    fs.writeFileSync("apps/android/app/build.gradle.kts", gradle, "utf8");
-  ' "$VERSION"
-fi
