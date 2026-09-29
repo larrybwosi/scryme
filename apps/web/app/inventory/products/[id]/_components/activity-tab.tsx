@@ -184,7 +184,7 @@ export function ActivityTab({ productId, onRevertSuccess }: ActivityTabProps) {
 
                         <div className="flex items-center gap-2">
                           <Badge
-                            variant={isRestore ? "warning" : "secondary"}
+                            variant={isRestore ? "outline" : "secondary"}
                             className="font-mono text-[11px] capitalize"
                           >
                             {log.action}

@@ -390,6 +390,8 @@ export async function updateProduct(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  const previousSnapshot = await getProductFullSnapshot(id, context.organizationId);
+
   return db.$transaction(async tx => {
     const product = await tx.product.update({
       where: { id, organizationId: context.organizationId },
@@ -1966,8 +1968,8 @@ export async function getProductFullSnapshot(productId: string, organizationId: 
       barcode: v.barcode,
       buyingPrice: v.buyingPrice ? v.buyingPrice.toString() : null,
       retailPrice: v.retailPrice ? v.retailPrice.toString() : null,
-      wholesalerPrice: v.wholesalerPrice ? v.wholesalerPrice.toString() : null,
-      specialPrice: v.specialPrice ? v.specialPrice.toString() : null,
+      wholesalePrice: v.wholesalePrice ? v.wholesalePrice.toString() : null,
+      promotionalPrice: v.promotionalPrice ? v.promotionalPrice.toString() : null,
       isActive: v.isActive,
       stockingUnitId: v.stockingUnitId,
       stockingOrgUnitId: v.stockingOrgUnitId,
@@ -2117,10 +2119,10 @@ export async function revertProductState(productId: string, auditLogId: string):
               name: targetVar.name,
               sku: targetVar.sku,
               barcode: targetVar.barcode,
-              buyingPrice: targetVar.buyingPrice ? new Decimal(targetVar.buyingPrice) : null,
-              retailPrice: targetVar.retailPrice ? new Decimal(targetVar.retailPrice) : null,
-              wholesalerPrice: targetVar.wholesalerPrice ? new Decimal(targetVar.wholesalerPrice) : null,
-              specialPrice: targetVar.specialPrice ? new Decimal(targetVar.specialPrice) : null,
+              buyingPrice: targetVar.buyingPrice ? new Decimal(targetVar.buyingPrice) : undefined,
+              retailPrice: targetVar.retailPrice ? new Decimal(targetVar.retailPrice) : undefined,
+              wholesalePrice: targetVar.wholesalePrice ? new Decimal(targetVar.wholesalePrice) : undefined,
+              promotionalPrice: targetVar.promotionalPrice ? new Decimal(targetVar.promotionalPrice) : undefined,
               isActive: targetVar.isActive !== undefined ? targetVar.isActive : true,
               stockingUnitId: targetVar.stockingUnitId,
               stockingOrgUnitId: targetVar.stockingOrgUnitId,
