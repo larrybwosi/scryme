@@ -128,8 +128,11 @@ export class DeliveryPartnerUseCase {
         throw new BadRequestException("Insufficient wallet balance");
       }
 
-      await tx.deliveryPartner.update({
-        where: { id: partnerId },
+      // Threat: BOLA / IDOR Cross-Tenant Wallet Modification.
+      // Mitigation: DeliveryPartner model lacks composite unique index [id, organizationId]. Prisma update ignores non-unique where filters.
+      // Using updateMany ensures database-level multi-tenant isolation during balance updates.
+      await tx.deliveryPartner.updateMany({
+        where: { id: partnerId, organizationId },
         data: { walletBalance: newBalance },
       });
 
