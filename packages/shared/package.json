@@ -144,7 +144,7 @@
   "scripts": {
     "build": "tsup",
     "shared:build": "tsup",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "lint": "echo \"no lint script defined\"",
     "type-check": "tsc --noEmit",
     "dev": "tsup --watch"
@@ -193,9 +193,12 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.19.33",
     "@types/nodemailer": "^8.0.1",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
     "tsup": "^8.5.1",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.9"
   }
 }
