@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 export default function RealtimeInitializer() {
   const initialize = useRealtimeStore((state) => state.initialize);
+  const reconnect = useRealtimeStore((state) => state.reconnect);
   const socketClient = useRealtimeStore((state) => state.socketClient);
   const connectionState = useRealtimeStore((state) => state.connectionState);
   const subscribe = useRealtimeStore((state) => state.subscribe);
@@ -26,18 +27,18 @@ export default function RealtimeInitializer() {
   const syncCustomers = useSyncEngineStore((state) => state.syncCustomers);
   const syncPricing = useSyncEngineStore((state) => state.syncPricing);
 
-  // ── Initialize Realtime once auth is ready ──────────────────────────────────
+  // ── Initialize or reconnect Realtime once auth or active member changes ───
   useEffect(() => {
     const isDisabled = localStorage.getItem('realtime-disabled') === 'true';
     if (isAuthInitialized && isConfigured && currentMember && !isDisabled) {
-      initialize(true);
+      reconnect();
     } else if (!isConfigured || !currentMember) {
       const state = useRealtimeStore.getState();
       if (state.socketClient?.connected) {
         state.socketClient.disconnect();
       }
     }
-  }, [initialize, isAuthInitialized, isConfigured, currentMember?.id]);
+  }, [reconnect, isAuthInitialized, isConfigured, currentMember?.id]);
 
   // ── Presence management ────────────────────────────────────────────────────
   useEffect(() => {
@@ -123,7 +124,7 @@ export default function RealtimeInitializer() {
         unsubProductUpdated();
         unsubProductDeleted();
     };
-  }, [organizationId, subscribe, updateProductStock, currentLocationId, queryClient, syncProducts]);
+  }, [organizationId, subscribe, updateProductStock, currentLocationId, queryClient, syncProducts, currentMember]);
 
   // ── Customer & Pricing sync ─────────────────────────────────────────────────
   useEffect(() => {
@@ -190,7 +191,7 @@ export default function RealtimeInitializer() {
           unsubCustomerUpdated();
           unsubCustomerDeleted();
       };
-  }, [organizationId, subscribe, queryClient, syncPricing, syncCustomers]);
+  }, [organizationId, subscribe, queryClient, syncPricing, syncCustomers, currentMember]);
 
   // ── Orders & Sales sync ───────────────────────────────────────────────────
   useEffect(() => {
@@ -216,7 +217,7 @@ export default function RealtimeInitializer() {
           unsubOrderCreated();
           unsubSaleCreated();
       };
-  }, [organizationId, subscribe, queryClient]);
+  }, [organizationId, subscribe, queryClient, currentMember]);
 
   // ── Cleanup on unmount ─────────────────────────────────────────────────────
   useEffect(() => {
