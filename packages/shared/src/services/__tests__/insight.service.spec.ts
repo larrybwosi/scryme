@@ -1,3 +1,7 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('server-only', () => ({}));
+
 import { InsightService } from '../insight.service';
 
 describe('InsightService', () => {
@@ -7,10 +11,10 @@ describe('InsightService', () => {
   beforeEach(() => {
     mockPrisma = {
       transaction: {
-        findMany: jest.fn(),
+        findMany: vi.fn(),
       },
       crmRecord: {
-        findFirst: jest.fn(),
+        findFirst: vi.fn(),
       },
     };
     service = new InsightService(mockPrisma);

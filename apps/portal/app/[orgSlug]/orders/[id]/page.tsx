@@ -40,7 +40,8 @@ export default async function OrderDetailPage({
   await requireSession(orgSlug);
 
   const sdk = await getPortalSDK();
-  const orders = await sdk.b2b.getOrders(orgSlug);
+  const res = await sdk.orders.getB2BOrders();
+  const orders = (res.data as any) || [];
   const order = orders.find((o: any) => o.id === id);
 
   if (!order) notFound();

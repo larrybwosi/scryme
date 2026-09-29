@@ -1,4 +1,4 @@
-import { getScrymeV3API } from "./generated/scryme";
+import { getScrymeV3API } from "./proxy";
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
 import type {
   ProductResponseDto,
@@ -550,6 +550,9 @@ export const ordersMapping = {
   updateStatus: "ordersUpdateStatus",
   requestB2BQuote: "ordersRequestB2BQuote",
   convertQuoteToOrder: "ordersConvertQuoteToOrder",
+  getCatalog: "b2BGetCatalog",
+  getInvoices: "b2BGetInvoices",
+  createQuote: "b2BCreateQuote",
   getB2BCatalog: "b2BGetCatalog",
   getB2BInvoices: "b2BGetInvoices",
   getB2BOrders: "b2BGetOrders",

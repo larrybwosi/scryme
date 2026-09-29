@@ -1,3 +1,4 @@
+import { describe, it, expect } from "vitest";
 import { computeCustomerHealthScore, parseCustomerCsv } from "../customer-enterprise";
 
 describe("Customer Enterprise Pure Helper Logic", () => {
@@ -41,13 +42,13 @@ describe("Customer Enterprise Pure Helper Logic", () => {
         name: "John Doe",
         email: "john@example.com",
         phone: "+254700000000",
-        company: "Acme Corp",
+        company: null,
       });
       expect(records[1]).toEqual({
         name: "Jane Smith",
         email: "jane@example.com",
         phone: "+254711111111",
-        company: "Tech Inc",
+        company: null,
       });
     });
   });

@@ -1,8 +1,9 @@
+import { describe, it, expect, vi, Mocked } from 'vitest';
 import { MpesaClient } from '../client';
 import axios from 'axios';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+vi.mock('axios');
+const mockedAxios = axios as Mocked<typeof axios>;
 
 describe('MpesaClient', () => {
   const credentials = {

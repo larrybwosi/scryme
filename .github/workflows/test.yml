@@ -21,6 +21,8 @@ jobs:
       api: ${{ steps.changes.outputs.api }}
       crm: ${{ steps.changes.outputs.crm }}
       web: ${{ steps.changes.outputs.web }}
+      portal: ${{ steps.changes.outputs.portal }}
+      mcp: ${{ steps.changes.outputs.mcp }}
       packages: ${{ steps.changes.outputs.packages }}
       pkg_auth: ${{ steps.changes.outputs.pkg_auth }}
       pkg_config_eslint: ${{ steps.changes.outputs.pkg_config_eslint }}
@@ -40,7 +42,6 @@ jobs:
         id: changes
         with:
           filters: |
-            android:
             pos:
               - 'apps/pos/**'
             pos_rust:
@@ -55,6 +56,10 @@ jobs:
               - 'apps/crm/**'
             web:
               - 'apps/web/**'
+            portal:
+              - 'apps/portal/**'
+            mcp:
+              - 'apps/mcp/**'
             packages:
               - 'packages/**'
             pkg_auth:
@@ -95,11 +100,13 @@ jobs:
     steps:
       - id: check
         run: |
-             [ "${{ needs.filter.outputs.pos }}" == "true" ] || \
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || \
              [ "${{ needs.filter.outputs.bakery }}" == "true" ] || \
              [ "${{ needs.filter.outputs.api }}" == "true" ] || \
              [ "${{ needs.filter.outputs.crm }}" == "true" ] || \
              [ "${{ needs.filter.outputs.web }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.portal }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.mcp }}" == "true" ] || \
              [ "${{ needs.filter.outputs.packages }}" == "true" ] || \
              [ "${{ needs.filter.outputs.workflow }}" == "true" ] || \
              [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
@@ -112,6 +119,7 @@ jobs:
     needs: [filter]
     if: |
       needs.filter.outputs.api == 'true' ||
+      needs.filter.outputs.packages == 'true' ||
       needs.filter.outputs.workflow == 'true' ||
       needs.filter.outputs.test_workflow == 'true'
     runs-on: ubuntu-latest
@@ -189,7 +197,7 @@ jobs:
       - name: Lint and Type Check Apps
         run: |
           APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.portal }}" == "true" ] || [ "${{ needs.filter.outputs.mcp }}" == "true" ]; then
             APPS_CHANGED=true
           fi
 
@@ -205,6 +213,8 @@ jobs:
             if [ "${{ needs.filter.outputs.bakery }}" == "true" ]; then FILTER="$FILTER --filter=bakery..."; fi
             if [ "${{ needs.filter.outputs.crm }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
             if [ "${{ needs.filter.outputs.web }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
+            if [ "${{ needs.filter.outputs.portal }}" == "true" ]; then FILTER="$FILTER --filter=portal..."; fi
+            if [ "${{ needs.filter.outputs.mcp }}" == "true" ]; then FILTER="$FILTER --filter=mcp..."; fi
 
             if [ -n "$FILTER" ]; then
               echo "Running lint and type-check for changed apps..."
@@ -222,7 +232,7 @@ jobs:
       - name: Lint and Type Check Packages
         run: |
           APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.portal }}" == "true" ] || [ "${{ needs.filter.outputs.mcp }}" == "true" ]; then
             APPS_CHANGED=true
           fi
 
@@ -371,12 +381,43 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Generate Prisma Client
         run: pnpm generate
+      - name: Build Packages Dependencies
+        run: pnpm turbo build --filter="./packages/*"
       - name: Run Tests
         run: |
-          FILTER=""
           if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            pnpm turbo build --filter=pos...
+            echo "Running POS frontend tests..."
             pnpm --filter pos test:frontend
+          fi
+
+          if [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            echo "Running Bakery frontend tests..."
+            pnpm --filter bakery test:frontend
+          fi
+
+          if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            echo "Running CRM tests..."
+            pnpm --filter crm test
+          fi
+
+          if [ "${{ needs.filter.outputs.mcp }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            echo "Running MCP tests..."
+            pnpm --filter mcp test
+          fi
+
+          if [ "${{ needs.filter.outputs.pkg_documents }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            echo "Running Documents package tests..."
+            pnpm --filter @repo/documents test
+          fi
+
+          if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            echo "Running Shared package tests..."
+            pnpm --filter @repo/shared test
+          fi
+
+          if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            echo "Running SDK package tests..."
+            pnpm --filter @scryme/sdk test
           fi
         env:
           POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
@@ -421,6 +462,7 @@ jobs:
     if: |
       github.event_name == 'pull_request' && (
         needs.filter.outputs.web == 'true' ||
+        needs.filter.outputs.portal == 'true' ||
         needs.filter.outputs.packages == 'true' ||
         needs.filter.outputs.workflow == 'true' ||
         needs.filter.outputs.test_workflow == 'true'
@@ -459,6 +501,11 @@ jobs:
             WEB_CHANGED=true
           fi
 
+          PORTAL_CHANGED=false
+          if [ "${{ needs.filter.outputs.portal }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+            PORTAL_CHANGED=true
+          fi
+
           ROOT_CHANGED=false
           if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             ROOT_CHANGED=true
@@ -469,6 +516,13 @@ jobs:
             pnpm turbo build --filter=web...
           else
             echo "No web app changes requiring build-verify detected"
+          fi
+
+          if [ "$PORTAL_CHANGED" == "true" ] || [ "$ROOT_CHANGED" == "true" ]; then
+            echo "Running verification build for portal app..."
+            pnpm turbo build --filter=portal...
+          else
+            echo "No portal app changes requiring build-verify detected"
           fi
         env:
           DATABASE_URL: postgresql://postgres@localhost:5432/postgres
