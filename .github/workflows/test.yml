@@ -42,7 +42,6 @@ jobs:
         id: changes
         with:
           filters: |
-            android:
             pos:
               - 'apps/pos/**'
             pos_rust:
