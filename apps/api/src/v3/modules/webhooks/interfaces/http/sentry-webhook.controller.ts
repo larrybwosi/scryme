@@ -15,14 +15,14 @@ import { AllowPublic } from "@/v3/common/auth";
 import { PrismaService } from "@/prisma/prisma.service";
 
 @ApiTags("V3 Sentry Webhook Receiver")
-@Controller("v3/webhooks/sentry")
+@Controller("v3/webhooks")
 export class PublicSentryWebhookController {
   private readonly logger = new Logger(PublicSentryWebhookController.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
   @AllowPublic()
-  @Post()
+  @Post("sentry")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "Public webhook receiver for Sentry error alerts and issue events",
