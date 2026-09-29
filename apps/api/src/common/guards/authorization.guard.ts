@@ -15,7 +15,7 @@ export class AuthorizationGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<any>();
     const url = request.raw?.url || request.url || "";
-    if (url.includes("/v3/") || url.includes("/android/")) {
+    if (url.includes("/v3/")) {
       return true;
     }
 
