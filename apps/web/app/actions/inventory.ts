@@ -331,7 +331,7 @@ export async function createProduct(data: {
     const actorName = getMemberFullName(member) || context.user?.name || "System User";
     const actorEmail = member?.user?.email || context.user?.email || "";
 
-    const updatedSnapshot = await getProductFullSnapshot(product.id, context.organizationId);
+    const updatedSnapshot = await getProductFullSnapshot(id, context.organizationId);
 
     await tx.auditLog.create({
       data: {
@@ -339,12 +339,13 @@ export async function createProduct(data: {
         memberId: context.memberId || null,
         actorName,
         actorEmail,
-        action: "CREATE",
+        action: "UPDATE",
         entityType: "PRODUCT",
-        entityId: product.id,
-        description: `Created product "${data.name || product.name}"`,
+        entityId: id,
+        description: `Updated product "${data.name || previousSnapshot?.name || id}" details`,
         details: {
-          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          previousState: previousSnapshot,
           afterState: updatedSnapshot,
           snapshot: updatedSnapshot,
         },
@@ -354,7 +355,7 @@ export async function createProduct(data: {
     });
 
     revalidatePath("/inventory");
-    revalidatePath(`/inventory/products/${product.id}`);
+    revalidatePath(`/inventory/products/${id}`);
     return product;
   });
 }
@@ -430,59 +431,72 @@ export async function updateProduct(
             data.buyingPrice !== undefined
               ? new Decimal(data.buyingPrice)
               : undefined,
-          retailPrice: isRaw
-            ? null
-            : data.retailPrice !== undefined
+          retailPrice:
+            data.retailPrice !== undefined
               ? new Decimal(data.retailPrice)
-              : undefined,
-          stockingUnitId:
-            data.stockingUnitId !== undefined
-              ? data.stockingUnitId
-              : undefined,
-          stockingOrgUnitId:
-            data.stockingOrgUnitId !== undefined
-              ? data.stockingOrgUnitId
               : undefined,
         },
       });
+    } else if (
+      data.buyingPrice !== undefined ||
+      data.retailPrice !== undefined
+    ) {
+      // If variant doesn't exist but pricing was provided, we might be in an inconsistent state
+      // but let's try to update the first variant anyway if possible.
+      const firstVariant = await tx.productVariant.findFirst({
+        where: { productId: id },
+      });
+      if (firstVariant) {
+        await tx.productVariant.update({
+          where: { id: firstVariant.id },
+          data: {
+            buyingPrice:
+              data.buyingPrice !== undefined
+                ? new Decimal(data.buyingPrice)
+                : undefined,
+            retailPrice:
+              data.retailPrice !== undefined
+                ? new Decimal(data.retailPrice)
+                : undefined,
+          },
+        });
+    } else if (
+      data.buyingPrice !== undefined ||
+      data.retailPrice !== undefined ||
+      data.stockingUnitId !== undefined ||
+      data.stockingOrgUnitId !== undefined
+    ) {
+      const firstVariant = await tx.productVariant.findFirst({
+        where: { productId: id },
+      });
+      if (firstVariant) {
+        await tx.productVariant.update({
+          where: { id: firstVariant.id },
+          data: {
+            buyingPrice:
+              data.buyingPrice !== undefined
+                ? new Decimal(data.buyingPrice)
+                : undefined,
+            retailPrice: isRaw
+              ? null
+              : data.retailPrice !== undefined
+                ? new Decimal(data.retailPrice)
+                : undefined,
+            stockingUnitId:
+              data.stockingUnitId !== undefined
+                ? data.stockingUnitId
+                : undefined,
+            stockingOrgUnitId:
+              data.stockingOrgUnitId !== undefined
+                ? data.stockingOrgUnitId
+                : undefined,
+          },
+        });
+      }
+      }
     }
 
-    // Capture Member/User info for audit log
-    const member = context.memberId
-      ? await tx.member.findUnique({
-          where: { id: context.memberId },
-          include: { user: true },
-        })
-      : null;
-
-    const actorName = getMemberFullName(member) || context.user?.name || "System User";
-    const actorEmail = member?.user?.email || context.user?.email || "";
-
-    const updatedSnapshot = await getProductFullSnapshot(id, context.organizationId);
-
-    await tx.auditLog.create({
-      data: {
-        organizationId: context.organizationId,
-        memberId: context.memberId || null,
-        actorName,
-        actorEmail,
-        action: "UPDATE",
-        entityType: "PRODUCT",
-        entityId: id,
-        description: `Updated product "${data.name || previousSnapshot?.name || id}" details`,
-        details: {
-          updatedAt: new Date().toISOString(),
-          previousState: previousSnapshot,
-          afterState: updatedSnapshot,
-          snapshot: updatedSnapshot,
-        },
-        status: "SUCCESS",
-        severity: "INFO",
-      },
-    });
-
     revalidatePath("/inventory");
-    revalidatePath(`/inventory/products/${id}`);
     return product;
   });
 }
@@ -2162,4 +2176,118 @@ export async function revertProductState(productId: string, auditLogId: string):
     success: true,
     message: "Product state successfully reverted.",
   };
+}
+
+// --- Product Supplier Actions ---
+
+export async function linkProductSupplier(data: {
+  productId: string;
+  variantId: string;
+  supplierId: string;
+  supplierSku?: string;
+  costPrice: number;
+  leadTimeDays?: number;
+  minimumOrderQuantity?: number;
+  isPreferred?: boolean;
+}): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  return db.$transaction(async (tx) => {
+    // If set as preferred, un-prefer other supplier links for this product
+    if (data.isPreferred) {
+      await tx.productSupplier.updateMany({
+        where: { productId: data.productId },
+        data: { isPreferred: false },
+      });
+    }
+
+    const supplierLink = await tx.productSupplier.create({
+      data: {
+        productId: data.productId,
+        variantId: data.variantId,
+        supplierId: data.supplierId,
+        supplierSku: data.supplierSku || null,
+        costPrice: new Decimal(data.costPrice),
+        leadTimeDays: data.leadTimeDays ? Number(data.leadTimeDays) : null,
+        minimumOrderQuantity: data.minimumOrderQuantity ? Number(data.minimumOrderQuantity) : null,
+        isPreferred: Boolean(data.isPreferred),
+      },
+      include: {
+        supplier: true,
+      },
+    });
+
+    revalidatePath(`/inventory/products/${data.productId}`);
+    revalidatePath("/inventory");
+    return supplierLink;
+  });
+}
+
+export async function updateProductSupplierLink(
+  id: string,
+  data: {
+    supplierSku?: string;
+    costPrice?: number;
+    leadTimeDays?: number;
+    minimumOrderQuantity?: number;
+    isPreferred?: boolean;
+  }
+): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  return db.$transaction(async (tx) => {
+    const existing = await tx.productSupplier.findUnique({
+      where: { id },
+      select: { productId: true },
+    });
+
+    if (!existing) throw new Error("Product supplier link not found.");
+
+    if (data.isPreferred) {
+      await tx.productSupplier.updateMany({
+        where: { productId: existing.productId },
+        data: { isPreferred: false },
+      });
+    }
+
+    const updatedLink = await tx.productSupplier.update({
+      where: { id },
+      data: {
+        supplierSku: data.supplierSku !== undefined ? (data.supplierSku || null) : undefined,
+        costPrice: data.costPrice !== undefined ? new Decimal(data.costPrice) : undefined,
+        leadTimeDays: data.leadTimeDays !== undefined ? (data.leadTimeDays ? Number(data.leadTimeDays) : null) : undefined,
+        minimumOrderQuantity: data.minimumOrderQuantity !== undefined ? (data.minimumOrderQuantity ? Number(data.minimumOrderQuantity) : null) : undefined,
+        isPreferred: data.isPreferred !== undefined ? Boolean(data.isPreferred) : undefined,
+      },
+      include: {
+        supplier: true,
+      },
+    });
+
+    revalidatePath(`/inventory/products/${existing.productId}`);
+    revalidatePath("/inventory");
+    return updatedLink;
+  });
+}
+
+export async function unlinkProductSupplier(id: string): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const existing = await db.productSupplier.findUnique({
+    where: { id },
+    select: { productId: true },
+  });
+
+  if (!existing) throw new Error("Product supplier link not found.");
+
+  await db.productSupplier.delete({
+    where: { id },
+  });
+
+  revalidatePath(`/inventory/products/${existing.productId}`);
+  revalidatePath("/inventory");
+  return { success: true };
 }
