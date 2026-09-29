@@ -13,7 +13,7 @@ const RealtimeConfigSchema = z.object({
       })
       .loose(),
     metadata: z.object({
-      paymentChannel: z.string(),
+      paymentChannel: z.string().optional(),
       organizationId: z.string().optional(),
     }),
   }),
@@ -40,6 +40,7 @@ interface RealtimeState {
   activeChannels: Map<string, SubscribedChannelInfo>;
   listeners: Map<string, Set<EventCallback>>;
   initialize: (force?: boolean) => void;
+  reconnect: () => void;
   publish: (channel: string, event: string, data: any) => Promise<void>;
   subscribe: (channel: string, event: string, callback: EventCallback, options?: { rewind?: number }) => () => void;
 }
@@ -54,6 +55,10 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
   error: null,
   activeChannels: new Map<string, SubscribedChannelInfo>(),
   listeners: new Map<string, Set<EventCallback>>(),
+
+  reconnect: () => {
+    get().initialize(true);
+  },
 
   initialize: (force = false) => {
     const { socketClient, connectionState } = get();
@@ -141,7 +146,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
           let tokenToUse: string | null = null;
           const currentAuth = useAuthStore.getState();
           const orgSlug = currentAuth.deviceConfig?.orgSlug;
-          const memberToken = currentAuth.memberToken || currentAuth.sessionToken;
+          const memberToken = (currentAuth as any).memberToken || (currentAuth as any).sessionToken;
 
           try {
               const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });

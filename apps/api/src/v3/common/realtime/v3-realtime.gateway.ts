@@ -9,7 +9,6 @@ import {
 } from "@nestjs/websockets";
 import { Server, Socket } from "socket.io";
 import { V3AuthService } from "../../modules/auth/infrastructure/services/v3-auth.service";
-import { V3AuthCoreService } from "../../modules/auth-core/infrastructure/services/v3-auth-core.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RealtimeRedisService } from "../../../v2/realtime/realtime-redis.service";
 import { auth } from "@repo/auth/nest";
@@ -37,6 +36,7 @@ export class V3RealtimeGateway
       const rawToken =
         client.handshake.auth?.token ||
         client.handshake.auth?.authorization ||
+        client.handshake.headers?.["x-member-token"] ||
         client.handshake.headers?.authorization ||
         (client.handshake.query?.token as string);
 
@@ -52,6 +52,24 @@ export class V3RealtimeGateway
       // 1. Try HS256 V3 client/hybrid JWT token
       try {
         payload = await this.v3AuthService.verifyToken(token);
+        if (payload) {
+          // If token didn't contain locationId, attempt to fetch from deviceRegistry if present
+          if (!payload.locationId && (payload.sub || payload.clientId)) {
+            const registry = await this.prisma.client.deviceRegistry.findFirst({
+              where: {
+                OR: [
+                  ...(payload.sub ? [{ v3ApiClientId: payload.sub }, { apiKeyId: payload.sub }] : []),
+                  ...(payload.clientId ? [{ apiKey: payload.clientId }] : []),
+                ],
+              },
+              select: { locationId: true, id: true },
+            });
+            if (registry) {
+              payload.locationId = registry.locationId;
+              payload.deviceId = registry.id;
+            }
+          }
+        }
       } catch (err) {
         // Token was not a standard HS256 JWT
       }
@@ -90,7 +108,6 @@ export class V3RealtimeGateway
       if (!payload && token) {
         const apiKeyStr = token;
         const clientId = apiKeyStr.includes(".") ? apiKeyStr.split(".")[0] : apiKeyStr;
-        const clientSecret = apiKeyStr.includes(".") ? apiKeyStr.split(".").slice(1).join(".") : undefined;
         try {
           const clientObj = await this.prisma.client.v3ApiClient.findUnique({
             where: { clientId },
@@ -131,7 +148,7 @@ export class V3RealtimeGateway
       (client as any).v3Context = payload;
 
       console.log(
-        `V3 Client connected: ${client.id} (Org: ${payload.orgSlug})`,
+        `V3 Client connected: ${client.id} (Org: ${payload.orgSlug}, Member: ${payload.memberId || "N/A"})`,
       );
     } catch (error: any) {
       console.error("V3 WS Connection error:", error.message);
@@ -181,7 +198,7 @@ export class V3RealtimeGateway
       return true;
     }
 
-    // Organization specific channels check (e.g., organization:orgId:inventory, organization:orgId:pricing, organization:orgId:customers, organization:orgId:payments)
+    // Organization specific channels check (e.g., organization:orgId:inventory, organization:orgId:pricing, organization:orgId:customers, organization:orgId:payments, organization:orgId:orders)
     if (channel.startsWith("organization:")) {
       const parts = channel.split(":");
       const targetOrg = parts[1];
