@@ -22,18 +22,19 @@ import {
   X,
   RotateCcw
 } from 'lucide-react';
-import { taskStore } from '../lib/store';
+import { taskStore, useTaskStore } from '../lib/store';
 
 export default function Layout({ children }: { children?: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const { tasks, projects, clients, teamMembers } = useTaskStore();
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-    { name: 'Tasks', path: '/tasks', icon: CheckSquare, badge: '11' },
-    { name: 'Projects', path: '/projects', icon: FolderKanban, count: '8' },
-    { name: 'Clients', path: '/clients', icon: Users, count: '8' },
-    { name: 'Teams', path: '/teams', icon: UserCheck },
+    { name: 'Tasks', path: '/tasks', icon: CheckSquare, badge: String(tasks.length) },
+    { name: 'Projects', path: '/projects', icon: FolderKanban, count: String(projects.length) },
+    { name: 'Clients', path: '/clients', icon: Users, count: String(clients.length) },
+    { name: 'Teams', path: '/teams', icon: UserCheck, count: String(teamMembers.length) },
     { name: 'Schedule', path: '/schedule', icon: CalendarDays },
     { name: 'Time tracker', path: '/time-tracker', icon: Clock },
     { name: 'Tags', path: '/tags', icon: TagIcon },
@@ -88,13 +89,13 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
                 Taskifity
               </div>
               <div className="text-[10px] text-slate-400 font-medium mt-0.5">
-                Local-First Workspace
+                Enterprise Workspace
               </div>
             </div>
           </div>
           <button
             onClick={() => taskStore.resetStateToSeed()}
-            title="Reset data to initial screenshot seed"
+            title="Reset state to initial seed"
             className="p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 transition-colors"
           >
             <RotateCcw className="h-3.5 w-3.5" />
@@ -177,7 +178,6 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top Header Bar */}
         <header className="sticky top-0 z-30 h-14 bg-white/80 dark:bg-slate-900/80 backdrop-blur border-b border-slate-200/80 dark:border-slate-800 px-6 flex items-center justify-between">
-          {/* Breadcrumbs or Page Category */}
           <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
             <span className="text-slate-400">Project Management</span>
             <span>/</span>
@@ -186,17 +186,16 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
             </span>
           </div>
 
-          {/* Quick Actions */}
           <div className="flex items-center gap-3">
-            <button className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors">
+            <Link to="/tasks" className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors">
               <Plus className="h-3.5 w-3.5" />
               <span>Create Task</span>
-            </button>
+            </Link>
             <button className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
               <Bell className="h-4 w-4" />
             </button>
             <div className="h-7 w-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold border border-slate-300 dark:border-slate-600">
-              JS
+              SJ
             </div>
           </div>
         </header>

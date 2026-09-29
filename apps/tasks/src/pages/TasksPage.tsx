@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useTaskStore, taskStore } from '../lib/store';
 import { Task, TaskStatus } from '../lib/types';
+import TaskDetailModal from '../components/modals/TaskDetailModal';
+import CreateTaskModal from '../components/modals/CreateTaskModal';
 import {
   List,
   Kanban,
@@ -11,28 +13,32 @@ import {
   Filter,
   ArrowUpDown,
   ChevronDown,
-  ChevronRight,
-  MoreHorizontal,
-  CheckCircle2,
   Trash2,
-  User,
-  Tag as TagIcon
+  UserCheck,
+  Globe,
+  SlidersHorizontal,
+  CheckCircle2
 } from 'lucide-react';
 
 export default function TasksPage() {
-  const { tasks } = useTaskStore();
+  const { tasks, myTasksOnly } = useTaskStore();
   const [activeTab, setActiveTab] = useState<'list' | 'board' | 'calendar' | 'timeline'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTag, setFilterTag] = useState<string>('All');
   const [newTaskGroup, setNewTaskGroup] = useState<'Today' | 'Tomorrow' | 'Feb 16, 2024' | null>(null);
   const [newTaskName, setNewTaskName] = useState('');
 
+  const [selectedTaskForModal, setSelectedTaskForModal] = useState<Task | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Filtering
   const filteredTasks = tasks.filter((t) => {
     const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.project.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTag = filterTag === 'All' || t.tags.includes(filterTag);
-    return matchesSearch && matchesTag;
+    const matchesMyTasks = !myTasksOnly || t.assignees.some((a) => a.name === 'Sarah Jenkins');
+    return matchesSearch && matchesTag && matchesMyTasks;
   });
 
   const dateGroups: ('Today' | 'Tomorrow' | 'Feb 16, 2024')[] = ['Today', 'Tomorrow', 'Feb 16, 2024'];
@@ -40,7 +46,7 @@ export default function TasksPage() {
   const getStatusBadge = (status: TaskStatus) => {
     switch (status) {
       case 'Review':
-        return <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">Review</span>;
+        return <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/60">In Review</span>;
       case 'InProgress':
         return <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60">In Progress</span>;
       case 'Stopped':
@@ -76,14 +82,17 @@ export default function TasksPage() {
     taskStore.addTask({
       name: newTaskName.trim(),
       client: 'Snazzy Studio',
-      project: 'Landing Page',
+      project: 'Landing Page Rebrand',
       status: 'ToDo',
       tags: ['Design'],
       estimation: `${group}, 5:00 PM`,
       dateGroup: group,
       assignees: [
-        { name: 'Sarah Jenkins', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' }
+        { id: 'm-1', name: 'Sarah Jenkins', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' }
       ],
+      subtasks: [],
+      comments: [],
+      activityLogs: []
     });
     setNewTaskName('');
     setNewTaskGroup(null);
@@ -93,57 +102,93 @@ export default function TasksPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Title & View Navigation Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
             Tasks
           </h1>
+
+          {/* Scope Toggle: My Tasks vs All Tasks */}
+          <div className="flex items-center bg-slate-200/80 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
+            <button
+              onClick={() => taskStore.setMyTasksOnly(false)}
+              className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                !myTasksOnly
+                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              <Globe className="h-3 w-3" />
+              <span>All Workspace</span>
+            </button>
+            <button
+              onClick={() => taskStore.setMyTasksOnly(true)}
+              className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                myTasksOnly
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+              }`}
+            >
+              <UserCheck className="h-3 w-3" />
+              <span>My Tasks</span>
+            </button>
+          </div>
         </div>
 
-        {/* View Tabs */}
-        <div className="flex items-center p-1 bg-slate-200/60 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/60 self-start sm:self-auto">
+        {/* View Tabs & Create Button */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center p-1 bg-slate-200/60 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/60 self-start sm:self-auto">
+            <button
+              onClick={() => setActiveTab('list')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'list'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <List className="h-3.5 w-3.5" />
+              <span>List</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('board')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'board'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Kanban className="h-3.5 w-3.5" />
+              <span>Board</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'calendar'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span>Calendar</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('timeline')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'timeline'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+              }`}
+            >
+              <Clock className="h-3.5 w-3.5" />
+              <span>Timeline</span>
+            </button>
+          </div>
+
           <button
-            onClick={() => setActiveTab('list')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'list'
-                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl shadow-xs flex items-center gap-1.5 transition-colors"
           >
-            <List className="h-3.5 w-3.5" />
-            <span>List</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('board')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'board'
-                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <Kanban className="h-3.5 w-3.5" />
-            <span>Board</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('calendar')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'calendar'
-                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <CalendarIcon className="h-3.5 w-3.5" />
-            <span>Calendar</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('timeline')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'timeline'
-                ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
-          >
-            <Clock className="h-3.5 w-3.5" />
-            <span>Timeline</span>
+            <Plus className="h-3.5 w-3.5" />
+            <span>Create Task</span>
           </button>
         </div>
       </div>
@@ -182,15 +227,10 @@ export default function TasksPage() {
               <option value="UX Research">UX Research</option>
             </select>
           </div>
-
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium rounded-lg transition-colors">
-            <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />
-            <span>Sort</span>
-          </button>
         </div>
       </div>
 
-      {/* Main View Content */}
+      {/* List View */}
       {activeTab === 'list' && (
         <div className="space-y-6">
           {dateGroups.map((group) => {
@@ -238,9 +278,10 @@ export default function TasksPage() {
                       {groupTasks.map((task) => (
                         <tr
                           key={task.id}
-                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group"
+                          className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer"
+                          onClick={() => setSelectedTaskForModal(task)}
                         >
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                             <input
                               type="checkbox"
                               checked={task.status === 'Completed'}
@@ -257,6 +298,11 @@ export default function TasksPage() {
                             <span className={task.status === 'Completed' ? 'line-through text-slate-400' : ''}>
                               {task.name}
                             </span>
+                            {task.subtasks && task.subtasks.length > 0 && (
+                              <span className="ml-2 text-[10px] font-normal text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                {task.subtasks.filter((st) => st.completed).length}/{task.subtasks.length}
+                              </span>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-slate-600 dark:text-slate-400 font-medium">
                             {task.client}
@@ -264,11 +310,11 @@ export default function TasksPage() {
                           <td className="py-3 px-4 text-slate-600 dark:text-slate-400">
                             {task.project}
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                             <select
                               value={task.status}
                               onChange={(e) => taskStore.updateTaskStatus(task.id, e.target.value as TaskStatus)}
-                              className="bg-transparent border-none outline-none cursor-pointer p-0 m-0"
+                              className="bg-transparent border-none outline-none cursor-pointer p-0 m-0 text-xs font-semibold"
                             >
                               <option value="ToDo">To Do</option>
                               <option value="InProgress">In Progress</option>
@@ -305,7 +351,7 @@ export default function TasksPage() {
                               ))}
                             </div>
                           </td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => taskStore.deleteTask(task.id)}
                               className="p-1 text-slate-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-all rounded"
@@ -394,7 +440,8 @@ export default function TasksPage() {
                   {colTasks.map((task) => (
                     <div
                       key={task.id}
-                      className="p-3 bg-white dark:bg-slate-800/90 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-2 hover:border-indigo-300 transition-colors"
+                      onClick={() => setSelectedTaskForModal(task)}
+                      className="p-3 bg-white dark:bg-slate-800/90 rounded-lg border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-2 hover:border-indigo-400 cursor-pointer transition-colors"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 leading-snug">
@@ -432,18 +479,88 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* Calendar & Timeline Placeholder Tabs */}
-      {(activeTab === 'calendar' || activeTab === 'timeline') && (
-        <div className="p-12 text-center bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-3">
-          <CalendarIcon className="h-10 w-10 text-indigo-500 mx-auto" />
-          <h3 className="font-bold text-slate-900 dark:text-white">
-            {activeTab === 'calendar' ? 'Calendar View' : 'Timeline View'}
-          </h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Interactive timeline and scheduling view for tasks across projects.
-          </p>
+      {/* Calendar View */}
+      {activeTab === 'calendar' && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">February 2024 - Sprint Calendar</h3>
+            <span className="text-xs text-slate-500 font-medium">11 Scheduled Tasks</span>
+          </div>
+          <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2">
+            <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: 28 }).map((_, i) => {
+              const day = i + 1;
+              const dayTasks = filteredTasks.filter((t) => (day === 15 && t.dateGroup === 'Today') || (day === 16 && t.dateGroup === 'Tomorrow') || (day === 17 && t.dateGroup === 'Feb 16, 2024'));
+
+              return (
+                <div key={day} className={`min-h-[90px] p-2 rounded-xl border ${day === 15 ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800' : 'bg-slate-50/40 dark:bg-slate-800/20 border-slate-100 dark:border-slate-800/80'}`}>
+                  <div className="text-[10px] font-bold text-slate-400 mb-1">{day}</div>
+                  <div className="space-y-1">
+                    {dayTasks.map((t) => (
+                      <div
+                        key={t.id}
+                        onClick={() => setSelectedTaskForModal(t)}
+                        className="p-1 bg-white dark:bg-slate-800 rounded border border-slate-200/60 dark:border-slate-700 text-[10px] font-semibold text-slate-800 dark:text-slate-200 truncate cursor-pointer hover:border-indigo-500"
+                        title={t.name}
+                      >
+                        {t.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
+
+      {/* Timeline / Gantt View */}
+      {activeTab === 'timeline' && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Project Gantt Schedule</h3>
+            <span className="text-xs text-slate-500">Resource allocation timeline</span>
+          </div>
+
+          <div className="space-y-3">
+            {filteredTasks.map((t, idx) => {
+              const widthPct = Math.min(100, Math.max(25, ((t.estimatedHours || 8) / 16) * 100));
+              return (
+                <div key={t.id} className="p-3 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-4">
+                  <div className="w-48 shrink-0 min-w-0">
+                    <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{t.name}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{t.project}</div>
+                  </div>
+                  <div className="flex-1 bg-slate-200 dark:bg-slate-800 h-6 rounded-lg overflow-hidden relative">
+                    <div
+                      className={`h-full rounded-lg text-[10px] font-bold text-white px-2 flex items-center justify-between transition-all ${
+                        t.status === 'Completed' ? 'bg-emerald-500' : t.status === 'InProgress' ? 'bg-indigo-600' : 'bg-amber-500'
+                      }`}
+                      style={{ width: `${widthPct}%` }}
+                    >
+                      <span>{t.status}</span>
+                      <span>{t.estimatedHours || 8}h</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Modals */}
+      <TaskDetailModal
+        task={selectedTaskForModal}
+        onClose={() => setSelectedTaskForModal(null)}
+      />
+
+      <CreateTaskModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      />
     </div>
   );
 }
