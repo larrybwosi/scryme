@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Task, TaskStatus, PriorityLevel } from '../../lib/types';
-import { taskStore, useTaskStore } from '../../lib/store';
+import { taskStore } from '../../lib/store';
 import {
   Clock,
   MessageSquare,
@@ -8,7 +8,10 @@ import {
   Plus,
   Trash2,
   ListTodo,
-  Calendar
+  Calendar,
+  Edit2,
+  Check,
+  X
 } from 'lucide-react';
 import {
   Dialog,
@@ -31,9 +34,34 @@ interface TaskDetailModalProps {
 export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
   if (!task) return null;
 
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(task.name);
+
+  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [editedDesc, setEditedDesc] = useState(task.description || '');
+
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newCommentText, setNewCommentText] = useState('');
   const [activeTab, setActiveTab] = useState<'subtasks' | 'comments' | 'activity'>('subtasks');
+
+  useEffect(() => {
+    setEditedTitle(task.name);
+    setEditedDesc(task.description || '');
+  }, [task]);
+
+  const handleSaveTitle = () => {
+    if (editedTitle.trim() && editedTitle !== task.name) {
+      taskStore.updateTask(task.id, { name: editedTitle.trim() });
+    }
+    setIsEditingTitle(false);
+  };
+
+  const handleSaveDesc = () => {
+    if (editedDesc !== task.description) {
+      taskStore.updateTask(task.id, { description: editedDesc });
+    }
+    setIsEditingDesc(false);
+  };
 
   const handleStatusChange = (status: TaskStatus) => {
     taskStore.updateTaskStatus(task.id, status);
@@ -66,7 +94,7 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
   const subtaskProgress = totalSubtasksCount > 0 ? Math.round((completedSubtasksCount / totalSubtasksCount) * 100) : 0;
 
   return (
-    <Dialog open={!!task} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!task} onOpenChange={(open: boolean) => !open && onClose()}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
         <DialogHeader className="p-5 border-b border-border bg-muted/30">
           <div className="flex items-center gap-2 mb-1">
@@ -74,9 +102,42 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
             <span className="text-xs text-muted-foreground">•</span>
             <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{task.project}</span>
           </div>
-          <DialogTitle className="text-lg font-bold text-foreground">
-            {task.name}
-          </DialogTitle>
+
+          {/* Editable Title */}
+          {isEditingTitle ? (
+            <div className="flex items-center gap-2 mt-1">
+              <Input
+                type="text"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSaveTitle()}
+                className="text-base font-bold h-9"
+                autoFocus
+              />
+              <Button size="sm" onClick={handleSaveTitle} className="h-9 px-2.5">
+                <Check className="h-4 w-4" />
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setIsEditingTitle(false)} className="h-9 px-2.5">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between group">
+              <DialogTitle className="text-lg font-bold text-foreground">
+                {task.name}
+              </DialogTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsEditingTitle(true)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity h-7 px-2 text-xs text-muted-foreground"
+              >
+                <Edit2 className="h-3.5 w-3.5 mr-1" />
+                Edit
+              </Button>
+            </div>
+          )}
+
           <DialogDescription className="sr-only">
             Task details for {task.name}
           </DialogDescription>
@@ -117,6 +178,46 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
                 <option value="URGENT">Urgent</option>
               </select>
             </div>
+          </div>
+
+          {/* Task Description */}
+          <div className="space-y-1">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Description
+              </label>
+              {!isEditingDesc && (
+                <button
+                  onClick={() => setIsEditingDesc(true)}
+                  className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline"
+                >
+                  {task.description ? 'Edit' : '+ Add Description'}
+                </button>
+              )}
+            </div>
+
+            {isEditingDesc ? (
+              <div className="space-y-2 mt-1">
+                <textarea
+                  value={editedDesc}
+                  onChange={(e) => setEditedDesc(e.target.value)}
+                  placeholder="Add detailed task requirements..."
+                  className="w-full min-h-[80px] p-2.5 text-xs bg-background border border-input rounded-xl outline-none focus:ring-2 focus:ring-ring"
+                />
+                <div className="flex items-center justify-end gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setIsEditingDesc(false)} className="h-8 text-xs">
+                    Cancel
+                  </Button>
+                  <Button size="sm" onClick={handleSaveDesc} className="h-8 text-xs">
+                    Save Description
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground leading-relaxed p-2.5 bg-muted/20 rounded-xl border border-border/50">
+                {task.description || 'No description provided for this task.'}
+              </p>
+            )}
           </div>
 
           {/* Details Metadata */}
@@ -161,7 +262,7 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
           </div>
 
           {/* Tabs Navigation & Content */}
-          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
+          <Tabs value={activeTab} onValueChange={(val: string) => setActiveTab(val as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="subtasks" className="text-xs gap-1.5">
                 <ListTodo className="h-3.5 w-3.5" />
