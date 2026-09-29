@@ -39,42 +39,48 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
   const [selectedTag, setSelectedTag] = useState(availableTags[0]?.name || 'Development');
   const [estimatedHours, setEstimatedHours] = useState('8');
   const [dateGroup, setDateGroup] = useState<'Today' | 'Tomorrow' | 'Feb 16, 2024'>('Today');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isSubmitting) return;
 
+    setIsSubmitting(true);
     const selectedProj = projects.find((p) => p.id === projectId);
     const projectName = selectedProj ? selectedProj.name : 'Workspace Project';
 
-    await taskStore.addTask({
-      name: name.trim(),
-      client: client || (selectedProj ? selectedProj.client : 'Workspace Client'),
-      projectId: projectId || undefined,
-      project: projectName,
-      status,
-      priority,
-      tags: [selectedTag],
-      estimation: `${dateGroup}, 5:00 PM`,
-      estimatedHours: parseFloat(estimatedHours) || 8,
-      actualHours: 0,
-      dateGroup,
-      assignees: teamMembers[0]
-        ? [
-            {
-              id: teamMembers[0].id,
-              name: teamMembers[0].name,
-              avatar: teamMembers[0].avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
-            },
-          ]
-        : [],
-      subtasks: [],
-      comments: [],
-      activityLogs: []
-    });
+    try {
+      await taskStore.addTask({
+        name: name.trim(),
+        client: client || (selectedProj ? selectedProj.client : 'Workspace Client'),
+        projectId: projectId || undefined,
+        project: projectName,
+        status,
+        priority,
+        tags: [selectedTag],
+        estimation: `${dateGroup}, 5:00 PM`,
+        estimatedHours: parseFloat(estimatedHours) || 8,
+        actualHours: 0,
+        dateGroup,
+        assignees: teamMembers[0]
+          ? [
+              {
+                id: teamMembers[0].id,
+                name: teamMembers[0].name,
+                avatar: teamMembers[0].avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+              },
+            ]
+          : [],
+        subtasks: [],
+        comments: [],
+        activityLogs: []
+      });
 
-    onClose();
-    setName('');
+      onClose();
+      setName('');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -263,6 +269,7 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
             </Button>
             <Button
               type="submit"
+              disabled={isSubmitting}
               size="sm"
               className="text-xs"
             >

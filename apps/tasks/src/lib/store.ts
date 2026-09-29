@@ -111,8 +111,13 @@ function mapUiStatusToApi(status: TaskStatus): string {
   }
 }
 
+let isSyncing = false;
+
 export const taskStore = {
   async syncWithApi() {
+    if (isSyncing) return;
+    isSyncing = true;
+
     currentState = { ...currentState, isLoading: true };
     notify();
 
@@ -229,6 +234,8 @@ export const taskStore = {
       console.error("Failed to sync task store with API:", err);
       currentState = { ...currentState, isLoading: false };
       notify();
+    } finally {
+      isSyncing = false;
     }
   },
 
