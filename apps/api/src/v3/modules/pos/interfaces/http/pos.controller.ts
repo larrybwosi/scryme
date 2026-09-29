@@ -268,7 +268,12 @@ export class PosController {
                 tokenRequest: { token: cleanToken },
                 metadata: {
                   paymentChannel: `organization:${verified.organizationId}:payments`,
+                  inventoryChannel: `organization:${verified.organizationId}:inventory`,
+                  pricingChannel: `organization:${verified.organizationId}:pricing`,
+                  customersChannel: `organization:${verified.organizationId}:customers`,
+                  ordersChannel: `organization:${verified.organizationId}:orders`,
                   organizationId: verified.organizationId,
+                  memberId: verified.memberId,
                 },
               },
             };

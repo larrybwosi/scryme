@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTaskStore, taskStore } from '../lib/store';
-import { Task, TaskStatus } from '../lib/types';
+import { Task, TaskStatus, PriorityLevel } from '../lib/types';
 import TaskDetailModal from '../components/modals/TaskDetailModal';
 import CreateTaskModal from '../components/modals/CreateTaskModal';
 import {
@@ -9,7 +9,24 @@ import {
   Calendar as CalendarIcon,
   Plus,
   Search,
-  Trash2
+  Filter,
+  ArrowUpDown,
+  ChevronDown,
+  Trash2,
+  UserCheck,
+  Globe,
+  SlidersHorizontal,
+  CheckCircle2,
+  AlertCircle,
+  Clock3,
+  ListTodo,
+  CheckSquare,
+  Sparkles,
+  Layers,
+  ChevronRight,
+  MoreHorizontal,
+  Folder,
+  User
 } from 'lucide-react';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
@@ -20,7 +37,9 @@ export default function TasksPage() {
   const { tasks, myTasksOnly } = useTaskStore();
   const [activeTab, setActiveTab] = useState<'list' | 'board' | 'calendar' | 'timeline'>('list');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTag] = useState<string>('All');
+  const [filterTag, setFilterTag] = useState<string>('All');
+  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [filterPriority, setFilterPriority] = useState<string>('All');
   const [newTaskGroup, setNewTaskGroup] = useState<'Today' | 'Tomorrow' | 'Feb 16, 2024' | null>(null);
   const [newTaskName, setNewTaskName] = useState('');
 
@@ -29,43 +48,112 @@ export default function TasksPage() {
 
   // Filtering
   const filteredTasks = tasks.filter((t) => {
-    const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
       t.project.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTag = filterTag === 'All' || t.tags.includes(filterTag);
+    const matchesStatus = filterStatus === 'All' || t.status === filterStatus;
+    const matchesPriority = filterPriority === 'All' || t.priority === filterPriority;
     const matchesMyTasks = !myTasksOnly || t.assignees.some((a) => a.name === 'Sarah Jenkins');
-    return matchesSearch && matchesTag && matchesMyTasks;
+    return matchesSearch && matchesTag && matchesStatus && matchesPriority && matchesMyTasks;
   });
 
   const dateGroups: ('Today' | 'Tomorrow' | 'Feb 16, 2024')[] = ['Today', 'Tomorrow', 'Feb 16, 2024'];
 
+  // Stats calculation
+  const totalCount = tasks.length;
+  const inProgressCount = tasks.filter((t) => t.status === 'InProgress').length;
+  const completedCount = tasks.filter((t) => t.status === 'Completed').length;
+  const dueTodayCount = tasks.filter((t) => t.dateGroup === 'Today' && t.status !== 'Completed').length;
+
   const getStatusBadge = (status: TaskStatus) => {
     switch (status) {
       case 'Review':
-        return <Badge variant="secondary" className="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800">In Review</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80">
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+            In Review
+          </span>
+        );
       case 'InProgress':
-        return <Badge variant="secondary" className="bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200 dark:border-amber-800">In Progress</Badge>;
-      case 'Completed':
-        return <Badge variant="secondary" className="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800">Completed</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+            In Progress
+          </span>
+        );
       case 'Stopped':
-        return <Badge variant="destructive">Stopped</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/80 dark:border-rose-800/80">
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+            Stopped
+          </span>
+        );
       case 'ToDo':
-      default:
-        return <Badge variant="outline">To Do</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+            To Do
+          </span>
+        );
+      case 'Completed':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80">
+            <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+            Completed
+          </span>
+        );
     }
   };
 
-  const getPriorityBadge = (priority?: string) => {
+  const getPriorityBadge = (priority?: PriorityLevel) => {
     switch (priority) {
       case 'URGENT':
-        return <Badge variant="destructive">Urgent</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300">
+            <AlertCircle className="h-3 w-3 text-rose-600" />
+            Urgent
+          </span>
+        );
       case 'HIGH':
-        return <Badge variant="secondary" className="bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 border-rose-200 dark:border-rose-800">High</Badge>;
-      case 'LOW':
-        return <Badge variant="outline" className="text-muted-foreground">Low</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-orange-100 text-orange-800 dark:bg-orange-950/80 dark:text-orange-300">
+            High
+          </span>
+        );
       case 'MEDIUM':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+            Medium
+          </span>
+        );
+      case 'LOW':
       default:
-        return <Badge variant="secondary" className="bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 border-blue-200 dark:border-blue-800">Medium</Badge>;
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            Low
+          </span>
+        );
+    }
+  };
+
+  const getTagBadge = (tag: string) => {
+    switch (tag) {
+      case 'Design':
+        return <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">Design</span>;
+      case 'Frontend':
+      case 'Front-End':
+        return <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300 border border-cyan-200/50 dark:border-cyan-800/50">Frontend</span>;
+      case 'UX Design':
+      case 'UX Research':
+        return <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border border-purple-200/50 dark:border-purple-800/50">{tag}</span>;
+      case 'Development':
+        return <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/50">Development</span>;
+      case 'Back-end':
+        return <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200/50 dark:border-amber-800/50">Back-end</span>;
+      default:
+        return <span className="px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60">{tag}</span>;
     }
   };
 
@@ -80,7 +168,7 @@ export default function TasksPage() {
       priority: 'MEDIUM',
       tags: ['Design'],
       estimation: `${group}, 5:00 PM`,
-      estimatedHours: 4,
+      estimatedHours: 8,
       actualHours: 0,
       dateGroup: group,
       assignees: [
@@ -94,72 +182,189 @@ export default function TasksPage() {
     setNewTaskGroup(null);
   };
 
+  const handleToggleTaskStatus = (task: Task, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newStatus: TaskStatus = task.status === 'Completed' ? 'ToDo' : 'Completed';
+    taskStore.updateTask(task.id, { status: newStatus });
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Top Header Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
-        {/* Left: View Tabs */}
-        <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
-          <button
-            onClick={() => setActiveTab('list')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'list'
-                ? 'bg-background text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <List className="h-3.5 w-3.5" />
-            <span>List</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('board')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'board'
-                ? 'bg-background text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Kanban className="h-3.5 w-3.5" />
-            <span>Board</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('calendar')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              activeTab === 'calendar'
-                ? 'bg-background text-foreground shadow-xs'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <CalendarIcon className="h-3.5 w-3.5" />
-            <span>Calendar</span>
-          </button>
+    <div className="space-y-6 max-w-[1400px] mx-auto pb-12">
+      {/* Enterprise Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-500/20">
+              <ListTodo className="h-5 w-5" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Enterprise Task Management
+            </h1>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+            Track operational workflows, deliverables, sprint allocations, and team execution.
+          </p>
         </div>
 
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search tasks..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 text-xs h-9 w-44 sm:w-60"
-            />
-          </div>
-
-          <Button
-            size="sm"
+        <div className="flex items-center gap-3">
+          <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="gap-1.5 text-xs h-9 shadow-xs"
+            className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
-            <span>New Task</span>
-          </Button>
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span>Add New Task</span>
+          </button>
         </div>
       </div>
 
-      {/* Main Tab Views */}
+      {/* KPI Overview Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Work Items</span>
+            <div className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{totalCount}</div>
+          </div>
+          <div className="p-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+            <Layers className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">In Active Progress</span>
+            <div className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{inProgressCount}</div>
+          </div>
+          <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400">
+            <Clock3 className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Due Today</span>
+            <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 mt-1">{dueTodayCount}</div>
+          </div>
+          <div className="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400">
+            <AlertCircle className="h-5 w-5" />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Completed Tasks</span>
+            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">{completedCount}</div>
+          </div>
+          <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+            <CheckSquare className="h-5 w-5" />
+          </div>
+        </div>
+      </div>
+
+      {/* Control Bar: Tab Navigation & Filters */}
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Tab View Selector */}
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl w-fit">
+            <button
+              onClick={() => setActiveTab('list')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'list'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <List className="h-4 w-4" />
+              <span>List View</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('board')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'board'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Kanban className="h-4 w-4" />
+              <span>Kanban Board</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('calendar')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'calendar'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <CalendarIcon className="h-4 w-4" />
+              <span>Calendar</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('timeline')}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                activeTab === 'timeline'
+                  ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <Clock className="h-4 w-4" />
+              <span>Timeline</span>
+            </button>
+          </div>
+
+          {/* Search Input & Select Filters */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="relative min-w-[220px] flex-1 sm:flex-initial">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search tasks, client, project..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500"
+              />
+            </div>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer"
+            >
+              <option value="All">All Statuses</option>
+              <option value="ToDo">To Do</option>
+              <option value="InProgress">In Progress</option>
+              <option value="Review">In Review</option>
+              <option value="Completed">Completed</option>
+              <option value="Stopped">Stopped</option>
+            </select>
+
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer"
+            >
+              <option value="All">All Priorities</option>
+              <option value="URGENT">Urgent</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+
+            <select
+              value={filterTag}
+              onChange={(e) => setFilterTag(e.target.value)}
+              className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer"
+            >
+              <option value="All">All Tags</option>
+              <option value="Design">Design</option>
+              <option value="Frontend">Frontend</option>
+              <option value="Development">Development</option>
+              <option value="Back-end">Back-end</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Enterprise Structured List View */}
       {activeTab === 'list' && (
         <div className="space-y-6">
           {dateGroups.map((group) => {
@@ -167,141 +372,168 @@ export default function TasksPage() {
             const completedCount = groupTasks.filter((t) => t.status === 'Completed').length;
 
             return (
-              <Card key={group} className="overflow-hidden border-border shadow-xs">
+              <div
+                key={group}
+                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs overflow-hidden"
+              >
                 {/* Group Header */}
-                <div className="px-5 py-3.5 bg-muted/40 border-b border-border flex items-center justify-between">
+                <div className="px-5 py-3.5 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <span className="font-bold text-sm text-foreground">{group}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {groupTasks.length} tasks
-                    </Badge>
-                    {completedCount > 0 && (
-                      <span className="text-xs text-muted-foreground font-medium">
-                        ({completedCount} completed)
-                      </span>
-                    )}
+                    <span className="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      {group === 'Today' ? 'Today' : group === 'Tomorrow' ? 'Tomorrow' : 'Feb 16, 2024'}
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-xs font-bold border border-indigo-200/60 dark:border-indigo-800/60">
+                      {groupTasks.length} {groupTasks.length === 1 ? 'task' : 'tasks'}
+                    </span>
                   </div>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={() => setNewTaskGroup(group)}
-                    className="text-xs h-8 text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 gap-1"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 rounded-lg transition-colors cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>Add Task</span>
-                  </Button>
+                    <span>Quick Add</span>
+                  </button>
                 </div>
 
-                {/* Inline Task Form */}
-                {newTaskGroup === group && (
-                  <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/20 border-b border-border flex gap-2">
-                    <Input
-                      type="text"
-                      autoFocus
-                      placeholder="Task name..."
-                      value={newTaskName}
-                      onChange={(e) => setNewTaskName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleInlineTaskCreate(group);
-                        if (e.key === 'Escape') setNewTaskGroup(null);
-                      }}
-                      className="text-xs h-9 bg-background"
-                    />
-                    <Button size="sm" onClick={() => handleInlineTaskCreate(group)} className="text-xs h-9">
-                      Add
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setNewTaskGroup(null)}
-                      className="text-xs h-9"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-
-                {/* Tasks List */}
-                <div className="divide-y divide-border">
-                  {groupTasks.length === 0 ? (
-                    <div className="p-6 text-center text-xs text-muted-foreground italic">
-                      No tasks for {group.toLowerCase()}.
-                    </div>
-                  ) : (
-                    groupTasks.map((task) => (
-                      <div
-                        key={task.id}
-                        className="p-4 hover:bg-muted/30 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 group"
-                      >
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={task.status === 'Completed'}
-                            onChange={() => {
-                              taskStore.updateTaskStatus(
-                                task.id,
-                                task.status === 'Completed' ? 'ToDo' : 'Completed'
-                              );
-                            }}
-                            className="h-4 w-4 rounded border-input text-indigo-600 focus:ring-ring cursor-pointer shrink-0"
-                          />
-                          <div
+                {/* Table Layout */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/30 dark:bg-slate-900/30">
+                        <th className="py-3 px-4 w-10"></th>
+                        <th className="py-3 px-4 min-w-[240px]">Task Name</th>
+                        <th className="py-3 px-4 min-w-[140px]">Project & Client</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4">Priority</th>
+                        <th className="py-3 px-4">Tags</th>
+                        <th className="py-3 px-4">Due Date</th>
+                        <th className="py-3 px-4">Assignees</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                      {groupTasks.length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-slate-400 font-medium">
+                            No tasks scheduled for {group}.
+                          </td>
+                        </tr>
+                      ) : (
+                        groupTasks.map((task) => (
+                          <tr
+                            key={task.id}
                             onClick={() => setSelectedTaskForModal(task)}
-                            className="cursor-pointer flex-1 min-w-0"
+                            className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                           >
-                            <div className="flex items-center gap-2">
-                              <span
-                                className={`text-xs font-semibold truncate ${
+                            {/* Complete Checkbox */}
+                            <td className="py-3.5 px-4">
+                              <button
+                                onClick={(e) => handleToggleTaskStatus(task, e)}
+                                className={`h-4 w-4 rounded border flex items-center justify-center transition-colors ${
                                   task.status === 'Completed'
-                                    ? 'line-through text-muted-foreground'
-                                    : 'text-foreground hover:text-indigo-600 dark:hover:text-indigo-400'
+                                    ? 'bg-emerald-600 border-emerald-600 text-white'
+                                    : 'border-slate-300 dark:border-slate-600 hover:border-indigo-500'
                                 }`}
                               >
+                                {task.status === 'Completed' && <CheckCircle2 className="h-3 w-3" />}
+                              </button>
+                            </td>
+
+                            {/* Task Name */}
+                            <td className="py-3.5 px-4 font-semibold text-slate-900 dark:text-slate-100">
+                              <span className={task.status === 'Completed' ? 'line-through text-slate-400' : ''}>
                                 {task.name}
                               </span>
-                              {task.tags.map((tag) => (
-                                <Badge key={tag} variant="outline" className="text-[10px] py-0 px-1.5 h-4">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                              <span>{task.client}</span>
-                              <span>•</span>
-                              <span className="font-medium text-indigo-600 dark:text-indigo-400">{task.project}</span>
-                            </div>
-                          </div>
-                        </div>
+                            </td>
 
-                        <div className="flex items-center gap-3 shrink-0">
-                          {getStatusBadge(task.status)}
-                          {getPriorityBadge(task.priority)}
+                            {/* Project & Client */}
+                            <td className="py-3.5 px-4">
+                              <div className="font-medium text-slate-800 dark:text-slate-200">{task.project}</div>
+                              <div className="text-[11px] text-slate-400">{task.client}</div>
+                            </td>
 
-                          <div className="flex -space-x-1">
-                            {task.assignees.map((person, idx) => (
-                              <img
-                                key={idx}
-                                src={person.avatar}
-                                alt={person.name}
-                                title={person.name}
-                                className="h-6 w-6 rounded-full ring-2 ring-background object-cover"
+                            {/* Status */}
+                            <td className="py-3.5 px-4">{getStatusBadge(task.status)}</td>
+
+                            {/* Priority */}
+                            <td className="py-3.5 px-4">{getPriorityBadge(task.priority)}</td>
+
+                            {/* Tags */}
+                            <td className="py-3.5 px-4">
+                              <div className="flex flex-wrap gap-1">
+                                {task.tags.map((tag) => (
+                                  <React.Fragment key={tag}>{getTagBadge(tag)}</React.Fragment>
+                                ))}
+                              </div>
+                            </td>
+
+                            {/* Due Date */}
+                            <td className="py-3.5 px-4 text-slate-500 font-medium whitespace-nowrap">
+                              {task.estimation}
+                            </td>
+
+                            {/* Assignees */}
+                            <td className="py-3.5 px-4">
+                              <div className="flex -space-x-1.5 overflow-hidden">
+                                {task.assignees.map((person, idx) => (
+                                  <img
+                                    key={idx}
+                                    src={person.avatar}
+                                    alt={person.name}
+                                    title={person.name}
+                                    className="inline-block h-6 w-6 rounded-full ring-2 ring-white dark:ring-slate-900 object-cover"
+                                  />
+                                ))}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+
+                      {/* Inline Add Task Row */}
+                      {newTaskGroup === group && (
+                        <tr className="bg-indigo-50/30 dark:bg-indigo-950/20 border-t border-indigo-200/50 dark:border-indigo-800/50">
+                          <td className="py-3 px-4"></td>
+                          <td className="py-3 px-4" colSpan={7}>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={newTaskName}
+                                onChange={(e) => setNewTaskName(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleCreateTask(group)}
+                                placeholder="Enter task title and press Enter..."
+                                autoFocus
+                                className="flex-1 px-3 py-2 bg-white dark:bg-slate-800 border border-indigo-300 dark:border-indigo-700 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500/30"
                               />
-                            ))}
-                          </div>
+                              <button
+                                onClick={() => handleCreateTask(group)}
+                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer"
+                              >
+                                Save Task
+                              </button>
+                              <button
+                                onClick={() => setNewTaskGroup(null)}
+                                className="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-medium text-xs rounded-xl hover:bg-slate-300 transition-colors cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => taskStore.deleteTask(task.id)}
-                            className="h-7 w-7 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                {/* Bottom Add Task Action */}
+                <div className="p-3 bg-slate-50/50 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() => setNewTaskGroup(group)}
+                    className="flex items-center gap-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 transition-colors cursor-pointer"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add task to {group}</span>
+                  </button>
                 </div>
               </Card>
             );
@@ -322,31 +554,43 @@ export default function TasksPage() {
             };
 
             return (
-              <div key={status} className="bg-muted/40 p-4 rounded-xl border border-border flex flex-col min-h-[450px]">
-                <div className="flex items-center justify-between mb-3 pb-2 border-b border-border">
-                  <h3 className="text-xs font-bold text-foreground flex items-center gap-2">
-                    <span>{statusTitles[status]}</span>
-                    <Badge variant="secondary" className="text-[10px]">
-                      {columnTasks.length}
-                    </Badge>
-                  </h3>
+              <div
+                key={colStatus}
+                className="bg-slate-100/70 dark:bg-slate-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 space-y-3"
+              >
+                <div className="flex items-center justify-between px-1 pb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                      {colStatus === 'ToDo' ? 'To Do' : colStatus === 'InProgress' ? 'In Progress' : colStatus}
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
+                      {colTasks.length}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="space-y-3 flex-1 overflow-y-auto">
-                  {columnTasks.map((task) => (
-                    <Card
+                <div className="space-y-3">
+                  {colTasks.map((task) => (
+                    <div
                       key={task.id}
                       onClick={() => setSelectedTaskForModal(task)}
-                      className="p-3.5 cursor-pointer hover:border-indigo-500/50 transition-all shadow-xs"
+                      className="p-4 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-3 hover:border-indigo-500 cursor-pointer transition-all hover:shadow-md"
                     >
-                      <div className="text-xs font-semibold text-foreground mb-1">
-                        {task.name}
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 leading-snug">
+                          {task.name}
+                        </span>
+                        {getPriorityBadge(task.priority)}
                       </div>
                       <div className="text-[11px] text-muted-foreground mb-3 truncate">
                         {task.project}
                       </div>
-                      <div className="flex items-center justify-between pt-2 border-t border-border">
-                        {getPriorityBadge(task.priority)}
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/50">
+                        <div className="flex gap-1">
+                          {task.tags.map((tag) => (
+                            <React.Fragment key={tag}>{getTagBadge(tag)}</React.Fragment>
+                          ))}
+                        </div>
                         <div className="flex -space-x-1">
                           {task.assignees.map((person, idx) => (
                             <img
@@ -368,13 +612,74 @@ export default function TasksPage() {
       )}
 
       {activeTab === 'calendar' && (
-        <Card className="p-8 text-center border-border">
-          <CalendarIcon className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-          <h3 className="text-sm font-bold text-foreground">Calendar View</h3>
-          <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-            Interactive schedule view showing due dates for all workspace tasks across clients.
-          </p>
-        </Card>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">February 2024 - Sprint Calendar</h3>
+            <span className="text-xs text-slate-500 font-medium">11 Scheduled Tasks</span>
+          </div>
+          <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2">
+            <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            {Array.from({ length: 28 }).map((_, i) => {
+              const day = i + 1;
+              const dayTasks = filteredTasks.filter((t) => (day === 15 && t.dateGroup === 'Today') || (day === 16 && t.dateGroup === 'Tomorrow') || (day === 17 && t.dateGroup === 'Feb 16, 2024'));
+
+              return (
+                <div key={day} className={`min-h-[90px] p-2 rounded-xl border ${day === 15 ? 'bg-indigo-50/50 dark:bg-indigo-950/20 border-indigo-200 dark:border-indigo-800' : 'bg-slate-50/40 dark:bg-slate-800/20 border-slate-100 dark:border-slate-800/80'}`}>
+                  <div className="text-[10px] font-bold text-slate-400 mb-1">{day}</div>
+                  <div className="space-y-1">
+                    {dayTasks.map((t) => (
+                      <div
+                        key={t.id}
+                        onClick={() => setSelectedTaskForModal(t)}
+                        className="p-1.5 bg-white dark:bg-slate-800 rounded-lg border border-slate-200/60 dark:border-slate-700 text-[10px] font-semibold text-slate-800 dark:text-slate-200 truncate cursor-pointer hover:border-indigo-500 shadow-xs"
+                        title={t.name}
+                      >
+                        {t.name}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Timeline / Gantt View */}
+      {activeTab === 'timeline' && (
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Project Gantt Schedule</h3>
+            <span className="text-xs text-slate-500">Resource allocation timeline</span>
+          </div>
+
+          <div className="space-y-3">
+            {filteredTasks.map((t) => {
+              const widthPct = Math.min(100, Math.max(25, ((t.estimatedHours || 8) / 16) * 100));
+              return (
+                <div key={t.id} className="p-3 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center gap-4">
+                  <div className="w-48 shrink-0 min-w-0">
+                    <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{t.name}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{t.project}</div>
+                  </div>
+                  <div className="flex-1 bg-slate-200 dark:bg-slate-800 h-6 rounded-lg overflow-hidden relative">
+                    <div
+                      className={`h-full rounded-lg text-[10px] font-bold text-white px-2 flex items-center justify-between transition-all ${
+                        t.status === 'Completed' ? 'bg-emerald-500' : t.status === 'InProgress' ? 'bg-indigo-600' : 'bg-amber-500'
+                      }`}
+                      style={{ width: `${widthPct}%` }}
+                    >
+                      <span>{t.status}</span>
+                      <span>{t.estimatedHours || 8}h</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Modals */}

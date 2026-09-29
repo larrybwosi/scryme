@@ -2019,6 +2019,10 @@ export class ProductionService {
         isActive: v.isActive,
         createdAt: v.createdAt,
         updatedAt: v.updatedAt,
+        product: v.product ? {
+          id: v.product.id,
+          name: v.product.name,
+        } : null,
         category: v.product.category ? {
           id: v.product.category.id,
           name: v.product.category.name,

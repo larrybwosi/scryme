@@ -12,6 +12,19 @@ import {
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
+import {
+  X,
+  Plus,
+  Calendar,
+  User,
+  Folder,
+  Tag,
+  Clock,
+  Briefcase,
+  AlertCircle,
+  FileText,
+  CheckCircle2
+} from 'lucide-react';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -50,7 +63,11 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
       actualHours: 0,
       dateGroup,
       assignees: [
-        { id: teamMembers[0]?.id || 'm-1', name: teamMembers[0]?.name || 'Sarah Jenkins', avatar: teamMembers[0]?.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' }
+        {
+          id: teamMembers[0]?.id || 'm-1',
+          name: teamMembers[0]?.name || 'Sarah Jenkins',
+          avatar: teamMembers[0]?.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100'
+        }
       ],
       subtasks: [],
       comments: [],
@@ -65,33 +82,38 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <SheetContent className="sm:max-w-md flex flex-col p-0 gap-0">
         <SheetHeader className="p-6 border-b border-border bg-muted/30">
-          <SheetTitle className="text-lg font-bold text-foreground">
-            Create New Task
+          <SheetTitle className="text-lg font-bold text-foreground flex items-center gap-2">
+            <FileText className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            Create Enterprise Work Task
           </SheetTitle>
           <SheetDescription className="text-xs text-muted-foreground">
-            Fill in details below to add a task to your workspace.
+            Define task details, assign project resources, and set target priorities.
           </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
+          {/* Section 1: Task Title */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">
-              Task Name *
+            <Label className="text-xs font-semibold flex items-center gap-1.5">
+              <span>Task Name</span>
+              <span className="text-destructive">*</span>
             </Label>
             <Input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Design User Onboarding Flow"
+              placeholder="e.g. Design Enterprise User Onboarding Flow"
               className="text-xs"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          {/* Section 2: Project & Client Context */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">
-                Project
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Folder className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Project Assignment</span>
               </Label>
               <select
                 value={projectId}
@@ -105,8 +127,9 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">
-                Client
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Client Entity</span>
               </Label>
               <select
                 value={client}
@@ -120,10 +143,12 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          {/* Section 3: Execution Settings */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">
-                Status
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Status</span>
               </Label>
               <select
                 value={status}
@@ -133,12 +158,15 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
                 <option value="ToDo">To Do</option>
                 <option value="InProgress">In Progress</option>
                 <option value="Review">In Review</option>
+                <option value="Completed">Completed</option>
+                <option value="Stopped">Stopped</option>
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">
-                Priority
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Priority</span>
               </Label>
               <select
                 value={priority}
@@ -153,11 +181,49 @@ export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProp
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">
-                Est. Hours
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Category Tag</span>
+              </Label>
+              <select
+                value={selectedTag}
+                onChange={(e) => setSelectedTag(e.target.value)}
+                className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+              >
+                {availableTags.map((t) => (
+                  <option key={t.id} value={t.name}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Section 4: Schedule & Estimation */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Schedule Bucket</span>
+              </Label>
+              <select
+                value={dateGroup}
+                onChange={(e) => setDateGroup(e.target.value as any)}
+                className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="Today">Today</option>
+                <option value="Tomorrow">Tomorrow</option>
+                <option value="Feb 16, 2024">Feb 16, 2024</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold flex items-center gap-1.5">
+                <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>Est. Allocation (Hours)</span>
               </Label>
               <Input
                 type="number"
+                min="0.5"
+                step="0.5"
                 value={estimatedHours}
                 onChange={(e) => setEstimatedHours(e.target.value)}
                 className="text-xs"

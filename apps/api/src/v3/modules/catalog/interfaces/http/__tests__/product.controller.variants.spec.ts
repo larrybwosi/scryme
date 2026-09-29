@@ -125,6 +125,10 @@ describe("ProductController.getVariants (V3)", () => {
           isActive: true,
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
+          product: {
+            id: "prod_1",
+            name: "White Bread",
+          },
           category: {
             id: "cat_1",
             name: "Breads",

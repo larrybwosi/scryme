@@ -2177,3 +2177,117 @@ export async function revertProductState(productId: string, auditLogId: string):
     message: "Product state successfully reverted.",
   };
 }
+
+// --- Product Supplier Actions ---
+
+export async function linkProductSupplier(data: {
+  productId: string;
+  variantId: string;
+  supplierId: string;
+  supplierSku?: string;
+  costPrice: number;
+  leadTimeDays?: number;
+  minimumOrderQuantity?: number;
+  isPreferred?: boolean;
+}): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  return db.$transaction(async (tx) => {
+    // If set as preferred, un-prefer other supplier links for this product
+    if (data.isPreferred) {
+      await tx.productSupplier.updateMany({
+        where: { productId: data.productId },
+        data: { isPreferred: false },
+      });
+    }
+
+    const supplierLink = await tx.productSupplier.create({
+      data: {
+        productId: data.productId,
+        variantId: data.variantId,
+        supplierId: data.supplierId,
+        supplierSku: data.supplierSku || null,
+        costPrice: new Decimal(data.costPrice),
+        leadTimeDays: data.leadTimeDays ? Number(data.leadTimeDays) : null,
+        minimumOrderQuantity: data.minimumOrderQuantity ? Number(data.minimumOrderQuantity) : null,
+        isPreferred: Boolean(data.isPreferred),
+      },
+      include: {
+        supplier: true,
+      },
+    });
+
+    revalidatePath(`/inventory/products/${data.productId}`);
+    revalidatePath("/inventory");
+    return supplierLink;
+  });
+}
+
+export async function updateProductSupplierLink(
+  id: string,
+  data: {
+    supplierSku?: string;
+    costPrice?: number;
+    leadTimeDays?: number;
+    minimumOrderQuantity?: number;
+    isPreferred?: boolean;
+  }
+): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  return db.$transaction(async (tx) => {
+    const existing = await tx.productSupplier.findUnique({
+      where: { id },
+      select: { productId: true },
+    });
+
+    if (!existing) throw new Error("Product supplier link not found.");
+
+    if (data.isPreferred) {
+      await tx.productSupplier.updateMany({
+        where: { productId: existing.productId },
+        data: { isPreferred: false },
+      });
+    }
+
+    const updatedLink = await tx.productSupplier.update({
+      where: { id },
+      data: {
+        supplierSku: data.supplierSku !== undefined ? (data.supplierSku || null) : undefined,
+        costPrice: data.costPrice !== undefined ? new Decimal(data.costPrice) : undefined,
+        leadTimeDays: data.leadTimeDays !== undefined ? (data.leadTimeDays ? Number(data.leadTimeDays) : null) : undefined,
+        minimumOrderQuantity: data.minimumOrderQuantity !== undefined ? (data.minimumOrderQuantity ? Number(data.minimumOrderQuantity) : null) : undefined,
+        isPreferred: data.isPreferred !== undefined ? Boolean(data.isPreferred) : undefined,
+      },
+      include: {
+        supplier: true,
+      },
+    });
+
+    revalidatePath(`/inventory/products/${existing.productId}`);
+    revalidatePath("/inventory");
+    return updatedLink;
+  });
+}
+
+export async function unlinkProductSupplier(id: string): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const existing = await db.productSupplier.findUnique({
+    where: { id },
+    select: { productId: true },
+  });
+
+  if (!existing) throw new Error("Product supplier link not found.");
+
+  await db.productSupplier.delete({
+    where: { id },
+  });
+
+  revalidatePath(`/inventory/products/${existing.productId}`);
+  revalidatePath("/inventory");
+  return { success: true };
+}
