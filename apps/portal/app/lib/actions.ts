@@ -9,22 +9,22 @@ import { randomBytes, randomUUID } from "crypto";
 
 export async function getB2BProducts(orgSlug: string, query?: string) {
   const sdk = await getPortalSDK();
-  const response = await sdk.b2b.getCatalog(orgSlug);
+  const response = await sdk.orders.getB2BCatalog();
 
-  const products = response || [];
+  const products = response.data || [];
+  const items = Array.isArray(products) ? products : (products as any)?.items || [];
 
   if (query) {
     const q = query.toLowerCase();
-    return products.filter((p: any) =>
+    return items.filter((p: any) =>
       p.name.toLowerCase().includes(q) ||
       p.sku?.toLowerCase().includes(q) ||
       p.description?.toLowerCase().includes(q)
     );
   }
 
-  return products;
+  return items;
 }
-
 
 export async function loginMockUser(orgSlug: string, email: string) {
   // STRICT SECURITY CHECK: Deny mock login in production environments

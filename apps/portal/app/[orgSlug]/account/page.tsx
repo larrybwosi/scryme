@@ -20,7 +20,8 @@ export default async function AccountPage({ params }: { params: Promise<{ orgSlu
   const sdk = await getPortalSDK();
   let customer;
   try {
-    customer = await sdk.customers.getCustomer(orgSlug, session.customerId);
+    const response = await sdk.customer.getProfile(session.customerId);
+    customer = response.data;
   } catch (e) {
     return <div>Error loading customer profile.</div>;
   }

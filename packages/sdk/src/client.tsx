@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
-import { getScrymeV3API } from "./index";
+import { getScrymeV3API } from "./proxy";
 import type {
   CartControllerGetCartParams,
   CartResponseDto,
@@ -212,6 +212,8 @@ export class ScrymeClientSDK<
   public inventory: InventoryModule;
   /** Cart management, sales order orchestration, checkout processing, and payments submodule. */
   public orders: OrdersModule;
+  /** Alias for orders & B2B operations submodule. */
+  public b2b: OrdersModule;
   /** Custom fields, relationships, note logging, associations, and CRM timeline submodule. */
   public crm: CRMModule;
   /** Cash flow register, sale processing, terminal synchronization, and device provision submodule. */
@@ -983,6 +985,7 @@ export class ScrymeClientSDK<
     };
     this.inventory = buildModule(this.api, config.orgSlug, inventoryMapping);
     this.orders = buildModule(this.api, config.orgSlug, ordersMapping);
+    this.b2b = this.orders;
     this.crm = buildModule(this.api, config.orgSlug, crmMapping);
     this.pos = buildModule(this.api, config.orgSlug, posMapping);
     this.accounting = buildModule(this.api, config.orgSlug, accountingMapping);

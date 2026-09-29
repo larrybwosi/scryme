@@ -1,62 +1,63 @@
+import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
 import { MpesaService } from '../service';
 import { db } from '@repo/db';
 import { realtimeService } from '../../realtime';
-import { MpesaClient } from '../client';
 
-jest.mock('@repo/db', () => ({
+vi.mock('@repo/db', () => ({
   db: {
     paymentCredentials: {
-      findUnique: jest.fn(),
-      findFirst: jest.fn(),
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
     payment: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      create: jest.fn(),
-      findFirst: jest.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      create: vi.fn(),
+      findFirst: vi.fn(),
     },
     transaction: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      findFirst: jest.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      findFirst: vi.fn(),
     },
     mpesaPaymentRequest: {
-      create: jest.fn(),
-      updateMany: jest.fn(),
-      findFirst: jest.fn(),
+      create: vi.fn(),
+      updateMany: vi.fn(),
+      findFirst: vi.fn(),
     },
     unclaimedPayment: {
-      upsert: jest.fn(),
-      findFirst: jest.fn(),
+      upsert: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
     },
     invoice: {
-      updateMany: jest.fn(),
+      updateMany: vi.fn(),
     },
     auditLog: {
-      create: jest.fn(),
+      create: vi.fn(),
     },
-    $transaction: jest.fn((callback) => callback(db)),
+    $transaction: vi.fn((callback) => callback(db)),
   },
 }));
 
-jest.mock('../../api/v2', () => ({
-  decrypt: jest.fn((val) => Promise.resolve(val)),
+vi.mock('../../api/v2', () => ({
+  decrypt: vi.fn((val) => Promise.resolve(val)),
 }));
 
-jest.mock('../../realtime', () => ({
+vi.mock('../../realtime', () => ({
   realtimeService: {
-    publish: jest.fn(),
+    publish: vi.fn(),
   },
 }));
 
-jest.mock('../client');
+vi.mock('../client');
 
 describe('MpesaService', () => {
   let service: MpesaService;
 
   beforeEach(() => {
     service = new MpesaService();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('handleC2BConfirmation', () => {
@@ -81,11 +82,11 @@ describe('MpesaService', () => {
         status: 'DRAFT',
       };
 
-      (db.paymentCredentials.findFirst as jest.Mock).mockResolvedValue({ organizationId: 'org_123' });
-      (db.transaction.findFirst as jest.Mock).mockResolvedValue(mockTransaction);
-      (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
-      (db.payment.create as jest.Mock).mockResolvedValue({ id: 'pay_123' });
-      (db.transaction.update as jest.Mock).mockResolvedValue({
+      (db.paymentCredentials.findFirst as Mock).mockResolvedValue({ organizationId: 'org_123' });
+      (db.transaction.findFirst as Mock).mockResolvedValue(mockTransaction);
+      (db.payment.findFirst as Mock).mockResolvedValue(null);
+      (db.payment.create as Mock).mockResolvedValue({ id: 'pay_123' });
+      (db.transaction.update as Mock).mockResolvedValue({
         ...mockTransaction,
         totalPaid: 100,
       });
@@ -118,9 +119,9 @@ describe('MpesaService', () => {
     });
 
     it('should mark as unclaimed if transaction not found and include organizationId', async () => {
-      (db.paymentCredentials.findFirst as jest.Mock).mockResolvedValue({ organizationId: 'org_123' });
-      (db.transaction.findFirst as jest.Mock).mockResolvedValue(null);
-      (db.unclaimedPayment.upsert as jest.Mock).mockResolvedValue({ id: 'unclaimed_123' });
+      (db.paymentCredentials.findFirst as Mock).mockResolvedValue({ organizationId: 'org_123' });
+      (db.transaction.findFirst as Mock).mockResolvedValue(null);
+      (db.unclaimedPayment.upsert as Mock).mockResolvedValue({ id: 'unclaimed_123' });
 
       await service.handleC2BConfirmation(payload);
 
@@ -138,7 +139,7 @@ describe('MpesaService', () => {
 
   describe('verifyPayment', () => {
     it('should return PAID if a successful payment exists', async () => {
-      (db.payment.findFirst as jest.Mock).mockResolvedValue({
+      (db.payment.findFirst as Mock).mockResolvedValue({
         status: 'PAID',
         amount: 100,
         gatewayTxnId: 'REC123',
@@ -152,9 +153,9 @@ describe('MpesaService', () => {
     });
 
     it('should return PROCESSING if an STK push is pending', async () => {
-      (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
-      (db.transaction.findFirst as jest.Mock).mockResolvedValue({ id: 'tx_123', number: 'ORD-123', paymentStatus: 'UNPAID' });
-      (db.mpesaPaymentRequest.findFirst as jest.Mock).mockResolvedValue({
+      (db.payment.findFirst as Mock).mockResolvedValue(null);
+      (db.transaction.findFirst as Mock).mockResolvedValue({ id: 'tx_123', number: 'ORD-123', paymentStatus: 'UNPAID' });
+      (db.mpesaPaymentRequest.findFirst as Mock).mockResolvedValue({
         status: 'PENDING',
         checkoutRequestId: 'ws_123',
       });
@@ -166,10 +167,10 @@ describe('MpesaService', () => {
     });
 
     it('should return UNCLAIMED_FOUND if a matching unclaimed payment exists', async () => {
-        (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
-        (db.transaction.findFirst as jest.Mock).mockResolvedValue({ id: 'tx_123', number: 'ORD-123', paymentStatus: 'UNPAID' });
-        (db.mpesaPaymentRequest.findFirst as jest.Mock).mockResolvedValue(null);
-        (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue({
+        (db.payment.findFirst as Mock).mockResolvedValue(null);
+        (db.transaction.findFirst as Mock).mockResolvedValue({ id: 'tx_123', number: 'ORD-123', paymentStatus: 'UNPAID' });
+        (db.mpesaPaymentRequest.findFirst as Mock).mockResolvedValue(null);
+        (db.unclaimedPayment.findFirst as Mock).mockResolvedValue({
             transId: 'REC456',
             amount: 500,
             billRefNumber: 'ORD-123'
@@ -184,8 +185,8 @@ describe('MpesaService', () => {
 
   describe('security - multi-tenant isolation', () => {
     it('validate should NOT return unclaimed payments from other organizations (IDOR)', async () => {
-      (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
-      (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue({
+      (db.payment.findFirst as Mock).mockResolvedValue(null);
+      (db.unclaimedPayment.findFirst as Mock).mockResolvedValue({
         id: 'unclaimed_456',
         transId: 'REC999',
         organizationId: 'other_org',
@@ -196,7 +197,6 @@ describe('MpesaService', () => {
         organizationId: 'my_org',
       });
 
-      // This is expected to FAIL before the fix because validate doesn't filter by organizationId for unclaimed
       expect(db.unclaimedPayment.findFirst).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -207,15 +207,15 @@ describe('MpesaService', () => {
     });
 
     it('verifyPayment should NOT return unclaimed payments from other organizations', async () => {
-      (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
-      (db.transaction.findFirst as jest.Mock).mockResolvedValue({
+      (db.payment.findFirst as Mock).mockResolvedValue(null);
+      (db.transaction.findFirst as Mock).mockResolvedValue({
         id: 'tx_123',
         number: 'ORD-123',
         organizationId: 'my_org',
         paymentStatus: 'UNPAID',
       });
-      (db.mpesaPaymentRequest.findFirst as jest.Mock).mockResolvedValue(null);
-      (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue({
+      (db.mpesaPaymentRequest.findFirst as Mock).mockResolvedValue(null);
+      (db.unclaimedPayment.findFirst as Mock).mockResolvedValue({
         transId: 'REC456',
         organizationId: 'other_org',
       });
@@ -232,14 +232,14 @@ describe('MpesaService', () => {
     });
 
     it('verifyPayment should NOT return payment requests from other organizations', async () => {
-      (db.payment.findFirst as jest.Mock).mockResolvedValue(null);
-      (db.transaction.findFirst as jest.Mock).mockResolvedValue({
+      (db.payment.findFirst as Mock).mockResolvedValue(null);
+      (db.transaction.findFirst as Mock).mockResolvedValue({
         id: 'tx_123',
         number: 'ORD-123',
         organizationId: 'my_org',
         paymentStatus: 'UNPAID',
       });
-      (db.mpesaPaymentRequest.findFirst as jest.Mock).mockResolvedValue({
+      (db.mpesaPaymentRequest.findFirst as Mock).mockResolvedValue({
         status: 'PENDING',
         organizationId: 'other_org',
       });
@@ -275,7 +275,7 @@ describe('MpesaService', () => {
         }
       };
 
-      (db.payment.update as jest.Mock).mockResolvedValue({ id: 'pay_123', transactionId: 'tx_123' });
+      (db.payment.update as Mock).mockResolvedValue({ id: 'pay_123', transactionId: 'tx_123' });
 
       await service.handleStkCallback('org_123', 'pay_123', payload as any);
 
@@ -289,7 +289,7 @@ describe('MpesaService', () => {
     it('should allow whitelisted IPs and handle IPv4-mapped IPv6', () => {
       process.env.NODE_ENV = 'production';
       expect(service.validateWebhookIp('196.201.214.200')).toBe(true);
-      expect(service.validateWebhookIp('196.201.214.50')).toBe(true); // in range 196.201.214.0/24
+      expect(service.validateWebhookIp('196.201.214.50')).toBe(true);
       expect(service.validateWebhookIp('::ffff:196.201.214.200')).toBe(true);
     });
 
@@ -321,11 +321,11 @@ describe('MpesaService', () => {
         number: 'ORD-123',
       };
 
-      (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue(mockUnclaimed);
-      (db.transaction.findFirst as jest.Mock).mockResolvedValue(mockTransaction);
-      (db.payment.create as jest.Mock).mockResolvedValue({ id: 'pay_123' });
-      (db.unclaimedPayment.update as jest.Mock).mockResolvedValue({});
-      (db.transaction.update as jest.Mock).mockResolvedValue({ ...mockTransaction, finalTotal: 1000, totalPaid: 0 });
+      (db.unclaimedPayment.findFirst as Mock).mockResolvedValue(mockUnclaimed);
+      (db.transaction.findFirst as Mock).mockResolvedValue(mockTransaction);
+      (db.payment.create as Mock).mockResolvedValue({ id: 'pay_123' });
+      (db.unclaimedPayment.update as Mock).mockResolvedValue({});
+      (db.transaction.update as Mock).mockResolvedValue({ ...mockTransaction, finalTotal: 1000, totalPaid: 0 });
 
       await service.claimPayment(organizationId, unclaimedPaymentId, transactionId, memberId);
 
@@ -338,7 +338,7 @@ describe('MpesaService', () => {
     });
 
     it('should throw error if unclaimed payment belongs to another organization', async () => {
-      (db.unclaimedPayment.findFirst as jest.Mock).mockResolvedValue(null);
+      (db.unclaimedPayment.findFirst as Mock).mockResolvedValue(null);
 
       await expect(service.claimPayment('org_123', 'unclaimed_456', 'tx_123', 'mem_123'))
         .rejects.toThrow('Unclaimed payment not found');

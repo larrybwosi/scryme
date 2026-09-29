@@ -14,14 +14,12 @@ export default async function DashboardPage({ params }: { params: Promise<{ orgS
   await requireSession(orgSlug);
 
   const sdk = await getPortalSDK();
-  // OPTIMIZATION (Bolt ⚡): Parallelize independent B2B orders and invoices SDK calls using Promise.all.
-  // This reduces page load data fetching time by ~50% by eliminating a sequential roundtrip bottleneck.
   const [ordersRes, invoicesRes] = await Promise.all([
-    sdk.b2b.getOrders(orgSlug),
-    sdk.b2b.getInvoices(orgSlug),
+    sdk.orders.getB2BOrders(),
+    sdk.orders.getB2BInvoices(),
   ]);
-  const orders = ordersRes || [];
-  const invoices = invoicesRes || [];
+  const orders = (ordersRes.data as any) || [];
+  const invoices = (invoicesRes.data as any) || [];
 
   const pendingPayments = invoices.reduce((acc: number, inv: any) => acc + (inv.status === 'UNPAID' ? Number(inv.total) : 0), 0);
   const activeShipments = orders.filter((o: any) => ['DISPATCHED', 'PROCESSING', 'READY'].includes(o.status)).length;
