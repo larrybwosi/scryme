@@ -4,6 +4,26 @@ import { Task, TaskStatus, PriorityLevel } from '../lib/types';
 import TaskDetailModal from '../components/modals/TaskDetailModal';
 import CreateTaskModal from '../components/modals/CreateTaskModal';
 import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  closestCorners,
+  DragStartEvent,
+  DragOverEvent,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
   List,
   Kanban,
   Calendar as CalendarIcon,
@@ -15,12 +35,223 @@ import {
   ListTodo,
   CheckSquare,
   Layers,
-  Clock
+  Clock,
+  GripVertical,
+  MessageSquare,
+  CheckSquare as SubtaskIcon
 } from 'lucide-react';
+
+const KANBAN_STATUSES: { id: TaskStatus; label: string; color: string }[] = [
+  { id: 'ToDo', label: 'To Do', color: 'border-slate-300 dark:border-slate-700' },
+  { id: 'InProgress', label: 'In Progress', color: 'border-amber-400 dark:border-amber-600' },
+  { id: 'Review', label: 'In Review', color: 'border-indigo-400 dark:border-indigo-600' },
+  { id: 'Completed', label: 'Completed', color: 'border-emerald-400 dark:border-emerald-600' },
+  { id: 'Stopped', label: 'Stopped', color: 'border-rose-400 dark:border-rose-600' },
+];
+
+function KanbanTaskCard({
+  task,
+  onSelect,
+  isOverlay = false
+}: {
+  task: Task;
+  onSelect?: () => void;
+  isOverlay?: boolean;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({
+    id: task.id,
+    data: { task }
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1
+  };
+
+  const getPriorityBadge = (priority?: PriorityLevel) => {
+    switch (priority) {
+      case 'URGENT':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300">
+            <AlertCircle className="h-3 w-3 text-rose-600" />
+            Urgent
+          </span>
+        );
+      case 'HIGH':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-800 dark:bg-orange-950/80 dark:text-orange-300">
+            High
+          </span>
+        );
+      case 'MEDIUM':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+            Medium
+          </span>
+        );
+      case 'LOW':
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+            Low
+          </span>
+        );
+    }
+  };
+
+  const completedSubtasks = (task.subtasks || []).filter(s => s.completed).length;
+  const totalSubtasks = (task.subtasks || []).length;
+  const commentsCount = (task.comments || []).length;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={() => onSelect && onSelect()}
+      className={`p-3.5 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-3 hover:border-indigo-500 cursor-pointer transition-all hover:shadow-md ${
+        isOverlay ? 'shadow-2xl border-indigo-500 ring-2 ring-indigo-500/20 scale-105' : ''
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <button
+            {...attributes}
+            {...listeners}
+            onClick={(e) => e.stopPropagation()}
+            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-grab active:cursor-grabbing p-0.5"
+            title="Drag task"
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 leading-snug line-clamp-2">
+            {task.name}
+          </span>
+        </div>
+        {getPriorityBadge(task.priority)}
+      </div>
+
+      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+        {task.project} • <span className="text-slate-400">{task.client}</span>
+      </div>
+
+      {/* Subtasks and comments count */}
+      {(totalSubtasks > 0 || commentsCount > 0) && (
+        <div className="flex items-center gap-3 text-[11px] text-slate-400 pt-1">
+          {totalSubtasks > 0 && (
+            <div className="flex items-center gap-1">
+              <SubtaskIcon className="h-3 w-3" />
+              <span>{completedSubtasks}/{totalSubtasks}</span>
+            </div>
+          )}
+          {commentsCount > 0 && (
+            <div className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" />
+              <span>{commentsCount}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700/50">
+        <div className="flex flex-wrap gap-1">
+          {task.tags.slice(0, 2).map((tag) => (
+            <span key={tag} className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300">
+              {tag}
+            </span>
+          ))}
+        </div>
+        <div className="flex -space-x-1">
+          {task.assignees.map((person, idx) => (
+            <img
+              key={idx}
+              src={person.avatar}
+              alt={person.name}
+              title={person.name}
+              className="h-5 w-5 rounded-full ring-1 ring-background object-cover"
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KanbanColumn({
+  column,
+  tasks,
+  onSelectTask,
+  onQuickAdd
+}: {
+  column: { id: TaskStatus; label: string; color: string };
+  tasks: Task[];
+  onSelectTask: (task: Task) => void;
+  onQuickAdd: (status: TaskStatus) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: column.id,
+    data: { status: column.id }
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`bg-slate-100/70 dark:bg-slate-900/60 rounded-2xl p-3 border border-slate-200/80 dark:border-slate-800 flex flex-col min-h-[500px] transition-colors ${
+        isOver ? 'bg-indigo-50/50 dark:bg-indigo-950/30 border-indigo-300 dark:border-indigo-700' : ''
+      }`}
+    >
+      {/* Column Header */}
+      <div className="flex items-center justify-between px-2 py-1.5 mb-2 border-b border-slate-200/60 dark:border-slate-800">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
+            {column.label}
+          </span>
+          <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
+            {tasks.length}
+          </span>
+        </div>
+
+        <button
+          onClick={() => onQuickAdd(column.id)}
+          className="p-1 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          title={`Add task to ${column.label}`}
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* Task List Container */}
+      <SortableContext items={tasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex-1 space-y-3 p-1">
+          {tasks.length === 0 ? (
+            <div className="h-32 flex items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl text-slate-400 text-xs font-medium">
+              Drop task here
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <KanbanTaskCard
+                key={task.id}
+                task={task}
+                onSelect={() => onSelectTask(task)}
+              />
+            ))
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  );
+}
 
 export default function TasksPage() {
   const { tasks, myTasksOnly } = useTaskStore();
-  const [activeTab, setActiveTab] = useState<'list' | 'board' | 'calendar' | 'timeline'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'board' | 'calendar' | 'timeline'>('board');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTag, setFilterTag] = useState<string>('All');
   const [filterStatus, setFilterStatus] = useState<string>('All');
@@ -30,6 +261,12 @@ export default function TasksPage() {
 
   const [selectedTaskForModal, setSelectedTaskForModal] = useState<Task | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [activeTaskForDrag, setActiveTaskForDrag] = useState<Task | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor)
+  );
 
   // Filtering
   const filteredTasks = tasks.filter((t) => {
@@ -51,6 +288,66 @@ export default function TasksPage() {
   const inProgressCount = tasks.filter((t) => t.status === 'InProgress').length;
   const completedCount = tasks.filter((t) => t.status === 'Completed').length;
   const dueTodayCount = tasks.filter((t) => t.dateGroup === 'Today' && t.status !== 'Completed').length;
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const foundTask = tasks.find((t) => t.id === active.id);
+    if (foundTask) {
+      setActiveTaskForDrag(foundTask);
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    if (activeId === overId) return;
+
+    const activeTask = tasks.find((t) => t.id === activeId);
+    if (!activeTask) return;
+
+    // Determine target status
+    let targetStatus: TaskStatus | null = null;
+    const isOverColumn = KANBAN_STATUSES.some((col) => col.id === overId);
+
+    if (isOverColumn) {
+      targetStatus = overId as TaskStatus;
+    } else {
+      const overTask = tasks.find((t) => t.id === overId);
+      if (overTask) {
+        targetStatus = overTask.status;
+      }
+    }
+
+    if (targetStatus && activeTask.status !== targetStatus) {
+      taskStore.updateTaskStatus(activeId, targetStatus);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTaskForDrag(null);
+
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    const activeTask = tasks.find((t) => t.id === activeId);
+    const overTask = tasks.find((t) => t.id === overId);
+
+    if (activeTask && overTask && activeTask.id !== overTask.id) {
+      const oldIndex = tasks.findIndex((t) => t.id === activeId);
+      const newIndex = tasks.findIndex((t) => t.id === overId);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const reordered = arrayMove(tasks, oldIndex, newIndex);
+        taskStore.reorderTasks(reordered);
+      }
+    }
+  };
 
   const getStatusBadge = (status: TaskStatus) => {
     switch (status) {
@@ -522,67 +819,36 @@ export default function TasksPage() {
         </div>
       )}
 
+      {/* Interactive Drag and Drop Kanban Board */}
       {activeTab === 'board' && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {(['ToDo', 'InProgress', 'Review', 'Completed', 'Stopped'] as TaskStatus[]).map((status) => {
-            const columnTasks = filteredTasks.filter((t) => t.status === status);
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {KANBAN_STATUSES.map((column) => {
+              const columnTasks = filteredTasks.filter((t) => t.status === column.id);
+              return (
+                <KanbanColumn
+                  key={column.id}
+                  column={column}
+                  tasks={columnTasks}
+                  onSelectTask={(task) => setSelectedTaskForModal(task)}
+                  onQuickAdd={() => setIsCreateModalOpen(true)}
+                />
+              );
+            })}
+          </div>
 
-            return (
-              <div
-                key={status}
-                className="bg-slate-100/70 dark:bg-slate-900/60 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 space-y-3"
-              >
-                <div className="flex items-center justify-between px-1 pb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-xs text-slate-800 dark:text-slate-200">
-                      {status === 'ToDo' ? 'To Do' : status === 'InProgress' ? 'In Progress' : status}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
-                      {columnTasks.length}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {columnTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      onClick={() => setSelectedTaskForModal(task)}
-                      className="p-4 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700/60 shadow-xs space-y-3 hover:border-indigo-500 cursor-pointer transition-all hover:shadow-md"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-semibold text-xs text-slate-900 dark:text-slate-100 leading-snug">
-                          {task.name}
-                        </span>
-                        {getPriorityBadge(task.priority)}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground mb-3 truncate">
-                        {task.project}
-                      </div>
-                      <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/50">
-                        <div className="flex gap-1">
-                          {task.tags.map((tag) => (
-                            <React.Fragment key={tag}>{getTagBadge(tag)}</React.Fragment>
-                          ))}
-                        </div>
-                        <div className="flex -space-x-1">
-                          {task.assignees.map((person, idx) => (
-                            <img
-                              key={idx}
-                              src={person.avatar}
-                              alt={person.name}
-                              className="h-5 w-5 rounded-full ring-1 ring-background object-cover"
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          <DragOverlay>
+            {activeTaskForDrag ? (
+              <KanbanTaskCard task={activeTaskForDrag} isOverlay={true} />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
       )}
 
       {activeTab === 'calendar' && (

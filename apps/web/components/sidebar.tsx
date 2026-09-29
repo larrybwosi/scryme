@@ -416,7 +416,7 @@ export function Sidebar() {
                     </AvatarFallback>
                   </Avatar>
                 </button>
-              TooltipTrigger>
+              </TooltipTrigger>
               <TooltipContent side="right">
                 User Info & Preferences
               </TooltipContent>

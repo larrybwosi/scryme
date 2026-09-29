@@ -196,7 +196,6 @@ export const taskStore = {
         }));
         updatedState.projects = apiProjects;
 
-        // Derive client entries from unique project clients
         const clientNames = Array.from(new Set(apiProjects.map((p) => p.client)));
         updatedState.clients = clientNames.map((cName, idx) => ({
           id: `cli-${idx + 1}`,
@@ -305,6 +304,14 @@ export const taskStore = {
 
   async updateTaskStatus(taskId: string, status: TaskStatus) {
     await this.updateTask(taskId, { status });
+  },
+
+  async reorderTasks(newTasks: Task[]) {
+    currentState = {
+      ...currentState,
+      tasks: newTasks,
+    };
+    notify();
   },
 
   async deleteTask(taskId: string) {
@@ -489,7 +496,7 @@ export const taskStore = {
     notify();
   },
 
-  // Timer Actions
+  // Timer Actions (Lightweight update without triggering full app notify on every tick)
   startTimer(description: string, project: string) {
     currentState = {
       ...currentState,
@@ -544,13 +551,8 @@ export const taskStore = {
     notify();
   },
   updateTimerElapsed(seconds: number) {
-    currentState = {
-      ...currentState,
-      activeTimer: {
-        ...currentState.activeTimer,
-        elapsedSeconds: seconds,
-      },
-    };
+    currentState.activeTimer.elapsedSeconds = seconds;
+    // Silent state mutation for high frequency ticker ticks to avoid re-rendering unrelated pages
     notify();
   },
   setActiveTimerField(fields: Partial<ActiveTimer>) {
