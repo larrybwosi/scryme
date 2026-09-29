@@ -720,8 +720,15 @@ export function ProductPageClient({
 
             {/* SUPPLIERS TAB */}
             <TabsContent value="suppliers" className="mt-0">
-              <SuppliersTab product={product} />
+              <SuppliersTab product={product} setProduct={setProduct} suppliers={suppliers} />
             </TabsContent>
+
+            {/* ACTIVITY TAB */}
+            {isOwnerOrAdmin && (
+              <TabsContent value="activity" className="mt-0">
+                <ActivityTab productId={product.id} />
+              </TabsContent>
+            )}
           </Tabs>
         </div>
 
