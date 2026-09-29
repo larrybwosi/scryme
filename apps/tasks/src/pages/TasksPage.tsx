@@ -7,7 +7,6 @@ import {
   List,
   Kanban,
   Calendar as CalendarIcon,
-  Clock,
   Plus,
   Search,
   Filter,
@@ -29,6 +28,10 @@ import {
   Folder,
   User
 } from 'lucide-react';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Card } from '@repo/ui/components/ui/card';
 
 export default function TasksPage() {
   const { tasks, myTasksOnly } = useTaskStore();
@@ -154,12 +157,13 @@ export default function TasksPage() {
     }
   };
 
-  const handleCreateTask = (group: 'Today' | 'Tomorrow' | 'Feb 16, 2024') => {
+  const handleInlineTaskCreate = (group: 'Today' | 'Tomorrow' | 'Feb 16, 2024') => {
     if (!newTaskName.trim()) return;
     taskStore.addTask({
       name: newTaskName.trim(),
       client: 'Snazzy Studio',
-      project: 'Landing Page Rebrand',
+      projectId: 'proj-1',
+      project: 'Mobile App Redesign',
       status: 'ToDo',
       priority: 'MEDIUM',
       tags: ['Design'],
@@ -364,7 +368,8 @@ export default function TasksPage() {
       {activeTab === 'list' && (
         <div className="space-y-6">
           {dateGroups.map((group) => {
-            const groupTasks = filteredTasks.filter((t) => t.dateGroup === group);
+            const groupTasks = filteredTasks.filter((t) => t.dateGroup === group || (!t.dateGroup && group === 'Today'));
+            const completedCount = groupTasks.filter((t) => t.status === 'Completed').length;
 
             return (
               <div
@@ -530,17 +535,24 @@ export default function TasksPage() {
                     <span>Add task to {group}</span>
                   </button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
       )}
 
-      {/* Kanban Board View */}
       {activeTab === 'board' && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {(['ToDo', 'InProgress', 'Stopped', 'Review'] as TaskStatus[]).map((colStatus) => {
-            const colTasks = filteredTasks.filter((t) => t.status === colStatus);
+          {(['ToDo', 'InProgress', 'Review', 'Completed', 'Stopped'] as TaskStatus[]).map((status) => {
+            const columnTasks = filteredTasks.filter((t) => t.status === status);
+            const statusTitles: Record<TaskStatus, string> = {
+              ToDo: 'To Do',
+              InProgress: 'In Progress',
+              Review: 'In Review',
+              Completed: 'Completed',
+              Stopped: 'Stopped'
+            };
+
             return (
               <div
                 key={colStatus}
@@ -570,8 +582,8 @@ export default function TasksPage() {
                         </span>
                         {getPriorityBadge(task.priority)}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {task.client} • {task.project}
+                      <div className="text-[11px] text-muted-foreground mb-3 truncate">
+                        {task.project}
                       </div>
                       <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/50">
                         <div className="flex gap-1">
@@ -585,12 +597,12 @@ export default function TasksPage() {
                               key={idx}
                               src={person.avatar}
                               alt={person.name}
-                              className="h-5 w-5 rounded-full ring-1 ring-white object-cover"
+                              className="h-5 w-5 rounded-full ring-1 ring-background object-cover"
                             />
                           ))}
                         </div>
                       </div>
-                    </div>
+                    </Card>
                   ))}
                 </div>
               </div>
@@ -599,7 +611,6 @@ export default function TasksPage() {
         </div>
       )}
 
-      {/* Calendar View */}
       {activeTab === 'calendar' && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-6 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">

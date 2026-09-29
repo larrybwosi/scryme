@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import { useTaskStore, taskStore } from '../lib/store';
-import { CreditCard, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Card } from '@repo/ui/components/ui/card';
+import { Badge } from '@repo/ui/components/ui/badge';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell
+} from '@repo/ui/components/ui/table';
 
 export default function ExpensesPage() {
   const { expenses, projects } = useTaskStore();
@@ -32,21 +44,22 @@ export default function ExpensesPage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
             Project Expenses
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Track design assets, cloud infrastructure, and operational expense logs.
           </p>
         </div>
 
-        <button
+        <Button
           onClick={() => setIsAdding(!isAdding)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl shadow-xs flex items-center gap-2 self-start sm:self-auto transition-colors"
+          className="gap-2 self-start sm:self-auto text-xs"
+          size="sm"
         >
           <Plus className="h-4 w-4" />
           <span>Log Expense</span>
-        </button>
+        </Button>
       </div>
 
       {/* Summary Banner */}
@@ -61,88 +74,82 @@ export default function ExpensesPage() {
       </div>
 
       {isAdding && (
-        <form onSubmit={handleAddExpense} className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-sm animate-in fade-in duration-150">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Submit New Expense Claim</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none"
-            >
-              <option value="Software License">Software License</option>
-              <option value="Cloud Infrastructure">Cloud Infrastructure</option>
-              <option value="Design Assets">Design Assets</option>
-              <option value="Travel & Meals">Travel & Meals</option>
-            </select>
-            <input
-              type="text"
-              required
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Description / Vendor"
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none"
-            />
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Amount ($)"
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl"
-            >
-              Submit Expense
-            </button>
-          </div>
-        </form>
+        <Card className="p-5 shadow-xs border-border bg-muted/20">
+          <form onSubmit={handleAddExpense} className="space-y-4">
+            <h3 className="text-sm font-bold text-foreground">Submit New Expense Claim</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="Software License">Software License</option>
+                <option value="Cloud Infrastructure">Cloud Infrastructure</option>
+                <option value="Design Assets">Design Assets</option>
+                <option value="Travel & Meals">Travel & Meals</option>
+              </select>
+              <Input
+                type="text"
+                required
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Description / Vendor"
+                className="text-xs"
+              />
+              <Input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Amount ($)"
+                className="text-xs"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAdding(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" className="text-xs">
+                Submit Expense
+              </Button>
+            </div>
+          </form>
+        </Card>
       )}
 
       {/* Expenses Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-xs">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 font-semibold uppercase tracking-wider text-[10px] bg-slate-50/50 dark:bg-slate-900/40">
-                <th className="py-3 px-4">Ref #</th>
-                <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Description</th>
-                <th className="py-3 px-4">Amount</th>
-                <th className="py-3 px-4">Submitted By</th>
-                <th className="py-3 px-4">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {expenses.map((exp) => (
-                <tr key={exp.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3 px-4 font-mono font-bold text-slate-900 dark:text-white">{exp.expenseNumber}</td>
-                  <td className="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">{exp.category}</td>
-                  <td className="py-3 px-4 text-slate-500">{exp.description}</td>
-                  <td className="py-3 px-4 font-bold text-slate-900 dark:text-white">${exp.amount.toLocaleString()}</td>
-                  <td className="py-3 px-4 text-slate-500">{exp.submittedBy}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      exp.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400'
-                    }`}>
-                      {exp.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <Card className="overflow-hidden shadow-xs border-border">
+        <Table className="text-xs">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ref #</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Submitted By</TableHead>
+              <TableHead>Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {expenses.map((exp) => (
+              <TableRow key={exp.id}>
+                <TableCell className="font-mono font-bold text-foreground">{exp.expenseNumber}</TableCell>
+                <TableCell className="font-semibold text-foreground">{exp.category}</TableCell>
+                <TableCell className="text-muted-foreground">{exp.description}</TableCell>
+                <TableCell className="font-bold text-foreground">${exp.amount.toLocaleString()}</TableCell>
+                <TableCell className="text-muted-foreground">{exp.submittedBy}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="secondary"
+                    className={exp.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400'}
+                  >
+                    {exp.status}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Card>
     </div>
   );
 }

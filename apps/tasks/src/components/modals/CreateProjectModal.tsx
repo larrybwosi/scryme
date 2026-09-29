@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
 import { useTaskStore, taskStore } from '../../lib/store';
 import { PriorityLevel } from '../../lib/types';
-import { X } from 'lucide-react';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter
+} from '@repo/ui/components/ui/sheet';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Textarea } from '@repo/ui/components/ui/textarea';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -9,8 +20,6 @@ interface CreateProjectModalProps {
 }
 
 export default function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps) {
-  if (!isOpen) return null;
-
   const { clients, teamMembers } = useTaskStore();
 
   const [name, setName] = useState('');
@@ -50,60 +59,57 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150">
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-          <h2 className="text-base font-bold text-slate-900 dark:text-white">
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="sm:max-w-md flex flex-col p-0 gap-0">
+        <SheetHeader className="p-6 border-b border-border bg-muted/30">
+          <SheetTitle className="text-lg font-bold text-foreground">
             Create New Project
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+          </SheetTitle>
+          <SheetDescription className="text-xs text-muted-foreground">
+            Add a new project to organize tasks and manage team deliverables.
+          </SheetDescription>
+        </SheetHeader>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
           <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2">
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-xs font-semibold">
                 Project Name *
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Mobile App Redesign"
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                className="text-xs"
               />
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">
                 Key Prefix
-              </label>
-              <input
+              </Label>
+              <Input
                 type="text"
                 value={key}
                 onChange={(e) => setKey(e.target.value.toUpperCase())}
                 placeholder="APP"
                 maxLength={6}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                className="text-xs font-mono uppercase font-bold"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">
                 Client
-              </label>
+              </Label>
               <select
                 value={client}
                 onChange={(e) => setClient(e.target.value)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
               >
                 {clients.map((c) => (
                   <option key={c.id} value={c.name}>{c.name}</option>
@@ -111,14 +117,14 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
               </select>
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">
                 Priority
-              </label>
+              </Label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as PriorityLevel)}
-                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -128,36 +134,39 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block mb-1">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">
               Description
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description of the project goals..."
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
+              className="text-xs resize-none"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <button
+          <SheetFooter className="p-0 pt-4 flex gap-2 border-t border-border mt-auto">
+            <Button
               type="button"
+              variant="outline"
+              size="sm"
               onClick={onClose}
-              className="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-300 transition-colors"
+              className="text-xs"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl shadow-xs transition-colors"
+              size="sm"
+              className="text-xs"
             >
               Create Project
-            </button>
-          </div>
+            </Button>
+          </SheetFooter>
         </form>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
