@@ -126,7 +126,7 @@ export default function DashboardPage() {
         <div className="lg:col-span-1 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 space-y-4 shadow-xs">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900 dark:text-white">Active Projects</h2>
-            <Link to="/projects" className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+            <Link to={"/projects" as any} className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
               View All →
             </Link>
           </div>
