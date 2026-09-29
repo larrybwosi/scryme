@@ -88,6 +88,8 @@ import { PricingTab } from "./_components/pricing-tab";
 import { UnitsTab } from "./_components/units-tab";
 import { InventoryTab } from "./_components/inventory-tab";
 import { SuppliersTab } from "./_components/suppliers-tab";
+import { ActivityTab } from "./_components/activity-tab";
+import { useSession } from "@/lib/auth-client";
 
 export function ProductPageClient({
   product: initialProduct,
@@ -98,6 +100,9 @@ export function ProductPageClient({
   organizationUnits,
 }: any) {
   const [product, setProduct] = useState(initialProduct);
+  const { data: session } = useSession();
+  const userRole = (session?.user as any)?.role || (session as any)?.activeOrganizationRole || (session?.user as any)?.orgRole;
+  const isOwnerOrAdmin = userRole === "OWNER" || userRole === "ADMIN" || (session as any)?.role === "ADMIN" || (session as any)?.role === "OWNER";
   const [activeTab, setActiveTab] = useState("overview");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -627,6 +632,7 @@ export function ProductPageClient({
                     icon: History,
                   },
                   { value: "suppliers", label: "Suppliers", icon: Truck },
+                  ...(isOwnerOrAdmin ? [{ value: "activity", label: "Activity", icon: History }] : []),
                 ].map(tab => (
                   <TabsTrigger
                     key={tab.value}
