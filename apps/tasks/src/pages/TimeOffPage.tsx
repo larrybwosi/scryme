@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useTaskStore, taskStore } from '../lib/store';
-import { CalendarOff, Plus, CheckCircle2, Clock } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Card } from '@repo/ui/components/ui/card';
+import { Badge } from '@repo/ui/components/ui/badge';
 
 export default function TimeOffPage() {
   const { timeOffRequests, teamMembers } = useTaskStore();
@@ -32,91 +36,88 @@ export default function TimeOffPage() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
             Time Off & Leave Management
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             Track team leave schedules, vacation balance, and project availability.
           </p>
         </div>
 
-        <button
+        <Button
           onClick={() => setIsAdding(!isAdding)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl shadow-xs flex items-center gap-2 self-start sm:self-auto transition-colors"
+          className="gap-2 self-start sm:self-auto text-xs"
+          size="sm"
         >
           <Plus className="h-4 w-4" />
           <span>Request Leave</span>
-        </button>
+        </Button>
       </div>
 
       {isAdding && (
-        <form onSubmit={handleAddRequest} className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-sm animate-in fade-in duration-150">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Submit Leave Request</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <select
-              value={memberId}
-              onChange={(e) => setMemberId(e.target.value)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none"
-            >
-              {teamMembers.map((m) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as any)}
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none"
-            >
-              <option value="VACATION">Vacation</option>
-              <option value="SICK_LEAVE">Sick Leave</option>
-              <option value="PERSONAL">Personal Leave</option>
-            </select>
-            <input
-              type="text"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="Reason / Notes"
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl"
-            >
-              Submit Request
-            </button>
-          </div>
-        </form>
+        <Card className="p-5 border-border bg-muted/20">
+          <form onSubmit={handleAddRequest} className="space-y-4">
+            <h3 className="text-sm font-bold text-foreground">Submit Leave Request</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <select
+                value={memberId}
+                onChange={(e) => setMemberId(e.target.value)}
+                className="bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+              >
+                {teamMembers.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+              <select
+                value={type}
+                onChange={(e) => setType(e.target.value as any)}
+                className="bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="VACATION">Vacation</option>
+                <option value="SICK_LEAVE">Sick Leave</option>
+                <option value="PERSONAL">Personal Leave</option>
+              </select>
+              <Input
+                type="text"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Reason / Notes"
+                className="text-xs"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAdding(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" className="text-xs">
+                Submit Request
+              </Button>
+            </div>
+          </form>
+        </Card>
       )}
 
       <div className="space-y-3">
         {timeOffRequests.map((req) => (
-          <div key={req.id} className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
+          <Card key={req.id} className="p-4 border-border shadow-xs flex items-center justify-between">
             <div className="flex items-center gap-3">
               {req.memberAvatar && (
                 <img src={req.memberAvatar} alt={req.memberName} className="h-10 w-10 rounded-full object-cover" />
               )}
               <div>
-                <h3 className="font-bold text-sm text-slate-900 dark:text-white">{req.memberName}</h3>
-                <div className="text-xs text-slate-500">
+                <h3 className="font-bold text-sm text-foreground">{req.memberName}</h3>
+                <div className="text-xs text-muted-foreground">
                   {req.type} • {req.startDate} to {req.endDate} ({req.daysCount} days)
                 </div>
               </div>
             </div>
-            <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-              req.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400'
-            }`}>
+            <Badge
+              variant="secondary"
+              className={req.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400'}
+            >
               {req.status}
-            </span>
-          </div>
+            </Badge>
+          </Card>
         ))}
       </div>
     </div>

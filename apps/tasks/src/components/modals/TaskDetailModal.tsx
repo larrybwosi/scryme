@@ -2,20 +2,26 @@ import React, { useState } from 'react';
 import { Task, TaskStatus, PriorityLevel } from '../../lib/types';
 import { taskStore, useTaskStore } from '../../lib/store';
 import {
-  X,
-  CheckCircle2,
   Clock,
-  User,
-  Tag as TagIcon,
   MessageSquare,
   Activity,
   Plus,
   Trash2,
   ListTodo,
-  Paperclip,
-  Calendar,
-  AlertCircle
+  Calendar
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@repo/ui/components/ui/dialog';
+import { Button } from '@repo/ui/components/ui/button';
+import { Badge } from '@repo/ui/components/ui/badge';
+import { Input } from '@repo/ui/components/ui/input';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@repo/ui/components/ui/tabs';
 
 interface TaskDetailModalProps {
   task: Task | null;
@@ -25,7 +31,6 @@ interface TaskDetailModalProps {
 export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
   if (!task) return null;
 
-  const { teamMembers } = useTaskStore();
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [newCommentText, setNewCommentText] = useState('');
   const [activeTab, setActiveTab] = useState<'subtasks' | 'comments' | 'activity'>('subtasks');
@@ -41,76 +46,70 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
   const handleAddSubtask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubtaskTitle.trim()) return;
-    taskStore.addSubtask(task.id, newSubtaskTitle);
+    taskStore.addSubtask(task.id, newSubtaskTitle.trim());
     setNewSubtaskTitle('');
   };
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCommentText.trim()) return;
-    taskStore.addComment(task.id, newCommentText, 'Sarah Jenkins');
+    taskStore.addComment(
+      task.id,
+      newCommentText.trim(),
+      'Sarah Jenkins'
+    );
     setNewCommentText('');
   };
 
-  const completedSubtasksCount = (task.subtasks || []).filter((st) => st.completed).length;
   const totalSubtasksCount = (task.subtasks || []).length;
+  const completedSubtasksCount = (task.subtasks || []).filter((s) => s.completed).length;
   const subtaskProgress = totalSubtasksCount > 0 ? Math.round((completedSubtasksCount / totalSubtasksCount) * 100) : 0;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-end bg-slate-900/50 backdrop-blur-xs p-2 sm:p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-2xl h-full max-h-[92vh] rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-200">
-        {/* Header */}
-        <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-start justify-between bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="space-y-1 pr-6">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
-                {task.taskKey || 'TASK'}
-              </span>
-              <span className="text-xs text-slate-500 font-medium">
-                {task.client} • {task.project}
-              </span>
-            </div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-snug">
-              {task.name}
-            </h2>
+    <Dialog open={!!task} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="p-5 border-b border-border bg-muted/30">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-semibold text-muted-foreground">{task.client}</span>
+            <span className="text-xs text-muted-foreground">•</span>
+            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{task.project}</span>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+          <DialogTitle className="text-lg font-bold text-foreground">
+            {task.name}
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Task details for {task.name}
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Scrollable Modal Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Status & Priority Control Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-800">
+        <div className="p-6 space-y-5 overflow-y-auto flex-1">
+          {/* Quick Actions & Status Control */}
+          <div className="grid grid-cols-2 gap-4 p-3.5 bg-muted/40 rounded-xl border border-border">
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1">
                 Status
               </label>
               <select
                 value={task.status}
                 onChange={(e) => handleStatusChange(e.target.value as TaskStatus)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-background border border-input rounded-lg px-2.5 py-1 text-xs font-semibold text-foreground outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="ToDo">To Do</option>
                 <option value="InProgress">In Progress</option>
-                <option value="Stopped">Stopped</option>
                 <option value="Review">In Review</option>
                 <option value="Completed">Completed</option>
+                <option value="Stopped">Stopped</option>
               </select>
             </div>
 
             <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1">
                 Priority
               </label>
               <select
-                value={task.priority || 'MEDIUM'}
+                value={task.priority}
                 onChange={(e) => handlePriorityChange(e.target.value as PriorityLevel)}
-                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full bg-background border border-input rounded-lg px-2.5 py-1 text-xs font-semibold text-foreground outline-none focus:ring-2 focus:ring-ring"
               >
                 <option value="LOW">Low</option>
                 <option value="MEDIUM">Medium</option>
@@ -118,115 +117,74 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
                 <option value="URGENT">Urgent</option>
               </select>
             </div>
+          </div>
 
-            <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                Due Date
-              </label>
-              <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 py-1">
-                <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                <span>{task.estimation}</span>
+          {/* Details Metadata */}
+          <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span>Due: <strong className="text-foreground">{task.estimation}</strong></span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              <span>Logged: <strong className="text-foreground">{task.actualHours || 0} / {task.estimatedHours || 0} hrs</strong></span>
+            </div>
+          </div>
+
+          {/* Assignees & Tags */}
+          <div className="flex items-center justify-between pt-2 border-t border-border">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium">Assignees:</span>
+              <div className="flex -space-x-1">
+                {task.assignees.map((person, idx) => (
+                  <img
+                    key={idx}
+                    src={person.avatar}
+                    alt={person.name}
+                    title={person.name}
+                    className="h-7 w-7 rounded-full ring-2 ring-background object-cover"
+                  />
+                ))}
               </div>
             </div>
 
-            <div>
-              <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                Hours (Est / Act)
-              </label>
-              <div className="flex items-center gap-1 text-xs font-medium text-slate-700 dark:text-slate-300 py-1">
-                <Clock className="h-3.5 w-3.5 text-slate-400" />
-                <span>{task.estimatedHours || 0}h / {task.actualHours || 0}h</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground font-medium">Tags:</span>
+              <div className="flex gap-1">
+                {task.tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="text-[11px]">
+                    {tag}
+                  </Badge>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Assignees & Tags Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
-                Assignees & Labels
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500">Assigned to:</span>
-                <div className="flex -space-x-1">
-                  {task.assignees.map((person, idx) => (
-                    <img
-                      key={idx}
-                      src={person.avatar}
-                      alt={person.name}
-                      title={person.name}
-                      className="h-7 w-7 rounded-full ring-2 ring-white dark:ring-slate-900 object-cover"
-                    />
-                  ))}
-                </div>
-              </div>
+          {/* Tabs Navigation & Content */}
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="subtasks" className="text-xs gap-1.5">
+                <ListTodo className="h-3.5 w-3.5" />
+                <span>Subtasks ({completedSubtasksCount}/{totalSubtasksCount})</span>
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="text-xs gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5" />
+                <span>Comments ({(task.comments || []).length})</span>
+              </TabsTrigger>
+              <TabsTrigger value="activity" className="text-xs gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                <span>Activity</span>
+              </TabsTrigger>
+            </TabsList>
 
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs text-slate-500">Tags:</span>
-                <div className="flex gap-1">
-                  {task.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabs Navigation */}
-          <div className="border-b border-slate-200 dark:border-slate-800 flex gap-4">
-            <button
-              onClick={() => setActiveTab('subtasks')}
-              className={`pb-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-colors ${
-                activeTab === 'subtasks'
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              <ListTodo className="h-3.5 w-3.5" />
-              <span>Subtasks ({completedSubtasksCount}/{totalSubtasksCount})</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('comments')}
-              className={`pb-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-colors ${
-                activeTab === 'comments'
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              <MessageSquare className="h-3.5 w-3.5" />
-              <span>Comments ({(task.comments || []).length})</span>
-            </button>
-            <button
-              onClick={() => setActiveTab('activity')}
-              className={`pb-2 text-xs font-semibold flex items-center gap-1.5 border-b-2 transition-colors ${
-                activeTab === 'activity'
-                  ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
-                  : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-              }`}
-            >
-              <Activity className="h-3.5 w-3.5" />
-              <span>Activity Log</span>
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          {activeTab === 'subtasks' && (
-            <div className="space-y-4">
-              {/* Subtask Progress Bar */}
+            <TabsContent value="subtasks" className="space-y-4 pt-3">
               {totalSubtasksCount > 0 && (
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
                     <span>Checklist completion</span>
                     <span>{subtaskProgress}%</span>
                   </div>
-                  <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                  <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
                     <div
                       className="bg-indigo-600 h-full transition-all duration-300"
                       style={{ width: `${subtaskProgress}%` }}
@@ -235,22 +193,21 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
                 </div>
               )}
 
-              {/* Subtasks List */}
               <div className="space-y-2">
                 {(task.subtasks || []).map((st) => (
                   <div
                     key={st.id}
-                    className="flex items-center gap-2 p-2.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200/60 dark:border-slate-800 hover:bg-slate-100/60 transition-colors"
+                    className="flex items-center gap-2 p-2.5 bg-muted/40 rounded-xl border border-border hover:bg-muted/70 transition-colors"
                   >
                     <input
                       type="checkbox"
                       checked={st.completed}
                       onChange={() => taskStore.toggleSubtask(task.id, st.id)}
-                      className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      className="h-4 w-4 rounded border-input text-indigo-600 focus:ring-ring cursor-pointer"
                     />
                     <span
                       className={`text-xs font-medium flex-1 ${
-                        st.completed ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'
+                        st.completed ? 'line-through text-muted-foreground' : 'text-foreground'
                       }`}
                     >
                       {st.title}
@@ -259,103 +216,90 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
                 ))}
               </div>
 
-              {/* Add Subtask Form */}
               <form onSubmit={handleAddSubtask} className="flex gap-2">
-                <input
+                <Input
                   type="text"
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
                   placeholder="Add a new checklist item..."
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 text-xs h-9"
                 />
-                <button
-                  type="submit"
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl flex items-center gap-1 transition-colors"
-                >
+                <Button type="submit" size="sm" className="gap-1 h-9">
                   <Plus className="h-3.5 w-3.5" />
                   <span>Add</span>
-                </button>
+                </Button>
               </form>
-            </div>
-          )}
+            </TabsContent>
 
-          {activeTab === 'comments' && (
-            <div className="space-y-4">
+            <TabsContent value="comments" className="space-y-4 pt-3">
               <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                 {(task.comments || []).length === 0 ? (
-                  <p className="text-xs text-slate-400 py-4 text-center">No comments yet. Start the conversation!</p>
+                  <p className="text-xs text-muted-foreground py-4 text-center">No comments yet. Start the conversation!</p>
                 ) : (
                   (task.comments || []).map((c) => (
-                    <div key={c.id} className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-200/60 dark:border-slate-800 space-y-1">
+                    <div key={c.id} className="p-3 bg-muted/40 rounded-xl border border-border space-y-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold text-slate-900 dark:text-white">{c.author.name}</span>
-                        <span className="text-[10px] text-slate-400">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="font-bold text-foreground">{c.author.name}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
-                      <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{c.content}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{c.content}</p>
                     </div>
                   ))
                 )}
               </div>
 
-              {/* Add Comment Input */}
               <form onSubmit={handleAddComment} className="flex gap-2">
-                <input
+                <Input
                   type="text"
                   value={newCommentText}
                   onChange={(e) => setNewCommentText(e.target.value)}
                   placeholder="Write a comment..."
-                  className="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="flex-1 text-xs h-9"
                 />
-                <button
-                  type="submit"
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl transition-colors"
-                >
+                <Button type="submit" size="sm" className="h-9">
                   Post
-                </button>
+                </Button>
               </form>
-            </div>
-          )}
+            </TabsContent>
 
-          {activeTab === 'activity' && (
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <TabsContent value="activity" className="space-y-2 pt-3 max-h-60 overflow-y-auto">
               {(task.activityLogs || []).length === 0 ? (
-                <p className="text-xs text-slate-400 py-4 text-center">No recent activity logged for this task.</p>
+                <p className="text-xs text-muted-foreground py-4 text-center">No recent activity logged for this task.</p>
               ) : (
                 (task.activityLogs || []).map((log) => (
-                  <div key={log.id} className="flex items-start gap-2.5 text-xs p-2.5 bg-slate-50 dark:bg-slate-800/30 rounded-xl border border-slate-200/40 dark:border-slate-800">
+                  <div key={log.id} className="flex items-start gap-2.5 text-xs p-2.5 bg-muted/30 rounded-xl border border-border">
                     <Activity className="h-3.5 w-3.5 text-indigo-500 mt-0.5 shrink-0" />
                     <div>
-                      <span className="font-semibold text-slate-900 dark:text-white">{log.actor.name}</span>
-                      <span className="text-slate-600 dark:text-slate-400"> {log.action}</span>
-                      <div className="text-[10px] text-slate-400 mt-0.5">{new Date(log.createdAt).toLocaleString()}</div>
+                      <span className="font-semibold text-foreground">{log.actor.name}</span>
+                      <span className="text-muted-foreground"> {log.action}</span>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">{new Date(log.createdAt).toLocaleString()}</div>
                     </div>
                   </div>
                 ))
               )}
-            </div>
-          )}
+            </TabsContent>
+          </Tabs>
         </div>
 
-        {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/50">
-          <button
+        <DialogFooter className="p-4 border-t border-border flex items-center justify-between sm:justify-between bg-muted/30">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => {
               taskStore.deleteTask(task.id);
               onClose();
             }}
-            className="flex items-center gap-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 px-3 py-1.5 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 gap-1.5 text-xs"
           >
             <Trash2 className="h-3.5 w-3.5" />
             <span>Delete Task</span>
-          </button>
-          <button
-            onClick={onClose}
-            className="px-4 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-medium rounded-xl transition-colors"
-          >
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={onClose} className="text-xs">
             Close
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

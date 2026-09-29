@@ -1,28 +1,32 @@
 import React, { useState } from 'react';
 import { useTaskStore, taskStore } from '../lib/store';
-import { Users, Plus, Mail, Building2, FolderKanban, DollarSign } from 'lucide-react';
+import { Plus } from 'lucide-react';
+import { Button } from '@repo/ui/components/ui/button';
+import { Input } from '@repo/ui/components/ui/input';
+import { Card } from '@repo/ui/components/ui/card';
+import { Badge } from '@repo/ui/components/ui/badge';
 
 export default function ClientsPage() {
   const { clients } = useTaskStore();
-  const [newClientName, setNewClientName] = useState('');
-  const [newClientCompany, setNewClientCompany] = useState('');
-  const [newClientEmail, setNewClientEmail] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [company, setCompany] = useState('');
 
   const handleAddClient = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newClientName.trim()) return;
+    if (!name.trim()) return;
     taskStore.addClient({
-      name: newClientName.trim(),
-      company: newClientCompany.trim() || newClientName.trim(),
-      email: newClientEmail.trim() || `contact@${newClientName.toLowerCase().replace(/\s+/g, '')}.com`,
+      name: name.trim(),
+      email: email.trim() || `${name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+      company: company.trim() || 'Enterprise Client',
       activeProjectsCount: 1,
       totalInvoiced: 15000,
       status: 'ACTIVE'
     });
-    setNewClientName('');
-    setNewClientCompany('');
-    setNewClientEmail('');
+    setName('');
+    setEmail('');
+    setCompany('');
     setIsAdding(false);
   };
 
@@ -30,105 +34,88 @@ export default function ClientsPage() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">
             Clients
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage organization client directory and project billing profiles.
+          <p className="text-xs text-muted-foreground mt-1">
+            Manage organization client directory and project billing relationships.
           </p>
         </div>
 
-        <button
+        <Button
           onClick={() => setIsAdding(!isAdding)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl shadow-xs flex items-center gap-2 self-start sm:self-auto transition-colors"
+          className="gap-2 self-start sm:self-auto text-xs"
+          size="sm"
         >
           <Plus className="h-4 w-4" />
           <span>Add Client</span>
-        </button>
+        </Button>
       </div>
 
       {isAdding && (
-        <form onSubmit={handleAddClient} className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 space-y-4 shadow-sm animate-in fade-in duration-150">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Add New Client Organization</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <input
-              type="text"
-              required
-              value={newClientName}
-              onChange={(e) => setNewClientName(e.target.value)}
-              placeholder="Client Name *"
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <input
-              type="text"
-              value={newClientCompany}
-              onChange={(e) => setNewClientCompany(e.target.value)}
-              placeholder="Company Name"
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <input
-              type="email"
-              value={newClientEmail}
-              onChange={(e) => setNewClientEmail(e.target.value)}
-              placeholder="Contact Email"
-              className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsAdding(false)}
-              className="px-3 py-1.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-xs rounded-xl"
-            >
-              Save Client
-            </button>
-          </div>
-        </form>
+        <Card className="p-5 shadow-xs border-border bg-muted/20">
+          <form onSubmit={handleAddClient} className="space-y-4">
+            <h3 className="text-sm font-bold text-foreground">Add New Client</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Input
+                type="text"
+                required
+                placeholder="Client / Company Name *"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="text-xs"
+              />
+              <Input
+                type="email"
+                placeholder="Contact Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="text-xs"
+              />
+              <Input
+                type="text"
+                placeholder="Company Entity"
+                value={company}
+                onChange={(e) => setCompany(e.target.value)}
+                className="text-xs"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setIsAdding(false)} className="text-xs">
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" className="text-xs">
+                Save Client
+              </Button>
+            </div>
+          </form>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clients.map((c) => (
-          <div key={c.id} className="p-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-4">
+        {clients.map((client) => (
+          <Card key={client.id} className="p-5 border-border shadow-xs space-y-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 font-bold text-sm flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
-                  {c.name.substring(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">{c.name}</h3>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1">
-                    <Building2 className="h-3 w-3" />
-                    <span>{c.company || 'Enterprise'}</span>
-                  </div>
-                </div>
+              <div>
+                <h3 className="font-bold text-sm text-foreground">{client.name}</h3>
+                <div className="text-xs text-muted-foreground">{client.company}</div>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-                {c.status}
-              </span>
+              <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                {client.status}
+              </Badge>
             </div>
 
-            <div className="text-xs text-slate-500 space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <Mail className="h-3.5 w-3.5 text-slate-400" />
-                <span>{c.email}</span>
+            <div className="pt-3 border-t border-border grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Active Projects</span>
+                <span className="font-bold text-foreground">{client.activeProjectsCount} projects</span>
               </div>
-              <div className="flex items-center justify-between pt-1 text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-                <span className="flex items-center gap-1 text-slate-500">
-                  <FolderKanban className="h-3.5 w-3.5 text-slate-400" />
-                  {c.activeProjectsCount || 1} Active Projects
-                </span>
-                <span className="text-emerald-600 dark:text-emerald-400">
-                  ${(c.totalInvoiced || 0).toLocaleString()} Invoiced
-                </span>
+              <div>
+                <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Total Invoiced</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">${(client.totalInvoiced || 0).toLocaleString()}</span>
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>
