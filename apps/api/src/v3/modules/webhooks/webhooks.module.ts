@@ -4,6 +4,7 @@ import {
   WebhookController,
   PublicIncomingWebhookController,
 } from "./interfaces/http/webhook.controller";
+import { PublicSentryWebhookController } from "./interfaces/http/sentry-webhook.controller";
 import { WebhookService } from "./infrastructure/services/webhook.service";
 import { WebhookProcessor } from "./infrastructure/workers/webhook.processor";
 
@@ -13,7 +14,11 @@ import { WebhookProcessor } from "./infrastructure/workers/webhook.processor";
       name: "webhooks",
     }),
   ],
-  controllers: [WebhookController, PublicIncomingWebhookController],
+  controllers: [
+    WebhookController,
+    PublicIncomingWebhookController,
+    PublicSentryWebhookController,
+  ],
   providers: [WebhookService, WebhookProcessor],
   exports: [WebhookService],
 })
