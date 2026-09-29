@@ -4,8 +4,12 @@ import { getPortalSDK } from "./portal-sdk";
 import { revalidatePath } from "next/cache";
 
 export async function getCart(orgSlug: string) {
+  const session = await getSession();
   const sdk = await getPortalSDK();
-  return await sdk.cart.getCart(orgSlug);
+  const res = await sdk.orders.getCart({
+    sessionId: session?.customerId || "portal-session",
+  });
+  return res.data;
 }
 
 export async function addToCart(orgSlug: string, variantId: string, quantity: number) {
@@ -13,7 +17,7 @@ export async function addToCart(orgSlug: string, variantId: string, quantity: nu
   if (!session) throw new Error("Unauthorized");
 
   const sdk = await getPortalSDK();
-  await sdk.cart.addItem(orgSlug, {
+  await sdk.orders.addToCart({
     variantId,
     quantity,
     customerId: session.customerId
@@ -29,7 +33,7 @@ export async function removeFromCart(orgSlug: string, variantId: string) {
   if (!session) throw new Error("Unauthorized");
 
   const sdk = await getPortalSDK();
-  await sdk.cart.removeItem(orgSlug, {
+  await sdk.orders.removeFromCart({
     variantId,
     customerId: session.customerId
   });
@@ -41,20 +45,27 @@ export async function checkout(orgSlug: string) {
   if (!session) throw new Error("Unauthorized");
 
   const sdk = await getPortalSDK();
-  const cart = await sdk.cart.getCart(orgSlug);
-  if (!cart || !cart.items || cart.items.length === 0) throw new Error("Cart is empty");
+  const cartRes = await sdk.orders.getCart({
+    sessionId: session.customerId,
+  });
+  const cart: any = cartRes.data;
+  const items = cart?.items || cart?.data?.items || [];
+  if (!items || items.length === 0) throw new Error("Cart is empty");
 
   const orderData = {
-    items: cart.items.map((item: any) => ({
+    customerId: session.customerId,
+    locationId: "default",
+    channel: "B2B_PORTAL" as any,
+    items: items.map((item: any) => ({
       variantId: item.variantId,
       quantity: item.quantity
     }))
   };
 
-  const tx = await sdk.b2b.createOrder(orgSlug, orderData);
+  const res = await sdk.orders.createOrder(orderData);
 
   revalidatePath(`/${orgSlug}/orders`);
   revalidatePath(`/${orgSlug}/cart`);
 
-  return tx;
+  return res.data;
 }

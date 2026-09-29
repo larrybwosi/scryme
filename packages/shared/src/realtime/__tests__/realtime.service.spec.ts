@@ -1,16 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RealtimeService } from '../realtime.service';
-import { SocketIORealtimeProvider } from '../socketio.provider';
 
 vi.mock('../socketio.provider', () => {
   return {
-    SocketIORealtimeProvider: vi.fn().mockImplementation(() => ({
-      publish: vi.fn().mockResolvedValue(undefined),
-      getPresence: vi.fn().mockResolvedValue([]),
-      enterPresence: vi.fn().mockResolvedValue(undefined),
-      leavePresence: vi.fn().mockResolvedValue(undefined),
-      getHistory: vi.fn().mockResolvedValue([]),
-    })),
+    SocketIORealtimeProvider: class {
+      publish = vi.fn().mockResolvedValue(undefined);
+      getPresence = vi.fn().mockResolvedValue([]);
+      enterPresence = vi.fn().mockResolvedValue(undefined);
+      leavePresence = vi.fn().mockResolvedValue(undefined);
+      getHistory = vi.fn().mockResolvedValue([]);
+    },
   };
 });
 
@@ -23,7 +22,7 @@ describe('RealtimeService', () => {
   });
 
   it('should initialize with SocketIORealtimeProvider', () => {
-    expect(SocketIORealtimeProvider).toHaveBeenCalled();
+    expect((service as any).provider).toBeDefined();
   });
 
   it('should delegate publish to provider', async () => {

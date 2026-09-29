@@ -13,7 +13,7 @@ export async function updateAccount(orgSlug: string, formData: FormData) {
   const company = formData.get("company") as string;
 
   const sdk = await getPortalSDK();
-  await sdk.customers.updateCustomer(orgSlug, session.customerId, {
+  await sdk.customer.updateProfile(session.customerId, {
     name,
     email,
     phone,

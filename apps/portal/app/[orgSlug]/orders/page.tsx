@@ -19,8 +19,8 @@ export default async function OrdersPage({ params }: { params: Promise<{ orgSlug
   await requireSession(orgSlug);
 
   const sdk = await getPortalSDK();
-  const txsResponse = await sdk.b2b.getOrders(orgSlug);
-  const txs = txsResponse || [];
+  const txsResponse = await sdk.orders.getB2BOrders();
+  const txs = (txsResponse.data as any) || [];
 
   const getStatusColor = (status: string) => {
     switch (status) {

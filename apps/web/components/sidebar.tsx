@@ -5,7 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { authClient, useSession } from "@/lib/auth-client";
 import { SetupGuideTour } from "@/components/onboarding/setup-guide-tour";
-import { UserSettingsDialog } from "@/components/user-settings-dialog";
+import { UserSettingsDialog } from "@repo/ui/components/user-settings-dialog";
+import { getActiveOrganization } from "@/app/actions/organization";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@repo/ui/components/ui/avatar";
 import {
   Tooltip,
   TooltipContent,
@@ -150,10 +156,18 @@ export function Sidebar() {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const [showUserSettingsDialog, setShowUserSettingsDialog] = useState(false);
   const [showManualTour, setShowManualTour] = useState(false);
+  const [activeOrg, setActiveOrg] = useState<any>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
-  const { data: activeOrg } = authClient.useActiveOrganization();
+
+  useEffect(() => {
+    getActiveOrganization().then((org) => {
+      if (org) setActiveOrg(org);
+    }).catch((err) => {
+      console.error("Failed to load active organization:", err);
+    });
+  }, []);
 
   const activeOrgName = activeOrg?.name || "Scryme";
 
@@ -189,6 +203,14 @@ export function Sidebar() {
     });
   };
 
+  const userInitials =
+    session?.user?.name
+      ?.split(" ")
+      .map((n: string) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) || "U";
+
   return (
     <>
       <SetupGuideTour
@@ -211,7 +233,7 @@ export function Sidebar() {
           isCollapsed ? "w-20" : "w-64"
         )}
       >
-        {/* Header Header */}
+        {/* Header */}
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           {!isCollapsed ? (
             <div className="flex items-center gap-3 px-2 min-w-0">
@@ -360,9 +382,14 @@ export function Sidebar() {
               className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-sidebar-accent transition-colors text-left group"
               title="User Info & Preferences"
             >
-              <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-200 shrink-0 group-hover:ring-2 group-hover:ring-indigo-500 transition-all">
-                {session?.user?.name?.charAt(0) || "U"}
-              </div>
+              <Avatar className="h-8 w-8 border border-border shrink-0 group-hover:ring-2 group-hover:ring-indigo-500 transition-all">
+                {session?.user?.image ? (
+                  <AvatarImage src={session.user.image} alt={session.user.name || "User"} />
+                ) : null}
+                <AvatarFallback className="bg-slate-800 text-xs font-bold text-slate-200">
+                  {userInitials}
+                </AvatarFallback>
+              </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-medium truncate leading-tight">
                   {session?.user?.name || "User"}
@@ -378,11 +405,18 @@ export function Sidebar() {
               <TooltipTrigger asChild>
                 <button
                   onClick={() => setShowUserSettingsDialog(true)}
-                  className="h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-200 mx-auto hover:ring-2 hover:ring-indigo-500 transition-all"
+                  className="rounded-full mx-auto hover:ring-2 hover:ring-indigo-500 transition-all focus:outline-none"
                 >
-                  {session?.user?.name?.charAt(0) || "U"}
+                  <Avatar className="h-9 w-9 border border-border">
+                    {session?.user?.image ? (
+                      <AvatarImage src={session.user.image} alt={session.user.name || "User"} />
+                    ) : null}
+                    <AvatarFallback className="bg-slate-800 text-xs font-bold text-slate-200">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
                 </button>
-              </TooltipTrigger>
+              TooltipTrigger>
               <TooltipContent side="right">
                 User Info & Preferences
               </TooltipContent>
