@@ -162,4 +162,9 @@ export const taskApi = {
       body: JSON.stringify(data),
     });
   },
+
+  // Member / Team endpoints
+  async getMembers() {
+    return fetchWithAuth("/v3/members", { method: "GET" });
+  },
 };

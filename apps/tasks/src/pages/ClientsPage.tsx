@@ -21,7 +21,6 @@ export default function ClientsPage() {
       email: email.trim() || `${name.toLowerCase().replace(/\s+/g, '')}@example.com`,
       company: company.trim() || 'Enterprise Client',
       activeProjectsCount: 1,
-      totalInvoiced: 15000,
       status: 'ACTIVE'
     });
     setName('');
@@ -38,7 +37,7 @@ export default function ClientsPage() {
             Clients
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Manage organization client directory and project billing relationships.
+            Manage organization client directory and project relationships.
           </p>
         </div>
 
@@ -93,30 +92,30 @@ export default function ClientsPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clients.map((client) => (
-          <Card key={client.id} className="p-5 border-border shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-sm text-foreground">{client.name}</h3>
-                <div className="text-xs text-muted-foreground">{client.company}</div>
+        {clients.length === 0 ? (
+          <div className="col-span-full py-12 text-center text-xs text-muted-foreground">
+            No clients found. Click "Add Client" to create your first client record.
+          </div>
+        ) : (
+          clients.map((client) => (
+            <Card key={client.id} className="p-5 border-border shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">{client.name}</h3>
+                  <div className="text-xs text-muted-foreground">{client.company}</div>
+                </div>
+                <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                  {client.status}
+                </Badge>
               </div>
-              <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-                {client.status}
-              </Badge>
-            </div>
 
-            <div className="pt-3 border-t border-border grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Active Projects</span>
-                <span className="font-bold text-foreground">{client.activeProjectsCount} projects</span>
+              <div className="pt-3 border-t border-border flex items-center justify-between text-xs">
+                <span className="text-muted-foreground text-[10px] uppercase font-semibold">Active Projects</span>
+                <span className="font-bold text-foreground">{client.activeProjectsCount || 0} projects</span>
               </div>
-              <div>
-                <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Total Invoiced</span>
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">${(client.totalInvoiced || 0).toLocaleString()}</span>
-              </div>
-            </div>
-          </Card>
-        ))}
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );

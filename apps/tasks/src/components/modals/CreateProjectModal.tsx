@@ -24,29 +24,31 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
 
   const [name, setName] = useState('');
   const [key, setKey] = useState('');
-  const [client, setClient] = useState(clients[0]?.name || 'Snazzy Studio');
+  const [client, setClient] = useState(clients[0]?.name || 'Workspace Client');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('MEDIUM');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
     const prjKey = key.trim() || name.substring(0, 3).toUpperCase();
 
-    taskStore.addProject({
+    await taskStore.addProject({
       name: name.trim(),
       key: prjKey,
-      client,
+      client: client || 'Workspace Client',
       description: description.trim(),
       status: 'ACTIVE',
       priority,
       color: '#6366F1',
-      owner: {
-        id: teamMembers[0]?.id || 'm-1',
-        name: teamMembers[0]?.name || 'Sarah Jenkins',
-        avatar: teamMembers[0]?.avatar
-      },
+      owner: teamMembers[0]
+        ? {
+            id: teamMembers[0].id,
+            name: teamMembers[0].name,
+            avatar: teamMembers[0].avatar,
+          }
+        : undefined,
       taskCount: 0,
       completedTaskCount: 0,
       progress: 0,
@@ -106,15 +108,25 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
               <Label className="text-xs font-semibold">
                 Client
               </Label>
-              <select
-                value={client}
-                onChange={(e) => setClient(e.target.value)}
-                className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
-              >
-                {clients.map((c) => (
-                  <option key={c.id} value={c.name}>{c.name}</option>
-                ))}
-              </select>
+              {clients.length > 0 ? (
+                <select
+                  value={client}
+                  onChange={(e) => setClient(e.target.value)}
+                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  type="text"
+                  placeholder="Client Name"
+                  value={client}
+                  onChange={(e) => setClient(e.target.value)}
+                  className="text-xs"
+                />
+              )}
             </div>
 
             <div className="space-y-1.5">
