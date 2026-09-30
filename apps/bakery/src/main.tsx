@@ -6,6 +6,7 @@ import { QueryProvider } from '@/lib/tanstack-axios'
 import { AuthProvider } from '@/lib/providers/auth-context'
 import { OrganizationProvider } from '@/lib/providers/organization-context'
 import { DeleteConfirmationProvider } from '@/lib/providers/delete-modal'
+import { TooltipProvider } from '@repo/ui/components/ui/tooltip'
 import { Toaster } from 'sonner'
 import './index.css'
 
@@ -15,10 +16,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <AuthProvider>
         <OrganizationProvider>
           <DeleteConfirmationProvider>
+          <TooltipProvider>
             <BrowserRouter>
               <App />
               <Toaster />
             </BrowserRouter>
+          </TooltipProvider>
           </DeleteConfirmationProvider>
         </OrganizationProvider>
       </AuthProvider>

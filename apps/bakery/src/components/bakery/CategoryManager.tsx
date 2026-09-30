@@ -16,7 +16,7 @@ import {
 } from '@repo/ui/components/ui/dialog';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Separator } from '@repo/ui/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@repo/ui/components/ui/tooltip';
 import { BakeryCategory } from '@/types/bakery';
 import {
   Plus,
@@ -231,8 +231,10 @@ export default function CategoryManager() {
   const filteredCategories = Array.isArray(categories)
     ? categories.filter(
         category =>
-          (category?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (category?.description && category.description.toLowerCase().includes(searchTerm.toLowerCase()))
+          category &&
+          typeof category === 'object' &&
+          ((category.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (category.description && typeof category.description === 'string' && category.description.toLowerCase().includes(searchTerm.toLowerCase())))
       )
     : [];
 
@@ -453,7 +455,7 @@ export default function CategoryManager() {
           return (
             <Card key={category.id} className="group relative overflow-hidden transition-all duration-300 hover:shadow-lg border-border/60 hover:border-primary/20 bg-card/50 backdrop-blur-sm">
                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex gap-1">
-                  <Tooltip>
+                  <TooltipProvider><Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="secondary"
@@ -467,8 +469,8 @@ export default function CategoryManager() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">Edit Category</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
+                  </Tooltip></TooltipProvider>
+                  <TooltipProvider><Tooltip>
                     <TooltipTrigger asChild>
                       <Button
                         variant="secondary"
@@ -482,7 +484,7 @@ export default function CategoryManager() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">Delete Category</TooltipContent>
-                  </Tooltip>
+                  </Tooltip></TooltipProvider>
                </div>
 
               <CardHeader className="pb-3">
