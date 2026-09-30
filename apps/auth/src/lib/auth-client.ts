@@ -4,8 +4,10 @@ import { passkeyClient } from "@better-auth/passkey/client";
 import { oauthProviderClient } from "@better-auth/oauth-provider/client";
 import { ssoClient } from "@better-auth/sso/client";
 
+const IS_PROD = import.meta.env.MODE === "production" || import.meta.env.PROD;
+
 export const DEFAULT_WEB_URL =
-  import.meta.env.VITE_PUBLIC_WEB_URL || "http://localhost:3000";
+  import.meta.env.VITE_PUBLIC_WEB_URL || (IS_PROD ? "https://app.scryme.tech" : "http://localhost:3000");
 
 const getValidBaseUrl = (): string => {
   if (typeof window !== "undefined") {
@@ -20,7 +22,7 @@ const getValidBaseUrl = (): string => {
   ) {
     return envUrl.trim();
   }
-  return "http://localhost:4444";
+  return IS_PROD ? "https://auth.scryme.tech" : "http://localhost:4444";
 };
 
 export const authClient = createAuthClient({
