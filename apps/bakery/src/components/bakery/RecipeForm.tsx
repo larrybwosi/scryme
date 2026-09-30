@@ -194,8 +194,8 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   };
 
   const handleIngredientUnitChange = (index: number) => (value: string | undefined, type: 'system' | 'org') => {
-    setValue(`ingredients.${index}.systemUnitId` as any, type === 'system' ? value : undefined);
-    setValue(`ingredients.${index}.orgUnitId` as any, type === 'org' ? value : undefined);
+    setValue(`ingredients.${index}.systemUnitId` as any, type === 'system' ? value : undefined, { shouldValidate: true });
+    setValue(`ingredients.${index}.orgUnitId` as any, type === 'org' ? value : undefined, { shouldValidate: true });
   };
 
   const isGenerating = generateRecipeAi.isPending;
@@ -302,7 +302,10 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
             <TabsContent value="manual">
               <form
                 id="recipe-form"
-                onSubmit={handleSubmit(onSubmit)}
+                onSubmit={handleSubmit(onSubmit, (invalidErrors) => {
+                  console.error('Validation errors:', invalidErrors);
+                  toast.error('Please fill in all required fields marked in red.');
+                })}
                 className="space-y-8 bg-white dark:bg-slate-950 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm"
               >
                 <FormSection title="Core Information" icon={FileText}>
@@ -329,7 +332,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                       ) : (
                         <Select
                           value={categoryId}
-                          onValueChange={value => setValue('categoryId', value)}
+                          onValueChange={value => setValue('categoryId', value, { shouldValidate: true })}
                           disabled={isSubmitting}
                         >
                           <SelectTrigger className={cn('h-9', errors.categoryId && 'border-red-500')}>
@@ -377,11 +380,12 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                           <AdvancedUnitSelector
                             value={systemUnitId || orgUnitId || undefined}
                             onValueChange={(val, type) => {
-                              setValue('systemUnitId', type === 'system' ? val : undefined);
-                              setValue('orgUnitId', type === 'org' ? val : undefined);
+                              setValue('systemUnitId', type === 'system' ? val : undefined, { shouldValidate: true });
+                              setValue('orgUnitId', type === 'org' ? val : undefined, { shouldValidate: true });
                             }}
                             disabled={isSubmitting}
                             placeholder="Unit"
+                            hasError={Boolean(errors.systemUnitId || errors.orgUnitId)}
                           />
                         </div>
                       </div>
@@ -394,9 +398,10 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                       <Label className="text-xs font-medium text-slate-500 uppercase">Produces Product Variant *</Label>
                       <ProductVariantsSelect
                         value={producesVariantId}
-                        onValueChange={val => setValue('producesVariantId', val)}
+                        onValueChange={val => setValue('producesVariantId', val, { shouldValidate: true })}
                         disabled={isSubmitting}
                         placeholder="Link to inventory item"
+                        className={errors.producesVariantId ? 'border-red-500' : ''}
                       />
                       {errors.producesVariantId && (
                         <p className="text-xs text-red-500">Must link to an inventory variant</p>
@@ -483,7 +488,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                 <div>
                                   <Select
                                     value={currentIng?.ingredientVariantId || ''}
-                                    onValueChange={value => setValue(`ingredients.${index}.ingredientVariantId` as any, value)}
+                                    onValueChange={value => setValue(`ingredients.${index}.ingredientVariantId` as any, value, { shouldValidate: true })}
                                     disabled={isSubmitting}
                                   >
                                     <SelectTrigger
@@ -524,6 +529,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                     onValueChange={handleIngredientUnitChange(index)}
                                     disabled={isSubmitting}
                                     placeholder="Unit"
+                                    hasError={Boolean(ingredientErrors?.[index]?.systemUnitId || ingredientErrors?.[index]?.orgUnitId || ingredientErrors?.[index]?.root)}
                                   />
                                 </div>
 

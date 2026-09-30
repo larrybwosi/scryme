@@ -19,6 +19,7 @@ interface AdvancedUnitSelectorProps {
   className?: string;
   filterByType?: UnitType | UnitType[];
   allowCustom?: boolean;
+  hasError?: boolean;
 }
 
 export function AdvancedUnitSelector({
@@ -29,6 +30,7 @@ export function AdvancedUnitSelector({
   className,
   filterByType,
   allowCustom = true,
+  hasError = false,
 }: AdvancedUnitSelectorProps) {
   const { orgUnits, systemUnits } = useUnits();
   const [open, setOpen] = useState(false);
@@ -125,6 +127,7 @@ export function AdvancedUnitSelector({
             'transition-all duration-200',
             !selectedUnit && 'text-muted-foreground',
             open && 'border-border ring-1 ring-ring/20',
+            hasError && 'border-red-500 focus-visible:ring-red-500',
             className
           )}
         >

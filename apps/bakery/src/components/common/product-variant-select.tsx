@@ -75,6 +75,7 @@ interface ProductVariantsSelectProps {
   showLocationInfo?: boolean;
   excludeVariant?: string;
   excludeVariantIds?: string[];
+  className?: string;
 }
 
 // --- Component ---
@@ -89,6 +90,7 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
   showLocationInfo = true,
   excludeVariant,
   excludeVariantIds = [],
+  className,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -237,6 +239,7 @@ export const ProductVariantsSelect: FC<ProductVariantsSelectProps> = ({
           className={cn(
             "w-full justify-between bg-background hover:bg-accent hover:text-accent-foreground h-auto min-h-[40px] py-2",
             !value && "text-muted-foreground",
+            className
           )}
         >
           {selectedVariant ? (

@@ -52,18 +52,38 @@ interface OrganizationUnit {
 }
 
 // API functions
-const fetchSystemUnits = async (): Promise<SystemUnit[]> => {
+interface UnitsResponse {
+  systemUnits?: SystemUnit[];
+  organizationUnits?: OrganizationUnit[];
+}
+
+const fetchAllUnits = async (): Promise<{ systemUnits: SystemUnit[]; organizationUnits: OrganizationUnit[] }> => {
   if (isTauri() || isOfflineMode()) {
-    return tauriInvoke<SystemUnit[]>('get_system_units');
+    const [systemUnits, organizationUnits] = await Promise.all([
+      tauriInvoke<SystemUnit[]>('get_system_units').catch(() => []),
+      tauriInvoke<OrganizationUnit[]>('get_organization_units', { organizationId: 'local-org' }).catch(() => []),
+    ]);
+    return { systemUnits: systemUnits || [], organizationUnits: organizationUnits || [] };
   }
-  return sdk.client.get('/units/system');
+
+  const res = await sdk.client.get('/units');
+  if (Array.isArray(res)) {
+    return { systemUnits: res, organizationUnits: [] };
+  }
+  return {
+    systemUnits: res?.systemUnits || [],
+    organizationUnits: res?.organizationUnits || [],
+  };
+};
+
+const fetchSystemUnits = async (): Promise<SystemUnit[]> => {
+  const units = await fetchAllUnits();
+  return units.systemUnits;
 };
 
 const fetchOrganizationUnits = async (): Promise<OrganizationUnit[]> => {
-  if (isTauri() || isOfflineMode()) {
-    return tauriInvoke<OrganizationUnit[]>('get_organization_units', { organizationId: 'local-org' });
-  }
-  return sdk.client.get(`/units/organization`);
+  const units = await fetchAllUnits();
+  return units.organizationUnits;
 };
 
 const createOrganizationUnit = async (data: Partial<OrganizationUnit>): Promise<OrganizationUnit> => {
@@ -105,22 +125,16 @@ export function useUnits() {
 
   // Queries
   const {
-    data: systemUnits = [],
-    isLoading: systemLoading,
-    error: systemError,
+    data: allUnitsData = { systemUnits: [], organizationUnits: [] },
+    isLoading: loading,
+    error: unitsError,
   } = useQuery({
-    queryKey: ['systemUnits'],
-    queryFn: fetchSystemUnits,
+    queryKey: ['units'],
+    queryFn: fetchAllUnits,
   });
 
-  const {
-    data: orgUnits = [],
-    isLoading: orgLoading,
-    error: orgError,
-  } = useQuery({
-    queryKey: ['organizationUnits'],
-    queryFn: () => fetchOrganizationUnits(),
-  });
+  const systemUnits = allUnitsData.systemUnits || [];
+  const orgUnits = allUnitsData.organizationUnits || [];
 
   // Mutations
   const createMutation = useMutation({
@@ -214,7 +228,7 @@ export function useUnits() {
     return groups;
   }, [filteredUnits]);
 
-  const loading = systemLoading || orgLoading;
+
 
   return {
     // State
