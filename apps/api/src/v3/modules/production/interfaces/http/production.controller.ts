@@ -18,6 +18,8 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { ProductionService } from "../../application/services/production.service";
+import { MemberUseCase } from "../../members/application/use-cases/member.use-case";
+import { MemberQueryDto } from "../../members/application/dto/member.dto";
 import { ProductionReportService } from "../../reports/production-report.service";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
@@ -50,7 +52,7 @@ import {
 
 @ApiTags("V3 Production")
 @ApiBearerAuth()
-@Controller(":orgSlug/production")
+@Controller([":orgSlug/production", "v3/:orgSlug/production", "api/v3/:orgSlug/production"])
 @ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
@@ -58,6 +60,7 @@ export class ProductionController {
   constructor(
     private readonly productionService: ProductionService,
     private readonly productionReportService: ProductionReportService,
+    private readonly memberUseCase: MemberUseCase,
   ) {}
 
   @Get(["", "overview"])
@@ -456,6 +459,16 @@ export class ProductionController {
     const { organizationId } = ctx;
     await this.productionReportService.generateAndSendReport(organizationId, 7);
     return { status: "success", message: "Test report triggered" };
+  }
+
+  @Get("members")
+  @Permissions("members:read")
+  @ApiOperation({ summary: "List organization members for production management" })
+  async getMembers(
+    @v3Context() ctx: V3ApiContext,
+    @Query() query: MemberQueryDto,
+  ) {
+    return this.memberUseCase.getMembers(ctx.organizationId, query);
   }
 
   @Get(["bakers", "staff", "operators"])

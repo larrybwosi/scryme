@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ProductionController } from "../production.controller";
 import { ProductionService } from "../../../application/services/production.service";
 import { ProductionReportService } from "../../../reports/production-report.service";
+import { MemberUseCase } from "../../../../members/application/use-cases/member.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
 import { AuditService } from "@/v3/common/services/audit.service";
@@ -29,6 +30,12 @@ describe("ProductionController (V3)", () => {
             updateCategory: vi.fn(),
             updateSettings: vi.fn(),
             getVariants: vi.fn(),
+          },
+        },
+        {
+          provide: MemberUseCase,
+          useValue: {
+            getMembers: vi.fn(),
           },
         },
         {
