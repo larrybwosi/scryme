@@ -21,3 +21,11 @@
 ## 2026-09-27 - Department Mutation Tenant Isolation
 **Learning:** In `DepartmentUseCase`, `department.update` and `department.delete` rely solely on primary key `id` in `where` clauses because `Department` lacks a composite unique index on `[id, organizationId]`. If pre-checks are bypassed or raced against, single-ID targeting creates potential BOLA/IDOR risks.
 **Action:** Use `department.updateMany({ where: { id, organizationId }, data })` followed by `findFirstOrThrow` (and `department.deleteMany({ where: { id, organizationId } })`) to enforce database-level multi-tenant isolation during mutations.
+
+## 2026-09-29 - Multi-Tenant Scoping in Prisma Delete and Wallet Updates
+**Learning:** Models like `Customer` and `DeliveryPartner` lack composite unique keys on `[id, organizationId]`. Using Prisma's standard `delete({ where: { id } })` or `update({ where: { id } })` ignores `organizationId` filters in `where` parameters, creating BOLA/IDOR vulnerabilities if mutations are executed against foreign tenant entity IDs.
+**Action:** Use `deleteMany({ where: { id, organizationId } })` and `updateMany({ where: { id, organizationId }, data })` to enforce strict database-level multi-tenant isolation during entity deletion, deactivation, and balance adjustments.
+
+## 2026-09-30 - User Owner Scoping in OAuth Clients and API Keys
+**Learning:** `OAuthClient` and `Apikey` models lack composite unique constraints on `[id, userId]`. Standard Prisma `update` and `delete` calls ignore non-unique `userId` conditions in `where` clauses at runtime. In user-owned developer features, relying solely on pre-checks leaves potential race or bypass exposure.
+**Action:** Always use `updateMany({ where: { id, userId }, data })` (followed by `findFirstOrThrow`) and `deleteMany({ where: { id, userId } })` for database-level user owner scoping on auth resource mutations.

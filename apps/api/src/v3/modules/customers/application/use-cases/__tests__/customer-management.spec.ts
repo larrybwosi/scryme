@@ -14,7 +14,9 @@ describe("Customer Management Use Cases", () => {
         customer: {
           findFirst: vi.fn(),
           delete: vi.fn(),
+          deleteMany: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn(),
         },
         address: {
           findMany: vi.fn(),
@@ -59,25 +61,27 @@ describe("Customer Management Use Cases", () => {
     it("should delete customer successfully if exists", async () => {
       const useCase = new DeleteCustomerUseCase(prisma);
       vi.mocked(prisma.client.customer.findFirst).mockResolvedValue({ id: "cust-1" } as any);
-      vi.mocked(prisma.client.customer.delete).mockResolvedValue({} as any);
+      vi.mocked(prisma.client.customer.deleteMany).mockResolvedValue({ count: 1 } as any);
 
       const result = await useCase.execute("org-1", "cust-1");
       expect(result.success).toBe(true);
       expect(result.message).toContain("deleted");
-      expect(prisma.client.customer.delete).toHaveBeenCalledWith({ where: { id: "cust-1" } });
+      expect(prisma.client.customer.deleteMany).toHaveBeenCalledWith({
+        where: { id: "cust-1", organizationId: "org-1" },
+      });
     });
 
     it("should fall back to deactivation if delete fails", async () => {
       const useCase = new DeleteCustomerUseCase(prisma);
       vi.mocked(prisma.client.customer.findFirst).mockResolvedValue({ id: "cust-1" } as any);
-      vi.mocked(prisma.client.customer.delete).mockRejectedValue(new Error("Foreign key constraint"));
-      vi.mocked(prisma.client.customer.update).mockResolvedValue({} as any);
+      vi.mocked(prisma.client.customer.deleteMany).mockRejectedValue(new Error("Foreign key constraint"));
+      vi.mocked(prisma.client.customer.updateMany).mockResolvedValue({ count: 1 } as any);
 
       const result = await useCase.execute("org-1", "cust-1");
       expect(result.success).toBe(true);
       expect(result.message).toContain("deactivated");
-      expect(prisma.client.customer.update).toHaveBeenCalledWith({
-        where: { id: "cust-1" },
+      expect(prisma.client.customer.updateMany).toHaveBeenCalledWith({
+        where: { id: "cust-1", organizationId: "org-1" },
         data: { isActive: false },
       });
     });

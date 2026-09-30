@@ -90,8 +90,15 @@ export class OAuthClientManagementUseCase {
       ...(dto.corsOrigins ? { corsOrigins: dto.corsOrigins } : {}),
     };
 
-    const updated = await db.oAuthClient.update({
-      where: { id: existing.id },
+    // Threat: BOLA/IDOR vulnerability where an attacker manipulates client ID to alter another user's OAuth application.
+    // Mitigation: Use updateMany scoped strictly by both id and userId to enforce database-level owner isolation.
+    const whereClause = {
+      id: existing.id,
+      ...(userId ? { userId } : {}),
+    };
+
+    await db.oAuthClient.updateMany({
+      where: whereClause,
       data: {
         ...(dto.name ? { name: dto.name } : {}),
         ...(dto.redirectUris ? { redirectUris: dto.redirectUris } : {}),
@@ -105,6 +112,10 @@ export class OAuthClientManagementUseCase {
       },
     });
 
+    const updated = await db.oAuthClient.findFirstOrThrow({
+      where: whereClause,
+    });
+
     return {
       ...updated,
       clientSecret: undefined,
@@ -116,8 +127,13 @@ export class OAuthClientManagementUseCase {
   async deleteClient(id: string, userId?: string) {
     const existing = await this.getClientById(id, userId);
 
-    await db.oAuthClient.delete({
-      where: { id: existing.id },
+    // Threat: BOLA/IDOR vulnerability allowing unauthorized deletion of foreign OAuth clients.
+    // Mitigation: Use deleteMany scoped strictly by both id and userId for database-level owner isolation.
+    await db.oAuthClient.deleteMany({
+      where: {
+        id: existing.id,
+        ...(userId ? { userId } : {}),
+      },
     });
 
     return { success: true, message: "OAuth client deleted successfully" };
@@ -128,11 +144,22 @@ export class OAuthClientManagementUseCase {
 
     const newSecret = `sec_${randomBytes(32).toString("hex")}`;
 
-    const updated = await db.oAuthClient.update({
-      where: { id: existing.id },
+    // Threat: BOLA/IDOR vulnerability allowing secret key hijacking on foreign OAuth clients.
+    // Mitigation: Use updateMany scoped strictly by both id and userId for database-level owner isolation.
+    const whereClause = {
+      id: existing.id,
+      ...(userId ? { userId } : {}),
+    };
+
+    await db.oAuthClient.updateMany({
+      where: whereClause,
       data: {
         clientSecret: newSecret,
       },
+    });
+
+    const updated = await db.oAuthClient.findFirstOrThrow({
+      where: whereClause,
     });
 
     const meta = (updated.metadata as any) || {};

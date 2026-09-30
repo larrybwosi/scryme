@@ -9,8 +9,9 @@ vi.mock("@repo/db", () => ({
       create: vi.fn(),
       findMany: vi.fn(),
       findFirst: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
+      updateMany: vi.fn(),
+      findFirstOrThrow: vi.fn(),
+      deleteMany: vi.fn(),
     },
   },
 }));
@@ -71,6 +72,34 @@ describe("OAuthClientManagementUseCase", () => {
     expect(result[0].clientSecret).toBeUndefined();
   });
 
+  it("should update an OAuth client scoped by userId", async () => {
+    const existingClient = {
+      id: "client_1",
+      clientId: "scryme_abc",
+      name: "Old App Name",
+      metadata: { scopes: ["user.profile"] },
+    };
+
+    vi.mocked(db.oAuthClient.findFirst).mockResolvedValue(existingClient as any);
+    vi.mocked(db.oAuthClient.updateMany).mockResolvedValue({ count: 1 } as any);
+    vi.mocked(db.oAuthClient.findFirstOrThrow).mockResolvedValue({
+      ...existingClient,
+      name: "Updated App Name",
+    } as any);
+
+    const result = await useCase.updateClient("client_1", "user_123", {
+      name: "Updated App Name",
+    });
+
+    expect(result.name).toBe("Updated App Name");
+    expect(db.oAuthClient.updateMany).toHaveBeenCalledWith({
+      where: { id: "client_1", userId: "user_123" },
+      data: expect.objectContaining({
+        name: "Updated App Name",
+      }),
+    });
+  });
+
   it("should rotate secret for an OAuth client", async () => {
     const existingClient = {
       id: "client_1",
@@ -80,19 +109,38 @@ describe("OAuthClientManagementUseCase", () => {
     };
 
     vi.mocked(db.oAuthClient.findFirst).mockResolvedValue(existingClient as any);
-    vi.mocked(db.oAuthClient.update).mockImplementation(async (args: any) => ({
+    vi.mocked(db.oAuthClient.updateMany).mockResolvedValue({ count: 1 } as any);
+    vi.mocked(db.oAuthClient.findFirstOrThrow).mockResolvedValue({
       ...existingClient,
-      clientSecret: args.data.clientSecret,
-    }) as any);
+      clientSecret: "sec_newsecret123",
+    } as any);
 
     const result = await useCase.rotateSecret("client_1", "user_123");
 
     expect(result.clientSecret).toMatch(/^sec_/);
-    expect(db.oAuthClient.update).toHaveBeenCalledWith({
-      where: { id: "client_1" },
+    expect(db.oAuthClient.updateMany).toHaveBeenCalledWith({
+      where: { id: "client_1", userId: "user_123" },
       data: {
         clientSecret: expect.stringMatching(/^sec_/),
       },
+    });
+  });
+
+  it("should delete an OAuth client scoped by userId", async () => {
+    const existingClient = {
+      id: "client_1",
+      clientId: "scryme_abc",
+      userId: "user_123",
+    };
+
+    vi.mocked(db.oAuthClient.findFirst).mockResolvedValue(existingClient as any);
+    vi.mocked(db.oAuthClient.deleteMany).mockResolvedValue({ count: 1 } as any);
+
+    const result = await useCase.deleteClient("client_1", "user_123");
+
+    expect(result.success).toBe(true);
+    expect(db.oAuthClient.deleteMany).toHaveBeenCalledWith({
+      where: { id: "client_1", userId: "user_123" },
     });
   });
 
