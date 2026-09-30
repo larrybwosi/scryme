@@ -15,7 +15,7 @@ import { AllowPublic } from "@/v3/common/auth";
 import { PrismaService } from "@/prisma/prisma.service";
 
 @ApiTags("V3 Sentry Webhook Receiver")
-@Controller(["v3/webhooks", "api/v3/webhooks"])
+@Controller("webhooks")
 export class PublicSentryWebhookController {
   private readonly logger = new Logger(PublicSentryWebhookController.name);
 
