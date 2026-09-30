@@ -1,6 +1,6 @@
 "use server";
 
-import { db, Decimal, PricingMethod, RoundingMethod, PriceApprovalStatus, DiscountType } from "@repo/db";
+import { db, Decimal, PricingMethod, RoundingMethod, PriceApprovalStatus, DiscountType, BundleType } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
 import { realtimeService } from "@repo/shared/realtime";
@@ -345,4 +345,291 @@ export async function removeCustomerFromPriceList(priceListId: string, customerI
 
   revalidatePath(`/inventory/pricelists/${priceListId}`);
   return result;
+}
+
+
+export async function getOrCreateDefaultPriceList() {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  let defaultList = await db.priceList.findFirst({
+    where: {
+      organizationId: context.organizationId,
+      isGlobal: true,
+    },
+    orderBy: { priority: "desc" },
+  });
+
+  if (!defaultList) {
+    defaultList = await db.priceList.create({
+      data: {
+        organizationId: context.organizationId,
+        name: "Standard Store Price List",
+        code: `STD_LIST_${Date.now()}`,
+        isGlobal: true,
+        priority: 0,
+        approvalStatus: PriceApprovalStatus.APPROVED,
+      },
+    });
+  }
+
+  return defaultList;
+}
+
+export async function getProductPricingDetails(productId: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) return null;
+
+  const product = await db.product.findFirst({
+    where: { id: productId, organizationId: context.organizationId },
+    select: { id: true, categoryId: true },
+  });
+
+  if (!product) return null;
+
+  const variants = await db.productVariant.findMany({
+    where: { productId },
+    select: { id: true, name: true, sku: true, retailPrice: true, buyingPrice: true },
+  });
+
+  const variantIds = variants.map(v => v.id);
+
+  const priceListItems = await db.priceListItem.findMany({
+    where: {
+      variantId: { in: variantIds },
+      priceList: { organizationId: context.organizationId },
+    },
+    include: {
+      priceList: { select: { id: true, name: true, isGlobal: true } },
+      variant: { select: { id: true, name: true, sku: true } },
+    },
+    orderBy: { minQuantity: "asc" },
+  });
+
+  const pricingRules = await db.pricingRule.findMany({
+    where: {
+      organizationId: context.organizationId,
+      OR: [
+        { variantId: { in: variantIds } },
+        { categoryId: product.categoryId },
+      ],
+    },
+    include: {
+      priceList: { select: { id: true, name: true } },
+      variant: { select: { id: true, name: true, sku: true } },
+    },
+    orderBy: { priority: "desc" },
+  });
+
+  const bundleItems = await db.pricingBundleItem.findMany({
+    where: { variantId: { in: variantIds } },
+    include: {
+      bundle: {
+        include: {
+          items: {
+            include: {
+              variant: { select: { id: true, name: true, sku: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const bundlesMap = new Map();
+  bundleItems.forEach(bi => {
+    if (bi.bundle && !bundlesMap.has(bi.bundle.id)) {
+      bundlesMap.set(bi.bundle.id, bi.bundle);
+    }
+  });
+
+  const priceLists = await db.priceList.findMany({
+    where: { organizationId: context.organizationId, isActive: true },
+    select: { id: true, name: true, code: true, isGlobal: true },
+  });
+
+  return {
+    priceListItems,
+    pricingRules,
+    bundles: Array.from(bundlesMap.values()),
+    priceLists,
+  };
+}
+
+export async function createVolumeTierForProduct(data: {
+  productId: string;
+  variantId: string;
+  minQuantity: number;
+  maxQuantity?: number | null;
+  price: number;
+  wholesalePrice?: number | null;
+  priceListId?: string;
+}) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  let listId = data.priceListId;
+  if (!listId) {
+    const defaultList = await getOrCreateDefaultPriceList();
+    listId = defaultList.id;
+  }
+
+  const existing = await db.priceListItem.findFirst({
+    where: {
+      priceListId: listId,
+      variantId: data.variantId,
+      minQuantity: data.minQuantity,
+    },
+  });
+
+  let item;
+  if (existing) {
+    item = await db.priceListItem.update({
+      where: { id: existing.id },
+      data: {
+        price: new Decimal(data.price),
+        maxQuantity: data.maxQuantity ?? null,
+        wholesalePrice: data.wholesalePrice ? new Decimal(data.wholesalePrice) : null,
+      },
+    });
+  } else {
+    item = await db.priceListItem.create({
+      data: {
+        priceListId: listId,
+        variantId: data.variantId,
+        minQuantity: data.minQuantity,
+        maxQuantity: data.maxQuantity ?? null,
+        price: new Decimal(data.price),
+        wholesalePrice: data.wholesalePrice ? new Decimal(data.wholesalePrice) : null,
+      },
+    });
+  }
+
+  revalidatePath(`/inventory/products/${data.productId}`);
+  return item;
+}
+
+export async function deleteVolumeTier(priceListItemId: string, productId?: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  await db.priceListItem.delete({
+    where: { id: priceListItemId },
+  });
+
+  if (productId) {
+    revalidatePath(`/inventory/products/${productId}`);
+  }
+}
+
+export async function createProductPricingRule(data: {
+  productId: string;
+  variantId?: string | null;
+  name: string;
+  description?: string;
+  discountType: DiscountType;
+  discountValue: number;
+  minQuantity?: number | null;
+  minOrderValue?: number | null;
+  priceListId?: string;
+}) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  let listId = data.priceListId;
+  if (!listId) {
+    const defaultList = await getOrCreateDefaultPriceList();
+    listId = defaultList.id;
+  }
+
+  const conditions: Record<string, any> = {};
+  if (data.minQuantity) conditions.minQuantity = data.minQuantity;
+  if (data.minOrderValue) conditions.minOrderValue = data.minOrderValue;
+
+  const rule = await db.pricingRule.create({
+    data: {
+      organizationId: context.organizationId,
+      priceListId: listId,
+      variantId: data.variantId || null,
+      name: data.name,
+      description: data.description || null,
+      discountType: data.discountType,
+      discountValue: new Decimal(data.discountValue),
+      conditions,
+    },
+  });
+
+  revalidatePath(`/inventory/products/${data.productId}`);
+  return rule;
+}
+
+export async function deleteProductPricingRule(ruleId: string, productId?: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  await db.pricingRule.delete({
+    where: { id: ruleId, organizationId: context.organizationId },
+  });
+
+  if (productId) {
+    revalidatePath(`/inventory/products/${productId}`);
+  }
+}
+
+export async function createProductPricingBundle(data: {
+  productId: string;
+  variantId: string;
+  name: string;
+  description?: string;
+  bundleType: BundleType;
+  bundlePrice?: number | null;
+  buyQuantity?: number | null;
+  getQuantity?: number | null;
+  getDiscountType?: DiscountType | null;
+  getDiscountValue?: number | null;
+}) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const bundleCode = `BDL_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+  const bundle = await db.pricingBundle.create({
+    data: {
+      organizationId: context.organizationId,
+      name: data.name,
+      code: bundleCode,
+      description: data.description || null,
+      bundleType: data.bundleType,
+      bundlePrice: data.bundlePrice ? new Decimal(data.bundlePrice) : null,
+      buyQuantity: data.buyQuantity ?? null,
+      getQuantity: data.getQuantity ?? null,
+      getDiscountType: data.getDiscountType ?? null,
+      getDiscountValue: data.getDiscountValue ? new Decimal(data.getDiscountValue) : null,
+      items: {
+        create: [
+          {
+            variantId: data.variantId,
+            quantity: data.buyQuantity || 1,
+            itemRole: data.bundleType === BundleType.DYNAMIC ? "BUY" : null,
+          },
+        ],
+      },
+    },
+  });
+
+  revalidatePath(`/inventory/products/${data.productId}`);
+  return bundle;
+}
+
+export async function deleteProductPricingBundle(bundleId: string, productId?: string) {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  await db.pricingBundle.delete({
+    where: { id: bundleId, organizationId: context.organizationId },
+  });
+
+  if (productId) {
+    revalidatePath(`/inventory/products/${productId}`);
+  }
 }
