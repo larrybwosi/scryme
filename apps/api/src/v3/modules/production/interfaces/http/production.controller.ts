@@ -52,7 +52,7 @@ import {
 
 @ApiTags("V3 Production")
 @ApiBearerAuth()
-@Controller([":orgSlug/production", "v3/:orgSlug/production", "api/v3/:orgSlug/production"])
+@Controller([":orgSlug/production", "v3/:orgSlug/production"])
 @ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
