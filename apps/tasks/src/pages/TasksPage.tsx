@@ -250,7 +250,8 @@ function KanbanColumn({
 }
 
 export default function TasksPage() {
-  const { tasks, myTasksOnly } = useTaskStore();
+  const tasks = useTaskStore((state) => state.tasks);
+  const myTasksOnly = useTaskStore((state) => state.myTasksOnly);
   const [activeTab, setActiveTab] = useState<'list' | 'board' | 'calendar' | 'timeline'>('board');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTag, setFilterTag] = useState<string>('All');

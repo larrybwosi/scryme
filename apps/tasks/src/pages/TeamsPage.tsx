@@ -7,7 +7,7 @@ import { Card } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
 
 export default function TeamsPage() {
-  const { teamMembers } = useTaskStore();
+  const teamMembers = useTaskStore((state) => state.teamMembers);
   const [isAdding, setIsAdding] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

@@ -4,7 +4,7 @@ import { Activity } from 'lucide-react';
 import { Card } from '@repo/ui/components/ui/card';
 
 export default function ActivityPage() {
-  const { tasks } = useTaskStore();
+  const tasks = useTaskStore((state) => state.tasks);
 
   const activityFeed = tasks.flatMap((t) =>
     (t.activityLogs || []).map((log) => ({

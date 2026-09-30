@@ -20,7 +20,8 @@ interface CreateProjectModalProps {
 }
 
 export default function CreateProjectModal({ isOpen, onClose }: CreateProjectModalProps) {
-  const { clients, teamMembers } = useTaskStore();
+  const clients = useTaskStore((state) => state.clients);
+  const teamMembers = useTaskStore((state) => state.teamMembers);
 
   const [name, setName] = useState('');
   const [key, setKey] = useState('');

@@ -7,7 +7,7 @@ import { Card } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
 
 export default function ClientsPage() {
-  const { clients } = useTaskStore();
+  const clients = useTaskStore((state) => state.clients);
   const [isAdding, setIsAdding] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

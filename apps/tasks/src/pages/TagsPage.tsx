@@ -7,7 +7,7 @@ import { Card } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
 
 export default function TagsPage() {
-  const { tags } = useTaskStore();
+  const tags = useTaskStore((state) => state.tags);
   const [tagName, setTagName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 

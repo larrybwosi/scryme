@@ -29,7 +29,10 @@ interface CreateTaskModalProps {
 }
 
 export default function CreateTaskModal({ isOpen, onClose }: CreateTaskModalProps) {
-  const { projects, clients, teamMembers, tags: availableTags } = useTaskStore();
+  const projects = useTaskStore((state) => state.projects);
+  const clients = useTaskStore((state) => state.clients);
+  const teamMembers = useTaskStore((state) => state.teamMembers);
+  const availableTags = useTaskStore((state) => state.tags);
 
   const [name, setName] = useState('');
   const [projectId, setProjectId] = useState(projects[0]?.id || '');

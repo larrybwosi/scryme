@@ -21,7 +21,7 @@ interface ProjectDetailModalProps {
 export default function ProjectDetailModal({ project, onClose }: ProjectDetailModalProps) {
   if (!project) return null;
 
-  const { tasks } = useTaskStore();
+  const tasks = useTaskStore((state) => state.tasks);
   const projectTasks = tasks.filter((t) => t.projectId === project.id || t.project === project.name);
   const completedTasks = projectTasks.filter((t) => t.status === 'Completed').length;
   const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : (project.progress || 0);

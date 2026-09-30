@@ -7,7 +7,8 @@ import { Card } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
 
 export default function TimeOffPage() {
-  const { timeOffRequests, teamMembers } = useTaskStore();
+  const timeOffRequests = useTaskStore((state) => state.timeOffRequests);
+  const teamMembers = useTaskStore((state) => state.teamMembers);
   const [isAdding, setIsAdding] = useState(false);
   const [memberId, setMemberId] = useState(teamMembers[0]?.id || 'm-1');
   const [type, setType] = useState<'VACATION' | 'SICK_LEAVE' | 'PERSONAL'>('VACATION');
