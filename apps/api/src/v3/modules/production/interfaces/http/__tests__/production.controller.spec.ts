@@ -13,6 +13,7 @@ describe("ProductionController (V3)", () => {
   let controller: ProductionController;
   let productionService: ProductionService;
   let productionReportService: ProductionReportService;
+  let memberUseCase: MemberUseCase;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -73,6 +74,7 @@ describe("ProductionController (V3)", () => {
     controller = module.get<ProductionController>(ProductionController);
     productionService = module.get<ProductionService>(ProductionService);
     productionReportService = module.get<ProductionReportService>(ProductionReportService);
+    memberUseCase = module.get<MemberUseCase>(MemberUseCase);
   });
 
   it("should be defined", () => {
@@ -160,6 +162,21 @@ describe("ProductionController (V3)", () => {
       expect(productionService.updateSettings).toHaveBeenCalledWith("org_123", body);
       expect(resPatch).toEqual({ id: "set_1", autoStartBatch: true });
       expect(resPut).toEqual({ id: "set_1", autoStartBatch: true });
+    });
+  });
+
+  describe("members endpoint", () => {
+    it("should call memberUseCase.getMembers with organizationId and query", async () => {
+
+      const mockResult = { members: [], total: 0 };
+      vi.mocked(memberUseCase.getMembers).mockResolvedValue(mockResult as any);
+
+      const mockCtx = { organizationId: "org_123" } as any;
+      const mockQuery = { page: 1, limit: 10 } as any;
+      const result = await controller.getMembers(mockCtx, mockQuery);
+
+      expect(memberUseCase.getMembers).toHaveBeenCalledWith("org_123", mockQuery);
+      expect(result).toEqual(mockResult);
     });
   });
 
