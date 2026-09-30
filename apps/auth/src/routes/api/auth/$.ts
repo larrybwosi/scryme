@@ -1,5 +1,7 @@
 import { createAPIFileRoute } from "@tanstack/start/api";
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
 const getTargetApiUrl = (): string => {
   const envUrl = process.env.VITE_PUBLIC_API_URL || process.env.VITE_API_URL;
   if (
@@ -10,7 +12,7 @@ const getTargetApiUrl = (): string => {
   ) {
     return envUrl.trim().replace(/\/+$/, "");
   }
-  return "http://localhost:3002";
+  return IS_PROD ? "https://api.scryme.tech" : "http://localhost:3002";
 };
 
 async function handleProxyRequest({ request, params }: { request: Request; params: { _splat?: string } }) {
