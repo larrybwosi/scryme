@@ -17,9 +17,18 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const url = `${baseUrl}${cleanEndpoint}`;
 
-  const sessionResponse = authClient.useSession ? authClient.getStore?.()?.value : null;
-  const sessionToken = sessionResponse?.session?.token;
-  const orgSlug = sessionResponse?.session?.activeOrganizationId || sessionResponse?.user?.activeOrganizationId;
+  let sessionToken: string | undefined;
+  let orgSlug: string | undefined;
+
+  try {
+    const sessionRes = await authClient.getSession();
+    if (sessionRes?.data) {
+      sessionToken = sessionRes.data.session?.token;
+      orgSlug = sessionRes.data.session?.activeOrganizationId || sessionRes.data.user?.activeOrganizationId;
+    }
+  } catch {
+    // Session fetching failed or unauthenticated
+  }
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -51,56 +60,56 @@ export const taskApi = {
   // Task endpoints
   async getTasks(params: Record<string, any> = {}) {
     const query = new URLSearchParams(params).toString();
-    const endpoint = `/v3/tasks${query ? `?${query}` : ""}`;
+    const endpoint = `/api/v3/tasks${query ? `?${query}` : ""}`;
     return fetchWithAuth(endpoint, { method: "GET" });
   },
 
   async getTask(id: string) {
-    return fetchWithAuth(`/v3/tasks/${id}`, { method: "GET" });
+    return fetchWithAuth(`/api/v3/tasks/${id}`, { method: "GET" });
   },
 
   async createTask(data: any) {
-    return fetchWithAuth("/v3/tasks", {
+    return fetchWithAuth("/api/v3/tasks", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   async updateTask(id: string, data: any) {
-    return fetchWithAuth(`/v3/tasks/${id}`, {
+    return fetchWithAuth(`/api/v3/tasks/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
   },
 
   async deleteTask(id: string) {
-    return fetchWithAuth(`/v3/tasks/${id}`, {
+    return fetchWithAuth(`/api/v3/tasks/${id}`, {
       method: "DELETE",
     });
   },
 
   async manageAssignees(id: string, memberIds: string[]) {
-    return fetchWithAuth(`/v3/tasks/${id}/assignees`, {
+    return fetchWithAuth(`/api/v3/tasks/${id}/assignees`, {
       method: "POST",
       body: JSON.stringify({ memberIds }),
     });
   },
 
   async addDependency(id: string, dependsOnTaskId: string, type: 'BLOCKS' | 'BLOCKED_BY' = 'BLOCKS') {
-    return fetchWithAuth(`/v3/tasks/${id}/dependencies`, {
+    return fetchWithAuth(`/api/v3/tasks/${id}/dependencies`, {
       method: "POST",
       body: JSON.stringify({ dependsOnTaskId, type }),
     });
   },
 
   async removeDependency(id: string, dependsOnTaskId: string) {
-    return fetchWithAuth(`/v3/tasks/${id}/dependencies/${dependsOnTaskId}`, {
+    return fetchWithAuth(`/api/v3/tasks/${id}/dependencies/${dependsOnTaskId}`, {
       method: "DELETE",
     });
   },
 
   async addComment(id: string, content: string) {
-    return fetchWithAuth(`/v3/tasks/${id}/comments`, {
+    return fetchWithAuth(`/api/v3/tasks/${id}/comments`, {
       method: "POST",
       body: JSON.stringify({ content }),
     });
@@ -109,43 +118,43 @@ export const taskApi = {
   // Project endpoints
   async getProjects(params: Record<string, any> = {}) {
     const query = new URLSearchParams(params).toString();
-    const endpoint = `/v3/projects${query ? `?${query}` : ""}`;
+    const endpoint = `/api/v3/projects${query ? `?${query}` : ""}`;
     return fetchWithAuth(endpoint, { method: "GET" });
   },
 
   async getProject(id: string) {
-    return fetchWithAuth(`/v3/projects/${id}`, { method: "GET" });
+    return fetchWithAuth(`/api/v3/projects/${id}`, { method: "GET" });
   },
 
   async createProject(data: any) {
-    return fetchWithAuth("/v3/projects", {
+    return fetchWithAuth("/api/v3/projects", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
 
   async updateProject(id: string, data: any) {
-    return fetchWithAuth(`/v3/projects/${id}`, {
+    return fetchWithAuth(`/api/v3/projects/${id}`, {
       method: "PATCH",
       body: JSON.stringify(data),
     });
   },
 
   async deleteProject(id: string) {
-    return fetchWithAuth(`/v3/projects/${id}`, {
+    return fetchWithAuth(`/api/v3/projects/${id}`, {
       method: "DELETE",
     });
   },
 
   async manageProjectMember(id: string, memberId: string, role: 'ADMIN' | 'MEMBER' | 'VIEWER') {
-    return fetchWithAuth(`/v3/projects/${id}/members`, {
+    return fetchWithAuth(`/api/v3/projects/${id}/members`, {
       method: "POST",
       body: JSON.stringify({ memberId, role }),
     });
   },
 
   async removeProjectMember(id: string, memberId: string) {
-    return fetchWithAuth(`/v3/projects/${id}/members/${memberId}`, {
+    return fetchWithAuth(`/api/v3/projects/${id}/members/${memberId}`, {
       method: "DELETE",
     });
   },
@@ -153,11 +162,11 @@ export const taskApi = {
   // Label endpoints
   async getLabels(projectId?: string) {
     const query = projectId ? `?projectId=${projectId}` : "";
-    return fetchWithAuth(`/v3/tasks/labels/list${query}`, { method: "GET" });
+    return fetchWithAuth(`/api/v3/tasks/labels/list${query}`, { method: "GET" });
   },
 
   async createLabel(data: { name: string; color?: string; projectId?: string }) {
-    return fetchWithAuth("/v3/tasks/labels", {
+    return fetchWithAuth("/api/v3/tasks/labels", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -165,6 +174,6 @@ export const taskApi = {
 
   // Member / Team endpoints
   async getMembers() {
-    return fetchWithAuth("/v3/members", { method: "GET" });
+    return fetchWithAuth("/api/v3/members", { method: "GET" });
   },
 };

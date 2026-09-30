@@ -27,37 +27,43 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   const [client, setClient] = useState(clients[0]?.name || 'Workspace Client');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('MEDIUM');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || isSubmitting) return;
 
+    setIsSubmitting(true);
     const prjKey = key.trim() || name.substring(0, 3).toUpperCase();
 
-    await taskStore.addProject({
-      name: name.trim(),
-      key: prjKey,
-      client: client || 'Workspace Client',
-      description: description.trim(),
-      status: 'ACTIVE',
-      priority,
-      color: '#6366F1',
-      owner: teamMembers[0]
-        ? {
-            id: teamMembers[0].id,
-            name: teamMembers[0].name,
-            avatar: teamMembers[0].avatar,
-          }
-        : undefined,
-      taskCount: 0,
-      completedTaskCount: 0,
-      progress: 0,
-    });
+    try {
+      await taskStore.addProject({
+        name: name.trim(),
+        key: prjKey,
+        client: client || 'Workspace Client',
+        description: description.trim(),
+        status: 'ACTIVE',
+        priority,
+        color: '#6366F1',
+        owner: teamMembers[0]
+          ? {
+              id: teamMembers[0].id,
+              name: teamMembers[0].name,
+              avatar: teamMembers[0].avatar,
+            }
+          : undefined,
+        taskCount: 0,
+        completedTaskCount: 0,
+        progress: 0,
+      });
 
-    onClose();
-    setName('');
-    setKey('');
-    setDescription('');
+      onClose();
+      setName('');
+      setKey('');
+      setDescription('');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -171,6 +177,7 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
             </Button>
             <Button
               type="submit"
+              disabled={isSubmitting}
               size="sm"
               className="text-xs"
             >
