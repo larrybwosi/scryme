@@ -71,3 +71,34 @@ describe("CategoryManager safe formatting helpers", () => {
     expect(getCategoryStats("non-existent")).toEqual({ recipes: 0, templates: 0, batches: 0 });
   });
 });
+
+describe("CategoryManager filtering logic", () => {
+  it("should filter categories safely with non-empty categories and search term", () => {
+    const categories = [
+      { id: "1", name: "Breads", description: "Freshly baked artisan breads" },
+      { id: "2", name: "Pastries", description: "Danish, croissants and puff pastry" },
+      { id: "3", name: "Cakes", description: null },
+      null,
+      undefined,
+      { id: "4", name: undefined, description: undefined }
+    ];
+
+    const filterCategories = (cats: any[], searchTerm: string) => {
+      return Array.isArray(cats)
+        ? cats.filter(
+            category =>
+              category &&
+              typeof category === 'object' &&
+              ((category.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (category.description && typeof category.description === 'string' && category.description.toLowerCase().includes(searchTerm.toLowerCase())))
+          )
+        : [];
+    };
+
+    expect(filterCategories(categories, "bread").length).toBe(1);
+    expect(filterCategories(categories, "bread")[0].name).toBe("Breads");
+    expect(filterCategories(categories, "croissant").length).toBe(1);
+    expect(filterCategories(categories, "cake").length).toBe(1);
+    expect(filterCategories(categories, "").length).toBe(4);
+  });
+});
