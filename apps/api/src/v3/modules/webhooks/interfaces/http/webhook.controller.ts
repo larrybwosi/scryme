@@ -39,7 +39,7 @@ import { AllowPublic } from "@/v3/common/auth";
 
 @ApiTags("V3 Webhooks")
 @ApiBearerAuth()
-@Controller(":orgSlug/webhooks")
+@Controller(["v3/:orgSlug/webhooks", "api/v3/:orgSlug/webhooks", ":orgSlug/webhooks"])
 @ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
@@ -242,7 +242,7 @@ export class WebhookController {
 
 // Separate Public Controller for receiving external incoming webhooks
 @ApiTags("V3 Webhooks Receiver")
-@Controller("v3/webhooks")
+@Controller(["v3/webhooks", "api/v3/webhooks"])
 export class PublicIncomingWebhookController {
   constructor(private readonly webhookService: WebhookService) {}
 
