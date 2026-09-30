@@ -91,7 +91,7 @@ export class PermissionsGuard implements CanActivate {
     if (isClientCredentials) {
       permissions = v3Context?.scopes || [];
       if (permissions.length === 0 || !permissions.some(p => p.startsWith("production:"))) {
-        permissions = [...permissions, "production:*", "pos:*", "catalog:*", "inventory:*"];
+        permissions = [...permissions, "production:*", "pos:*", "catalog:*", "inventory:*", "members:*"];
       }
     } else if (isCustomer) {
       permissions = [
