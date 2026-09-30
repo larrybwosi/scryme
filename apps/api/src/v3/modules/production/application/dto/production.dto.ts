@@ -307,6 +307,15 @@ export class CreateBatchDto {
 }
 
 export class UpdateBatchDto {
+  @ApiPropertyOptional({ description: "System unit ID" })
+  @IsOptional()
+  @IsString()
+  systemUnitId?: string;
+
+  @ApiPropertyOptional({ description: "Organization unit ID" })
+  @IsOptional()
+  @IsString()
+  orgUnitId?: string;
   @ApiPropertyOptional({ description: "Planned quantity" })
   @IsOptional()
   @IsNumber()
@@ -455,6 +464,15 @@ export class CreateTemplateDto {
 }
 
 export class UpdateTemplateDto {
+  @ApiPropertyOptional({ description: "System unit ID" })
+  @IsOptional()
+  @IsString()
+  systemUnitId?: string;
+
+  @ApiPropertyOptional({ description: "Organization unit ID" })
+  @IsOptional()
+  @IsString()
+  orgUnitId?: string;
   @ApiPropertyOptional({ description: "Template name" })
   @IsOptional()
   @IsString()
