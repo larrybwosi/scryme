@@ -38,6 +38,12 @@ import {
   UpdateQualityIncidentDto,
 } from "../dto/production.dto";
 
+
+function cleanUnitId(id?: string | null): string | undefined {
+  if (!id || (typeof id === 'string' && id.trim() === '')) return undefined;
+  return id;
+}
+
 @Injectable()
 export class ProductionService {
   private readonly logger = new Logger(ProductionService.name);
@@ -571,8 +577,6 @@ export class ProductionService {
       categoryId,
       producesVariantId,
       yieldQuantity,
-      systemUnitId,
-      orgUnitId,
       costPrice,
       description,
       prepTime,
@@ -587,6 +591,9 @@ export class ProductionService {
       isArchived,
       ingredients,
     } = data;
+
+    const systemUnitId = cleanUnitId(data.systemUnitId);
+    const orgUnitId = cleanUnitId(data.orgUnitId);
 
     if (!systemUnitId && !orgUnitId) {
       throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
@@ -626,8 +633,8 @@ export class ProductionService {
           create: ingredients.map((ing: any) => ({
             ingredientVariantId: ing.ingredientVariantId,
             quantity: ing.quantity,
-            systemUnitId: ing.systemUnitId,
-            orgUnitId: ing.orgUnitId,
+            systemUnitId: cleanUnitId(ing.systemUnitId),
+            orgUnitId: cleanUnitId(ing.orgUnitId),
             preparationNotes: ing.preparationNotes,
           })),
         },
@@ -662,8 +669,8 @@ export class ProductionService {
         where: { id, organizationId },
       });
       if (!existing) throw new NotFoundException("Recipe not found");
-      const sysUnit = rest.systemUnitId !== undefined ? rest.systemUnitId : existing.systemUnitId;
-      const orgUnit = rest.orgUnitId !== undefined ? rest.orgUnitId : existing.orgUnitId;
+      const sysUnit = rest.systemUnitId !== undefined ? cleanUnitId(rest.systemUnitId) : existing.systemUnitId;
+      const orgUnit = rest.orgUnitId !== undefined ? cleanUnitId(rest.orgUnitId) : existing.orgUnitId;
       if (!sysUnit && !orgUnit) {
         throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
       }
@@ -684,6 +691,8 @@ export class ProductionService {
       where: { id, organizationId },
       data: {
         ...rest,
+        systemUnitId: rest.systemUnitId !== undefined ? cleanUnitId(rest.systemUnitId) : undefined,
+        orgUnitId: rest.orgUnitId !== undefined ? cleanUnitId(rest.orgUnitId) : undefined,
         difficulty: rest.difficulty as any,
         ingredients: ingredients
           ? {
@@ -691,8 +700,8 @@ export class ProductionService {
               create: ingredients.map((ing: any) => ({
                 ingredientVariantId: ing.ingredientVariantId,
                 quantity: ing.quantity,
-                systemUnitId: ing.systemUnitId,
-                orgUnitId: ing.orgUnitId,
+                systemUnitId: cleanUnitId(ing.systemUnitId),
+                orgUnitId: cleanUnitId(ing.orgUnitId),
                 preparationNotes: ing.preparationNotes,
               })),
             }
@@ -866,8 +875,8 @@ export class ProductionService {
       data: {
         recipeId,
         plannedQuantity,
-        systemUnitId,
-        orgUnitId,
+        systemUnitId: cleanUnitId(systemUnitId),
+        orgUnitId: cleanUnitId(orgUnitId),
         recipeMultiplier: recipeMultiplier ?? 1.0,
         leadBakerId,
         notes,
@@ -887,6 +896,8 @@ export class ProductionService {
 
   async updateBatch(organizationId: string, id: string, data: UpdateBatchDto) {
     const { assistantBakerIds, status, ...updateData } = data;
+    if (updateData.systemUnitId !== undefined) updateData.systemUnitId = cleanUnitId(updateData.systemUnitId);
+    if (updateData.orgUnitId !== undefined) updateData.orgUnitId = cleanUnitId(updateData.orgUnitId);
 
     return this.prisma.client.batch.update({
       where: { id, organizationId },
@@ -1208,8 +1219,8 @@ export class ProductionService {
         name,
         recipeId,
         quantity,
-        systemUnitId,
-        orgUnitId,
+        systemUnitId: cleanUnitId(systemUnitId),
+        orgUnitId: cleanUnitId(orgUnitId),
         recipeMultiplier,
         duration,
         leadBakerId,
@@ -1222,9 +1233,12 @@ export class ProductionService {
   }
 
   async updateTemplate(organizationId: string, id: string, data: UpdateTemplateDto) {
+    const cleanData = { ...data };
+    if (cleanData.systemUnitId !== undefined) cleanData.systemUnitId = cleanUnitId(cleanData.systemUnitId);
+    if (cleanData.orgUnitId !== undefined) cleanData.orgUnitId = cleanUnitId(cleanData.orgUnitId);
     return this.prisma.client.template.update({
       where: { id, organizationId },
-      data,
+      data: cleanData,
     });
   }
 

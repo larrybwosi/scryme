@@ -161,11 +161,22 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
 
   const onSubmit = async (data: any) => {
     try {
+      const payload = {
+        ...data,
+        systemUnitId: data.systemUnitId || undefined,
+        orgUnitId: data.orgUnitId || undefined,
+        ingredients: data.ingredients?.map((ing: any) => ({
+          ...ing,
+          systemUnitId: ing.systemUnitId || undefined,
+          orgUnitId: ing.orgUnitId || undefined,
+        })),
+      };
+
       if (mode === 'edit' && recipe) {
-        await updateRecipe.mutateAsync({ id: recipe.id, ...data });
+        await updateRecipe.mutateAsync({ id: recipe.id, ...payload });
         toast.success('Recipe updated successfully');
       } else {
-        await createRecipe.mutateAsync(data);
+        await createRecipe.mutateAsync(payload);
         toast.success('Recipe created successfully');
       }
       onOpenChange(false);
@@ -190,7 +201,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   };
 
   const addIngredientRow = () => {
-    append({ ingredientVariantId: '', quantity: 0, systemUnitId: '' });
+    append({ ingredientVariantId: '', quantity: 0, systemUnitId: undefined, orgUnitId: undefined });
   };
 
   const handleIngredientUnitChange = (index: number) => (value: string | undefined, type: 'system' | 'org') => {
