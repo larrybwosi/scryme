@@ -90,12 +90,23 @@ export class ApiKeyManagementUseCase {
       throw new NotFoundException(`API key with ID '${id}' not found`);
     }
 
-    const updated = await db.apikey.update({
-      where: { id: existing.id },
+    // Threat: BOLA/IDOR vulnerability allowing unauthorized modification of another developer's API key.
+    // Mitigation: Use updateMany scoped strictly by both id and userId to enforce database-level owner isolation.
+    const whereClause = {
+      id: existing.id,
+      ...(userId ? { userId } : {}),
+    };
+
+    await db.apikey.updateMany({
+      where: whereClause,
       data: {
         enabled: !(existing.enabled ?? true),
         updatedAt: new Date(),
       },
+    });
+
+    const updated = await db.apikey.findFirstOrThrow({
+      where: whereClause,
     });
 
     return {
@@ -114,8 +125,13 @@ export class ApiKeyManagementUseCase {
       throw new NotFoundException(`API key with ID '${id}' not found`);
     }
 
-    await db.apikey.delete({
-      where: { id: existing.id },
+    // Threat: BOLA/IDOR vulnerability allowing unauthorized revocation and deletion of foreign API keys.
+    // Mitigation: Use deleteMany scoped strictly by both id and userId for database-level owner isolation.
+    await db.apikey.deleteMany({
+      where: {
+        id: existing.id,
+        ...(userId ? { userId } : {}),
+      },
     });
 
     return { success: true, message: "API key revoked and deleted successfully" };
