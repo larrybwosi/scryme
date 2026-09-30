@@ -486,27 +486,14 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                 className="grid grid-cols-[1fr_120px_140px_40px] gap-3 items-start px-3 py-2 bg-white dark:bg-slate-950"
                               >
                                 <div>
-                                  <Select
-                                    value={currentIng?.ingredientVariantId || ''}
+                                  <ProductVariantsSelect
+                                    value={currentIng?.ingredientVariantId}
                                     onValueChange={value => setValue(`ingredients.${index}.ingredientVariantId` as any, value, { shouldValidate: true })}
                                     disabled={isSubmitting}
-                                  >
-                                    <SelectTrigger
-                                      className={cn(
-                                        'h-9',
-                                        ingredientErrors?.[index] && 'border-red-500'
-                                      )}
-                                    >
-                                      <SelectValue placeholder="Select material" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {ingredients?.map((ing: any) => (
-                                        <SelectItem key={ing.id} value={ing.id}>
-                                          {formatVariantName(ing.product?.name || ing.productName, ing.name || ing.variantName)}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                    productType="ALL"
+                                    placeholder="Select material..."
+                                    className={ingredientErrors?.[index] ? 'border-red-500' : ''}
+                                  />
                                 </div>
 
                                 <div>
