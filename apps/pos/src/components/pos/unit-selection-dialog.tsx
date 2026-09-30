@@ -11,7 +11,8 @@ import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Label } from '@repo/ui/components/ui/label';
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/components/ui/toggle-group';
-import { Minus, Plus, ShoppingCart, Package, Info } from 'lucide-react';
+import { Minus, Plus, ShoppingCart, Package, Info, ImageOff } from 'lucide-react';
+import { getPOSImageUrl } from '@/lib/image-helper';
 import { cn, useFormattedCurrency } from '@/lib/utils';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
@@ -134,7 +135,21 @@ export function UnitSelectionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden gap-0">
-        <DialogHeader className="p-6 pb-4 border-b">
+        <DialogHeader className="p-6 pb-4 border-b flex flex-row items-center gap-4 space-y-0">
+          {product.imageUrl ? (
+            <div className="h-14 w-14 rounded-lg bg-muted border border-border overflow-hidden shrink-0">
+              <img
+                src={getPOSImageUrl(product.imageUrl)}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="h-14 w-14 rounded-lg bg-muted border border-border flex items-center justify-center shrink-0 text-muted-foreground/30">
+              <ImageOff className="w-6 h-6" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
           <DialogTitle className="text-xl font-bold">
             {title || `Select Unit: ${product.productName || product.name}`}
           </DialogTitle>
@@ -148,6 +163,7 @@ export function UnitSelectionDialog({
                </span>
              )}
           </div>
+        </div>
         </DialogHeader>
 
         <div className="p-6 space-y-6">

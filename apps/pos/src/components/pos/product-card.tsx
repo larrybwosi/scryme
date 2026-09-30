@@ -6,7 +6,7 @@ import { Minus, Plus, ShoppingCart, Package, ImageOff, Tag, Wrench } from 'lucid
 import { cn, useFormattedCurrency } from '@/lib/utils';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Separator } from '@repo/ui/components/ui/separator';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { getPOSImageUrl } from '@/lib/image-helper';
 import { UnitSelectionDialog } from './unit-selection-dialog';
 
 // --- Types ---
@@ -171,7 +171,7 @@ export const ProductCard = memo(({ product, onAddToCart, onSelectProduct, pricin
         <div className="relative aspect-[4/3] w-full bg-muted/20 overflow-hidden border-b border-border/50">
           {!imgError && product.imageUrl ? (
             <img
-              src={convertFileSrc(product.imageUrl)}
+              src={getPOSImageUrl(product.imageUrl)}
               alt={product.name}
               onError={() => setImgError(true)}
               className={cn(
