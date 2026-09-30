@@ -24,6 +24,8 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   const syncedSessionRef = useRef<string | null>(null);
 
+  const sessionId = sessionData?.session?.id || sessionData?.session?.token || sessionData?.user?.id || null;
+
   useEffect(() => {
     if (!isPending && (!sessionData || !sessionData.session || error)) {
       if (typeof window !== "undefined") {
@@ -32,14 +34,13 @@ export default function AuthGuard({ children }: AuthGuardProps) {
         const loginUrl = `${authBase}/sign-in?callbackUrl=${encodeURIComponent(currentUrl)}`;
         window.location.href = loginUrl;
       }
-    } else if (sessionData?.session) {
-      const sessionId = sessionData.session.id || sessionData.session.token || sessionData.user?.id || "authenticated";
+    } else if (sessionId) {
       if (syncedSessionRef.current !== sessionId) {
         syncedSessionRef.current = sessionId;
         taskStore.syncWithApi();
       }
     }
-  }, [isPending, sessionData, error]);
+  }, [isPending, sessionId, error]);
 
   if (isPending) {
     return (

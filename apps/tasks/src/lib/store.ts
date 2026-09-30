@@ -154,7 +154,10 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
     if (isSyncing) return;
     isSyncing = true;
 
-    set({ isLoading: true });
+    // Only set isLoading if tasks are empty to avoid thrashing state when modals open or background re-syncs happen
+    if (get().tasks.length === 0) {
+      set({ isLoading: true });
+    }
 
     try {
       const [tasksRes, projectsRes, membersRes] = await Promise.all([
