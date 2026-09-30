@@ -1,5 +1,5 @@
+import { create } from 'zustand';
 import { taskApi } from "./api";
-import { useSyncExternalStore } from 'react';
 import {
   Task,
   TimeEntry,
@@ -37,42 +37,66 @@ interface AppStoreState {
   isLoading: boolean;
 }
 
+interface AppStoreActions {
+  syncWithApi: () => Promise<void>;
+  addTask: (taskData: Omit<Task, 'id' | 'createdAt'>) => Promise<void>;
+  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
+  updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
+  reorderTasks: (newTasks: Task[]) => Promise<void>;
+  deleteTask: (taskId: string) => Promise<void>;
+  addComment: (taskId: string, content: string, authorName?: string) => Promise<void>;
+  toggleSubtask: (taskId: string, subtaskId: string) => void;
+  addSubtask: (taskId: string, title: string) => void;
+  addProject: (projectData: Omit<Project, 'id' | 'createdAt'>) => Promise<void>;
+  updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
+  deleteProject: (id: string) => Promise<void>;
+  addClient: (client: Omit<Client, 'id'>) => void;
+  addTeamMember: (member: Omit<TeamMember, 'id'>) => void;
+  addTag: (tag: Omit<Tag, 'id'>) => void;
+  addTimeOff: (request: Omit<TimeOffRequest, 'id'>) => void;
+  setMyTasksOnly: (val: boolean) => void;
+  startTimer: (description: string, project: string) => void;
+  pauseTimer: () => void;
+  stopAndSaveTimer: () => void;
+  updateTimerElapsed: (seconds: number) => void;
+  setActiveTimerField: (fields: Partial<ActiveTimer>) => void;
+}
+
+export type AppStore = AppStoreState & AppStoreActions;
+
 const STORAGE_KEY = 'scryme_tasks_app_timer_v1';
 
-function getInitialState(): AppStoreState {
+function loadSavedActiveTimer(): ActiveTimer {
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.activeTimer) {
+          return parsed.activeTimer;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load timer state from localStorage', e);
+    }
+  }
   return {
-    tasks: [],
-    projects: [],
-    clients: [],
-    teamMembers: [],
-    tags: [],
-    timeEntries: [],
-    timeOffRequests: [],
-    activeTimer: {
-      description: '',
-      project: '',
-      startTime: 0,
-      elapsedSeconds: 0,
-      isRunning: false,
-    },
-    selectedProject: '',
-    myTasksOnly: false,
-    isLoading: false,
+    description: '',
+    project: '',
+    startTime: 0,
+    elapsedSeconds: 0,
+    isRunning: false,
   };
 }
 
-let currentState: AppStoreState = getInitialState();
-const listeners = new Set<() => void>();
-
-function notify() {
+function persistActiveTimer(timer: ActiveTimer) {
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ activeTimer: currentState.activeTimer }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ activeTimer: timer }));
     } catch (e) {
       console.error('Failed to save timer state to localStorage', e);
     }
   }
-  listeners.forEach((listener) => listener());
 }
 
 function mapApiStatusToUi(status?: string): TaskStatus {
@@ -113,13 +137,24 @@ function mapUiStatusToApi(status: TaskStatus): string {
 
 let isSyncing = false;
 
-export const taskStore = {
-  async syncWithApi() {
+export const useTaskStore = create<AppStore>()((set, get) => ({
+  tasks: [],
+  projects: [],
+  clients: [],
+  teamMembers: [],
+  tags: [],
+  timeEntries: [],
+  timeOffRequests: [],
+  activeTimer: loadSavedActiveTimer(),
+  selectedProject: '',
+  myTasksOnly: false,
+  isLoading: false,
+
+  syncWithApi: async () => {
     if (isSyncing) return;
     isSyncing = true;
 
-    currentState = { ...currentState, isLoading: true };
-    notify();
+    set({ isLoading: true });
 
     try {
       const [tasksRes, projectsRes, membersRes] = await Promise.all([
@@ -128,7 +163,7 @@ export const taskStore = {
         taskApi.getMembers().catch(() => null),
       ]);
 
-      let updatedState = { ...currentState, isLoading: false };
+      const stateUpdates: Partial<AppStoreState> = { isLoading: false };
 
       if (tasksRes && Array.isArray(tasksRes.items)) {
         const apiTasks: Task[] = tasksRes.items.map((item: any) => ({
@@ -174,7 +209,7 @@ export const taskStore = {
           createdAt: item.createdAt || new Date().toISOString(),
           updatedAt: item.updatedAt,
         }));
-        updatedState.tasks = apiTasks;
+        stateUpdates.tasks = apiTasks;
       }
 
       if (projectsRes && Array.isArray(projectsRes.items)) {
@@ -199,56 +234,31 @@ export const taskStore = {
           progress: item.progress || 0,
           createdAt: item.createdAt,
         }));
-        updatedState.projects = apiProjects;
-
-        const clientNames = Array.from(new Set(apiProjects.map((p) => p.client)));
-        updatedState.clients = clientNames.map((cName, idx) => ({
-          id: `cli-${idx + 1}`,
-          name: cName,
-          company: `${cName} Corp`,
-          status: 'ACTIVE',
-          activeProjectsCount: apiProjects.filter((p) => p.client === cName).length,
-        }));
+        stateUpdates.projects = apiProjects;
       }
 
       if (membersRes && Array.isArray(membersRes.items)) {
         const apiMembers: TeamMember[] = membersRes.items.map((m: any) => ({
           id: m.id,
-          name: m.user?.name || m.name || 'Team Member',
+          name: m.user?.name || m.name || 'Workspace Member',
           email: m.user?.email || m.email || '',
-          role: m.role || 'Member',
-          department: m.department?.name || 'Engineering',
-          assignedTasksCount: 0,
-          completedTasksCount: 0,
-          weeklyCapacityHours: 40,
-          loggedHoursThisWeek: 0,
-          status: 'ONLINE',
-          avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+          role: m.role || 'MEMBER',
+          avatar: m.user?.image || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+          department: m.jobTitle || 'Engineering',
         }));
-        updatedState.teamMembers = apiMembers;
+        stateUpdates.teamMembers = apiMembers;
       }
 
-      currentState = updatedState;
-      notify();
+      set(stateUpdates);
     } catch (err) {
       console.error("Failed to sync task store with API:", err);
-      currentState = { ...currentState, isLoading: false };
-      notify();
+      set({ isLoading: false });
     } finally {
       isSyncing = false;
     }
   },
 
-  subscribe(listener: () => void) {
-    listeners.add(listener);
-    return () => listeners.delete(listener);
-  },
-  getSnapshot() {
-    return currentState;
-  },
-
-  // Async Task Actions wired to taskApi
-  async addTask(taskData: Omit<Task, 'id' | 'createdAt'>) {
+  addTask: async (taskData) => {
     try {
       const payload = {
         title: taskData.name,
@@ -262,15 +272,14 @@ export const taskStore = {
 
       const res = await taskApi.createTask(payload);
       if (res && res.data) {
-        await this.syncWithApi();
+        await get().syncWithApi();
       } else {
         const newTask: Task = {
           ...taskData,
           id: `task-${Date.now()}`,
           createdAt: new Date().toISOString(),
         };
-        currentState = { ...currentState, tasks: [newTask, ...currentState.tasks] };
-        notify();
+        set((state) => ({ tasks: [newTask, ...state.tasks] }));
       }
     } catch (e) {
       console.warn("Failed to create task on backend, adding locally:", e);
@@ -279,18 +288,15 @@ export const taskStore = {
         id: `task-${Date.now()}`,
         createdAt: new Date().toISOString(),
       };
-      currentState = { ...currentState, tasks: [newTask, ...currentState.tasks] };
-      notify();
+      set((state) => ({ tasks: [newTask, ...state.tasks] }));
     }
   },
 
-  async updateTask(taskId: string, updates: Partial<Task>) {
+  updateTask: async (taskId, updates) => {
     // Optimistic local update
-    currentState = {
-      ...currentState,
-      tasks: currentState.tasks.map((t) => (t.id === taskId ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t)),
-    };
-    notify();
+    set((state) => ({
+      tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t)),
+    }));
 
     try {
       const payload: Record<string, any> = {};
@@ -309,24 +315,18 @@ export const taskStore = {
     }
   },
 
-  async updateTaskStatus(taskId: string, status: TaskStatus) {
-    await this.updateTask(taskId, { status });
+  updateTaskStatus: async (taskId, status) => {
+    await get().updateTask(taskId, { status });
   },
 
-  async reorderTasks(newTasks: Task[]) {
-    currentState = {
-      ...currentState,
-      tasks: newTasks,
-    };
-    notify();
+  reorderTasks: async (newTasks) => {
+    set({ tasks: newTasks });
   },
 
-  async deleteTask(taskId: string) {
-    currentState = {
-      ...currentState,
-      tasks: currentState.tasks.filter((t) => t.id !== taskId),
-    };
-    notify();
+  deleteTask: async (taskId) => {
+    set((state) => ({
+      tasks: state.tasks.filter((t) => t.id !== taskId),
+    }));
 
     try {
       if (!taskId.startsWith('task-')) {
@@ -337,7 +337,7 @@ export const taskStore = {
     }
   },
 
-  async addComment(taskId: string, content: string, authorName: string = 'Current User') {
+  addComment: async (taskId, content, authorName = 'Current User') => {
     if (!content.trim()) return;
 
     const newComment: TaskComment = {
@@ -352,17 +352,15 @@ export const taskStore = {
       createdAt: new Date().toISOString(),
     };
 
-    currentState = {
-      ...currentState,
-      tasks: currentState.tasks.map((t) => {
+    set((state) => ({
+      tasks: state.tasks.map((t) => {
         if (t.id !== taskId) return t;
         return {
           ...t,
           comments: [...(t.comments || []), newComment],
         };
       }),
-    };
-    notify();
+    }));
 
     try {
       if (!taskId.startsWith('task-')) {
@@ -373,42 +371,37 @@ export const taskStore = {
     }
   },
 
-  toggleSubtask(taskId: string, subtaskId: string) {
-    currentState = {
-      ...currentState,
-      tasks: currentState.tasks.map((t) => {
+  toggleSubtask: (taskId, subtaskId) => {
+    set((state) => ({
+      tasks: state.tasks.map((t) => {
         if (t.id !== taskId || !t.subtasks) return t;
         return {
           ...t,
           subtasks: t.subtasks.map((st) => (st.id === subtaskId ? { ...st, completed: !st.completed } : st)),
         };
       }),
-    };
-    notify();
+    }));
   },
 
-  addSubtask(taskId: string, title: string) {
+  addSubtask: (taskId, title) => {
     if (!title.trim()) return;
     const newSubtask: Subtask = {
       id: `st-${Date.now()}`,
       title: title.trim(),
       completed: false,
     };
-    currentState = {
-      ...currentState,
-      tasks: currentState.tasks.map((t) => {
+    set((state) => ({
+      tasks: state.tasks.map((t) => {
         if (t.id !== taskId) return t;
         return {
           ...t,
           subtasks: [...(t.subtasks || []), newSubtask],
         };
       }),
-    };
-    notify();
+    }));
   },
 
-  // Async Project Actions
-  async addProject(projectData: Omit<Project, 'id' | 'createdAt'>) {
+  addProject: async (projectData) => {
     try {
       const payload = {
         name: projectData.name,
@@ -420,15 +413,14 @@ export const taskStore = {
 
       const res = await taskApi.createProject(payload);
       if (res && res.data) {
-        await this.syncWithApi();
+        await get().syncWithApi();
       } else {
         const newPrj: Project = {
           ...projectData,
           id: `prj-${Date.now()}`,
           createdAt: new Date().toISOString(),
         };
-        currentState = { ...currentState, projects: [newPrj, ...currentState.projects] };
-        notify();
+        set((state) => ({ projects: [newPrj, ...state.projects] }));
       }
     } catch (e) {
       console.warn("Failed to create project on backend, adding locally:", e);
@@ -437,17 +429,14 @@ export const taskStore = {
         id: `prj-${Date.now()}`,
         createdAt: new Date().toISOString(),
       };
-      currentState = { ...currentState, projects: [newPrj, ...currentState.projects] };
-      notify();
+      set((state) => ({ projects: [newPrj, ...state.projects] }));
     }
   },
 
-  async updateProject(id: string, updates: Partial<Project>) {
-    currentState = {
-      ...currentState,
-      projects: currentState.projects.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    };
-    notify();
+  updateProject: async (id, updates) => {
+    set((state) => ({
+      projects: state.projects.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }));
 
     try {
       if (!id.startsWith('prj-')) {
@@ -458,12 +447,10 @@ export const taskStore = {
     }
   },
 
-  async deleteProject(id: string) {
-    currentState = {
-      ...currentState,
-      projects: currentState.projects.filter((p) => p.id !== id),
-    };
-    notify();
+  deleteProject: async (id) => {
+    set((state) => ({
+      projects: state.projects.filter((p) => p.id !== id),
+    }));
 
     try {
       if (!id.startsWith('prj-')) {
@@ -474,64 +461,60 @@ export const taskStore = {
     }
   },
 
-  addClient(client: Omit<Client, 'id'>) {
+  addClient: (client) => {
     const newCli: Client = { ...client, id: `cli-${Date.now()}` };
-    currentState = { ...currentState, clients: [newCli, ...currentState.clients] };
-    notify();
+    set((state) => ({ clients: [newCli, ...state.clients] }));
   },
 
-  addTeamMember(member: Omit<TeamMember, 'id'>) {
+  addTeamMember: (member) => {
     const newMember: TeamMember = { ...member, id: `m-${Date.now()}` };
-    currentState = { ...currentState, teamMembers: [newMember, ...currentState.teamMembers] };
-    notify();
+    set((state) => ({ teamMembers: [newMember, ...state.teamMembers] }));
   },
 
-  addTag(tag: Omit<Tag, 'id'>) {
+  addTag: (tag) => {
     const newTag: Tag = { ...tag, id: `tag-${Date.now()}` };
-    currentState = { ...currentState, tags: [newTag, ...currentState.tags] };
-    notify();
+    set((state) => ({ tags: [newTag, ...state.tags] }));
   },
 
-  addTimeOff(request: Omit<TimeOffRequest, 'id'>) {
+  addTimeOff: (request) => {
     const newReq: TimeOffRequest = { ...request, id: `to-${Date.now()}` };
-    currentState = { ...currentState, timeOffRequests: [newReq, ...currentState.timeOffRequests] };
-    notify();
+    set((state) => ({ timeOffRequests: [newReq, ...state.timeOffRequests] }));
   },
 
-  setMyTasksOnly(val: boolean) {
-    currentState = { ...currentState, myTasksOnly: val };
-    notify();
+  setMyTasksOnly: (val) => {
+    set({ myTasksOnly: val });
   },
 
-  // Timer Actions (Lightweight update without triggering full app notify on every tick)
-  startTimer(description: string, project: string) {
-    currentState = {
-      ...currentState,
-      activeTimer: {
+  startTimer: (description, project) => {
+    set((state) => {
+      const activeTimer: ActiveTimer = {
         description,
         project,
         startTime: Date.now(),
-        elapsedSeconds: currentState.activeTimer.isRunning && currentState.activeTimer.description === description
-          ? currentState.activeTimer.elapsedSeconds
+        elapsedSeconds: state.activeTimer.isRunning && state.activeTimer.description === description
+          ? state.activeTimer.elapsedSeconds
           : 0,
         isRunning: true,
-      },
-    };
-    notify();
+      };
+      persistActiveTimer(activeTimer);
+      return { activeTimer };
+    });
   },
-  pauseTimer() {
-    if (!currentState.activeTimer.isRunning) return;
-    currentState = {
-      ...currentState,
-      activeTimer: {
-        ...currentState.activeTimer,
+
+  pauseTimer: () => {
+    set((state) => {
+      if (!state.activeTimer.isRunning) return {};
+      const activeTimer: ActiveTimer = {
+        ...state.activeTimer,
         isRunning: false,
-      },
-    };
-    notify();
+      };
+      persistActiveTimer(activeTimer);
+      return { activeTimer };
+    });
   },
-  stopAndSaveTimer() {
-    const { activeTimer } = currentState;
+
+  stopAndSaveTimer: () => {
+    const { activeTimer, selectedProject } = get();
     if (activeTimer.elapsedSeconds <= 0 && !activeTimer.description) return;
 
     const newEntry: TimeEntry = {
@@ -544,36 +527,61 @@ export const taskStore = {
       dateGroup: 'Today',
     };
 
-    currentState = {
-      ...currentState,
-      timeEntries: [newEntry, ...currentState.timeEntries],
-      activeTimer: {
-        description: '',
-        project: currentState.selectedProject,
-        startTime: 0,
-        elapsedSeconds: 0,
-        isRunning: false,
-      },
+    const resetTimer: ActiveTimer = {
+      description: '',
+      project: selectedProject,
+      startTime: 0,
+      elapsedSeconds: 0,
+      isRunning: false,
     };
-    notify();
-  },
-  updateTimerElapsed(seconds: number) {
-    currentState.activeTimer.elapsedSeconds = seconds;
-    // Silent state mutation for high frequency ticker ticks to avoid re-rendering unrelated pages
-    notify();
-  },
-  setActiveTimerField(fields: Partial<ActiveTimer>) {
-    currentState = {
-      ...currentState,
-      activeTimer: {
-        ...currentState.activeTimer,
-        ...fields,
-      },
-    };
-    notify();
-  },
-};
 
-export function useTaskStore() {
-  return useSyncExternalStore(taskStore.subscribe, taskStore.getSnapshot, taskStore.getSnapshot);
-}
+    persistActiveTimer(resetTimer);
+
+    set((state) => ({
+      timeEntries: [newEntry, ...state.timeEntries],
+      activeTimer: resetTimer,
+    }));
+  },
+
+  updateTimerElapsed: (seconds) => {
+    set((state) => {
+      const activeTimer = { ...state.activeTimer, elapsedSeconds: seconds };
+      persistActiveTimer(activeTimer);
+      return { activeTimer };
+    });
+  },
+
+  setActiveTimerField: (fields) => {
+    set((state) => {
+      const activeTimer = { ...state.activeTimer, ...fields };
+      persistActiveTimer(activeTimer);
+      return { activeTimer };
+    });
+  },
+}));
+
+// Backward compatibility helper for direct method calls on taskStore
+export const taskStore = {
+  syncWithApi: () => useTaskStore.getState().syncWithApi(),
+  addTask: (taskData: Omit<Task, 'id' | 'createdAt'>) => useTaskStore.getState().addTask(taskData),
+  updateTask: (taskId: string, updates: Partial<Task>) => useTaskStore.getState().updateTask(taskId, updates),
+  updateTaskStatus: (taskId: string, status: TaskStatus) => useTaskStore.getState().updateTaskStatus(taskId, status),
+  reorderTasks: (newTasks: Task[]) => useTaskStore.getState().reorderTasks(newTasks),
+  deleteTask: (taskId: string) => useTaskStore.getState().deleteTask(taskId),
+  addComment: (taskId: string, content: string, authorName?: string) => useTaskStore.getState().addComment(taskId, content, authorName),
+  toggleSubtask: (taskId: string, subtaskId: string) => useTaskStore.getState().toggleSubtask(taskId, subtaskId),
+  addSubtask: (taskId: string, title: string) => useTaskStore.getState().addSubtask(taskId, title),
+  addProject: (projectData: Omit<Project, 'id' | 'createdAt'>) => useTaskStore.getState().addProject(projectData),
+  updateProject: (id: string, updates: Partial<Project>) => useTaskStore.getState().updateProject(id, updates),
+  deleteProject: (id: string) => useTaskStore.getState().deleteProject(id),
+  addClient: (client: Omit<Client, 'id'>) => useTaskStore.getState().addClient(client),
+  addTeamMember: (member: Omit<TeamMember, 'id'>) => useTaskStore.getState().addTeamMember(member),
+  addTag: (tag: Omit<Tag, 'id'>) => useTaskStore.getState().addTag(tag),
+  addTimeOff: (request: Omit<TimeOffRequest, 'id'>) => useTaskStore.getState().addTimeOff(request),
+  setMyTasksOnly: (val: boolean) => useTaskStore.getState().setMyTasksOnly(val),
+  startTimer: (description: string, project: string) => useTaskStore.getState().startTimer(description, project),
+  pauseTimer: () => useTaskStore.getState().pauseTimer(),
+  stopAndSaveTimer: () => useTaskStore.getState().stopAndSaveTimer(),
+  updateTimerElapsed: (seconds: number) => useTaskStore.getState().updateTimerElapsed(seconds),
+  setActiveTimerField: (fields: Partial<ActiveTimer>) => useTaskStore.getState().setActiveTimerField(fields),
+};

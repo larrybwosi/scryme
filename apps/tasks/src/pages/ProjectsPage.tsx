@@ -10,7 +10,7 @@ import { Badge } from '@repo/ui/components/ui/badge';
 import { Card } from '@repo/ui/components/ui/card';
 
 export default function ProjectsPage() {
-  const { projects } = useTaskStore();
+  const projects = useTaskStore((state) => state.projects);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);

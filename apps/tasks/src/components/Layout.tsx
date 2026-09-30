@@ -14,21 +14,41 @@ import {
   Search,
   Plus,
   Bell,
-  ChevronDown,
   Sparkles,
   Menu,
   X,
-  RotateCcw
+  RotateCcw,
+  Settings2
 } from 'lucide-react';
 import { taskStore, useTaskStore } from '../lib/store';
+import { useSession } from '../lib/auth-client';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Badge } from '@repo/ui/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@repo/ui/components/ui/avatar';
 
 export default function Layout({ children }: { children?: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const { tasks, projects, clients, teamMembers } = useTaskStore();
+  const { data: session } = useSession();
+
+  const tasks = useTaskStore((state) => state.tasks);
+  const projects = useTaskStore((state) => state.projects);
+  const clients = useTaskStore((state) => state.clients);
+  const teamMembers = useTaskStore((state) => state.teamMembers);
+
+  const displayName = session?.user?.name || 'User';
+  const displayEmail = session?.user?.email || 'user@scryme.tech';
+  const userImage = session?.user?.image;
+
+  const userInitials = displayName
+    ? displayName
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2)
+    : 'U';
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -153,23 +173,29 @@ export default function Layout({ children }: { children?: React.ReactNode }) {
           })}
         </nav>
 
-        {/* User / Workspace Switcher Footer */}
+        {/* User Profile Footer Card */}
         <div className="p-3 border-t border-border">
-          <div className="flex items-center justify-between p-2 rounded-lg bg-muted/40 border border-border cursor-pointer hover:bg-muted transition-colors">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="h-7 w-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs ring-1 ring-border shrink-0">
-                WS
+          <div
+            className="w-full flex items-center gap-2.5 p-2 rounded-lg bg-muted/40 hover:bg-muted border border-border transition-colors cursor-pointer group"
+            title="User Info & Preferences"
+          >
+            <Avatar className="h-8 w-8 border border-border shrink-0 ring-2 ring-indigo-500/20 group-hover:ring-indigo-500 transition-all">
+              {userImage ? (
+                <AvatarImage src={userImage} alt={displayName} />
+              ) : null}
+              <AvatarFallback className="bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 text-xs font-bold">
+                {userInitials}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-foreground truncate leading-tight">
+                {displayName}
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs font-semibold text-foreground truncate">
-                  Enterprise Workspace
-                </div>
-                <div className="text-[10px] text-muted-foreground truncate">
-                  Active Session
-                </div>
+              <div className="text-[10px] text-muted-foreground truncate leading-none mt-0.5">
+                {displayEmail}
               </div>
             </div>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <Settings2 className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
           </div>
         </div>
       </aside>

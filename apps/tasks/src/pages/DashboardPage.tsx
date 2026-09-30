@@ -16,7 +16,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ui
 import { Badge } from '@repo/ui/components/ui/badge';
 
 export default function DashboardPage() {
-  const { tasks, projects, clients, teamMembers, timeEntries } = useTaskStore();
+  const tasks = useTaskStore((state) => state.tasks);
+  const projects = useTaskStore((state) => state.projects);
+  const clients = useTaskStore((state) => state.clients);
+  const teamMembers = useTaskStore((state) => state.teamMembers);
+  const timeEntries = useTaskStore((state) => state.timeEntries);
 
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter((t) => t.status === 'Completed').length;
