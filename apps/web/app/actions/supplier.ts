@@ -195,6 +195,32 @@ export async function deleteSupplier(id: string): Promise<any> {
   revalidatePath("/inventory/supplier");
 }
 
+
+export async function updateSupplierProductPrice(data: {
+  productSupplierId: string;
+  supplierId: string;
+  costPrice: number;
+  supplierSku?: string;
+}): Promise<any> {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) {
+    throw new Error("Unauthorized");
+  }
+
+  const ps = await db.productSupplier.update({
+    where: {
+      id: data.productSupplierId,
+    },
+    data: {
+      costPrice: new Decimal(data.costPrice),
+      supplierSku: data.supplierSku,
+    },
+  });
+
+  revalidatePath(`/inventory/supplier/${data.supplierId}`);
+  return ps;
+}
+
 export async function addProductToSupplier(data: {
   supplierId: string;
   productId: string;
@@ -317,7 +343,20 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
               category: true,
             },
           },
-          variant: true,
+          variant: {
+            include: {
+              suppliers: {
+                include: {
+                  supplier: {
+                    select: {
+                      id: true,
+                      name: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
       purchases: {

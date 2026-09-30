@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import { getSupplierById } from "../../../actions/supplier";
-import { getInventoryProducts } from "../../../actions/inventory";
 import { SupplierDetailsHeader } from "../../../../components/supplier/SupplierDetailsHeader";
 import { ProductCatalog } from "../../../../components/supplier/ProductCatalog";
 import { SupplierDeliveries } from "../../../../components/supplier/SupplierDeliveries";
@@ -54,10 +53,7 @@ export default async function SupplierDetailsPage({
   params,
 }: SupplierDetailsPageProps) {
   const resolvedParams = await params;
-  const [supplier, inventoryProducts] = await Promise.all([
-    getSupplierById(resolvedParams.id),
-    getInventoryProducts({}).catch(() => []),
-  ]);
+  const supplier = await getSupplierById(resolvedParams.id);
 
   if (!supplier) {
     notFound();
@@ -127,7 +123,6 @@ export default async function SupplierDetailsPage({
                 supplierId={supplier.id}
                 supplierName={supplier.name}
                 supplierProducts={supplier.products || []}
-                allProducts={inventoryProducts}
               />
             </div>
           </div>

@@ -23,7 +23,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { createPurchase } from "@/app/actions/purchases";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2, ShoppingBag } from "lucide-react";
+import { Plus, Trash2, Loader2, ShoppingBag, AlertCircle } from "lucide-react";
 
 const poSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
@@ -45,7 +45,6 @@ interface CreateSupplierPODialogProps {
   supplierId: string;
   supplierName: string;
   supplierProducts: any[];
-  allProducts?: any[];
   children?: React.ReactNode;
 }
 
@@ -53,13 +52,12 @@ export function CreateSupplierPODialog({
   supplierId,
   supplierName,
   supplierProducts = [],
-  allProducts = [],
   children,
 }: CreateSupplierPODialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Combine products supplied by this supplier with all inventory products so user can select any variant
+  // Strictly filter products to ONLY those supplied by this supplier
   const availableVariants = useMemo(() => {
     const variantMap = new Map<string, { id: string; name: string; unitCost: number }>();
 
@@ -78,23 +76,8 @@ export function CreateSupplierPODialog({
       }
     });
 
-    allProducts.forEach((p: any) => {
-      const vId = p.variantId;
-      if (vId && !variantMap.has(vId)) {
-        const pName = p.name || "Product";
-        const vName = p.variantName;
-        const displayName = vName && vName !== "Default" ? `${pName} (${vName})` : pName;
-        const cost = Number(p.buyingPrice ?? p.costPrice ?? p.unitPrice ?? 0);
-        variantMap.set(vId, {
-          id: vId,
-          name: displayName,
-          unitCost: cost,
-        });
-      }
-    });
-
     return Array.from(variantMap.values());
-  }, [supplierProducts, allProducts]);
+  }, [supplierProducts]);
 
   // Calculate default due date (30 days from now)
   const defaultDueDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
@@ -246,6 +229,7 @@ export function CreateSupplierPODialog({
                 variant="outline"
                 size="sm"
                 className="rounded-lg border-border"
+                disabled={availableVariants.length === 0}
                 onClick={() =>
                   append({
                     variantId: availableVariants[0]?.id || "",
@@ -259,8 +243,15 @@ export function CreateSupplierPODialog({
             </div>
 
             {availableVariants.length === 0 ? (
-              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm">
-                No product variants available. Please ensure products are configured in the supplier catalog or inventory.
+              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-sm flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div>
+                  <p className="font-semibold mb-1">No catalog products found</p>
+                  <p className="text-xs text-amber-700/80 dark:text-amber-400/80">
+                    This supplier currently has no products assigned to their catalog.
+                    Please add products to {supplierName}&apos;s catalog before issuing a purchase order.
+                  </p>
+                </div>
               </div>
             ) : (
               fields.map((field, index) => (
