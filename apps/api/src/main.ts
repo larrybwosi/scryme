@@ -37,7 +37,29 @@ async function bootstrap() {
   );
 
   app.enableCors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      try {
+        const hostname = new URL(origin).hostname.toLowerCase();
+        if (
+          hostname === "scryme.tech" ||
+          hostname.endsWith(".scryme.tech") ||
+          hostname === "localhost" ||
+          hostname === "127.0.0.1" ||
+          hostname.endsWith(".localhost") ||
+          env.NODE_ENV !== "production"
+        ) {
+          callback(null, true);
+          return;
+        }
+      } catch {
+        // Fallback on invalid origin string
+      }
+      callback(null, true);
+    },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS",
     credentials: true,
     allowedHeaders: [
@@ -47,6 +69,15 @@ async function bootstrap() {
       "x-api-key",
       "x-member-token",
       "x-correlation-id",
+      "x-org-slug",
+      "x-organization-slug",
+      "x-org-id",
+      "x-organization-id",
+      "x-location-id",
+      "x-device-key",
+      "x-device-id",
+      "x-standalone-key",
+      "x-scryme-signature",
     ],
   });
 
