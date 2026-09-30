@@ -137,12 +137,13 @@ export default function RealtimeInitializer() {
           console.log('[Realtime] Price list created received');
           await syncPricing().catch(console.error);
           queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+          queryClient.invalidateQueries({ queryKey: ['pos-pricing'] });
       });
 
       const unsubPriceListUpdated = subscribe(pricingChannel, 'price-list-updated', async () => {
           console.log('[Realtime] Price list updated received');
           await syncPricing().catch(console.error);
-          queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+          queryClient.invalidateQueries({ queryKey: ['pos-pricing'] });
       });
 
       const unsubPriceListDeleted = subscribe(pricingChannel, 'price-list-deleted', async (data: any) => {
@@ -156,6 +157,7 @@ export default function RealtimeInitializer() {
           }
           await syncPricing().catch(console.error);
           queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+          queryClient.invalidateQueries({ queryKey: ['pos-pricing'] });
       });
 
       const unsubCustomerCreated = subscribe(customersChannel, 'customer-created', async () => {

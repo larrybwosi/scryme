@@ -63,6 +63,17 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
   initialize: (force = false) => {
     const { socketClient, connectionState } = get();
 
+    // Guard: Do not initialize realtime connection if no staff member is checked in
+    const authStoreState = useAuthStore.getState();
+    if (!authStoreState.isConfigured || !authStoreState.currentMember) {
+      if (socketClient) {
+        socketClient.removeAllListeners();
+        socketClient.disconnect();
+      }
+      set({ status: 'idle', connectionState: 'idle', socketClient: null });
+      return;
+    }
+
     if (!force && socketClient && !['closed', 'failed', 'idle'].includes(connectionState)) {
       return;
     }

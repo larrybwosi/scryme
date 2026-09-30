@@ -1,25 +1,53 @@
 import { invoke } from '@tauri-apps/api/core';
 import { useMemo } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMutation } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useAuthStore } from '@/store/pos-auth-store';
+import { logger, writeAudit } from '@/lib/logger';
 
 // --- HOOKS ---
 
 export const usePosPricingSync = () => {
   const queryClient = useQueryClient();
+  const locationId = useAuthStore(state => state.currentLocation?.id);
+  const currentMember = useAuthStore(state => state.currentMember);
 
   const syncMutation = useMutation({
     mutationFn: async () => {
-      const result = await invoke('sync_pricing_command', {});
+      logger.info('[Sync] Initiating Pricing Sync request', { locationId, actorId: currentMember?.id });
+      console.log('[API Console] Sending GET Pricing Sync request via Rust engine...');
+
+      const result = await invoke<string>('sync_pricing_command', {});
+      console.log('[API Console] Pricing Sync Response:', result);
+
+      writeAudit({
+        action: 'SYNC_PRICING',
+        level: 'INFO',
+        actorId: currentMember?.id,
+        actorName: currentMember?.name,
+        locationId,
+        details: { result },
+      });
+
       return result;
     },
     onSuccess: newTimestamp => {
-      console.log('Pricing Synced. New Timestamp:', newTimestamp);
-      // Invalidate relevant queries if needed
+      console.log('[API Console] Pricing Synced. New Timestamp:', newTimestamp);
       queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+      queryClient.invalidateQueries({ queryKey: ['pos-pricing'] });
     },
     onError: error => {
-      console.error('Pricing Sync Failed:', error);
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error('[Sync] Pricing Sync Failed', error, { locationId });
+      console.error('[API Console] Pricing Sync Error:', msg);
+
+      writeAudit({
+        action: 'SYNC_PRICING_FAILED',
+        level: 'WARNING',
+        actorId: currentMember?.id,
+        actorName: currentMember?.name,
+        locationId,
+        details: { error: msg },
+      });
     },
   });
 
@@ -27,7 +55,7 @@ export const usePosPricingSync = () => {
     isSyncing: syncMutation.isPending,
     syncError: syncMutation.error,
     triggerSync: syncMutation.mutateAsync,
-    lastSyncTime: null, // We could fetch this from Rust if needed, but it's less critical now
+    lastSyncTime: null,
   };
 };
 
