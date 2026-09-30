@@ -32,7 +32,7 @@ import { emitTo } from '@tauri-apps/api/event';
 import { HeldOrdersDialog } from '@/components/held-orders-dialog';
 import { PrescriptionDialog } from '@/components/pos/prescription-dialog';
 import { HoldOrderDialog } from '@/components/hold-order-dialog';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { getPOSImageUrl } from '@/lib/image-helper';
 import { usePrinter } from '@/hooks/use-printer';
 import { toast } from 'sonner';
 
@@ -529,7 +529,7 @@ export function Cart() {
                     <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted shrink-0 border border-border/50">
                       {item.imageUrl ? (
                         <img
-                          src={convertFileSrc(item.imageUrl)}
+                          src={getPOSImageUrl(item.imageUrl)}
                           alt={item.productName}
                           className="object-cover w-full h-full"
                           loading="lazy"

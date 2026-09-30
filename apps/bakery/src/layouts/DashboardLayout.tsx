@@ -24,7 +24,7 @@ const NAV_ITEMS = [
   { id: 'batches', label: 'Batches', icon: Layers, path: '/batches' },
   { id: 'recipes', label: 'Recipes', icon: BookOpen, path: '/recipes' },
   { id: 'templates', label: 'Templates', icon: FileCode2, path: '/templates' },
-  { id: 'bakers', label: 'Staff & Shift Trading', icon: Users, path: '/bakers' },
+  { id: 'bakers', label: 'Staff & Schedules', icon: Users, path: '/bakers' },
   { id: 'deliveries', label: 'Deliveries', icon: Truck, path: '/deliveries' },
   { id: 'categories', label: 'Categories', icon: Tags, path: '/categories' },
   { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
