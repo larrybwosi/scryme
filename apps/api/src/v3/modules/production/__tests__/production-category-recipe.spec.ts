@@ -27,6 +27,12 @@ describe("ProductionService - Category and Recipe Validation", () => {
           findFirst: vi.fn(),
           findMany: vi.fn(),
         },
+        systemUnit: {
+          findUnique: vi.fn(),
+        },
+        organizationUnit: {
+          findFirst: vi.fn(),
+        },
       },
     };
 
@@ -76,7 +82,7 @@ describe("ProductionService - Category and Recipe Validation", () => {
     });
   });
 
-  describe("Recipe Creation Validation", () => {
+  describe("Recipe Creation Validation & Unit Auto-Resolution", () => {
     const validIngredient = {
       ingredientVariantId: "var-1",
       quantity: 500,
@@ -98,6 +104,7 @@ describe("ProductionService - Category and Recipe Validation", () => {
     });
 
     it("should throw BadRequestException if ingredients array is empty", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue({ id: "unit-kg" });
       const dto: CreateRecipeDto = {
         name: "Sourdough",
         categoryId: "cat-1",
@@ -111,6 +118,7 @@ describe("ProductionService - Category and Recipe Validation", () => {
     });
 
     it("should throw BadRequestException if an ingredient lacks a unit", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue({ id: "unit-kg" });
       const dto: CreateRecipeDto = {
         name: "Sourdough",
         categoryId: "cat-1",
@@ -125,7 +133,63 @@ describe("ProductionService - Category and Recipe Validation", () => {
       );
     });
 
-    it("should create recipe successfully when all validation rules pass", async () => {
+    it("should throw BadRequestException if a unit ID does not exist in systemUnit or organizationUnit", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue(null);
+      prismaMock.client.organizationUnit.findFirst.mockResolvedValue(null);
+
+      const dto: CreateRecipeDto = {
+        name: "Sourdough",
+        categoryId: "cat-1",
+        producesVariantId: "var-prod-1",
+        yieldQuantity: 10,
+        systemUnitId: "non-existent-unit",
+        ingredients: [validIngredient],
+      };
+
+      await expect(service.createRecipe("org-1", dto)).rejects.toThrow(BadRequestException);
+    });
+
+    it("should auto-reassign custom orgUnit passed in systemUnitId field", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue(null);
+      prismaMock.client.organizationUnit.findFirst.mockImplementation(({ where }) => {
+        if (where.id === "custom-org-unit") return Promise.resolve({ id: "custom-org-unit" });
+        if (where.id === "unit-g") return Promise.resolve(null);
+        return Promise.resolve(null);
+      });
+
+      // Mock ingredient unit as system unit
+      prismaMock.client.systemUnit.findUnique.mockImplementation(({ where }) => {
+        if (where.id === "unit-g") return Promise.resolve({ id: "unit-g" });
+        return Promise.resolve(null);
+      });
+
+      const dto: CreateRecipeDto = {
+        name: "Sourdough",
+        categoryId: "cat-1",
+        producesVariantId: "var-prod-1",
+        yieldQuantity: 10,
+        systemUnitId: "custom-org-unit", // Passed as systemUnitId, but actually an org unit
+        ingredients: [validIngredient],
+      };
+
+      const mockCreatedRecipe = { id: "rec-1", name: "Sourdough", organizationId: "org-1" };
+      prismaMock.client.recipe.create.mockResolvedValue(mockCreatedRecipe);
+
+      const result = await service.createRecipe("org-1", dto);
+      expect(result).toEqual(mockCreatedRecipe);
+      expect(prismaMock.client.recipe.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            systemUnitId: undefined,
+            orgUnitId: "custom-org-unit",
+          }),
+        }),
+      );
+    });
+
+    it("should create recipe successfully when system unit is valid", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue({ id: "unit-kg" });
+
       const dto: CreateRecipeDto = {
         name: "Sourdough",
         categoryId: "cat-1",

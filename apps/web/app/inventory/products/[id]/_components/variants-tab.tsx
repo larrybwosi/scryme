@@ -4,6 +4,8 @@ import { formatCurrency } from "../../../../../lib/utils";
 import { useOrganizationStore } from "../../../../../lib/stores/organization-store";
 
 import React from "react";
+import { formatCurrency } from "@/lib/utils";
+import { useOrganizationStore } from "@/lib/store/use-organization-store";
 import { Plus, MoreHorizontal, Edit, Trash2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";

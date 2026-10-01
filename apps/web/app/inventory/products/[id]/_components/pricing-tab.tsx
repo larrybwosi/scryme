@@ -1,8 +1,5 @@
 "use client";
 
-import { formatCurrency } from "../../../../../lib/utils";
-import { useOrganizationStore } from "../../../../../lib/stores/organization-store";
-
 import React, { useState, useEffect } from "react";
 import {
   DollarSign,
@@ -10,14 +7,11 @@ import {
   Plus,
   TrendingUp,
   Percent,
-  Layers,
   Trash2,
-  Package,
   ShoppingBag,
   Loader2,
   Sparkles,
   SlidersHorizontal,
-  Info,
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -56,6 +50,8 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
+import { useOrganizationStore } from "@/lib/store/use-organization-store";
 import {
   getProductPricingDetails,
   createVolumeTierForProduct,
@@ -74,6 +70,7 @@ interface PricingTabProps {
 export function PricingTab({ product, setProduct }: PricingTabProps) {
   const { currency, currencySymbol: storeSymbol } = useOrganizationStore();
   const currencySymbol = storeSymbol || "$";
+
   const retailPrice = Number(product.variants?.[0]?.retailPrice || 0);
   const buyingPrice = Number(product.variants?.[0]?.buyingPrice || 0);
   const marginPercentage =
@@ -103,31 +100,50 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
   const [volumeForm, setVolumeForm] = useState({
     variantId: product.variants?.[0]?.id || "",
     minQuantity: 5,
-    maxQuantity: "",
+    maxQuantity: "" as string | number,
     price: retailPrice > 0 ? Number((retailPrice * 0.9).toFixed(2)) : 0,
-    wholesalePrice: "",
+    wholesalePrice: "" as string | number,
     priceListId: "",
   });
 
   // Bundle Form State
-  const [bundleForm, setBundleForm] = useState({
+  const [bundleForm, setBundleForm] = useState<{
+    variantId: string;
+    name: string;
+    description: string;
+    bundleType: "FIXED" | "DYNAMIC";
+    buyQuantity: number;
+    bundlePrice: number;
+    getQuantity: number;
+    getDiscountType: "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE";
+    getDiscountValue: number;
+  }>({
     variantId: product.variants?.[0]?.id || "",
     name: "Buy 3 Pack Special",
     description: "Get a special discounted package price when buying 3 items",
-    bundleType: "FIXED" as "FIXED" | "DYNAMIC",
+    bundleType: "FIXED",
     buyQuantity: 3,
     bundlePrice: retailPrice > 0 ? Number((retailPrice * 2.5).toFixed(2)) : 0,
     getQuantity: 1,
-    getDiscountType: "PERCENTAGE" as "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE",
+    getDiscountType: "PERCENTAGE",
     getDiscountValue: 50,
   });
 
   // Pricing Rule Form State
-  const [ruleForm, setRuleForm] = useState({
+  const [ruleForm, setRuleForm] = useState<{
+    variantId: string;
+    name: string;
+    description: string;
+    discountType: "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE";
+    discountValue: number;
+    minQuantity: number;
+    minOrderValue: number;
+    priceListId: string;
+  }>({
     variantId: "ALL",
     name: "Bulk Order Discount",
     description: "Special percentage off for high volume orders",
-    discountType: "PERCENTAGE" as "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE",
+    discountType: "PERCENTAGE",
     discountValue: 10,
     minQuantity: 10,
     minOrderValue: 0,
@@ -187,7 +203,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       toast.success("Volume pricing tier added successfully");
       setIsVolumeTierOpen(false);
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to create volume pricing tier");
     } finally {
       setIsSubmitting(false);
@@ -200,7 +216,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       await deleteVolumeTier(id, product.id);
       toast.success("Volume pricing tier removed");
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to remove volume tier");
     } finally {
       setIsDeleting(null);
@@ -236,7 +252,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       toast.success("Multi-buy pricing rule created");
       setIsBundleOpen(false);
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to create multi-buy rule");
     } finally {
       setIsSubmitting(false);
@@ -249,7 +265,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       await deleteProductPricingBundle(id, product.id);
       toast.success("Multi-buy rule removed");
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to remove multi-buy rule");
     } finally {
       setIsDeleting(null);
@@ -281,7 +297,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       toast.success("Pricing rule created");
       setIsRuleOpen(false);
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to create pricing rule");
     } finally {
       setIsSubmitting(false);
@@ -294,7 +310,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       await deleteProductPricingRule(id, product.id);
       toast.success("Pricing rule removed");
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to remove pricing rule");
     } finally {
       setIsDeleting(null);
@@ -931,7 +947,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
               <Label>Multi-Buy Deal Type</Label>
               <Select
                 value={bundleForm.bundleType}
-                onValueChange={(val: any) => setBundleForm({ ...bundleForm, bundleType: val })}>
+                onValueChange={(val: "FIXED" | "DYNAMIC") => setBundleForm({ ...bundleForm, bundleType: val })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -983,7 +999,9 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                   <Label>Discount Type</Label>
                   <Select
                     value={bundleForm.getDiscountType}
-                    onValueChange={(val: any) => setBundleForm({ ...bundleForm, getDiscountType: val })}>
+                    onValueChange={(val: "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE") =>
+                      setBundleForm({ ...bundleForm, getDiscountType: val })
+                    }>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -1076,7 +1094,9 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 <Label>Discount Type</Label>
                 <Select
                   value={ruleForm.discountType}
-                  onValueChange={(val: any) => setRuleForm({ ...ruleForm, discountType: val })}>
+                  onValueChange={(val: "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE") =>
+                    setRuleForm({ ...ruleForm, discountType: val })
+                  }>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>

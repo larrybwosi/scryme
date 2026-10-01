@@ -53,6 +53,51 @@ export class ProductionService {
     private readonly authCoreService: V3AuthCoreService,
   ) {}
 
+  private async resolveUnitId(
+    systemUnitId?: string | null,
+    orgUnitId?: string | null,
+    organizationId?: string,
+    label: string = 'unit',
+  ): Promise<{ systemUnitId?: string; orgUnitId?: string }> {
+    const sysId = cleanUnitId(systemUnitId);
+    const customId = cleanUnitId(orgUnitId);
+
+    if (!sysId && !customId) {
+      return {};
+    }
+
+    const candidate = sysId || customId;
+
+    if (candidate) {
+      const systemUnit = await this.prisma.client.systemUnit.findUnique({
+        where: { id: candidate },
+        select: { id: true },
+      });
+
+      if (systemUnit) {
+        return { systemUnitId: candidate, orgUnitId: undefined };
+      }
+
+      const orgUnit = await this.prisma.client.organizationUnit.findFirst({
+        where: {
+          id: candidate,
+          ...(organizationId ? { organizationId } : {}),
+        },
+        select: { id: true },
+      });
+
+      if (orgUnit) {
+        return { systemUnitId: undefined, orgUnitId: candidate };
+      }
+
+      throw new BadRequestException(
+        `The specified ${label} '${candidate}' was not found as a valid System Unit or Organization Unit.`,
+      );
+    }
+
+    return {};
+  }
+
   async getAttendanceStatus(ctx: V3ApiContext) {
     if (!ctx.memberId) {
       throw new UnauthorizedException("Member authentication required.");
@@ -449,14 +494,37 @@ export class ProductionService {
 
     const { id: _, createdAt: __, updatedAt: ___, ...recipeData } = recipe;
 
+    const resolvedYieldUnit = await this.resolveUnitId(
+      recipeData.systemUnitId,
+      recipeData.orgUnitId,
+      organizationId,
+      "recipe yield unit",
+    );
+
+    const resolvedIngredients = await Promise.all(
+      recipe.ingredients.map(async ({ id: _, recipeId: __, ...ing }) => {
+        const resolvedIngUnit = await this.resolveUnitId(
+          ing.systemUnitId,
+          ing.orgUnitId,
+          organizationId,
+          `ingredient '${ing.ingredientVariantId}' unit`,
+        );
+        return {
+          ...ing,
+          systemUnitId: resolvedIngUnit.systemUnitId,
+          orgUnitId: resolvedIngUnit.orgUnitId,
+        };
+      }),
+    );
+
     return this.prisma.client.recipe.create({
       data: {
         ...recipeData,
         name: `${recipeData.name} (Copy)`,
+        systemUnitId: resolvedYieldUnit.systemUnitId,
+        orgUnitId: resolvedYieldUnit.orgUnitId,
         ingredients: {
-          create: recipe.ingredients.map(
-            ({ id: _, recipeId: __, ...ing }) => ing,
-          ),
+          create: resolvedIngredients,
         },
       },
     });
@@ -591,10 +659,10 @@ export class ProductionService {
       ingredients,
     } = data;
 
-    const systemUnitId = cleanUnitId(data.systemUnitId);
-    const orgUnitId = cleanUnitId(data.orgUnitId);
+    const rawSystemUnitId = cleanUnitId(data.systemUnitId);
+    const rawOrgUnitId = cleanUnitId(data.orgUnitId);
 
-    if (!systemUnitId && !orgUnitId) {
+    if (!rawSystemUnitId && !rawOrgUnitId) {
       throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
     }
 
@@ -603,9 +671,47 @@ export class ProductionService {
     }
 
     for (const ing of ingredients) {
-      if (!ing.systemUnitId && !ing.orgUnitId) {
+      const ingSysId = cleanUnitId(ing.systemUnitId);
+      const ingOrgId = cleanUnitId(ing.orgUnitId);
+      if (!ingSysId && !ingOrgId) {
         throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
       }
+    }
+
+    const resolvedYieldUnit = await this.resolveUnitId(
+      rawSystemUnitId,
+      rawOrgUnitId,
+      organizationId,
+      "recipe yield unit",
+    );
+
+    if (!resolvedYieldUnit.systemUnitId && !resolvedYieldUnit.orgUnitId) {
+      throw new BadRequestException("At least one valid yield unit (system or organization) must be selected.");
+    }
+
+    const resolvedIngredients = [];
+    for (const ing of ingredients) {
+      const ingSysId = cleanUnitId(ing.systemUnitId);
+      const ingOrgId = cleanUnitId(ing.orgUnitId);
+
+      const resolvedIngUnit = await this.resolveUnitId(
+        ingSysId,
+        ingOrgId,
+        organizationId,
+        `ingredient '${ing.ingredientVariantId}' unit`,
+      );
+
+      if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
+        throw new BadRequestException("Each ingredient must have a valid unit selected.");
+      }
+
+      resolvedIngredients.push({
+        ingredientVariantId: ing.ingredientVariantId,
+        quantity: ing.quantity,
+        systemUnitId: resolvedIngUnit.systemUnitId,
+        orgUnitId: resolvedIngUnit.orgUnitId,
+        preparationNotes: ing.preparationNotes,
+      });
     }
 
     return this.prisma.client.recipe.create({
@@ -614,8 +720,8 @@ export class ProductionService {
         categoryId,
         producesVariantId,
         yieldQuantity,
-        systemUnitId,
-        orgUnitId,
+        systemUnitId: resolvedYieldUnit.systemUnitId,
+        orgUnitId: resolvedYieldUnit.orgUnitId,
         costPrice,
         description,
         prepTime,
@@ -629,13 +735,7 @@ export class ProductionService {
         tags,
         organizationId,
         ingredients: {
-          create: ingredients.map((ing: any) => ({
-            ingredientVariantId: ing.ingredientVariantId,
-            quantity: ing.quantity,
-            systemUnitId: cleanUnitId(ing.systemUnitId),
-            orgUnitId: cleanUnitId(ing.orgUnitId),
-            preparationNotes: ing.preparationNotes,
-          })),
+          create: resolvedIngredients,
         },
       },
       include: {
@@ -663,26 +763,67 @@ export class ProductionService {
   async updateRecipe(organizationId: string, id: string, data: UpdateRecipeDto) {
     const { ingredients, isArchived, ...rest } = data;
 
-    if (rest.yieldQuantity !== undefined) {
-      const existing = await this.prisma.client.recipe.findFirst({
-        where: { id, organizationId },
-      });
-      if (!existing) throw new NotFoundException("Recipe not found");
+    const existing = await this.prisma.client.recipe.findFirst({
+      where: { id, organizationId },
+    });
+    if (!existing) throw new NotFoundException("Recipe not found");
+
+    let resolvedYieldUnit: { systemUnitId?: string; orgUnitId?: string } | undefined = undefined;
+
+    if (rest.systemUnitId !== undefined || rest.orgUnitId !== undefined || rest.yieldQuantity !== undefined) {
       const sysUnit = rest.systemUnitId !== undefined ? cleanUnitId(rest.systemUnitId) : existing.systemUnitId;
       const orgUnit = rest.orgUnitId !== undefined ? cleanUnitId(rest.orgUnitId) : existing.orgUnitId;
+
       if (!sysUnit && !orgUnit) {
         throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
       }
+
+      resolvedYieldUnit = await this.resolveUnitId(
+        sysUnit,
+        orgUnit,
+        organizationId,
+        "recipe yield unit",
+      );
+
+      if (!resolvedYieldUnit.systemUnitId && !resolvedYieldUnit.orgUnitId) {
+        throw new BadRequestException("At least one valid yield unit (system or organization) must be selected.");
+      }
     }
+
+    let resolvedIngredients: any[] | undefined = undefined;
 
     if (ingredients !== undefined) {
       if (!ingredients || ingredients.length === 0) {
         throw new BadRequestException("Ingredients list cannot be empty.");
       }
+
+      resolvedIngredients = [];
       for (const ing of ingredients) {
-        if (!ing.systemUnitId && !ing.orgUnitId) {
+        const ingSysId = cleanUnitId(ing.systemUnitId);
+        const ingOrgId = cleanUnitId(ing.orgUnitId);
+
+        if (!ingSysId && !ingOrgId) {
           throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
         }
+
+        const resolvedIngUnit = await this.resolveUnitId(
+          ingSysId,
+          ingOrgId,
+          organizationId,
+          `ingredient '${ing.ingredientVariantId}' unit`,
+        );
+
+        if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
+          throw new BadRequestException("Each ingredient must have a valid unit selected.");
+        }
+
+        resolvedIngredients.push({
+          ingredientVariantId: ing.ingredientVariantId,
+          quantity: ing.quantity,
+          systemUnitId: resolvedIngUnit.systemUnitId,
+          orgUnitId: resolvedIngUnit.orgUnitId,
+          preparationNotes: ing.preparationNotes,
+        });
       }
     }
 
@@ -690,19 +831,13 @@ export class ProductionService {
       where: { id, organizationId },
       data: {
         ...rest,
-        systemUnitId: rest.systemUnitId !== undefined ? cleanUnitId(rest.systemUnitId) : undefined,
-        orgUnitId: rest.orgUnitId !== undefined ? cleanUnitId(rest.orgUnitId) : undefined,
+        systemUnitId: resolvedYieldUnit ? resolvedYieldUnit.systemUnitId : undefined,
+        orgUnitId: resolvedYieldUnit ? resolvedYieldUnit.orgUnitId : undefined,
         difficulty: rest.difficulty as any,
-        ingredients: ingredients
+        ingredients: resolvedIngredients
           ? {
               deleteMany: {},
-              create: ingredients.map((ing: any) => ({
-                ingredientVariantId: ing.ingredientVariantId,
-                quantity: ing.quantity,
-                systemUnitId: cleanUnitId(ing.systemUnitId),
-                orgUnitId: cleanUnitId(ing.orgUnitId),
-                preparationNotes: ing.preparationNotes,
-              })),
+              create: resolvedIngredients,
             }
           : undefined,
       },
