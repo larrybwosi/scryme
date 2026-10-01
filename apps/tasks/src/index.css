@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "@repo/ui/globals.css";
+@plugin "tailwindcss-animate";
+@source "../../../packages/ui/src";
 
 @theme {
   --font-sans: "Inter", "Geist", ui-sans-serif, system-ui, sans-serif;
