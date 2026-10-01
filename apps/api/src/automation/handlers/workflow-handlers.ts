@@ -130,7 +130,7 @@ export class WorkflowHandlers {
 
   private async handleLowStockAlert(ctx: WorkflowJobHandlerContext) {
     const threshold = ctx.definitionConfig?.threshold ?? ctx.payload?.threshold ?? 10;
-    const notificationEmail = ctx.definitionConfig?.notificationEmail ?? ctx.payload?.notificationEmail ?? "alerts@example.com";
+    const notificationEmail = ctx.definitionConfig?.notificationEmail ?? ctx.payload?.notificationEmail ?? "";
     const productId = ctx.payload?.productId;
     const productName = ctx.payload?.productName || ctx.payload?.variantName || "Product";
     const currentStock = ctx.payload?.currentStock ?? 0;
@@ -222,10 +222,10 @@ export class WorkflowHandlers {
   }
 
   private async handleDailySalesReport(ctx: WorkflowJobHandlerContext) {
-    const recipientsRaw = ctx.definitionConfig?.recipients ?? ctx.payload?.recipients ?? "admin@example.com";
+    const recipientsRaw = ctx.definitionConfig?.recipients ?? ctx.payload?.recipients ?? "";
     const recipients = typeof recipientsRaw === "string"
       ? recipientsRaw.split(",").map((s) => s.trim()).filter(Boolean)
-      : Array.isArray(recipientsRaw) ? recipientsRaw : ["admin@example.com"];
+      : Array.isArray(recipientsRaw) ? recipientsRaw : [];
 
     const totalSales = ctx.payload?.totalSales ?? 0;
     const totalRevenue = ctx.payload?.totalRevenue ?? 0;

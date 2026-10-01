@@ -477,7 +477,7 @@ function initialGraph(workflow?: Workflow) {
           label: "Dispatch Low Stock Email",
           subtitle: "Alert Notification",
           description: "Sends alert to procurement team with reorder details.",
-          config: { recipient: workflow?.settings?.notificationEmail || "procurement@example.com", subject: "CRITICAL: Low Stock Warning", template: "low_stock_v1" },
+          config: { recipient: workflow?.settings?.notificationEmail || "", subject: "CRITICAL: Low Stock Warning", template: "low_stock_v1" },
         },
       },
       {
@@ -537,7 +537,7 @@ function initialGraph(workflow?: Workflow) {
           label: "Email Sales Report",
           subtitle: "Distribution",
           description: "Sends compiled daily sales report to executive recipients.",
-          config: { recipient: workflow?.settings?.recipients || "admin@example.com", subject: "Daily Sales & Revenue Report", template: "sales_report_v1" },
+          config: { recipient: workflow?.settings?.recipients || "", subject: "Daily Sales & Revenue Report", template: "sales_report_v1" },
         },
       },
     ];

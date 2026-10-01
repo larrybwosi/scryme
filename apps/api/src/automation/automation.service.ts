@@ -102,7 +102,7 @@ export class AutomationService {
           notificationEmail: {
             type: "string",
             title: "Alert Email",
-            default: "procurement@example.com",
+            default: "",
             description: "Primary email endpoint for critical inventory alerts.",
             group: "Notifications",
           },
@@ -116,7 +116,7 @@ export class AutomationService {
           },
         },
       },
-      defaultConfig: { threshold: 10, alertFrequency: "IMMEDIATE", notificationEmail: "procurement@example.com" },
+      defaultConfig: { threshold: 10, alertFrequency: "IMMEDIATE", notificationEmail: "" },
     },
     {
       path: "f/dealio/daily_sales_report",
@@ -130,7 +130,7 @@ export class AutomationService {
           recipients: {
             type: "string",
             title: "Recipient Emails (comma separated)",
-            default: "admin@example.com",
+            default: "",
             description: "Comma-separated list of executive email addresses.",
             group: "Distribution",
           },
@@ -151,7 +151,7 @@ export class AutomationService {
           },
         },
       },
-      defaultConfig: { recipients: "admin@example.com", reportTime: "18:00", includeCharts: true },
+      defaultConfig: { recipients: "", reportTime: "18:00", includeCharts: true },
     },
     {
       path: "f/dealio/stock_movement_report",

@@ -73,7 +73,7 @@ const builtInWorkflowTemplates = [
         notificationEmail: {
           type: "string",
           title: "Alert Email",
-          default: "procurement@example.com",
+          default: "",
           description: "Primary email endpoint for critical inventory alerts.",
           group: "Notifications",
         },
@@ -98,7 +98,7 @@ const builtInWorkflowTemplates = [
         recipients: {
           type: "string",
           title: "Recipient Emails (comma separated)",
-          default: "admin@example.com",
+          default: "",
           description: "Comma-separated list of executive email addresses.",
           group: "Distribution",
         },

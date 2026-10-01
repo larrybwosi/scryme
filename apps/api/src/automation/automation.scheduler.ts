@@ -111,7 +111,7 @@ export class AutomationScheduler {
             totalSales: salesCount,
             totalRevenue,
             currency: "USD",
-            recipients: def.config?.recipients || "admin@example.com",
+            recipients: def.config?.recipients,
           },
         });
       }
