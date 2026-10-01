@@ -234,6 +234,9 @@ model Organization {
   crmActivities              CrmActivity[]               @relation("OrgCrmActivities")
   crmNotes                   CrmNote[]                   @relation("OrgCrmNotes")
   crmFollowUps               CrmFollowUp[]               @relation("OrgCrmFollowUps")
+  communicationThreads       CommunicationThread[]       @relation("OrgCommunicationThreads")
+  communicationMessages      CommunicationMessage[]      @relation("OrgCommunicationMessages")
+  whatsappTemplates          WhatsappTemplate[]          @relation("OrgWhatsappTemplates")
   projects                   Project[]
   tasks                      Task[]
   taskLabels                 TaskLabel[]
@@ -401,6 +404,7 @@ model Member {
   crmActivities   CrmActivity[] @relation("CrmActivityMember")
   crmNotes        CrmNote[]     @relation("CrmNoteCreator")
   crmFollowUps    CrmFollowUp[] @relation("CrmFollowUpAssignedTo")
+  sentCommunicationMessages CommunicationMessage[] @relation("SentCommunicationMessages")
 
   createdCampaigns  Campaign[] @relation("CampaignCreator")
   approvedCampaigns Campaign[] @relation("CampaignApprover")
