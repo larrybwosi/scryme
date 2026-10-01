@@ -24,7 +24,7 @@ export class WorkflowHandlers {
 
   private async dispatchScrymeChatReport(
     organizationId: string,
-    channelSlug: string,
+    channelKeyOrSlug: string,
     messageContent: string,
   ): Promise<boolean> {
     try {
@@ -33,16 +33,41 @@ export class WorkflowHandlers {
       });
 
       if (config && config.isActive && config.workspaceSlug) {
-        await this.scrymeClient.sendMessage(
-          config.workspaceSlug,
-          channelSlug || "notifications",
-          { content: messageContent },
-        );
-        this.logger.log(`Dispatched ScrymeChat report/info for org ${organizationId} to channel ${channelSlug || "notifications"}`);
-        return true;
+        const mappings = (config.channelMappings as Record<string, string>) || {};
+        const targetChannel = mappings[channelKeyOrSlug] || channelKeyOrSlug || "alerts";
+
+        try {
+          await this.scrymeClient.sendMessage(
+            config.workspaceSlug,
+            targetChannel,
+            { content: messageContent },
+          );
+          this.logger.log(`Dispatched ScrymeChat report/info for org ${organizationId} to channel ${targetChannel}`);
+          return true;
+        } catch (err: any) {
+          // If sending to mapped channel failed (e.g. 404), try fallback channel 'alerts' or 'general'
+          if (targetChannel !== "alerts") {
+            try {
+              await this.scrymeClient.sendMessage(
+                config.workspaceSlug,
+                "alerts",
+                { content: messageContent },
+              );
+              this.logger.log(`Dispatched ScrymeChat report/info for org ${organizationId} to fallback channel 'alerts'`);
+              return true;
+            } catch (fallbackErr: any) {
+              this.logger.warn(
+                `Failed to dispatch ScrymeChat report for org ${organizationId} to ${targetChannel} and fallback 'alerts': ${fallbackErr.message}`
+              );
+              return false;
+            }
+          }
+          this.logger.warn(`Failed to dispatch ScrymeChat report for org ${organizationId} to channel ${targetChannel}: ${err.message}`);
+          return false;
+        }
       }
     } catch (error: any) {
-      this.logger.error(`Failed to dispatch ScrymeChat report for org ${organizationId}: ${error.message}`);
+      this.logger.warn(`Failed to dispatch ScrymeChat report for org ${organizationId}: ${error.message}`);
     }
     return false;
   }
@@ -67,14 +92,14 @@ export class WorkflowHandlers {
       });
 
       if (result && result.success === false) {
-        this.logger.error(`Failed to send workflow email to ${to}: ${result.error}`);
+        this.logger.error(`Failed to send workflow email to ${Array.isArray(to) ? to.join(", ") : to}: ${result.error}`);
         return false;
       }
 
       this.logger.log(`Workflow email dispatched successfully to ${Array.isArray(to) ? to.join(", ") : to}`);
       return true;
     } catch (error: any) {
-      this.logger.error(`Exception during workflow email dispatch to ${to}: ${error.message}`);
+      this.logger.error(`Exception during workflow email dispatch to ${Array.isArray(to) ? to.join(", ") : to}: ${error.message}`);
       return false;
     }
   }
@@ -119,7 +144,7 @@ export class WorkflowHandlers {
 
     if (isLowStock) {
       const alertMsg = `⚠️ **Low Stock Alert Report**\nProduct: **${productName}** (ID: \`${productId || 'N/A'}\`)\nCurrent Stock: **${currentStock}** (Threshold: ${threshold})`;
-      scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "inventory-alerts", alertMsg);
+      scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", alertMsg);
 
       if (notificationEmail) {
         const emailHtml = `
@@ -165,7 +190,7 @@ export class WorkflowHandlers {
     this.logger.log(`[CustomerOnboarding] Processing onboarding for ${customerEmail} (ID: ${customerId})`);
 
     const onboardingMsg = `🎉 **Customer Onboarding Report**\nNew Customer Onboarded: **${customerName}** (${customerEmail || 'N/A'})\nCustomer ID: \`${customerId || 'N/A'}\``;
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "customer-onboarding", onboardingMsg);
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "crm_alerts", onboardingMsg);
 
     let emailSent = false;
     if (sendWelcomeEmail && customerEmail) {
@@ -209,7 +234,7 @@ export class WorkflowHandlers {
     this.logger.log(`[DailySalesReport] Compiling report for org ${ctx.organizationId}: ${totalSales} sales, ${currency} ${totalRevenue}`);
 
     const reportMsg = `📊 **Daily Sales Report Summary**\nTotal Orders: **${totalSales}**\nTotal Revenue: **${currency} ${totalRevenue}**`;
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "workflow-reports", reportMsg);
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "sales_alerts", reportMsg);
 
     const emailHtml = `
       <h2>Daily Sales Summary Report</h2>
@@ -247,7 +272,7 @@ export class WorkflowHandlers {
     this.logger.log(`[StockMovementReport] Dispatching stock movement report for org ${ctx.organizationId}`);
 
     const reportMsg = `📦 **Weekly Stock Movement Summary**\nWeekly stock audit report compiled for workspace members.`;
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "inventory-alerts", reportMsg);
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", reportMsg);
 
     let emailSent = false;
     if (recipients.length > 0) {
@@ -294,7 +319,7 @@ export class WorkflowHandlers {
     });
 
     const reportMsg = `🔗 **Outgoing Webhook Workflow Executed**\nEndpoint: \`${targetUrl}\`\nExecution ID: \`${ctx.executionId}\``;
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "workflow-reports", reportMsg);
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "system_alerts", reportMsg);
 
     return {
       ...webhookResult,
@@ -307,7 +332,7 @@ export class WorkflowHandlers {
 
     const eventType = ctx.payload?.eventType || "GENERIC_EVENT";
     const reportMsg = `📋 **Workflow Event Report**\nEvent Type: **${eventType}**\nExecution ID: \`${ctx.executionId}\``;
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "workflow-reports", reportMsg);
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "system_alerts", reportMsg);
 
     return {
       success: true,

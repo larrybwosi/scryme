@@ -31,6 +31,9 @@ describe("WorkflowHandlers", () => {
       mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
         isActive: true,
         workspaceSlug: "scryme-corp",
+        channelMappings: {
+          stock_alerts: "inventory-alerts",
+        },
       });
 
       const sendScrymeSpy = vi.spyOn((handlers as any).scrymeClient, "sendMessage").mockResolvedValue({} as any);
@@ -61,6 +64,9 @@ describe("WorkflowHandlers", () => {
       mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
         isActive: true,
         workspaceSlug: "scryme-corp",
+        channelMappings: {
+          crm_alerts: "customer-onboarding",
+        },
       });
 
       const sendScrymeSpy = vi.spyOn((handlers as any).scrymeClient, "sendMessage").mockResolvedValue({} as any);
@@ -90,6 +96,9 @@ describe("WorkflowHandlers", () => {
       mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
         isActive: true,
         workspaceSlug: "scryme-corp",
+        channelMappings: {
+          sales_alerts: "workflow-reports",
+        },
       });
 
       const sendScrymeSpy = vi.spyOn((handlers as any).scrymeClient, "sendMessage").mockResolvedValue({} as any);

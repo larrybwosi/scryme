@@ -23,7 +23,7 @@ describe("Email Service Tests", () => {
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = await sendEmail({
-      to: "user@example.com",
+      to: "user@realdomain.com",
       subject: "Test Subject",
       html: "<p>Test Content</p>",
     });
@@ -36,11 +36,28 @@ describe("Email Service Tests", () => {
     consoleSpy.mockRestore();
   });
 
+  it("should handle placeholder recipients gracefully without calling Resend API", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const result = await sendEmail({
+      to: "user@example.com",
+      subject: "Test Subject",
+      html: "<p>Test Content</p>",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.id).toBeDefined();
+    expect(result.id).toContain("mock-placeholder-email-id-");
+    expect(consoleSpy).toHaveBeenCalled();
+
+    consoleSpy.mockRestore();
+  });
+
   it("should construct verification email and call sendEmail", async () => {
     delete process.env.RESEND_API_KEY;
 
     const result = await sendVerificationEmail({
-      email: "test@example.com",
+      email: "test@realdomain.com",
       url: "https://app.scryme.tech/verify-email?token=xyz123",
       user: { name: "Alice" },
     });
@@ -52,7 +69,7 @@ describe("Email Service Tests", () => {
     delete process.env.RESEND_API_KEY;
 
     const result = await sendPasswordResetEmail({
-      email: "test@example.com",
+      email: "test@realdomain.com",
       url: "https://app.scryme.tech/reset-password?token=reset123",
       user: { name: "Bob" },
     });
@@ -64,7 +81,7 @@ describe("Email Service Tests", () => {
     delete process.env.RESEND_API_KEY;
 
     const result = await sendTwoFactorOTPEmail({
-      email: "test@example.com",
+      email: "test@realdomain.com",
       otp: "654321",
       user: { name: "Charlie" },
     });
