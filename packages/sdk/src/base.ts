@@ -272,17 +272,6 @@ export type MethodsWithOrgSlug =
   | "crmIntegrationsHandleWebhook"
   | "crmIntegrationsReplyToActivity"
   | "unitsGetUnits"
-  | "strapiCreateConnection"
-  | "strapiListConnections"
-  | "strapiGetConnection"
-  | "strapiUpdateConnection"
-  | "strapiDeleteConnection"
-  | "strapiTriggerSync"
-  | "strapiEnqueueSync"
-  | "strapiGetWebhookLogs"
-  | "strapiGetSyncLogs"
-  | "strapiExchangeCustomerToken"
-  | "strapiRegisterCustomer"
   | "analyticsControllerGetDashboardAnalytics"
   | "analyticsControllerGetResourceUtilization";
 
@@ -592,18 +581,6 @@ export const crmMapping = {
   handleIntegrationsCallback: "crmIntegrationsHandleCallback",
   handleIntegrationsWebhook: "crmIntegrationsHandleWebhook",
   replyToIntegrationsActivity: "crmIntegrationsReplyToActivity",
-  createStrapiConnection: "strapiCreateConnection",
-  listStrapiConnections: "strapiListConnections",
-  getStrapiConnection: "strapiGetConnection",
-  updateStrapiConnection: "strapiUpdateConnection",
-  deleteStrapiConnection: "strapiDeleteConnection",
-  triggerStrapiSync: "strapiTriggerSync",
-  enqueueStrapiSync: "strapiEnqueueSync",
-  getStrapiWebhookLogs: "strapiGetWebhookLogs",
-  getStrapiSyncLogs: "strapiGetSyncLogs",
-  exchangeStrapiCustomerToken: "strapiExchangeCustomerToken",
-  registerStrapiCustomer: "strapiRegisterCustomer",
-  receiveStrapiWebhook: "strapiReceiveWebhook",
 } as const;
 
 export const posMapping = {

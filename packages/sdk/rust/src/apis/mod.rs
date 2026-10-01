@@ -141,8 +141,6 @@ pub mod v3_role_management_api;
 pub mod v3_services_api;
 pub mod v3_standalone_pos_api;
 pub mod v3_stocking_api;
-pub mod v3_strapi_integration_api;
-pub mod v3_strapi_webhooks_api;
 pub mod v3_units_api;
 pub mod v3_webhooks_api;
 

@@ -1032,18 +1032,6 @@ const mappings: Record<string, Record<string, string>> = {
     handleIntegrationsCallback: "crmIntegrationsHandleCallback",
     handleIntegrationsWebhook: "crmIntegrationsHandleWebhook",
     replyToIntegrationsActivity: "crmIntegrationsReplyToActivity",
-    createStrapiConnection: "strapiCreateConnection",
-    listStrapiConnections: "strapiListConnections",
-    getStrapiConnection: "strapiGetConnection",
-    updateStrapiConnection: "strapiUpdateConnection",
-    deleteStrapiConnection: "strapiDeleteConnection",
-    triggerStrapiSync: "strapiTriggerSync",
-    enqueueStrapiSync: "strapiEnqueueSync",
-    getStrapiWebhookLogs: "strapiGetWebhookLogs",
-    getStrapiSyncLogs: "strapiGetSyncLogs",
-    exchangeStrapiCustomerToken: "strapiExchangeCustomerToken",
-    registerStrapiCustomer: "strapiRegisterCustomer",
-    receiveStrapiWebhook: "strapiReceiveWebhook",
   },
   pos: {
     provision: "pOSProvision",
@@ -1313,10 +1301,8 @@ export default function App() {
         const tags = methodObj.tags || ["General"];
         const primaryTag = tags[0];
 
-        // Exclude Strapi, Standalone POS, and finance
         if (
           primaryTag &&
-          (primaryTag.toLowerCase().includes("strapi") ||
             primaryTag.toLowerCase().includes("standalone pos") ||
             primaryTag.toLowerCase().includes("standalone-pos") ||
             primaryTag.toLowerCase().includes("finance"))
@@ -1325,7 +1311,6 @@ export default function App() {
         }
 
         if (
-          pathKey.toLowerCase().includes("/strapi") ||
           pathKey.toLowerCase().includes("/standalone-pos")
         ) {
           continue;
