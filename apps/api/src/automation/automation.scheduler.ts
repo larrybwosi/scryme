@@ -28,28 +28,38 @@ export class AutomationScheduler {
         },
       });
 
-      for (const def of activeDefinitions) {
-        const threshold = def.config?.threshold ?? 10;
-        const lowStockVariants = await (this.prisma.client as any).productVariant.findMany({
-          where: {
-            product: { organizationId: def.organizationId },
-            stockQuantity: { lte: threshold },
-          },
-          take: 50,
-        });
-
-        for (const variant of lowStockVariants) {
-          await this.automationService.triggerWorkflow(def.organizationId, {
-            key: def.key,
-            inputs: {
-              productId: variant.id,
-              productName: variant.name || "Product Variant",
-              currentStock: variant.stockQuantity,
-              threshold,
+      /**
+       * ⚡ Bolt Optimization: Parallelize definition processing and workflow triggering.
+       * Executing product variant queries and workflow trigger dispatches concurrently via Promise.all
+       * collapses $O(N \times M)$ sequential async roundtrips down to $O(1)$ flat parallel execution,
+       * drastically reducing cron task execution time across multiple organizations.
+       */
+      await Promise.all(
+        activeDefinitions.map(async (def: any) => {
+          const threshold = def.config?.threshold ?? 10;
+          const lowStockVariants = await (this.prisma.client as any).productVariant.findMany({
+            where: {
+              product: { organizationId: def.organizationId },
+              stockQuantity: { lte: threshold },
             },
+            take: 50,
           });
-        }
-      }
+
+          await Promise.all(
+            lowStockVariants.map((variant: any) =>
+              this.automationService.triggerWorkflow(def.organizationId, {
+                key: def.key,
+                inputs: {
+                  productId: variant.id,
+                  productName: variant.name || "Product Variant",
+                  currentStock: variant.stockQuantity,
+                  threshold,
+                },
+              }),
+            ),
+          );
+        }),
+      );
     } catch (error: any) {
       this.logger.error(`Error executing low stock cron check: ${error.message}`);
     }
@@ -70,37 +80,45 @@ export class AutomationScheduler {
         },
       });
 
-      for (const def of activeDefinitions) {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
 
-        const salesCount = await (this.prisma.client as any).order.count({
-          where: {
-            organizationId: def.organizationId,
-            createdAt: { gte: todayStart },
-          },
-        });
+      /**
+       * ⚡ Bolt Optimization: Parallelize DB read queries and organization definitions.
+       * Combining order count and aggregate queries using Promise.all collapses 2 sequential DB roundtrips
+       * per organization down to 1 flat parallel roundtrip, while processing active definitions concurrently.
+       */
+      await Promise.all(
+        activeDefinitions.map(async (def: any) => {
+          const [salesCount, salesSum] = await Promise.all([
+            (this.prisma.client as any).order.count({
+              where: {
+                organizationId: def.organizationId,
+                createdAt: { gte: todayStart },
+              },
+            }),
+            (this.prisma.client as any).order.aggregate({
+              where: {
+                organizationId: def.organizationId,
+                createdAt: { gte: todayStart },
+              },
+              _sum: { totalAmount: true },
+            }),
+          ]);
 
-        const salesSum = await (this.prisma.client as any).order.aggregate({
-          where: {
-            organizationId: def.organizationId,
-            createdAt: { gte: todayStart },
-          },
-          _sum: { totalAmount: true },
-        });
+          const totalRevenue = salesSum._sum?.totalAmount || 0;
 
-        const totalRevenue = salesSum._sum?.totalAmount || 0;
-
-        await this.automationService.triggerWorkflow(def.organizationId, {
-          key: def.key,
-          inputs: {
-            totalSales: salesCount,
-            totalRevenue,
-            currency: "USD",
-            recipients: def.config?.recipients || "admin@example.com",
-          },
-        });
-      }
+          await this.automationService.triggerWorkflow(def.organizationId, {
+            key: def.key,
+            inputs: {
+              totalSales: salesCount,
+              totalRevenue,
+              currency: "USD",
+              recipients: def.config?.recipients || "admin@example.com",
+            },
+          });
+        }),
+      );
     } catch (error: any) {
       this.logger.error(`Error executing daily sales report cron check: ${error.message}`);
     }
