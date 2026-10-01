@@ -53,6 +53,8 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
+import { useOrganizationStore } from "@/lib/store/use-organization-store";
 import {
   getProductPricingDetails,
   createVolumeTierForProduct,
@@ -69,6 +71,7 @@ interface PricingTabProps {
 }
 
 export function PricingTab({ product, setProduct }: PricingTabProps) {
+  const { currency, currencySymbol } = useOrganizationStore();
   const retailPrice = Number(product.variants?.[0]?.retailPrice || 0);
   const buyingPrice = Number(product.variants?.[0]?.buyingPrice || 0);
   const marginPercentage =

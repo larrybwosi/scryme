@@ -666,6 +666,18 @@ export class ProductionService {
       throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
     }
 
+    if (!ingredients || ingredients.length === 0) {
+      throw new BadRequestException("At least one ingredient is required.");
+    }
+
+    for (const ing of ingredients) {
+      const ingSysId = cleanUnitId(ing.systemUnitId);
+      const ingOrgId = cleanUnitId(ing.orgUnitId);
+      if (!ingSysId && !ingOrgId) {
+        throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
+      }
+    }
+
     const resolvedYieldUnit = await this.resolveUnitId(
       rawSystemUnitId,
       rawOrgUnitId,
@@ -677,18 +689,10 @@ export class ProductionService {
       throw new BadRequestException("At least one valid yield unit (system or organization) must be selected.");
     }
 
-    if (!ingredients || ingredients.length === 0) {
-      throw new BadRequestException("At least one ingredient is required.");
-    }
-
     const resolvedIngredients = [];
     for (const ing of ingredients) {
       const ingSysId = cleanUnitId(ing.systemUnitId);
       const ingOrgId = cleanUnitId(ing.orgUnitId);
-
-      if (!ingSysId && !ingOrgId) {
-        throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
-      }
 
       const resolvedIngUnit = await this.resolveUnitId(
         ingSysId,

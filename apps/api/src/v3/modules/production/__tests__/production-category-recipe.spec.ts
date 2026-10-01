@@ -104,6 +104,7 @@ describe("ProductionService - Category and Recipe Validation", () => {
     });
 
     it("should throw BadRequestException if ingredients array is empty", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue({ id: "unit-kg" });
       const dto: CreateRecipeDto = {
         name: "Sourdough",
         categoryId: "cat-1",
@@ -117,6 +118,7 @@ describe("ProductionService - Category and Recipe Validation", () => {
     });
 
     it("should throw BadRequestException if an ingredient lacks a unit", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue({ id: "unit-kg" });
       const dto: CreateRecipeDto = {
         name: "Sourdough",
         categoryId: "cat-1",
