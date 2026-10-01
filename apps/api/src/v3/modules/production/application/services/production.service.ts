@@ -36,6 +36,8 @@ import {
   UpdateIngredientDto,
   CreateQualityIncidentDto,
   UpdateQualityIncidentDto,
+  DispatchStagedBatchDto,
+  DisposeStagedStockDto,
 } from "../dto/production.dto";
 
 
@@ -1087,6 +1089,27 @@ export class ProductionService {
     const waste = Number(wasteQuantity || 0);
     const netQuantity = Math.max(0, grossQuantity - waste);
 
+    const settings = await this.prisma.client.bakerySettings.findUnique({
+      where: { organizationId },
+    });
+    const enableStaging = settings?.enableProductionStaging ?? false;
+
+    let stagingData: any = {
+      stagedQuantity: 0,
+      dispatchedQuantity: 0,
+      stagingWasteQuantity: 0,
+      stagingStatus: "NOT_STAGED",
+    };
+
+    if (enableStaging && netQuantity > 0) {
+      stagingData = {
+        stagedQuantity: netQuantity,
+        dispatchedQuantity: 0,
+        stagingWasteQuantity: 0,
+        stagingStatus: "STAGED",
+      };
+    }
+
     return await this.prisma.client.$transaction(async tx => {
       const updatedBatch = await tx.batch.update({
         where: { id, organizationId },
@@ -1098,6 +1121,7 @@ export class ProductionService {
           wasteQuantity: waste,
           wasteReason: data.wasteReason,
           notes: notes || (batch as any).notes,
+          ...stagingData,
         },
       });
 
@@ -1261,6 +1285,258 @@ export class ProductionService {
               memberId: ctx.memberId!,
               organizationId,
               notes: `Produced from Batch ${batch.batchNumber} (Net yield after waste)`,
+            },
+          });
+        }
+      }
+
+      return updatedBatch;
+    });
+  }
+
+
+  async getStagedBatches(ctx: V3ApiContext) {
+    const organizationId = ctx.organizationId;
+    return this.prisma.client.batch.findMany({
+      where: {
+        organizationId,
+        status: "COMPLETED" as any,
+        stagingStatus: {
+          in: ["STAGED", "PARTIALLY_DISPATCHED"] as any,
+        },
+      },
+      include: {
+        recipe: {
+          include: {
+            producesVariant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+        outputLocation: true,
+        dispatches: {
+          include: {
+            toLocation: true,
+            dispatchedBy: {
+              include: { user: true },
+            },
+          },
+          orderBy: { dispatchedAt: "desc" },
+        },
+      },
+      orderBy: { completedAt: "desc" },
+    });
+  }
+
+  async dispatchStagedBatch(
+    ctx: V3ApiContext,
+    batchId: string,
+    data: DispatchStagedBatchDto,
+  ) {
+    const organizationId = ctx.organizationId;
+    const { toLocationId, quantity, notes } = data;
+
+    const dispatchQty = Number(quantity);
+    if (dispatchQty <= 0) {
+      throw new BadRequestException("Dispatch quantity must be greater than zero");
+    }
+
+    const batch = await this.prisma.client.batch.findFirst({
+      where: { id: batchId, organizationId },
+      include: {
+        recipe: { include: { producesVariant: true } },
+      },
+    });
+
+    if (!batch) {
+      throw new NotFoundException("Batch not found");
+    }
+
+    if (batch.status !== "COMPLETED") {
+      throw new BadRequestException("Only completed batches can be dispatched");
+    }
+
+    const totalStaged = Number(batch.stagedQuantity || 0);
+    const currentDispatched = Number(batch.dispatchedQuantity || 0);
+    const currentWaste = Number(batch.stagingWasteQuantity || 0);
+    const availableToDispatch = Math.max(0, totalStaged - currentDispatched - currentWaste);
+
+    if (dispatchQty > availableToDispatch) {
+      throw new BadRequestException(
+        `Cannot dispatch ${dispatchQty}. Available staged quantity is ${availableToDispatch}`,
+      );
+    }
+
+    const toLocation = await this.prisma.client.inventoryLocation.findFirst({
+      where: { id: toLocationId, organizationId },
+    });
+    if (!toLocation) {
+      throw new NotFoundException("Destination Front Office location not found");
+    }
+
+    return await this.prisma.client.$transaction(async (tx) => {
+      const newDispatched = currentDispatched + dispatchQty;
+      const newStagingStatus =
+        newDispatched + currentWaste >= totalStaged
+          ? "FULLY_DISPATCHED"
+          : "PARTIALLY_DISPATCHED";
+
+      const updatedBatch = await tx.batch.update({
+        where: { id: batchId },
+        data: {
+          dispatchedQuantity: newDispatched,
+          stagingStatus: newStagingStatus as any,
+        },
+      });
+
+      const dispatchLog = await tx.batchDispatch.create({
+        data: {
+          batchId,
+          toLocationId,
+          quantity: dispatchQty,
+          dispatchedById: ctx.memberId!,
+          notes,
+          organizationId,
+        },
+      });
+
+      if (batch.recipe.producesVariantId) {
+        const variantId = batch.recipe.producesVariantId;
+        const productId = (batch.recipe.producesVariant as any).productId;
+
+        await tx.productVariantStock.upsert({
+          where: {
+            variantId_locationId: {
+              variantId,
+              locationId: toLocationId,
+            },
+          },
+          update: {
+            currentStock: { increment: dispatchQty },
+            availableStock: { increment: dispatchQty },
+          },
+          create: {
+            productId,
+            variantId,
+            locationId: toLocationId,
+            currentStock: dispatchQty,
+            availableStock: dispatchQty,
+            organizationId,
+          } as any,
+        });
+
+        const frontOfficeStockBatch = await tx.stockBatch.create({
+          data: {
+            variantId,
+            batchNumber: `${batch.batchNumber}-FO`,
+            locationId: toLocationId,
+            initialQuantity: dispatchQty,
+            currentQuantity: dispatchQty,
+            purchasePrice: batch.recipe.costPrice || 0,
+            organizationId,
+            productionBatchId: batch.id,
+            receivedDate: new Date(),
+            expiryDate: batch.expiresAt,
+          } as any,
+        });
+
+        const fromLocationId = batch.outputLocationId || ctx.locationId;
+        await tx.stockMovement.create({
+          data: {
+            variantId,
+            stockBatchId: frontOfficeStockBatch.id,
+            fromLocationId,
+            toLocationId,
+            quantity: dispatchQty,
+            movementType: "TRANSFER_IN" as any,
+            memberId: ctx.memberId!,
+            organizationId,
+            notes: notes || `Dispatched from Batch ${batch.batchNumber} to Front Office (${toLocation.name})`,
+          },
+        });
+      }
+
+      return {
+        dispatchLog,
+        batch: updatedBatch,
+      };
+    });
+  }
+
+  async disposeStagedStock(
+    ctx: V3ApiContext,
+    batchId: string,
+    data: DisposeStagedStockDto,
+  ) {
+    const organizationId = ctx.organizationId;
+    const { quantity, reason, notes } = data;
+
+    const wasteQty = Number(quantity);
+    if (wasteQty <= 0) {
+      throw new BadRequestException("Waste quantity must be greater than zero");
+    }
+
+    const batch = await this.prisma.client.batch.findFirst({
+      where: { id: batchId, organizationId },
+      include: { recipe: true },
+    });
+
+    if (!batch) {
+      throw new NotFoundException("Batch not found");
+    }
+
+    const totalStaged = Number(batch.stagedQuantity || 0);
+    const currentDispatched = Number(batch.dispatchedQuantity || 0);
+    const currentWaste = Number(batch.stagingWasteQuantity || 0);
+    const availableToDispatch = Math.max(0, totalStaged - currentDispatched - currentWaste);
+
+    if (wasteQty > availableToDispatch) {
+      throw new BadRequestException(
+        `Cannot dispose ${wasteQty}. Available staged quantity is ${availableToDispatch}`,
+      );
+    }
+
+    return await this.prisma.client.$transaction(async (tx) => {
+      const newWaste = currentWaste + wasteQty;
+      let newStagingStatus = batch.stagingStatus;
+      if (currentDispatched + newWaste >= totalStaged) {
+        newStagingStatus = currentDispatched === 0 ? ("DISPOSED" as any) : ("FULLY_DISPATCHED" as any);
+      }
+
+      const updatedBatch = await tx.batch.update({
+        where: { id: batchId },
+        data: {
+          stagingWasteQuantity: newWaste,
+          stagingStatus: newStagingStatus as any,
+        },
+      });
+
+      if (batch.recipe.producesVariantId) {
+        const locationId = batch.outputLocationId || ctx.locationId;
+        if (locationId) {
+          await tx.productVariantStock.updateMany({
+            where: {
+              variantId: batch.recipe.producesVariantId,
+              locationId,
+              organizationId,
+            },
+            data: {
+              currentStock: { decrement: wasteQty },
+              availableStock: { decrement: wasteQty },
+            },
+          });
+
+          await tx.stockMovement.create({
+            data: {
+              variantId: batch.recipe.producesVariantId,
+              fromLocationId: locationId,
+              quantity: wasteQty,
+              movementType: "WASTE" as any,
+              memberId: ctx.memberId!,
+              organizationId,
+              notes: notes || `Staging disposal for Batch ${batch.batchNumber}: ${reason || "Spoiled/Damaged"}`,
             },
           });
         }

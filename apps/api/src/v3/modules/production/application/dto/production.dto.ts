@@ -539,6 +539,11 @@ export class UpdateProductionCategoryDto {
 }
 
 export class UpdateProductionSettingsDto {
+  @ApiPropertyOptional({ description: "Enable production staging", default: false })
+  @IsOptional()
+  @IsBoolean()
+  enableProductionStaging?: boolean;
+
   @ApiPropertyOptional({ description: "Default baker ID" })
   @IsOptional()
   @IsString()
@@ -845,4 +850,36 @@ export class UpdateQualityIncidentDto {
   @IsOptional()
   @IsString()
   status?: string;
+}
+
+export class DispatchStagedBatchDto {
+  @ApiProperty({ description: "Target Front Office / POS Location ID" })
+  @IsString()
+  @IsNotEmpty()
+  toLocationId!: string;
+
+  @ApiProperty({ description: "Quantity to dispatch to Front Office" })
+  @IsNumber()
+  quantity!: number;
+
+  @ApiPropertyOptional({ description: "Optional notes" })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class DisposeStagedStockDto {
+  @ApiProperty({ description: "Quantity to dispose/waste" })
+  @IsNumber()
+  quantity!: number;
+
+  @ApiPropertyOptional({ description: "Reason for disposal" })
+  @IsOptional()
+  @IsString()
+  reason?: string;
+
+  @ApiPropertyOptional({ description: "Optional notes" })
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }
