@@ -293,11 +293,8 @@ export class ProductionService {
       where: {
         product: {
           organizationId,
+          type: "RAW_MATERIAL" as any,
         },
-        OR: [
-          { product: { type: "RAW_MATERIAL" as any } },
-          { producedByRecipe: { isNot: null } },
-        ],
       },
       select: {
         id: true,
