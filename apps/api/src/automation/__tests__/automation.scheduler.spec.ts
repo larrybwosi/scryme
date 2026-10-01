@@ -36,10 +36,24 @@ describe("AutomationScheduler", () => {
       ]);
 
       mockPrisma.client.productVariant.findMany.mockResolvedValue([
-        { id: "var_10", name: "Flour 1kg", stockQuantity: 2 },
+        { id: "var_10", name: "Flour 1kg", variantStocks: [{ currentStock: 2 }] },
       ]);
 
       await scheduler.handleLowStockCronCheck();
+
+      expect(mockPrisma.client.productVariant.findMany).toHaveBeenCalledWith({
+        where: {
+          product: { organizationId: "org_1" },
+          OR: [
+            { variantStocks: { some: { currentStock: { lte: 5 } } } },
+            { variantStocks: { none: {} } },
+          ],
+        },
+        include: {
+          variantStocks: true,
+        },
+        take: 50,
+      });
 
       expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith("org_1", {
         key: "lowstock_alert",
@@ -48,6 +62,38 @@ describe("AutomationScheduler", () => {
           productName: "Flour 1kg",
           currentStock: 2,
           threshold: 5,
+        },
+      });
+    });
+
+    it("should handle variants with multiple location stocks and total stock calculation", async () => {
+      mockPrisma.client.workflowEngineDefinition.findMany.mockResolvedValue([
+        { id: "def_1", key: "lowstock_alert", organizationId: "org_1", config: { threshold: 10 } },
+      ]);
+
+      mockPrisma.client.productVariant.findMany.mockResolvedValue([
+        {
+          id: "var_11",
+          name: "Sugar 1kg",
+          variantStocks: [{ currentStock: 3 }, { currentStock: 4 }],
+        },
+        {
+          id: "var_12",
+          name: "Salt 1kg",
+          variantStocks: [{ currentStock: 8 }, { currentStock: 5 }],
+        },
+      ]);
+
+      await scheduler.handleLowStockCronCheck();
+
+      expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledTimes(1);
+      expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith("org_1", {
+        key: "lowstock_alert",
+        inputs: {
+          productId: "var_11",
+          productName: "Sugar 1kg",
+          currentStock: 7,
+          threshold: 10,
         },
       });
     });
