@@ -498,6 +498,12 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
       } else if (recipe.orgUnitId) {
         setValue('orgUnitId', recipe.orgUnitId, opt);
         setValue('systemUnitId', undefined, opt);
+      } else if (recipe.systemUnit?.id) {
+        setValue('systemUnitId', recipe.systemUnit.id, opt);
+        setValue('orgUnitId', undefined, opt);
+      } else if (recipe.orgUnit?.id) {
+        setValue('orgUnitId', recipe.orgUnit.id, opt);
+        setValue('systemUnitId', undefined, opt);
       }
 
       // Auto-fill duration from totalTime or prepTime+bakeTime
@@ -750,6 +756,9 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
               </div>
               {errors.plannedQuantity && (
                 <p className="text-xs text-destructive mt-1">{errors.plannedQuantity.message as string}</p>
+              )}
+              {errors.systemUnitId && (
+                <p className="text-xs text-destructive mt-1">{errors.systemUnitId.message as string}</p>
               )}
             </div>
 

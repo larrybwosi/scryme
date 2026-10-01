@@ -69,15 +69,15 @@ export function AdvancedUnitSelector({
 
   const selectedUnit = useMemo(() => {
     if (!value) return undefined;
-    return [...filteredSystemUnits, ...filteredOrgUnits].find(u => u.id === value) || undefined;
-  }, [filteredSystemUnits, filteredOrgUnits, value]);
+    return [...systemUnits, ...(orgUnits || [])].find(u => u.id === value) || undefined;
+  }, [systemUnits, orgUnits, value]);
 
   const selectedUnitSource = useMemo(() => {
     if (!value) return undefined;
-    if (filteredSystemUnits.find(u => u.id === value)) return 'system';
-    if (filteredOrgUnits.find(u => u.id === value)) return 'org';
+    if (systemUnits.find(u => u.id === value)) return 'system';
+    if (orgUnits?.find(u => u.id === value)) return 'org';
     return undefined;
-  }, [filteredSystemUnits, filteredOrgUnits, value]);
+  }, [systemUnits, orgUnits, value]);
 
   const groupedSystemUnits = useMemo(() => {
     const groups: Record<string, SystemUnit[]> = {};

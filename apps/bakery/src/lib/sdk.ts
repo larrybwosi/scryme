@@ -55,6 +55,7 @@ const formatApiPath = (url: string): string => {
     normalizedUrl.startsWith('/devices/') ||
     normalizedUrl === '/members' ||
     normalizedUrl.startsWith('/members/') ||
+    normalizedUrl === '/units' ||
     normalizedUrl.startsWith('/units/') ||
     normalizedUrl.startsWith('/deliveries/')
   ) {

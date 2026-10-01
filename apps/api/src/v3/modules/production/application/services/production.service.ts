@@ -364,6 +364,8 @@ export class ProductionService {
         categoryId: true,
         producesVariantId: true,
         yieldQuantity: true,
+        systemUnitId: true,
+        orgUnitId: true,
         prepTime: true,
         bakeTime: true,
         totalTime: true,
@@ -753,6 +755,8 @@ export class ProductionService {
         status: true,
         plannedQuantity: true,
         actualQuantity: true,
+        systemUnitId: true,
+        orgUnitId: true,
         recipeMultiplier: true,
         scheduledStartAt: true,
         startedAt: true,
@@ -839,6 +843,13 @@ export class ProductionService {
   }
 
   async createBatch(organizationId: string, data: CreateBatchDto) {
+    const cleanedSysUnitId = cleanUnitId(data.systemUnitId);
+    const cleanedOrgUnitId = cleanUnitId(data.orgUnitId);
+
+    if (!cleanedSysUnitId && !cleanedOrgUnitId) {
+      throw new BadRequestException("At least one unit (system or organization) must be selected.");
+    }
+
     const batchNumber = await this.generateBatchNumber(organizationId);
 
     const {

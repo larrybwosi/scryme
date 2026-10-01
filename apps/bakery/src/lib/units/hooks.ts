@@ -140,10 +140,11 @@ export function useUnits() {
   const createMutation = useMutation({
     mutationFn: createOrganizationUnit,
     onSuccess: newUnit => {
-      queryClient.setQueryData(['organizationUnits'], (old: OrganizationUnit[] = []) => [
-        ...old,
-        newUnit,
-      ]);
+      queryClient.setQueryData(['units'], (old: any) => ({
+        systemUnits: old?.systemUnits || [],
+        organizationUnits: [...(old?.organizationUnits || []), newUnit],
+      }));
+      queryClient.invalidateQueries({ queryKey: ['units'] });
       toast.success('Unit created successfully');
     },
     onError: (error: any) => {
@@ -155,9 +156,13 @@ export function useUnits() {
     mutationFn: ({ unitId, data }: { unitId: string; data: Partial<OrganizationUnit> }) =>
       updateOrganizationUnit(unitId, data),
     onSuccess: updatedUnit => {
-      queryClient.setQueryData(['organizationUnits'], (old: OrganizationUnit[] = []) =>
-        old.map(unit => (unit.id === updatedUnit.id ? updatedUnit : unit))
-      );
+      queryClient.setQueryData(['units'], (old: any) => ({
+        systemUnits: old?.systemUnits || [],
+        organizationUnits: (old?.organizationUnits || []).map((unit: any) =>
+          unit.id === updatedUnit.id ? updatedUnit : unit
+        ),
+      }));
+      queryClient.invalidateQueries({ queryKey: ['units'] });
       toast.success('Unit updated successfully');
     },
     onError: (error: any) => {
@@ -168,9 +173,11 @@ export function useUnits() {
   const deleteMutation = useMutation({
     mutationFn: deleteOrganizationUnit,
     onSuccess: (_, unitId) => {
-      queryClient.setQueryData(['organizationUnits'], (old: OrganizationUnit[] = []) =>
-        old.filter(unit => unit.id !== unitId)
-      );
+      queryClient.setQueryData(['units'], (old: any) => ({
+        systemUnits: old?.systemUnits || [],
+        organizationUnits: (old?.organizationUnits || []).filter((unit: any) => unit.id !== unitId),
+      }));
+      queryClient.invalidateQueries({ queryKey: ['units'] });
       toast.success('Unit deleted successfully');
     },
     onError: (error: any) => {
