@@ -29,6 +29,7 @@ describe("ProductionService - Category and Recipe Validation", () => {
         },
         systemUnit: {
           findUnique: vi.fn(),
+          findFirst: vi.fn(),
         },
         organizationUnit: {
           findFirst: vi.fn(),
@@ -182,6 +183,43 @@ describe("ProductionService - Category and Recipe Validation", () => {
           data: expect.objectContaining({
             systemUnitId: undefined,
             orgUnitId: "custom-org-unit",
+          }),
+        }),
+      );
+    });
+
+    it("should resolve unit by fallback symbol/name search when direct ID lookup yields null (e.g. count-pcs -> pc)", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue(null);
+      prismaMock.client.organizationUnit.findFirst.mockResolvedValue(null);
+      prismaMock.client.systemUnit.findFirst.mockImplementation(({ where }: any) => {
+        const hasPc = where?.OR?.some((cond: any) => cond.symbol?.equals === "pc");
+        if (hasPc) {
+          return Promise.resolve({ id: "sys-pc-id" });
+        }
+        if (where?.OR?.some((cond: any) => cond.symbol?.equals === "g" || cond.symbol?.equals === "unit-g")) {
+          return Promise.resolve({ id: "sys-g-id" });
+        }
+        return Promise.resolve(null);
+      });
+
+      const dto: CreateRecipeDto = {
+        name: "Croissant",
+        categoryId: "cat-1",
+        producesVariantId: "var-prod-1",
+        yieldQuantity: 12,
+        systemUnitId: "count-pcs",
+        ingredients: [validIngredient],
+      };
+
+      const mockCreatedRecipe = { id: "rec-2", name: "Croissant", organizationId: "org-1" };
+      prismaMock.client.recipe.create.mockResolvedValue(mockCreatedRecipe);
+
+      const result = await service.createRecipe("org-1", dto);
+      expect(result).toEqual(mockCreatedRecipe);
+      expect(prismaMock.client.recipe.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            systemUnitId: "sys-pc-id",
           }),
         }),
       );

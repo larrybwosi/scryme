@@ -39,6 +39,30 @@ import {
 } from "../dto/production.dto";
 
 
+function getUnitSearchTerms(candidate: string): string[] {
+  const terms = new Set<string>();
+  const trimmed = candidate.trim();
+  if (!trimmed) return [];
+
+  terms.add(trimmed);
+
+  const parts = trimmed.split(/[-_]+/);
+  for (const part of parts) {
+    if (part) {
+      terms.add(part);
+      if (part.endsWith('s') && part.length > 1) {
+        terms.add(part.slice(0, -1));
+      }
+    }
+  }
+
+  if (trimmed.endsWith('s') && trimmed.length > 1) {
+    terms.add(trimmed.slice(0, -1));
+  }
+
+  return Array.from(terms);
+}
+
 function cleanUnitId(id?: string | null): string | undefined {
   if (!id || (typeof id === 'string' && id.trim() === '')) return undefined;
   return id;
@@ -88,6 +112,38 @@ export class ProductionService {
 
       if (orgUnit) {
         return { systemUnitId: undefined, orgUnitId: candidate };
+      }
+
+      const searchTerms = getUnitSearchTerms(candidate);
+      if (searchTerms.length > 0) {
+        const sysFallback = await this.prisma.client.systemUnit.findFirst({
+          where: {
+            OR: searchTerms.flatMap((term) => [
+              { symbol: { equals: term, mode: 'insensitive' } },
+              { name: { equals: term, mode: 'insensitive' } },
+            ]),
+          },
+          select: { id: true },
+        });
+
+        if (sysFallback) {
+          return { systemUnitId: sysFallback.id, orgUnitId: undefined };
+        }
+
+        const orgFallback = await this.prisma.client.organizationUnit.findFirst({
+          where: {
+            ...(organizationId ? { organizationId } : {}),
+            OR: searchTerms.flatMap((term) => [
+              { symbol: { equals: term, mode: 'insensitive' } },
+              { name: { equals: term, mode: 'insensitive' } },
+            ]),
+          },
+          select: { id: true },
+        });
+
+        if (orgFallback) {
+          return { systemUnitId: undefined, orgUnitId: orgFallback.id };
+        }
       }
 
       throw new BadRequestException(
