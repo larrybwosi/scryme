@@ -145,7 +145,7 @@ export function VariantsTab({
                     {v.barcode || "-"}
                   </TableCell>
                   <TableCell className="text-right font-bold">
-                    ${Number(v.retailPrice || 0).toFixed(2)}
+                    {formatCurrency(Number(v.retailPrice || 0), currency)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Badge variant="outline" className="font-bold">

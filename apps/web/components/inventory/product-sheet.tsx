@@ -135,6 +135,7 @@ function FieldError({ message }: { message: string }) {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 import { getCurrencySymbol } from "../../lib/utils";
+import { useOrganizationStore } from "../../lib/stores/organization-store";
 
 export function ProductSheet({
   children,
@@ -142,8 +143,10 @@ export function ProductSheet({
   categories,
   isOpen: controlledOpen,
   onOpenChange,
-  currency = "USD",
+  currency: currencyProp,
 }: ProductSheetProps) {
+  const { currency: storeCurrency, currencySymbol: storeSymbol } = useOrganizationStore();
+  const currency = currencyProp || storeCurrency;
   const symbol = getCurrencySymbol(currency);
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
