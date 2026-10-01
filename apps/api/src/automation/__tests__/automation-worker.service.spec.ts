@@ -153,6 +153,9 @@ describe("AutomationWorkerService", () => {
     mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
       organizationId: "org_scryme",
       workspaceSlug: "scryme-org-workspace",
+      channelMappings: {
+        stock_alerts: "inventory-alerts",
+      },
       isActive: true,
     });
 
