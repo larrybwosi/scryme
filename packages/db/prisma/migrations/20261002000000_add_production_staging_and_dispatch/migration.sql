@@ -1,17 +1,22 @@
--- CreateEnum
-CREATE TYPE "BatchStagingStatus" AS ENUM ('NOT_STAGED', 'STAGED', 'PARTIALLY_DISPATCHED', 'FULLY_DISPATCHED', 'DISPOSED');
+-- Create Enum Types safely
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'BatchStagingStatus') THEN
+        CREATE TYPE "BatchStagingStatus" AS ENUM ('NOT_STAGED', 'STAGED', 'PARTIALLY_DISPATCHED', 'FULLY_DISPATCHED', 'DISPOSED');
+    END IF;
+END $$;
 
 -- AlterTable
-ALTER TABLE "bakery_settings" ADD COLUMN "enableProductionStaging" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "bakery_settings" ADD COLUMN IF NOT EXISTS "enableProductionStaging" BOOLEAN NOT NULL DEFAULT false;
 
 -- AlterTable
-ALTER TABLE "Batch" ADD COLUMN "stagedQuantity" DECIMAL(10,4),
-ADD COLUMN "dispatchedQuantity" DECIMAL(10,4) DEFAULT 0,
-ADD COLUMN "stagingWasteQuantity" DECIMAL(10,4) DEFAULT 0,
-ADD COLUMN "stagingStatus" "BatchStagingStatus" DEFAULT 'NOT_STAGED';
+ALTER TABLE "Batch" ADD COLUMN IF NOT EXISTS "stagedQuantity" DECIMAL(10,4),
+ADD COLUMN IF NOT EXISTS "dispatchedQuantity" DECIMAL(10,4) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS "stagingWasteQuantity" DECIMAL(10,4) DEFAULT 0,
+ADD COLUMN IF NOT EXISTS "stagingStatus" "BatchStagingStatus" DEFAULT 'NOT_STAGED';
 
 -- CreateTable
-CREATE TABLE "batch_dispatch" (
+CREATE TABLE IF NOT EXISTS "batch_dispatch" (
     "id" TEXT NOT NULL,
     "batchId" TEXT NOT NULL,
     "toLocationId" TEXT NOT NULL,
@@ -27,22 +32,39 @@ CREATE TABLE "batch_dispatch" (
 );
 
 -- CreateIndex
-CREATE INDEX "batch_dispatch_batchId_idx" ON "batch_dispatch"("batchId");
+CREATE INDEX IF NOT EXISTS "batch_dispatch_batchId_idx" ON "batch_dispatch"("batchId");
 
 -- CreateIndex
-CREATE INDEX "batch_dispatch_toLocationId_idx" ON "batch_dispatch"("toLocationId");
+CREATE INDEX IF NOT EXISTS "batch_dispatch_toLocationId_idx" ON "batch_dispatch"("toLocationId");
 
 -- CreateIndex
-CREATE INDEX "batch_dispatch_organizationId_idx" ON "batch_dispatch"("organizationId");
+CREATE INDEX IF NOT EXISTS "batch_dispatch_organizationId_idx" ON "batch_dispatch"("organizationId");
 
--- AddForeignKey
-ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AddForeignKey Constraints safely
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_dispatch_batchId_fkey') THEN
+        ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_toLocationId_fkey" FOREIGN KEY ("toLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_dispatch_toLocationId_fkey') THEN
+        ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_toLocationId_fkey" FOREIGN KEY ("toLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_dispatchedById_fkey" FOREIGN KEY ("dispatchedById") REFERENCES "Member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_dispatch_dispatchedById_fkey') THEN
+        ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_dispatchedById_fkey" FOREIGN KEY ("dispatchedById") REFERENCES "Member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_dispatch_organizationId_fkey') THEN
+        ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;

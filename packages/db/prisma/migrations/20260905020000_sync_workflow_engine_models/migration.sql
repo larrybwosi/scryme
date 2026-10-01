@@ -1,20 +1,41 @@
--- CreateEnum
-CREATE TYPE "WorkflowTriggerType" AS ENUM ('EVENT', 'WEBHOOK', 'SCHEDULED', 'MANUAL');
+-- Create Enum Types safely
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WorkflowTriggerType') THEN
+        CREATE TYPE "WorkflowTriggerType" AS ENUM ('EVENT', 'WEBHOOK', 'SCHEDULED', 'MANUAL');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "WorkflowExecutionStatus" AS ENUM ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WorkflowExecutionStatus') THEN
+        CREATE TYPE "WorkflowExecutionStatus" AS ENUM ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "WorkflowJobStatus" AS ENUM ('QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED', 'RETRYING', 'CANCELLED');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WorkflowJobStatus') THEN
+        CREATE TYPE "WorkflowJobStatus" AS ENUM ('QUEUED', 'PROCESSING', 'COMPLETED', 'FAILED', 'RETRYING', 'CANCELLED');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "WebhookDirection" AS ENUM ('INCOMING', 'OUTGOING');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'WebhookDirection') THEN
+        CREATE TYPE "WebhookDirection" AS ENUM ('INCOMING', 'OUTGOING');
+    END IF;
+END $$;
 
--- CreateEnum
-CREATE TYPE "AuditLogLevel" AS ENUM ('INFO', 'WARN', 'ERROR');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'AuditLogLevel') THEN
+        CREATE TYPE "AuditLogLevel" AS ENUM ('INFO', 'WARN', 'ERROR');
+    END IF;
+END $$;
 
 -- CreateTable
-CREATE TABLE "workflow_engine_definition" (
+CREATE TABLE IF NOT EXISTS "workflow_engine_definition" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "key" TEXT NOT NULL,
@@ -30,7 +51,7 @@ CREATE TABLE "workflow_engine_definition" (
 );
 
 -- CreateTable
-CREATE TABLE "workflow_engine_execution" (
+CREATE TABLE IF NOT EXISTS "workflow_engine_execution" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "definitionId" TEXT NOT NULL,
@@ -49,7 +70,7 @@ CREATE TABLE "workflow_engine_execution" (
 );
 
 -- CreateTable
-CREATE TABLE "workflow_engine_job" (
+CREATE TABLE IF NOT EXISTS "workflow_engine_job" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "executionId" TEXT NOT NULL,
@@ -72,7 +93,7 @@ CREATE TABLE "workflow_engine_job" (
 );
 
 -- CreateTable
-CREATE TABLE "workflow_engine_webhook" (
+CREATE TABLE IF NOT EXISTS "workflow_engine_webhook" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "definitionId" TEXT,
@@ -89,7 +110,7 @@ CREATE TABLE "workflow_engine_webhook" (
 );
 
 -- CreateTable
-CREATE TABLE "workflow_engine_audit_log" (
+CREATE TABLE IF NOT EXISTS "workflow_engine_audit_log" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "executionId" TEXT,
@@ -103,70 +124,75 @@ CREATE TABLE "workflow_engine_audit_log" (
 );
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_definition_organizationId_isActive_idx" ON "workflow_engine_definition"("organizationId", "isActive");
+CREATE INDEX IF NOT EXISTS "workflow_engine_definition_organizationId_isActive_idx" ON "workflow_engine_definition"("organizationId", "isActive");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "workflow_engine_definition_organizationId_key_key" ON "workflow_engine_definition"("organizationId", "key");
+CREATE UNIQUE INDEX IF NOT EXISTS "workflow_engine_definition_organizationId_key_key" ON "workflow_engine_definition"("organizationId", "key");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_execution_organizationId_triggerEvent_idx" ON "workflow_engine_execution"("organizationId", "triggerEvent");
+CREATE INDEX IF NOT EXISTS "workflow_engine_execution_organizationId_triggerEvent_idx" ON "workflow_engine_execution"("organizationId", "triggerEvent");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_execution_correlationId_idx" ON "workflow_engine_execution"("correlationId");
+CREATE INDEX IF NOT EXISTS "workflow_engine_execution_correlationId_idx" ON "workflow_engine_execution"("correlationId");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_execution_status_idx" ON "workflow_engine_execution"("status");
+CREATE INDEX IF NOT EXISTS "workflow_engine_execution_status_idx" ON "workflow_engine_execution"("status");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_job_organizationId_status_idx" ON "workflow_engine_job"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "workflow_engine_job_organizationId_status_idx" ON "workflow_engine_job"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_job_status_nextRunAt_idx" ON "workflow_engine_job"("status", "nextRunAt");
+CREATE INDEX IF NOT EXISTS "workflow_engine_job_status_nextRunAt_idx" ON "workflow_engine_job"("status", "nextRunAt");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_job_executionId_idx" ON "workflow_engine_job"("executionId");
+CREATE INDEX IF NOT EXISTS "workflow_engine_job_executionId_idx" ON "workflow_engine_job"("executionId");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_webhook_organizationId_direction_idx" ON "workflow_engine_webhook"("organizationId", "direction");
+CREATE INDEX IF NOT EXISTS "workflow_engine_webhook_organizationId_direction_idx" ON "workflow_engine_webhook"("organizationId", "direction");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_audit_log_organizationId_action_idx" ON "workflow_engine_audit_log"("organizationId", "action");
+CREATE INDEX IF NOT EXISTS "workflow_engine_audit_log_organizationId_action_idx" ON "workflow_engine_audit_log"("organizationId", "action");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_audit_log_executionId_idx" ON "workflow_engine_audit_log"("executionId");
+CREATE INDEX IF NOT EXISTS "workflow_engine_audit_log_executionId_idx" ON "workflow_engine_audit_log"("executionId");
 
 -- CreateIndex
-CREATE INDEX "workflow_engine_audit_log_jobId_idx" ON "workflow_engine_audit_log"("jobId");
+CREATE INDEX IF NOT EXISTS "workflow_engine_audit_log_jobId_idx" ON "workflow_engine_audit_log"("jobId");
 
--- AddForeignKey
-ALTER TABLE "workflow_engine_definition" ADD CONSTRAINT "workflow_engine_definition_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_execution" ADD CONSTRAINT "workflow_engine_execution_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_execution" ADD CONSTRAINT "workflow_engine_execution_definitionId_fkey" FOREIGN KEY ("definitionId") REFERENCES "workflow_engine_definition"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_job" ADD CONSTRAINT "workflow_engine_job_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_job" ADD CONSTRAINT "workflow_engine_job_executionId_fkey" FOREIGN KEY ("executionId") REFERENCES "workflow_engine_execution"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_job" ADD CONSTRAINT "workflow_engine_job_definitionId_fkey" FOREIGN KEY ("definitionId") REFERENCES "workflow_engine_definition"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_webhook" ADD CONSTRAINT "workflow_engine_webhook_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_webhook" ADD CONSTRAINT "workflow_engine_webhook_definitionId_fkey" FOREIGN KEY ("definitionId") REFERENCES "workflow_engine_definition"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_audit_log" ADD CONSTRAINT "workflow_engine_audit_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_audit_log" ADD CONSTRAINT "workflow_engine_audit_log_executionId_fkey" FOREIGN KEY ("executionId") REFERENCES "workflow_engine_execution"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "workflow_engine_audit_log" ADD CONSTRAINT "workflow_engine_audit_log_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "workflow_engine_job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AddForeignKey Constraints safely
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_definition_organizationId_fkey') THEN
+        ALTER TABLE "workflow_engine_definition" ADD CONSTRAINT "workflow_engine_definition_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_execution_organizationId_fkey') THEN
+        ALTER TABLE "workflow_engine_execution" ADD CONSTRAINT "workflow_engine_execution_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_execution_definitionId_fkey') THEN
+        ALTER TABLE "workflow_engine_execution" ADD CONSTRAINT "workflow_engine_execution_definitionId_fkey" FOREIGN KEY ("definitionId") REFERENCES "workflow_engine_definition"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_job_organizationId_fkey') THEN
+        ALTER TABLE "workflow_engine_job" ADD CONSTRAINT "workflow_engine_job_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_job_executionId_fkey') THEN
+        ALTER TABLE "workflow_engine_job" ADD CONSTRAINT "workflow_engine_job_executionId_fkey" FOREIGN KEY ("executionId") REFERENCES "workflow_engine_execution"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_job_definitionId_fkey') THEN
+        ALTER TABLE "workflow_engine_job" ADD CONSTRAINT "workflow_engine_job_definitionId_fkey" FOREIGN KEY ("definitionId") REFERENCES "workflow_engine_definition"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_webhook_organizationId_fkey') THEN
+        ALTER TABLE "workflow_engine_webhook" ADD CONSTRAINT "workflow_engine_webhook_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_webhook_definitionId_fkey') THEN
+        ALTER TABLE "workflow_engine_webhook" ADD CONSTRAINT "workflow_engine_webhook_definitionId_fkey" FOREIGN KEY ("definitionId") REFERENCES "workflow_engine_definition"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_audit_log_organizationId_fkey') THEN
+        ALTER TABLE "workflow_engine_audit_log" ADD CONSTRAINT "workflow_engine_audit_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_audit_log_executionId_fkey') THEN
+        ALTER TABLE "workflow_engine_audit_log" ADD CONSTRAINT "workflow_engine_audit_log_executionId_fkey" FOREIGN KEY ("executionId") REFERENCES "workflow_engine_execution"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'workflow_engine_audit_log_jobId_fkey') THEN
+        ALTER TABLE "workflow_engine_audit_log" ADD CONSTRAINT "workflow_engine_audit_log_jobId_fkey" FOREIGN KEY ("jobId") REFERENCES "workflow_engine_job"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
