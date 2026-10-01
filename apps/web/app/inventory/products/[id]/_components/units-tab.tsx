@@ -1,8 +1,8 @@
-import { useOrganizationStore } from "@/lib/stores/organization-store";
-import { formatCurrency } from "@/lib/utils";
 "use client";
 
 import React from "react";
+import { useOrganizationStore } from "../../../../../lib/stores/organization-store";
+import { formatCurrency } from "../../../../../lib/utils";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -43,14 +43,12 @@ interface UnitsTabProps {
 }
 
 export function UnitsTab({
-
   product,
   setProduct,
   systemUnits,
   organizationUnits,
 }: UnitsTabProps) {
   const { currency, currencySymbol } = useOrganizationStore();
-
   return (
     <div className="space-y-6 mt-0">
       {product.variants?.map((variant: any) => (

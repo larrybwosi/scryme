@@ -1,3 +1,4 @@
+import { GetUnitsUseCase } from "../../../../units/application/use-cases/get-units.use-case";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProductionController } from "../production.controller";
 import { ProductionService } from "../../../application/services/production.service";
@@ -65,6 +66,12 @@ describe("ProductionController (V3)", () => {
           provide: AuditService,
           useValue: {
             log: vi.fn(),
+          },
+        },
+        {
+          provide: GetUnitsUseCase,
+          useValue: {
+            execute: vi.fn(),
           },
         },
         Reflector,

@@ -1,8 +1,8 @@
-import { useOrganizationStore } from "@/lib/stores/organization-store";
-import { formatCurrency } from "@/lib/utils";
 "use client";
 
 import React, { useState } from "react";
+import { useOrganizationStore } from "../../../../../lib/stores/organization-store";
+import { formatCurrency } from "../../../../../lib/utils";
 import { Plus, MoreHorizontal, Truck, Loader2, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -75,6 +75,7 @@ interface SuppliersTabProps {
 }
 
 export function SuppliersTab({ product, setProduct, suppliers = [] }: SuppliersTabProps) {
+  const { currency, currencySymbol } = useOrganizationStore();
   // Modal States
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [editingSupplierLink, setEditingSupplierLink] = useState<any | null>(null);
