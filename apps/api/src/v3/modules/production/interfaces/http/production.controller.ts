@@ -19,6 +19,7 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { ProductionService } from "../../application/services/production.service";
 import { MemberUseCase } from "../../../members/application/use-cases/member.use-case";
+import { GetUnitsUseCase } from "../../../units/application/use-cases/get-units.use-case";
 import { MemberQueryDto } from "../../../members/application/dto/member.dto";
 import { ProductionReportService } from "../../reports/production-report.service";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
@@ -61,6 +62,7 @@ export class ProductionController {
     private readonly productionService: ProductionService,
     private readonly productionReportService: ProductionReportService,
     private readonly memberUseCase: MemberUseCase,
+    private readonly getUnitsUseCase: GetUnitsUseCase,
   ) {}
 
   @Get(["", "overview"])
@@ -75,6 +77,14 @@ export class ProductionController {
   @ApiOperation({ summary: "Get production attendance status" })
   async getAttendanceStatus(@v3Context() ctx: V3ApiContext) {
     return this.productionService.getAttendanceStatus(ctx);
+  }
+
+  // Units
+  @Get("units")
+  @Permissions("production:recipe:read")
+  @ApiOperation({ summary: "List units for production" })
+  async getUnits(@v3Context() ctx: V3ApiContext, @Query("lastSync") lastSync?: string) {
+    return this.getUnitsUseCase.execute(ctx.organizationId, lastSync);
   }
 
   // Ingredients
