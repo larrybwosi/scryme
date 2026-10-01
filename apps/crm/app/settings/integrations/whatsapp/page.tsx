@@ -5,8 +5,13 @@ import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
-import { CheckCircle2, AlertCircle, RefreshCw, ArrowLeft, Key, Phone, Shield } from 'lucide-react';
+import { CheckCircle2, RefreshCw, ArrowLeft, Key, Phone } from 'lucide-react';
 import Link from 'next/link';
+import {
+  getWhatsappConfig,
+  saveWhatsappConfig,
+  syncWhatsappTemplates,
+} from '@/app/actions/whatsapp';
 
 export default function WhatsappSettingsPage() {
   const [phoneNumberId, setPhoneNumberId] = useState('');
@@ -18,21 +23,20 @@ export default function WhatsappSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [syncingTemplates, setSyncingTemplates] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     async function loadConfig() {
       try {
-        const res = await fetch('/api/v3/crm/communication/whatsapp/config');
-        if (res.ok) {
-          const data = await res.json();
-          const config = data.data || data;
-          setIsConnected(config.isConnected);
-          setSyncStatus(config.syncStatus);
-          if (config.credentials) {
-            setPhoneNumberId(config.credentials.phoneNumberId || '');
-            setAccessToken(config.credentials.accessToken || '');
-            setWabaId(config.credentials.wabaId || '');
-            setDisplayPhoneNumber(config.credentials.displayPhoneNumber || '');
+        const res = await getWhatsappConfig();
+        if (res.success && res.data) {
+          setIsConnected(res.data.isConnected);
+          setSyncStatus(res.data.syncStatus);
+          if (res.data.credentials) {
+            setPhoneNumberId(res.data.credentials.phoneNumberId || '');
+            setAccessToken(res.data.credentials.accessToken || '');
+            setWabaId(res.data.credentials.wabaId || '');
+            setDisplayPhoneNumber(res.data.credentials.displayPhoneNumber || '');
           }
         }
       } catch (e) {
@@ -45,25 +49,25 @@ export default function WhatsappSettingsPage() {
   const handleSave = async () => {
     setLoading(true);
     setSaved(false);
+    setErrorMsg('');
     try {
-      const res = await fetch('/api/v3/crm/communication/whatsapp/config', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phoneNumberId,
-          accessToken,
-          wabaId,
-          displayPhoneNumber,
-        }),
+      const res = await saveWhatsappConfig({
+        phoneNumberId,
+        accessToken,
+        wabaId,
+        displayPhoneNumber,
       });
 
-      if (res.ok) {
+      if (res.success) {
         setIsConnected(true);
         setSyncStatus('CONNECTED');
         setSaved(true);
+      } else {
+        setErrorMsg(res.error || 'Failed to save configuration');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error('Failed to save config', e);
+      setErrorMsg(e?.message || 'Error occurred while saving configuration');
     } finally {
       setLoading(false);
     }
@@ -71,10 +75,15 @@ export default function WhatsappSettingsPage() {
 
   const handleSyncTemplates = async () => {
     setSyncingTemplates(true);
+    setErrorMsg('');
     try {
-      await fetch('/api/v3/crm/communication/templates/sync', { method: 'POST' });
-    } catch (e) {
+      const res = await syncWhatsappTemplates();
+      if (!res.success) {
+        setErrorMsg(res.error || 'Failed to sync templates');
+      }
+    } catch (e: any) {
       console.error('Failed to sync templates', e);
+      setErrorMsg(e?.message || 'Error occurred while syncing templates');
     } finally {
       setSyncingTemplates(false);
     }
@@ -158,6 +167,12 @@ export default function WhatsappSettingsPage() {
           {saved && (
             <div className="p-3 bg-emerald-500/10 text-emerald-500 rounded-md text-xs flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4" /> Settings saved successfully!
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="p-3 bg-destructive/10 text-destructive rounded-md text-xs">
+              {errorMsg}
             </div>
           )}
         </CardContent>
