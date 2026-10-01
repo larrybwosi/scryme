@@ -690,3 +690,38 @@ export function useBakerySettingsManagement() {
     isRemovingBaker: removeBaker.isPending,
   };
 }
+
+export const useStagedBatches = () => {
+  return useQuery({
+    queryKey: ["stagedBatches"],
+    queryFn: () => sdk.bakery.getStagedBatches(),
+  });
+};
+
+export const useDispatchStagedBatch = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { toLocationId: string; quantity: number; notes?: string } }) => {
+      return sdk.bakery.dispatchStagedBatch(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stagedBatches"] });
+      queryClient.invalidateQueries({ queryKey: ["batches"] });
+      queryClient.invalidateQueries({ queryKey: ["bakeryOverview"] });
+    },
+  });
+};
+
+export const useDisposeStagedStock = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { quantity: number; reason?: string; notes?: string } }) => {
+      return sdk.bakery.disposeStagedStock(id, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["stagedBatches"] });
+      queryClient.invalidateQueries({ queryKey: ["batches"] });
+      queryClient.invalidateQueries({ queryKey: ["bakeryOverview"] });
+    },
+  });
+};

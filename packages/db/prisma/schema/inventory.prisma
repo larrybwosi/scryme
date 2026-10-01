@@ -435,6 +435,7 @@ model InventoryLocation {
   fromStockTransfers        StockTransfer[]            @relation("FromLocation")
   toStockTransfers          StockTransfer[]            @relation("ToLocation")
   batchOutputs              Batch[]
+  dispatchesToLocation      BatchDispatch[]
   crmFollowUps              CrmFollowUp[]              @relation("LocationFollowUps")
 
   // Stock Reconciliation Relations

@@ -147,6 +147,11 @@ export interface Template {
 }
 
 export interface Batch {
+  stagedQuantity?: number;
+  dispatchedQuantity?: number;
+  stagingWasteQuantity?: number;
+  stagingStatus?: BatchStagingStatus;
+  dispatches?: BatchDispatch[];
   id: string;
   batchNumber: string;
   organizationId: string;
@@ -229,6 +234,7 @@ export interface BakeryBranding {
 }
 
 export interface BakerySettings {
+  enableProductionStaging?: boolean;
   id: string;
   organizationId: string;
   defaultBakerId?: string;
@@ -478,4 +484,19 @@ export interface OverviewData {
   averageRecipeCost?: number;
   recipesByCategory?: Record<string, number>;
   totalInventoryValue?: number;
+}
+
+export type BatchStagingStatus = "NOT_STAGED" | "STAGED" | "PARTIALLY_DISPATCHED" | "FULLY_DISPATCHED" | "DISPOSED";
+
+export interface BatchDispatch {
+  id: string;
+  batchId: string;
+  toLocationId: string;
+  toLocation?: { id: string; name: string };
+  quantity: number;
+  dispatchedById: string;
+  dispatchedBy?: { memberId?: string; user?: { name: string } };
+  dispatchedAt: Date | string;
+  notes?: string;
+  organizationId: string;
 }

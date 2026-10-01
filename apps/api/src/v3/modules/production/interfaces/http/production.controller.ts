@@ -49,6 +49,8 @@ import {
   UpdateIngredientDto,
   CreateQualityIncidentDto,
   UpdateQualityIncidentDto,
+  DispatchStagedBatchDto,
+  DisposeStagedStockDto,
 } from "../../application/dto/production.dto";
 
 @ApiTags("V3 Production")
@@ -282,6 +284,36 @@ export class ProductionController {
     @Param("id") id: string,
   ) {
     return this.productionService.startBatch(ctx.organizationId, id);
+  }
+
+
+  @Get("staged-batches")
+  @Permissions("production:batch:read")
+  @ApiOperation({ summary: "Get staged production batches awaiting dispatch" })
+  async getStagedBatches(@v3Context() ctx: V3ApiContext) {
+    return this.productionService.getStagedBatches(ctx);
+  }
+
+  @Post("batches/:id/dispatch")
+  @Permissions("production:batch:write")
+  @ApiOperation({ summary: "Dispatch staged batch items to front office location" })
+  async dispatchStagedBatch(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() body: DispatchStagedBatchDto,
+  ) {
+    return this.productionService.dispatchStagedBatch(ctx, id, body);
+  }
+
+  @Post("batches/:id/dispose-staged")
+  @Permissions("production:batch:write")
+  @ApiOperation({ summary: "Dispose staged items before front office dispatch" })
+  async disposeStagedStock(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() body: DisposeStagedStockDto,
+  ) {
+    return this.productionService.disposeStagedStock(ctx, id, body);
   }
 
   @Post("batches/:id/complete")

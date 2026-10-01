@@ -113,6 +113,7 @@ model Organization {
 
   // ---Bakery Batching System --- //
   batches          Batch[]
+  batchDispatches  BatchDispatch[]
   deliveryPartners DeliveryPartner[]
   templates        Template[]
   recipes          Recipe[]
@@ -362,6 +363,7 @@ model Member {
   createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
 
   bakeryRoles BakeryBaker[]
+  dispatchedBatches BatchDispatch[] @relation("BatchDispatchedBy")
 
   // Cal.com Integration
   calComId     String?

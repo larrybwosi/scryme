@@ -189,6 +189,12 @@ export const client = {
 };
 
 export const bakery = {
+  getStagedBatches: () => client.get("/staged-batches"),
+  dispatchStagedBatch: (id: string, data: { toLocationId: string; quantity: number; notes?: string }) =>
+    client.post(`/batches/${id}/dispatch`, data),
+  disposeStagedStock: (id: string, data: { quantity: number; reason?: string; notes?: string }) =>
+    client.post(`/batches/${id}/dispose-staged`, data),
+
   getBatches: (filters?: any) => client.get('/batches', { params: filters }),
   getBatch: (id: string) => client.get(`/batches/${id}`),
   getBatchTraceability: (id: string) => client.get(`/batches/${id}/traceability`),
