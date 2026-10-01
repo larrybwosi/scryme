@@ -161,17 +161,28 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
       PRISMA_BIN="prisma"
     fi
 
-    if ! $PRISMA_BIN migrate deploy; then
+    MIGRATE_FAILED=false
+    MIGRATE_OUTPUT=$($PRISMA_BIN migrate deploy 2>&1) || MIGRATE_FAILED=true
+    echo "$MIGRATE_OUTPUT"
+
+    if [ "$MIGRATE_FAILED" = "true" ]; then
       echo "⚠️ Database migration deployment failed. Checking for failed migrations to resolve..."
-      FAILED_MIGRATIONS=$(echo "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL OR (rolled_back_at IS NOT NULL AND rolled_back_at = '1970-01-01 00:00:00');" | $PRISMA_BIN db execute --stdin 2>/dev/null | grep -o '20[0-9]\{12\}_[^" ]*' || true)
-      if [ -n "$FAILED_MIGRATIONS" ]; then
-        for mig in $FAILED_MIGRATIONS; do
+
+      # Extract failed migration names directly from the Prisma migrate error output
+      FAILED_MIGRATIONS=$(echo "$MIGRATE_OUTPUT" | grep -oE '20[0-9]{12}_[a-zA-Z0-9_]+' | sort -u || true)
+
+      # Also query _prisma_migrations table to capture any unfinished/failed migrations in DB
+      DB_FAILED=$(echo "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL OR rolled_back_at = '1970-01-01 00:00:00';" | $PRISMA_BIN db execute --stdin 2>/dev/null | grep -oE '20[0-9]{12}_[a-zA-Z0-9_]+' | sort -u || true)
+
+      ALL_FAILED=$(printf "%s
+%s
+" "$FAILED_MIGRATIONS" "$DB_FAILED" | grep -v '^$' | sort -u || true)
+
+      if [ -n "$ALL_FAILED" ]; then
+        for mig in $ALL_FAILED; do
           echo "Resolving failed migration as rolled-back: $mig"
           $PRISMA_BIN migrate resolve --rolled-back "$mig" || true
         done
-      else
-        echo "Resolving failed migration 20260919000000_enterprise_scheduling_and_tasks as rolled-back..."
-        $PRISMA_BIN migrate resolve --rolled-back "20260919000000_enterprise_scheduling_and_tasks" || true
       fi
 
       echo "Retrying database migrations deployment..."
