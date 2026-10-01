@@ -6,16 +6,16 @@
  * OpenAPI spec version: 3.0
  */
 
+export interface CheckoutDto {
+  cartId: string;
+  sessionId: string;
+  phoneNumber: string;
+  locationId: string;
+  notes: string;
+}
+
 export interface CheckOutDto {
   locationId?: string;
   notes?: string;
   isAutoCheckout?: boolean;
-}
-
-export interface CheckoutDto {
-  cartId?: string;
-  sessionId?: string;
-  phoneNumber: string;
-  locationId: string;
-  notes?: string;
 }

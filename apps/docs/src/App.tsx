@@ -1303,7 +1303,7 @@ export default function App() {
 
         if (
           primaryTag &&
-            primaryTag.toLowerCase().includes("standalone pos") ||
+          (primaryTag.toLowerCase().includes("standalone pos") ||
             primaryTag.toLowerCase().includes("standalone-pos") ||
             primaryTag.toLowerCase().includes("finance"))
         ) {
