@@ -45,14 +45,14 @@ interface AppStoreActions {
   reorderTasks: (newTasks: Task[]) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
   addComment: (taskId: string, content: string, authorName?: string) => Promise<void>;
-  toggleSubtask: (taskId: string, subtaskId: string) => void;
-  addSubtask: (taskId: string, title: string) => void;
+  toggleSubtask: (taskId: string, subtaskId: string) => Promise<void>;
+  addSubtask: (taskId: string, title: string) => Promise<void>;
   addProject: (projectData: Omit<Project, 'id' | 'createdAt'>) => Promise<void>;
   updateProject: (id: string, updates: Partial<Project>) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   addClient: (client: Omit<Client, 'id'>) => void;
   addTeamMember: (member: Omit<TeamMember, 'id'>) => void;
-  addTag: (tag: Omit<Tag, 'id'>) => void;
+  addTag: (tag: Omit<Tag, 'id'>) => Promise<void>;
   addTimeOff: (request: Omit<TimeOffRequest, 'id'>) => void;
   setMyTasksOnly: (val: boolean) => void;
   startTimer: (description: string, project: string) => void;
@@ -142,7 +142,12 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
   projects: [],
   clients: [],
   teamMembers: [],
-  tags: [],
+  tags: [
+    { id: 't-1', name: 'Development', color: '#6366F1', usageCount: 5 },
+    { id: 't-2', name: 'Design', color: '#10B981', usageCount: 3 },
+    { id: 't-3', name: 'Frontend', color: '#06B6D4', usageCount: 4 },
+    { id: 't-4', name: 'Back-end', color: '#F59E0B', usageCount: 2 },
+  ],
   timeEntries: [],
   timeOffRequests: [],
   activeTimer: loadSavedActiveTimer(),
@@ -154,16 +159,16 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
     if (isSyncing) return;
     isSyncing = true;
 
-    // Only set isLoading if tasks are empty to avoid thrashing state when modals open or background re-syncs happen
     if (get().tasks.length === 0) {
       set({ isLoading: true });
     }
 
     try {
-      const [tasksRes, projectsRes, membersRes] = await Promise.all([
+      const [tasksRes, projectsRes, membersRes, labelsRes] = await Promise.all([
         taskApi.getTasks().catch(() => null),
         taskApi.getProjects().catch(() => null),
         taskApi.getMembers().catch(() => null),
+        taskApi.getLabels().catch(() => null),
       ]);
 
       const stateUpdates: Partial<AppStoreState> = { isLoading: false };
@@ -195,7 +200,13 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
                 avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
               }))
             : [],
-          subtasks: [],
+          subtasks: item.subtasks && Array.isArray(item.subtasks)
+            ? item.subtasks.map((st: any) => ({
+                id: st.id,
+                title: st.title,
+                completed: st.status === 'DONE' || st.status === 'COMPLETED',
+              }))
+            : [],
           comments: item.comments && Array.isArray(item.comments)
             ? item.comments.map((c: any) => ({
                 id: c.id,
@@ -207,6 +218,20 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
                 },
                 content: c.content,
                 createdAt: c.createdAt || new Date().toISOString(),
+              }))
+            : [],
+          activityLogs: item.activityLogs && Array.isArray(item.activityLogs)
+            ? item.activityLogs.map((log: any) => ({
+                id: log.id,
+                taskId: item.id,
+                actor: {
+                  id: log.actorId || log.actor?.id,
+                  name: log.actor?.user?.name || log.actor?.name || 'System User',
+                  avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100',
+                },
+                action: log.action || 'TASK_UPDATED',
+                details: log.details,
+                createdAt: log.createdAt || new Date().toISOString(),
               }))
             : [],
           createdAt: item.createdAt || new Date().toISOString(),
@@ -252,6 +277,18 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
         stateUpdates.teamMembers = apiMembers;
       }
 
+      if (labelsRes && Array.isArray(labelsRes)) {
+        const apiTags: Tag[] = labelsRes.map((lbl: any) => ({
+          id: lbl.id,
+          name: lbl.name,
+          color: lbl.color || '#6366F1',
+          usageCount: 1,
+        }));
+        if (apiTags.length > 0) {
+          stateUpdates.tags = apiTags;
+        }
+      }
+
       set(stateUpdates);
     } catch (err) {
       console.error("Failed to sync task store with API:", err);
@@ -263,7 +300,7 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
 
   addTask: async (taskData) => {
     try {
-      const payload = {
+      const payload: Record<string, any> = {
         title: taskData.name,
         description: taskData.description,
         projectId: taskData.projectId,
@@ -272,6 +309,10 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
         dueDate: taskData.dueDate,
         estimatedHours: taskData.estimatedHours,
       };
+
+      if (taskData.assignees && taskData.assignees.length > 0) {
+        payload.assigneeIds = taskData.assignees.map((a) => a.id).filter((id) => !id.startsWith('m-'));
+      }
 
       const res = await taskApi.createTask(payload);
       if (res && res.data) {
@@ -296,7 +337,6 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
   },
 
   updateTask: async (taskId, updates) => {
-    // Optimistic local update
     set((state) => ({
       tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t)),
     }));
@@ -312,6 +352,11 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
 
       if (Object.keys(payload).length > 0 && !taskId.startsWith('task-')) {
         await taskApi.updateTask(taskId, payload);
+      }
+
+      if (updates.assignees && !taskId.startsWith('task-')) {
+        const memberIds = updates.assignees.map((a) => a.id).filter((id) => !id.startsWith('m-'));
+        await taskApi.manageAssignees(taskId, memberIds);
       }
     } catch (e) {
       console.error("Failed to sync task update to backend:", e);
@@ -374,25 +419,46 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
     }
   },
 
-  toggleSubtask: (taskId, subtaskId) => {
+  toggleSubtask: async (taskId, subtaskId) => {
+    let targetSubtask: Subtask | undefined;
+
     set((state) => ({
       tasks: state.tasks.map((t) => {
         if (t.id !== taskId || !t.subtasks) return t;
         return {
           ...t,
-          subtasks: t.subtasks.map((st) => (st.id === subtaskId ? { ...st, completed: !st.completed } : st)),
+          subtasks: t.subtasks.map((st) => {
+            if (st.id === subtaskId) {
+              targetSubtask = { ...st, completed: !st.completed };
+              return targetSubtask;
+            }
+            return st;
+          }),
         };
       }),
     }));
+
+    if (targetSubtask && !subtaskId.startsWith('st-')) {
+      try {
+        await taskApi.updateTask(subtaskId, {
+          status: targetSubtask.completed ? 'DONE' : 'TODO',
+        });
+      } catch (e) {
+        console.error("Failed to sync subtask completion to backend:", e);
+      }
+    }
   },
 
-  addSubtask: (taskId, title) => {
+  addSubtask: async (taskId, title) => {
     if (!title.trim()) return;
+
+    const parentTask = get().tasks.find((t) => t.id === taskId);
     const newSubtask: Subtask = {
       id: `st-${Date.now()}`,
       title: title.trim(),
       completed: false,
     };
+
     set((state) => ({
       tasks: state.tasks.map((t) => {
         if (t.id !== taskId) return t;
@@ -402,6 +468,20 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
         };
       }),
     }));
+
+    if (parentTask && !taskId.startsWith('task-')) {
+      try {
+        await taskApi.createTask({
+          title: title.trim(),
+          parentTaskId: taskId,
+          projectId: parentTask.projectId,
+          status: 'TODO',
+        });
+        await get().syncWithApi();
+      } catch (e) {
+        console.error("Failed to create subtask on backend:", e);
+      }
+    }
   },
 
   addProject: async (projectData) => {
@@ -474,9 +554,19 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
     set((state) => ({ teamMembers: [newMember, ...state.teamMembers] }));
   },
 
-  addTag: (tag) => {
+  addTag: async (tag) => {
     const newTag: Tag = { ...tag, id: `tag-${Date.now()}` };
     set((state) => ({ tags: [newTag, ...state.tags] }));
+
+    try {
+      await taskApi.createLabel({
+        name: tag.name,
+        color: tag.color,
+      });
+      await get().syncWithApi();
+    } catch (e) {
+      console.error("Failed to create custom label on backend:", e);
+    }
   },
 
   addTimeOff: (request) => {
