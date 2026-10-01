@@ -89,13 +89,22 @@ export class StockRequestUseCase {
         throw new BadRequestException("Request is not in pending status");
       }
 
-      return tx.stockRequest.update({
-        where: { id: requestId },
+      // SECURITY (Sentinel): Using updateMany instead of update because
+      // StockRequest lacks a composite unique index on [id, organizationId].
+      // Prisma's standard update ignores non-unique fields in where clauses at runtime,
+      // creating potential BOLA/IDOR mutation risks if pre-checks are bypassed or raced against.
+      // updateMany strictly enforces database-level multi-tenant organizationId isolation during mutations.
+      await tx.stockRequest.updateMany({
+        where: { id: requestId, organizationId },
         data: {
           status: StockRequestStatus.APPROVED,
           approvedById: memberId,
           approvalDate: new Date(),
         },
+      });
+
+      return tx.stockRequest.findFirstOrThrow({
+        where: { id: requestId, organizationId },
       });
     });
   }

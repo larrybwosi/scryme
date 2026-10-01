@@ -42,7 +42,9 @@ describe("StockRequestUseCase", () => {
       stockRequest: {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
       },
       stockTransfer: {
         create: vi.fn(),
@@ -77,15 +79,25 @@ describe("StockRequestUseCase", () => {
       organizationId: mockOrgId,
       status: StockRequestStatus.PENDING,
     });
+    mockTx.stockRequest.findFirstOrThrow.mockResolvedValue({
+      id: mockRequestId,
+      organizationId: mockOrgId,
+      status: StockRequestStatus.APPROVED,
+      approvedById: mockMemberId,
+    });
 
     await stockRequestUseCase.approve(mockOrgId, mockMemberId, mockRequestId);
 
-    expect(mockTx.stockRequest.update).toHaveBeenCalledWith({
-      where: { id: mockRequestId },
+    expect(mockTx.stockRequest.updateMany).toHaveBeenCalledWith({
+      where: { id: mockRequestId, organizationId: mockOrgId },
       data: expect.objectContaining({
         status: StockRequestStatus.APPROVED,
         approvedById: mockMemberId,
       }),
+    });
+
+    expect(mockTx.stockRequest.findFirstOrThrow).toHaveBeenCalledWith({
+      where: { id: mockRequestId, organizationId: mockOrgId },
     });
   });
 
