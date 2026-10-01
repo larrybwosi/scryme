@@ -58,13 +58,13 @@ END $$;
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_dispatch_dispatchedById_fkey') THEN
-        ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_dispatchedById_fkey" FOREIGN KEY ("dispatchedById") REFERENCES "Member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+        ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_dispatchedById_fkey" FOREIGN KEY ("dispatchedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
     END IF;
 END $$;
 
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_dispatch_organizationId_fkey') THEN
-        ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+        ALTER TABLE "batch_dispatch" ADD CONSTRAINT "batch_dispatch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
     END IF;
 END $$;
