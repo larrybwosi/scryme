@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { recipeSchema, bakeryCategorySchema } from "../bakery";
+import { recipeSchema, bakeryCategorySchema, batchSchema } from "../bakery";
 
-describe("Bakery App Validations - Category & Recipe Schemas", () => {
+describe("Bakery App Validations - Category, Recipe & Batch Schemas", () => {
   describe("bakeryCategorySchema", () => {
     it("should pass with valid category name and optional description", () => {
       const result = bakeryCategorySchema.safeParse({
@@ -91,6 +91,45 @@ describe("Bakery App Validations - Category & Recipe Schemas", () => {
         expect(result.error.issues[0].message).toBe(
           "At least one unit (system or organization) must be selected for the ingredient"
         );
+      }
+    });
+  });
+
+  describe("batchSchema", () => {
+    const validBatch = {
+      recipeId: "recipe-123",
+      plannedQuantity: 10,
+      systemUnitId: "unit-loaves",
+      date: new Date(),
+      time: "08:00",
+    };
+
+    it("should pass when valid batch data with systemUnitId is provided", () => {
+      const result = batchSchema.safeParse(validBatch);
+      expect(result.success).toBe(true);
+    });
+
+    it("should pass when valid batch data with orgUnitId is provided", () => {
+      const result = batchSchema.safeParse({
+        ...validBatch,
+        systemUnitId: undefined,
+        orgUnitId: "custom-unit-123",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("should fail when neither systemUnitId nor orgUnitId is provided", () => {
+      const result = batchSchema.safeParse({
+        ...validBatch,
+        systemUnitId: undefined,
+        orgUnitId: undefined,
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toBe(
+          "At least one unit (system or organization) must be selected for the batch quantity"
+        );
+        expect(result.error.issues[0].path).toEqual(["systemUnitId"]);
       }
     });
   });
