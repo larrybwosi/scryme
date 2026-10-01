@@ -33,21 +33,35 @@ export class AutomationScheduler {
         const lowStockVariants = await (this.prisma.client as any).productVariant.findMany({
           where: {
             product: { organizationId: def.organizationId },
-            stockQuantity: { lte: threshold },
+            OR: [
+              { variantStocks: { some: { currentStock: { lte: threshold } } } },
+              { variantStocks: { none: {} } },
+            ],
+          },
+          include: {
+            variantStocks: true,
           },
           take: 50,
         });
 
         for (const variant of lowStockVariants) {
-          await this.automationService.triggerWorkflow(def.organizationId, {
-            key: def.key,
-            inputs: {
-              productId: variant.id,
-              productName: variant.name || "Product Variant",
-              currentStock: variant.stockQuantity,
-              threshold,
-            },
-          });
+          const currentStock =
+            variant.variantStocks?.reduce(
+              (acc: number, curr: any) => acc + (Number(curr.currentStock) || 0),
+              0,
+            ) ?? 0;
+
+          if (currentStock <= threshold) {
+            await this.automationService.triggerWorkflow(def.organizationId, {
+              key: def.key,
+              inputs: {
+                productId: variant.id,
+                productName: variant.name || "Product Variant",
+                currentStock,
+                threshold,
+              },
+            });
+          }
         }
       }
     } catch (error: any) {
