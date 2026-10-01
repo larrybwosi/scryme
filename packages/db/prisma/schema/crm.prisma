@@ -106,6 +106,7 @@ model CrmRecord {
   followUps          CrmFollowUp[]
   campaignEvents     CampaignEvent[]
   workflowInstances  CampaignWorkflowInstance[]
+  communicationThreads CommunicationThread[]
 
   @@index([objectId, organizationId])
   @@index([organizationId])
@@ -270,4 +271,111 @@ model CrmFollowUp {
   @@index([assignedToId])
   @@index([locationId])
   @@map("crm_follow_ups")
+}
+
+// ===================================
+// COMMUNICATION THREADS & MESSAGES
+// ===================================
+
+enum CommunicationChannel {
+  WHATSAPP
+  EMAIL
+  SMS
+  OTHER
+
+  @@map("CommunicationChannel")
+}
+
+enum CommunicationDirection {
+  INBOUND
+  OUTBOUND
+
+  @@map("CommunicationDirection")
+}
+
+enum CommunicationMessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+
+  @@map("CommunicationMessageStatus")
+}
+
+model CommunicationThread {
+  id             String               @id @default(cuid())
+  organizationId String
+  organization   Organization         @relation("OrgCommunicationThreads", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  channel        CommunicationChannel @default(WHATSAPP)
+  participantPhone String             // E.164 phone number e.g. "+254712345678"
+  participantName  String?
+
+  // Relations to CRM entities
+  crmRecordId    String?
+  crmRecord      CrmRecord?           @relation(fields: [crmRecordId], references: [id], onDelete: SetNull)
+
+  messages       CommunicationMessage[]
+
+  lastMessageAt  DateTime             @default(now())
+  unreadCount    Int                  @default(0)
+
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@unique([organizationId, channel, participantPhone])
+  @@index([organizationId])
+  @@index([participantPhone])
+  @@index([crmRecordId])
+  @@map("communication_threads")
+}
+
+model CommunicationMessage {
+  id             String                     @id @default(cuid())
+  threadId       String
+  thread         CommunicationThread        @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization   Organization               @relation("OrgCommunicationMessages", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  direction      CommunicationDirection
+  content        String                     @db.Text
+  status         CommunicationMessageStatus @default(PENDING)
+
+  // External IDs (e.g. Meta WhatsApp WAMID)
+  externalId     String?                    @unique
+
+  // Sender info if OUTBOUND from internal user
+  senderMemberId String?
+  senderMember   Member?                    @relation("SentCommunicationMessages", fields: [senderMemberId], references: [id], onDelete: SetNull)
+
+  metadata       Json?                      // Extra details (e.g. template parameters, media URLs, delivery timestamps)
+
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+
+  @@index([threadId])
+  @@index([organizationId])
+  @@index([externalId])
+  @@map("communication_messages")
+}
+
+model WhatsappTemplate {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation("OrgWhatsappTemplates", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name           String       // e.g. "order_confirmation"
+  category       String       // e.g. "UTILITY", "MARKETING"
+  language       String       @default("en_US")
+  status         String       @default("APPROVED") // e.g. APPROVED, REJECTED, PENDING
+  components     Json         // Array of template components (HEADER, BODY, FOOTER, BUTTONS)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, name, language])
+  @@index([organizationId])
+  @@map("whatsapp_templates")
 }
