@@ -1,3 +1,5 @@
+import { useOrganizationStore } from "@/lib/stores/organization-store";
+import { formatCurrency } from "@/lib/utils";
 "use client";
 
 import React from "react";
@@ -41,11 +43,14 @@ interface UnitsTabProps {
 }
 
 export function UnitsTab({
+
   product,
   setProduct,
   systemUnits,
   organizationUnits,
 }: UnitsTabProps) {
+  const { currency, currencySymbol } = useOrganizationStore();
+
   return (
     <div className="space-y-6 mt-0">
       {product.variants?.map((variant: any) => (

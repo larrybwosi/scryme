@@ -1,3 +1,5 @@
+import { useOrganizationStore } from "@/lib/stores/organization-store";
+import { formatCurrency } from "@/lib/utils";
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -473,7 +475,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 No quantity tiers defined
               </h4>
               <p className="text-xs text-muted-foreground max-w-sm mb-4">
-                Offer bulk quantity discounts (e.g. 10+ units @ $8.00, 50+ units @ $6.50) to incentivize higher volume sales.
+                Offer bulk quantity discounts (e.g. 10+ units @ {currencySymbol}8.00, 50+ units @ {currencySymbol}6.50) to incentivize higher volume sales.
               </p>
               <Button
                 size="sm"
@@ -516,10 +518,10 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                       {item.maxQuantity ? `${item.maxQuantity} units` : "∞"}
                     </TableCell>
                     <TableCell className="font-bold text-emerald-600 dark:text-emerald-400">
-                      ${Number(item.price).toFixed(2)}
+                      {formatCurrency(Number(item.price), currency)}
                     </TableCell>
                     <TableCell>
-                      {item.wholesalePrice ? `$${Number(item.wholesalePrice).toFixed(2)}` : "—"}
+                      {item.wholesalePrice ? formatCurrency(Number(item.wholesalePrice), currency) : "—"}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[11px]">
@@ -557,7 +559,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
               Grouped & Multi-Buy Rules
             </CardTitle>
             <CardDescription>
-              Configure package deals, bulk bundles (e.g. 3 for $25), or Buy-X-Get-Y promotions.
+              Configure package deals, bulk bundles (e.g. 3 for {currencySymbol}25), or Buy-X-Get-Y promotions.
             </CardDescription>
           </div>
           <Button
@@ -579,7 +581,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 No multi-buy rules configured
               </h4>
               <p className="text-xs text-muted-foreground max-w-sm mb-4">
-                Set up group pricing like "Buy 3 for $25.00" or dynamic rules like "Buy 2 Get 1 50% Off".
+                Set up group pricing like "Buy 3 for {currencySymbol}25.00" or dynamic rules like "Buy 2 Get 1 50% Off".
               </p>
               <Button
                 size="sm"
@@ -632,7 +634,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Group Price ({bundle.buyQuantity || 1} units):</span>
                         <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
-                          ${Number(bundle.bundlePrice || 0).toFixed(2)}
+                          {formatCurrency(Number(bundle.bundlePrice || 0), currency)}
                         </span>
                       </div>
                     ) : (
@@ -730,8 +732,8 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                       {rule.discountType === "PERCENTAGE"
                         ? `${rule.discountValue}% OFF`
                         : rule.discountType === "FIXED_AMOUNT"
-                        ? `$${rule.discountValue} OFF`
-                        : `$${rule.discountValue} FIXED`}
+                        ? `${formatCurrency(Number(rule.discountValue), currency)} OFF`
+                        : `${formatCurrency(Number(rule.discountValue), currency)} FIXED`}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {rule.conditions?.minQuantity ? (
@@ -743,7 +745,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                       {rule.conditions?.minOrderValue ? (
                         <div className="flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                          <span>Min Order: ${rule.conditions.minOrderValue}</span>
+                          <span>Min Order: {formatCurrency(Number(rule.conditions.minOrderValue), currency)}</span>
                         </div>
                       ) : null}
                       {!rule.conditions?.minQuantity && !rule.conditions?.minOrderValue && "No threshold conditions"}
@@ -827,7 +829,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Tier Unit Price ($)</Label>
+                <Label>Tier Unit Price ({currencySymbol})</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -837,7 +839,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Wholesale Price ($ Optional)</Label>
+                <Label>Wholesale Price ({currencySymbol} Optional)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -891,7 +893,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
           <DialogHeader>
             <DialogTitle>Create Multi-Buy / Group Pricing</DialogTitle>
             <DialogDescription>
-              Configure package discounts like "Buy 3 for $25" or "Buy 2 Get 1 Free".
+              Configure package discounts like "Buy 3 for {currencySymbol}25" or "Buy 2 Get 1 Free".
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -931,7 +933,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="FIXED">Fixed Group Price (e.g. 3 for $25)</SelectItem>
+                  <SelectItem value="FIXED">Fixed Group Price (e.g. 3 for {currencySymbol}25)</SelectItem>
                   <SelectItem value="DYNAMIC">Buy X Get Y (e.g. Buy 2 Get 1 50% Off)</SelectItem>
                 </SelectContent>
               </Select>
@@ -950,7 +952,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
 
               {bundleForm.bundleType === "FIXED" ? (
                 <div className="space-y-2">
-                  <Label>Group Bundle Price ($)</Label>
+                  <Label>Group Bundle Price ({currencySymbol})</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -984,7 +986,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                      <SelectItem value="FIXED_AMOUNT">Fixed Amount ($)</SelectItem>
+                      <SelectItem value="FIXED_AMOUNT">Fixed Amount ({currencySymbol})</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1077,8 +1079,8 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                    <SelectItem value="FIXED_AMOUNT">Fixed Amount ($)</SelectItem>
-                    <SelectItem value="FIXED_PRICE">Fixed Price ($)</SelectItem>
+                    <SelectItem value="FIXED_AMOUNT">Fixed Amount ({currencySymbol})</SelectItem>
+                    <SelectItem value="FIXED_PRICE">Fixed Price ({currencySymbol})</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1105,7 +1107,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Min Order Value ($ Optional)</Label>
+                <Label>Min Order Value ({currencySymbol} Optional)</Label>
                 <Input
                   type="number"
                   value={ruleForm.minOrderValue}

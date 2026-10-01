@@ -1,3 +1,5 @@
+import { useOrganizationStore } from "@/lib/stores/organization-store";
+import { formatCurrency } from "@/lib/utils";
 "use client";
 
 import React, { useState } from "react";
@@ -273,7 +275,7 @@ export function SuppliersTab({ product, setProduct, suppliers = [] }: SuppliersT
                       {s.supplierSku || "-"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      ${Number(s.costPrice || 0).toFixed(2)}
+                      {formatCurrency(Number(s.costPrice || 0), currency)}
                     </TableCell>
                     <TableCell className="text-right">
                       {s.leadTimeDays ? `${s.leadTimeDays} days` : "-"}
@@ -409,7 +411,7 @@ export function SuppliersTab({ product, setProduct, suppliers = [] }: SuppliersT
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="link-cost">Cost Price ($)</Label>
+                <Label htmlFor="link-cost">Cost Price ({currencySymbol})</Label>
                 <Input
                   id="link-cost"
                   type="number"
@@ -500,7 +502,7 @@ export function SuppliersTab({ product, setProduct, suppliers = [] }: SuppliersT
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="edit-cost">Cost Price ($)</Label>
+                <Label htmlFor="edit-cost">Cost Price ({currencySymbol})</Label>
                 <Input
                   id="edit-cost"
                   type="number"
