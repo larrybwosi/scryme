@@ -51,7 +51,7 @@ import {
 } from "@repo/ui/components/ui/table";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
-import { useOrganizationStore } from "@/lib/store/use-organization-store";
+import { useOrganizationStore } from "@/lib/stores/organization-store";
 import {
   getProductPricingDetails,
   createVolumeTierForProduct,
