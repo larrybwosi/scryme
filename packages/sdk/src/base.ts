@@ -802,7 +802,7 @@ export type AdminModule = SDKModule<typeof adminMapping>;
 export type PublicServicesModule = SDKModule<typeof publicServicesMapping>;
 export type ServicesModule = SDKModule<typeof servicesMapping>;
 
-export function buildModule<Mapping extends Record<string, keyof RawAPI>>(
+export function buildModule<Mapping extends Record<string, keyof RawAPI & string>>(
   api: RawAPI,
   orgSlug: string,
   mapping: Mapping
@@ -811,7 +811,7 @@ export function buildModule<Mapping extends Record<string, keyof RawAPI>>(
   for (const [key, rawMethodName] of Object.entries(mapping)) {
     const rawFn = api[rawMethodName];
     if (typeof rawFn === "function") {
-      if (methodsWithOrgSlugSet.has(rawMethodName)) {
+      if (methodsWithOrgSlugSet.has(rawMethodName as string)) {
         result[key] = function(this: any, ...args: any[]) {
           return (rawFn as any).apply(this, [orgSlug, ...args]);
         };
