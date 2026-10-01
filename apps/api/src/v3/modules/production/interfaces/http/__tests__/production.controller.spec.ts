@@ -3,6 +3,7 @@ import { ProductionController } from "../production.controller";
 import { ProductionService } from "../../../application/services/production.service";
 import { ProductionReportService } from "../../../reports/production-report.service";
 import { MemberUseCase } from "../../../../members/application/use-cases/member.use-case";
+import { GetUnitsUseCase } from "../../../../units/application/use-cases/get-units.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
 import { AuditService } from "@/v3/common/services/audit.service";
@@ -14,6 +15,7 @@ describe("ProductionController (V3)", () => {
   let productionService: ProductionService;
   let productionReportService: ProductionReportService;
   let memberUseCase: MemberUseCase;
+  let getUnitsUseCase: GetUnitsUseCase;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -37,6 +39,12 @@ describe("ProductionController (V3)", () => {
           provide: MemberUseCase,
           useValue: {
             getMembers: vi.fn(),
+          },
+        },
+        {
+          provide: GetUnitsUseCase,
+          useValue: {
+            execute: vi.fn(),
           },
         },
         {
@@ -75,6 +83,7 @@ describe("ProductionController (V3)", () => {
     productionService = module.get<ProductionService>(ProductionService);
     productionReportService = module.get<ProductionReportService>(ProductionReportService);
     memberUseCase = module.get<MemberUseCase>(MemberUseCase);
+    getUnitsUseCase = module.get<GetUnitsUseCase>(GetUnitsUseCase);
   });
 
   it("should be defined", () => {
