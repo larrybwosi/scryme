@@ -29,7 +29,7 @@ echo "$MIGRATE_OUTPUT"
 if [ "$MIGRATE_FAILED" = "true" ]; then
   echo "⚠️ Database migration deployment failed. Checking for failed migrations to resolve..."
   FAILED_MIGRATIONS=$(echo "$MIGRATE_OUTPUT" | grep -oE '20[0-9]{12}_[a-zA-Z0-9_]+' | sort -u || true)
-  DB_FAILED=$(echo "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL OR rolled_back_at = '1970-01-01 00:00:00';" | docker compose exec -T api prisma db execute --stdin 2>/dev/null | grep -oE '20[0-9]{12}_[a-zA-Z0-9_]+' | sort -u || true)
+  DB_FAILED=$(echo "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL;" | docker compose exec -T api prisma db execute --stdin 2>/dev/null | grep -oE '20[0-9]{12}_[a-zA-Z0-9_]+' | sort -u || true)
   ALL_FAILED=$(printf "%s
 %s
 " "$FAILED_MIGRATIONS" "$DB_FAILED" | grep -v '^$' | sort -u || true)
