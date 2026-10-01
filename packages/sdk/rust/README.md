@@ -291,18 +291,6 @@ Class | Method | HTTP request | Description
 *V3StockingApi* | [**stocking_ship_transfer**](docs/V3StockingApi.md#stocking_ship_transfer) | **POST** /v3/{orgSlug}/stocking/transfers/{id}/ship | Ship a stock transfer
 *V3StockingApi* | [**stocking_submit_physical_reconciliation**](docs/V3StockingApi.md#stocking_submit_physical_reconciliation) | **POST** /v3/{orgSlug}/stocking/physical-reconciliations | Submit physical reconciliation
 *V3StockingApi* | [**stocking_update_partner**](docs/V3StockingApi.md#stocking_update_partner) | **PATCH** /v3/{orgSlug}/stocking/partners/{id} | Update delivery partner
-*V3StrapiIntegrationApi* | [**strapi_create_connection**](docs/V3StrapiIntegrationApi.md#strapi_create_connection) | **POST** /v3/{orgSlug}/strapi/connections | Create a new Strapi connection for this organisation
-*V3StrapiIntegrationApi* | [**strapi_delete_connection**](docs/V3StrapiIntegrationApi.md#strapi_delete_connection) | **DELETE** /v3/{orgSlug}/strapi/connections/{connectionId} | Deactivate a Strapi connection
-*V3StrapiIntegrationApi* | [**strapi_enqueue_sync**](docs/V3StrapiIntegrationApi.md#strapi_enqueue_sync) | **POST** /v3/{orgSlug}/strapi/connections/{connectionId}/sync/queue | Enqueue a background sync job
-*V3StrapiIntegrationApi* | [**strapi_exchange_customer_token**](docs/V3StrapiIntegrationApi.md#strapi_exchange_customer_token) | **POST** /v3/{orgSlug}/strapi/connections/{connectionId}/customers/exchange-token | Exchange a Strapi storefront JWT for a Scryme customer session
-*V3StrapiIntegrationApi* | [**strapi_get_connection**](docs/V3StrapiIntegrationApi.md#strapi_get_connection) | **GET** /v3/{orgSlug}/strapi/connections/{connectionId} | Get a single Strapi connection
-*V3StrapiIntegrationApi* | [**strapi_get_sync_logs**](docs/V3StrapiIntegrationApi.md#strapi_get_sync_logs) | **GET** /v3/{orgSlug}/strapi/connections/{connectionId}/sync-logs | Get recent sync logs for a Strapi connection
-*V3StrapiIntegrationApi* | [**strapi_get_webhook_logs**](docs/V3StrapiIntegrationApi.md#strapi_get_webhook_logs) | **GET** /v3/{orgSlug}/strapi/connections/{connectionId}/webhook-logs | Get recent webhook event logs for a Strapi connection
-*V3StrapiIntegrationApi* | [**strapi_list_connections**](docs/V3StrapiIntegrationApi.md#strapi_list_connections) | **GET** /v3/{orgSlug}/strapi/connections | List all Strapi connections for this organisation
-*V3StrapiIntegrationApi* | [**strapi_register_customer**](docs/V3StrapiIntegrationApi.md#strapi_register_customer) | **POST** /v3/{orgSlug}/strapi/connections/{connectionId}/customers/register | Register a storefront customer in both Strapi and Scryme
-*V3StrapiIntegrationApi* | [**strapi_trigger_sync**](docs/V3StrapiIntegrationApi.md#strapi_trigger_sync) | **POST** /v3/{orgSlug}/strapi/connections/{connectionId}/sync | Trigger a manual sync for products and/or customers
-*V3StrapiIntegrationApi* | [**strapi_update_connection**](docs/V3StrapiIntegrationApi.md#strapi_update_connection) | **PATCH** /v3/{orgSlug}/strapi/connections/{connectionId} | Update a Strapi connection
-*V3StrapiWebhooksApi* | [**strapi_receive_webhook**](docs/V3StrapiWebhooksApi.md#strapi_receive_webhook) | **POST** /v3/webhooks/strapi/{connectionId} | Receive a Strapi v4 lifecycle webhook event
 *V3UnitsApi* | [**units_get_units**](docs/V3UnitsApi.md#units_get_units) | **GET** /v3/{orgSlug}/units | Get all units for an organization
 *V3WebhooksApi* | [**webhooks_create**](docs/V3WebhooksApi.md#webhooks_create) | **POST** /v3/{orgSlug}/webhooks | Register a new webhook subscription
 *V3WebhooksApi* | [**webhooks_delete**](docs/V3WebhooksApi.md#webhooks_delete) | **DELETE** /v3/{orgSlug}/webhooks/{id} | Delete a webhook
@@ -369,7 +357,6 @@ Class | Method | HTTP request | Description
  - [CreateServiceDto](docs/CreateServiceDto.md)
  - [CreateServiceResourceDto](docs/CreateServiceResourceDto.md)
  - [CreateSetupKeyDto](docs/CreateSetupKeyDto.md)
- - [CreateStrapiConnectionDto](docs/CreateStrapiConnectionDto.md)
  - [CreateTransferDto](docs/CreateTransferDto.md)
  - [CreateTransferItemDto](docs/CreateTransferItemDto.md)
  - [CreateUtilityAccountDto](docs/CreateUtilityAccountDto.md)
@@ -441,7 +428,6 @@ Class | Method | HTTP request | Description
  - [SetQuotaOverridesDto](docs/SetQuotaOverridesDto.md)
  - [ShipTransferDto](docs/ShipTransferDto.md)
  - [ShipTransferItemDto](docs/ShipTransferItemDto.md)
- - [StrapiConnectionResponseDto](docs/StrapiConnectionResponseDto.md)
  - [SubmitReconciliationDto](docs/SubmitReconciliationDto.md)
  - [SuspendOrganizationDto](docs/SuspendOrganizationDto.md)
  - [TerminalLoginDto](docs/TerminalLoginDto.md)
@@ -465,7 +451,6 @@ Class | Method | HTTP request | Description
  - [UpdateServiceCategoryDto](docs/UpdateServiceCategoryDto.md)
  - [UpdateServiceDto](docs/UpdateServiceDto.md)
  - [UpdateServiceResourceDto](docs/UpdateServiceResourceDto.md)
- - [UpdateStrapiConnectionDto](docs/UpdateStrapiConnectionDto.md)
  - [UpdateSubscriptionDto](docs/UpdateSubscriptionDto.md)
  - [UpdateSupplierProductDto](docs/UpdateSupplierProductDto.md)
  - [UserSummaryDto](docs/UserSummaryDto.md)

@@ -272,17 +272,6 @@ export type MethodsWithOrgSlug =
   | "crmIntegrationsHandleWebhook"
   | "crmIntegrationsReplyToActivity"
   | "unitsGetUnits"
-  | "strapiCreateConnection"
-  | "strapiListConnections"
-  | "strapiGetConnection"
-  | "strapiUpdateConnection"
-  | "strapiDeleteConnection"
-  | "strapiTriggerSync"
-  | "strapiEnqueueSync"
-  | "strapiGetWebhookLogs"
-  | "strapiGetSyncLogs"
-  | "strapiExchangeCustomerToken"
-  | "strapiRegisterCustomer"
   | "analyticsControllerGetDashboardAnalytics"
   | "analyticsControllerGetResourceUtilization";
 
@@ -592,18 +581,6 @@ export const crmMapping = {
   handleIntegrationsCallback: "crmIntegrationsHandleCallback",
   handleIntegrationsWebhook: "crmIntegrationsHandleWebhook",
   replyToIntegrationsActivity: "crmIntegrationsReplyToActivity",
-  createStrapiConnection: "strapiCreateConnection",
-  listStrapiConnections: "strapiListConnections",
-  getStrapiConnection: "strapiGetConnection",
-  updateStrapiConnection: "strapiUpdateConnection",
-  deleteStrapiConnection: "strapiDeleteConnection",
-  triggerStrapiSync: "strapiTriggerSync",
-  enqueueStrapiSync: "strapiEnqueueSync",
-  getStrapiWebhookLogs: "strapiGetWebhookLogs",
-  getStrapiSyncLogs: "strapiGetSyncLogs",
-  exchangeStrapiCustomerToken: "strapiExchangeCustomerToken",
-  registerStrapiCustomer: "strapiRegisterCustomer",
-  receiveStrapiWebhook: "strapiReceiveWebhook",
 } as const;
 
 export const posMapping = {
@@ -825,7 +802,7 @@ export type AdminModule = SDKModule<typeof adminMapping>;
 export type PublicServicesModule = SDKModule<typeof publicServicesMapping>;
 export type ServicesModule = SDKModule<typeof servicesMapping>;
 
-export function buildModule<Mapping extends Record<string, keyof RawAPI>>(
+export function buildModule<Mapping extends Record<string, keyof RawAPI & string>>(
   api: RawAPI,
   orgSlug: string,
   mapping: Mapping
@@ -834,7 +811,7 @@ export function buildModule<Mapping extends Record<string, keyof RawAPI>>(
   for (const [key, rawMethodName] of Object.entries(mapping)) {
     const rawFn = api[rawMethodName];
     if (typeof rawFn === "function") {
-      if (methodsWithOrgSlugSet.has(rawMethodName)) {
+      if (methodsWithOrgSlugSet.has(rawMethodName as string)) {
         result[key] = function(this: any, ...args: any[]) {
           return (rawFn as any).apply(this, [orgSlug, ...args]);
         };
