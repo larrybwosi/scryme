@@ -1,5 +1,7 @@
 "use client";
 
+import { useOrganizationStore } from "../../../../../lib/stores/organization-store";
+
 import React, { useState, useEffect } from "react";
 import {
   DollarSign,
@@ -69,6 +71,8 @@ interface PricingTabProps {
 }
 
 export function PricingTab({ product, setProduct }: PricingTabProps) {
+  const { currency, currencySymbol: storeSymbol } = useOrganizationStore();
+  const currencySymbol = storeSymbol || "$";
   const retailPrice = Number(product.variants?.[0]?.retailPrice || 0);
   const buyingPrice = Number(product.variants?.[0]?.buyingPrice || 0);
   const marginPercentage =
