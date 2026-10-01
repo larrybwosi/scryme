@@ -1,5 +1,8 @@
 "use client";
 
+import { formatCurrency } from "../../../../../lib/utils";
+import { useOrganizationStore } from "../../../../../lib/stores/organization-store";
+
 import React from "react";
 import { Plus, MoreHorizontal, Edit, Trash2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -55,6 +58,7 @@ export function VariantsTab({
   setVariantsToDelete,
   handleBulkStatusUpdate,
 }: VariantsTabProps) {
+  const { currency } = useOrganizationStore();
   return (
     <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800">
       <CardHeader className="flex flex-row items-center justify-between">
