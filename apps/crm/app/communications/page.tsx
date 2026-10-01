@@ -4,12 +4,9 @@ import React, { useState, useEffect } from 'react';
 import {
   MessageSquare,
   Send,
-  RefreshCw,
   Search,
   CheckCheck,
-  User,
   Phone,
-  FileText,
   Settings,
   Plus,
   Sparkles,
@@ -17,7 +14,6 @@ import {
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
 import { Textarea } from '@repo/ui/components/ui/textarea';
-import { Card } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
 import {
   Dialog,
@@ -27,12 +23,18 @@ import {
   DialogTrigger,
 } from '@repo/ui/components/ui/dialog';
 import Link from 'next/link';
+import {
+  getCommunicationThreads,
+  getThreadMessages,
+  getWhatsappTemplates,
+  sendWhatsappMessage,
+} from '@/app/actions/whatsapp';
 
 interface Thread {
   id: string;
   participantPhone: string;
-  participantName?: string;
-  lastMessageAt: string;
+  participantName?: string | null;
+  lastMessageAt: string | Date;
   unreadCount: number;
   messages?: Message[];
   crmRecord?: any;
@@ -43,7 +45,7 @@ interface Message {
   direction: 'INBOUND' | 'OUTBOUND';
   content: string;
   status: string;
-  createdAt: string;
+  createdAt: string | Date;
   senderMember?: any;
 }
 
@@ -66,14 +68,12 @@ export default function CommunicationsPage() {
   const [newRecipientPhone, setNewRecipientPhone] = useState('');
   const [newMessageText, setNewMessageText] = useState('');
   const [isNewModalOpen, setIsNewModalOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
 
   const fetchThreads = async () => {
     try {
-      const res = await fetch('/api/v3/crm/communication/threads');
-      if (res.ok) {
-        const data = await res.json();
-        setThreads(data.data || data || []);
+      const res = await getCommunicationThreads();
+      if (res.success && res.data) {
+        setThreads(res.data as unknown as Thread[]);
       }
     } catch (e) {
       console.error('Failed to fetch threads', e);
@@ -82,10 +82,9 @@ export default function CommunicationsPage() {
 
   const fetchTemplates = async () => {
     try {
-      const res = await fetch('/api/v3/crm/communication/templates');
-      if (res.ok) {
-        const data = await res.json();
-        setTemplates(data.data || data || []);
+      const res = await getWhatsappTemplates();
+      if (res.success && res.data) {
+        setTemplates(res.data as unknown as Template[]);
       }
     } catch (e) {
       console.error('Failed to fetch templates', e);
@@ -102,10 +101,9 @@ export default function CommunicationsPage() {
     const fetchMessages = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/v3/crm/communication/threads/${activeThreadId}/messages`);
-        if (res.ok) {
-          const data = await res.json();
-          setMessages(data.data || data || []);
+        const res = await getThreadMessages(activeThreadId);
+        if (res.success && res.data) {
+          setMessages(res.data as unknown as Message[]);
         }
       } catch (e) {
         console.error('Failed to fetch messages', e);
@@ -120,26 +118,21 @@ export default function CommunicationsPage() {
     if (!recipientPhone || (!text && !templateName)) return;
 
     try {
-      const res = await fetch('/api/v3/crm/communication/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipientPhone,
-          text,
-          templateName: templateName || undefined,
-        }),
+      const res = await sendWhatsappMessage({
+        recipientPhone,
+        text,
+        templateName: templateName || undefined,
       });
 
-      if (res.ok) {
+      if (res.success) {
         setReplyText('');
         setNewMessageText('');
         setIsNewModalOpen(false);
         fetchThreads();
         if (activeThreadId) {
-          const msgRes = await fetch(`/api/v3/crm/communication/threads/${activeThreadId}/messages`);
-          if (msgRes.ok) {
-            const msgData = await msgRes.json();
-            setMessages(msgData.data || msgData || []);
+          const msgRes = await getThreadMessages(activeThreadId);
+          if (msgRes.success && msgRes.data) {
+            setMessages(msgRes.data as unknown as Message[]);
           }
         }
       }
@@ -326,7 +319,6 @@ export default function CommunicationsPage() {
                     variant="outline"
                     className="text-xs h-7 shrink-0"
                     onClick={() => {
-                      setSelectedTemplate(tpl.name);
                       handleSendMessage(activeThread.participantPhone, `[Template: ${tpl.name}]`, tpl.name);
                     }}
                   >
