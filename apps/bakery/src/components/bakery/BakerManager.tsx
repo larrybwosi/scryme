@@ -58,7 +58,7 @@ export default function BakerManager() {
   };
 
   const getBakerStats = (baker: BakeryBaker) => {
-    const bakerBatches: FormattedBatch[] = (baker as any).batches || batches.filter((b: FormattedBatch) => b.assignedBakerId === baker.id) || [];
+    const bakerBatches: FormattedBatch[] = (baker as any).batches || batches.filter((b: FormattedBatch) => b.leadBaker?.id === baker.id || (b as any).assignedBakerId === baker.id) || [];
     const totalBatches = bakerBatches.length;
     const completedBatches = bakerBatches.filter((b: FormattedBatch) => b.status === BatchStatus.COMPLETED).length;
     const activeBatches = bakerBatches.filter((b: FormattedBatch) => b.status === BatchStatus.IN_PROGRESS).length;
@@ -141,11 +141,12 @@ export default function BakerManager() {
 
   const dynamicShifts: DynamicShift[] = activeBatchesList.length > 0
     ? activeBatchesList.map((batch: FormattedBatch, idx: number) => {
-        const lead = bakers?.find((b: BakeryBaker) => b.id === batch.assignedBakerId)?.name || realLeadBakers[idx % (realLeadBakers.length || 1)]?.name || bakers?.[0]?.name || 'Unassigned Lead';
+        const assignedId = batch.leadBaker?.id || (batch as any).assignedBakerId;
+        const lead = bakers?.find((b: BakeryBaker) => b.id === assignedId)?.name || batch.leadBaker?.name || realLeadBakers[idx % (realLeadBakers.length || 1)]?.name || bakers?.[0]?.name || 'Unassigned Lead';
         return {
           id: batch.id || `shift-${idx}`,
-          title: `${batch.recipeName || 'Production Batch'} (#${batch.code || batch.id.slice(0, 6)})`,
-          time: batch.plannedStartTime ? new Date(batch.plannedStartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Flexible Shift',
+          title: `${batch.recipe?.name || batch.name || 'Production Batch'} (#${batch.batchNumber || batch.id.slice(0, 6)})`,
+          time: batch.scheduledStartAt ? new Date(batch.scheduledStartAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Flexible Shift',
           leadBaker: lead,
           status: batch.status === BatchStatus.IN_PROGRESS ? 'In Progress' : 'Scheduled',
           activeBakers: bakers?.filter((b: BakeryBaker) => b.isActive).length || 1,
